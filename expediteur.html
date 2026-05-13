@@ -138,6 +138,7 @@ input.error,select.error,textarea.error{border-color:var(--color-error)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+    <script src="js/modal-helper.js"></script>
 <script src="js/auth.js"></script>
 <script>
 var currentStep=1;
@@ -231,7 +232,7 @@ document.getElementById('success').textContent='Colis cree avec succes: '+(data.
 document.getElementById('success').classList.add('show');
 setTimeout(()=>{window.location.href='/dashboard-expediteur.html'},1500);
 }catch(err){
-alert(err.message);
+showError(err.message);
 btn.disabled=false;
 btn.textContent="Confirmer l'envoi";
 }
@@ -239,4 +240,5 @@ btn.textContent="Confirmer l'envoi";
 </script>
 </body>
 </html>
+
 
