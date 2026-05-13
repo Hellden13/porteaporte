@@ -83,7 +83,7 @@
 
     if (!isEmailVerified(ctx.session, ctx.profile)) {
       console.error('ERREUR auth: email non confirme');
-      alert('Confirme ton email avant d acceder aux donnees sensibles.');
+      showError('Confirme ton email avant d acceder aux donnees sensibles.');
       window.location.href = redirectTo || '/login.html';
       return null;
     }
@@ -117,7 +117,7 @@
 
     if (ctx.profile.driver_status !== 'verified' && ctx.profile.role !== 'admin') {
       console.error('ERREUR livreur: verification requise');
-      alert('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
+      showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
       window.location.href = redirectTo || '/livreur.html';
       return null;
     }
@@ -152,4 +152,5 @@
 
   if (!window.logout) window.logout = logout;
 })();
+
 

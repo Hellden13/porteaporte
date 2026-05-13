@@ -240,7 +240,7 @@
   async function viewProfile(id) {
     const profile = state.users.find((user) => user.id === id);
     if (!profile) return;
-    alert(`${fullName(profile)}\n${profile.email || ''}\nRole: ${profile.role || '-'}`);
+    showError(`${fullName(profile)}\n${profile.email || ''}\nRole: ${profile.role || '-'}`);
   }
 
   async function refreshAll() {
@@ -269,4 +269,5 @@
 
   // console.log('âœ… connectÃ©: fonctions admin CRUD chargees');
 })();
+
 
