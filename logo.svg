@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Fond -->
+  <rect width="200" height="200" fill="#0A0C0F" rx="20"/>
+  
+  <!-- Boîte de gauche (Porte) -->
+  <rect x="30" y="60" width="55" height="80" fill="#B8F53E" rx="8" stroke="#0A0C0F" stroke-width="3"/>
+  <circle cx="75" cy="100" r="6" fill="#0A0C0F"/>
+  
+  <!-- Boîte de droite (à) -->
+  <rect x="115" y="60" width="55" height="80" fill="#0BFFCB" rx="8" stroke="#0A0C0F" stroke-width="3"/>
+  <circle cx="160" cy="100" r="6" fill="#0A0C0F"/>
+  
+  <!-- Flèche de livraison (symbolise le mouvement) -->
+  <path d="M 72 145 L 128 145" stroke="#E8EAED" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 120 137 L 128 145 L 120 153" stroke="#E8EAED" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

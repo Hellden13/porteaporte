@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missions Solidaires · PorteàPorte</title>
+<style>
+:root{--bg:#0A0C0F;--surface:#12151A;--border:#1F242C;--text:#E8EAED;--text-dim:#9BA1A9;--accent:#B8F53E}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:sans-serif;line-height:1.6}
+.navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:20px;font-weight:700;color:var(--accent)}
+.nav{display:flex;gap:16px}
+.nav a{color:var(--text-dim);text-decoration:none;font-size:14px;padding:8px 16px;border-radius:6px}
+.nav a:hover{background:var(--border);color:var(--accent)}
+.container{max-width:1000px;margin:0 auto;padding:40px 24px}
+h1{font-size:36px;margin-bottom:16px;color:var(--accent)}
+.intro{font-size:18px;color:var(--text-dim);margin-bottom:40px;line-height:1.8}
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:40px}
+.mission-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
+.mission-card h2{color:var(--accent);margin-bottom:12px}
+.mission-card p{color:var(--text-dim);margin-bottom:16px}
+.btn{background:var(--accent);color:#0A0C0F;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;text-transform:uppercase}
+.btn:hover{background:#8BC230}
+.back-link{display:inline-block;margin-bottom:24px;color:var(--accent);text-decoration:none;font-size:14px}
+</style>
+</head>
+<body>
+<div class="navbar">
+<div class="logo">PorteàPorte</div>
+<div class="nav">
+<a href="/livreur.html">Livreur</a>
+<a href="/expediteur.html">Expéditeur</a>
+<a href="/">Accueil</a>
+</div>
+</div>
+<div class="container">
+<a href="/" class="back-link">← Retour</a>
+<h1>🤝 Missions Solidaires</h1>
+<p class="intro">Chez PorteàPorte, on croit que la livraison peut faire la différence. Nos missions solidaires permettent à nos livreurs de contribuer à des causes sociales tout en gagnant des coins.</p>
+<div class="missions-grid">
+<div class="mission-card">
+<h2>📚 Banque alimentaire</h2>
+<p>Aide à livrer des colis alimentaires aux familles dans le besoin. Chaque livraison = +10 coins + respect infini.</p>
+<button class="btn">En savoir plus</button>
+</div>
+<div class="mission-card">
+<h2>🏥 Santé et bien-être</h2>
+<p>Livraisons de médicaments et équipements médicaux pour les personnes isolées. Impact social = +20 coins.</p>
+<button class="btn">Participer</button>
+</div>
+<div class="mission-card">
+<h2>♻️ Économie circulaire</h2>
+<p>Livraisons de produits rénovés et reconditionnés. Réduire l'impact environnemental = +15 coins.</p>
+<button class="btn">Découvrir</button>
+</div>
+</div>
+</div>
+</body>
+</html>

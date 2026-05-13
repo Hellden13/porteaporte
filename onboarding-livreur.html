@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue Livreur · PorteÀPorte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0A0C0F 0%, #0F1117 100%);
+            color: #E8EAED;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #B8F53E 0%, #0BFFCB 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #E8EAED;
+            margin-bottom: 1rem;
+        }
+
+        .user-name {
+            color: #B8F53E;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #A0A3A8;
+            margin-bottom: 2rem;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2.5rem 0;
+        }
+
+        .feature {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            border-color: #B8F53E;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #E8EAED;
+            font-size: 0.95rem;
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: #8A8D93;
+            line-height: 1.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #B8F53E 0%, #0BFFCB 100%);
+            color: #0A0C0F;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(184, 245, 62, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #1F242C;
+            color: #E8EAED;
+        }
+
+        .btn-secondary:hover {
+            border-color: #B8F53E;
+            color: #B8F53E;
+            background: rgba(184, 245, 62, 0.05);
+        }
+
+        .back-link {
+            color: #8A8D93;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            display: inline-block;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #B8F53E;
+        }
+
+        @media (max-width: 600px) {
+            .logo-text {
+                font-size: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚚</div>
+        <div class="logo-text">PorteÀPorte</div>
+        
+        <h1>Verification livreur <span id="user-name" class="user-name"></span></h1>
+        <p>Ton compte est cree, mais tu dois completer la verification livreur avant de voir les colis reels, accepter une livraison ou acceder au GPS.</p>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📦</div>
+                <div class="feature-title">Livraisons flexibles</div>
+                <div class="feature-desc">Choisis tes horaires et ta zone</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💰</div>
+                <div class="feature-title">50 coins offerts</div>
+                <div class="feature-desc">Ton bonus de bienvenue</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⭐</div>
+                <div class="feature-title">Système XP</div>
+                <div class="feature-desc">Gagne de l'expérience</div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <a href="/livreur.html" class="btn btn-primary">Completer ma verification</a>
+            <a href="/profile.html" class="btn btn-secondary">Mon profil</a>
+        </div>
+
+        <a href="/" class="back-link">← Retour à l'accueil</a>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://miqrircrfpzkmvvacgwt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcXJpcmNyZnB6a212dmFjZ3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODk3MzAsImV4cCI6MjA5MjE2NTczMH0.LJ8m2Vo7U0bmLbdoN1BqBuYlJZWUQxnZCwLwAZvVIaM';
+        
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.addEventListener('load', async () => {
+            try {
+                const { data } = await db.auth.getSession();
+                
+                if (data && data.session) {
+                    const { data: profile } = await db
+                        .from('profiles')
+                        .select('prenom,driver_status')
+                        .eq('id', data.session.user.id)
+                        .single();
+
+                    if (profile && profile.prenom) {
+                        document.getElementById('user-name').textContent = profile.prenom;
+                    }
+                    if (profile && profile.driver_status === 'verified') {
+                        window.location.href = '/dashboard-livreur.html';
+                    }
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        });
+    </script>
+</body>
+</html>

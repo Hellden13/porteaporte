@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation - PorteaPorte</title>
+  <style>
+    :root{--bg:#0A0C0F;--surface:#12151A;--border:#1F242C;--text:#E8EAED;--muted:#A0A3A8;--lime:#B8F53E;--cyan:#0BFFCB}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(135deg,var(--bg),#0F1117);color:var(--text);font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;display:grid;place-items:center;padding:24px}
+    main{width:min(560px,100%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px}
+    h1{margin:0 0 12px;color:var(--lime);font-size:28px}
+    p{color:var(--muted);line-height:1.6}
+    .row{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--border);padding:12px 0;color:var(--muted)}
+    .row strong{color:var(--text);text-align:right;word-break:break-word}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+    a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:8px;text-decoration:none;font-weight:700}
+    .primary{background:linear-gradient(135deg,var(--lime),var(--cyan));color:#0A0C0F}
+    .secondary{border:1px solid var(--border);color:var(--text)}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Paiement confirme</h1>
+    <p>Ta transaction a ete traitee. Si c'est un achat de PorteCoins, le credit final est applique par le webhook Stripe securise.</p>
+    <div class="row"><span>Type</span><strong id="type">-</strong></div>
+    <div class="row"><span>Coins</span><strong id="coins">-</strong></div>
+    <div class="row"><span>Montant</span><strong id="montant">-</strong></div>
+    <div class="row"><span>Reference Stripe</span><strong id="pi">-</strong></div>
+    <div class="row"><span>Livraison</span><strong id="livraison">-</strong></div>
+    <div class="actions">
+      <a class="primary" id="trackingLink" href="compte.html">Suivre la livraison</a>
+      <a class="secondary" href="index.html">Accueil</a>
+    </div>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const setText = (id, value) => { document.getElementById(id).textContent = value || '-'; };
+    const cents = Number(params.get('montant') || 0);
+    setText('type', params.get('type'));
+    setText('coins', params.get('coins'));
+    setText('montant', cents ? (cents / 100).toFixed(2) + ' $' : '');
+    setText('pi', params.get('pi'));
+    setText('livraison', params.get('livraison_id'));
+    if (params.get('livraison_id')) {
+      document.getElementById('trackingLink').href = 'suivi-livraison.html?id=' + encodeURIComponent(params.get('livraison_id'));
+    }
+  </script>
+</body>
+</html>

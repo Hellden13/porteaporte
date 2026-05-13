@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Niveaux Livreurs · PorteàPorte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0A0C0F;
+            color: #E8EAED;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #12151A;
+            border-bottom: 1px solid #1F242C;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #B8F53E;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        h1 {
+            color: #B8F53E;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .level-card {
+            background: #12151A;
+            border: 2px solid #1F242C;
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-card.beginner {
+            border-color: #0BFFCB;
+        }
+
+        .level-card.confirmed {
+            border-color: #B8F53E;
+        }
+
+        .level-card.elite {
+            border-color: #FFD700;
+            background: linear-gradient(135deg, #12151A 0%, #1a1a0a 100%);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .level-badge.beginner {
+            background: #0BFFCB;
+            color: #0A0C0F;
+        }
+
+        .level-badge.confirmed {
+            background: #B8F53E;
+            color: #0A0C0F;
+        }
+
+        .level-badge.elite {
+            background: #FFD700;
+            color: #0A0C0F;
+        }
+
+        .level-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #E8EAED;
+        }
+
+        .level-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .requirements {
+            background: #0A0C0F;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 3px solid;
+        }
+
+        .requirements.beginner {
+            border-left-color: #0BFFCB;
+        }
+
+        .requirements.confirmed {
+            border-left-color: #B8F53E;
+        }
+
+        .requirements.elite {
+            border-left-color: #FFD700;
+        }
+
+        .requirement-title {
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .requirement-icon {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .benefits {
+            background: #0A0C0F;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 3px solid;
+        }
+
+        .benefits.beginner {
+            border-left-color: #0BFFCB;
+        }
+
+        .benefits.confirmed {
+            border-left-color: #B8F53E;
+        }
+
+        .benefits.elite {
+            border-left-color: #FFD700;
+        }
+
+        .benefits-title {
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .benefit-icon {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .payment-timeline {
+            background: #0A0C0F;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid #1F242C;
+        }
+
+        .timeline-title {
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #B8F53E;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .timeline-step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #1F242C;
+            font-size: 0.9rem;
+        }
+
+        .timeline-step:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-time {
+            color: #B8F53E;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .admin-section {
+            background: #12151A;
+            border: 2px solid #B8F53E;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .admin-title {
+            color: #B8F53E;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .level-config {
+            background: #0A0C0F;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .config-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .config-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-label {
+            color: #9BA1A9;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .config-value {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .config-value input {
+            flex: 1;
+            padding: 0.75rem;
+            background: #12151A;
+            border: 1px solid #1F242C;
+            color: #B8F53E;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .config-value span {
+            color: #9BA1A9;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            background: #B8F53E;
+            color: #0A0C0F;
+        }
+
+        .btn:hover {
+            background: #a5dd2d;
+        }
+
+        .progression-chart {
+            background: #0A0C0F;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chart-title {
+            color: #B8F53E;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .progress-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #1F242C;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #B8F53E;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: #0A0C0F;
+            border: 1px solid #1F242C;
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            color: #B8F53E;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #9BA1A9;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .highlight {
+            background: #B8F53E;
+            color: #0A0C0F;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-brand">⭐ Système Niveaux Livreurs</div>
+        <div>
+            <a href="/admin-dashboard.html" style="color: #B8F53E; text-decoration: none; margin-right: 2rem;">← Admin</a>
+            <a href="/" onclick="logout(); return false;" style="color: #B8F53E; text-decoration: none;">Déconnexion</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🚀 Système de Niveaux Livreurs - Déblocage Progressif</h1>
+
+        <!-- GRID DES 3 NIVEAUX -->
+        <div class="levels-grid">
+            <!-- NIVEAU 1: DÉBUTANT -->
+            <div class="level-card beginner">
+                <div class="level-badge beginner">Niveau 1</div>
+                <div class="level-emoji">👶</div>
+                <div class="level-title">Livreur Débutant</div>
+
+                <div class="requirements beginner">
+                    <div class="requirement-title">📋 Critères</div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Nouvellement inscrit</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>0-50 livraisons</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Toute note</span>
+                    </div>
+                </div>
+
+                <div class="benefits beginner">
+                    <div class="benefits-title">🛡️ Protection Maximale</div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⏳</span>
+                        <span><span class="highlight">48 heures</span> d'attente</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🔒</span>
+                        <span>Vérification complète</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">📊</span>
+                        <span>Support prioritaire</span>
+                    </div>
+                </div>
+
+                <div class="payment-timeline">
+                    <div class="timeline-title">⏱️ Timeline Paiement</div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T0</span>
+                        <span>Expéditeur paie</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+5m</span>
+                        <span>Livreur accepte</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+10m</span>
+                        <span>Récepteur accepte</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+48h</span>
+                        <span><strong>💰 PAIEMENT DÉBLOQUÉ!</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEAU 2: CONFIRMÉ -->
+            <div class="level-card confirmed">
+                <div class="level-badge confirmed">Niveau 2</div>
+                <div class="level-emoji">⭐</div>
+                <div class="level-title">Livreur Confirmé</div>
+
+                <div class="requirements confirmed">
+                    <div class="requirement-title">📋 Critères</div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>50+ livraisons complétées</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Note moyenne: 4.0+</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Ancien compte (2+ semaines)</span>
+                    </div>
+                </div>
+
+                <div class="benefits confirmed">
+                    <div class="benefits-title">⚡ Accélération</div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⏳</span>
+                        <span><span class="highlight">24 heures</span> d'attente</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🎁</span>
+                        <span>Bonus confiance +1$ par livraison</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">📱</span>
+                        <span>App mobile prioritaire</span>
+                    </div>
+                </div>
+
+                <div class="payment-timeline">
+                    <div class="timeline-title">⏱️ Timeline Paiement</div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T0</span>
+                        <span>Expéditeur paie</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+5m</span>
+                        <span>Livreur accepte</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+10m</span>
+                        <span>Récepteur accepte</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+24h</span>
+                        <span><strong>💰 PAIEMENT DÉBLOQUÉ!</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEAU 3: ÉLITE -->
+            <div class="level-card elite">
+                <div class="level-badge elite">Niveau 3</div>
+                <div class="level-emoji">👑</div>
+                <div class="level-title">Livreur Élite</div>
+
+                <div class="requirements elite">
+                    <div class="requirement-title">📋 Critères</div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>100+ livraisons complétées</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Note moyenne: 4.7+</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="requirement-icon">✓</span>
+                        <span>Ancien compte (2+ mois)</span>
+                    </div>
+                </div>
+
+                <div class="benefits elite">
+                    <div class="benefits-title">🚀 Ultra-Rapide</div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⚡</span>
+                        <span><span class="highlight">IMMÉDIAT!</span> (après acceptation)</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">💎</span>
+                        <span>Bonus élite +5$ par livraison</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🏆</span>
+                        <span>Accès premium & concours spécial</span>
+                    </div>
+                </div>
+
+                <div class="payment-timeline">
+                    <div class="timeline-title">⏱️ Timeline Paiement</div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T0</span>
+                        <span>Expéditeur paie</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+5m</span>
+                        <span>Livreur accepte</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+8m</span>
+                        <span>Récepteur signe (biométrique)</span>
+                    </div>
+                    <div class="timeline-step">
+                        <span class="timeline-time">T+12m</span>
+                        <span><strong>💰 VIREMENT IMMÉDIAT!</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION ADMIN -->
+        <div class="admin-section">
+            <div class="admin-title">⚙️ Configuration Admin - Paramètres des Niveaux</div>
+
+            <!-- NIVEAU 1 -->
+            <div class="level-config">
+                <div style="color: #0BFFCB; font-weight: bold; margin-bottom: 1rem;">👶 NIVEAU 1: DÉBUTANT</div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Livraisons Min</div>
+                        <div class="config-value">
+                            <input type="number" id="level1-min-deliveries" value="0">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Livraisons Max</div>
+                        <div class="config-value">
+                            <input type="number" id="level1-max-deliveries" value="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Note Minimale</div>
+                        <div class="config-value">
+                            <input type="number" id="level1-min-rating" value="0" step="0.1">
+                            <span>/5</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Délai Paiement</div>
+                        <div class="config-value">
+                            <input type="number" id="level1-payment-delay" value="48">
+                            <span>heures</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Bonus Confiance</div>
+                        <div class="config-value">
+                            <input type="number" id="level1-bonus" value="0" step="0.5">
+                            <span>$/livraison</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEAU 2 -->
+            <div class="level-config">
+                <div style="color: #B8F53E; font-weight: bold; margin-bottom: 1rem;">⭐ NIVEAU 2: CONFIRMÉ</div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Livraisons Min</div>
+                        <div class="config-value">
+                            <input type="number" id="level2-min-deliveries" value="50">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Livraisons Max</div>
+                        <div class="config-value">
+                            <input type="number" id="level2-max-deliveries" value="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Note Minimale</div>
+                        <div class="config-value">
+                            <input type="number" id="level2-min-rating" value="4.0" step="0.1">
+                            <span>/5</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Délai Paiement</div>
+                        <div class="config-value">
+                            <input type="number" id="level2-payment-delay" value="24">
+                            <span>heures</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Bonus Confiance</div>
+                        <div class="config-value">
+                            <input type="number" id="level2-bonus" value="1" step="0.5">
+                            <span>$/livraison</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEAU 3 -->
+            <div class="level-config">
+                <div style="color: #FFD700; font-weight: bold; margin-bottom: 1rem;">👑 NIVEAU 3: ÉLITE</div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Livraisons Min</div>
+                        <div class="config-value">
+                            <input type="number" id="level3-min-deliveries" value="100">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Livraisons Max</div>
+                        <div class="config-value">
+                            <input type="number" id="level3-max-deliveries" value="999999">
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Note Minimale</div>
+                        <div class="config-value">
+                            <input type="number" id="level3-min-rating" value="4.7" step="0.1">
+                            <span>/5</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="config-label">Délai Paiement</div>
+                        <div class="config-value">
+                            <input type="number" id="level3-payment-delay" value="0">
+                            <span>heures (IMMÉDIAT!)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <div>
+                        <div class="config-label">Bonus Élite</div>
+                        <div class="config-value">
+                            <input type="number" id="level3-bonus" value="5" step="0.5">
+                            <span>$/livraison</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOUTONS -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="btn" onclick="saveConfiguration()">💾 SAUVEGARDER CONFIG</button>
+                <button class="btn" onclick="resetConfiguration()" style="background: #1F242C; color: #B8F53E;">↺ RÉINITIALISER</button>
+            </div>
+
+            <!-- STATISTIQUES -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">48h</div>
+                    <div class="stat-label">Débutant</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">24h</div>
+                    <div class="stat-label">Confirmé</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0h</div>
+                    <div class="stat-label">Élite</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">+$6/liv</div>
+                    <div class="stat-label">Bonus Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROGRESSION CHART -->
+        <div class="progression-chart">
+            <div class="chart-title">📈 Progression Type d'un Livreur</div>
+
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span>Semaine 1 (Débutant) - 5 livraisons</span>
+                    <span id="progress1">5/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 10%;"></div>
+                </div>
+            </div>
+
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span>Semaine 4 (Débutant) - 25 livraisons</span>
+                    <span id="progress2">25/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 50%;"></div>
+                </div>
+            </div>
+
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span>Semaine 8 (Confirmé) - 60 livraisons</span>
+                    <span id="progress3">60/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%; background: #B8F53E;"></div>
+                </div>
+            </div>
+
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span>Semaine 16 (Élite) - 120 livraisons</span>
+                    <span id="progress4">120/100+</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%; background: #FFD700;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Configuration par défaut
+        const defaultConfig = {
+            level1: {
+                minDeliveries: 0,
+                maxDeliveries: 50,
+                minRating: 0,
+                paymentDelayHours: 48,
+                bonusPerDelivery: 0
+            },
+            level2: {
+                minDeliveries: 50,
+                maxDeliveries: 100,
+                minRating: 4.0,
+                paymentDelayHours: 24,
+                bonusPerDelivery: 1
+            },
+            level3: {
+                minDeliveries: 100,
+                maxDeliveries: 999999,
+                minRating: 4.7,
+                paymentDelayHours: 0,
+                bonusPerDelivery: 5
+            }
+        };
+
+        function saveConfiguration() {
+            const config = {
+                level1: {
+                    minDeliveries: parseInt(document.getElementById('level1-min-deliveries').value),
+                    maxDeliveries: parseInt(document.getElementById('level1-max-deliveries').value),
+                    minRating: parseFloat(document.getElementById('level1-min-rating').value),
+                    paymentDelayHours: parseInt(document.getElementById('level1-payment-delay').value),
+                    bonusPerDelivery: parseFloat(document.getElementById('level1-bonus').value)
+                },
+                level2: {
+                    minDeliveries: parseInt(document.getElementById('level2-min-deliveries').value),
+                    maxDeliveries: parseInt(document.getElementById('level2-max-deliveries').value),
+                    minRating: parseFloat(document.getElementById('level2-min-rating').value),
+                    paymentDelayHours: parseInt(document.getElementById('level2-payment-delay').value),
+                    bonusPerDelivery: parseFloat(document.getElementById('level2-bonus').value)
+                },
+                level3: {
+                    minDeliveries: parseInt(document.getElementById('level3-min-deliveries').value),
+                    maxDeliveries: parseInt(document.getElementById('level3-max-deliveries').value),
+                    minRating: parseFloat(document.getElementById('level3-min-rating').value),
+                    paymentDelayHours: parseInt(document.getElementById('level3-payment-delay').value),
+                    bonusPerDelivery: parseFloat(document.getElementById('level3-bonus').value)
+                }
+            };
+
+            localStorage.setItem('livreur_levels_config', JSON.stringify(config));
+            alert('✅ Configuration sauvegardée!\n\nNiveaux:\n- Débutant: Délai ' + config.level1.paymentDelayHours + 'h\n- Confirmé: Délai ' + config.level2.paymentDelayHours + 'h\n- Élite: Délai ' + config.level3.paymentDelayHours + 'h (IMMÉDIAT!)');
+        }
+
+        function resetConfiguration() {
+            if (confirm('Êtes-vous sûr de réinitialiser tous les paramètres?')) {
+                document.getElementById('level1-min-deliveries').value = 0;
+                document.getElementById('level1-max-deliveries').value = 50;
+                document.getElementById('level1-min-rating').value = 0;
+                document.getElementById('level1-payment-delay').value = 48;
+                document.getElementById('level1-bonus').value = 0;
+
+                document.getElementById('level2-min-deliveries').value = 50;
+                document.getElementById('level2-max-deliveries').value = 100;
+                document.getElementById('level2-min-rating').value = 4.0;
+                document.getElementById('level2-payment-delay').value = 24;
+                document.getElementById('level2-bonus').value = 1;
+
+                document.getElementById('level3-min-deliveries').value = 100;
+                document.getElementById('level3-max-deliveries').value = 999999;
+                document.getElementById('level3-min-rating').value = 4.7;
+                document.getElementById('level3-payment-delay').value = 0;
+                document.getElementById('level3-bonus').value = 5;
+
+                saveConfiguration();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        // Charger la configuration au démarrage
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('livreur_levels_config');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('level1-min-deliveries').value = config.level1.minDeliveries;
+                document.getElementById('level1-max-deliveries').value = config.level1.maxDeliveries;
+                document.getElementById('level1-min-rating').value = config.level1.minRating;
+                document.getElementById('level1-payment-delay').value = config.level1.paymentDelayHours;
+                document.getElementById('level1-bonus').value = config.level1.bonusPerDelivery;
+
+                document.getElementById('level2-min-deliveries').value = config.level2.minDeliveries;
+                document.getElementById('level2-max-deliveries').value = config.level2.maxDeliveries;
+                document.getElementById('level2-min-rating').value = config.level2.minRating;
+                document.getElementById('level2-payment-delay').value = config.level2.paymentDelayHours;
+                document.getElementById('level2-bonus').value = config.level2.bonusPerDelivery;
+
+                document.getElementById('level3-min-deliveries').value = config.level3.minDeliveries;
+                document.getElementById('level3-max-deliveries').value = config.level3.maxDeliveries;
+                document.getElementById('level3-min-rating').value = config.level3.minRating;
+                document.getElementById('level3-payment-delay').value = config.level3.paymentDelayHours;
+                document.getElementById('level3-bonus').value = config.level3.bonusPerDelivery;
+            }
+        });
+    </script>
+</body>
+</html>

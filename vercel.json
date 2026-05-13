@@ -1,0 +1,125 @@
+{
+    "cleanUrls":  false,
+    "trailingSlash":  false,
+    "rewrites":  [
+                     {
+                         "source":  "/api/capture-payment",
+                         "destination":  "/api/capture-livraison"
+                     },
+                     {
+                         "source":  "/api/test-email",
+                         "destination":  "/api/notifier"
+                     },
+                     {
+                         "source":  "/api/admin-update-driver-status",
+                         "destination":  "/api/platform?endpoint=admin-update-driver-status"
+                     },
+                     {
+                         "source":  "/api/refund-payment",
+                         "destination":  "/api/platform?endpoint=refund-payment"
+                     },
+                     {
+                         "source":  "/api/gps-update",
+                         "destination":  "/api/platform?endpoint=gps-update"
+                     },
+                     {
+                         "source":  "/api/create-livraison",
+                         "destination":  "/api/platform?endpoint=create-livraison"
+                     },
+                     {
+                         "source":  "/api/assign-driver",
+                         "destination":  "/api/platform?endpoint=assign-driver"
+                     },
+                     {
+                         "source":  "/api/available-livraisons",
+                         "destination":  "/api/platform?endpoint=available-livraisons"
+                     },
+                     {
+                         "source":  "/api/notifications",
+                         "destination":  "/api/platform?endpoint=notifications"
+                     },
+                     {
+                         "source":  "/livreur-hero.png",
+                         "destination":  "/logo.svg"
+                     },
+                     {
+                         "source":  "/api/tracking",
+                         "destination":  "/api/platform?endpoint=tracking"
+                     },
+                     {
+                         "source":  "/api/confirm-delivery",
+                         "destination":  "/api/platform?endpoint=confirm-delivery"
+                     },
+                     {
+                         "source":  "/api/submit-driver-verification",
+                         "destination":  "/api/platform?endpoint=submit-driver-verification"
+                     },
+                     {
+                         "source":  "/api/request-driver-card",
+                         "destination":  "/api/platform?endpoint=request-driver-card"
+                     }
+                 ],
+    "headers":  [
+                    {
+                        "source":  "/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "X-Content-Type-Options",
+                                            "value":  "nosniff"
+                                        },
+                                        {
+                                            "key":  "Referrer-Policy",
+                                            "value":  "strict-origin-when-cross-origin"
+                                        },
+                                        {
+                                            "key":  "Strict-Transport-Security",
+                                            "value":  "max-age=31536000; includeSubDomains; preload"
+                                        },
+                                        {
+                                            "key":  "X-Frame-Options",
+                                            "value":  "DENY"
+                                        },
+                                        {
+                                            "key":  "Permissions-Policy",
+                                            "value":  "camera=(), microphone=(), geolocation=(self), payment=(self)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/api/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/js/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "public, max-age=86400, stale-while-revalidate=604800"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/assets/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "public, max-age=31536000, immutable"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/(.*).css",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "public, max-age=86400, stale-while-revalidate=604800"
+                                        }
+                                    ]
+                    }
+                ]
+}

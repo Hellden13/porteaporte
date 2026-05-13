@@ -1,0 +1,625 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PorteàPorte — Suivez votre livraison en temps réel. GPS, statuts, notifications. Votre colis est entre de bonnes mains ??">
+<title>PorteàPorte — Suivi de livraison ??</title>
+<script>window.location.replace("/suivi-livraison.html" + window.location.search);</script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/live-gps.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--gold:#F5C842;--orange:#FF8C00;--red:#FF4D4D;--blue:#60A5FA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(5,8,10,.96);backdrop-filter:blur(14px);position:sticky;top:0;z-index:100}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.back{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}.back:hover{color:var(--lime)}
+
+/* SEARCH */
+.search-section{padding:32px 24px;max-width:680px;margin:0 auto}
+.search-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
+.search-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,48px);letter-spacing:-1px;margin-bottom:16px;line-height:1}
+.search-wrap{display:flex;gap:8px}
+.search-input{flex:1;background:var(--smoke);border:1px solid var(--border);padding:13px 16px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:15px;outline:none;transition:border-color .2s;border-radius:2px}
+.search-input:focus{border-color:rgba(184,245,62,.4)}
+.search-input::placeholder{color:rgba(245,240,232,.2)}
+.search-btn{background:var(--lime);color:var(--ink);border:none;padding:13px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;transition:all .2s;white-space:nowrap}
+.search-btn:hover{background:#d4ff5e}
+.examples{margin-top:10px;font-size:11px;color:var(--muted)}
+.example-code{color:var(--lime);cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
+
+/* RÉSULTAT */
+#result{display:none;max-width:800px;margin:0 auto;padding:0 24px 60px}
+
+/* STATUT PRINCIPAL */
+.status-card{background:var(--smoke);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.status-header{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.status-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:600}
+.status-enroute{background:rgba(11,255,203,.1);color:var(--teal);border:1px solid rgba(11,255,203,.2)}
+.status-pickup{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}
+.status-delivered{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.status-pending{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+.status-dot{width:8px;height:8px;border-radius:50%;animation:blink 1.5s infinite}
+.blink-teal{background:var(--teal)}
+.blink-orange{background:var(--orange)}
+.blink-lime{background:var(--lime)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.colis-code{font-family:monospace;font-size:11px;color:var(--muted)}
+.status-body{padding:20px 22px}
+.trajet-display{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.trajet-city{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:-.5px;line-height:1}
+.trajet-arrow{color:var(--lime);font-size:20px;flex:1;text-align:center;position:relative}
+.trajet-arrow::before,.trajet-arrow::after{content:'';position:absolute;top:50%;height:1px;background:rgba(184,245,62,.2);width:calc(50% - 12px)}
+.trajet-arrow::before{left:0}.trajet-arrow::after{right:0}
+.progress-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;border-radius:2px;background:var(--lime);transition:width 2s ease}
+.progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+/* CARTE GPS SIMULÉE */
+.map-card{background:var(--s2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:16px;position:relative;height:260px}
+.map-bg{position:absolute;inset:0;background:
+  linear-gradient(rgba(28,34,32,.8),rgba(28,34,32,.8)),
+  repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(184,245,62,.04) 30px),
+  repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(184,245,62,.04) 40px);
+}
+.map-road{position:absolute;background:rgba(184,245,62,.08);border-radius:4px}
+.road-h{height:8px;width:100%}
+.road-v{width:8px;height:100%}
+.map-label{position:absolute;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:4px 8px;background:var(--ink);border:1px solid var(--border);border-radius:2px}
+.map-dot{position:absolute;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%)}
+.map-dot-origin{background:var(--muted);border:2px solid var(--smoke)}
+.map-dot-dest{background:var(--lime);border:2px solid var(--smoke)}
+.map-truck{position:absolute;font-size:20px;transform:translate(-50%,-50%);animation:truckMove 8s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(11,255,203,.4))}
+@keyframes truckMove{
+  0%{left:20%;top:50%}
+  25%{left:35%;top:45%}
+  50%{left:55%;top:48%}
+  75%{left:70%;top:46%}
+  100%{left:20%;top:50%}
+}
+.map-trail{position:absolute;top:47%;left:20%;width:50%;height:2px;background:linear-gradient(to right,var(--teal),transparent);opacity:.4;border-radius:2px;animation:trailPulse 2s ease-in-out infinite}
+@keyframes trailPulse{0%,100%{opacity:.4}50%{opacity:.8}}
+.map-overlay{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between}
+.map-info{background:rgba(5,8,10,.8);backdrop-filter:blur(8px);padding:8px 12px;border-radius:4px;border:1px solid var(--border);font-size:11px}
+.map-info-label{color:var(--muted);margin-bottom:2px}
+.map-info-val{font-weight:600;color:var(--teal)}
+.map-live{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--lime);background:rgba(184,245,62,.08);padding:5px 10px;border-radius:50px;border:1px solid rgba(184,245,62,.2);position:absolute;top:12px;right:12px}
+.map-live-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);animation:blink 1.5s infinite}
+
+/* ÉTAPES */
+.steps-card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:16px}
+.step{display:flex;gap:14px;margin-bottom:0}
+.step:not(:last-child){padding-bottom:16px}
+.step-left{display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.step-line{flex:1;width:2px;background:var(--border);margin:4px 0}
+.step-done .step-circle{background:rgba(184,245,62,.15);border:2px solid var(--lime)}
+.step-active .step-circle{background:rgba(11,255,203,.15);border:2px solid var(--teal);animation:ringPulse 2s infinite}
+.step-todo .step-circle{background:var(--s2);border:2px solid var(--border)}
+@keyframes ringPulse{0%,100%{box-shadow:0 0 0 0 rgba(11,255,203,.3)}50%{box-shadow:0 0 0 8px rgba(11,255,203,0)}}
+.step-body{padding-top:4px;flex:1}
+.step-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.step-sub{font-size:11px;color:var(--muted);line-height:1.5}
+.step-time{font-size:10px;color:var(--lime);margin-top:3px;font-weight:500}
+
+/* INFOS LIVREUR */
+.livreur-card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:16px}
+.livreur-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.livreur-avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,245,62,.1);border:2px solid rgba(184,245,62,.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.livreur-name{font-size:15px;font-weight:600;margin-bottom:3px}
+.livreur-id{font-size:10px;color:var(--muted);font-family:monospace}
+.rating{display:flex;gap:2px;color:var(--gold);font-size:12px;margin-top:4px}
+.livreur-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lstat{background:var(--s2);border-radius:4px;padding:10px;text-align:center}
+.lstat-n{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:-1px;line-height:1}
+.lstat-l{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
+.contact-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:10px;padding:9px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.15);color:var(--lime);font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border-radius:2px;transition:all .2s}
+.contact-btn:hover{background:rgba(184,245,62,.12)}
+
+/* INFOS COLIS */
+.details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.detail-card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:14px}
+.detail-label{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.detail-val{font-size:14px;font-weight:500}
+
+/* ACTIONS */
+.actions-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.action-btn{flex:1;min-width:140px;padding:11px;border-radius:2px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;border:none}
+.abp{background:var(--lime);color:var(--ink)}.abp:hover{background:#d4ff5e}
+.abs{background:transparent;color:var(--paper);border:1px solid var(--border)}.abs:hover{background:var(--s2)}
+.abr{background:rgba(255,77,77,.08);color:var(--red);border:1px solid rgba(255,77,77,.15)}.abr:hover{background:rgba(255,77,77,.15)}
+
+/* NOTIFICATION TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid rgba(184,245,62,.2);border-radius:4px;padding:12px 16px;font-size:12px;max-width:260px;transform:translateX(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);z-index:999;line-height:1.5}
+.toast.show{transform:translateX(0)}
+
+/* MODAL CONFIRMER */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,8,10,.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--smoke);border:1px solid rgba(184,245,62,.2);border-radius:8px;padding:28px;max-width:400px;width:100%}
+
+@media(max-width:600px){
+  .trajet-city{font-size:22px}
+  .details-grid{grid-template-columns:1fr}
+  .actions-row{flex-direction:column}
+  .livreur-stats{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <div style="font-size:36px;text-align:center;margin-bottom:14px">?</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--lime);text-align:center;letter-spacing:-1px;margin-bottom:8px">Confirmer la réception</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;line-height:1.7;margin-bottom:20px">En confirmant, tu libères le paiement au livreur et tu indiques que ton colis est arrivé en bon état. Cette action est irréversible.</div>
+    <div style="display:flex;gap:8px">
+      <button class="action-btn abp" onclick="confirmerReception()" style="flex:2">? Confirmer et libérer le paiement</button>
+      <button class="action-btn abs" onclick="document.getElementById('modal-confirm').classList.remove('open')" style="flex:1">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <div style="display:flex;gap:12px;align-items:center">
+    <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">?? Mon compte</a>
+    <a href="index.html" class="back">? Retour</a>
+  </div>
+</nav>
+
+<!-- RECHERCHE -->
+<div class="search-section">
+  <div class="search-label">Suivi en temps réel</div>
+  <h1 class="search-title">?? Où est<br>mon colis ?</h1>
+  <div class="search-wrap">
+    <input class="search-input" type="text" id="code-input" placeholder="PP-AB12CD ou courriel de confirmation..." maxlength="30">
+    <button class="search-btn" onclick="rechercherColis()">?? Suivre</button>
+  </div>
+  <div class="examples">Essaie un code de démo : 
+    <span class="example-code" onclick="demoEnRoute()">PP-AB12CD</span> · 
+    <span class="example-code" onclick="demoRamassage()">PP-XY78ZW</span> · 
+    <span class="example-code" onclick="demoLivre()">PP-ST90UV</span>
+  </div>
+</div>
+
+<!-- RÉSULTAT -->
+<div id="result">
+
+  <!-- STATUT -->
+  <div class="status-card">
+    <div class="status-header">
+      <div>
+        <div class="colis-code" id="r-code">PP-AB12CD</div>
+        <div style="font-size:13px;font-weight:500;margin-top:2px" id="r-desc">Électronique · 2.3 kg</div>
+      </div>
+      <div class="status-badge status-enroute" id="r-badge">
+        <span class="status-dot blink-teal"></span>
+        <span id="r-badge-text">En route</span>
+      </div>
+    </div>
+    <div class="status-body">
+      <div class="trajet-display">
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">DÉPART</div>
+          <div class="trajet-city" id="r-from">Montréal</div>
+        </div>
+        <div class="trajet-arrow">?</div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">ARRIVÉE</div>
+          <div class="trajet-city" id="r-to">Québec</div>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="r-progress" style="width:65%"></div>
+      </div>
+      <div class="progress-label">
+        <span id="r-eta-label">ETA : <strong style="color:var(--lime)" id="r-eta">14h30 aujourd'hui</strong></span>
+        <span id="r-pct">65% complété</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARTE GPS -->
+  <div class="map-card">
+    <div class="map-bg"></div>
+    <!-- Routes simulées -->
+    <div class="map-road road-h" style="top:48%;opacity:.6"></div>
+    <div class="map-road road-v" style="left:25%;opacity:.3"></div>
+    <div class="map-road road-v" style="left:75%;opacity:.3"></div>
+    <!-- Villes -->
+    <div class="map-label" style="left:12%;top:38%">MTL</div>
+    <div class="map-label" style="right:10%;top:38%">QC</div>
+    <!-- Points -->
+    <div class="map-dot map-dot-origin" style="left:20%;top:50%"></div>
+    <div class="map-dot map-dot-dest" style="left:82%;top:50%"></div>
+    <!-- Trail -->
+    <div class="map-trail"></div>
+    <!-- Camion animé -->
+    <div class="map-truck" id="map-truck">??</div>
+    <!-- Overlay info -->
+    <div class="map-overlay">
+      <div class="map-info">
+        <div class="map-info-label">Vitesse</div>
+        <div class="map-info-val" id="map-speed">112 km/h</div>
+      </div>
+      <div class="map-info">
+        <div class="map-info-label">Distance restante</div>
+        <div class="map-info-val" id="map-dist">98 km</div>
+      </div>
+      <div class="map-info">
+        <div class="map-info-label">Dernière mise à jour</div>
+        <div class="map-info-val" id="map-update">À l'instant</div>
+      </div>
+    </div>
+    <div class="map-live"><span class="map-live-dot"></span>GPS EN DIRECT</div>
+  </div>
+
+  <!-- ÉTAPES -->
+  <div class="steps-card">
+    <div style="font-size:11px;color:var(--lime);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Progression</div>
+    <div id="steps-container"></div>
+  </div>
+
+  <!-- INFOS LIVREUR -->
+  <div class="livreur-card">
+    <div style="font-size:11px;color:var(--lime);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Ton livreur</div>
+    <div class="livreur-header">
+      <div class="livreur-avatar" id="l-avatar">??</div>
+      <div>
+        <div class="livreur-name" id="l-name">Marc-Antoine L.</div>
+        <div class="livreur-id" id="l-id">PP-DR-00847 · Livreur Élite ??</div>
+        <div class="rating">????? <span style="font-size:11px;color:var(--muted);margin-left:4px">4.9 (147 avis)</span></div>
+      </div>
+    </div>
+    <div class="livreur-stats">
+      <div class="lstat"><div class="lstat-n" style="color:var(--lime)">147</div><div class="lstat-l">Livraisons</div></div>
+      <div class="lstat"><div class="lstat-n" style="color:var(--gold)">4.9?</div><div class="lstat-l">Évaluation</div></div>
+      <div class="lstat"><div class="lstat-n" style="color:var(--teal)">97%</div><div class="lstat-l">Score</div></div>
+    </div>
+    <button class="contact-btn" onclick="toast('?? Notification envoyée à Marc-Antoine — il te répondra sous peu !')">?? Contacter le livreur</button>
+  </div>
+
+  <!-- DÉTAILS COLIS -->
+  <div class="details-grid">
+    <div class="detail-card">
+      <div class="detail-label">Type de colis</div>
+      <div class="detail-val" id="d-type">?? Électronique</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Valeur déclarée</div>
+      <div class="detail-val" id="d-valeur">850 $</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Assurance</div>
+      <div class="detail-val" id="d-assurance">??? Standard (2 500 $)</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Paiement</div>
+      <div class="detail-val" id="d-paiement">?? En escrow — 42 $</div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions-row" id="actions-row">
+    <button class="action-btn abp" onclick="document.getElementById('modal-confirm').classList.add('open')">? Confirmer la réception</button>
+    <button class="action-btn abs" onclick="toast('?? Lien de suivi copié — partage-le avec tes proches !')">?? Partager le suivi</button>
+    <button class="action-btn abr" onclick="toast('?? Signalement envoyé à l\'équipe PorteàPorte. Nous traitons ça dans l\'heure.')">?? Signaler un problème</button>
+  </div>
+
+</div>
+
+<script>
+// Données de démo
+const DEMOS = {
+  'PP-AB12CD': {
+    code:'PP-AB12CD', desc:'Électronique · 2.3 kg', from:'Montréal', to:'Québec',
+    status:'en_route', progress:65, eta:'14h30 aujourd\'hui',
+    livreur:{name:'Marc-Antoine L.', id:'PP-DR-00847 · Livreur Élite ??', avatar:'??', rating:'4.9'},
+    type:'?? Électronique', valeur:'850 $', assurance:'??? Standard (2 500 $)', paiement:'?? En escrow — 42 $',
+    speed:'112 km/h', dist:'98 km',
+    steps:[
+      {done:true,  title:'Colis reçu par PorteàPorte',  sub:'Annonce publiée et confirmée par l\'expéditeur',  time:'Hier, 15h22'},
+      {done:true,  title:'Livreur assigné',  sub:'Marc-Antoine L. a accepté la livraison',  time:'Hier, 16h05'},
+      {done:true,  title:'Colis ramassé',  sub:'Photo prise · Colis conforme à la description',  time:'Aujourd\'hui, 9h15'},
+      {active:true, title:'En route vers Québec',  sub:'Sur l\'A-20 · GPS actif · ETA 14h30',  time:'En cours'},
+      {todo:true,  title:'Arrivée à destination',  sub:'Livraison au 42 rue des Lilas, Québec',  time:'ETA 14h30'},
+      {todo:true,  title:'Confirmation de réception',  sub:'Tu confirmes ? paiement libéré au livreur',  time:'À venir'},
+    ]
+  },
+  'PP-XY78ZW': {
+    code:'PP-XY78ZW', desc:'Valises · 18 kg', from:'Lévis', to:'Sherbrooke',
+    status:'ramassage', progress:25, eta:'Demain, 11h00',
+    livreur:{name:'Sophie B.', id:'PP-DR-01245 · Livreur Pro ??', avatar:'??', rating:'5.0'},
+    type:'?? Bagages', valeur:'450 $', assurance:'??? Basique (100 $)', paiement:'?? En escrow — 58 $',
+    speed:'—', dist:'178 km',
+    steps:[
+      {done:true,  title:'Colis reçu par PorteàPorte',  sub:'Annonce publiée et confirmée',  time:'Aujourd\'hui, 10h14'},
+      {done:true,  title:'Livreur assigné',  sub:'Sophie B. a accepté la livraison',  time:'Aujourd\'hui, 11h30'},
+      {active:true, title:'Ramassage prévu demain',  sub:'Sophie passe à 9h00 — prépare ton colis',  time:'Demain, 9h00'},
+      {todo:true,  title:'En route vers Sherbrooke',  sub:'Trajet prévu via la Rive-Sud',  time:'Demain'},
+      {todo:true,  title:'Arrivée à destination',  sub:'Adresse confirmée à la livraison',  time:'ETA demain 11h'},
+      {todo:true,  title:'Confirmation de réception',  sub:'À confirmer à la livraison',  time:'À venir'},
+    ]
+  },
+  'PP-ST90UV': {
+    code:'PP-ST90UV', desc:'Meubles · 32 kg', from:'Montréal', to:'Sherbrooke',
+    status:'livre', progress:100, eta:'Livré',
+    livreur:{name:'Kevin M.', id:'PP-DR-00214 · Livreur Élite ??', avatar:'??', rating:'4.8'},
+    type:'??? Meuble', valeur:'1 200 $', assurance:'??? Premium (10 000 $)', paiement:'? Paiement libéré — 65 $',
+    speed:'—', dist:'0 km',
+    steps:[
+      {done:true, title:'Colis reçu par PorteàPorte', sub:'Annonce publiée et confirmée', time:'Il y a 3 jours'},
+      {done:true, title:'Livreur assigné', sub:'Kevin M. a accepté la livraison', time:'Il y a 3 jours'},
+      {done:true, title:'Colis ramassé', sub:'Photo prise · Colis conforme', time:'Il y a 2 jours'},
+      {done:true, title:'En route vers Sherbrooke', sub:'Trajet via l\'A-10', time:'Il y a 2 jours'},
+      {done:true, title:'Arrivée à destination', sub:'Livré au 12 av. Bowen, Sherbrooke', time:'Hier, 14h22'},
+      {done:true, title:'Réception confirmée', sub:'Paiement de 65 $ libéré au livreur', time:'Hier, 14h35'},
+    ]
+  }
+};
+
+let currentDemo = null;
+
+function rechercherColis() {
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  const demo = DEMOS[code] || DEMOS['PP-AB12CD'];
+  afficherColis(demo);
+}
+
+function demoEnRoute() {
+  document.getElementById('code-input').value = 'PP-AB12CD';
+  afficherColis(DEMOS['PP-AB12CD']);
+}
+function demoRamassage() {
+  document.getElementById('code-input').value = 'PP-XY78ZW';
+  afficherColis(DEMOS['PP-XY78ZW']);
+}
+function demoLivre() {
+  document.getElementById('code-input').value = 'PP-ST90UV';
+  afficherColis(DEMOS['PP-ST90UV']);
+}
+
+function afficherColis(d) {
+  currentDemo = d;
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Statut principal
+  document.getElementById('r-code').textContent = d.code;
+  document.getElementById('r-desc').textContent = d.desc;
+  document.getElementById('r-from').textContent = d.from;
+  document.getElementById('r-to').textContent = d.to;
+  document.getElementById('r-progress').style.width = d.progress + '%';
+  document.getElementById('r-pct').textContent = d.progress + '% complété';
+  document.getElementById('r-eta').textContent = d.eta;
+  document.getElementById('map-speed').textContent = d.speed;
+  document.getElementById('map-dist').textContent = d.dist;
+
+  // Badge
+  const badge = document.getElementById('r-badge');
+  const badgeText = document.getElementById('r-badge-text');
+  badge.className = 'status-badge';
+  const dot = badge.querySelector('.status-dot');
+  if(d.status === 'en_route') {
+    badge.classList.add('status-enroute');
+    dot.className = 'status-dot blink-teal';
+    badgeText.textContent = '?? En route';
+  } else if(d.status === 'ramassage') {
+    badge.classList.add('status-pickup');
+    dot.className = 'status-dot blink-orange';
+    badgeText.textContent = '? Ramassage prévu';
+  } else if(d.status === 'livre') {
+    badge.classList.add('status-delivered');
+    dot.className = 'status-dot blink-lime';
+    badgeText.textContent = '? Livré';
+  }
+
+  // Livreur
+  document.getElementById('l-avatar').textContent = d.livreur.avatar;
+  document.getElementById('l-name').textContent = d.livreur.name;
+  document.getElementById('l-id').textContent = d.livreur.id;
+
+  // Détails
+  document.getElementById('d-type').textContent = d.type;
+  document.getElementById('d-valeur').textContent = d.valeur;
+  document.getElementById('d-assurance').textContent = d.assurance;
+  document.getElementById('d-paiement').textContent = d.paiement;
+
+  // Camion
+  const truck = document.getElementById('map-truck');
+  truck.textContent = d.status === 'livre' ? '??' : '??';
+  truck.style.animation = d.status === 'livre' ? 'none' : 'truckMove 8s ease-in-out infinite';
+  if(d.status === 'livre') { truck.style.left = '82%'; truck.style.top = '50%'; }
+  if(d.status === 'ramassage') { truck.style.animation = 'none'; truck.style.left = '20%'; truck.style.top = '50%'; }
+
+  // Étapes
+  const sc = document.getElementById('steps-container');
+  sc.innerHTML = d.steps.map((s, i) => {
+    const isLast = i === d.steps.length - 1;
+    const cls = s.done ? 'step-done' : s.active ? 'step-active' : 'step-todo';
+    const icon = s.done ? '?' : s.active ? '?' : '?';
+    return `<div class="step ${cls}">
+      <div class="step-left">
+        <div class="step-circle">${icon}</div>
+        ${!isLast ? '<div class="step-line"></div>' : ''}
+      </div>
+      <div class="step-body">
+        <div class="step-title">${s.title}</div>
+        <div class="step-sub">${s.sub}</div>
+        ${s.time ? `<div class="step-time">${s.time}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Masquer bouton confirmer si déjà livré
+  const actionsRow = document.getElementById('actions-row');
+  if(d.status === 'livre') {
+    actionsRow.innerHTML = '<div style="font-size:13px;color:var(--lime);font-weight:500;padding:12px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.15);border-radius:4px;width:100%;text-align:center">? Livraison confirmée — paiement libéré au livreur. Merci d\'avoir utilisé PorteàPorte ??</div>';
+  } else {
+    actionsRow.innerHTML = `
+      <button class="action-btn abp" onclick="document.getElementById('modal-confirm').classList.add('open')">? Confirmer la réception</button>
+      <button class="action-btn abs" onclick="toast('?? Lien copié !')">?? Partager</button>
+      <button class="action-btn abr" onclick="toast('?? Signalement envoyé à l\'équipe PorteàPorte !')">?? Problème</button>`;
+  }
+
+  // Animation compteur
+  animerCompteur();
+}
+
+function confirmerReception() {
+  document.getElementById('modal-confirm').classList.remove('open');
+  toast('?? Réception confirmée ! Paiement libéré au livreur. +10 PorteCoins crédités !');
+  if(currentDemo) {
+    currentDemo.status = 'livre';
+    currentDemo.progress = 100;
+    setTimeout(() => afficherColis(currentDemo), 1000);
+  }
+}
+
+// Compteur GPS animé
+let compteurTimer = null;
+function animerCompteur() {
+  if(compteurTimer) clearInterval(compteurTimer);
+  let secs = 0;
+  const labels = ['À l\'instant','Il y a 3s','Il y a 8s','Il y a 15s','Il y a 30s'];
+  compteurTimer = setInterval(() => {
+    secs++;
+    const el = document.getElementById('map-update');
+    if(el) el.textContent = secs < 60 ? `Il y a ${secs}s` : `Il y a ${Math.floor(secs/60)}min`;
+    // Varier la vitesse légèrement
+    const sp = document.getElementById('map-speed');
+    if(sp && sp.textContent !== '—') {
+      const v = 105 + Math.round(Math.random() * 20);
+      sp.textContent = v + ' km/h';
+    }
+    // Varier la distance
+    const dist = document.getElementById('map-dist');
+    if(dist && dist.textContent !== '—' && dist.textContent !== '0 km') {
+      const km = parseInt(dist.textContent) || 98;
+      if(km > 1) dist.textContent = (km - Math.random() * 0.1).toFixed(0) + ' km';
+    }
+  }, 3000);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Charger depuis URL params
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if(code) {
+    document.getElementById('code-input').value = code.toUpperCase();
+    rechercherColis();
+  }
+});
+</script>
+<script>
+(function(){
+  let liveChannel = null;
+
+  function normalizeLivraison(row) {
+    const status = row.statut === 'livre' ? 'livre' : row.statut === 'ramasse' ? 'en_route' : row.statut === 'en_route' ? 'en_route' : 'ramassage';
+    return {
+      code: row.code || row.id,
+      desc: (row.type_colis || row.titre || row.description || 'Colis') + (row.poids ? ' · ' + row.poids + ' kg' : ''),
+      from: row.ville_depart || 'Départ',
+      to: row.ville_arrivee || 'Arrivée',
+      status,
+      progress: status === 'livre' ? 100 : status === 'en_route' ? 65 : 25,
+      eta: status === 'livre' ? 'Livré' : 'En direct',
+      livreur: { name: row.livreur_nom || 'Livreur PorteàPorte', id: row.livreur_id || 'GPS actif', avatar: '??', rating: '5.0' },
+      type: row.type_colis || row.type || 'Colis',
+      valeur: row.valeur_declaree ? row.valeur_declaree + ' $' : '-',
+      assurance: row.assurance_plan || '-',
+      paiement: row.prix_total || row.prix ? '?? En escrow — ' + (row.prix_total || row.prix) + ' $' : '?? En escrow',
+      speed: 'GPS live',
+      dist: '-',
+      steps: [
+        { done: true, title: 'Livraison créée', sub: 'Commande enregistrée dans Supabase', time: '' },
+        { done: !!row.livreur_id, title: 'Livreur assigné', sub: row.livreur_id || 'En attente', time: '' },
+        { active: status !== 'livre', done: status === 'livre', title: 'GPS en direct', sub: 'Position reçue via Supabase Realtime', time: 'En cours' },
+        { todo: status !== 'livre', done: status === 'livre', title: 'Livraison terminée', sub: 'Réception confirmée', time: '' }
+      ]
+    };
+  }
+
+  function applyLiveLocation(location) {
+    if (!location) return;
+    const speed = location.speed === null || location.speed === undefined ? null : Number(location.speed) * 3.6;
+    document.getElementById('map-update').textContent = 'À l’instant';
+    document.getElementById('map-speed').textContent = speed ? speed.toFixed(1) + ' km/h' : 'GPS live';
+    const truck = document.getElementById('map-truck');
+    truck.textContent = '??';
+    truck.style.animation = 'none';
+    truck.style.left = '55%';
+    truck.style.top = '48%';
+  }
+
+  async function loadRealTracking(code) {
+    if (!window.getSupabaseClient) return false;
+    const db = window.getSupabaseClient();
+    const { data } = await db.auth.getSession();
+    if (!data.session) {
+      console.error('ERREUR suivi: session requise pour un suivi reel');
+      return false;
+    }
+
+    const res = await fetch('/api/tracking?code=' + encodeURIComponent(code), {
+      headers: { Authorization: 'Bearer ' + data.session.access_token }
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || !result.livraison) {
+      console.error('ERREUR suivi:', result.error || res.status);
+      return false;
+    }
+
+    afficherColis(normalizeLivraison(result.livraison));
+    if (result.latest_location) applyLiveLocation(result.latest_location);
+
+    if (window.PorteGPS) {
+      if (liveChannel) window.PorteGPS.unsubscribe();
+      liveChannel = window.PorteGPS.subscribe(result.livraison.id, applyLiveLocation);
+      toast('Suivi GPS live connecté');
+    }
+    return true;
+  }
+
+  const originalSearch = window.rechercherColis;
+  window.rechercherColis = async function() {
+    const code = document.getElementById('code-input').value.trim().toUpperCase();
+    if (code && await loadRealTracking(code)) return;
+    originalSearch();
+  };
+
+  window.addEventListener('beforeunload', function(){
+    if (window.PorteGPS) window.PorteGPS.unsubscribe();
+  });
+})();
+</script>
+</body>
+</html>
+

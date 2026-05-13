@@ -1,0 +1,89 @@
+/* PorteaPorte brand consistency layer */
+:root {
+  --brand-bg-dark: #0A0C10;
+  --brand-bg-surface: #111318;
+  --brand-bg-surface-light: #1A1F28;
+  --brand-cyan: #00D9FF;
+  --brand-lime: #00FF9F;
+  --brand-text: #F0F2F5;
+  --brand-muted: #A8ACB1;
+  --brand-border: #1F2937;
+}
+
+body {
+  background: linear-gradient(135deg, var(--brand-bg-dark) 0%, #0D0F15 100%) !important;
+  color: var(--brand-text) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+nav,
+.navbar,
+header {
+  background: rgba(10, 12, 16, .95) !important;
+  border-bottom: 1px solid var(--brand-border) !important;
+}
+
+.logo {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
+  color: var(--brand-text) !important;
+}
+
+.logo span,
+.os-title,
+.step-title,
+.sec-title span,
+.success-title,
+.plan-price {
+  color: var(--brand-lime) !important;
+}
+
+a,
+.back {
+  color: var(--brand-cyan);
+}
+
+.card,
+.card2,
+.step-block,
+.order-summary,
+.faq-item,
+.content-sec,
+.plan,
+.form-section {
+  background: var(--brand-bg-surface) !important;
+  border-color: var(--brand-border) !important;
+  border-radius: 8px !important;
+}
+
+input,
+select,
+textarea,
+.fi,
+.stripe-wrap {
+  background: #0B0E13 !important;
+  border-color: var(--brand-border) !important;
+  color: var(--brand-text) !important;
+  border-radius: 8px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.fi:focus,
+.stripe-wrap.focused {
+  border-color: var(--brand-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, .12) !important;
+}
+
+.btn,
+.btn-next,
+.pay-btn,
+button[type="submit"] {
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
+  color: var(--brand-bg-dark) !important;
+  border-radius: 8px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}

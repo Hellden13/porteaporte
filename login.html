@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - PorteàPorte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0A0C0F;
+            --bg-surface: #12151A;
+            --border: #1F242C;
+            --text-primary: #E8EAED;
+            --text-secondary: #A0A3A8;
+            --accent-lime: #B8F53E;
+            --accent-cyan: #0BFFCB;
+            --blue-quebec: #0051BA;
+            --white: #FFFFFF;
+            --error: #EF4444;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0F1117 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-lime) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(11, 255, 203, 0.2);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.8rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--accent-lime);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-lime);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue-quebec) 0%, var(--accent-cyan) 100%);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11, 255, 203, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 12px rgba(11, 255, 203, 0.1);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+
+        .oauth-btn {
+            padding: 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .oauth-btn:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 12px rgba(11, 255, 203, 0.1);
+        }
+
+        .oauth-icon {
+            font-size: 1.2rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin: 1.2rem 0;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .checkbox-group a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+
+        .link-text {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+        }
+
+        .link-text a {
+            color: var(--accent-lime);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-text a:hover {
+            text-decoration: underline;
+        }
+
+        .text-link-button {
+            background: none;
+            border: 0;
+            color: var(--accent-lime);
+            cursor: pointer;
+            font: inherit;
+            padding: 0;
+        }
+
+        .text-link-button:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .phone-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .country-code {
+            width: 80px;
+        }
+
+        .phone-number {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            .logo-text {
+                font-size: 1.4rem;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <div class="logo">🚚</div>
+            <div class="logo-text">PorteàPorte</div>
+            <div class="tagline">Livraison peer-to-peer du Québec</div>
+        </div>
+
+        <div class="card">
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('email')">Email</button>
+                <button class="tab" onclick="switchTab('phone')">Téléphone</button>
+                <button class="tab" onclick="switchTab('oauth')">OAuth</button>
+            </div>
+
+            <!-- EMAIL TAB -->
+            <div id="email-tab" class="tab-content active">
+                <h2 class="card-title">Connexion</h2>
+                <p class="card-subtitle">Entre ton email et mot de passe</p>
+
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="emailInput" placeholder="toi@example.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="passwordInput" placeholder="••••••••">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rememberMe">
+                    <label for="rememberMe">Se souvenir de moi</label>
+                </div>
+
+                <button class="btn btn-primary" onclick="loginWithEmail()">
+                    Se connecter
+                </button>
+
+                <div class="link-text">
+                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                </div>
+
+                <div class="link-text" style="margin-top: 0.8rem;">
+                    <button type="button" class="text-link-button" onclick="showForgotPassword()">Mot de passe oublié?</button>
+                </div>
+                <div class="link-text" style="margin-top: 0.8rem;">
+                    <button type="button" class="text-link-button" onclick="resendConfirmationEmail()">Renvoyer le courriel de confirmation</button>
+                </div>
+            </div>
+
+            <!-- PHONE TAB -->
+            <div id="phone-tab" class="tab-content">
+                <h2 class="card-title">Connexion par SMS</h2>
+                <p class="card-subtitle">Reçois un code sur ton téléphone</p>
+
+                <div class="input-group">
+                    <label>Numéro de téléphone</label>
+                    <div class="phone-input-wrapper">
+                        <select class="input-group country-code" id="countryCode" style="padding: 0.9rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);">
+                            <option value="+1">+1 (CA)</option>
+                            <option value="+1">+1 (US)</option>
+                            <option value="+33">+33 (FR)</option>
+                        </select>
+                        <input type="tel" id="phoneInput" class="phone-number" placeholder="555-123-4567">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="loginWithPhone()">
+                    Envoyer le code
+                </button>
+
+                <div id="phoneCodeSection" style="display: none; margin-top: 1.5rem;">
+                    <div class="input-group">
+                        <label>Code de vérification</label>
+                        <input type="text" id="phoneCode" placeholder="123456" maxlength="6">
+                    </div>
+                    <button class="btn btn-primary" onclick="verifyPhoneCode()">
+                        Vérifier le code
+                    </button>
+                </div>
+
+                <div class="link-text">
+                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                </div>
+            </div>
+
+            <!-- OAUTH TAB -->
+            <div id="oauth-tab" class="tab-content">
+                <h2 class="card-title">Connexion rapide</h2>
+                <p class="card-subtitle">Utilise ton compte existant</p>
+
+                <div class="oauth-buttons">
+                    <button class="oauth-btn" onclick="loginWithGoogle()">
+                        <span class="oauth-icon">🔵</span>
+                        Continuer avec Google
+                    </button>
+                    <button class="oauth-btn" onclick="loginWithFacebook()">
+                        <span class="oauth-icon">👥</span>
+                        Continuer avec Facebook
+                    </button>
+                    <button class="oauth-btn" onclick="loginWithApple()">
+                        <span class="oauth-icon">🍎</span>
+                        Continuer avec Apple
+                    </button>
+                </div>
+
+                <div class="divider">ou</div>
+
+                <div class="link-text">
+                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script>
+        var db = window.getSupabaseClient();
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Error/Success messages
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.classList.add('show');
+            setTimeout(() => errorEl.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = '✓ ' + message;
+            successEl.classList.add('show');
+            setTimeout(() => successEl.classList.remove('show'), 5000);
+        }
+
+        // EMAIL LOGIN
+        async function loginWithEmail() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            if (!email || !password) {
+                showError('Email et mot de passe requis');
+                return;
+            }
+
+            try {
+                const { data, error } = await db.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                showSuccess('Connexion réussie!');
+                localStorage.setItem('auth_token', data.session.access_token);
+                setTimeout(() => {
+                    window.location.href = 'role-choice.html';
+                }, 1500);
+            } catch (error) {
+                const message = error.message || 'Erreur de connexion';
+                if (message.toLowerCase().includes('email not confirmed')) {
+                    showError("Ton courriel n'est pas encore confirme. Clique sur \"Renvoyer le courriel de confirmation\", puis verifie aussi tes indesirables.");
+                    return;
+                }
+                showError(message);
+            }
+        }
+
+        // PHONE LOGIN
+        let phoneSessionId = null;
+
+        async function loginWithPhone() {
+            const countryCode = document.getElementById('countryCode').value;
+            const phone = document.getElementById('phoneInput').value;
+            const fullPhone = countryCode + phone.replace(/\D/g, '');
+
+            if (!phone) {
+                showError('Numéro de téléphone requis');
+                return;
+            }
+
+            try {
+                const { data, error } = await db.auth.signInWithOtp({
+                    phone: fullPhone
+                });
+
+                if (error) throw error;
+
+                showSuccess('Code envoyé par SMS!');
+                document.getElementById('phoneCodeSection').style.display = 'block';
+                phoneSessionId = data.session?.id;
+            } catch (error) {
+                showError(error.message || 'Erreur lors de l\'envoi du code');
+            }
+        }
+
+        async function verifyPhoneCode() {
+            const code = document.getElementById('phoneCode').value;
+            const phone = document.getElementById('countryCode').value + document.getElementById('phoneInput').value.replace(/\D/g, '');
+
+            if (!code || code.length !== 6) {
+                showError('Code invalide');
+                return;
+            }
+
+            try {
+                const { data, error } = await db.auth.verifyOtp({
+                    phone: phone,
+                    token: code,
+                    type: 'sms'
+                });
+
+                if (error) throw error;
+
+                showSuccess('Vérification réussie!');
+                localStorage.setItem('auth_token', data.session.access_token);
+                setTimeout(() => {
+                    window.location.href = 'role-choice.html';
+                }, 1500);
+            } catch (error) {
+                showError(error.message || 'Code invalide');
+            }
+        }
+
+        // OAUTH LOGINS
+        async function loginWithGoogle() {
+            try {
+                const { data, error } = await db.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/role-choice.html'
+                    }
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                showError(error.message || 'Erreur Google');
+            }
+        }
+
+        async function loginWithFacebook() {
+            try {
+                const { data, error } = await db.auth.signInWithOAuth({
+                    provider: 'facebook',
+                    options: {
+                        redirectTo: window.location.origin + '/role-choice.html'
+                    }
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                showError(error.message || 'Erreur Facebook');
+            }
+        }
+
+        async function loginWithApple() {
+            try {
+                const { data, error } = await db.auth.signInWithOAuth({
+                    provider: 'apple',
+                    options: {
+                        redirectTo: window.location.origin + '/role-choice.html'
+                    }
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                showError(error.message || 'Erreur Apple');
+            }
+        }
+
+        // FORGOT PASSWORD
+        function showForgotPassword() {
+            const email = prompt('Entrez votre email:');
+            if (email) {
+                db.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/login.html?reset=1'
+                }).then(() => {
+                    showSuccess('Email de réinitialisation envoyé!');
+                }).catch(error => {
+                    showError(error.message);
+                });
+            }
+        }
+
+        async function resendConfirmationEmail() {
+            const email = document.getElementById('emailInput').value.trim() || prompt('Entre ton email:');
+            if (!email) return;
+
+            try {
+                const { error } = await db.auth.resend({
+                    type: 'signup',
+                    email: email,
+                    options: {
+                        emailRedirectTo: window.location.origin + '/login.html?confirmed=1'
+                    }
+                });
+                if (error) throw error;
+                const fallback = await sendFallbackAuthEmail(email);
+                if (fallback.ok) {
+                    showSuccess('Courriel de confirmation renvoye. Verifie aussi tes indesirables.');
+                } else {
+                    showError(fallback.error || 'Supabase a accepte la demande, mais PorteaPorte n a pas pu envoyer le courriel de secours.');
+                }
+            } catch (error) {
+                const fallback = await sendFallbackAuthEmail(email);
+                if (fallback.ok) showSuccess('Lien de confirmation envoye par PorteaPorte. Verifie aussi tes indesirables.');
+                else showError(fallback.error || error.message || 'Impossible de renvoyer le courriel');
+            }
+        }
+
+        async function sendFallbackAuthEmail(email) {
+            try {
+                const res = await fetch('/api/notifier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'auth_confirmation', data: { email } })
+                });
+                const out = await res.json().catch(() => ({}));
+                if (res.ok) return { ok: true, data: out };
+                const details = out.sendgrid_status ? `SendGrid ${out.sendgrid_status}: ` : '';
+                return { ok: false, error: details + (out.error || 'Courriel de secours non envoye') };
+            } catch (err) {
+                console.error('Fallback email confirmation impossible:', err);
+                return { ok: false, error: err.message || 'Service courriel inaccessible' };
+            }
+        }
+
+        // Check if already logged in
+        window.addEventListener('load', async () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('confirmed') === '1') {
+                showSuccess('Courriel confirme. Tu peux maintenant te connecter.');
+            }
+            const { data } = await db.auth.getSession();
+            if (data.session) {
+                window.location.href = 'role-choice.html';
+            }
+        });
+    </script>
+</body>
+</html>

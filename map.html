@@ -1,0 +1,655 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Interactive - PorteàPorte</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  if (window.PorteAuth) await window.PorteAuth.requireVerifiedDriver('/livreur.html');
+});
+</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0A0C0F;
+            --bg-surface: #12151A;
+            --border: #1F242C;
+            --text-primary: #E8EAED;
+            --text-secondary: #A0A3A8;
+            --accent-lime: #B8F53E;
+            --accent-cyan: #0BFFCB;
+            --blue-quebec: #0051BA;
+            --white: #FFFFFF;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========== HEADER ========== */
+        header {
+            background: rgba(12, 12, 15, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            position: relative;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--success);
+        }
+
+        .biometric-btn {
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, var(--blue-quebec) 0%, var(--accent-cyan) 100%);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .biometric-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11, 255, 203, 0.3);
+        }
+
+        .user-info {
+            text-align: right;
+            font-size: 0.9rem;
+        }
+
+        .user-level {
+            color: var(--accent-lime);
+            font-weight: 600;
+        }
+
+        /* ========== MAIN MAP AREA ========== */
+        #map {
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: var(--bg-surface);
+            position: absolute;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            position: absolute;
+            left: 1rem;
+            top: 5.5rem;
+            width: 350px;
+            max-height: calc(100vh - 120px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow-y: auto;
+            z-index: 999;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--accent-lime) 0%, var(--accent-cyan) 100%);
+            color: var(--bg-dark);
+            padding: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-sidebar {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--bg-dark);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .sidebar-content {
+            padding: 1.5rem;
+        }
+
+        .parcel-item {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .parcel-item:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 12px rgba(11, 255, 203, 0.15);
+        }
+
+        .parcel-title {
+            font-weight: 600;
+            color: var(--accent-lime);
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .parcel-distance {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .parcel-comment {
+            background: rgba(184, 245, 62, 0.05);
+            border-left: 3px solid var(--accent-lime);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 0.6rem;
+        }
+
+        /* ========== BIOMETRIC MODAL ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--accent-lime);
+        }
+
+        .biometric-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .bio-option {
+            padding: 1.5rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .bio-option:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 12px rgba(11, 255, 203, 0.15);
+        }
+
+        .bio-icon {
+            font-size: 2.5rem;
+        }
+
+        .bio-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            color: var(--success);
+            font-weight: 600;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue-quebec) 0%, var(--accent-cyan) 100%);
+            color: var(--bg-dark);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11, 255, 203, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 0.8rem;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 90%;
+                left: 5%;
+            }
+
+            .header-controls {
+                gap: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        /* Leaflet customization */
+        .leaflet-container {
+            background: var(--bg-surface) !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-surface) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+        }
+
+        .leaflet-popup-content {
+            color: var(--text-primary) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: var(--bg-surface) !important;
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <a href="/" class="logo">
+            <span>🚚</span>
+            <span>Porte à Porte</span>
+        </a>
+        <div class="header-controls">
+            <div class="security-badge">
+                <span>🔒 Sécurisé</span>
+            </div>
+            <button class="biometric-btn" id="bioBtn">Vérifier identité</button>
+            <div class="user-info">
+                <div>Livreur ? <span class="user-level" id="userLevel">Niveau 1</span></div>
+                <div id="parcelsVisible" style="font-size: 0.8rem; color: var(--text-secondary);">0 colis visibles</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            Colis disponibles
+            <button class="close-sidebar" onclick="document.getElementById('sidebar').style.display='none'">×</button>
+        </div>
+        <div class="sidebar-content" id="parcelList">
+            <p style="color: var(--text-secondary); text-align: center;">Vérifiez votre identité pour voir les colis</p>
+        </div>
+    </div>
+
+    <!-- BIOMETRIC MODAL -->
+    <div class="modal" id="bioModal">
+        <div class="modal-content">
+            <div class="modal-title">Vérification de sécurité</div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Utilisez l'une de ces méthodes pour accéder aux colis en temps réel.
+            </p>
+
+            <div id="bioOptions" class="biometric-options">
+                <div class="bio-option" onclick="startBiometric('fingerprint')">
+                    <div class="bio-icon">👆</div>
+                    <div class="bio-label">Empreinte</div>
+                </div>
+                <div class="bio-option" onclick="startBiometric('faceid')">
+                    <div class="bio-icon">👤</div>
+                    <div class="bio-label">Reconnaissance faciale</div>
+                </div>
+            </div>
+
+            <div id="bioStatus" style="display: none; text-align: center;">
+                <div class="loading-spinner"></div>
+                <p style="color: var(--text-secondary); margin-top: 1rem;" id="bioStatusText">
+                    Veuillez placer votre doigt sur le lecteur...
+                </p>
+            </div>
+
+            <div id="bioSuccess" style="display: none;">
+                <div class="success-message">✓ Vérification réussie!</div>
+                <p style="color: var(--text-secondary); margin: 1rem 0;">
+                    Vous pouvez maintenant voir les colis dans votre zone.
+                </p>
+                <button class="btn-primary" onclick="closeBioModal()">Continuer</button>
+            </div>
+
+            <div id="bioError" style="display: none;">
+                <p style="color: var(--error); margin: 1rem 0;">
+                    ❌ Vérification échouée. Réessayez.
+                </p>
+                <button class="btn-secondary" onclick="resetBioModal()">Réessayer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        let map;
+        let userLevel = 1;
+        let isAuthenticated = false;
+        let parcelsVisible = 0;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([46.8139, -71.2080], 11);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            loadParcels();
+        }
+
+        // Mock parcel data
+        const mockParcels = [
+            {
+                id: 1,
+                lat: 46.8139,
+                lng: -71.2080,
+                distance: 0.5,
+                title: 'Enveloppe (Québec)',
+                comment: 'Livraison urgent - Merci! ??',
+                zone: 'quebec'
+            },
+            {
+                id: 2,
+                lat: 46.8200,
+                lng: -71.2150,
+                distance: 1.2,
+                title: 'Colis (Québec)',
+                comment: 'Traiter avec soin svp',
+                zone: 'quebec'
+            },
+            {
+                id: 3,
+                lat: 46.8100,
+                lng: -71.2000,
+                distance: 2.3,
+                title: 'Paquet (Québec)',
+                comment: 'Client chez lui après 18h',
+                zone: 'quebec'
+            },
+            {
+                id: 4,
+                lat: 46.7500,
+                lng: -71.2500,
+                distance: 8.7,
+                title: 'Boîte (Lévis)',
+                comment: 'Peut laisser sur porch',
+                zone: 'levis'
+            },
+            {
+                id: 5,
+                lat: 46.7400,
+                lng: -71.2600,
+                distance: 9.5,
+                title: 'Colis (Lévis)',
+                comment: 'Demander signature',
+                zone: 'levis'
+            }
+        ];
+
+        // Load and display parcels
+        function loadParcels() {
+            if (!isAuthenticated) {
+                parcelsVisible = 0;
+                document.getElementById('parcelsVisible').textContent = '0 colis visibles';
+                return;
+            }
+
+            // Determine visible parcels based on user level
+            let visibleParcels = [];
+            if (userLevel === 1) {
+                visibleParcels = mockParcels.filter(p => p.zone === 'quebec' && p.distance < 3);
+                parcelsVisible = visibleParcels.length;
+            } else if (userLevel === 2) {
+                visibleParcels = mockParcels.filter(p => p.distance < 15);
+                parcelsVisible = visibleParcels.length;
+            } else {
+                visibleParcels = mockParcels;
+                parcelsVisible = visibleParcels.length;
+            }
+
+            // Add markers
+            visibleParcels.forEach(parcel => {
+                const marker = L.circleMarker([parcel.lat, parcel.lng], {
+                    radius: 12,
+                    fillColor: '#B8F53E',
+                    color: '#0BFFCB',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="color: var(--text-primary);">
+                        <strong>${parcel.title}</strong><br>
+                        <small style="color: var(--text-secondary);">${parcel.distance}km</small><br>
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(184, 245, 62, 0.1); border-radius: 4px; font-size: 0.85rem;">
+                            "${parcel.comment}"
+                        </div>
+                    </div>
+                `);
+            });
+
+            // Update sidebar
+            updateSidebar(visibleParcels);
+            document.getElementById('parcelsVisible').textContent = `${parcelsVisible} colis visibles`;
+        }
+
+        function updateSidebar(parcels) {
+            const list = document.getElementById('parcelList');
+            if (parcels.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Aucun colis dans votre zone pour maintenant.</p>';
+                return;
+            }
+
+            list.innerHTML = parcels.map(p => `
+                <div class="parcel-item" onclick="map.setView([${p.lat}, ${p.lng}], 15)">
+                    <div class="parcel-title">${p.title}</div>
+                    <div class="parcel-distance">📍 ${p.distance}km ? ${p.zone}</div>
+                    <div class="parcel-comment">"${p.comment}"</div>
+                </div>
+            `).join('');
+        }
+
+        // Biometric authentication
+        document.getElementById('bioBtn').addEventListener('click', () => {
+            if (!isAuthenticated) {
+                document.getElementById('bioModal').classList.add('active');
+            } else {
+                // Logout
+                isAuthenticated = false;
+                userLevel = 1;
+                loadParcels();
+                alert('Déconnecté');
+            }
+        });
+
+        function startBiometric(type) {
+            document.getElementById('bioOptions').style.display = 'none';
+            document.getElementById('bioStatus').style.display = 'block';
+            
+            const statusText = type === 'fingerprint' 
+                ? 'Veuillez placer votre doigt sur le lecteur...'
+                : 'Veuillez vous positionner face à la caméra...';
+            
+            document.getElementById('bioStatusText').textContent = statusText;
+
+            // Simulate biometric check
+            setTimeout(() => {
+                if (Math.random() > 0.1) {  // 90% success rate
+                    completeBioAuth();
+                } else {
+                    showBioError();
+                }
+            }, 2500);
+        }
+
+        function completeBioAuth() {
+            isAuthenticated = true;
+            userLevel = Math.floor(Math.random() * 3) + 1;
+            
+            document.getElementById('bioStatus').style.display = 'none';
+            document.getElementById('bioSuccess').style.display = 'block';
+            document.getElementById('userLevel').textContent = `Niveau ${userLevel}`;
+            
+            loadParcels();
+        }
+
+        function showBioError() {
+            document.getElementById('bioStatus').style.display = 'none';
+            document.getElementById('bioError').style.display = 'block';
+        }
+
+        function resetBioModal() {
+            document.getElementById('bioOptions').style.display = 'grid';
+            document.getElementById('bioError').style.display = 'none';
+            document.getElementById('bioStatus').style.display = 'none';
+        }
+
+        function closeBioModal() {
+            document.getElementById('bioModal').classList.remove('active');
+        }
+
+        // Initialize
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
+

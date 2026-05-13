@@ -1,0 +1,977 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PorteÃ Porte - Livraison Collaborative du QuÃ©bec</title>
+    <style>
+        /* ============================================
+           DESIGN SYSTEM - Variables Globales
+           ============================================ */
+        :root {
+            /* Backgrounds */
+            --color-bg-dark: #0A0C10;
+            --color-bg-surface: #111318;
+            --color-bg-surface-light: #1A1F28;
+            
+            /* Accents */
+            --color-cyan-primary: #00D9FF;
+            --color-cyan-dark: #00B8D4;
+            --color-lime-accent: #00FF9F;
+            --color-blue-nuit: #0051BA;
+            
+            /* Text */
+            --color-text-primary: #F0F2F5;
+            --color-text-secondary: #A8ACB1;
+            --color-text-tertiary: #6B7280;
+            
+            /* Borders */
+            --color-border: #1F2937;
+            --color-border-light: #2D3748;
+            
+            /* Feedback */
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --color-info: #3B82F6;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --spacing-3xl: 4rem;
+            
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.6);
+            
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ============================================
+           RESET & BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--color-bg-dark) 0%, #0D0F15 100%);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           HEADER / NAV
+           ============================================ */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDownIn 0.5s ease-out;
+        }
+
+        @keyframes slideDownIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--color-text-primary);
+            text-decoration: none;
+            letter-spacing: -1px;
+            transition: all var(--transition-base);
+        }
+
+        .logo:hover {
+            color: var(--color-cyan-primary);
+            transform: scale(1.05);
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        nav {
+            display: flex;
+            gap: var(--spacing-2xl);
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color var(--transition-base);
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--color-cyan-primary);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-cyan-primary), var(--color-lime-accent));
+            transition: width var(--transition-base);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-cyan-primary), var(--color-lime-accent));
+            color: var(--color-bg-dark);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1.5px solid var(--color-cyan-primary);
+            color: var(--color-cyan-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           HERO SECTION
+           ============================================ */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-3xl) var(--spacing-xl);
+            text-align: center;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: var(--spacing-lg);
+            background: linear-gradient(135deg, var(--color-cyan-primary) 0%, var(--color-lime-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: var(--color-text-secondary);
+            max-width: 700px;
+            margin: 0 auto var(--spacing-2xl);
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        /* ============================================
+           PROBLEMS GRID
+           ============================================ */
+        .problems-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-xl) var(--spacing-3xl);
+        }
+
+        .section-title {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 800;
+            margin-bottom: var(--spacing-2xl);
+            color: var(--color-text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            justify-content: center;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--color-cyan-primary), var(--color-lime-accent));
+            border-radius: var(--radius-full);
+        }
+
+        .problems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        .problem-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            animation: fadeIn 0.6s ease-out both;
+        }
+
+        .problem-card:nth-child(1) { animation-delay: 0.2s; }
+        .problem-card:nth-child(2) { animation-delay: 0.3s; }
+        .problem-card:nth-child(3) { animation-delay: 0.4s; }
+        .problem-card:nth-child(4) { animation-delay: 0.5s; }
+
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-cyan-primary), var(--color-lime-accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--transition-base);
+        }
+
+        .problem-card:hover {
+            border-color: var(--color-cyan-primary);
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(0, 255, 159, 0.05));
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px);
+        }
+
+        .problem-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .problem-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-md);
+            display: block;
+        }
+
+        .problem-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text-primary);
+        }
+
+        .problem-card p {
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .problem-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            transition: transform var(--transition-base);
+        }
+
+        .problem-card:hover .problem-image {
+            transform: scale(1.05);
+        }
+
+        /* ============================================
+           PRICING WIDGET
+           ============================================ */
+        .pricing-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-xl) var(--spacing-3xl);
+        }
+
+        .pricing-widget {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideInUp 0.8s ease-out 0.4s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .widget-header {
+            color: var(--color-cyan-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .pricing-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .input-group label {
+            color: var(--color-text-tertiary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group input,
+        .input-group select {
+            background: var(--color-bg-dark);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            transition: all var(--transition-base);
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--color-cyan-primary);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+            background: rgba(0, 217, 255, 0.02);
+        }
+
+        .pricing-results {
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+            display: none;
+        }
+
+        .pricing-results.show {
+            display: block;
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+            padding-top: var(--spacing-lg);
+            border-top: 2px solid rgba(0, 217, 255, 0.2);
+            font-weight: 700;
+            color: var(--color-lime-accent);
+            font-size: 1.1rem;
+        }
+
+        .result-label {
+            color: var(--color-text-secondary);
+        }
+
+        .result-value {
+            color: var(--color-cyan-primary);
+            font-weight: 600;
+        }
+
+        .savings {
+            color: var(--color-success);
+            font-weight: 700;
+        }
+
+        /* ============================================
+           MAP TEASER
+           ============================================ */
+        .map-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-xl) var(--spacing-3xl);
+        }
+
+        .map-container {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            height: 400px;
+            box-shadow: var(--shadow-lg);
+            animation: slideInUp 0.8s ease-out 0.5s both;
+        }
+
+        .map-container:hover {
+            border-color: var(--color-cyan-primary);
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .map-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 12, 16, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-lg);
+            opacity: 0;
+            transition: opacity var(--transition-base);
+        }
+
+        .map-container:hover .map-overlay {
+            opacity: 1;
+        }
+
+        .map-overlay-text {
+            color: var(--color-lime-accent);
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .map-overlay-subtext {
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .map-cta-button {
+            background: linear-gradient(135deg, var(--color-cyan-primary), var(--color-lime-accent));
+            color: var(--color-bg-dark);
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform var(--transition-base);
+        }
+
+        .map-cta-button:hover {
+            transform: scale(1.08);
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        footer {
+            background: var(--color-bg-surface);
+            border-top: 1px solid var(--color-border);
+            margin-top: var(--spacing-3xl);
+            padding: var(--spacing-2xl) var(--spacing-xl);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--spacing-2xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .footer-section h4 {
+            color: var(--color-cyan-primary);
+            margin-bottom: var(--spacing-md);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-sm);
+            transition: color var(--transition-base);
+        }
+
+        .footer-section a:hover {
+            color: var(--color-cyan-primary);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--color-border);
+            padding-top: var(--spacing-xl);
+            text-align: center;
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* ============================================
+           RESPONSIVE MOBILE
+           ============================================ */
+        @media (max-width: 768px) {
+            header {
+                padding: var(--spacing-md) var(--spacing-lg);
+            }
+
+            nav {
+                gap: var(--spacing-lg);
+            }
+
+            nav a {
+                font-size: 0.85rem;
+            }
+
+            .hero {
+                padding: var(--spacing-2xl) var(--spacing-lg);
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .problems-section,
+            .pricing-section,
+            .map-section {
+                padding-left: var(--spacing-lg);
+                padding-right: var(--spacing-lg);
+            }
+
+            .problems-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
+
+            .problem-card {
+                padding: var(--spacing-md);
+            }
+
+            .pricing-widget {
+                padding: var(--spacing-lg);
+            }
+
+            .pricing-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .map-container {
+                height: 300px;
+            }
+
+            .map-overlay-text {
+                font-size: 1.1rem;
+            }
+
+            .btn {
+                padding: 0.65rem 1.2rem;
+                font-size: 0.9rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .hero-cta .btn {
+                width: 100%;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--spacing-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                gap: var(--spacing-md);
+            }
+
+            nav {
+                gap: var(--spacing-sm);
+            }
+
+            nav a {
+                display: none;
+            }
+
+            nav a:first-child {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+                margin-bottom: var(--spacing-md);
+            }
+
+            .hero-subtitle {
+                font-size: 0.95rem;
+                margin-bottom: var(--spacing-lg);
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .section-title::before {
+                height: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <a href="/" class="logo">
+            <span class="logo-icon">ðŸšš</span>
+            <span>PorteÃ Porte</span>
+        </a>
+        <nav>
+            <a href="#comment-ca-marche">Comment Ã§a marche</a>
+            <a href="livreur.html">Pour livreurs</a>
+            <a href="expediteur.html">Pour expÃ©diteurs</a>
+            <button class="btn btn-primary" onclick="window.location.href='login.html'">
+                Connexion
+            </button>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <h1>Quelqu'un passe dÃ©jÃ  dans ta direction</h1>
+        <p class="hero-subtitle">
+            La plateforme quÃ©bÃ©coise qui connecte les livreurs avec les expÃ©diteurs. 
+            Plus simple, plus rapide, plus humain.
+        </p>
+        <div class="hero-cta">
+            <button class="btn btn-primary" onclick="document.querySelector('.pricing-widget').scrollIntoView({behavior: 'smooth'})">
+                â†“ Calculer mon Ã©conomie
+            </button>
+            <button class="btn btn-secondary" onclick="window.location.href='login.html'">
+                CrÃ©er un compte
+            </button>
+        </div>
+    </section>
+
+    <!-- PROBLEMS SECTION -->
+    <section class="problems-section" id="comment-ca-marche">
+        <h2 class="section-title">Le systÃ¨me actuel laisse trop de monde de cÃ´tÃ©</h2>
+        
+        <div class="problems-grid">
+            <div class="problem-card">
+                <div class="problem-icon">ðŸ’°</div>
+                <h3>CoÃ»ts Ã©levÃ©s</h3>
+                <p>Les tarifs des grandes compagnies sont surpayÃ©s pour les petits envois. PorteÃ Porte rÃ©duit les frais de 50-60%.</p>
+            </div>
+
+            <div class="problem-card">
+                <div class="problem-icon">ðŸ—ºï¸</div>
+                <h3>RÃ©gions mal servies</h3>
+                <p>Petits villages et zones rurales reÃ§oivent peu ou pas de service. PorteÃ Porte crÃ©e des opportunitÃ©s partout.</p>
+            </div>
+
+            <div class="problem-card">
+                <div class="problem-icon">ðŸ¤–</div>
+                <h3>Impersonnel</h3>
+                <p>Pas de contact humain, juste des boÃ®tes noires. Nous crÃ©ons des connexions rÃ©elles entre livreurs et clients.</p>
+            </div>
+
+            <div class="problem-card">
+                <div class="problem-icon">ðŸ¢</div>
+                <h3>DÃ©pendance aux gÃ©ants</h3>
+                <p>ComplÃ¨tement dÃ©pendant des gros transporteurs. PorteÃ Porte remet le pouvoir au peuple du QuÃ©bec.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING WIDGET -->
+    <section class="pricing-section" id="tarifs">
+        <h2 class="section-title">DÃ©couvre tes Ã©conomies</h2>
+        
+        <div class="pricing-widget">
+            <div class="widget-header">
+                ðŸ“Š Combien tu Ã©conomises avec PorteÃ Porte
+            </div>
+            
+            <div class="pricing-inputs">
+                <div class="input-group">
+                    <label>Distance (km)</label>
+                    <input type="number" id="distance" value="20" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Poids (kg)</label>
+                    <input type="number" id="weight" value="2" min="0.1" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Type d'envoi</label>
+                    <select id="type">
+                        <option value="courrier">Courrier</option>
+                        <option value="colis" selected>Colis standard</option>
+                        <option value="gros">Gros colis</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="calculatePrice()" style="width: 100%;">
+                Calculer
+            </button>
+
+            <div id="results" class="pricing-results">
+                <div class="result-row">
+                    <span class="result-label">PorteÃ Porte</span>
+                    <span class="result-value" id="ppPrice">-</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">UPS Ground</span>
+                    <span id="upsPrice">-</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Purolator</span>
+                    <span id="puroPrice">-</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Tes Ã©conomies</span>
+                    <span class="savings" id="savings">-</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAP TEASER -->
+    <section class="map-section">
+        <h2 class="section-title">Vois les livraisons en temps rÃ©el</h2>
+        
+        <div class="map-container" onclick="goToMap()">
+            <iframe class="map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d11261.394661953156!2d-71.16046239999999!3d46.81337879999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cb896b8d0000001%3A0x1c8b8b8b8b8b8b8b!2sQu%C3%A9bec%2C%20QC!5e0!3m2!1sfr!2sca!4v1234567890" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            
+            <div class="map-overlay">
+                <div class="map-overlay-text">Clique pour explorer la carte</div>
+                <div class="map-overlay-subtext">Vois les colis en temps rÃ©el (avec compte)</div>
+                <button class="map-cta-button">Ouvrir la carte</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Produit</h4>
+                <a href="#comment-ca-marche">Comment Ã§a marche</a>
+                <a href="livreur.html">Pour livreurs</a>
+                <a href="expediteur.html">Pour expÃ©diteurs</a>
+                <a href="#tarifs">Tarifs</a>
+            </div>
+            <div class="footer-section">
+                <h4>Entreprise</h4>
+                <a href="notre-histoire.html">Ã€ propos</a>
+                <a href="faq.html">FAQ</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div class="footer-section">
+                <h4>LÃ©gal</h4>
+                <a href="cgu.html">Conditions d'utilisation</a>
+                <a href="confidentialite.html">Politique de confidentialitÃ©</a>
+                <a href="cookies.html">Cookies</a>
+            </div>
+            <div class="footer-section">
+                <h4>Nous suivre</h4>
+                <a href="https://facebook.com/porteaporte" target="_blank">Facebook</a>
+                <a href="https://instagram.com/porteaporte" target="_blank">Instagram</a>
+                <a href="https://twitter.com/porteaporte" target="_blank">Twitter/X</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 PorteÃ Porte. Livraison peer-to-peer du QuÃ©bec. Tous droits rÃ©servÃ©s.</p>
+        </div>
+    </footer>
+
+    <!-- SUPABASE & SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/modal-helper.js"></script>
+    <script>
+        var db = window.getSupabaseClient();
+
+        function calculatePrice() {
+            const distance = parseFloat(document.getElementById('distance').value) || 20;
+            const weight = parseFloat(document.getElementById('weight').value) || 2;
+
+            // Price formula
+            let basePrice = (distance * 0.15) + (weight * 0.25);
+            let ppPrice = (basePrice * 1.12).toFixed(2);
+
+            // Competitor prices
+            let upsPrice, puroPrice;
+            if (weight < 0.5) {
+                upsPrice = 8.50;
+                puroPrice = 7.75;
+            } else if (weight < 2) {
+                upsPrice = 12.00;
+                puroPrice = 11.50;
+            } else if (weight < 5) {
+                upsPrice = 18.50;
+                puroPrice = 17.00;
+            } else {
+                upsPrice = 28.00;
+                puroPrice = 26.00;
+            }
+
+            const savings = (((upsPrice - ppPrice) / upsPrice) * 100).toFixed(1);
+
+            // Display
+            document.getElementById('ppPrice').textContent = `$${ppPrice}`;
+            document.getElementById('upsPrice').textContent = `$${upsPrice.toFixed(2)}`;
+            document.getElementById('puroPrice').textContent = `$${puroPrice.toFixed(2)}`;
+            document.getElementById('savings').textContent = `${savings}% d'Ã©conomie`;
+            document.getElementById('results').classList.add('show');
+        }
+
+        async function goToMap() {
+            try {
+                const { data } = await db.auth.getSession();
+                window.location.href = data && data.session ? 'map.html' : 'map.html?preview=true';
+            } catch (err) {
+                console.error('Session Supabase non disponible:', err);
+                window.location.href = 'map.html?preview=true';
+            }
+        }
+
+        // Auto-calculate on load
+        window.addEventListener('load', calculatePrice);
+    </script>
+</body>
+</html>
+

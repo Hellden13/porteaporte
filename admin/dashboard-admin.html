@@ -1,0 +1,1278 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>PorteÃ Porte â€” Dashboard Admin ðŸ”</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  if (window.PorteAuth) await window.PorteAuth.requireAdmin('/login.html');
+});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;
+  --smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;
+  --border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;
+  --orange:#FF8C00;--purple:#A78BFA;--blue:#60A5FA;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+/* â”€â”€ LOGIN â”€â”€ */
+#login-screen{position:fixed;inset:0;background:var(--ink);z-index:9999;display:flex;align-items:center;justify-content:center}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(184,245,62,.05),transparent 70%)}
+.login-box{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:36px;width:360px;position:relative;z-index:1}
+.ll{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.ll span{color:var(--lime)}
+.ls{font-size:13px;color:var(--muted);margin-bottom:24px}
+.lf{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;margin-top:14px}
+.li{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:12px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;border-radius:2px;transition:border-color .2s}
+.li:focus{border-color:rgba(184,245,62,.4)}
+.li.err{border-color:var(--red);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.lb{width:100%;background:var(--lime);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border-radius:2px;margin-top:16px;transition:all .2s}
+.lb:hover{background:var(--teal)}
+.lb:disabled{opacity:.5;cursor:not-allowed}
+.lerr{font-size:12px;color:var(--red);margin-top:10px;text-align:center;display:none}
+
+/* â”€â”€ TOPBAR â”€â”€ */
+#app{display:none}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(5,8,10,.97);backdrop-filter:blur(14px)}
+.tlogo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
+.tlogo span{color:var(--lime)}
+.tright{display:flex;align-items:center;gap:14px}
+.tadmin{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--purple);font-size:11px;padding:5px 12px;border-radius:50px;font-weight:600}
+.tdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tout-btn{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:2px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;transition:all .2s}
+.tout-btn:hover{background:rgba(255,77,77,.2)}
+
+/* â”€â”€ LAYOUT â”€â”€ */
+.layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);padding:16px 0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;background:var(--smoke)}
+.sb-sec{padding:6px 18px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:18px;margin-bottom:4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;cursor:pointer;border-left:3px solid transparent;color:var(--muted);transition:all .15s;font-weight:500}
+.sb-item:hover{background:rgba(184,245,62,.05);color:var(--paper)}
+.sb-item.on{background:rgba(184,245,62,.08);color:var(--lime);border-left-color:var(--lime)}
+.sb-icon{font-size:18px;width:24px;text-align:center}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:50px}
+.sb-badge.o{background:var(--orange)}
+.sb-badge.g{background:#3B6D11}
+.sb-badge.p{background:var(--purple)}
+
+/* â”€â”€ CONTENT â”€â”€ */
+.content{flex:1;overflow-x:hidden;background:var(--ink)}
+.sec{padding:32px 36px;display:none;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sec.on{display:block}
+.slbl{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.ssub{font-size:14px;color:var(--muted);margin-bottom:28px;font-weight:300}
+
+/* â”€â”€ CARDS â”€â”€ */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:14px;transition:border-color .2s}
+.card:hover{border-color:rgba(184,245,62,.15)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
+.card3{background:var(--s3);border:1px solid rgba(255,255,255,.04);border-radius:4px;padding:12px}
+
+/* â”€â”€ GRIDS â”€â”€ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* â”€â”€ STATS â”€â”€ */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:all .2s}
+.stat-card:hover{border-color:rgba(184,245,62,.2);transform:translateY(-2px)}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--lime)}
+.stat-num.teal{color:var(--teal)}
+.stat-num.gold{color:var(--gold)}
+.stat-num.red{color:var(--red)}
+.stat-num.orange{color:var(--orange)}
+.stat-num.purple{color:var(--purple)}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase;font-weight:500}
+.stat-change{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.stat-change.up{color:#3FE88F}
+.stat-change.down{color:var(--red)}
+
+/* â”€â”€ TABLE â”€â”€ */
+.table-wrap{overflow-x:auto;border-radius:6px;border:1px solid var(--border);margin-bottom:14px;background:var(--smoke)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--s2);padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:12px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(184,245,62,.02)}
+
+/* â”€â”€ TAGS â”€â”€ */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600}
+.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.tb{background:rgba(11,255,203,.1);color:var(--teal);border:1px solid rgba(11,255,203,.2)}
+.to{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}
+.tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.tv{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.tgo{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+
+/* â”€â”€ BOUTONS â”€â”€ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:4px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.bp{background:var(--lime);color:var(--ink)}.bp:hover{background:var(--teal);transform:translateY(-2px)}
+.bs{background:transparent;color:var(--paper);border:1px solid var(--border)}.bs:hover{background:var(--s2)}
+.bd{background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.2)}.bd:hover{background:rgba(255,77,77,.25)}
+.bi{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.2)}.bi:hover{background:rgba(96,165,250,.25)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:6px 12px;font-size:11px}
+
+/* â”€â”€ FORMS â”€â”€ */
+.form-group{margin-bottom:16px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.form-input,.form-select,.form-textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 12px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:13px;outline:none;border-radius:4px;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(184,245,62,.4)}
+.form-textarea{resize:vertical;min-height:100px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:768px){.form-row{grid-template-columns:1fr}}
+
+/* â”€â”€ ALERTS â”€â”€ */
+.alert{padding:12px 16px;border-radius:4px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:10px}
+.alert-success{background:rgba(63,232,143,.1);color:#3FE88F;border:1px solid rgba(63,232,143,.2)}
+.alert-warning{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}
+.alert-danger{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.alert-info{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+
+/* â”€â”€ ACTIONS â”€â”€ */
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+
+/* â”€â”€ MODAL â”€â”€ */
+.modal{position:fixed;inset:0;background:rgba(5,8,10,.95);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.modal.open{display:flex}
+.modal-content{background:var(--smoke);border:1px solid var(--border);border-radius:8px;padding:28px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;animation:modalIn .3s}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.5px}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:all .2s}
+.modal-close:hover{background:var(--s2);color:var(--paper)}
+
+/* â”€â”€ RESPONSIVE â”€â”€ */
+@media(max-width:1024px){
+  .sidebar{width:200px}
+  .sb-item{font-size:12px;padding:8px 14px}
+}
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}
+  .sb-sec:first-child{margin-top:0}
+  .content{min-height:calc(100vh - 200px)}
+  .g2{grid-template-columns:1fr}
+  .topbar{padding:12px 16px}
+  .sec{padding:20px 16px}
+}
+
+/* â”€â”€ LOADING â”€â”€ */
+.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(184,245,62,.3);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* â”€â”€ EMPTY STATE â”€â”€ */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.5}
+.empty-text{font-size:14px;margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<!-- Ã‰CRAN DE CONNEXION -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="ll">ðŸ” <span>PORTE</span>Ã€PORTE</div>
+    <div class="ls">Dashboard administrateur</div>
+    <label class="lf">Email admin</label>
+    <input type="email" id="login-email" class="li" placeholder="admin@porteaporte.site" value="admin@porteaporte.site">
+    <label class="lf">Mot de passe</label>
+    <input type="password" id="login-pwd" class="li" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+    <button class="lb" onclick="login()">ðŸš€ Se connecter</button>
+    <div class="lerr" id="login-error">Identifiants incorrects</div>
+  </div>
+</div>
+
+<!-- APPLICATION -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tlogo"><span class="tdot"></span> <span>PORTE</span>Ã€PORTE <span class="tadmin">ADMIN</span></div>
+    <div class="tright">
+      <div id="admin-name" style="font-size:12px;color:var(--muted)"></div>
+      <button class="tout-btn" onclick="logout()">ðŸšª DÃ©connexion</button>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-sec">ðŸ“Š Vue d'ensemble</div>
+      <div class="sb-item on" onclick="showSection('dashboard')">
+        <span class="sb-icon">ðŸ </span> Dashboard
+      </div>
+      <div class="sb-item" onclick="showSection('analytics')">
+        <span class="sb-icon">ðŸ“ˆ</span> Analytiques
+      </div>
+
+      <div class="sb-sec">ðŸ‘¥ Gestion</div>
+      <div class="sb-item" onclick="showSection('users')">
+        <span class="sb-icon">ðŸ‘¤</span> Utilisateurs
+        <span class="sb-badge" id="users-badge">0</span>
+      </div>
+      <div class="sb-item" onclick="showSection('deliveries')">
+        <span class="sb-icon">ðŸ“¦</span> Livraisons
+        <span class="sb-badge o" id="deliveries-badge">0</span>
+      </div>
+      <div class="sb-item" onclick="showSection('drivers')">
+        <span class="sb-icon">ðŸš—</span> Livreurs
+        <span class="sb-badge g" id="drivers-badge">0</span>
+      </div>
+
+      <div class="sb-sec">ðŸ’° Finances</div>
+      <div class="sb-item" onclick="showSection('transactions')">
+        <span class="sb-icon">ðŸ’³</span> Transactions
+      </div>
+      <div class="sb-item" onclick="showSection('coins')">
+        <span class="sb-icon">ðŸª™</span> PorteCoins
+      </div>
+      <div class="sb-item" onclick="showSection('payouts')">
+        <span class="sb-icon">ðŸ’¸</span> Paiements
+      </div>
+
+      <div class="sb-sec">ðŸŽ¯ Marketing</div>
+      <div class="sb-item" onclick="showSection('referrals')">
+        <span class="sb-icon">ðŸ¤</span> Parrainages
+      </div>
+      <div class="sb-item" onclick="showSection('notifications')">
+        <span class="sb-icon">ðŸ””</span> Notifications
+      </div>
+      <div class="sb-item" onclick="showSection('promos')">
+        <span class="sb-icon">ðŸŽ</span> Promotions
+      </div>
+
+      <div class="sb-sec">ðŸ› ï¸ SystÃ¨me</div>
+      <div class="sb-item" onclick="showSection('settings')">
+        <span class="sb-icon">âš™ï¸</span> ParamÃ¨tres
+      </div>
+      <div class="sb-item" onclick="showSection('logs')">
+        <span class="sb-icon">ðŸ“‹</span> Logs systÃ¨me
+      </div>
+      <div class="sb-item" onclick="showSection('security')">
+        <span class="sb-icon">ðŸ”’</span> SÃ©curitÃ©
+      </div>
+    </div>
+
+    <!-- CONTENU -->
+    <div class="content">
+      
+      <!-- DASHBOARD -->
+      <div class="sec on" id="sec-dashboard">
+        <div class="slbl">Vue d'ensemble</div>
+        <div class="stitle">Dashboard Principal</div>
+        <div class="ssub">Tous les indicateurs clÃ©s en temps rÃ©el</div>
+
+        <!-- STATS PRINCIPALES -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num" id="stat-users">0</div>
+            <div class="stat-label">ðŸ‘¥ Utilisateurs</div>
+            <div class="stat-change up">â†— +12% cette semaine</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num teal" id="stat-deliveries">0</div>
+            <div class="stat-label">ðŸ“¦ Livraisons actives</div>
+            <div class="stat-change up">â†— +8 aujourd'hui</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num gold" id="stat-revenue">0 $</div>
+            <div class="stat-label">ðŸ’° Revenus du mois</div>
+            <div class="stat-change up">â†— +24% vs. mois dernier</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num purple" id="stat-drivers">0</div>
+            <div class="stat-label">ðŸš— Livreurs actifs</div>
+            <div class="stat-change up">â†— +5 cette semaine</div>
+          </div>
+        </div>
+
+        <!-- GRAPHIQUES -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">ðŸ“ˆ Livraisons (7 derniers jours)</div>
+            </div>
+            <div id="chart-deliveries" style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
+              Graphique Ã  venir (Chart.js)
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">ðŸ’° Revenus (30 derniers jours)</div>
+            </div>
+            <div id="chart-revenue" style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
+              Graphique Ã  venir (Chart.js)
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITÃ‰ RÃ‰CENTE -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">ðŸ”¥ ActivitÃ© rÃ©cente</div>
+            <button class="btn btn-sm bs">RafraÃ®chir</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Heure</th>
+                  <th>Type</th>
+                  <th>DÃ©tails</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody id="activity-log">
+                <tr>
+                  <td>14:32</td>
+                  <td><span class="tag tg">Livraison</span></td>
+                  <td>PP-A8F2X4 â†’ MontrÃ©al-QuÃ©bec</td>
+                  <td><span class="tag tb">En cours</span></td>
+                </tr>
+                <tr>
+                  <td>14:18</td>
+                  <td><span class="tag tgo">Paiement</span></td>
+                  <td>Jean Tremblay â†’ 325 PorteCoins</td>
+                  <td><span class="tag tg">ComplÃ©tÃ©</span></td>
+                </tr>
+                <tr>
+                  <td>13:45</td>
+                  <td><span class="tag tv">Inscription</span></td>
+                  <td>Marie Dubois (Livreur)</td>
+                  <td><span class="tag tg">ApprouvÃ©</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYTIQUES -->
+      <div class="sec" id="sec-analytics">
+        <div class="slbl">DonnÃ©es avancÃ©es</div>
+        <div class="stitle">Analytiques DÃ©taillÃ©es</div>
+        <div class="ssub">Analyse approfondie des performances</div>
+
+        <div class="alert alert-info">
+          ðŸ“Š <strong>PÃ©riode actuelle :</strong> 1er au 27 avril 2026
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num orange">4.8</div>
+            <div class="stat-label">â­ Note moyenne</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">98.2%</div>
+            <div class="stat-label">âœ… Taux de succÃ¨s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num teal">24 min</div>
+            <div class="stat-label">â±ï¸ Temps moy. livraison</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num gold">47 $</div>
+            <div class="stat-label">ðŸ’µ Panier moyen</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">DÃ©tails des performances</div>
+          <div class="g2" style="margin-top:20px">
+            <div class="card2">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Nouveaux utilisateurs</div>
+              <div style="font-family:'Bebas Neue';font-size:28px;color:var(--lime)">+127</div>
+              <div style="font-size:11px;color:#3FE88F;margin-top:4px">â†— +32% vs. semaine prÃ©cÃ©dente</div>
+            </div>
+            <div class="card2">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Taux de conversion</div>
+              <div style="font-family:'Bebas Neue';font-size:28px;color:var(--teal)">23.4%</div>
+              <div style="font-size:11px;color:#3FE88F;margin-top:4px">â†— +5.2% vs. semaine prÃ©cÃ©dente</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UTILISATEURS -->
+      <div class="sec" id="sec-users">
+        <div class="slbl">Gestion des comptes</div>
+        <div class="stitle">Utilisateurs</div>
+        <div class="ssub">GÃ©rer tous les utilisateurs de la plateforme</div>
+
+        <div class="actions">
+          <button class="btn bp" onclick="openModal('add-user')">âž• Nouvel utilisateur</button>
+          <button class="btn bs">ðŸ“¥ Exporter CSV</button>
+          <button class="btn bs">ðŸ” Recherche avancÃ©e</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>RÃ´le</th>
+                  <th>Coins</th>
+                  <th>XP</th>
+                  <th>Inscription</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table">
+                <tr>
+                  <td colspan="8">
+                    <div class="empty">
+                      <div class="empty-icon">ðŸ‘¤</div>
+                      <div class="empty-text">Chargement des utilisateurs...</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVRAISONS -->
+      <div class="sec" id="sec-deliveries">
+        <div class="slbl">Suivi des colis</div>
+        <div class="stitle">Livraisons</div>
+        <div class="ssub">Toutes les livraisons en cours et historique</div>
+
+        <div class="actions">
+          <button class="btn bp">ðŸ“¦ Nouvelle livraison</button>
+          <button class="btn bs">ðŸ” Filtrer par statut</button>
+          <button class="btn bs">ðŸ“¥ Exporter rapport</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>ExpÃ©diteur</th>
+                  <th>Livreur</th>
+                  <th>Trajet</th>
+                  <th>Statut</th>
+                  <th>Prix</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deliveries-table">
+                <tr>
+                  <td colspan="8">
+                    <div class="empty">
+                      <div class="empty-icon">ðŸ“¦</div>
+                      <div class="empty-text">Chargement des livraisons...</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVREURS -->
+      <div class="sec" id="sec-drivers">
+        <div class="slbl">Transporteurs</div>
+        <div class="stitle">Livreurs CertifiÃ©s</div>
+        <div class="ssub">Gestion et validation des livreurs</div>
+
+        <div class="actions">
+          <button class="btn bp">âœ… Approuver en attente</button>
+          <button class="btn bs">ðŸ… Gestion des badges</button>
+          <button class="btn bs">ðŸ“Š Rapport de performance</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Niveau</th>
+                  <th>Score</th>
+                  <th>Livraisons</th>
+                  <th>Gains total</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="drivers-table">
+                <tr>
+                  <td colspan="7">
+                    <div class="empty">
+                      <div class="empty-icon">ðŸš—</div>
+                      <div class="empty-text">Chargement des livreurs...</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div class="sec" id="sec-transactions">
+        <div class="slbl">Finances</div>
+        <div class="stitle">Transactions</div>
+        <div class="ssub">Historique complet des paiements Stripe</div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num gold">12 458 $</div>
+            <div class="stat-label">ðŸ’° Volume total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num teal">2 491 $</div>
+            <div class="stat-label">ðŸ’µ Commissions PP</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">187</div>
+            <div class="stat-label">ðŸ’³ Transactions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num orange">67 $</div>
+            <div class="stat-label">ðŸ“ˆ Transaction moy.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Utilisateur</th>
+                  <th>Type</th>
+                  <th>Montant</th>
+                  <th>Statut</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-table">
+                <tr>
+                  <td colspan="7">
+                    <div class="empty">
+                      <div class="empty-icon">ðŸ’³</div>
+                      <div class="empty-text">Chargement des transactions...</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PORTECOINS -->
+      <div class="sec" id="sec-coins">
+        <div class="slbl">Ã‰conomie interne</div>
+        <div class="stitle">PorteCoins</div>
+        <div class="ssub">Gestion de la monnaie virtuelle</div>
+
+        <div class="alert alert-warning">
+          âš ï¸ <strong>Attention :</strong> L'ajout manuel de coins affecte l'Ã©conomie. Utiliser avec prÃ©caution.
+        </div>
+
+        <div class="actions">
+          <button class="btn bp" onclick="openModal('add-coins')">ðŸª™ Ajouter des coins</button>
+          <button class="btn bs">ðŸ“Š Rapport Ã©conomique</button>
+          <button class="btn bs">ðŸ’¸ Historique des achats</button>
+        </div>
+
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">ðŸ“Š Statistiques PorteCoins</div>
+            <div style="margin-top:20px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:12px;color:var(--muted)">Coins en circulation</span>
+                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--gold)">45 280 ðŸª™</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:12px;color:var(--muted)">Valeur totale (CAD)</span>
+                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--teal)">2 715 $</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="font-size:12px;color:var(--muted)">Taux de conversion</span>
+                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--lime)">1 ðŸª™ = 0.06 $</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">ðŸŽ Top acheteurs</div>
+            <div style="margin-top:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px;margin-bottom:6px">
+                <span style="font-size:12px">Jean Tremblay</span>
+                <span style="font-size:12px;color:var(--gold)">3 000 ðŸª™</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px;margin-bottom:6px">
+                <span style="font-size:12px">Marie Dubois</span>
+                <span style="font-size:12px;color:var(--gold)">1 800 ðŸª™</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px">
+                <span style="font-size:12px">Pierre Gagnon</span>
+                <span style="font-size:12px;color:var(--gold)">1 200 ðŸª™</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAIEMENTS -->
+      <div class="sec" id="sec-payouts">
+        <div class="slbl">Versements livreurs</div>
+        <div class="stitle">Paiements aux Livreurs</div>
+        <div class="ssub">Gestion des virements et revenus</div>
+
+        <div class="alert alert-success">
+          âœ… <strong>Prochain virement automatique :</strong> 30 avril 2026 Ã  00h00
+        </div>
+
+        <div class="actions">
+          <button class="btn bp">ðŸ’¸ DÃ©clencher paiement manuel</button>
+          <button class="btn bs">ðŸ“Š Rapport mensuel</button>
+          <button class="btn bs">âš™ï¸ Configuration auto-payout</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Livreur</th>
+                  <th>Montant dÃ»</th>
+                  <th>DerniÃ¨re date</th>
+                  <th>MÃ©thode</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Marc Tremblay</td>
+                  <td style="font-weight:600;color:var(--lime)">485 $</td>
+                  <td>1er avril 2026</td>
+                  <td><span class="tag tb">Virement bancaire</span></td>
+                  <td><span class="tag to">En attente</span></td>
+                  <td><button class="btn btn-sm bp">Payer maintenant</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARRAINAGES -->
+      <div class="sec" id="sec-referrals">
+        <div class="slbl">Marketing viral</div>
+        <div class="stitle">Programme de Parrainage</div>
+        <div class="ssub">Suivi et gestion des codes de parrainage</div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num">127</div>
+            <div class="stat-label">ðŸ¤ Parrainages actifs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num gold">3 175 $</div>
+            <div class="stat-label">ðŸ’° Bonus versÃ©s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num teal">12.3%</div>
+            <div class="stat-label">ðŸ“ˆ Taux de conversion</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num purple">2.8</div>
+            <div class="stat-label">ðŸ‘¥ Parrainages moy./user</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ðŸ† Top parrains</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Parrain</th>
+                  <th>Code</th>
+                  <th>Utilisations</th>
+                  <th>Bonus gagnÃ©</th>
+                  <th>DerniÃ¨re utilisation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Jean Tremblay</td>
+                  <td><span class="tag tg">PP-REF-A8F2X4</span></td>
+                  <td style="font-weight:600">18</td>
+                  <td style="color:var(--gold);font-weight:600">450 $</td>
+                  <td>25 avril 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="sec" id="sec-notifications">
+        <div class="slbl">Communication</div>
+        <div class="stitle">Notifications Push</div>
+        <div class="ssub">Envoyer des messages Ã  tous les utilisateurs</div>
+
+        <div class="actions">
+          <button class="btn bp" onclick="openModal('send-notif')">ðŸ“£ Nouvelle notification</button>
+          <button class="btn bs">ðŸ“Š Statistiques d'engagement</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ðŸ“¨ Historique des envois</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Message</th>
+                  <th>Destinataires</th>
+                  <th>Taux d'ouverture</th>
+                  <th>EnvoyÃ© le</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>ðŸŽ‰ Lancement officiel PorteÃ Porte!</td>
+                  <td>1 247 utilisateurs</td>
+                  <td><span class="tag tg">78%</span></td>
+                  <td>15 avril 2026</td>
+                  <td><button class="btn btn-sm bs">Voir dÃ©tails</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROMOTIONS -->
+      <div class="sec" id="sec-promos">
+        <div class="slbl">Marketing</div>
+        <div class="stitle">Promotions & Codes Promo</div>
+        <div class="ssub">CrÃ©er et gÃ©rer les campagnes promotionnelles</div>
+
+        <div class="actions">
+          <button class="btn bp" onclick="openModal('add-promo')">ðŸŽ Nouvelle promo</button>
+          <button class="btn bs">ðŸ“Š Rapport d'utilisation</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>RÃ©duction</th>
+                  <th>Utilisations</th>
+                  <th>Limite</th>
+                  <th>Expire le</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tag tgo">LAUNCH2026</span></td>
+                  <td style="font-weight:600;color:var(--lime)">50%</td>
+                  <td>87 / âˆž</td>
+                  <td>IllimitÃ©</td>
+                  <td>31 dÃ©c 2026</td>
+                  <td><span class="tag tg">Actif</span></td>
+                  <td>
+                    <button class="btn btn-sm bs">Ã‰diter</button>
+                    <button class="btn btn-sm bd">DÃ©sactiver</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARAMÃˆTRES -->
+      <div class="sec" id="sec-settings">
+        <div class="slbl">Configuration</div>
+        <div class="stitle">ParamÃ¨tres SystÃ¨me</div>
+        <div class="ssub">Configuration globale de la plateforme</div>
+
+        <div class="card">
+          <div class="card-title">âš™ï¸ ParamÃ¨tres gÃ©nÃ©raux</div>
+          <div class="form-group" style="margin-top:20px">
+            <label class="form-label">Nom de la plateforme</label>
+            <input type="text" class="form-input" value="PorteÃ Porte">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email de contact</label>
+            <input type="email" class="form-input" value="bonjour@porteaporte.site">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Commission PorteÃ Porte (%)</label>
+              <input type="number" class="form-input" value="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bonus parrainage ($)</label>
+              <input type="number" class="form-input" value="25">
+            </div>
+          </div>
+          <button class="btn bp">ðŸ’¾ Sauvegarder</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ðŸ’³ Configuration Stripe</div>
+          <div class="form-group" style="margin-top:20px">
+            <label class="form-label">ClÃ© publique (Live)</label>
+            <input type="text" class="form-input" value="Configure dans Vercel">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ClÃ© secrÃ¨te (Live)</label>
+            <input type="password" class="form-input" value="">
+          </div>
+          <button class="btn bp">ðŸ”„ Tester la connexion</button>
+        </div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="sec" id="sec-logs">
+        <div class="slbl">Monitoring</div>
+        <div class="stitle">Logs SystÃ¨me</div>
+        <div class="ssub">Historique complet des Ã©vÃ©nements</div>
+
+        <div class="actions">
+          <button class="btn bs">ðŸ” Filtrer par type</button>
+          <button class="btn bs">ðŸ“¥ TÃ©lÃ©charger logs</button>
+          <button class="btn bd">ðŸ—‘ï¸ Purger anciens logs</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Type</th>
+                  <th>Utilisateur</th>
+                  <th>Action</th>
+                  <th>DÃ©tails</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2026-04-27 14:32:18</td>
+                  <td><span class="tag tb">INFO</span></td>
+                  <td>admin@porteaporte.site</td>
+                  <td>LOGIN</td>
+                  <td>Connexion rÃ©ussie depuis 142.114.x.x</td>
+                </tr>
+                <tr>
+                  <td>2026-04-27 14:18:05</td>
+                  <td><span class="tag tg">SUCCESS</span></td>
+                  <td>jean@example.com</td>
+                  <td>PAYMENT</td>
+                  <td>Achat de 325 PorteCoins (19.99 $)</td>
+                </tr>
+                <tr>
+                  <td>2026-04-27 13:45:22</td>
+                  <td><span class="tag to">WARNING</span></td>
+                  <td>system</td>
+                  <td>DELIVERY</td>
+                  <td>Livraison PP-A8F2X4 en retard de 15 min</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SÃ‰CURITÃ‰ -->
+      <div class="sec" id="sec-security">
+        <div class="slbl">Protection</div>
+        <div class="stitle">SÃ©curitÃ© & ModÃ©ration</div>
+        <div class="ssub">Gestion des accÃ¨s et signalements</div>
+
+        <div class="alert alert-danger">
+          ðŸš¨ <strong>3 signalements non traitÃ©s</strong> nÃ©cessitent votre attention
+        </div>
+
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">ðŸ›¡ï¸ Utilisateurs suspendus</div>
+            <div style="margin-top:16px">
+              <div style="padding:12px;background:var(--s2);border-radius:4px;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:600">Marc Dubois</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px">Raison: Comportement inappropriÃ©</div>
+                <div style="margin-top:8px">
+                  <button class="btn btn-sm bp">RÃ©activer</button>
+                  <button class="btn btn-sm bd">Bannir dÃ©finitivement</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">ðŸš¨ Signalements rÃ©cents</div>
+            <div style="margin-top:16px">
+              <div style="padding:12px;background:var(--s2);border-radius:4px;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:600">Livraison PP-X8F2A4</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px">Colis endommagÃ© Ã  l'arrivÃ©e</div>
+                <div style="margin-top:8px">
+                  <button class="btn btn-sm bp">Investiguer</button>
+                  <button class="btn btn-sm bs">Rejeter</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Modal Ajouter Utilisateur -->
+<div class="modal" id="modal-add-user">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">âž• Nouvel Utilisateur</div>
+      <button class="modal-close" onclick="closeModal('add-user')">âœ•</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">PrÃ©nom</label>
+        <input type="text" class="form-input" placeholder="Jean">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom</label>
+        <input type="text" class="form-input" placeholder="Tremblay">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" placeholder="jean.tremblay@example.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">RÃ´le</label>
+        <select class="form-select">
+          <option>ExpÃ©diteur</option>
+          <option>Livreur</option>
+          <option>Les deux</option>
+          <option>Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Coins initiaux</label>
+        <input type="number" class="form-input" value="50">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn bp">âœ… CrÃ©er l'utilisateur</button>
+      <button class="btn bs" onclick="closeModal('add-user')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ajouter Coins -->
+<div class="modal" id="modal-add-coins">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">ðŸª™ Ajouter des PorteCoins</div>
+      <button class="modal-close" onclick="closeModal('add-coins')">âœ•</button>
+    </div>
+    <div class="alert alert-warning">
+      âš ï¸ Cette action est irrÃ©versible et affecte l'Ã©conomie
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email de l'utilisateur</label>
+      <input type="email" class="form-input" placeholder="utilisateur@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre de coins</label>
+      <input type="number" class="form-input" placeholder="325">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Raison</label>
+      <textarea class="form-textarea" placeholder="Ex: Compensation pour problÃ¨me technique"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn bp">âœ… Ajouter les coins</button>
+      <button class="btn bs" onclick="closeModal('add-coins')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Notification -->
+<div class="modal" id="modal-send-notif">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">ðŸ“£ Envoyer une Notification</div>
+      <button class="modal-close" onclick="closeModal('send-notif')">âœ•</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Titre</label>
+      <input type="text" class="form-input" placeholder="Ex: Nouvelle fonctionnalitÃ©!">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Message</label>
+      <textarea class="form-textarea" placeholder="Votre message ici..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Destinataires</label>
+      <select class="form-select">
+        <option>Tous les utilisateurs</option>
+        <option>ExpÃ©diteurs uniquement</option>
+        <option>Livreurs uniquement</option>
+        <option>Utilisateurs actifs</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn bp">ðŸ“¤ Envoyer maintenant</button>
+      <button class="btn bs" onclick="closeModal('send-notif')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Promo -->
+<div class="modal" id="modal-add-promo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">ðŸŽ Nouvelle Promotion</div>
+      <button class="modal-close" onclick="closeModal('add-promo')">âœ•</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Code promo</label>
+      <input type="text" class="form-input" placeholder="PROMO2026">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type de rÃ©duction</label>
+        <select class="form-select">
+          <option>Pourcentage</option>
+          <option>Montant fixe</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valeur</label>
+        <input type="number" class="form-input" placeholder="20">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Limite d'utilisation</label>
+        <input type="number" class="form-input" placeholder="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date d'expiration</label>
+        <input type="date" class="form-input">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn bp">âœ… CrÃ©er la promo</button>
+      <button class="btn bs" onclick="closeModal('add-promo')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// â”€â”€ SUPABASE CONFIG â”€â”€
+const SUPABASE_URL = 'https://votre-projet.supabase.co';
+const SUPABASE_ANON_KEY = 'votre-cle-anon';
+var supabaseClient =
+  typeof supabase !== 'undefined' && supabase.createClient
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+// â”€â”€ Ã‰TAT â”€â”€
+let currentUser = null;
+
+// â”€â”€ LOGIN â”€â”€
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-error');
+  
+  // Login local desactive: utiliser login.html + role admin Supabase.
+  if (false) {
+    currentUser = { email, role: 'admin', nom: 'Admin' };
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('admin-name').textContent = currentUser.nom;
+    loadDashboardData();
+  } else {
+    errEl.textContent = 'Acces admin via login Supabase requis.';
+    errEl.style.display = 'block';
+    document.getElementById('login-email').classList.add('err');
+    document.getElementById('login-pwd').classList.add('err');
+    setTimeout(() => {
+      document.getElementById('login-email').classList.remove('err');
+      document.getElementById('login-pwd').classList.remove('err');
+    }, 500);
+  }
+}
+
+// â”€â”€ LOGOUT â”€â”€
+function logout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-pwd').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// â”€â”€ NAVIGATION â”€â”€
+function showSection(sec) {
+  // Masquer toutes les sections
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('on'));
+  
+  // Afficher la section demandÃ©e
+  const secEl = document.getElementById('sec-' + sec);
+  if (secEl) secEl.classList.add('on');
+  
+  // Activer l'item dans la sidebar
+  event.currentTarget?.classList.add('on');
+  
+  // Charger les donnÃ©es si nÃ©cessaire
+  if (sec === 'users') loadUsers();
+  if (sec === 'deliveries') loadDeliveries();
+  if (sec === 'drivers') loadDrivers();
+  if (sec === 'transactions') loadTransactions();
+}
+
+// â”€â”€ MODALS â”€â”€
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+}
+
+// â”€â”€ CHARGEMENT DES DONNÃ‰ES â”€â”€
+async function loadDashboardData() {
+  // Simuler le chargement (Ã  remplacer par vraies requÃªtes Supabase)
+  setTimeout(() => {
+    document.getElementById('stat-users').textContent = '1,247';
+    document.getElementById('stat-deliveries').textContent = '38';
+    document.getElementById('stat-revenue').textContent = '12,458 $';
+    document.getElementById('stat-drivers').textContent = '187';
+    
+    document.getElementById('users-badge').textContent = '1247';
+    document.getElementById('deliveries-badge').textContent = '38';
+    document.getElementById('drivers-badge').textContent = '187';
+  }, 500);
+}
+
+async function loadUsers() {
+  // TODO: Charger depuis Supabase
+  const tbody = document.getElementById('users-table');
+  tbody.innerHTML = `
+    <tr>
+      <td>uuid-1234</td>
+      <td>Jean Tremblay</td>
+      <td>jean@example.com</td>
+      <td><span class="tag tb">ExpÃ©diteur</span></td>
+      <td style="color:var(--gold);font-weight:600">325 ðŸª™</td>
+      <td style="color:var(--lime);font-weight:600">1,280 XP</td>
+      <td>15 avr 2026</td>
+      <td>
+        <button class="btn btn-sm bs">Voir</button>
+        <button class="btn btn-sm bd">Suspendre</button>
+      </td>
+    </tr>
+  `;
+}
+
+async function loadDeliveries() {
+  const tbody = document.getElementById('deliveries-table');
+  tbody.innerHTML = `
+    <tr>
+      <td><span class="tag tg">PP-A8F2X4</span></td>
+      <td>Jean Tremblay</td>
+      <td>Marc Dubois</td>
+      <td>MontrÃ©al â†’ QuÃ©bec</td>
+      <td><span class="tag tb">En cours</span></td>
+      <td style="color:var(--lime);font-weight:600">67 $</td>
+      <td>27 avr 2026</td>
+      <td><button class="btn btn-sm bs">DÃ©tails</button></td>
+    </tr>
+  `;
+}
+
+async function loadDrivers() {
+  const tbody = document.getElementById('drivers-table');
+  tbody.innerHTML = `
+    <tr>
+      <td>Marc Dubois</td>
+      <td><span class="tag tgo">Or ðŸ¥‡</span></td>
+      <td style="color:var(--lime);font-weight:600">92/100</td>
+      <td>47</td>
+      <td style="color:var(--gold);font-weight:600">2,480 $</td>
+      <td><span class="tag tg">Actif</span></td>
+      <td><button class="btn btn-sm bs">Voir profil</button></td>
+    </tr>
+  `;
+}
+
+async function loadTransactions() {
+  const tbody = document.getElementById('transactions-table');
+  tbody.innerHTML = `
+    <tr>
+      <td>pi_ABC123</td>
+      <td>Jean Tremblay</td>
+      <td><span class="tag tgo">PorteCoins</span></td>
+      <td style="color:var(--lime);font-weight:600">19.99 $</td>
+      <td><span class="tag tg">ComplÃ©tÃ©</span></td>
+      <td>27 avr 2026 14:18</td>
+      <td><button class="btn btn-sm bs">ReÃ§u</button></td>
+    </tr>
+  `;
+}
+
+// â”€â”€ ENTER KEY LOGIN â”€â”€
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-pwd').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') login();
+  });
+});
+</script>
+
+</body>
+</html>
+

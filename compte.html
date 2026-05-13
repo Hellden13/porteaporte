@@ -1,0 +1,573 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteàPorte ? Mon compte. Connexion, inscription, profil, PorteCoins et historique de livraisons. La livraison de confiance au Canada 🍁">
+<meta property="og:title" content="PorteàPorte 🍁">
+<meta property="og:description" content="PorteàPorte ? Mon compte. Connexion, inscription, profil, PorteCoins et historique de livraisons. La livraison de confiance au Canada 🍁">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteàPorte ? Mon compte 🍁</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.08);--red:#FF4D4D;--gold:#F5C842}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(184,245,62,.05),transparent 70%);pointer-events:none}
+
+nav{padding:16px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:relative;z-index:10}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-back{font-size:12px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
+.nav-back:hover{color:var(--lime)}
+
+/* ?? LAYOUT ?? */
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px;position:relative;z-index:1}
+.box{background:var(--smoke);border:1px solid var(--border);border-radius:8px;width:100%;max-width:420px;overflow:hidden}
+
+/* ?? TABS ?? */
+.tabs{display:grid;grid-template-columns:1fr 1fr}
+.tab{padding:14px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--border);color:var(--muted);transition:all .2s;background:var(--s2);user-select:none}
+.tab:hover{color:var(--paper)}
+.tab.on{color:var(--lime);border-bottom-color:var(--lime);background:var(--smoke)}
+
+/* ?? FORMS ?? */
+.form{display:none;padding:24px}
+.form.on{display:block}
+.fg{margin-bottom:14px}
+.fl{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+.fi{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(245,240,232,.12);padding:12px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:4px;-webkit-appearance:none}
+.fi:focus{border-color:var(--lime)}
+.fi::placeholder{color:rgba(245,240,232,.25)}
+.fi.err{border-color:var(--red)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ROLE */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+.role{border:1.5px solid rgba(245,240,232,.12);border-radius:6px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03)}
+.role:hover{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.04)}
+.role.on{border-color:var(--lime);background:rgba(184,245,62,.08)}
+.role-icon{font-size:24px;margin-bottom:6px}
+.role-name{font-size:12px;font-weight:600}
+.role-desc{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* BOUTON */
+.submit{width:100%;background:var(--lime);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border-radius:4px;margin-top:6px;letter-spacing:.3px;transition:all .2s;position:relative}
+.submit:hover{background:var(--teal)}
+.submit:active{transform:scale(.98)}
+.submit:disabled{opacity:.6;cursor:not-allowed}
+
+/* MESSAGES */
+.msg{padding:10px 14px;border-radius:4px;font-size:12px;line-height:1.6;margin-top:10px;display:none}
+.msg.show{display:block}
+.msg.err{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.25);color:#FF9090}
+.msg.ok{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);color:var(--lime)}
+
+.lien{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;cursor:pointer;transition:color .2s}
+.lien:hover{color:var(--lime)}
+.note-bas{font-size:10px;color:rgba(245,240,232,.25);text-align:center;margin-top:12px;line-height:1.6}
+
+/* ?? PROFIL ?? */
+#profil-screen{display:none;flex:1;padding:28px 20px;max-width:860px;margin:0 auto;width:100%;position:relative;z-index:1}
+.profil-card{background:var(--smoke);border:1px solid rgba(184,245,62,.2);border-radius:8px;padding:24px;margin-bottom:14px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.av{width:68px;height:68px;border-radius:50%;background:rgba(184,245,62,.12);border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;cursor:pointer}
+.pnom{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:-.5px;line-height:1}
+.pemail{font-size:12px;color:var(--muted);margin-top:2px}
+.prole{display:inline-flex;align-items:center;gap:5px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.2);color:var(--lime);font-size:11px;font-weight:600;padding:3px 10px;border-radius:50px;margin-top:6px}
+.pstats{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.ps{text-align:center}
+.psn{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-.5px;line-height:1}
+.psl{font-size:10px;color:var(--muted);margin-top:2px}
+.xp-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:14px;width:100%}
+.xp-fill{height:100%;border-radius:4px;background:var(--lime);transition:width 1.4s cubic-bezier(0.16,1,0.3,1)}
+
+.ptabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.ptab{padding:7px 14px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .15s;background:none;font-family:'Bricolage Grotesque',sans-serif}
+.ptab.on{background:rgba(184,245,62,.1);border-color:var(--lime);color:var(--lime)}
+.tc{display:none}
+.tc.on{display:block}
+
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:12px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.clbl{font-size:12px;color:var(--lime);font-weight:600;margin-bottom:12px}
+.badge-m{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;font-size:10px}
+.badge-m.on{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.05)}
+.deconn{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:4px;padding:9px 18px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.deconn:hover{background:rgba(255,77,77,.2)}
+.lk{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--s2);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--paper);font-size:12px;font-weight:500;transition:all .2s;margin-bottom:7px}
+.lk:hover{border-color:rgba(184,245,62,.25);background:rgba(184,245,62,.04)}
+
+/* SPINNER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(5,8,10,.3);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:500px){
+  nav{padding:12px 16px}
+  .fr{grid-template-columns:1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .pstats{gap:12px}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <a href="index.html" class="nav-back">← Retour au site</a>
+</nav>
+
+<!-- ?? ÉCRAN AUTH ?? -->
+<div class="main" id="auth-screen">
+  <div class="box">
+    <div class="tabs">
+      <div class="tab on" id="tab-conn" onclick="switchTab('conn')">Se connecter</div>
+      <div class="tab" id="tab-insc" onclick="switchTab('insc')">S'inscrire</div>
+    </div>
+
+    <!-- CONNEXION -->
+    <div class="form on" id="form-conn">
+      <div class="fg">
+        <label class="fl">Courriel</label>
+        <input class="fi" type="email" id="c-email" placeholder="ton@courriel.ca">
+      </div>
+      <div class="fg">
+        <label class="fl">Mot de passe</label>
+        <input class="fi" type="password" id="c-mdp" placeholder="????????"
+          onkeydown="if(event.key==='Enter')connexion()">
+      </div>
+      <button class="submit" id="btn-conn" onclick="connexion()">
+        Se connecter →
+      </button>
+      <div class="msg" id="msg-conn"></div>
+      <div class="lien" onclick="motDePasseOublie()">Mot de passe oublié ?</div>
+      <div class="note-bas">✓ Connexion sécurisée Supabase · Loi 25 QC</div>
+    </div>
+
+    <!-- INSCRIPTION -->
+    <div class="form" id="form-insc">
+      <div class="fr">
+        <div class="fg">
+          <label class="fl">Prénom *</label>
+          <input class="fi" type="text" id="i-prenom" placeholder="Denis">
+        </div>
+        <div class="fg">
+          <label class="fl">Nom *</label>
+          <input class="fi" type="text" id="i-nom" placeholder="Morneau">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Courriel *</label>
+        <input class="fi" type="email" id="i-email" placeholder="ton@courriel.ca">
+      </div>
+      <div class="fg">
+        <label class="fl">Mot de passe * (min. 6 caractères)</label>
+        <input class="fi" type="password" id="i-mdp" placeholder="????????"
+          onkeydown="if(event.key==='Enter')inscription()">
+      </div>
+      <div class="fg">
+        <label class="fl">Ville</label>
+        <input class="fi" type="text" id="i-ville" placeholder="Lévis, Québec">
+      </div>
+      <div class="fg">
+        <label class="fl">Je veux *</label>
+        <div class="roles">
+          <div class="role on" id="r-exp" onclick="setRole('expediteur')">
+            <div class="role-icon">📦</div>
+            <div class="role-name">Envoyer</div>
+            <div class="role-desc">Expéditeur</div>
+          </div>
+          <div class="role" id="r-drv" onclick="setRole('livreur')">
+            <div class="role-icon">🚗</div>
+            <div class="role-name">Livrer</div>
+            <div class="role-desc">Livreur</div>
+          </div>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Code parrainage (optionnel)</label>
+        <input class="fi" type="text" id="i-parrain" placeholder="PP-REF-XXXXX"
+          style="text-transform:uppercase">
+      </div>
+      <button class="submit" id="btn-insc" onclick="inscription()">
+        Créer mon compte + 50 🪙 offerts →
+      </button>
+      <div class="msg" id="msg-insc"></div>
+      <div class="note-bas">✓ Gratuit · ✓ Jamais revendu · ✓ Loi 25 QC</div>
+    </div>
+  </div>
+</div>
+
+<!-- ?? PROFIL ?? -->
+<div id="profil-screen">
+  <div class="profil-card">
+    <div class="av" id="pf-av" onclick="changerAv()">😊</div>
+    <div style="flex:1">
+      <div class="pnom" id="pf-nom">?</div>
+      <div class="pemail" id="pf-email">?</div>
+      <div class="prole" id="pf-role">📦 Expéditeur</div>
+    </div>
+    <div class="pstats">
+      <div class="ps"><div class="psn" style="color:var(--gold)" id="pf-coins">50</div><div class="psl">PorteCoins</div></div>
+      <div class="ps"><div class="psn" id="pf-xp">50</div><div class="psl">XP</div></div>
+      <div class="ps"><div class="psn" style="color:var(--teal)" id="pf-livr">0</div><div class="psl">Livraisons</div></div>
+    </div>
+    <div class="xp-bar">
+      <div class="xp-fill" id="pf-xpbar" style="width:5%"></div>
+    </div>
+  </div>
+
+  <div class="ptabs">
+    <button class="ptab on" onclick="showTC('dash',this)">📊 Tableau de bord</button>
+    <button class="ptab" onclick="showTC('recomp',this)">🪙 PorteCoins</button>
+    <button class="ptab" onclick="showTC('param',this)">⚙ Paramètres</button>
+  </div>
+
+  <!-- TABLEAU DE BORD -->
+  <div class="tc on" id="tc-dash">
+    <div class="g3" style="margin-bottom:12px">
+      <a href="expediteur.html" class="lk">📦 Envoyer un colis</a>
+      <a href="livreur.html" class="lk">🚗 Devenir livreur</a>
+      <a href="parrainage.html" class="lk">🤝 Mon parrainage</a>
+      <a href="engagement.html" class="lk">🏅 XP & Badges</a>
+      <a href="unique.html" class="lk">❤ Missions solidaires</a>
+      <a href="assurance.html" class="lk">🛡 Assurance</a>
+    </div>
+    <div class="card">
+      <div class="clbl">🏅 Mes badges (4/12)</div>
+      <div class="g3" style="margin-bottom:0">
+        <div class="badge-m on"><div style="font-size:20px">🍁</div>Fondateur</div>
+        <div class="badge-m on"><div style="font-size:20px">📦</div>1er envoi</div>
+        <div class="badge-m on"><div style="font-size:20px">🤝</div>Ambassadeur</div>
+        <div class="badge-m on"><div style="font-size:20px">🔥</div>Fidèle</div>
+        <div class="badge-m" style="opacity:.3"><div style="font-size:20px">🌱</div>Écolo</div>
+        <div class="badge-m" style="opacity:.3"><div style="font-size:20px">🌙</div>Noctambule</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTECOINS -->
+  <div class="tc" id="tc-recomp">
+    <div class="card" style="background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.2)">
+      <div class="clbl" style="color:var(--gold)">🪙 Solde PorteCoins</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--gold);letter-spacing:-2px;line-height:1" id="coins-disp">50</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">≈ <span id="coins-val">5,00</span> $ · 10 PC = 1 $</div>
+      <a href="index.html" style="display:inline-block;margin-top:14px;background:var(--gold);color:var(--ink);border:none;padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:4px;text-decoration:none">🪙 Acheter des PorteCoins →</a>
+    </div>
+    <div class="card">
+      <div class="clbl">📜 Historique</div>
+      <div id="coins-hist">
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;font-weight:500">🎁 Bonus bienvenue</div><div style="font-size:10px;color:var(--muted)">Compte créé</div></div>
+          <span style="color:var(--lime);font-weight:700">+50 PC</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARAMÈTRES -->
+  <div class="tc" id="tc-param">
+    <div class="card">
+      <div class="clbl">👤 Informations</div>
+      <div class="fr" style="margin-bottom:10px">
+        <div><label class="fl">Prénom</label><input class="fi" type="text" id="e-prenom" placeholder="Denis"></div>
+        <div><label class="fl">Nom</label><input class="fi" type="text" id="e-nom" placeholder="Morneau"></div>
+      </div>
+      <label class="fl">Téléphone</label>
+      <input class="fi" type="tel" id="e-tel" placeholder="+1 (418) 555-0123" style="margin-bottom:14px">
+      <button class="submit" onclick="sauvegarder()" style="font-size:13px;padding:11px">Sauvegarder →</button>
+      <div class="msg" id="msg-param"></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;font-weight:500">Se déconnecter</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Fermer la session sur cet appareil</div>
+      </div>
+      <button class="deconn" onclick="deconnexion()">Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+// ?? CONFIG ??
+const SB_URL = 'https://miqrircrfpzkmvvacgwt.supabase.co';
+const SB_KEY = window.PORTEAPORTE_SUPABASE_ANON_KEY;
+let sb, role = 'expediteur';
+
+// Init après chargement du script
+window.addEventListener('load', () => {
+  try {
+    sb = window.getSupabaseClient();
+    // Vérifier session existante
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) afficherProfil(data.session.user);
+    });
+    // Écouter les changements auth
+    sb.auth.onAuthStateChange((event, session) => {
+      if (session && event === 'SIGNED_IN') afficherProfil(session.user);
+      if (event === 'SIGNED_OUT') afficherAuth();
+    });
+  } catch(e) {
+    console.error('Erreur Supabase init:', e);
+  }
+});
+
+// ?? NAVIGATION TABS ??
+function switchTab(t) {
+  ['conn','insc'].forEach(x => {
+    document.getElementById('tab-'+x).classList.toggle('on', x===t);
+    document.getElementById('form-'+x).classList.toggle('on', x===t);
+  });
+}
+
+function setRole(r) {
+  role = r;
+  document.getElementById('r-exp').classList.toggle('on', r==='expediteur');
+  document.getElementById('r-drv').classList.toggle('on', r==='livreur');
+}
+
+// ?? CONNEXION ??
+async function connexion() {
+  const email = document.getElementById('c-email').value.trim();
+  const mdp   = document.getElementById('c-mdp').value;
+  const btn   = document.getElementById('btn-conn');
+  const msg   = document.getElementById('msg-conn');
+
+  if (!email) { affMsg(msg,'err','Entre ton adresse courriel.'); return; }
+  if (!mdp)   { affMsg(msg,'err','Entre ton mot de passe.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Connexion...';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: mdp });
+    if (error) throw error;
+    afficherProfil(data.user);
+  } catch(e) {
+    affMsg(msg,'err', traErr(e.message));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Se connecter →';
+  }
+}
+
+// ?? INSCRIPTION ??
+async function inscription() {
+  const prenom = document.getElementById('i-prenom').value.trim();
+  const nom    = document.getElementById('i-nom').value.trim();
+  const email  = document.getElementById('i-email').value.trim();
+  const mdp    = document.getElementById('i-mdp').value;
+  const ville  = document.getElementById('i-ville').value.trim();
+  const parrain= document.getElementById('i-parrain').value.trim();
+  const btn    = document.getElementById('btn-insc');
+  const msg    = document.getElementById('msg-insc');
+
+  // Validations
+  if (!prenom) { affMsg(msg,'err','Remplis ton prénom.'); document.getElementById('i-prenom').focus(); return; }
+  if (!nom)    { affMsg(msg,'err','Remplis ton nom.'); document.getElementById('i-nom').focus(); return; }
+  if (!email || !email.includes('@')) { affMsg(msg,'err','Entre une adresse courriel valide.'); document.getElementById('i-email').focus(); return; }
+  if (!mdp || mdp.length < 6) { affMsg(msg,'err','Mot de passe : minimum 6 caractères.'); document.getElementById('i-mdp').focus(); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Création du compte...';
+
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: mdp,
+      options: {
+        emailRedirectTo: window.location.origin + '/login.html?confirmed=1',
+        data: { prenom, nom, role, ville, coins: 50, xp: 50, livraisons: 0, parrain }
+      }
+    });
+
+    if (error) throw error;
+
+    if (data.session) {
+      // Connecté directement
+      afficherProfil(data.user);
+    } else {
+      // Email de confirmation nécessaire
+      affMsg(msg,'ok','✅ Compte créé ! Vérifie ton courriel pour te connecter. 50 PorteCoins t\'attendent !');
+    }
+
+  } catch(e) {
+    affMsg(msg,'err', traErr(e.message));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer mon compte + 50 🪙 offerts →';
+  }
+}
+
+// ?? PROFIL ??
+function afficherProfil(user) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('profil-screen').style.display = 'block';
+  const m = user.user_metadata || {};
+  const prenom = m.prenom || user.email.split('@')[0];
+  const nom    = m.nom    || '';
+  const r      = m.role   || 'expediteur';
+
+  document.getElementById('pf-nom').textContent   = prenom + ' ' + nom;
+  document.getElementById('pf-email').textContent = user.email;
+  document.getElementById('pf-role').textContent  = r === 'livreur' ? '🚗 Livreur' : '📦 Expéditeur';
+  document.getElementById('e-prenom').value = m.prenom || '';
+  document.getElementById('e-nom').value    = m.nom    || '';
+  document.getElementById('e-tel').value    = m.tel    || '';
+
+  // Charger les coins DEPUIS SUPABASE ? jamais depuis le navigateur
+  chargerCoinsDepuisSupabase(user.id);
+  chargerHistoriqueCoins(user.id);
+}
+
+function afficherAuth() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('profil-screen').style.display = 'none';
+}
+
+// ?? COINS SÉCURISÉS ? toujours depuis Supabase, jamais localStorage ??
+async function chargerCoinsDepuisSupabase(userId) {
+  try {
+    const { data, error } = await sb
+      .from('profiles')
+      .select('coins, xp, livraisons, niveau')
+      .eq('id', userId)
+      .single();
+    if (error || !data) {
+      // Table pas encore créée ? afficher valeurs par défaut
+      document.getElementById('pf-coins').textContent = 50;
+      document.getElementById('coins-disp').textContent = 50;
+      document.getElementById('coins-val').textContent = '5.00';
+      document.getElementById('pf-xpbar').style.width = '5%';
+      return null;
+    }
+    // Mettre à jour depuis la vraie source Supabase
+    document.getElementById('pf-coins').textContent = data.coins;
+    document.getElementById('pf-xp').textContent    = data.xp;
+    document.getElementById('pf-livr').textContent = data.livraisons || 0;
+    document.getElementById('coins-disp').textContent = data.coins;
+    document.getElementById('coins-val').textContent  = (data.coins * 0.1).toFixed(2);
+    document.getElementById('pf-xpbar').style.width   = Math.min(data.xp / 10, 100) + '%';
+    return data;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ?? HISTORIQUE TRANSACTIONS depuis Supabase ??
+async function chargerHistoriqueCoins(userId) {
+  try {
+    const { data, error } = await sb
+      .from('transactions')
+      .select('type, montant_coins, description, cree_le')
+      .eq('user_id', userId)
+      .order('cree_le', { ascending: false })
+      .limit(10);
+    if (error || !data || data.length === 0) return;
+    const hist = document.getElementById('coins-hist');
+    if (!hist) return;
+    hist.innerHTML = data.map(t => {
+      const signe = t.montant_coins > 0 ? '+' : '';
+      const couleur = t.montant_coins > 0 ? '#B8F53E' : '#FF4D4D';
+      const date = new Date(t.cree_le).toLocaleDateString('fr-CA');
+      return '<div style="background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:12px;font-weight:500">' + t.description + '</div><div style="font-size:10px;color:var(--muted)">' + date + '</div></div><span style="color:' + couleur + ';font-weight:700;font-size:14px">' + signe + t.montant_coins + ' PC</span></div>';
+    }).join('');
+  } catch(e) {
+  }
+}
+
+// ?? ACTIONS ??
+async function deconnexion() {
+  if (!confirm('Se déconnecter ?')) return;
+  await sb.auth.signOut();
+  afficherAuth();
+}
+
+async function sauvegarder() {
+  const msg = document.getElementById('msg-param');
+  try {
+    const { error } = await sb.auth.updateUser({
+      data: {
+        prenom: document.getElementById('e-prenom').value.trim(),
+        nom:    document.getElementById('e-nom').value.trim(),
+        tel:    document.getElementById('e-tel').value.trim()
+      }
+    });
+    if (error) throw error;
+    affMsg(msg,'ok','✅ Profil sauvegardé !');
+  } catch(e) {
+    affMsg(msg,'err','Erreur : ' + e.message);
+  }
+}
+
+async function motDePasseOublie() {
+  const email = document.getElementById('c-email').value.trim();
+  const msg   = document.getElementById('msg-conn');
+  if (!email) { affMsg(msg,'err','Entre ton courriel d\'abord.'); return; }
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://porteaporte.site/compte.html' });
+  affMsg(msg,'ok','📧 Lien envoyé sur ' + email);
+}
+
+function changerAv() {
+  const avs = ['😊','😎','🧑','👩','🧔','🚗','📦','🍁','💎','🌱'];
+  const el  = document.getElementById('pf-av');
+  const idx = avs.indexOf(el.textContent);
+  el.textContent = avs[(idx+1) % avs.length];
+}
+
+// ?? TABS PROFIL ??
+function showTC(id, el) {
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tc-'+id).classList.add('on');
+  el.classList.add('on');
+}
+
+// ?? HELPERS ??
+function affMsg(el, type, txt) {
+  el.textContent = txt;
+  el.className   = 'msg show ' + type;
+  if (type === 'err') setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// ?? NOTIFICATIONS ??
+async function notifier(type, data) {
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data })
+    });
+  } catch(e) {
+  }
+}
+
+function traErr(m) {
+  if (m.includes('Invalid login credentials'))  return '❌ Courriel ou mot de passe incorrect.';
+  if (m.includes('Email not confirmed'))         return '📧 Vérifie ton courriel ? confirme ton compte.';
+  if (m.includes('User already registered'))     return '❌ Ce courriel est déjà utilisé. Connecte-toi !';
+  if (m.includes('Password should be'))          return '❌ Mot de passe trop court (min. 6 caractères).';
+  if (m.includes('rate limit'))                  return '⏳ Trop de tentatives. Attends une minute.';
+  if (m.includes('network') || m.includes('fetch')) return '🌐 Problème de connexion internet.';
+  return '❌ ' + m;
+}
+</script>
+</body>
+</html>
+

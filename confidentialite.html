@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#05080A">
+<title>PorteàPorte — Politique de confidentialité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--gold:#F5C842;--teal:#0BFFCB}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+.navbar{background:rgba(5,8,10,.95);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-links{margin-left:auto;display:flex;gap:20px}
+.nav-links a{color:var(--muted);font-size:13px;text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--lime)}
+.container{max-width:860px;margin:0 auto;padding:60px 24px}
+.header-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.2);color:var(--lime);font-size:11px;font-weight:600;padding:5px 14px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;margin-bottom:24px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,64px);letter-spacing:2px;line-height:1;margin-bottom:12px}
+h1 span{color:var(--lime)}
+.intro{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:48px;max-width:680px}
+.effective{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:40px;font-size:13px;display:flex;gap:20px;flex-wrap:wrap}
+.effective span{color:var(--muted)}
+.effective strong{color:var(--paper)}
+.toc{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:40px}
+.toc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px}
+.toc ol{padding-left:20px}
+.toc li{font-size:13px;color:var(--muted);margin-bottom:6px}
+.toc a{color:var(--lime);text-decoration:none}
+.section{margin-bottom:40px}
+.section h2{font-size:20px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.section p,.section li{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:10px}
+.section ul{padding-left:20px;margin-bottom:12px}
+.section li{list-style:disc}
+.highlight{background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.12);border-radius:8px;padding:18px 22px;margin-bottom:20px;font-size:13px;line-height:1.7}
+.highlight strong{color:var(--lime)}
+.data-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
+.data-table th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border)}
+.data-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
+.data-table td:first-child{color:var(--paper);font-weight:600}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+.contact-box{background:linear-gradient(135deg,rgba(184,245,62,.06),rgba(11,255,203,.03));border:1px solid rgba(184,245,62,.2);border-radius:10px;padding:24px;margin-top:40px;text-align:center}
+.contact-box h3{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;color:var(--lime);margin-bottom:10px}
+.contact-box p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:var(--ink);padding:11px 24px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;margin:6px}
+.btn.outline{background:none;border:1px solid var(--border);color:var(--paper)}
+.footer{border-top:1px solid var(--border);padding:28px 32px;text-align:center;font-size:12px;color:var(--muted);margin-top:60px}
+.footer a{color:var(--lime);text-decoration:none}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="legal.html">CGU</a>
+    <a href="loi25.html">Loi 25</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="header-badge">🔒 Politique officielle</div>
+  <h1>Politique de<br><span>confidentialité</span></h1>
+  <p class="intro">PorteàPorte inc. s'engage à protéger vos renseignements personnels conformément à la Loi 25 du Québec et aux meilleures pratiques de l'industrie. Cette politique explique comment nous collectons, utilisons et protégeons vos données.</p>
+
+  <div class="effective">
+    <div><span>Version : </span><strong>1.0</strong></div>
+    <div><span>Entrée en vigueur : </span><strong>26 avril 2026</strong></div>
+    <div><span>Dernière mise à jour : </span><strong>26 avril 2026</strong></div>
+    <div><span>Responsable : </span><strong>Denis Morneau</strong></div>
+  </div>
+
+  <!-- Table des matières -->
+  <div class="toc">
+    <div class="toc-title">Table des matières</div>
+    <ol>
+      <li><a href="#collecte">Renseignements collectés</a></li>
+      <li><a href="#utilisation">Utilisation des données</a></li>
+      <li><a href="#partage">Partage avec des tiers</a></li>
+      <li><a href="#securite">Sécurité et conservation</a></li>
+      <li><a href="#droits">Vos droits</a></li>
+      <li><a href="#cookies">Cookies</a></li>
+      <li><a href="#mineurs">Mineurs</a></li>
+      <li><a href="#modifications">Modifications</a></li>
+      <li><a href="#contact">Nous contacter</a></li>
+    </ol>
+  </div>
+
+  <div class="highlight">
+    <strong>Résumé en langage clair :</strong> Nous collectons uniquement ce dont nous avons besoin pour faire fonctionner la plateforme. Nous ne vendons pas vos données. Nous ne faisons pas de publicité ciblée. Vos données de paiement ne passent jamais par nos serveurs (Stripe les gère directement). Vous pouvez demander la suppression de votre compte à tout moment.
+  </div>
+
+  <!-- Section 1 -->
+  <div class="section" id="collecte">
+    <h2>📊 1. Renseignements collectés</h2>
+    <p>Voici ce que nous collectons et pourquoi :</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Donnée</th>
+          <th>Pourquoi</th>
+          <th>Base légale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Prénom, nom</td><td>Identification et personnalisation</td><td>Exécution du contrat</td></tr>
+        <tr><td>Courriel</td><td>Notifications et communications</td><td>Exécution du contrat</td></tr>
+        <tr><td>Téléphone</td><td>Contact en cas d'urgence livraison</td><td>Exécution du contrat</td></tr>
+        <tr><td>Adresses (départ/arrivée)</td><td>Organisation des livraisons</td><td>Exécution du contrat</td></tr>
+        <tr><td>GPS temps réel</td><td>Suivi de livraison actif uniquement</td><td>Intérêt légitime + consentement</td></tr>
+        <tr><td>Documents KYC (livreurs)</td><td>Vérification d'identité obligatoire</td><td>Obligation légale + consentement</td></tr>
+        <tr><td>Données biométriques</td><td>Vérification vivacité KYC</td><td>Consentement explicite</td></tr>
+        <tr><td>Historique transactions</td><td>Facturation et litiges</td><td>Obligation légale (7 ans)</td></tr>
+        <tr><td>Adresse IP, appareil</td><td>Sécurité et détection fraude</td><td>Intérêt légitime</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="section" id="utilisation">
+    <h2>🎯 2. Utilisation des données</h2>
+    <p>Vos données sont utilisées exclusivement pour :</p>
+    <ul>
+      <li>Mettre en relation expéditeurs et livreurs certifiés</li>
+      <li>Traiter les paiements via Stripe Canada</li>
+      <li>Assurer le suivi GPS des livraisons en cours</li>
+      <li>Envoyer des confirmations, notifications et reçus par courriel</li>
+      <li>Vérifier l'identité des livreurs (KYC)</li>
+      <li>Calculer et afficher les scores de confiance</li>
+      <li>Prévenir les fraudes et assurer la sécurité de la plateforme</li>
+      <li>Améliorer nos services (données anonymisées)</li>
+      <li>Respecter nos obligations légales et fiscales</li>
+    </ul>
+    <p><strong style="color:var(--paper)">Ce que nous ne faisons JAMAIS :</strong></p>
+    <ul>
+      <li>Vendre vos données à des tiers</li>
+      <li>Utiliser vos données à des fins publicitaires</li>
+      <li>Partager vos données sans votre consentement sauf obligation légale</li>
+      <li>Stocker vos numéros de carte bancaire</li>
+    </ul>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="section" id="partage">
+    <h2>🤝 3. Partage avec des tiers</h2>
+    <p>Nous partageons des données uniquement avec les prestataires essentiels au service, tous contractuellement tenus à la confidentialité :</p>
+    <table class="data-table">
+      <thead><tr><th>Prestataire</th><th>Données partagées</th><th>Finalité</th></tr></thead>
+      <tbody>
+        <tr><td>Stripe Canada</td><td>Données de paiement</td><td>Traitement sécurisé des paiements (PCI-DSS)</td></tr>
+        <tr><td>SendGrid (Twilio)</td><td>Courriel, prénom</td><td>Envoi des notifications transactionnelles</td></tr>
+        <tr><td>Supabase</td><td>Profil utilisateur, historique</td><td>Stockage sécurisé de la base de données</td></tr>
+        <tr><td>Vercel</td><td>Logs d'accès anonymisés</td><td>Hébergement et CDN</td></tr>
+        <tr><td>Cloudflare</td><td>Adresse IP (temporaire)</td><td>Protection contre les attaques et bots</td></tr>
+      </tbody>
+    </table>
+    <p>En cas de demande légale (ordonnance judiciaire, demande des autorités), nous pouvons être tenus de divulguer certaines données. Nous vous en informerons dans la mesure du possible sauf interdiction légale.</p>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="section" id="securite">
+    <h2>🔐 4. Sécurité et durées de conservation</h2>
+    <ul>
+      <li><strong>Chiffrement en transit :</strong> TLS 1.3 sur toutes les communications</li>
+      <li><strong>Chiffrement au repos :</strong> AES-256 pour toutes les bases de données</li>
+      <li><strong>Accès limité :</strong> Seul le personnel autorisé accède aux données sensibles</li>
+      <li><strong>Journalisation :</strong> Tous les accès aux données sont journalisés</li>
+    </ul>
+    <p>Durées de conservation :</p>
+    <ul>
+      <li><strong>Données de transaction :</strong> 7 ans (obligation fiscale québécoise)</li>
+      <li><strong>Profil utilisateur actif :</strong> Durée de l'utilisation du service</li>
+      <li><strong>Profil désactivé :</strong> 3 ans après désactivation puis suppression définitive</li>
+      <li><strong>Données KYC / biométriques :</strong> Supprimées après validation, index de vérification conservé 3 ans</li>
+      <li><strong>Logs de sécurité :</strong> 12 mois</li>
+      <li><strong>GPS :</strong> Durée de la livraison + 30 jours pour litiges éventuels</li>
+    </ul>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="section" id="droits">
+    <h2>⚖️ 5. Vos droits</h2>
+    <p>Conformément à la Loi 25 du Québec, vous disposez des droits suivants :</p>
+    <ul>
+      <li><strong>Accès :</strong> Obtenir une copie de vos données personnelles</li>
+      <li><strong>Rectification :</strong> Corriger des informations inexactes</li>
+      <li><strong>Effacement :</strong> Demander la suppression de votre compte et de vos données</li>
+      <li><strong>Portabilité :</strong> Recevoir vos données dans un format structuré</li>
+      <li><strong>Opposition :</strong> Vous opposer à certains traitements</li>
+      <li><strong>Retrait du consentement :</strong> Retirer votre consentement à tout moment</li>
+    </ul>
+    <p>Pour exercer vos droits : <a href="mailto:confidentialite@porteaporte.site" style="color:var(--lime)">confidentialite@porteaporte.site</a> — Réponse sous 30 jours.</p>
+    <p>Vous pouvez également porter plainte auprès de la <strong style="color:var(--paper)">Commission d'accès à l'information (CAI) du Québec</strong> : <a href="https://www.cai.gouv.qc.ca" target="_blank" style="color:var(--lime)">cai.gouv.qc.ca</a></p>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="section" id="cookies">
+    <h2>🍪 6. Cookies</h2>
+    <p>PorteàPorte utilise uniquement des cookies fonctionnels et de sécurité :</p>
+    <table class="data-table">
+      <thead><tr><th>Cookie</th><th>Type</th><th>Durée</th><th>Finalité</th></tr></thead>
+      <tbody>
+        <tr><td>session_token</td><td>Essentiel</td><td>Session</td><td>Authentification utilisateur</td></tr>
+        <tr><td>cf_clearance</td><td>Sécurité</td><td>1 heure</td><td>Validation Cloudflare anti-bot</td></tr>
+        <tr><td>__cf_bm</td><td>Sécurité</td><td>30 minutes</td><td>Protection Cloudflare</td></tr>
+        <tr><td>stripe_sid</td><td>Fonctionnel</td><td>Session</td><td>Sécurité paiements Stripe</td></tr>
+      </tbody>
+    </table>
+    <p>Nous n'utilisons aucun cookie publicitaire, de pistage ou de profilage. Aucune donnée n'est partagée avec des régies publicitaires.</p>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="section" id="mineurs">
+    <h2>👶 7. Mineurs</h2>
+    <p>PorteàPorte est destiné aux personnes de 18 ans et plus. Nous ne collectons pas sciemment des données personnelles de personnes de moins de 18 ans. Si vous estimez qu'un mineur a créé un compte sur notre plateforme, contactez-nous immédiatement à <a href="mailto:confidentialite@porteaporte.site" style="color:var(--lime)">confidentialite@porteaporte.site</a> pour procéder à la suppression du compte.</p>
+  </div>
+
+  <!-- Section 8 -->
+  <div class="section" id="modifications">
+    <h2>📝 8. Modifications de la politique</h2>
+    <p>Nous pouvons modifier cette politique de confidentialité à tout moment. En cas de modification substantielle, nous vous en informerons par courriel et/ou par une notification visible sur la plateforme au moins 30 jours avant l'entrée en vigueur des changements.</p>
+    <p>L'utilisation continue de la plateforme après notification vaut acceptation de la politique mise à jour.</p>
+  </div>
+
+  <!-- CTA -->
+  <div class="contact-box" id="contact">
+    <h3>Questions sur vos données ?</h3>
+    <p>Notre responsable de la protection des renseignements personnels vous répond sous 30 jours, conformément à la Loi 25.</p>
+    <a href="mailto:confidentialite@porteaporte.site" class="btn">📧 Exercer mes droits</a>
+    <a href="loi25.html" class="btn outline">🛡️ Loi 25 — Détails</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 PorteàPorte inc. — Lévis, Québec, Canada</div>
+  <div style="margin-top:8px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
+    <a href="legal.html">CGU</a>
+    <a href="confidentialite.html">Politique de confidentialité</a>
+    <a href="loi25.html">Loi 25</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</footer>
+</body>
+</html>

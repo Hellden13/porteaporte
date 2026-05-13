@@ -1,0 +1,598 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteaPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="Protection livraison optionnelle PorteaPorte : aucune couverture sans protection payee, plans de 0 $ a 5,99 $, preuves analysees en cas de litige.">
+<meta property="og:title" content="PorteaPorte">
+<meta property="og:description" content="Protection livraison optionnelle PorteaPorte : aucune couverture sans protection payee, plans de 0 $ a 5,99 $, preuves analysees en cas de litige.">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteaPorte - Assurance et reclamations</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;--orange:#FF8C00}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.95);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;text-decoration:none;color:var(--paper)}
+.logo span{color:var(--lime)}
+.back{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
+.back:hover{color:var(--lime)}
+
+/* HERO */
+.hero{padding:56px 40px 44px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(184,245,62,.06),transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);padding:6px 16px;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:18px;border-radius:2px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,6.5vw,88px);letter-spacing:-1px;line-height:.95;margin-bottom:14px}
+.hero h1 span{color:var(--lime)}
+.hero p{font-size:16px;color:var(--muted);max-width:520px;margin:0 auto 32px;line-height:1.65;font-weight:300}
+.hero-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.htab{background:var(--smoke);border:1px solid var(--border);padding:10px 22px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border-radius:2px;color:var(--muted)}
+.htab:hover{color:var(--paper);border-color:rgba(245,240,232,.2)}
+.htab.on{background:rgba(184,245,62,.1);border-color:var(--lime);color:var(--lime)}
+
+/* SECTIONS */
+.wrap{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.content-sec{display:none;padding-top:36px}
+.content-sec.on{display:block}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,48px);letter-spacing:-1px;margin-bottom:6px}
+.sec-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.65;font-weight:300}
+
+/* CARDS */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:22px;margin-bottom:12px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* PLANS */
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.plan{border:1px solid var(--border);border-radius:4px;padding:18px;cursor:pointer;transition:all .25s;position:relative;text-align:center}
+.plan:hover{transform:translateY(-4px);border-color:rgba(184,245,62,.25)}
+.plan.sel{border-color:var(--lime);background:rgba(184,245,62,.06)}
+.plan.sel-teal{border-color:var(--teal);background:rgba(11,255,203,.04)}
+.plan.sel-gold{border-color:var(--gold);background:rgba(245,200,66,.04)}
+.plan.sel-red{border-color:var(--red);background:rgba(255,77,77,.04)}
+.plan-icon{font-size:28px;margin-bottom:10px}
+.plan-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;margin-bottom:4px}
+.plan-price{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--lime);letter-spacing:-1px;line-height:1}
+.plan-per{font-size:10px;color:var(--muted);margin-bottom:10px}
+.plan-cov{font-size:11px;color:var(--muted);margin-bottom:12px}
+.plan-perks{list-style:none;display:flex;flex-direction:column;gap:6px;text-align:left}
+.plan-perks li{font-size:11px;display:flex;gap:6px;align-items:flex-start}
+.plan-perks li::before{content:'✓';color:var(--lime);flex-shrink:0;font-weight:700}
+.plan-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--teal);color:var(--ink);font-size:9px;font-weight:700;padding:2px 10px;border-radius:50px;white-space:nowrap}
+
+/* DÉLAIS */
+.delais{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
+.delai{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center}
+.delai-n{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-1px;line-height:1}
+.delai-l{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* FORMULAIRE RÉCLAMATION */
+.steps-horiz{display:flex;gap:0;margin-bottom:28px}
+.sh-item{flex:1;text-align:center;position:relative}
+.sh-item::after{content:'';position:absolute;top:12px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.sh-item:last-child::after{display:none}
+.sh-circle{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;margin:0 auto 5px;position:relative;z-index:1;transition:all .3s}
+.sh-item.on .sh-circle{border-color:var(--lime);background:var(--lime);color:var(--ink)}
+.sh-item.done .sh-circle{border-color:var(--lime);background:var(--lime);color:var(--ink);font-size:0}
+.sh-item.done .sh-circle::after{content:'✓';font-size:11px}
+.sh-label{font-size:10px;color:var(--muted)}
+.sh-item.on .sh-label{color:var(--lime)}
+.form-sec{display:none}.form-sec.on{display:block}
+.fg{margin-bottom:14px}
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi::placeholder{color:rgba(245,240,232,.2)}
+select.fi option{background:#141918}
+textarea.fi{resize:vertical;min-height:80px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.upload-zone{border:2px dashed rgba(245,240,232,.12);border-radius:4px;padding:20px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
+.upload-zone:hover{border-color:rgba(184,245,62,.35);background:rgba(184,245,62,.03)}
+.upload-zone.up{border-color:var(--lime);background:rgba(184,245,62,.05);border-style:solid}
+.upload-input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-ok{display:none;color:var(--lime);font-size:13px;font-weight:500}
+.upload-ok.show{display:block}
+.btn-next{width:100%;background:var(--lime);color:var(--ink);border:none;padding:13px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:8px;border-radius:2px}
+.btn-next:hover{background:var(--teal);transform:translateY(-1px)}
+.btn-back{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);padding:11px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;border-radius:2px;margin-top:8px}
+.btn-back:hover{color:var(--paper)}
+
+/* CALCUL REMBOURSEMENT */
+.calc-box{background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:20px;margin-bottom:14px}
+.calc-result{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--lime);letter-spacing:-2px;text-align:center;margin:12px 0 4px}
+.calc-sub{font-size:11px;color:var(--muted);text-align:center}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;background:var(--border);border-radius:3px;outline:none;cursor:pointer;margin:10px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--lime);cursor:pointer}
+
+/* NOTE */
+.note{padding:10px 14px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin:12px 0}
+.note strong{color:var(--paper)}
+.note-r{border-left-color:var(--red);background:rgba(255,77,77,.03)}
+.note-o{border-left-color:var(--orange);background:rgba(255,140,0,.03)}
+
+/* TAG */
+.tag{display:inline-flex;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:500}
+.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.tb{background:rgba(61,255,197,.1);color:var(--teal);border:1px solid rgba(61,255,197,.2)}
+.to{background:rgba(255,184,60,.1);color:var(--orange);border:1px solid rgba(255,184,60,.2)}
+.tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+
+/* SUCCESS */
+.success-box{text-align:center;padding:36px 20px;display:none}
+.success-box.show{display:block}
+.success-icon{font-size:52px;margin-bottom:14px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.success-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);letter-spacing:-1px;color:var(--lime);margin-bottom:10px}
+.ref-code{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--paper);letter-spacing:3px;background:var(--smoke);border:1px solid rgba(184,245,62,.25);padding:12px 20px;border-radius:4px;margin:14px auto;display:inline-block}
+.ref-code span{color:var(--lime)}
+
+/* FAQ */
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq-item{border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.faq-q{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:500;transition:background .2s}
+.faq-q:hover{background:rgba(184,245,62,.04)}
+.faq-q.open{background:rgba(184,245,62,.06);color:var(--lime)}
+.faq-arrow{font-size:11px;transition:transform .2s}
+.faq-q.open .faq-arrow{transform:rotate(180deg)}
+.faq-a{display:none;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border)}
+.faq-a.show{display:block}
+
+@media(max-width:700px){
+  nav{padding:14px 16px}
+  .hero{padding:36px 16px 28px}
+  .wrap{padding:0 12px 60px}
+  .plans{grid-template-columns:1fr 1fr}
+  .g2,.fr,.delais{grid-template-columns:1fr}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>&agrave;</span>Porte</a>
+  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">Mon compte</a><a href="index.html" class="back">&larr; Retour au site</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">Protection livraison</div>
+  <h1>Assurance<br><span>&amp; R&eacute;clamations</span></h1>
+  <p>La protection livraison est optionnelle. Choisis un plan selon la valeur declaree de ton colis.</p>
+  <div class="hero-tabs">
+    <div class="htab on" onclick="showTab('plans',this)">Nos plans</div>
+    <div class="htab" onclick="showTab('reclamation',this)">Faire une r&eacute;clamation</div>
+    <div class="htab" onclick="showTab('calculateur',this)">Calculateur</div>
+    <div class="htab" onclick="showTab('suivi',this)">Suivre ma r&eacute;clamation</div>
+    <div class="htab" onclick="showTab('faq',this)">FAQ</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══════════════ PLANS ══════════════ -->
+<div class="content-sec on" id="tab-plans">
+  <div class="sec-title">Nos 4 plans de protection</div>
+  <div class="sec-sub">Sans protection payee, aucune couverture contractuelle ne s'applique. La couverture est limitee a la valeur declaree et au plafond du plan choisi.</div>
+
+  <div class="plans">
+    <div class="plan" onclick="selectPlan(this,'sel','Aucune protection')">
+      <div class="plan-icon">0</div>
+      <div class="plan-name">Aucune protection</div>
+      <div class="plan-price" style="color:var(--muted)">0 $</div>
+      <div class="plan-per">par colis</div>
+      <div class="plan-cov">Aucune couverture contractuelle</div>
+      <ul class="plan-perks">
+        <li>Aucune prime ajoutee</li>
+        <li>Aucun remboursement contractuel</li>
+        <li>Litige analyse seulement pour securite</li>
+        <li>Preuves conservees au dossier</li>
+      </ul>
+    </div>
+    <div class="plan" onclick="selectPlan(this,'sel-teal','Protection Base')">
+      <div class="plan-badge">Base</div>
+      <div class="plan-icon">50</div>
+      <div class="plan-name">Protection Base</div>
+      <div class="plan-price">1 $</div>
+      <div class="plan-per">par colis</div>
+      <div class="plan-cov">Couverture maximale <strong style="color:var(--paper)">50 $</strong></div>
+      <ul class="plan-perks">
+        <li>Pour petits envois</li>
+        <li>Limitee a la valeur declaree</li>
+        <li>Photos et historique requis</li>
+        <li>Analyse du dossier avant decision</li>
+      </ul>
+    </div>
+    <div class="plan" onclick="selectPlan(this,'sel-gold','Protection Standard')">
+      <div class="plan-icon">250</div>
+      <div class="plan-name">Protection Standard</div>
+      <div class="plan-price" style="color:var(--gold)">2,99 $</div>
+      <div class="plan-per">par colis</div>
+      <div class="plan-cov">Couverture maximale <strong style="color:var(--paper)">250 $</strong></div>
+      <ul class="plan-perks">
+        <li>Pour colis de valeur moderee</li>
+        <li>Limitee a la valeur declaree</li>
+        <li>GPS, messages et photos verifies</li>
+        <li>Certains objets peuvent etre exclus</li>
+      </ul>
+    </div>
+    <div class="plan" onclick="selectPlan(this,'sel-red','Protection Plus')">
+      <div class="plan-icon">1000</div>
+      <div class="plan-name">Protection Plus</div>
+      <div class="plan-price" style="color:var(--red)">5,99 $</div>
+      <div class="plan-per">par colis</div>
+      <div class="plan-cov">Couverture maximale <strong style="color:var(--paper)">1 000 $</strong></div>
+      <ul class="plan-perks">
+        <li>Pour envois plus sensibles</li>
+        <li>Limitee a la valeur declaree</li>
+        <li>Preuves completes recommandees</li>
+        <li>Exclusions applicables selon dossier</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:12px;font-weight:500;color:var(--lime);margin-bottom:12px">Regles importantes</div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.7">La protection livraison est optionnelle. Sans protection payee, aucune couverture contractuelle ne s applique. La couverture ne peut jamais depasser la valeur declaree du colis ni le plafond du plan choisi. Les demandes sont analysees avec les preuves disponibles : photos, GPS, messages et historique de livraison. Certains objets ou situations peuvent etre exclus.</div>
+  </div>
+  <div class="g2">
+    <div class="card2">
+      <div style="font-size:12px;font-weight:500;color:var(--lime);margin-bottom:10px">Preuves analysees</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted)">
+        <div>Photos du colis avant et apres livraison</div>
+        <div>GPS et historique de livraison</div>
+        <div>Messages entre expediteur et livreur</div>
+        <div>Valeur declaree et preuve d'achat si disponible</div>
+      </div>
+    </div>
+    <div class="card2">
+      <div style="font-size:12px;font-weight:500;color:var(--lime);margin-bottom:10px">Exclusions possibles</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted)">
+        <div>Contenu interdit ou non declare</div>
+        <div>Emballage inadequat</div>
+        <div>Fausse declaration de valeur</div>
+        <div>Absence de preuves suffisantes</div>
+        <div>Force majeure ou situation hors controle</div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><strong>Important :</strong> Cette protection est un engagement commercial interne de PorteaPorte, pas une police d'assurance externe. Les decisions dependent du plan paye, de la valeur declaree, du plafond applicable et des preuves disponibles.</div>
+</div>
+
+<!-- ══════════════ RÉCLAMATION ══════════════ -->
+<div class="content-sec" id="tab-reclamation">
+  <div class="sec-title">Faire une réclamation</div>
+  <div class="sec-sub">Soumets ta réclamation en 4 étapes. Le traitement commence dans les 2 heures suivant la soumission.</div>
+
+  <div class="steps-horiz">
+    <div class="sh-item on" id="rh-1"><div class="sh-circle">1</div><div class="sh-label">Identification</div></div>
+    <div class="sh-item" id="rh-2"><div class="sh-circle">2</div><div class="sh-label">Problème</div></div>
+    <div class="sh-item" id="rh-3"><div class="sh-circle">3</div><div class="sh-label">Preuves</div></div>
+    <div class="sh-item" id="rh-4"><div class="sh-circle">4</div><div class="sh-label">Confirmation</div></div>
+  </div>
+
+  <!-- ÉTAPE 1 -->
+  <div class="form-sec on" id="rs-1">
+    <div class="card">
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">👤 Identification</div>
+      <div class="fg"><label class="fl">Numéro de colis (ex: PP-12345)</label><input class="fi" type="text" id="r-code" placeholder="PP-12345" style="text-transform:uppercase"></div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Ton prénom et nom</label><input class="fi" type="text" id="r-nom" placeholder="Marie-Claire Tremblay"></div>
+        <div class="fg"><label class="fl">Ton courriel</label><input class="fi" type="email" id="r-email" placeholder="ton@courriel.ca"></div>
+      </div>
+      <div class="fg"><label class="fl">Ton rôle dans cette livraison</label>
+        <select class="fi" id="r-role">
+          <option value="">Choisir...</option>
+          <option>📦 J'étais l'expéditeur</option>
+          <option>🏁 J'étais le destinataire</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Plan d'assurance souscrit</label>
+        <select class="fi" id="r-plan">
+          <option value="">Choisir...</option>
+          <option>Aucune protection (couverture 0 $)</option>
+          <option>Protection Base (couverture 50 $)</option>
+          <option>Protection Standard (couverture 250 $)</option>
+          <option>Protection Plus (couverture 1 000 $)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-next" onclick="goR(2)">Continuer → Décrire le problème</button>
+  </div>
+
+  <!-- ÉTAPE 2 -->
+  <div class="form-sec" id="rs-2">
+    <div class="card">
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🔍 Nature du problème</div>
+      <div class="fg"><label class="fl">Type de problème</label>
+        <select class="fi" id="r-type">
+          <option value="">Choisir...</option>
+          <option>📦 Colis perdu ? introuvable</option>
+          <option>💥 Colis endommagé ? partiellement</option>
+          <option>💥 Colis endommagé ? totalement</option>
+          <option>🕵 Vol suspecté pendant la livraison</option>
+          <option>⏰ Retard important (+ de 48h)</option>
+          <option>❌ Livraison non effectuée</option>
+          <option>📍 Livré à la mauvaise adresse</option>
+          <option>🔧 Autre problème</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Date du problème</label><input class="fi" type="date" id="r-date"></div>
+      <div class="fg"><label class="fl">Valeur déclarée du colis ($)</label><input class="fi" type="number" id="r-valeur" placeholder="500" oninput="calcRemboursement()"></div>
+      <div class="fg"><label class="fl">Description détaillée</label><textarea class="fi" id="r-desc" placeholder="Décris précisément ce qui s'est passé. Plus tu es précis, plus vite on traite ta réclamation..."></textarea></div>
+    </div>
+    <button class="btn-next" onclick="goR(3)">Continuer → Ajouter les preuves</button>
+    <button class="btn-back" onclick="goR(1)">← Retour</button>
+  </div>
+
+  <!-- ÉTAPE 3 -->
+  <div class="form-sec" id="rs-3">
+    <div class="card">
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">📸 Preuves ? Plus tu en fournis, plus vite c'est traité</div>
+      <div class="fg"><label class="fl">Photo du colis endommagé ou état actuel</label>
+        <div class="upload-zone" id="uz-1" onclick="document.getElementById('uf-1').click()">
+          <input type="file" id="uf-1" accept="image/*" style="display:none" onchange="handleUp('uz-1','uo-1','ph-1')">
+          <div id="ph-1" style="font-size:12px;color:var(--muted)">📷 Clique pour ajouter une photo · JPG, PNG · Max 10MB</div>
+          <div class="upload-ok" id="uo-1">✅ Photo ajoutée !</div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Capture d'écran de la conversation avec le livreur (optionnel)</label>
+        <div class="upload-zone" id="uz-2" onclick="document.getElementById('uf-2').click()">
+          <input type="file" id="uf-2" accept="image/*,.pdf" style="display:none" onchange="handleUp('uz-2','uo-2','ph-2')">
+          <div id="ph-2" style="font-size:12px;color:var(--muted)">📱 Capture d'écran ou PDF · Optionnel mais accélère le traitement</div>
+          <div class="upload-ok" id="uo-2">✅ Document ajouté !</div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Facture ou preuve de valeur (recommandé)</label>
+        <div class="upload-zone" id="uz-3" onclick="document.getElementById('uf-3').click()">
+          <input type="file" id="uf-3" accept="image/*,.pdf" style="display:none" onchange="handleUp('uz-3','uo-3','ph-3')">
+          <div id="ph-3" style="font-size:12px;color:var(--muted)">🧾 Facture d'achat ou estimation · Recommandé pour montants &gt;500 $</div>
+          <div class="upload-ok" id="uo-3">✅ Facture ajoutée !</div>
+        </div>
+      </div>
+    </div>
+    <div class="note-o note">⚡ <strong>Conseil :</strong> Avec 3 pièces jointes, le délai de traitement est réduit de 40%. Sans pièce jointe, notre équipe te contactera pour en obtenir.</div>
+    <button class="btn-next" onclick="goR(4)">Continuer → Confirmation</button>
+    <button class="btn-back" onclick="goR(2)">← Retour</button>
+  </div>
+
+  <!-- ÉTAPE 4 -->
+  <div class="form-sec" id="rs-4">
+    <div class="card" id="recap-recl">
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">✅ Résumé de ta réclamation</div>
+      <div id="recap-content" style="display:flex;flex-direction:column;gap:8px;font-size:12px"></div>
+    </div>
+    <div class="note">🔒 <strong>Escrow protégé :</strong> Si le paiement est encore en escrow Stripe, il sera automatiquement bloqué pendant l'analyse de ta réclamation. Aucun fond ne sera libéré au livreur avant résolution.</div>
+    <button class="btn-next" onclick="submitRecl()" style="font-size:15px;padding:14px">📝 Soumettre ma réclamation</button>
+    <button class="btn-back" onclick="goR(3)">← Retour</button>
+  </div>
+
+  <!-- SUCCÈS -->
+  <div class="success-box" id="recl-success">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Réclamation soumise !</div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px">Notre équipe analyse ton dossier. Tu recevras une mise à jour par courriel sous peu.</p>
+    <div class="ref-code">CLM-<span id="clm-code">XXXXX</span></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:20px">Numéro de dossier ? garde-le précieusement</p>
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:380px;margin:0 auto;text-align:left">
+      <div class="card2"><div style="font-size:12px;font-weight:500;margin-bottom:3px">📧 Courriel de confirmation</div><div style="font-size:11px;color:var(--muted)">Envoyé dans les 5 minutes avec tous les détails et le délai estimé.</div></div>
+      <div class="card2"><div style="font-size:12px;font-weight:500;margin-bottom:3px">🔍 Suivi en temps réel</div><div style="font-size:11px;color:var(--muted)">Utilise l'onglet "Suivre ma réclamation" avec ton numéro CLM.</div></div>
+      <div class="card2"><div style="font-size:12px;font-weight:500;margin-bottom:3px">💸 Remboursement</div><div style="font-size:11px;color:var(--muted)">Selon ton plan : 24h à 7 jours ouvrables après approbation.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CALCULATEUR ══════════════ -->
+<div class="content-sec" id="tab-calculateur">
+  <div class="sec-title">Calculateur de remboursement</div>
+  <div class="sec-sub">Estime rapidement le montant que tu peux récupérer selon ton plan et la valeur de ton colis.</div>
+
+  <div class="card">
+    <div class="fg"><label class="fl">Valeur déclarée de ton colis ($)</label><input type="range" id="calc-slider" min="0" max="1000" value="250" step="10" oninput="updateCalc()"></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:16px"><span>0 $</span><span id="calc-val-label" style="color:var(--lime);font-weight:500">250 $</span><span>1 000 $</span></div>
+    <div class="fg"><label class="fl">Plan d'assurance</label>
+      <select class="fi" id="calc-plan" onchange="updateCalc()">
+        <option value="0">Aucune protection - 0 $ - max 0 $</option>
+        <option value="1">Protection Base - 1 $ - max 50 $</option>
+        <option value="2.99">Protection Standard - 2,99 $ - max 250 $</option>
+        <option value="5.99">Protection Plus - 5,99 $ - max 1 000 $</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Type de dommage</label>
+      <select class="fi" id="calc-dmg" onchange="updateCalc()">
+        <option value="1">Perte totale ou vol (100%)</option>
+        <option value="0.75">Dommages majeurs (75%)</option>
+        <option value="0.5">Dommages partiels (50%)</option>
+        <option value="0.25">Dommages mineurs (25%)</option>
+      </select>
+    </div>
+    <div class="calc-box">
+      <div style="font-size:11px;color:var(--muted)">Remboursement estimé</div>
+      <div class="calc-result" id="calc-result">250 $</div>
+      <div class="calc-sub" id="calc-sub">Protection Standard - Perte totale - Valeur 250 $ (max 250 $)</div>
+    </div>
+    <div id="calc-details" style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Valeur déclarée</span><span id="cd-valeur">250 $</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Couverture max du plan</span><span id="cd-max">250 $</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Prime d'assurance payée</span><span id="cd-prime">Gratuit</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">% de dommage</span><span id="cd-pct">100%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:600;font-size:14px"><span>Remboursement estimé</span><span style="color:var(--lime)" id="cd-final">250 $</span></div>
+    </div>
+  </div>
+  <div class="note">💡 <strong>Ce calculateur est indicatif.</strong> Le montant réel dépend de l'évaluation du dossier, des preuves fournies et de la valeur vérifiée du colis.</div>
+</div>
+
+<!-- ══════════════ SUIVI ══════════════ -->
+<div class="content-sec" id="tab-suivi">
+  <div class="sec-title">Suivre ma réclamation</div>
+  <div class="sec-sub">Entre ton numéro de dossier pour voir l'état de ta réclamation en temps réel.</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="fr" style="align-items:flex-end">
+      <div class="fg" style="margin-bottom:0"><label class="fl">Numéro de dossier (CLM-XXXXX)</label><input class="fi" type="text" id="suivi-input" placeholder="CLM-00044" style="text-transform:uppercase"></div>
+      <button onclick="rechercherRecl()" style="background:var(--lime);color:var(--ink);border:none;padding:10px 18px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;white-space:nowrap;height:42px">Rechercher →</button>
+    </div>
+  </div>
+
+  <div id="suivi-result" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:14px;font-weight:500" id="suivi-ref">CLM-00044</div><div style="font-size:11px;color:var(--muted)" id="suivi-date">Soumis le 14 décembre 2026</div></div>
+        <span class="tag to" id="suivi-statut">🟡 En analyse</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="suivi-step" id="ss-1" style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)"><div style="width:24px;height:24px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</div><div><div style="font-size:12px;font-weight:500">Réclamation reçue</div><div style="font-size:10px;color:var(--muted)">14 déc. 2026 à 09h15</div></div></div>
+        <div class="suivi-step" id="ss-2" style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)"><div style="width:24px;height:24px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</div><div><div style="font-size:12px;font-weight:500">Documents vérifiés</div><div style="font-size:10px;color:var(--muted)">14 déc. 2026 à 10h42</div></div></div>
+        <div class="suivi-step" id="ss-3" style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)"><div style="width:24px;height:24px;border-radius:50%;background:rgba(184,245,62,.2);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;animation:pulse 1.5s infinite">⏳</div><div><div style="font-size:12px;font-weight:500;color:var(--lime)">En cours d'analyse ? Agent assigné</div><div style="font-size:10px;color:var(--muted)">En cours · Résultat attendu avant 17h</div></div></div>
+        <div class="suivi-step" id="ss-4" style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);opacity:.35"><div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">4</div><div><div style="font-size:12px;font-weight:500">Décision rendue</div><div style="font-size:10px;color:var(--muted)">En attente</div></div></div>
+        <div class="suivi-step" id="ss-5" style="display:flex;gap:14px;padding:12px 0;opacity:.35"><div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">5</div><div><div style="font-size:12px;font-weight:500">Remboursement envoyé</div><div style="font-size:10px;color:var(--muted)">En attente</div></div></div>
+      </div>
+    </div>
+    <div class="note">📧 Tu recevras un courriel automatique à chaque changement de statut. Délai restant estimé : <strong style="color:var(--lime)">~6 heures</strong></div>
+  </div>
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</div>
+
+<!-- ══════════════ FAQ ══════════════ -->
+<div class="content-sec" id="tab-faq">
+  <div class="sec-title">Questions fréquentes</div>
+  <div class="sec-sub">Tout ce que tu dois savoir sur notre système d'assurance.</div>
+
+  <div class="faq">
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Combien de temps pour recevoir une decision ? <span class="faq-arrow">▼</span></div><div class="faq-a">Chaque demande est analysee avec les preuves disponibles : photos, GPS, messages et historique de livraison. Le delai depend de la clarte du dossier et des validations requises.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Mon colis n'etait pas protege, ai-je une couverture ? <span class="faq-arrow">▼</span></div><div class="faq-a">Non. Sans protection payee, aucune couverture contractuelle ne s'applique. Le dossier peut quand meme etre analyse pour la securite de la plateforme.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Que se passe-t-il si la valeur reelle differe de la valeur declaree ? <span class="faq-arrow">▼</span></div><div class="faq-a">La couverture est toujours limitee a la valeur declaree du colis et ne peut jamais depasser le plafond du plan choisi.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Le livreur peut-il contester ma réclamation ? <span class="faq-arrow">▼</span></div><div class="faq-a">Oui. Le livreur est notifié et peut soumettre sa version des faits et ses preuves dans un délai de 24h. Notre équipe arbitre le litige de façon impartiale. En cas d'égalité de preuves, l'expéditeur est favorisé.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Certains objets sont-ils exclus ? <span class="faq-arrow">▼</span></div><div class="faq-a">Oui. Certains objets ou situations peuvent etre exclus, notamment contenu interdit, emballage inadequat, fausse declaration ou absence de preuves suffisantes.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Que faire si mon colis est perdu et le livreur ne répond plus ? <span class="faq-arrow">▼</span></div><div class="faq-a">Soumet immédiatement une réclamation avec le type "Colis perdu". PorteàPorte suspendra le compte du livreur et bloquera tous ses fonds en attente. Si la perte est confirmée après 72h, le remboursement est automatiquement déclenché selon ton plan.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Mon remboursement sera-t-il en argent ou en crédit ? <span class="faq-arrow">▼</span></div><div class="faq-a">Par défaut, le remboursement est effectué via Stripe vers la carte de paiement originale. Sur demande, tu peux recevoir un crédit PorteàPorte+ équivalent à 110% du montant (bonus de 10% si tu choisis le crédit).</div></div>
+  </div>
+
+  <div class="card" style="margin-top:16px;text-align:center">
+    <div style="font-size:24px;margin-bottom:10px">💬</div>
+    <div style="font-size:14px;font-weight:500;margin-bottom:6px">Tu as d'autres questions ?</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Notre équipe répond en moins de 2h en semaine, 4h le week-end.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button onclick="alert('Chat ouvert !')" style="background:var(--lime);color:var(--ink);border:none;padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px">💬 Chat en direct</button>
+      <a href="mailto:assurance@porteaporte.site" style="background:transparent;color:var(--paper);border:1px solid var(--border);padding:10px 20px;font-size:13px;font-weight:500;border-radius:2px;text-decoration:none">📧 assurance@porteaporte.site</a>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function showTab(id,el){
+  document.querySelectorAll('.content-sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.htab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  el.classList.add('on');
+  window.scrollTo({top:200,behavior:'smooth'});
+}
+
+function selectPlan(el,cls,name){
+  document.querySelectorAll('.plan').forEach(p=>p.classList.remove('sel','sel-teal','sel-gold','sel-red'));
+  el.classList.add(cls);
+}
+
+let rStep=1;
+function goR(n){
+  if(n>rStep){
+    if(rStep===1&&(!document.getElementById('r-code').value||!document.getElementById('r-nom').value||!document.getElementById('r-email').value)){alert('Veuillez remplir tous les champs.');return}
+    if(rStep===2&&(!document.getElementById('r-type').value||!document.getElementById('r-valeur').value)){alert('Veuillez remplir tous les champs.');return}
+    if(rStep===4) return;
+    if(n===4) buildRecap();
+  }
+  document.getElementById('rs-'+rStep).classList.remove('on');
+  document.getElementById('rh-'+rStep).classList.remove('on');
+  document.getElementById('rh-'+rStep).classList.add('done');
+  rStep=n;
+  document.getElementById('rs-'+n).classList.add('on');
+  document.getElementById('rh-'+n).classList.add('on');
+  window.scrollTo({top:300,behavior:'smooth'});
+}
+
+function buildRecap(){
+  const code=document.getElementById('r-code').value.toUpperCase();
+  const nom=document.getElementById('r-nom').value;
+  const plan=document.getElementById('r-plan').value;
+  const type=document.getElementById('r-type').value;
+  const valeur=document.getElementById('r-valeur').value;
+  document.getElementById('recap-content').innerHTML=`
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Colis</span><span>${code||'?'}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Réclamant</span><span>${nom}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Plan</span><span style="color:var(--lime)">${plan||'?'}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Problème</span><span>${type||'?'}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--muted)">Valeur déclarée</span><span style="color:var(--lime)">${parseFloat(valeur||0).toLocaleString('fr-CA')} $</span></div>`;
+}
+
+function submitRecl(){
+  const code='BROUILLON';
+  document.getElementById('clm-code').textContent=code;
+  const note=document.querySelector('#recl-success .success-sub');
+  if(note) note.textContent='Ta demande est prete a etre transmise. Le numero officiel sera genere par le serveur lorsque le module litige backend sera active.';
+  document.getElementById('rs-4').classList.remove('on');
+  document.getElementById('recl-success').classList.add('show');
+  window.scrollTo({top:300,behavior:'smooth'});
+}
+
+function handleUp(zoneId,okId,phId){
+  document.getElementById(zoneId).classList.add('up');
+  document.getElementById(phId).style.display='none';
+  document.getElementById(okId).classList.add('show');
+}
+
+// CALCULATEUR
+function updateCalc(){
+  const val=parseInt(document.getElementById('calc-slider').value);
+  const planVal=parseFloat(document.getElementById('calc-plan').value);
+  const dmg=parseFloat(document.getElementById('calc-dmg').value);
+  document.getElementById('calc-val-label').textContent=val.toLocaleString('fr-CA')+' $';
+  const maxMap={0:0,1:50,2.99:250,5.99:1000};
+  const max=maxMap[planVal] ?? 0;
+  const planNames={0:'Aucune protection',1:'Protection Base',2.99:'Protection Standard',5.99:'Protection Plus'};
+  const dmgNames={1:'Perte totale',0.75:'Dommages majeurs',0.5:'Dommages partiels',0.25:'Dommages mineurs'};
+  const remb=Math.min(val*dmg,max);
+  document.getElementById('calc-result').textContent=Math.round(remb).toLocaleString('fr-CA')+' $';
+  document.getElementById('calc-sub').textContent=`${planNames[planVal]} - ${dmgNames[dmg]} - Valeur ${val.toLocaleString('fr-CA')} $ (max ${max.toLocaleString('fr-CA')} $)`;
+  document.getElementById('cd-valeur').textContent=val.toLocaleString('fr-CA')+' $';
+  document.getElementById('cd-max').textContent=max.toLocaleString('fr-CA')+' $';
+  document.getElementById('cd-prime').textContent=planVal===0?'Gratuit':planVal.toFixed(2)+' $';
+  document.getElementById('cd-pct').textContent=Math.round(dmg*100)+'%';
+  document.getElementById('cd-final').textContent=Math.round(remb).toLocaleString('fr-CA')+' $';
+}
+updateCalc();
+
+// SUIVI
+function rechercherRecl(){
+  const val=document.getElementById('suivi-input').value.trim();
+  if(!val){alert('Entre un numéro de dossier CLM-XXXXX');return}
+  document.getElementById('suivi-result').style.display='block';
+  document.getElementById('suivi-ref').textContent=val.toUpperCase();
+  window.scrollTo({top:400,behavior:'smooth'});
+}
+
+// FAQ
+function toggleFaq(el){
+  const a=el.nextElementSibling;
+  el.classList.toggle('open');
+  a.classList.toggle('show');
+}
+</script>
+</body>
+</html>
+
+
+

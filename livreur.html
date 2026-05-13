@@ -1,0 +1,821 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Deviens livreur certifiÃ© PorteÃ Porte â€” Travailleur autonome, tu choisis tes trajets, tu gagnes des bonus mensuels.">
+<title>PorteÃ Porte â€” Devenir livreur certifiÃ© ðŸ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+/* NAV */
+nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;text-decoration:none;color:var(--paper)}
+.logo span{color:var(--lime)}
+.back{font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s}
+.back:hover{color:var(--lime)}
+
+/* HERO */
+.hero{padding:60px 40px 48px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(184,245,62,.07),transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);padding:6px 16px;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:20px;border-radius:2px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,96px);letter-spacing:-1px;line-height:.95;margin-bottom:16px}
+.hero h1 span{color:var(--lime)}
+.hero p{font-size:16px;color:var(--muted);max-width:480px;margin:0 auto 32px;line-height:1.65;font-weight:300}
+
+/* AVANTAGES */
+.avantages{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+.av{background:var(--smoke);border:1px solid var(--border);padding:16px 20px;border-radius:2px;text-align:center;min-width:140px}
+.av-n{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--lime);letter-spacing:-1px;line-height:1}
+.av-l{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* STEPPER */
+.stepper{display:flex;justify-content:center;gap:0;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.step-pill{flex:1;text-align:center;position:relative}
+.step-pill::after{content:'';position:absolute;top:14px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.step-pill:last-child::after{display:none}
+.step-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;margin:0 auto 6px;position:relative;z-index:1;transition:all .3s}
+.step-pill.active .step-circle{border-color:var(--lime);background:var(--lime);color:var(--ink)}
+.step-pill.done .step-circle{border-color:var(--lime);background:var(--lime);color:var(--ink)}
+.step-pill.done .step-circle::after{content:'âœ“'}
+.step-label{font-size:10px;color:var(--muted);letter-spacing:.5px}
+.step-pill.active .step-label{color:var(--lime)}
+
+/* FORM CONTAINER */
+.form-container{max-width:640px;margin:0 auto;padding:0 20px 80px}
+.form-section{display:none}
+.form-section.active{display:block}
+
+/* CARDS */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:28px;margin-bottom:16px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.5px;color:var(--lime);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* FORM ELEMENTS */
+.fg{margin-bottom:16px}
+.fl{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.12);padding:11px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi::placeholder{color:rgba(245,240,232,.22)}
+.fi.error{border-color:var(--red)}
+select.fi option{background:#141918}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.error-msg{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.fg.has-error .error-msg{display:block}
+.fg.has-error .fi{border-color:var(--red)}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed rgba(245,240,232,.15);border-radius:4px;padding:28px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--lime);background:rgba(184,245,62,.04)}
+.upload-zone.uploaded{border-color:var(--lime);background:rgba(184,245,62,.06);border-style:solid}
+.upload-icon{font-size:32px;margin-bottom:10px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+.upload-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-success{display:none;align-items:center;gap:10px;font-size:13px;color:var(--lime)}
+.upload-success.show{display:flex;justify-content:center}
+
+/* CHECKBOX */
+.checkbox-group{display:flex;flex-direction:column;gap:10px}
+.checkbox-item{display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .2s}
+.checkbox-item:hover{border-color:rgba(184,245,62,.25);background:rgba(184,245,62,.03)}
+.checkbox-item input{display:none}
+.checkbox-box{width:20px;height:20px;border:2px solid rgba(245,240,232,.2);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
+.checkbox-item input:checked~.checkbox-box,.checkbox-item.checked .checkbox-box{background:var(--lime);border-color:var(--lime);color:var(--ink)}
+.checkbox-item input:checked~.checkbox-box::after,.checkbox-item.checked .checkbox-box::after{content:'âœ“';font-size:12px;font-weight:700;color:var(--ink)}
+.checkbox-text{flex:1}
+.checkbox-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.checkbox-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* VEHICLE SELECTOR */
+.vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vehicle-card{border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all .2s}
+.vehicle-card:hover{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.04)}
+.vehicle-card.selected{border-color:var(--lime);background:rgba(184,245,62,.08)}
+.vehicle-icon{font-size:28px;margin-bottom:6px}
+.vehicle-name{font-size:12px;font-weight:500}
+.vehicle-cap{font-size:10px;color:var(--muted);margin-top:2px}
+.vehicle-card.eco{border-color:rgba(184,245,62,.18);background:rgba(184,245,62,.03)}
+.vehicle-card.eco:hover,.vehicle-card.eco.selected{border-color:var(--lime);background:rgba(184,245,62,.1);transform:translateY(-3px)}
+.vehicle-eco{font-size:10px;color:var(--lime);font-weight:600;margin-top:4px}
+
+/* SCORE PREVIEW */
+.score-preview{background:rgba(184,245,62,.05);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:20px;margin-top:16px}
+.score-title{font-size:12px;font-weight:500;color:var(--lime);margin-bottom:12px;letter-spacing:1px;text-transform:uppercase}
+.score-bars{display:flex;flex-direction:column;gap:8px}
+.score-bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+.score-bar-label{color:var(--muted);width:160px;flex-shrink:0}
+.score-bar-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.score-bar-fill{height:100%;background:var(--lime);border-radius:2px;width:0;transition:width 1s ease}
+.score-bar-val{color:var(--paper);font-weight:500;width:40px;text-align:right}
+
+/* NIVEAU PREVIEW */
+.niveau-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:2px;font-size:13px;font-weight:500;margin-top:12px}
+.niveau-bronze{background:rgba(232,160,96,.1);border:1px solid rgba(232,160,96,.25);color:#E8A060}
+.niveau-argent{background:rgba(168,190,200,.1);border:1px solid rgba(168,190,200,.25);color:#A8BEC8}
+.niveau-or{background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);color:#F5C842}
+.niveau-elite{background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);color:var(--lime)}
+
+/* BUTTONS */
+.btn-next{width:100%;background:var(--lime);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:.5px;border-radius:2px;margin-top:8px}
+.btn-next:hover{background:var(--teal);transform:translateY(-1px);box-shadow:0 12px 30px rgba(184,245,62,.25)}
+.btn-back{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);padding:12px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;cursor:pointer;transition:all .2s;border-radius:2px;margin-top:8px}
+.btn-back:hover{color:var(--paper);border-color:rgba(245,240,232,.25)}
+
+/* SUCCESS */
+.success-screen{text-align:center;padding:48px 20px}
+.success-icon{font-size:64px;margin-bottom:20px;animation:bounce .6s ease}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.success-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:-1px;color:var(--lime);margin-bottom:12px}
+.success-sub{font-size:16px;color:var(--muted);max-width:420px;margin:0 auto 32px;line-height:1.65;font-weight:300}
+.card-officielle{background:linear-gradient(135deg,#1A2820,#0F1F16);border:1px solid rgba(184,245,62,.3);border-radius:8px;padding:22px 24px;max-width:280px;margin:0 auto 28px;position:relative;overflow:hidden;text-align:left}
+.card-officielle::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(184,245,62,.1),transparent 70%)}
+.card-logo{font-family:'Bebas Neue',sans-serif;font-size:14px;font-weight:800;color:var(--lime);margin-bottom:10px;letter-spacing:2px}
+.card-name-field{font-size:15px;font-weight:500;margin-bottom:3px}
+.card-id{font-size:10px;color:var(--muted);letter-spacing:1px;font-family:monospace;margin-bottom:12px}
+.card-niveau{display:inline-flex;align-items:center;gap:5px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.22);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--lime)}
+.card-cert{font-size:9px;color:var(--muted);margin-top:8px}
+.next-steps{display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto;text-align:left}
+.next-step{display:flex;gap:12px;padding:12px 14px;background:var(--smoke);border:1px solid var(--border);border-radius:2px;font-size:13px}
+.ns-num{width:24px;height:24px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* NOTE */
+.note{padding:12px 14px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.04);font-size:12px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0}
+.note strong{color:var(--paper)}
+
+@media(max-width:600px){
+  nav{padding:14px 16px}
+  .hero{padding:40px 16px 32px}
+  .form-container{padding:0 12px 60px}
+  .fr{grid-template-columns:1fr}
+  .vehicle-grid{grid-template-columns:1fr 1fr}
+  .avantages{gap:10px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>Ã </span>Porte</a>
+  <a href="profile.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">ðŸ‘¤ Mon profil</a><a href="dashboard-livreur.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">ðŸš— Dashboard</a><a href="index.html" class="back">â† Retour au site</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:10px 16px;margin-bottom:20px;font-size:12px;color:rgba(245,240,232,.7);max-width:600px">
+      ðŸ <strong style="color:var(--lime)">PorteÃ Porte est une plateforme numÃ©rique de mise en relation.</strong> Tu gardes ton statut de particulier. Pour le covoiturage, tu partages tes frais rÃ©els de dÃ©placement â€” pas un salaire.
+    </div>
+    <div class="hero-badge">ðŸš— Devenir livreur certifiÃ©</div>
+  <h1>Roule.<br><span>Gagne.</span><br>Aide.</h1>
+  <p>Tu fais dÃ©jÃ  le trajet. Transporte des colis sur le chemin et gagne des bonus mensuels. Travailleur autonome â€” tu gardes ta libertÃ© totale.</p>
+
+  <div class="avantages">
+    <div class="av"><div class="av-n">Ã—2.5</div><div class="av-l">Bonus niveau Ã‰lite</div></div>
+    <div class="av"><div class="av-n">0 $</div><div class="av-l">Frais d'inscription</div></div>
+    <div class="av"><div class="av-n">24/7</div><div class="av-l">Tu choisis tes trajets</div></div>
+    <div class="av"><div class="av-n">ðŸ</div><div class="av-l">Canada seulement</div></div>
+  </div>
+
+  <!-- STEPPER -->
+  <div class="stepper">
+    <div class="step-pill active" id="pill-1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Profil</div>
+    </div>
+    <div class="step-pill" id="pill-2">
+      <div class="step-circle">2</div>
+      <div class="step-label">VÃ©hicule</div>
+    </div>
+    <div class="step-pill" id="pill-3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Documents</div>
+    </div>
+    <div class="step-pill" id="pill-4">
+      <div class="step-circle">4</div>
+      <div class="step-label">Trajets</div>
+    </div>
+    <div class="step-pill" id="pill-5">
+      <div class="step-circle">5</div>
+      <div class="step-label">Confirmation</div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULAIRE -->
+<div class="form-container">
+
+  <!-- Ã‰TAPE 1 â€” PROFIL -->
+  <div class="form-section active" id="step-1">
+    <div class="card">
+      <div class="card-title">ðŸ‘¤ Ton profil</div>
+      <div class="fr">
+        <div class="fg"><label class="fl">PrÃ©nom</label><input class="fi" type="text" id="prenom" placeholder="Marie-Claire" required></div>
+        <div class="fg"><label class="fl">Nom</label><input class="fi" type="text" id="nom" placeholder="Tremblay" required></div>
+      </div>
+      <div class="fg"><label class="fl">Adresse courriel</label><input class="fi" type="email" id="email" placeholder="ton@courriel.ca" required></div>
+      <div class="fg"><label class="fl">NumÃ©ro de tÃ©lÃ©phone</label><input class="fi" type="tel" id="tel" placeholder="+1 (418) 555-0123" required></div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Ville de dÃ©part habituelle</label><input class="fi" type="text" id="ville" placeholder="MontrÃ©al" required></div>
+        <div class="fg"><label class="fl">Province</label>
+          <select class="fi" id="province">
+            <option value="">Choisir...</option>
+            <option>QuÃ©bec</option><option>Ontario</option><option>Colombie-Britannique</option>
+            <option>Alberta</option><option>Manitoba</option><option>Saskatchewan</option>
+            <option>Nouvelle-Ã‰cosse</option><option>Nouveau-Brunswick</option>
+            <option>Terre-Neuve</option><option>ÃŽ.-P.-Ã‰.</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Date de naissance</label><input class="fi" type="date" id="dob" required></div>
+    </div>
+    <div class="note"><strong>ðŸ”’ ConfidentialitÃ© :</strong> Tes informations sont protÃ©gÃ©es selon la Loi 25 du QuÃ©bec et la PIPEDA. Elles ne sont jamais vendues ou partagÃ©es.</div>
+    <button class="btn-next" onclick="goToStep(2)">Continuer â†’ VÃ©hicule</button>
+  </div>
+
+  <!-- Ã‰TAPE 2 â€” VÃ‰HICULE -->
+  <div class="form-section" id="step-2">
+    <div class="card">
+      <div class="card-title">ðŸš— Ton moyen de transport</div>
+
+      <!-- BADGE Ã‰CO -->
+      <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.18);border-radius:4px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px">
+        <span style="font-size:18px">ðŸŒ±</span>
+        <div>
+          <strong style="color:var(--lime)">Bonus vert automatique !</strong>
+          <div style="color:var(--muted);margin-top:2px">Les transports Ã©cologiques (vÃ©lo, trottinette, marche, Ã©lectrique) reÃ§oivent un <strong style="color:var(--lime)">bonus de +10% Ã  +20%</strong> sur chaque livraison et un badge exclusif.</div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Type de transport</label>
+
+        <!-- SECTION Ã‰CO -->
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime);margin-bottom:8px;display:flex;align-items:center;gap:6px">ðŸŒ± Transport Ã©cologique â€” Bonus +10% Ã  +20%</div>
+        <div class="vehicle-grid" id="vehicle-grid" style="margin-bottom:14px">
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'Ã€ pied','eco','+20%')">
+            <div class="vehicle-icon">ðŸš¶</div>
+            <div class="vehicle-name">Ã€ pied</div>
+            <div class="vehicle-cap">Quartier Â· &lt;2 km</div>
+            <div class="vehicle-eco">ðŸŒ± +20% bonus</div>
+          </div>
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'VÃ©lo','eco','+20%')">
+            <div class="vehicle-icon">ðŸš²</div>
+            <div class="vehicle-name">VÃ©lo</div>
+            <div class="vehicle-cap">Urbain Â· &lt;10 km</div>
+            <div class="vehicle-eco">ðŸŒ± +20% bonus</div>
+          </div>
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'VÃ©lo Ã©lectrique','eco','+15%')">
+            <div class="vehicle-icon">âš¡ðŸš²</div>
+            <div class="vehicle-name">VÃ©lo Ã©lectrique</div>
+            <div class="vehicle-cap">Urbain Â· &lt;30 km</div>
+            <div class="vehicle-eco">ðŸŒ± +15% bonus</div>
+          </div>
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'Trottinette Ã©lectrique','eco','+15%')">
+            <div class="vehicle-icon">ðŸ›´</div>
+            <div class="vehicle-name">Trottinette Ã©lec.</div>
+            <div class="vehicle-cap">Urbain Â· &lt;20 km</div>
+            <div class="vehicle-eco">ðŸŒ± +15% bonus</div>
+          </div>
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'Voiture Ã©lectrique','eco','+10%')">
+            <div class="vehicle-icon">ðŸ”‹ðŸš—</div>
+            <div class="vehicle-name">Voiture Ã©lectrique</div>
+            <div class="vehicle-cap">Longue distance</div>
+            <div class="vehicle-eco">ðŸŒ± +10% bonus</div>
+          </div>
+          <div class="vehicle-card eco" onclick="selectVehicle(this,'VUS Ã©lectrique / hybride','eco','+10%')">
+            <div class="vehicle-icon">ðŸ”‹ðŸš™</div>
+            <div class="vehicle-name">VUS Ã©lec. / hybride</div>
+            <div class="vehicle-cap">Gros colis Â· longue dist.</div>
+            <div class="vehicle-eco">ðŸŒ± +10% bonus</div>
+          </div>
+        </div>
+
+        <!-- SECTION STANDARD -->
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">ðŸš— Transport standard</div>
+        <div class="vehicle-grid" style="margin-bottom:14px">
+          <div class="vehicle-card" onclick="selectVehicle(this,'Moto','standard','')">
+            <div class="vehicle-icon">ðŸï¸</div>
+            <div class="vehicle-name">Moto</div>
+            <div class="vehicle-cap">Express urbain</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'Voiture','standard','')">
+            <div class="vehicle-icon">ðŸš—</div>
+            <div class="vehicle-name">Voiture</div>
+            <div class="vehicle-cap">Petits colis</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'VUS / Pickup','standard','')">
+            <div class="vehicle-icon">ðŸš™</div>
+            <div class="vehicle-name">VUS / Pickup</div>
+            <div class="vehicle-cap">Colis moyens</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'Fourgonnette','standard','')">
+            <div class="vehicle-icon">ðŸš</div>
+            <div class="vehicle-name">Fourgonnette</div>
+            <div class="vehicle-cap">Gros colis</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'Camion','standard','')">
+            <div class="vehicle-icon">ðŸšš</div>
+            <div class="vehicle-name">Camion</div>
+            <div class="vehicle-cap">Meubles, voitures</div>
+          </div>
+        </div>
+
+        <!-- SECTION REMORQUE -->
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">ðŸš› Avec remorque â€” Gros volumes</div>
+        <div class="vehicle-grid">
+          <div class="vehicle-card" onclick="selectVehicle(this,'Remorque fermÃ©e','trailer','')">
+            <div class="vehicle-icon">ðŸš›</div>
+            <div class="vehicle-name">Remorque fermÃ©e</div>
+            <div class="vehicle-cap">Marchandise protÃ©gÃ©e</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Parfait pour l'Ã©lectro, meubles</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'Remorque ouverte','trailer','')">
+            <div class="vehicle-icon">ðŸšœ</div>
+            <div class="vehicle-name">Remorque ouverte</div>
+            <div class="vehicle-cap">Gros matÃ©riaux</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Bois, matÃ©riaux, vÃ©hicules</div>
+          </div>
+          <div class="vehicle-card" onclick="selectVehicle(this,'Plateau porte-voiture','trailer','')">
+            <div class="vehicle-icon">ðŸš˜</div>
+            <div class="vehicle-name">Porte-voiture</div>
+            <div class="vehicle-cap">Transport vÃ©hicules</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Voitures, motos, VTT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SÃ‰LECTION AFFICHÃ‰E -->
+      <div id="vehicle-selected-display" style="display:none;margin-top:14px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.2);border-radius:4px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Transport sÃ©lectionnÃ©</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:14px;font-weight:500" id="v-selected-name">â€”</div>
+          <div style="font-size:12px;color:var(--lime);font-weight:600" id="v-selected-bonus"></div>
+        </div>
+      </div>
+
+      <!-- CHAMPS CONDITIONNELS -->
+      <div id="vehicule-motorise-fields" style="display:none;margin-top:14px">
+        <div class="fr">
+          <div class="fg"><label class="fl">Marque</label><input class="fi" type="text" id="marque" placeholder="Toyota"></div>
+          <div class="fg"><label class="fl">ModÃ¨le & AnnÃ©e</label><input class="fi" type="text" id="modele" placeholder="RAV4 2021"></div>
+        </div>
+        <div class="fg"><label class="fl">Plaque d'immatriculation</label><input class="fi" type="text" id="plaque" placeholder="ABC-1234" style="text-transform:uppercase"></div>
+        <div class="fg" id="remorque-fields" style="display:none">
+          <label class="fl">CapacitÃ© de la remorque</label>
+          <select class="fi" id="remorque-cap">
+            <option>Jusqu'Ã  500 kg</option>
+            <option>500 kg Ã  1 500 kg</option>
+            <option>1 500 kg Ã  3 500 kg</option>
+            <option>Plus de 3 500 kg</option>
+          </select>
+          <label class="fl" style="margin-top:10px">Longueur intÃ©rieure (pieds)</label>
+          <input class="fi" type="number" id="remorque-long" placeholder="16" min="4" max="53">
+        </div>
+      </div>
+
+      <!-- CHAMPS VÃ‰LO/PIED -->
+      <div id="vehicule-eco-fields" style="display:none;margin-top:14px">
+        <label class="fl">Zone de livraison prÃ©fÃ©rÃ©e</label>
+        <input class="fi" type="text" id="eco-zone" placeholder="Centre-ville MontrÃ©al, Vieux-QuÃ©bec...">
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.6;padding:10px;background:var(--s2);border-radius:4px">
+          ðŸŒ± Ton badge <strong style="color:var(--lime)">"Livreur Ã‰colo"</strong> sera affichÃ© sur ton profil public et sur chaque livraison que tu complÃ¨tes. Les clients voient ton transport Ã©cologique avant de choisir !
+        </div>
+      </div>
+    </div>
+
+    <div class="note"><strong>ðŸ’¡ Conseil :</strong> Les remorques fermÃ©es et les voitures Ã©lectriques ont les meilleurs taux d'acceptation sur la plateforme â€” les expÃ©diteurs aiment la protection et l'aspect Ã©cologique.</div>
+    <button class="btn-next" onclick="goToStep(3)">Continuer â†’ Documents</button>
+    <button class="btn-back" onclick="goToStep(1)">â† Retour</button>
+  </div>
+
+  <!-- Ã‰TAPE 3 â€” DOCUMENTS -->
+  <div class="form-section" id="step-3">
+    <div class="card">
+      <div class="card-title">Piece d'identite officielle</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Telecharge une piece d'identite officielle valide avec photo. Le permis de conduire est requis seulement pour les livraisons en vehicule motorise.</p>
+      <div class="upload-zone" id="zone-permis" onclick="document.getElementById('input-permis').click()">
+        <input type="file" id="input-permis" accept="image/*,.pdf" style="display:none" onchange="handleUpload(this,'zone-permis','success-permis','Piece d identite')">
+        <div id="zone-permis-content">
+          <div class="upload-icon">ðŸªª</div>
+          <div class="upload-title">Clique ou glisse ta piece d'identite ici</div>
+          <div class="upload-sub">JPG, PNG ou PDF Â· Max 10 MB</div>
+        </div>
+        <div class="upload-success" id="success-permis">Piece d'identite telechargee avec succes !</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ðŸ¤³ Selfie de vÃ©rification</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Prends un selfie clair avec ton visage bien visible. Cette photo sera comparee a ta piece d'identite pour verifier ton identite. Elle ne sera jamais partagÃ©e publiquement.</p>
+      <div class="upload-zone" id="zone-selfie" onclick="document.getElementById('input-selfie').click()">
+        <input type="file" id="input-selfie" accept="image/*" capture="user" style="display:none" onchange="handleUpload(this,'zone-selfie','success-selfie','Selfie')">
+        <div id="zone-selfie-content">
+          <div class="upload-icon">ðŸ¤³</div>
+          <div class="upload-title">Clique pour prendre un selfie</div>
+          <div class="upload-sub">Photo claire, visage bien visible Â· Max 10 MB</div>
+        </div>
+        <div class="upload-success" id="success-selfie">âœ… Selfie tÃ©lÃ©chargÃ© avec succÃ¨s !</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">âœ… Engagements</div>
+      <div class="checkbox-group">
+        <label class="checkbox-item" onclick="toggleCheck(this)">
+          <input type="checkbox" class="eng-check">
+          <div class="checkbox-box"></div>
+          <div class="checkbox-text"><div class="checkbox-title">Je certifie que mon identite est exacte</div><div class="checkbox-desc">Ma piece d'identite est valide et correspond a mon identite reelle. Si j'utilise une voiture ou un camion, je confirme aussi avoir le permis et les assurances requis.</div></div>
+        </label>
+        <label class="checkbox-item" onclick="toggleCheck(this)">
+          <input type="checkbox" class="eng-check">
+          <div class="checkbox-box"></div>
+          <div class="checkbox-text"><div class="checkbox-title">J'ai une assurance automobile valide</div><div class="checkbox-desc">Mon vÃ©hicule est assurÃ© selon les exigences de ma province. PorteÃ Porte ajoute une couverture supplÃ©mentaire pour les colis.</div></div>
+        </label>
+        <label class="checkbox-item" onclick="toggleCheck(this)">
+          <input type="checkbox" class="eng-check">
+          <div class="checkbox-box"></div>
+          <div class="checkbox-text"><div class="checkbox-title">J'accepte le code de conduite PorteÃ Porte</div><div class="checkbox-desc">Je m'engage Ã  traiter les colis avec soin, Ã  respecter les dÃ©lais et Ã  communiquer avec les clients.</div></div>
+        </label>
+        <label class="checkbox-item" onclick="toggleCheck(this)">
+          <input type="checkbox" class="eng-check">
+          <div class="checkbox-box"></div>
+          <div class="checkbox-text"><div class="checkbox-title">J'accepte le statut de travailleur autonome</div><div class="checkbox-desc">Je comprends que je suis travailleur autonome. Je dois dÃ©clarer mes revenus (T2125) et gÃ©rer mes taxes (TPS/TVQ si >30 000 $/an).</div></div>
+        </label>
+      </div>
+    </div>
+    <button class="btn-next" onclick="goToStep(4)">Continuer â†’ Mes trajets</button>
+    <button class="btn-back" onclick="goToStep(2)">â† Retour</button>
+  </div>
+
+  <!-- Ã‰TAPE 4 â€” TRAJETS -->
+  <div class="form-section" id="step-4">
+    <div class="card">
+      <div class="card-title">ðŸ“ Tes trajets habituels</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Indique les routes que tu fais rÃ©guliÃ¨rement. L'algorithme de matching te proposera des colis sur ton chemin.</p>
+      <div class="fg"><label class="fl">Trajet principal (ex: MontrÃ©al â†’ QuÃ©bec)</label><input class="fi" type="text" id="trajet1" placeholder="MontrÃ©al â†’ QuÃ©bec"></div>
+      <div class="fg"><label class="fl">Trajet secondaire (optionnel)</label><input class="fi" type="text" id="trajet2" placeholder="Laval â†’ Sherbrooke"></div>
+      <div class="fg"><label class="fl">FrÃ©quence de tes trajets</label>
+        <select class="fi" id="frequence">
+          <option value="">Choisir...</option>
+          <option>Quotidien (5 jours/semaine)</option>
+          <option>Plusieurs fois par semaine (2-4 jours)</option>
+          <option>Hebdomadaire (1 fois/semaine)</option>
+          <option>Occasionnel (quelques fois par mois)</option>
+          <option>Variable selon les offres</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">DisponibilitÃ© horaire</label>
+        <div class="checkbox-group" style="margin-top:4px">
+          <label class="checkbox-item" onclick="toggleCheck(this)" style="padding:10px 12px"><input type="checkbox" class="dispo-check"><div class="checkbox-box"></div><div class="checkbox-text"><div class="checkbox-title" style="font-size:12px">ðŸŒ… Matin (6hâ€“12h)</div></div></label>
+          <label class="checkbox-item" onclick="toggleCheck(this)" style="padding:10px 12px"><input type="checkbox" class="dispo-check"><div class="checkbox-box"></div><div class="checkbox-text"><div class="checkbox-title" style="font-size:12px">â˜€ï¸ AprÃ¨s-midi (12hâ€“18h)</div></div></label>
+          <label class="checkbox-item" onclick="toggleCheck(this)" style="padding:10px 12px"><input type="checkbox" class="dispo-check"><div class="checkbox-box"></div><div class="checkbox-text"><div class="checkbox-title" style="font-size:12px">ðŸŒ™ Soir (18hâ€“23h) Â· SupplÃ©ment automatique</div></div></label>
+          <label class="checkbox-item" onclick="toggleCheck(this)" style="padding:10px 12px"><input type="checkbox" class="dispo-check"><div class="checkbox-box"></div><div class="checkbox-text"><div class="checkbox-title" style="font-size:12px">ðŸŒ‘ Nuit (23hâ€“6h) Â· SupplÃ©ment maximum</div></div></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ðŸ“Š Ton score de dÃ©part</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Voici comment ton score sera calculÃ© dÃ¨s ta premiÃ¨re livraison :</p>
+      <div class="score-bars" id="score-preview">
+        <div class="score-bar-row"><span class="score-bar-label">â­ Avis clients</span><div class="score-bar-track"><div class="score-bar-fill" style="width:0%" data-target="0"></div></div><span class="score-bar-val">â€”</span></div>
+        <div class="score-bar-row"><span class="score-bar-label">âœ… Taux de rÃ©ussite</span><div class="score-bar-track"><div class="score-bar-fill" style="width:0%" data-target="0"></div></div><span class="score-bar-val">â€”</span></div>
+        <div class="score-bar-row"><span class="score-bar-label">â±ï¸ DÃ©lais respectÃ©s</span><div class="score-bar-track"><div class="score-bar-fill" style="width:0%" data-target="0"></div></div><span class="score-bar-val">â€”</span></div>
+        <div class="score-bar-row"><span class="score-bar-label">ðŸªª IdentitÃ© vÃ©rifiÃ©e</span><div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--lime)" data-target="100"></div></div><span class="score-bar-val" style="color:var(--lime)">âœ“</span></div>
+        <div class="score-bar-row"><span class="score-bar-label">ðŸ“ GPS actif</span><div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--teal)" data-target="100"></div></div><span class="score-bar-val" style="color:var(--teal)">âœ“</span></div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--muted)">Niveau de dÃ©part :</div>
+      <div class="niveau-badge niveau-bronze">ðŸ¥‰ Bronze â€” En attente de premiÃ¨res livraisons</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6">AprÃ¨s tes 5 premiÃ¨res livraisons rÃ©ussies, ton score rÃ©el sera calculÃ© et tu pourras monter en Argent, Or ou Ã‰lite.</div>
+    </div>
+
+    <button class="btn-next" onclick="goToStep(5)">Continuer â†’ Confirmation</button>
+    <button class="btn-back" onclick="goToStep(3)">â† Retour</button>
+  </div>
+
+  <!-- Ã‰TAPE 5 â€” CONFIRMATION -->
+  <div class="form-section" id="step-5">
+    <div class="card">
+      <div class="card-title">âœ… RÃ©sumÃ© de ton inscription</div>
+      <div id="resume" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+        <!-- Rempli par JS -->
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(184,245,62,.04);border-color:rgba(184,245,62,.15)">
+      <div class="card-title">ðŸŽ Ce que tu reÃ§ois maintenant</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+        <div style="display:flex;gap:10px"><span style="color:var(--lime)">âœ“</span><span>Ta <strong>carte officielle PorteÃ Porte</strong> numÃ©rique (envoyÃ©e par courriel)</span></div>
+        <div style="display:flex;gap:10px"><span style="color:var(--lime)">âœ“</span><span>AccÃ¨s Ã  l'application dÃ¨s le <strong>lancement au QuÃ©bec</strong></span></div>
+        <div style="display:flex;gap:10px"><span style="color:var(--lime)">âœ“</span><span>Ton <strong>profil public</strong> avec badge "CertifiÃ© PorteÃ Porte"</span></div>
+        <div style="display:flex;gap:10px"><span style="color:var(--lime)">âœ“</span><span>AccÃ¨s prioritaire aux <strong>premiÃ¨res livraisons</strong> de ta rÃ©gion</span></div>
+        <div style="display:flex;gap:10px"><span style="color:var(--lime)">âœ“</span><span>Participation au <strong>tirage mensuel</strong> dÃ¨s ta premiÃ¨re livraison</span></div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-bottom:16px"><strong>Prochaine etape :</strong> ta demande sera placee en verification. Les colis reels restent bloques tant que ton statut livreur n'est pas approuve.</div>
+
+    <button class="btn-next" onclick="submitForm()" style="font-size:16px;padding:16px">ðŸ Je deviens livreur PorteÃ Porte !</button>
+    <button class="btn-back" onclick="goToStep(4)">â† Retour</button>
+  </div>
+
+  <!-- SUCCÃˆS -->
+  <div class="form-section" id="step-success">
+    <div class="success-screen">
+      <div class="success-icon">ðŸŽ‰</div>
+      <div class="success-title">Bienvenue<br>dans l'Ã©quipe !</div>
+      <p class="success-sub">Tu es officiellement inscrit comme livreur PorteÃ Porte. Ta carte officielle arrive dans ta boÃ®te courriel.</p>
+
+      <div class="card-officielle">
+        <div class="card-logo">PorteÃ Porte ðŸ</div>
+        <div class="card-name-field" id="card-name-display">â€”</div>
+        <div class="card-id" id="card-id-display">ID : PP-DR-XXXXX</div>
+        <div class="card-niveau">ðŸ¥‰ Bronze â€” Livreur certifiÃ©</div>
+        <div class="card-cert">Identite verifiee - GPS actif - Certifie PorteaPorte</div>
+      </div>
+
+      <div class="next-steps">
+        <div class="next-step"><div class="ns-num">1</div><div>VÃ©rifie ton courriel â€” ta carte officielle et tes identifiants de connexion arrivent dans 2 minutes.</div></div>
+        <div class="next-step"><div class="ns-num">2</div><div>ComplÃ¨te la formation en ligne (20 min) pour gagner <strong style="color:var(--lime)">+5 points</strong> sur ton score de dÃ©part.</div></div>
+        <div class="next-step"><div class="ns-num">3</div><div>Attends le lancement officiel au QuÃ©bec â€” tu seras notifiÃ© en prioritÃ© par courriel et SMS.</div></div>
+        <div class="next-step"><div class="ns-num">4</div><div>Partage ton lien de parrainage â€” chaque livreur que tu invites te rapporte <strong style="color:var(--lime)">+10 points</strong> bonus !</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/modal-helper.js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+let currentStep=1;
+let selectedVehicle='';
+let uploadedPermis=false;
+let uploadedSelfie=false;
+
+function goToStep(n){
+  // Validation
+  if(n>currentStep){
+    if(currentStep===1){
+      const fields=['prenom','nom','email','tel','ville'];
+      let ok=true;
+      fields.forEach(id=>{
+        const el=document.getElementById(id);
+        if(!el.value.trim()){el.classList.add('error');ok=false}
+        else el.classList.remove('error');
+      });
+      if(!document.getElementById('province').value){document.getElementById('province').classList.add('error');ok=false}
+      else document.getElementById('province').classList.remove('error');
+      if(!ok){showError('âŒ Veuillez remplir tous les champs obligatoires.'); return}
+    }
+    if(currentStep===2 && !selectedVehicle){
+      showError('âŒ Veuillez choisir un type de vÃ©hicule.'); return;
+    }
+    if(currentStep===3){
+      const checks=document.querySelectorAll('.eng-check');
+      let allChecked=true;
+      checks.forEach(c=>{if(!c.checked)allChecked=false});
+      if(!uploadedPermis){showError('âŒ Veuillez telecharger votre piece d'identite.'); return}
+      if(!uploadedSelfie){showError('âŒ Veuillez tÃ©lÃ©charger votre selfie de vÃ©rification.'); return}
+      if(!allChecked){showError('âŒ Veuillez cocher tous les engagements pour continuer.'); return}
+    }
+    if(currentStep===4){
+      if(!document.getElementById('trajet1').value.trim()){
+        showError('âŒ Veuillez indiquer votre trajet principal.'); return;
+      }
+      if(!document.getElementById('frequence').value){
+        showError('âŒ Veuillez indiquer votre frÃ©quence de trajet.'); return;
+      }
+      buildResume();
+    }
+  }
+  document.getElementById('step-'+currentStep).classList.remove('active');
+  document.getElementById('pill-'+currentStep).classList.remove('active');
+  document.getElementById('pill-'+currentStep).classList.add('done');
+  currentStep=n;
+  document.getElementById('step-'+n).classList.add('active');
+  document.getElementById('pill-'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selectVehicle(el,name,type,bonus){
+  document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedVehicle=name;
+
+  // Afficher le rÃ©sumÃ© de sÃ©lection
+  const disp=document.getElementById('vehicle-selected-display');
+  const namEl=document.getElementById('v-selected-name');
+  const bonEl=document.getElementById('v-selected-bonus');
+  if(disp){
+    disp.style.display='block';
+    namEl.textContent=el.querySelector('.vehicle-icon').textContent+' '+name;
+    bonEl.textContent=bonus?'ðŸŒ± Bonus Ã©co '+bonus:'';
+    bonEl.style.color=bonus?'var(--lime)':'var(--muted)';
+  }
+
+  // Champs conditionnels
+  const motorise=document.getElementById('vehicule-motorise-fields');
+  const ecoFields=document.getElementById('vehicule-eco-fields');
+  const remorqueFields=document.getElementById('remorque-fields');
+  if(!motorise||!ecoFields)return;
+
+  const ecoTypes=['Ã€ pied','VÃ©lo','VÃ©lo Ã©lectrique','Trottinette Ã©lectrique'];
+  const remorqueTypes=['Remorque fermÃ©e','Remorque ouverte','Plateau porte-voiture'];
+
+  if(ecoTypes.includes(name)){
+    motorise.style.display='none';
+    ecoFields.style.display='block';
+    if(remorqueFields)remorqueFields.style.display='none';
+  } else {
+    motorise.style.display='block';
+    ecoFields.style.display='none';
+    if(remorqueFields){
+      remorqueFields.style.display=remorqueTypes.includes(name)?'block':'none';
+    }
+  }
+
+  // Mise Ã  jour du rÃ©sumÃ© (Ã©tape 5)
+  const vResume=document.getElementById('resume-vehicule');
+  if(vResume)vResume.textContent=name+(bonus?' ('+bonus+' bonus Ã©co)':'');
+}
+
+function toggleCheck(label){
+  const cb=label.querySelector('input[type="checkbox"]');
+  setTimeout(()=>{
+    if(cb.checked)label.classList.add('checked');
+    else label.classList.remove('checked');
+  },0);
+}
+
+function handleUpload(input,zoneId,successId,label){
+  if(input.files&&input.files[0]){
+    const zone=document.getElementById(zoneId);
+    const success=document.getElementById(successId);
+    zone.classList.add('uploaded');
+    document.getElementById(zoneId+'-content').style.display='none';
+    success.classList.add('show');
+    if(zoneId==='zone-permis')uploadedPermis=true;
+    if(zoneId==='zone-selfie')uploadedSelfie=true;
+  }
+}
+
+function buildResume(){
+  const prenom=document.getElementById('prenom').value;
+  const nom=document.getElementById('nom').value;
+  const email=document.getElementById('email').value;
+  const tel=document.getElementById('tel').value;
+  const ville=document.getElementById('ville').value;
+  const province=document.getElementById('province').value;
+  const trajet=document.getElementById('trajet1').value;
+  const freq=document.getElementById('frequence').value;
+  const resume=document.getElementById('resume');
+  resume.innerHTML=`
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">Nom</span><span>${prenom} ${nom}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">Courriel</span><span>${email}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">TÃ©lÃ©phone</span><span>${tel}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">Ville</span><span>${ville}, ${province}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">VÃ©hicule</span><span id="resume-vehicule">${selectedVehicle}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">Trajet principal</span><span>${trajet}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.07)"><span style="color:var(--muted)">FrÃ©quence</span><span>${freq}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0"><span style="color:var(--muted)">Documents</span><span style="color:var(--lime)">Identite + Selfie</span></div>
+  `;
+}
+
+function normalizeTransportMode(name){
+  const value=String(name||'').toLowerCase();
+  if(value.includes('pied'))return 'foot';
+  if(value.includes('vÃ©lo')||value.includes('velo'))return 'bike';
+  if(value.includes('trottinette'))return 'scooter';
+  if(value)return 'motor';
+  return 'unknown';
+}
+
+async function submitDriverVerification(){
+  try{
+    if(!window.getSupabaseClient)return {ok:false, skipped:true};
+    const db=window.getSupabaseClient();
+    const {data}=await db.auth.getSession();
+    if(!data||!data.session)return {ok:false, skipped:true};
+    const payload={
+      prenom:document.getElementById('prenom').value.trim(),
+      nom:document.getElementById('nom').value.trim(),
+      telephone:document.getElementById('tel').value.trim(),
+      ville:document.getElementById('ville').value.trim(),
+      province:document.getElementById('province').value,
+      vehicule:selectedVehicle,
+      transport_mode:normalizeTransportMode(selectedVehicle),
+      trajet_principal:document.getElementById('trajet1').value.trim()
+    };
+    const res=await fetch('/api/platform',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+data.session.access_token
+      },
+      body:JSON.stringify({endpoint:'submit-driver-verification',...payload})
+    });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok){
+      console.error('Erreur soumission verification livreur:',out);
+      return {ok:false,error:out.error||'Soumission impossible'};
+    }
+    console.log('Verification livreur soumise:',out.driver_status);
+    return {ok:true,...out};
+  }catch(err){
+    console.error('Erreur soumission verification livreur:',err.message);
+    return {ok:false,error:err.message};
+  }
+}
+
+async function sendDriverCardEmail(){
+  try{
+    if(!window.getSupabaseClient)return {ok:false, skipped:true};
+    const db=window.getSupabaseClient();
+    const {data}=await db.auth.getSession();
+    if(!data||!data.session)return {ok:false, skipped:true};
+    const res=await fetch('/api/platform',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+data.session.access_token
+      },
+      body:JSON.stringify({endpoint:'request-driver-card'})
+    });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok){
+      console.error('Carte livreur non envoyee:',out);
+      return {ok:false,error:out.error||'Carte non envoyee'};
+    }
+    console.log('Carte livreur envoyee:',out.card_id);
+    return {ok:true,card_id:out.card_id};
+  }catch(err){
+    console.error('Carte livreur non envoyee:',err.message);
+    return {ok:false,error:err.message};
+  }
+}
+
+async function submitForm(){
+  const cardResult=await submitDriverVerification();
+  const prenom=document.getElementById('prenom').value;
+  const nom=document.getElementById('nom').value;
+  const id=cardResult.card_id||'PP-DR-EN-ATTENTE';
+  document.getElementById('card-name-display').textContent=prenom+' '+nom;
+  document.getElementById('card-id-display').textContent='ID : '+id;
+  document.getElementById('step-5').classList.remove('active');
+  document.getElementById('pill-5').classList.remove('active');
+  document.getElementById('pill-5').classList.add('done');
+  document.getElementById('step-success').classList.add('active');
+  const note=document.querySelector('#step-success .note');
+  if(note){
+    if(cardResult.ok&&cardResult.email_sent) note.innerHTML='<strong>Demande recue :</strong> verifie ton courriel, incluant tes indesirables. Ta carte reste en verification et les colis reels demeurent bloques jusqu a approbation.';
+    else if(cardResult.ok) note.innerHTML='<strong>Demande recue :</strong> ton profil est en verification. Le courriel n a pas pu etre envoye, mais l admin peut quand meme traiter ta demande.';
+    else if(cardResult.skipped) note.innerHTML='<strong>Carte non envoyee :</strong> connecte-toi d abord, puis reviens demander ta carte livreur.';
+    else note.innerHTML='<strong>Soumission incomplete :</strong> '+(cardResult.error||'verifie les champs et reessaie.');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+  // Confetti effect
+  for(let i=0;i<20;i++){
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.style.cssText=`position:fixed;top:-20px;left:${Math.random()*100}%;width:8px;height:8px;background:${['#B8F53E','#0BFFCB','#FFB83C'][Math.floor(Math.random()*3)]};border-radius:50%;pointer-events:none;z-index:9999;animation:fall ${1+Math.random()*2}s linear forwards`;
+      document.body.appendChild(d);
+      setTimeout(()=>d.remove(),3000);
+    },i*100);
+  }
+}
+
+// CSS pour confetti
+const style=document.createElement('style');
+style.textContent='@keyframes fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+document.head.appendChild(style);
+</script>
+
+<script>
+// Service Worker PWA â€” PorteÃ Porte
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW PorteÃ Porte actif'))
+      .catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
+

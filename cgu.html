@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteàPorte — Conditions générales d'utilisation et Politique de confidentialité. Conformes à la Loi 25 du Québec et à la LPRPDE. Lévis, Québec, Canada 🍁">
+<meta property="og:title" content="PorteàPorte 🍁">
+<meta property="og:description" content="PorteàPorte — Conditions générales d'utilisation et Politique de confidentialité. Conformes à la Loi 25 du Québec et à la LPRPDE. Lévis, Québec, Canada 🍁">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteàPorte — Conditions générales & Confidentialité 🍁</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07)}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+nav{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.96);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.back{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}.back:hover{color:var(--lime)}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--smoke)}
+.tab{padding:14px 28px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .2s}
+.tab:hover{color:var(--paper)}
+.tab.on{color:var(--lime);border-bottom-color:var(--lime)}
+
+.doc{display:none;max-width:760px;margin:0 auto;padding:48px 24px 80px}
+.doc.on{display:block}
+
+/* TYPOGRAPHIE LÉGALE */
+.doc-header{margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.doc-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:8px;font-weight:500}
+.doc-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:-1px;line-height:1;margin-bottom:12px}
+.doc-meta{font-size:12px;color:var(--muted);line-height:1.7}
+.doc-meta strong{color:var(--paper)}
+
+
+.avocat-banner strong{color:#F5C842}
+
+h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.5px;color:var(--lime);margin:36px 0 10px;padding-top:8px;border-top:1px solid rgba(184,245,62,.1)}
+h3{font-size:15px;font-weight:600;color:var(--paper);margin:20px 0 8px}
+p{font-size:14px;color:rgba(245,240,232,.75);line-height:1.8;margin-bottom:12px}
+ul,ol{margin:8px 0 16px 20px}
+li{font-size:14px;color:rgba(245,240,232,.75);line-height:1.8;margin-bottom:4px}
+strong{color:var(--paper);font-weight:600}
+.article{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:20px 22px;margin:16px 0}
+.art-num{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:500}
+.highlight{background:rgba(184,245,62,.06);border-left:3px solid var(--lime);padding:12px 16px;border-radius:0 4px 4px 0;margin:16px 0;font-size:13px;color:rgba(245,240,232,.8);line-height:1.7}
+.table-wrap{overflow-x:auto;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--s2);padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid rgba(245,240,232,.05);color:rgba(245,240,232,.75)}
+tr:last-child td{border-bottom:none}
+.contact-box{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:20px;margin:16px 0;font-size:13px}
+.contact-box div{padding:5px 0;border-bottom:1px solid rgba(245,240,232,.05)}
+.contact-box div:last-child{border-bottom:none}
+.contact-label{color:var(--muted);width:180px;display:inline-block}
+footer{border-top:1px solid var(--border);padding:24px 40px;background:var(--smoke);text-align:center;font-size:11px;color:rgba(245,240,232,.25)}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <a href="index.html" class="back">← Retour au site</a>
+</nav>
+
+<div class="tabs">
+  <div class="tab on" onclick="showDoc('cgu',this)">📋 Conditions générales (CGU)</div>
+  <div class="tab" onclick="showDoc('confidentialite',this)">🔒 Politique de confidentialité</div>
+  <div class="tab" onclick="showDoc('cookies',this)">🍪 Cookies & Témoins</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CGU — CONDITIONS GÉNÉRALES D'UTILISATION
+══════════════════════════════════════════════ -->
+<div class="doc on" id="doc-cgu">
+  <div class="doc-header">
+    <div class="doc-label">Document légal</div>
+    <div class="doc-title">Conditions générales d'utilisation</div>
+    <div class="doc-meta">
+      <strong>Version :</strong> 1.0<br>
+      <strong>Entrée en vigueur :</strong> 1er mai 2026<br>
+      <strong>Société :</strong> Pieds en L'air S.E.N.C. · Lévis, Québec, Canada<br>
+      <strong>Juridiction :</strong> Province de Québec, Canada
+    </div>
+  </div>
+
+  <div class="avocat-banner" style="display:none">
+    ⚠️ <strong>Note pour l'avocat :</strong> Ce document est un projet de CGU préparé par le fondateur. Il doit être révisé et validé par un avocat spécialisé en droit québécois des affaires et du commerce électronique avant toute mise en ligne officielle. Les sections marquées 2026-NQ-0001 doivent être finalisées après l'incorporation de la société.
+  </div>
+
+  <h2>Article 1 — Présentation de la plateforme</h2>
+  <p>PorteàPorte (ci-après « la Plateforme ») est une plateforme numérique canadienne de mise en relation entre des particuliers souhaitant faire livrer des colis (« Expéditeurs ») et des particuliers disposés à effectuer ces livraisons dans le cadre de leurs trajets habituels (« Livreurs »). La Plateforme est accessible à l'adresse <strong>porteaporte.site</strong>.</p>
+  <p>La Plateforme est exploitée par <strong>PorteàPorte inc.</strong>, société par actions constituée en vertu des lois du Québec, dont le siège social est situé à Lévis, Québec, Canada (NEQ : En cours).</p>
+
+  <div class="highlight">PorteàPorte agit comme plateforme d'intermédiation entre Expéditeurs et Livreurs indépendants. La Plateforme ne réalise pas elle-même les livraisons et n'est pas partie au contrat de livraison conclu entre l'Expéditeur et le Livreur.</div>
+
+  <h2>Article 2 — Acceptation des conditions</h2>
+  <p>L'utilisation de la Plateforme implique l'acceptation pleine et entière des présentes Conditions Générales d'Utilisation (CGU). Toute personne qui accède à la Plateforme ou qui crée un compte accepte d'être liée par ces CGU.</p>
+  <p>Si vous n'acceptez pas ces conditions, vous devez cesser immédiatement d'utiliser la Plateforme.</p>
+
+  <h2>Article 3 — Admissibilité et inscription</h2>
+  <h3>3.1 Conditions d'admissibilité</h3>
+  <ul>
+    <li>Être âgé d'au moins <strong>18 ans</strong></li>
+    <li>Être résident canadien ou avoir le droit légal d'exercer une activité commerciale au Canada</li>
+    <li>Disposer d'une adresse courriel valide</li>
+    <li>Pour les Livreurs : fournir une piece d'identite officielle; un permis de conduire valide est requis seulement si un vehicule motorise est utilise</li>
+    <li>Fournir des informations véridiques lors de l'inscription</li>
+  </ul>
+
+  <h3>3.2 Vérification d'identité (KYC)</h3>
+  <p>Tout Livreur doit se soumettre à une procédure de vérification d'identité (Know Your Customer — KYC) avant d'accepter sa première livraison. Cette vérification inclut :</p>
+  <ul>
+    <li>Presentation d'une piece d'identite officielle valide avec photo</li>
+    <li>Selfie de vérification biométrique</li>
+    <li>Verification du permis de conduire seulement pour les livreurs utilisant un vehicule motorise</li>
+  </ul>
+
+  <h2>Article 4 — Fonctionnement de la Plateforme</h2>
+  <h3>4.1 Dépôt d'une annonce de livraison</h3>
+  <p>L'Expéditeur crée une annonce décrivant : le colis (type, poids, valeur déclarée), le trajet (ville de départ et d'arrivée), la date souhaitée, la protection livraison choisie et le prix proposé. L'annonce est visible aux Livreurs certifiés effectuant un trajet similaire.</p>
+
+  <h3>4.2 Acceptation et confirmation</h3>
+  <p>Un Livreur peut soumettre une offre sur une annonce. L'Expéditeur choisit son Livreur parmi les offres reçues. La confirmation de la livraison crée un contrat de service entre l'Expéditeur et le Livreur. PorteàPorte n'est pas partie à ce contrat.</p>
+
+  <h3>4.3 Système de paiement sécurisé (Escrow)</h3>
+  <p>Le paiement de l'Expéditeur est bloqué en dépôt fiduciaire (escrow) via Stripe Canada au moment de la confirmation. Les fonds sont libérés au Livreur uniquement après confirmation de la bonne réception du colis par l'Expéditeur ou après résolution du dossier selon le cas.</p>
+  <p>Le paiement peut être retenu, libéré, remboursé ou suspendu selon la confirmation de livraison, l'état de la livraison ou l'analyse d'un litige.</p>
+
+  <div class="article">
+    <div class="art-num">Répartition des fonds</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Destinataire</th><th>Pourcentage</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Livreur</strong></td><td style="color:var(--lime)">88%</td><td>Revenu net de la livraison</td></tr>
+          <tr><td>Organismes humanitaires</td><td>5%</td><td>Moisson Montréal, Habitat Humanité, Fondation Suzuki</td></tr>
+          <tr><td>Fonds de garantie</td><td>3%</td><td>Couverture des réclamations et litiges</td></tr>
+          <tr><td>Tirage mensuel</td><td>2%</td><td>Cagnotte redistribuée aux utilisateurs</td></tr>
+          <tr><td>PorteàPorte (opérations)</td><td>2%</td><td>Frais de plateforme</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>Article 5 — Obligations des Livreurs</h2>
+  <ul>
+    <li>Maintenir les autorisations requises selon le mode de livraison utilise, incluant permis et assurance pour les vehicules motorises</li>
+    <li>Traiter les colis avec soin et diligence, comme s'ils étaient leurs propres biens</li>
+    <li>Prendre une photo du colis au ramassage et à la livraison</li>
+    <li>Respecter les délais convenus et prévenir l'Expéditeur de tout retard</li>
+    <li>Ne jamais ouvrir, inspecter ou modifier le contenu des colis</li>
+    <li>Agir à titre de <strong>travailleur autonome</strong> indépendant — PorteàPorte n'est pas leur employeur</li>
+    <li>Déclarer leurs revenus conformément aux lois fiscales canadiennes (formulaire T2125)</li>
+    <li>S'inscrire au registre TPS/TVQ si leurs revenus dépassent 30 000 $ par année</li>
+  </ul>
+
+  <h2>Article 6 — Obligations des Expéditeurs</h2>
+  <ul>
+    <li>Décrire fidèlement le colis — poids, dimensions, valeur, contenu</li>
+    <li>Ne jamais expédier de substances illicites, dangereuses, explosives, inflammables ou réglementées</li>
+    <li>Déclarer fidèlement la valeur du colis et choisir, au besoin, une protection livraison adaptée</li>
+    <li>Confirmer la réception du colis dans les 72 heures suivant la livraison</li>
+    <li>Payer le prix convenu conformément aux conditions de paiement</li>
+  </ul>
+
+  <h2>Article 7 — Contenus prohibés</h2>
+  <p>Les colis suivants sont strictement interdits sur la Plateforme :</p>
+  <div class="article">
+    <ul>
+      <li>Stupéfiants et substances contrôlées (Loi réglementant certaines drogues et autres substances, L.C. 1996)</li>
+      <li>Armes à feu, munitions et explosifs (Loi sur les armes à feu, L.C. 1995)</li>
+      <li>Matières dangereuses (TMD — Transport des marchandises dangereuses)</li>
+      <li>Espèces animales protégées ou leurs parties</li>
+      <li>Animaux vivants</li>
+      <li>Argent liquide, bijoux, cartes-cadeaux et instruments assimilables à de l'argent</li>
+      <li>Alcool ou tabac sans les licences requises</li>
+      <li>Contrefaçons ou marchandises violant des droits de propriété intellectuelle</li>
+      <li>Tout objet dont le transport est illégal selon les lois fédérales ou provinciales canadiennes</li>
+    </ul>
+  </div>
+  <p>La violation de cette clause entraîne la suspension immédiate du compte et peut faire l'objet d'un signalement aux autorités compétentes.</p>
+
+  <h2>Article 8 — Protection livraison et responsabilité</h2>
+  <h3>8.1 Protection livraison optionnelle</h3>
+  <p>La protection livraison est optionnelle. Sans protection payée, aucune couverture contractuelle ne s'applique.</p>
+
+  <h3>8.2 Plans de protection PorteàPorte</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Plan</th><th>Prix</th><th>Couverture maximale</th></tr></thead>
+      <tbody>
+        <tr><td>Aucune protection</td><td>0 $</td><td>Aucune couverture contractuelle</td></tr>
+        <tr><td>Base</td><td>1 $</td><td>Maximum 50 $</td></tr>
+        <tr><td>Standard</td><td>2,99 $</td><td>Maximum 250 $</td></tr>
+        <tr><td>Plus</td><td>5,99 $</td><td>Maximum 1 000 $</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8.3 Limites de couverture</h3>
+  <p>La couverture est toujours limitée à la valeur déclarée du colis et ne peut jamais dépasser le plafond du plan choisi.</p>
+
+  <h3>8.4 Exclusions</h3>
+  <p>Aucune couverture ne s'applique notamment aux objets ou situations suivants :</p>
+  <ul>
+    <li>Objets illégaux ou contenus prohibés</li>
+    <li>Argent liquide, bijoux et cartes-cadeaux</li>
+    <li>Animaux vivants</li>
+    <li>Produits dangereux</li>
+    <li>Alcool ou tabac non autorisé</li>
+    <li>Objets mal emballés ou insuffisamment protégés</li>
+    <li>Dommages sans preuve suffisante</li>
+    <li>Fausse déclaration de valeur</li>
+    <li>Fraude ou tentative de fraude</li>
+  </ul>
+
+  <h3>8.5 Limites de responsabilité de PorteàPorte</h3>
+  <p>PorteàPorte n'est pas responsable des dommages résultant de : (a) la faute ou négligence du Livreur ou de l'Expéditeur ; (b) la nature du colis ou de son emballage inadéquat ; (c) les événements de force majeure ; (d) les conditions météorologiques extrêmes ; (e) tout contenu prohibé tel que défini à l'article 7.</p>
+
+  <h2>Article 9 — PorteCoins (monnaie virtuelle interne)</h2>
+  <p>Les PorteCoins sont une monnaie virtuelle interne à la Plateforme, sans valeur légale ou monétaire au sens de la Loi sur la Banque du Canada. Ils ne constituent pas une cryptomonnaie au sens de la réglementation de l'Autorité des marchés financiers (AMF). Les PorteCoins peuvent être :</p>
+  <ul>
+    <li>Achetés sur la Plateforme aux tarifs affichés</li>
+    <li>Gagnés en complétant des livraisons, parrainages ou missions communautaires</li>
+    <li>Échangés contre des récompenses disponibles dans la boutique de la Plateforme</li>
+    <li>Transférés entre utilisateurs (maximum 1 000 PC par transfert, 3 transferts par jour)</li>
+  </ul>
+  <p>Les PorteCoins n'ont aucune valeur monétaire garantie, ne peuvent pas être remboursés en argent, et expirent 24 mois après la dernière activité du compte.</p>
+
+  <h2>Article 10 — Statut des Livreurs</h2>
+  <div class="highlight">Les Livreurs sont des <strong>travailleurs autonomes indépendants</strong>. Aucune relation d'emploi, de mandat ou de société en participation n'existe entre PorteàPorte et les Livreurs. PorteàPorte ne prélève pas de cotisations au Régime de rentes du Québec (RRQ) ni d'assurance-emploi pour les Livreurs.</div>
+
+  <h2>Article 11 — Résiliation et suspension de compte</h2>
+  <p>PorteàPorte se réserve le droit de suspendre ou résilier tout compte sans préavis dans les cas suivants :</p>
+  <ul>
+    <li>Violation des présentes CGU</li>
+    <li>Comportement frauduleux, abusif ou contraire à l'éthique</li>
+    <li>Évaluations négatives répétées ou score de confiance insuffisant</li>
+    <li>Défaut de paiement ou litige non résolu</li>
+    <li>Fausse déclaration lors de l'inscription ou du KYC</li>
+  </ul>
+
+  <h2>Article 12 — Règlement des litiges</h2>
+  <h3>12.1 Processus interne</h3>
+  <p>Tout litige entre un Expéditeur et un Livreur doit être soumis au service de médiation de PorteàPorte rapidement après la livraison, idéalement dans les <strong>24 heures</strong> suivant l'incident. PorteàPorte analyse le dossier selon les informations disponibles.</p>
+  <p>Les litiges peuvent être analysés avec photos, GPS, messages, historique de livraison et toute autre preuve pertinente.</p>
+  <h3>12.2 Juridiction</h3>
+  <p>Les présentes CGU sont régies par les lois de la Province de Québec et les lois fédérales canadiennes applicables. Tout litige non résolu à l'amiable sera soumis à la compétence exclusive des tribunaux de la Province de Québec.</p>
+
+  <h2>Article 13 — Modification des CGU</h2>
+  <p>PorteàPorte se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront notifiés par courriel au moins <strong>30 jours avant</strong> l'entrée en vigueur de toute modification substantielle. La poursuite de l'utilisation de la Plateforme après cette période vaut acceptation des nouvelles conditions.</p>
+
+  <h2>Article 14 — Contact</h2>
+  <div class="contact-box">
+    <div><span class="contact-label">Société</span> PorteàPorte inc.</div>
+    <div><span class="contact-label">Adresse</span> Lévis, Québec, Canada Lévis, Québec, Canada</div>
+    <div><span class="contact-label">NEQ</span> En cours</div>
+    <div><span class="contact-label">Courriel légal</span> legal@porteaporte.site</div>
+    <div><span class="contact-label">Courriel général</span> bonjour@porteaporte.site</div>
+    <div><span class="contact-label">Responsable légal</span> Denis Morneau, Fondateur</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     POLITIQUE DE CONFIDENTIALITÉ — LOI 25
+══════════════════════════════════════════════ -->
+<div class="doc" id="doc-confidentialite">
+  <div class="doc-header">
+    <div class="doc-label">Loi 25 QC · LPRPDE Canada</div>
+    <div class="doc-title">Politique de confidentialité</div>
+    <div class="doc-meta">
+      <strong>Version :</strong> 1.0<br>
+      <strong>Entrée en vigueur :</strong> 1er mai 2026<br>
+      <strong>Lois applicables :</strong> Loi 25 (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels, LQ 2021, c. 25) · LPRPDE (Loi sur la protection des renseignements personnels et les documents électroniques, LC 2000) · RGPD (pour les résidents de l'UE)
+    </div>
+  </div>
+
+  <div class="avocat-banner" style="display:none">
+    ⚠️ <strong>Note pour l'avocat :</strong> La Loi 25 du Québec est entrée en vigueur par phases (sept. 2022, sept. 2023). Ce document doit refléter toutes les obligations actuelles notamment : droit à la portabilité des données, droit à la désindexation, déclaration d'incident obligatoire à la Commission d'accès à l'information (CAI), et nomination d'un responsable de la protection des renseignements personnels.
+  </div>
+
+  <h2>1. Qui sommes-nous</h2>
+  <p>PorteàPorte inc. (« nous », « notre », « PorteàPorte ») est responsable de la collecte et du traitement des renseignements personnels de ses utilisateurs. Notre <strong>Responsable de la protection des renseignements personnels (RPRP)</strong> est Denis Morneau, joignable à <strong>confidentialite@porteaporte.site</strong>.</p>
+
+  <h2>2. Renseignements collectés</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Renseignements</th><th>Finalité</th><th>Base légale</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Identité</strong></td><td>Prénom, nom, date de naissance</td><td>Création de compte, KYC</td><td>Exécution du contrat</td></tr>
+        <tr><td><strong>Contact</strong></td><td>Courriel, téléphone, adresse</td><td>Communication, livraisons</td><td>Exécution du contrat</td></tr>
+        <tr><td><strong>Identité numérique</strong></td><td>Piece d'identite, selfie biometrique</td><td>Vérification KYC livreurs</td><td>Obligation légale + consentement</td></tr>
+        <tr><td><strong>Paiement</strong></td><td>4 derniers chiffres carte, transactions (via Stripe)</td><td>Facturation, remboursement</td><td>Exécution du contrat</td></tr>
+        <tr><td><strong>Navigation</strong></td><td>Adresse IP, appareil, navigateur, pages visitées</td><td>Sécurité, amélioration du service</td><td>Intérêt légitime</td></tr>
+        <tr><td><strong>Localisation</strong></td><td>GPS en temps réel (livreurs en mission seulement)</td><td>Suivi des livraisons</td><td>Consentement explicite</td></tr>
+        <tr><td><strong>Communications</strong></td><td>Messages entre Expéditeur et Livreur</td><td>Résolution de litiges, sécurité</td><td>Intérêt légitime</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Utilisation des renseignements</h2>
+  <p>Nous utilisons vos renseignements personnels pour :</p>
+  <ul>
+    <li>Créer et gérer votre compte utilisateur</li>
+    <li>Faciliter les mises en relation entre Expéditeurs et Livreurs</li>
+    <li>Traiter les paiements via notre prestataire Stripe Canada</li>
+    <li>Vérifier l'identité des Livreurs (KYC)</li>
+    <li>Assurer la sécurité de la Plateforme et prévenir la fraude</li>
+    <li>Vous envoyer des communications relatives à votre compte (non commerciales)</li>
+    <li>Vous envoyer des communications commerciales si vous y avez consenti</li>
+    <li>Respecter nos obligations légales (Loi 25, LPRPDE, CRA)</li>
+    <li>Améliorer nos services grâce à des analyses agrégées et anonymisées</li>
+  </ul>
+
+  <h2>4. Partage des renseignements</h2>
+  <p>Nous ne vendons jamais vos renseignements personnels. Nous les partageons uniquement avec :</p>
+  <div class="article">
+    <div class="art-num">Tiers autorisés</div>
+    <ul>
+      <li><strong>Stripe Inc.</strong> — traitement des paiements (certifié PCI-DSS niveau 1)</li>
+      <li><strong>Supabase Inc.</strong> — hébergement de la base de données (serveurs en Amérique du Nord)</li>
+      <li><strong>Vercel Inc.</strong> — hébergement du site web</li>
+      <li><strong>SendGrid / Twilio</strong> — envoi de courriels transactionnels</li>
+      <li><strong>Persona</strong> — vérification KYC des livreurs (avec consentement explicite)</li>
+      <li><strong>Autorités compétentes</strong> — si requis par une ordonnance judiciaire ou une obligation légale</li>
+    </ul>
+  </div>
+  <p>Tous nos fournisseurs sont liés par des engagements contractuels de confidentialité conformes à la Loi 25.</p>
+
+  <h2>5. Durée de conservation</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Type de données</th><th>Durée de conservation</th></tr></thead>
+      <tbody>
+        <tr><td>Données de compte actif</td><td>Durée de vie du compte + 12 mois</td></tr>
+        <tr><td>Données de transaction</td><td>7 ans (obligation fiscale CRA / Revenu Québec)</td></tr>
+        <tr><td>Données KYC livreurs</td><td>5 ans après la dernière livraison</td></tr>
+        <tr><td>Logs de sécurité</td><td>12 mois</td></tr>
+        <tr><td>Communications en litige</td><td>5 ans après résolution</td></tr>
+        <tr><td>PorteCoins (solde inactif)</td><td>24 mois d'inactivité puis annulation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6. Vos droits (Loi 25 QC)</h2>
+  <p>Conformément à la Loi modernisant des dispositions législatives en matière de protection des renseignements personnels (Loi 25), vous disposez des droits suivants :</p>
+
+  <div class="article">
+    <div class="art-num">Droits garantis</div>
+    <ul>
+      <li><strong>Droit d'accès :</strong> Obtenir une copie de vos renseignements personnels dans les 30 jours.</li>
+      <li><strong>Droit de rectification :</strong> Corriger des renseignements inexacts ou incomplets.</li>
+      <li><strong>Droit à l'effacement :</strong> Demander la suppression de vos données (sous réserve des obligations légales de conservation).</li>
+      <li><strong>Droit à la portabilité :</strong> Recevoir vos données dans un format structuré et lisible par machine.</li>
+      <li><strong>Droit à la désindexation :</strong> Demander le retrait de vos renseignements des résultats de recherche interne.</li>
+      <li><strong>Droit de retirer votre consentement :</strong> À tout moment, pour les traitements basés sur le consentement.</li>
+      <li><strong>Droit de déposer une plainte :</strong> Auprès de la Commission d'accès à l'information du Québec (CAI) — cai.gouv.qc.ca</li>
+    </ul>
+  </div>
+
+  <p>Pour exercer ces droits, contactez notre RPRP : <strong>confidentialite@porteaporte.site</strong></p>
+
+  <h2>7. Sécurité des renseignements</h2>
+  <p>Nous mettons en œuvre les mesures de sécurité suivantes :</p>
+  <ul>
+    <li>Chiffrement SSL/TLS (HTTPS) pour toutes les communications</li>
+    <li>Row Level Security (RLS) sur la base de données Supabase</li>
+    <li>Authentification à deux facteurs disponible pour tous les comptes</li>
+    <li>Données de paiement jamais stockées sur nos serveurs (délégué à Stripe PCI-DSS)</li>
+    <li>Accès administrateur limité au fondateur avec authentification renforcée</li>
+    <li>Journaux d'accès conservés 12 mois</li>
+  </ul>
+
+  <h2>8. Incidents de confidentialité</h2>
+  <p>Conformément à la Loi 25, tout incident de confidentialité présentant un risque sérieux de préjudice sera :</p>
+  <ul>
+    <li>Signalé à la <strong>Commission d'accès à l'information (CAI)</strong> dans les meilleurs délais</li>
+    <li>Notifié aux personnes concernées sans délai déraisonnable</li>
+    <li>Consigné dans notre registre des incidents de confidentialité</li>
+  </ul>
+
+  <h2>9. Transferts hors Québec</h2>
+  <p>Certains de nos fournisseurs (Stripe, Vercel, SendGrid) traitent des données aux États-Unis. Avant tout transfert, nous effectuons une <strong>évaluation des facteurs relatifs à la vie privée (ÉFVP)</strong> pour nous assurer d'un niveau de protection adéquat, conformément à l'article 17 de la Loi 25.</p>
+
+  <h2>10. Contact</h2>
+  <div class="contact-box">
+    <div><span class="contact-label">RPRP</span> Denis Morneau, Fondateur de PorteàPorte</div>
+    <div><span class="contact-label">Courriel</span> confidentialite@porteaporte.site</div>
+    <div><span class="contact-label">CAI Québec</span> cai.gouv.qc.ca · 1 888 528-7741</div>
+    <div><span class="contact-label">Commissaire fédéral</span> priv.gc.ca (LPRPDE)</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     COOKIES
+══════════════════════════════════════════════ -->
+<div class="doc" id="doc-cookies">
+  <div class="doc-header">
+    <div class="doc-label">Témoins de connexion</div>
+    <div class="doc-title">Politique sur les cookies (Témoins)</div>
+    <div class="doc-meta">
+      <strong>Version :</strong> 1.0 · <strong>Entrée en vigueur :</strong> 1er mai 2026
+    </div>
+  </div>
+
+  <h2>1. Qu'est-ce qu'un témoin (cookie) ?</h2>
+  <p>Un témoin est un petit fichier texte stocké sur votre appareil lorsque vous visitez notre site. Il permet de mémoriser vos préférences et d'améliorer votre expérience de navigation.</p>
+
+  <h2>2. Témoins utilisés par PorteàPorte</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Témoin</th><th>Type</th><th>Finalité</th><th>Durée</th></tr></thead>
+      <tbody>
+        <tr><td>sb-auth-token</td><td>Essentiel</td><td>Session Supabase — maintien de la connexion</td><td>Session</td></tr>
+        <tr><td>pp_suivi_v2</td><td>Fonctionnel</td><td>Mémorisation des préférences locales</td><td>Permanent</td></tr>
+        <tr><td>stripe-mid</td><td>Sécurité</td><td>Prévention de la fraude Stripe</td><td>1 an</td></tr>
+        <tr><td>_vercel_analytics</td><td>Analytique</td><td>Statistiques de visite anonymisées (Vercel)</td><td>30 jours</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>PorteàPorte <strong>n'utilise aucun témoin publicitaire</strong> et ne partage aucune donnée de navigation avec des réseaux publicitaires tiers.</p>
+
+  <h2>3. Gestion des témoins</h2>
+  <p>Vous pouvez configurer votre navigateur pour refuser les témoins non essentiels. Le refus des témoins essentiels peut empêcher la connexion à votre compte. Pour configurer vos préférences, consultez l'aide de votre navigateur (Chrome, Firefox, Safari, Brave).</p>
+
+  <h2>4. Contact</h2>
+  <p>Pour toute question : <strong>confidentialite@porteaporte.site</strong></p>
+</div>
+
+<footer>© 2026 PorteàPorte inc. · Lévis, Québec, Canada 🍁 · Document préparé pour révision juridique ·  · <a href="contact.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">✉️ Contact</a><a href="faq.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">❓ FAQ</a></footer>
+
+<script>
+function showDoc(id, el) {
+  document.querySelectorAll('.doc').forEach(d => d.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('doc-' + id).classList.add('on');
+  el.classList.add('on');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+<script>
+// Service Worker PWA — PorteàPorte
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW PorteàPorte actif'))
+      .catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

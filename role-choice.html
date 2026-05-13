@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choisir ton rôle - PorteàPorte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0A0C0F;
+            --bg-surface: #12151A;
+            --border: #1F242C;
+            --text-primary: #E8EAED;
+            --text-secondary: #A0A3A8;
+            --accent-lime: #B8F53E;
+            --accent-cyan: #0BFFCB;
+            --blue-quebec: #0051BA;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0F1117 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        header {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.8rem;
+            background: linear-gradient(135deg, var(--accent-lime) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-card {
+            background: var(--bg-surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-lime), var(--accent-cyan));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .role-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 40px rgba(11, 255, 203, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .role-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .role-card.selected {
+            border-color: var(--accent-lime);
+            background: rgba(184, 245, 62, 0.05);
+        }
+
+        .role-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .role-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .role-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-features {
+            background: var(--bg-dark);
+            border-left: 3px solid var(--accent-lime);
+            padding: 1.2rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-features h4 {
+            color: var(--accent-lime);
+            margin-bottom: 0.8rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            color: var(--text-secondary);
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .role-cta {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-select {
+            background: linear-gradient(135deg, var(--blue-quebec) 0%, var(--accent-cyan) 100%);
+            color: var(--bg-dark);
+        }
+
+        .btn-select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11, 255, 203, 0.3);
+        }
+
+        .btn-learn {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-learn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .bottom-section {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .bottom-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .bottom-text a {
+            color: var(--accent-lime);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .bottom-text a:hover {
+            text-decoration: underline;
+        }
+
+        .link-button {
+            background: none;
+            border: 0;
+            color: var(--accent-lime);
+            cursor: pointer;
+            font: inherit;
+            font-weight: 600;
+            padding: 0;
+        }
+
+        .link-button:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.8rem;
+            }
+
+            .roles-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .role-card {
+                padding: 1.5rem;
+            }
+
+            .role-icon {
+                font-size: 3rem;
+            }
+
+            .role-title {
+                font-size: 1.3rem;
+            }
+
+            header {
+                left: 1rem;
+                top: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <header>
+        <span>🚚</span>
+        <span>PorteàPorte</span>
+    </header>
+
+    <div class="container">
+        <div class="title-section">
+            <h1 class="title">Quel est ton rôle?</h1>
+            <p class="subtitle">Choisis pour continuer vers ton tableau de bord</p>
+        </div>
+
+        <div class="roles-grid">
+            <!-- LIVREUR CARD -->
+            <div class="role-card" id="livreur-card">
+                <div class="role-icon">🚴</div>
+                <h2 class="role-title">Je suis Livreur</h2>
+                <p class="role-description">
+                    Accepte les livraisons et gagne de l'argent avec ta propre flexibilité.
+                </p>
+                <div class="role-features">
+                    <h4>Avantages</h4>
+                    <ul class="feature-list">
+                        <li>Gagne jusqu'à 60% par livraison</li>
+                        <li>Horaires flexibles</li>
+                        <li>Bonus et récompenses</li>
+                        <li>Assurance complète</li>
+                        <li>Support 24/7</li>
+                    </ul>
+                </div>
+                <div class="role-cta">
+                    <button class="btn btn-select" onclick="selectRole('livreur')">
+                        Continuer
+                    </button>
+                    <button class="btn btn-learn" onclick="learnMore('livreur')">
+                        En savoir plus
+                    </button>
+                </div>
+            </div>
+
+            <!-- EXPÉDITEUR CARD -->
+            <div class="role-card" id="expediteur-card">
+                <div class="role-icon">📦</div>
+                <h2 class="role-title">Je suis Expéditeur</h2>
+                <p class="role-description">
+                    Envoie des colis et économise jusqu'à 60% vs les géants de la livraison.
+                </p>
+                <div class="role-features">
+                    <h4>Avantages</h4>
+                    <ul class="feature-list">
+                        <li>50-60% moins cher</li>
+                        <li>Service humain et local</li>
+                        <li>Suivi en temps réel</li>
+                        <li>Soutien des orgas humanitaires</li>
+                        <li>Compteur de livraisons pour concours</li>
+                    </ul>
+                </div>
+                <div class="role-cta">
+                    <button class="btn btn-select" onclick="selectRole('expediteur')">
+                        Continuer
+                    </button>
+                    <button class="btn btn-learn" onclick="learnMore('expediteur')">
+                        En savoir plus
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-section">
+            <p class="bottom-text">
+                Veux-tu être les deux? <button type="button" class="link-button" onclick="selectRole('both')">Oui, je veux être livreur ET expéditeur</button>
+            </p>
+            <p class="bottom-text">
+                <button type="button" class="link-button" onclick="logout()">Se déconnecter</button>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+
+        async function selectRole(role) {
+            try {
+                if (!db) {
+                    console.error('Erreur: client Supabase indisponible');
+                    alert('Connexion Supabase indisponible');
+                    return;
+                }
+
+                const { data: { user }, error: userError } = await db.auth.getUser();
+                
+                if (userError || !user) {
+                    console.error('Erreur auth:', userError);
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Save role to localStorage
+                const normalizedRole = role === 'both' ? 'les deux' : role;
+                localStorage.setItem('userRole', normalizedRole);
+
+                // Create or update user profile in Supabase
+                const profilePayload = {
+                    id: user.id,
+                    email: user.email || '',
+                    role: normalizedRole,
+                    email_verified: Boolean(user.email_confirmed_at || user.confirmed_at),
+                    verification_status: 'pending',
+                    driver_status: role === 'expediteur' ? 'not_started' : 'not_started',
+                    mis_a_jour_le: new Date().toISOString()
+                };
+
+                let { error } = await db
+                    .from('profiles')
+                    .upsert(profilePayload, { onConflict: 'id' });
+
+                if (error && /column .* does not exist/i.test(error.message || '')) {
+                    const fallbackPayload = {
+                        id: user.id,
+                        email: user.email || '',
+                        role: normalizedRole,
+                        mis_a_jour_le: new Date().toISOString()
+                    };
+                    const fallback = await db
+                        .from('profiles')
+                        .upsert(fallbackPayload, { onConflict: 'id' });
+                    error = fallback.error;
+                }
+
+                if (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la mise à jour du profil');
+                    return;
+                }
+
+                // Redirect to appropriate dashboard or onboarding
+                if (role === 'livreur') {
+                    window.location.href = 'livreur.html';
+                } else if (role === 'expediteur') {
+                    window.location.href = 'dashboard-expediteur.html';
+                } else if (role === 'both') {
+                    window.location.href = 'livreur.html'; // Start with livreur verification
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            }
+        }
+
+        function learnMore(role) {
+            if (role === 'livreur') {
+                alert('Livreur:\n\n- Gagne 60% par livraison\n- Accepte/refuse librement\n- Bonus pour performance\n- Couverture d\'assurance complète');
+            } else {
+                alert('Expéditeur:\n\n- 50-60% moins cher que UPS\n- Suivi en temps réel\n- Service humain\n- Supporte les orgas locales');
+            }
+        }
+
+        async function logout() {
+            await db.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Check if user is logged in
+        window.addEventListener('load', async () => {
+            const { data: { user } } = await db.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

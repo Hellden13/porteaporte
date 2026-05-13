@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Envoyer un colis · PorteàPorte</title>
+<style>
+:root{--bg:#0A0C0F;--surface:#12151A;--border:#1F242C;--text:#E8EAED;--text-dim:#9BA1A9;--accent:#B8F53E}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:sans-serif}
+.navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;justify-content:space-between}
+.logo{font-size:20px;font-weight:700;color:var(--accent)}
+.container{max-width:600px;margin:0 auto;padding:40px 24px}
+h1{font-size:32px;margin-bottom:24px;color:var(--accent)}
+.form-group{margin-bottom:24px}
+label{display:block;font-size:14px;font-weight:600;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px}
+input,textarea,select{width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:14px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:100px}
+.btn{background:var(--accent);color:#0A0C0F;border:none;padding:14px 32px;border-radius:6px;cursor:pointer;font-weight:700;text-transform:uppercase;width:100%;margin-top:24px}
+.btn:hover{background:#8BC230}
+.back{display:inline-block;margin-bottom:24px;color:var(--accent);text-decoration:none;font-size:14px}
+</style>
+</head>
+<body>
+<div class="navbar">
+<div class="logo">PorteàPorte</div>
+<a href="/" style="color:var(--accent);text-decoration:none">← Accueil</a>
+</div>
+<div class="container">
+<h1>📮 Envoyer un colis</h1>
+<form id="shipping-form">
+<div class="form-group">
+<label>Nom du destinataire</label>
+<input type="text" required placeholder="Jean Dupont">
+</div>
+<div class="form-group">
+<label>Adresse de livraison</label>
+<input type="text" required placeholder="123 Rue de la Paix">
+</div>
+<div class="form-group">
+<label>Ville</label>
+<input type="text" required placeholder="Montréal">
+</div>
+<div class="form-group">
+<label>Code postal</label>
+<input type="text" required placeholder="H1A 1A1">
+</div>
+<div class="form-group">
+<label>Poids du colis (kg)</label>
+<input type="number" required min="0.1" step="0.1" placeholder="2.5">
+</div>
+<div class="form-group">
+<label>Description du colis</label>
+<textarea required placeholder="Décris le contenu du colis..."></textarea>
+</div>
+<button type="submit" class="btn">Envoyer mon colis</button>
+</form>
+</div>
+<script>
+document.getElementById('shipping-form').onsubmit=function(e){
+e.preventDefault();
+alert('✅ Demande d\'envoi enregistrée ! Un livreur te contactera bientôt.');
+this.reset();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteàPorte — Missions solidaires, coaching IA et bien-être livreurs. Ce qui nous rend uniques au Canada. PorteCoins, communauté, impact 🍁">
+<meta property="og:title" content="PorteàPorte 🍁">
+<meta property="og:description" content="PorteàPorte — Missions solidaires, coaching IA et bien-être livreurs. Ce qui nous rend uniques au Canada. PorteCoins, communauté, impact 🍁">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteàPorte — Ce qui nous rend uniques 🍁</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;--orange:#FF8C00;--purple:#A78BFA;--blue:#60A5FA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+nav{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.96);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.ntab{padding:6px 12px;border-radius:2px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .15s;background:none;font-family:'Bricolage Grotesque',sans-serif;white-space:nowrap}
+.ntab:hover{color:var(--paper)}
+.ntab.on{background:rgba(184,245,62,.1);border-color:var(--lime);color:var(--lime)}
+.back{font-size:12px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--lime)}
+
+.page{display:none;max-width:960px;margin:0 auto;padding:28px 24px 80px}
+.page.on{display:block}
+
+/* HERO SECTION */
+.hero-strip{padding:36px 0 28px;text-align:center;position:relative;overflow:hidden;margin-bottom:24px}
+.hero-strip::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(184,245,62,.06),transparent 70%)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);padding:5px 14px;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px;border-radius:2px}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,62px);letter-spacing:-1px;line-height:.95;position:relative;z-index:1}
+.hero-title span{color:var(--lime)}
+.hero-sub{font-size:13px;color:var(--muted);max-width:480px;margin:10px auto 0;line-height:1.65;font-weight:300;position:relative;z-index:1}
+
+/* CARDS */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:22px;margin-bottom:12px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
+.card3{background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* PORTECOIN */
+.coin-hero{background:rgba(245,200,66,.05);border:1px solid rgba(245,200,66,.2);border-radius:4px;padding:24px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.coin-logo{width:72px;height:72px;border-radius:50%;background:rgba(245,200,66,.15);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;animation:spin-slow 8s linear infinite}
+@keyframes spin-slow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.coin-info{flex:1}
+.coin-name{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--gold);letter-spacing:-1px;line-height:1}
+.coin-rate{font-size:13px;color:var(--muted);margin-top:4px}
+.coin-balance{text-align:right}
+.coin-bal-n{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--gold);letter-spacing:-2px;line-height:1}
+.coin-bal-l{font-size:11px;color:var(--muted)}
+
+.marketplace-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.market-item{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.market-item:hover{border-color:rgba(245,200,66,.3);transform:translateY(-4px)}
+.market-item.featured{border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.04)}
+.market-icon{font-size:28px;margin-bottom:8px}
+.market-name{font-size:11px;font-weight:500;margin-bottom:6px}
+.market-price{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);letter-spacing:-.5px;line-height:1}
+.market-val{font-size:10px;color:var(--muted)}
+.market-item.locked{opacity:.4;cursor:not-allowed}
+.market-item.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:12px}
+
+.earn-grid{display:flex;flex-direction:column;gap:8px}
+.earn-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s2);border:1px solid var(--border);border-radius:4px}
+.earn-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.earn-info{flex:1;font-size:12px}
+.earn-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:-.5px}
+
+.exchange-box{background:var(--s2);border:1px solid rgba(245,200,66,.15);border-radius:4px;padding:18px}
+.exchange-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ex-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(245,200,66,.2);border-radius:2px;padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.ex-input:focus{border-color:var(--gold)}
+.ex-arrow{font-size:18px;color:var(--gold);flex-shrink:0}
+.ex-result{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.2);border-radius:2px;padding:10px 13px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);min-width:100px;text-align:center}
+
+/* MISSIONS */
+.mission-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:18px;margin-bottom:10px;transition:all .25s;cursor:pointer}
+.mission-card:hover{border-color:rgba(11,255,203,.25);background:rgba(11,255,203,.03);transform:translateY(-2px)}
+.mission-card.active{border-color:var(--teal);background:rgba(11,255,203,.04)}
+.mission-card.completed{border-color:var(--lime);background:rgba(184,245,62,.04);opacity:.7}
+.mission-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.mission-icon{font-size:32px;flex-shrink:0}
+.mission-info{flex:1}
+.mission-title{font-size:14px;font-weight:500;margin-bottom:3px}
+.mission-desc{font-size:12px;color:var(--muted);line-height:1.55}
+.mission-rewards{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mission-tag{font-size:10px;font-weight:500;padding:3px 9px;border-radius:50px}
+.mt-teal{background:rgba(11,255,203,.1);color:var(--teal);border:1px solid rgba(11,255,203,.2)}
+.mt-lime{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.mt-gold{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+.mt-purple{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.mission-progress{margin-top:10px}
+.pb{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+.pbf{height:100%;border-radius:3px;background:var(--teal)}
+.join-btn{background:var(--teal);color:var(--ink);border:none;padding:8px 18px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;transition:all .2s;margin-top:10px}
+.join-btn:hover{opacity:.88;transform:translateY(-1px)}
+.join-btn.joined{background:var(--lime)}
+
+/* IMPACT COMMUNAUTÉ */
+.impact-counter{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,80px);color:var(--teal);letter-spacing:-2px;line-height:1}
+
+/* COACHING */
+.score-radar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.radar-item{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center;position:relative;overflow:hidden}
+.radar-fill{position:absolute;bottom:0;left:0;right:0;background:rgba(184,245,62,.12);transition:height 1s cubic-bezier(0.16,1,0.3,1)}
+.radar-content{position:relative;z-index:1}
+.radar-score{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:-.5px;line-height:1}
+.radar-label{font-size:9px;color:var(--muted);margin-top:3px}
+.radar-weight{font-size:8px;color:rgba(245,240,232,.3);margin-top:2px}
+
+.coaching-tip{background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.18);border-radius:4px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+.coaching-tip.positive{border-color:rgba(184,245,62,.2);background:rgba(184,245,62,.04)}
+.coaching-tip.warning{border-color:rgba(255,184,60,.2);background:rgba(255,184,60,.04)}
+.coaching-tip.info{border-color:rgba(96,165,250,.2);background:rgba(96,165,250,.04)}
+.ct-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.ct-body{flex:1}
+.ct-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.ct-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.ct-action{font-size:11px;color:var(--lime);margin-top:6px;font-weight:500}
+
+.projection-box{background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:16px;margin-top:12px}
+.proj-title{font-size:11px;color:var(--lime);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.proj-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid rgba(245,240,232,.05)}
+.proj-row:last-child{border-bottom:none;font-weight:600;padding-top:8px;font-size:13px}
+
+/* BIEN-ÊTRE */
+.wellness-status{background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.wellness-score{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:-2px;line-height:1;color:var(--lime)}
+.wellness-bars{flex:1;min-width:200px}
+.wb{margin-bottom:8px}
+.wb-header{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+.wb-label{color:var(--muted)}
+.wb-val{font-weight:500}
+
+.pause-alert{background:rgba(255,140,0,.07);border:1px solid rgba(255,140,0,.25);border-radius:4px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;animation:pulse-warn 3s ease-in-out infinite}
+@keyframes pulse-warn{0%,100%{border-color:rgba(255,140,0,.25)}50%{border-color:rgba(255,140,0,.5)}}
+.pause-icon{font-size:28px;flex-shrink:0}
+.pause-btn{background:var(--orange);color:#fff;border:none;padding:8px 16px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;margin-left:auto;white-space:nowrap;transition:all .2s}
+.pause-btn:hover{opacity:.88}
+
+.partner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.partner-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center;transition:all .2s;cursor:pointer}
+.partner-card:hover{border-color:rgba(96,165,250,.3);transform:translateY(-3px)}
+.partner-logo{font-size:28px;margin-bottom:8px}
+.partner-name{font-size:12px;font-weight:500;margin-bottom:4px}
+.partner-offer{font-size:11px;color:var(--teal);margin-bottom:6px}
+.partner-desc{font-size:10px;color:var(--muted);line-height:1.4}
+
+.safe-driving{background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:16px;margin-bottom:12px}
+.sd-score{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--lime);letter-spacing:-2px;line-height:1}
+
+/* FORM */
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+select.fi option{background:#141918}
+.btn-primary{background:var(--lime);color:var(--ink);border:none;padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;transition:all .2s}
+.btn-primary:hover{background:var(--teal)}
+
+/* NOTE */
+.note{padding:10px 14px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:10px}
+.note strong{color:var(--paper)}
+
+/* TOAST */
+.toast{position:fixed;top:70px;right:20px;background:var(--s2);border:1px solid rgba(184,245,62,.3);border-radius:4px;padding:12px 16px;font-size:12px;transform:translateX(120%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);z-index:999;max-width:260px}
+.toast.show{transform:translateX(0)}
+
+@media(max-width:700px){
+  nav{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .nav-tabs{order:3;width:100%}
+  .page{padding:20px 14px 60px}
+  .g2,.g3,.g4,.marketplace-grid,.score-radar,.partner-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"><span id="toast-msg">✅ Super !</span></div>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <div class="nav-tabs">
+    <button class="ntab on" onclick="showPage('portecoin',this)">🪙 PorteCoin</button>
+    <button class="ntab" onclick="showPage('missions',this)">❤️ Missions</button>
+    <button class="ntab" onclick="showPage('coaching',this)">🧠 Coaching IA</button>
+    <button class="ntab" onclick="showPage('bienetre',this)">💚 Bien-être</button>
+  </div>
+  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">👤 Mon compte</a><a href="index.html" class="back">← Retour</a>
+</nav>
+
+<!-- ════════════════════════════════
+     PORTECOIN
+════════════════════════════════ -->
+<div class="page on" id="page-portecoin">
+  <div class="hero-strip">
+    <div class="hero-badge">💰 Économie interne exclusive</div>
+    <div class="hero-title">La monnaie<br>de <span>PorteàPorte</span></div>
+    <div class="hero-sub">Gagne des PorteCoins à chaque action. Échange-les contre de vraies récompenses. Transfère-les à d'autres membres. Une économie vivante.</div>
+  </div>
+
+  <div class="coin-hero">
+    <div class="coin-logo">🪙</div>
+    <div class="coin-info">
+      <div class="coin-name">PorteCoin</div>
+      <div class="coin-rate">1 PorteCoin = 0,10 $ · 10 PC = 1,00 $ · Ne expire jamais</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span style="font-size:11px;background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2);padding:3px 10px;border-radius:50px">🍁 Made in Canada</span>
+        <span style="font-size:11px;background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2);padding:3px 10px;border-radius:50px">✓ Transférable</span>
+        <span style="font-size:11px;background:rgba(11,255,203,.1);color:var(--teal);border:1px solid rgba(11,255,203,.2);padding:3px 10px;border-radius:50px">✓ Échangeable</span>
+      </div>
+    </div>
+    <div class="coin-balance">
+      <div class="coin-bal-n" id="coin-balance">425</div>
+      <div class="coin-bal-l">PorteCoins disponibles</div>
+      <div style="font-size:12px;color:var(--gold);margin-top:4px">≈ <span id="coin-value">42,50</span> $</div>
+    </div>
+  </div>
+
+  <!-- MARKETPLACE -->
+  <div style="font-size:12px;color:var(--gold);font-weight:500;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase">🛒 Marketplace de récompenses</div>
+  <div class="marketplace-grid">
+    <div class="market-item featured" onclick="buy(this,'Livraison gratuite',100)">
+      <div class="market-icon">📦</div>
+      <div class="market-name">Livraison gratuite</div>
+      <div class="market-price">100 PC</div>
+      <div class="market-val">valeur 10 $</div>
+    </div>
+    <div class="market-item" onclick="buy(this,'Carte-cadeau 25$',250)">
+      <div class="market-icon">🎁</div>
+      <div class="market-name">Carte-cadeau 25 $</div>
+      <div class="market-price">250 PC</div>
+      <div class="market-val">Amazon, Walmart...</div>
+    </div>
+    <div class="market-item" onclick="buy(this,'Assurance Premium offerte',200)">
+      <div class="market-icon">🛡️</div>
+      <div class="market-name">Assurance Premium</div>
+      <div class="market-price">200 PC</div>
+      <div class="market-val">valeur 4,99 $</div>
+    </div>
+    <div class="market-item" onclick="buy(this,'Rabais 15% livraison',150)">
+      <div class="market-icon">💸</div>
+      <div class="market-name">Rabais 15 %</div>
+      <div class="market-price">150 PC</div>
+      <div class="market-val">prochaine livraison</div>
+    </div>
+    <div class="market-item" onclick="buy(this,'Plein d\'essence 20$',300)">
+      <div class="market-icon">⛽</div>
+      <div class="market-name">Carte essence 20 $</div>
+      <div class="market-price">300 PC</div>
+      <div class="market-val">Petro-Canada, Ultramar</div>
+    </div>
+    <div class="market-item" onclick="buy(this,'Premium 1 mois',500)">
+      <div class="market-icon">💎</div>
+      <div class="market-name">Premium 1 mois</div>
+      <div class="market-price">500 PC</div>
+      <div class="market-val">valeur 9,99 $</div>
+    </div>
+    <div class="market-item locked">
+      <div class="market-icon">✈️</div>
+      <div class="market-name">Billet d'avion</div>
+      <div class="market-price">5 000 PC</div>
+      <div class="market-val">débloqué à 5 000 PC</div>
+    </div>
+    <div class="market-item locked">
+      <div class="market-icon">🏨</div>
+      <div class="market-name">Nuit d'hôtel</div>
+      <div class="market-price">2 500 PC</div>
+      <div class="market-val">débloqué à 2 500 PC</div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <!-- COMMENT GAGNER -->
+    <div class="card">
+      <div style="font-size:12px;color:var(--gold);font-weight:500;margin-bottom:12px">⚡ Comment gagner des PorteCoins</div>
+      <div class="earn-grid">
+        <div class="earn-item"><div class="earn-icon">📦</div><div class="earn-info"><div style="font-weight:500">Colis envoyé</div><div style="color:var(--muted)">+10 PC par livraison</div></div><div class="earn-pts">+10</div></div>
+        <div class="earn-item"><div class="earn-icon">🚗</div><div class="earn-info"><div style="font-weight:500">Livraison effectuée</div><div style="color:var(--muted)">+15 PC par livraison</div></div><div class="earn-pts">+15</div></div>
+        <div class="earn-item"><div class="earn-icon">⭐</div><div class="earn-info"><div style="font-weight:500">Avis 5 étoiles reçu</div><div style="color:var(--muted)">+5 PC par évaluation</div></div><div class="earn-pts">+5</div></div>
+        <div class="earn-item"><div class="earn-icon">🤝</div><div class="earn-info"><div style="font-weight:500">Parrainage réussi</div><div style="color:var(--muted)">Ami complète 1re livraison</div></div><div class="earn-pts">+250</div></div>
+        <div class="earn-item"><div class="earn-icon">🔥</div><div class="earn-info"><div style="font-weight:500">Streak hebdo</div><div style="color:var(--muted)">Bonus chaque semaine</div></div><div class="earn-pts">+50</div></div>
+        <div class="earn-item"><div class="earn-icon">❤️</div><div class="earn-info"><div style="font-weight:500">Mission communautaire</div><div style="color:var(--muted)">Livraison solidaire</div></div><div class="earn-pts">+100</div></div>
+      </div>
+    </div>
+
+    <!-- TRANSFERT P2P -->
+    <div class="card">
+      <div style="font-size:12px;color:var(--gold);font-weight:500;margin-bottom:12px">🔄 Transfert entre membres</div>
+      <div class="exchange-box">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Envoie des PorteCoins à un autre membre. Parfait pour remercier un livreur exceptionnel ou partager avec un ami.</div>
+        <label class="fl">Destinataire (code PP)</label>
+        <input class="fi" type="text" id="transfer-to" placeholder="PP-DR-00847 ou courriel">
+        <label class="fl">Montant (PC)</label>
+        <div class="exchange-row">
+          <input class="ex-input" type="number" id="transfer-amt" placeholder="50" min="10" max="1000" oninput="calcTransfer()">
+          <span class="ex-arrow">→</span>
+          <div class="ex-result" id="transfer-val">5,00 $</div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:10px" onclick="doTransfer()">🪙 Envoyer les PorteCoins</button>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">Min. 10 PC · Max. 1 000 PC par transfert · Instantané</div>
+      </div>
+      <div class="note" style="margin-top:10px">💡 <strong>Idée unique :</strong> Utilise tes PorteCoins comme pourboire supplémentaire. Envoie 50 PC (5 $) à un livreur qui a fait un effort exceptionnel.</div>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--gold);font-weight:500;margin-bottom:10px">📜 Historique des transactions</div>
+    <div id="coin-history" style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">🎁 Bonus bienvenue — Fondateur</div><div style="font-size:10px;color:var(--muted)">19 avr. 2026</div></div><span style="color:var(--lime);font-weight:600;font-size:14px">+50 PC</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">🤝 Parrainage Marc-Antoine L.</div><div style="font-size:10px;color:var(--muted)">19 avr. 2026</div></div><span style="color:var(--lime);font-weight:600;font-size:14px">+250 PC</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">📦 Colis envoyé Lévis→MTL</div><div style="font-size:10px;color:var(--muted)">19 avr. 2026</div></div><span style="color:var(--lime);font-weight:600;font-size:14px">+10 PC</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">🎁 Échange — Livraison gratuite</div><div style="font-size:10px;color:var(--muted)">19 avr. 2026</div></div><span style="color:var(--red);font-weight:600;font-size:14px">−100 PC</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:500">🔥 Bonus streak semaine 3</div><div style="font-size:10px;color:var(--muted)">19 avr. 2026</div></div><span style="color:var(--lime);font-weight:600;font-size:14px">+50 PC</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     MISSIONS COMMUNAUTAIRES
+════════════════════════════════ -->
+<div class="page" id="page-missions">
+  <div class="hero-strip">
+    <div class="hero-badge">❤️ Ce qu'aucune autre app ne fait</div>
+    <div class="hero-title">Missions<br><span>Communautaires</span></div>
+    <div class="hero-sub">Livre gratuitement pour ceux qui en ont besoin. Participe à des événements solidaires. Gagne le badge "Héros Local" — le plus rare et le plus respecté.</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div style="background:rgba(11,255,203,.05);border:1px solid rgba(11,255,203,.15);border-radius:4px;padding:20px;text-align:center">
+      <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Impact collectif</div>
+      <div class="impact-counter" id="mission-count">0</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">livraisons solidaires complétées</div>
+    </div>
+    <div style="background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.15);border-radius:4px;padding:20px;text-align:center">
+      <div style="font-size:12px;color:var(--purple);font-weight:500;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Héros locaux</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,80px);color:var(--purple);letter-spacing:-2px;line-height:1" id="heroes-count">0</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">livreurs avec badge Héros</div>
+    </div>
+  </div>
+
+  <!-- MISSIONS ACTIVES -->
+  <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase">🎯 Missions disponibles maintenant</div>
+
+  <div class="mission-card active" id="m1">
+    <div class="mission-header">
+      <div class="mission-icon">👴</div>
+      <div class="mission-info">
+        <div class="mission-title">Livraison solidaire — Personnes âgées</div>
+        <div class="mission-desc">5 personnes âgées de Lévis ont des colis à récupérer mais ne peuvent pas se déplacer. Le livreur prend en charge la livraison gratuitement. PorteàPorte couvre les frais via le fonds solidaire.</div>
+      </div>
+      <span style="font-size:11px;background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);padding:3px 10px;border-radius:50px;flex-shrink:0">🔴 Urgent</span>
+    </div>
+    <div class="mission-rewards">
+      <span class="mission-tag mt-teal">+100 PorteCoins</span>
+      <span class="mission-tag mt-lime">+200 XP</span>
+      <span class="mission-tag mt-purple">Badge Héros</span>
+      <span class="mission-tag mt-gold">Couvert par PP</span>
+    </div>
+    <div class="mission-progress">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px"><span>Livreurs inscrits</span><span id="m1-count">3/5</span></div>
+      <div class="pb"><div class="pbf" id="m1-bar" style="width:60%"></div></div>
+    </div>
+    <button class="join-btn" id="m1-btn" onclick="joinMission('m1')">❤️ Participer à cette mission</button>
+  </div>
+
+  <div class="mission-card" id="m2">
+    <div class="mission-header">
+      <div class="mission-icon">🏫</div>
+      <div class="mission-info">
+        <div class="mission-title">Rentrée solidaire — Fournitures scolaires</div>
+        <div class="mission-desc">L'organisme Moisson Montréal distribue des fournitures scolaires aux familles dans le besoin. On a besoin de 8 livreurs pour couvrir Montréal et Laval samedi matin.</div>
+      </div>
+      <span style="font-size:11px;background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2);padding:3px 10px;border-radius:50px;flex-shrink:0">Samedi 26 avr.</span>
+    </div>
+    <div class="mission-rewards">
+      <span class="mission-tag mt-teal">+150 PorteCoins</span>
+      <span class="mission-tag mt-lime">+300 XP</span>
+      <span class="mission-tag mt-purple">Badge Héros</span>
+      <span class="mission-tag mt-gold">Repas offert</span>
+    </div>
+    <div class="mission-progress">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px"><span>Livreurs inscrits</span><span id="m2-count">5/8</span></div>
+      <div class="pb"><div class="pbf" id="m2-bar" style="width:62.5%"></div></div>
+    </div>
+    <button class="join-btn" id="m2-btn" onclick="joinMission('m2')">❤️ Participer à cette mission</button>
+  </div>
+
+  <div class="mission-card" id="m3">
+    <div class="mission-header">
+      <div class="mission-icon">🌱</div>
+      <div class="mission-info">
+        <div class="mission-title">Mission Éco — Journée sans voiture</div>
+        <div class="mission-desc">Dimanche 27 avril, journée spéciale : toutes les livraisons à vélo ou à pied dans un rayon de 5 km. Compense 100% des émissions carbone de la journée avec la Fondation Suzuki.</div>
+      </div>
+      <span style="font-size:11px;background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2);padding:3px 10px;border-radius:50px;flex-shrink:0">Dimanche 27 avr.</span>
+    </div>
+    <div class="mission-rewards">
+      <span class="mission-tag mt-lime">+80 PorteCoins</span>
+      <span class="mission-tag mt-lime">+150 XP</span>
+      <span class="mission-tag mt-teal">Badge Écolo</span>
+      <span class="mission-tag mt-teal">CO2 compensé</span>
+    </div>
+    <div class="mission-progress">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px"><span>Livreurs inscrits</span><span id="m3-count">12/20</span></div>
+      <div class="pb"><div class="pbf" id="m3-bar" style="width:60%;background:var(--lime)"></div></div>
+    </div>
+    <button class="join-btn" id="m3-btn" onclick="joinMission('m3')">🌱 Participer à cette mission</button>
+  </div>
+
+  <div class="mission-card completed">
+    <div class="mission-header">
+      <div class="mission-icon">✅</div>
+      <div class="mission-info">
+        <div class="mission-title">Mission Habitat — Déménagement solidaire</div>
+        <div class="mission-desc">Terminée ! 6 livreurs ont aidé une famille à déménager gratuitement vers leur nouveau logement Habitat pour l'Humanité.</div>
+      </div>
+      <span style="font-size:11px;background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2);padding:3px 10px;border-radius:50px;flex-shrink:0">✓ Terminée</span>
+    </div>
+    <div class="mission-rewards">
+      <span class="mission-tag mt-lime">+200 PorteCoins distribués</span>
+      <span class="mission-tag mt-purple">6 badges Héros décernés</span>
+    </div>
+  </div>
+
+  <div class="note">❤️ <strong>Pourquoi c'est important :</strong> Aucune plateforme de livraison au Canada ne fait ça bien. PorteàPorte est la première à intégrer la solidarité directement dans le modèle d'affaires — pas comme une option, comme une valeur fondamentale.</div>
+</div>
+
+<!-- ════════════════════════════════
+     COACHING LIVREUR IA
+════════════════════════════════ -->
+<div class="page" id="page-coaching">
+  <div class="hero-strip">
+    <div class="hero-badge">🧠 Coaching IA en temps réel</div>
+    <div class="hero-title">Ton coach<br><span>personnel</span></div>
+    <div class="hero-sub">Analyse ta performance en temps réel. Suggestions concrètes. Micro-récompenses pour chaque amélioration. Tu sais exactement quoi faire pour monter de niveau.</div>
+  </div>
+
+  <!-- SCORE RADAR -->
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+      <span>📊 Ton score de performance — Marc-Antoine L.</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-.5px">88%</span>
+    </div>
+    <div class="score-radar">
+      <div class="radar-item">
+        <div class="radar-fill" style="height:85%"></div>
+        <div class="radar-content"><div class="radar-score" style="color:var(--lime)">85%</div><div class="radar-label">Avis clients</div><div class="radar-weight">poids 30%</div></div>
+      </div>
+      <div class="radar-item">
+        <div class="radar-fill" style="height:95%"></div>
+        <div class="radar-content"><div class="radar-score" style="color:var(--lime)">95%</div><div class="radar-label">Taux réussite</div><div class="radar-weight">poids 30%</div></div>
+      </div>
+      <div class="radar-item">
+        <div class="radar-fill" style="height:78%"></div>
+        <div class="radar-content"><div class="radar-score" style="color:var(--orange)">78%</div><div class="radar-label">Délais</div><div class="radar-weight">poids 20%</div></div>
+      </div>
+      <div class="radar-item">
+        <div class="radar-fill" style="height:100%"></div>
+        <div class="radar-content"><div class="radar-score" style="color:var(--lime)">✓</div><div class="radar-label">Identité</div><div class="radar-weight">poids 10%</div></div>
+      </div>
+      <div class="radar-item">
+        <div class="radar-fill" style="height:100%"></div>
+        <div class="radar-content"><div class="radar-score" style="color:var(--lime)">✓</div><div class="radar-label">GPS actif</div><div class="radar-weight">poids 10%</div></div>
+      </div>
+    </div>
+
+    <div class="projection-box">
+      <div class="proj-title">🎯 Projection IA — Si tu améliores tes délais de 8%</div>
+      <div class="proj-row"><span style="color:var(--muted)">Score actuel</span><span>88% — Niveau Or 🥇</span></div>
+      <div class="proj-row"><span style="color:var(--muted)">Score projeté</span><span style="color:var(--lime)">92% — Vers Élite 💎</span></div>
+      <div class="proj-row"><span style="color:var(--muted)">Bonus mensuel actuel</span><span>72 $</span></div>
+      <div class="proj-row"><span style="color:var(--muted)">Bonus projeté</span><span style="color:var(--lime)">118 $ (+64%)</span></div>
+      <div class="proj-row"><span>Effort requis</span><span style="color:var(--teal)">Partir 12 min plus tôt en moyenne</span></div>
+    </div>
+  </div>
+
+  <!-- CONSEILS IA -->
+  <div style="font-size:12px;color:var(--purple);font-weight:500;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase">🤖 Suggestions de ton coach IA</div>
+
+  <div class="coaching-tip positive">
+    <div class="ct-icon">🌟</div>
+    <div class="ct-body">
+      <div class="ct-title">Excellent taux de réussite (95%)</div>
+      <div class="ct-desc">Tu complètes presque toutes tes livraisons sans incident. C'est dans le top 5% de la plateforme. Continue — chaque livraison réussie ajoute 0,1% à ton score.</div>
+      <div class="ct-action">→ +5 PorteCoins bonus décernés automatiquement</div>
+    </div>
+  </div>
+
+  <div class="coaching-tip warning">
+    <div class="ct-icon">⏱️</div>
+    <div class="ct-body">
+      <div class="ct-title">Délais : marge d'amélioration détectée</div>
+      <div class="ct-desc">Tu arrives en moyenne 14 minutes après l'ETA annoncée. Si tu partais 12-15 minutes plus tôt, ton score "Délais" passerait de 78% à 88%. Ça t'amènerait directement en zone Élite.</div>
+      <div class="ct-action">→ Activer les rappels de départ anticipé dans les paramètres</div>
+    </div>
+  </div>
+
+  <div class="coaching-tip info">
+    <div class="ct-icon">💬</div>
+    <div class="ct-body">
+      <div class="ct-title">Opportunité : plus de communication client</div>
+      <div class="ct-desc">Les livreurs qui envoient un message de confirmation 30 min avant arrivée reçoivent des avis 4,9/5 en moyenne vs 4,6/5. Un simple "J'arrive dans 30 min !" fait toute la différence.</div>
+      <div class="ct-action">→ Activer les messages automatiques pré-livraison</div>
+    </div>
+  </div>
+
+  <div class="coaching-tip positive">
+    <div class="ct-icon">🌙</div>
+    <div class="ct-body">
+      <div class="ct-title">Tu es disponible la nuit — exploite ça !</div>
+      <div class="ct-desc">Tu as fait 3 livraisons nocturnes ce mois-ci. Les livraisons de nuit (22h–6h) ont un bonus automatique de +12 $ et moins de concurrence. C'est ta spécialité potentielle.</div>
+      <div class="ct-action">→ Voir les créneaux nocturnes disponibles cette semaine</div>
+    </div>
+  </div>
+
+  <!-- MICRO-RÉCOMPENSES -->
+  <div class="card" style="margin-top:4px">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">🎁 Micro-récompenses débloquées cette semaine</div>
+    <div class="g3">
+      <div class="card2" style="text-align:center"><div style="font-size:24px;margin-bottom:6px">📦</div><div style="font-size:11px;font-weight:500;margin-bottom:3px">5 livraisons d'affilée</div><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime)">+25 PC</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:24px;margin-bottom:6px">⭐</div><div style="font-size:11px;font-weight:500;margin-bottom:3px">3 avis 5 étoiles</div><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime)">+15 PC</div></div>
+      <div class="card2" style="text-align:center;opacity:.4"><div style="font-size:24px;margin-bottom:6px">🔒</div><div style="font-size:11px;font-weight:500;margin-bottom:3px">Ponctualité parfaite</div><div style="font-size:10px;color:var(--muted)">Améliore tes délais</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     BIEN-ÊTRE LIVREURS
+════════════════════════════════ -->
+<div class="page" id="page-bienetre">
+  <div class="hero-strip">
+    <div class="hero-badge">💚 Différenciateur majeur</div>
+    <div class="hero-title">Ton bien-être<br><span>nous importe</span></div>
+    <div class="hero-sub">PorteàPorte est la seule plateforme canadienne qui surveille activement la fatigue de ses livreurs. Parce qu'un livreur en forme livre mieux et vit mieux.</div>
+  </div>
+
+  <!-- ALERTE PAUSE -->
+  <div class="pause-alert">
+    <div class="pause-icon">😴</div>
+    <div>
+      <div style="font-size:13px;font-weight:500;color:var(--orange)">Pause recommandée</div>
+      <div style="font-size:12px;color:var(--muted)">Tu as conduit 3h20 sans pause. On recommande un arrêt de 15 minutes avant ta prochaine livraison.</div>
+    </div>
+    <button class="pause-btn" onclick="takePause()">☕ Prendre une pause</button>
+  </div>
+
+  <!-- SCORE BIEN-ÊTRE -->
+  <div class="wellness-status">
+    <div>
+      <div style="font-size:11px;color:var(--lime);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Score bien-être</div>
+      <div class="wellness-score" id="wellness-score">78</div>
+      <div style="font-size:11px;color:var(--muted)">/100 · Bon</div>
+    </div>
+    <div class="wellness-bars">
+      <div class="wb">
+        <div class="wb-header"><span class="wb-label">Heures de conduite aujourd'hui</span><span class="wb-val" style="color:var(--orange)">3h 20min</span></div>
+        <div class="pb"><div class="pbf" style="width:67%;background:var(--orange)"></div></div>
+      </div>
+      <div class="wb">
+        <div class="wb-header"><span class="wb-label">Livraisons cette semaine</span><span class="wb-val" style="color:var(--lime)">12/20</span></div>
+        <div class="pb"><div class="pbf" style="width:60%"></div></div>
+      </div>
+      <div class="wb">
+        <div class="wb-header"><span class="wb-label">Score conduite sécuritaire</span><span class="wb-val" style="color:var(--lime)">91%</span></div>
+        <div class="pb"><div class="pbf" style="width:91%"></div></div>
+      </div>
+      <div class="wb">
+        <div class="wb-header"><span class="wb-label">Jours de repos cette semaine</span><span class="wb-val">1/2 recommandés</span></div>
+        <div class="pb"><div class="pbf" style="width:50%;background:var(--orange)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONDUITE SÉCURITAIRE -->
+  <div class="safe-driving">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--lime);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Bonus conduite sécuritaire</div>
+        <div class="sd-score">91%</div>
+        <div style="font-size:11px;color:var(--muted)">Score ce mois-ci · Niveau Excellent</div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <div style="display:flex;gap:8px"><span style="color:var(--lime)">✓</span><span>Aucun freinage brusque cette semaine</span></div>
+          <div style="display:flex;gap:8px"><span style="color:var(--lime)">✓</span><span>Vitesse moyenne respectée sur tous les trajets</span></div>
+          <div style="display:flex;gap:8px"><span style="color:var(--lime)">✓</span><span>Pauses respectées 2/3 fois</span></div>
+          <div style="display:flex;gap:8px"><span style="color:var(--orange)">!</span><span>Amélioration possible : éviter les créneaux 22h–2h fatigue</span></div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Bonus du mois</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--lime);letter-spacing:-1px">+45 $</div>
+        <div style="font-size:10px;color:var(--muted)">Versé le 1er du mois</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTENAIRES BIEN-ÊTRE -->
+  <div style="font-size:12px;color:var(--blue);font-weight:500;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase">🤝 Partenaires bien-être livreurs</div>
+  <div class="partner-grid">
+    <div class="partner-card" onclick="showPartner('Petro-Canada')">
+      <div class="partner-logo">⛽</div>
+      <div class="partner-name">Petro-Canada</div>
+      <div class="partner-offer">-5 cents/litre</div>
+      <div class="partner-desc">Présente ta carte PorteàPorte certifiée à la caisse. Valide sur tout le Québec.</div>
+    </div>
+    <div class="partner-card" onclick="showPartner('Jiffy Lube')">
+      <div class="partner-logo">🔧</div>
+      <div class="partner-name">Entretien auto</div>
+      <div class="partner-offer">-15% vidange & pneus</div>
+      <div class="partner-desc">Partenariat avec Jiffy Lube et OK Tire. Ton véhicule mérite d'être entretenu.</div>
+    </div>
+    <div class="partner-card" onclick="showPartner('Second Cup')">
+      <div class="partner-logo">☕</div>
+      <div class="partner-name">Café & pause</div>
+      <div class="partner-offer">Café gratuit après 4h</div>
+      <div class="partner-desc">Second Cup partenaire. Montre l'app après 4h de conduite pour un café offert.</div>
+    </div>
+    <div class="partner-card" onclick="showPartner('Assurance')">
+      <div class="partner-logo">🛡️</div>
+      <div class="partner-name">Assurance auto+</div>
+      <div class="partner-offer">Couverture livraison</div>
+      <div class="partner-desc">Assurance spéciale pour livreurs PorteàPorte. Votre usage professionnel est couvert.</div>
+    </div>
+    <div class="partner-card" onclick="showPartner('Gym')">
+      <div class="partner-logo">💪</div>
+      <div class="partner-name">Gym partenaire</div>
+      <div class="partner-offer">-20% abonnement</div>
+      <div class="partner-desc">GoodLife, YMCA et salles locales. Ton corps, c'est ton outil de travail.</div>
+    </div>
+    <div class="partner-card" onclick="showPartner('Télémédecine')">
+      <div class="partner-logo">🩺</div>
+      <div class="partner-name">Télémédecine</div>
+      <div class="partner-offer">Consultation gratuite</div>
+      <div class="partner-desc">1 consultation médicale gratuite par mois via Maple.ca. Travailleur autonome = pas de régime.</div>
+    </div>
+  </div>
+
+  <!-- PARAMÈTRES BIEN-ÊTRE -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">⚙️ Mes paramètres bien-être</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:13px;font-weight:500">Rappel de pause automatique</div><div style="font-size:11px;color:var(--muted)">Alerte après X heures de conduite consécutives</div></div>
+        <select class="fi" style="width:auto" onchange="showToast('Paramètre sauvegardé !')">
+          <option>Après 2h</option><option selected>Après 3h</option><option>Après 4h</option><option>Désactivé</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:13px;font-weight:500">Limite de livraisons par jour</div><div style="font-size:11px;color:var(--muted)">Pour éviter la surcharge et maintenir la qualité</div></div>
+        <select class="fi" style="width:auto" onchange="showToast('Paramètre sauvegardé !')">
+          <option>5 livraisons</option><option>10 livraisons</option><option selected>15 livraisons</option><option>Illimité</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:13px;font-weight:500">Zones géographiques préférées</div><div style="font-size:11px;color:var(--muted)">Le matching IA respecte ta zone de confort</div></div>
+        <input class="fi" type="text" style="width:180px" placeholder="Ex: Lévis, Québec" oninput="">
+      </div>
+    </div>
+  </div>
+
+  <div class="note">💚 <strong>Pourquoi PorteàPorte fait ça :</strong> Un livreur fatigué = risques d'accident, mauvaise livraison, abandon de la plateforme. En prenant soin de nos livreurs, on protège tout le monde. C'est bon pour eux, bon pour les clients, bon pour nous.</div>
+</div>
+
+<script>
+// Navigation
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(el)el.classList.add('on');
+  window.scrollTo({top:60,behavior:'smooth'});
+}
+
+// Toast
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// PorteCoin
+let coins=425;
+function buy(el,name,price){
+  if(coins<price){showToast('❌ Pas assez de PorteCoins ! ('+price+' requis)');return}
+  coins-=price;
+  updateCoinDisplay();
+  addCoinHistory('🎁 Échange — '+name,'−'+price+' PC','var(--red)');
+  showToast('✅ '+name+' obtenu ! −'+price+' PC');
+  launchConfetti();
+}
+function updateCoinDisplay(){
+  document.getElementById('coin-balance').textContent=coins;
+  document.getElementById('coin-value').textContent=(coins*0.1).toFixed(2);
+}
+function calcTransfer(){
+  const amt=parseInt(document.getElementById('transfer-amt').value)||0;
+  document.getElementById('transfer-val').textContent=(amt*0.1).toFixed(2)+' $';
+}
+function doTransfer(){
+  const to=document.getElementById('transfer-to').value.trim();
+  const amt=parseInt(document.getElementById('transfer-amt').value)||0;
+  if(!to){showToast('❌ Entre un destinataire');return}
+  if(amt<10){showToast('❌ Minimum 10 PC par transfert');return}
+  if(amt>coins){showToast('❌ Pas assez de PorteCoins');return}
+  coins-=amt;
+  updateCoinDisplay();
+  addCoinHistory('🔄 Transfert → '+to,'−'+amt+' PC','var(--red)');
+  showToast('✅ '+amt+' PC envoyés à '+to+' !');
+  document.getElementById('transfer-to').value='';
+  document.getElementById('transfer-amt').value='';
+  document.getElementById('transfer-val').textContent='0,00 $';
+}
+function addCoinHistory(label,amount,color){
+  const hist=document.getElementById('coin-history');
+  const div=document.createElement('div');
+  div.className='card2';
+  div.style.cssText='display:flex;justify-content:space-between;align-items:center';
+  const now=new Date().toLocaleDateString('fr-CA');
+  div.innerHTML=`<div><div style="font-weight:500">${label}</div><div style="font-size:10px;color:var(--muted)">${now}</div></div><span style="color:${color};font-weight:600;font-size:14px">${amount}</span>`;
+  hist.insertBefore(div,hist.firstChild);
+}
+
+// Missions
+const missionData={
+  m1:{count:3,max:5,bar:'m1-bar'},
+  m2:{count:5,max:8,bar:'m2-bar'},
+  m3:{count:12,max:20,bar:'m3-bar'}
+};
+function joinMission(id){
+  const m=missionData[id];
+  const btn=document.getElementById(id+'-btn');
+  if(btn.classList.contains('joined')){showToast('Tu es déjà inscrit !');return}
+  m.count++;
+  btn.classList.add('joined');
+  btn.textContent='✅ Tu es inscrit !';
+  document.getElementById(id+'-count').textContent=m.count+'/'+m.max;
+  document.getElementById(m.bar).style.width=(m.count/m.max*100)+'%';
+  showToast('❤️ Mission rejointe ! +100 PorteCoins et +200 XP t\'attendent !');
+  coins+=100;
+  updateCoinDisplay();
+  launchConfetti();
+  // Update impact counters
+  const mc=document.getElementById('mission-count');
+  const hc=document.getElementById('heroes-count');
+  if(mc)animCounter(mc,parseInt(mc.textContent||0)+1);
+  if(hc)animCounter(hc,parseInt(hc.textContent||0)+1);
+}
+
+// Counters animation
+function animCounter(el,target){
+  const start=Date.now();
+  const from=parseInt(el.textContent)||0;
+  const tick=()=>{
+    const p=Math.min((Date.now()-start)/1000,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=Math.round(from+(target-from)*ease);
+    if(p<1)requestAnimationFrame(tick);
+  };tick();
+}
+// Init impact counters
+setTimeout(()=>{
+  const mc=document.getElementById('mission-count');
+  const hc=document.getElementById('heroes-count');
+  if(mc)animCounter(mc,247);
+  if(hc)animCounter(hc,89);
+},500);
+
+// Pause
+function takePause(){
+  document.querySelector('.pause-alert').style.display='none';
+  const ws=document.getElementById('wellness-score');
+  if(ws)ws.textContent='92';
+  showToast('☕ Super ! Profite bien de ta pause. Tu mérites ça !');
+}
+
+// Partenaires
+function showPartner(name){showToast('🤝 Partenariat '+name+' — disponible au lancement !')}
+
+// Confetti
+function launchConfetti(){
+  const colors=['#B8F53E','#0BFFCB','#F5C842','#FF8C00'];
+  for(let i=0;i<14;i++){
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}%;width:7px;height:7px;background:${colors[i%4]};border-radius:50%;pointer-events:none;z-index:9999;animation:fall ${1+Math.random()*2}s linear forwards`;
+      document.body.appendChild(d);
+      setTimeout(()=>d.remove(),3000);
+    },i*80);
+  }
+}
+const s=document.createElement('style');
+s.textContent='@keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+document.head.appendChild(s);
+</script>
+</body>
+</html>

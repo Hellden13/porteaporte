@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteàPorte — Devenir partenaire. Rejoins notre réseau de confiance : essence, entretien, café, gym. Visibilité auprès de 1 247 utilisateurs actifs 🍁">
+<meta property="og:title" content="PorteàPorte 🍁">
+<meta property="og:description" content="PorteàPorte — Devenir partenaire. Rejoins notre réseau de confiance : essence, entretien, café, gym. Visibilité auprès de 1 247 utilisateurs actifs 🍁">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteàPorte — Devenir partenaire 🤝</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07);--gold:#F5C842;--orange:#FF8C00;--purple:#A78BFA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.95);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.back{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.back:hover{color:var(--lime)}
+
+/* HERO */
+.hero{padding:70px 40px 56px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(184,245,62,.06),transparent 70%)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);padding:6px 16px;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:18px;border-radius:2px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,96px);letter-spacing:-1px;line-height:.95;margin-bottom:14px;position:relative;z-index:1}
+.hero h1 span{color:var(--lime)}
+.hero p{font-size:16px;color:var(--muted);max-width:540px;margin:0 auto 32px;line-height:1.65;font-weight:300;position:relative;z-index:1}
+
+/* STATS */
+.stats-bar{display:flex;gap:0;background:var(--lime);padding:14px 40px;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center;padding:0 28px;border-right:1px solid rgba(5,8,10,.15)}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--ink);letter-spacing:-1px;line-height:1}
+.stat-l{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(5,8,10,.55);margin-top:2px}
+
+/* SECTIONS */
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 80px}
+.section{padding:56px 0}
+.sec-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:8px;font-weight:500}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);letter-spacing:-1px;line-height:1;margin-bottom:12px}
+.sec-sub{font-size:15px;color:var(--muted);max-width:520px;line-height:1.7;font-weight:300;margin-bottom:40px}
+
+/* AVANTAGES */
+.avantages-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:40px}
+.av-card{background:var(--smoke);padding:28px 22px;border:1px solid transparent;transition:all .3s}
+.av-card:hover{border-color:rgba(184,245,62,.2);transform:translateY(-4px)}
+.av-icon{font-size:36px;margin-bottom:14px}
+.av-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.5px;margin-bottom:8px}
+.av-desc{font-size:12px;color:var(--muted);line-height:1.65}
+.av-stat{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--lime);letter-spacing:-1px;margin-top:12px;line-height:1}
+
+/* TYPES PARTENAIRES */
+.types-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:40px}
+.type-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:18px;text-align:center;transition:all .25s;cursor:pointer}
+.type-card:hover{border-color:rgba(184,245,62,.3);transform:translateY(-3px)}
+.type-icon{font-size:32px;margin-bottom:10px}
+.type-name{font-size:13px;font-weight:600;margin-bottom:6px}
+.type-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.type-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:50px;margin-top:8px;background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+
+/* PROCESSUS */
+.process{display:flex;flex-direction:column;gap:0;max-width:600px}
+.proc-step{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid rgba(245,240,232,.06)}
+.proc-step:last-child{border-bottom:none}
+.proc-n{font-family:'Bebas Neue',sans-serif;font-size:40px;color:rgba(245,240,232,.1);width:48px;flex-shrink:0;line-height:1;transition:color .3s}
+.proc-step:hover .proc-n{color:var(--lime)}
+.proc-title{font-size:16px;font-weight:600;margin-bottom:4px}
+.proc-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* PARTENAIRES ACTUELS */
+.partners-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:40px}
+.partner-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:16px;display:flex;align-items:center;gap:12px}
+.partner-logo{width:40px;height:40px;border-radius:4px;background:var(--smoke);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.partner-name{font-size:12px;font-weight:600}
+.partner-offer{font-size:11px;color:var(--teal);margin-top:2px}
+
+/* FORMULAIRE */
+.form-card{background:var(--smoke);border:1px solid rgba(184,245,62,.2);border-radius:6px;padding:32px;max-width:600px;margin:0 auto}
+.form-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime);letter-spacing:-1px;margin-bottom:6px}
+.form-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.fg{margin-bottom:14px}
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:11px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi::placeholder{color:rgba(245,240,232,.2)}
+select.fi option{background:#141918}
+textarea.fi{resize:vertical;min-height:80px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.submit{width:100%;background:var(--lime);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border-radius:2px;margin-top:6px;transition:all .2s;letter-spacing:.5px}
+.submit:hover{background:var(--teal);transform:translateY(-1px)}
+.success{display:none;text-align:center;padding:24px}
+.success.show{display:block}
+
+/* NOTE */
+.note{padding:10px 14px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:10px}
+.note strong{color:var(--paper)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:28px 40px;background:var(--smoke);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:11px;color:rgba(245,240,232,.25)}
+.footer-link{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-link:hover{color:var(--lime)}
+
+@media(max-width:700px){
+  nav{padding:14px 16px}
+  .hero{padding:48px 16px 36px}
+  .stats-bar{padding:14px 16px;gap:10px}
+  .stat{padding:0 14px;border-right:none}
+  .wrap{padding:0 16px 60px}
+  .avantages-grid,.types-grid,.partners-grid{grid-template-columns:1fr}
+  .fr{grid-template-columns:1fr}
+  .form-card{padding:20px}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">👤 Mon compte</a><a href="index.html" class="back">← Retour au site</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🤝 Programme partenaires 2026</div>
+  <h1>Rejoignez notre<br>réseau <span>de confiance</span></h1>
+  <p>PorteàPorte connecte votre entreprise à des milliers de livreurs certifiés et d'expéditeurs actifs au Québec. Visibilité, fidélité, impact — tous les avantages d'un partenariat local.</p>
+  <a href="#formulaire" style="display:inline-block;background:var(--lime);color:var(--ink);padding:14px 32px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;border-radius:2px;text-decoration:none;transition:all .2s" onmouseover="this.style.background='var(--teal)'" onmouseout="this.style.background='var(--lime)'">Devenir partenaire →</a>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-n">1 247</div><div class="stat-l">Utilisateurs actifs</div></div>
+  <div class="stat"><div class="stat-n">89</div><div class="stat-l">Livreurs certifiés</div></div>
+  <div class="stat"><div class="stat-n">8 420</div><div class="stat-l">Livraisons complétées</div></div>
+  <div class="stat"><div class="stat-n">5 villes</div><div class="stat-l">Québec, MTL, Laval...</div></div>
+</div>
+
+<div class="wrap">
+
+  <!-- AVANTAGES -->
+  <div class="section">
+    <div class="sec-label">Pourquoi nous rejoindre</div>
+    <h2 class="sec-title">Les avantages d'un partenariat PorteàPorte</h2>
+    <div class="avantages-grid">
+      <div class="av-card">
+        <div class="av-icon">📣</div>
+        <div class="av-title">Visibilité ciblée</div>
+        <div class="av-desc">Votre logo et offre affichés dans l'application, sur la page bien-être livreurs et dans les communications PorteàPorte. Audience 100% québécoise.</div>
+        <div class="av-stat">1 247+</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">utilisateurs exposés</div>
+      </div>
+      <div class="av-card">
+        <div class="av-icon">🚗</div>
+        <div class="av-title">Clientèle de livreurs</div>
+        <div class="av-desc">Accès direct à 89 livreurs certifiés qui conduisent quotidiennement. Parfait pour les stations-service, garages, restaurants et services auto.</div>
+        <div class="av-stat">89</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">livreurs actifs</div>
+      </div>
+      <div class="av-card">
+        <div class="av-icon">❤️</div>
+        <div class="av-title">Image solidaire</div>
+        <div class="av-desc">S'associer à PorteàPorte, c'est s'afficher comme une entreprise qui soutient l'économie locale, les livreurs autonomes et les causes humanitaires.</div>
+        <div class="av-stat">5%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">des bénéfices aux organismes</div>
+      </div>
+      <div class="av-card">
+        <div class="av-icon">🪙</div>
+        <div class="av-title">Programme PorteCoins</div>
+        <div class="av-desc">Vos clients peuvent gagner des PorteCoins en utilisant votre service via PorteàPorte. Une fidélisation croisée unique au Canada dans la livraison.</div>
+        <div class="av-stat">0 $</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">coût de départ</div>
+      </div>
+      <div class="av-card">
+        <div class="av-icon">📊</div>
+        <div class="av-title">Rapport mensuel</div>
+        <div class="av-desc">Chaque mois, vous recevez un rapport sur les interactions générées par votre partenariat : clics, utilisations de l'offre, retours livreurs.</div>
+        <div class="av-stat">100%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">transparent</div>
+      </div>
+      <div class="av-card">
+        <div class="av-icon">🍁</div>
+        <div class="av-title">Local et croissant</div>
+        <div class="av-desc">Nous lançons à Québec et Montréal en 2026 avec une expansion rapide. Rejoignez le réseau maintenant et bénéficiez d'un avantage de premier arrivant.</div>
+        <div class="av-stat">5+</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">villes en 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPES DE PARTENAIRES -->
+  <div class="section" style="padding-top:0">
+    <div class="sec-label">Qui peut devenir partenaire ?</div>
+    <h2 class="sec-title">Pour toutes les entreprises locales</h2>
+    <div class="types-grid">
+      <div class="type-card">
+        <div class="type-icon">⛽</div>
+        <div class="type-name">Stations-service</div>
+        <div class="type-desc">Rabais à la pompe pour les livreurs. Petro-Canada, Ultramar, Irving — idéal pour fidéliser une clientèle récurrente qui conduit beaucoup.</div>
+        <span class="type-badge">Priorité haute</span>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🔧</div>
+        <div class="type-name">Garages & Entretien</div>
+        <div class="type-desc">Les livreurs entretiennent leur véhicule régulièrement. Rabais vidange, pneus, inspection — clientèle fidèle et besoins récurrents.</div>
+        <span class="type-badge">Priorité haute</span>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">☕</div>
+        <div class="type-name">Cafés & Restaurants</div>
+        <div class="type-desc">Offre de bienvenue pour les livreurs actifs. Visible dans l'app comme partenaire de pause. Trafic garanti aux heures creuses.</div>
+        <span class="type-badge">Populaire</span>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">💪</div>
+        <div class="type-name">Gyms & Bien-être</div>
+        <div class="type-desc">PorteàPorte encourage les livreurs à prendre soin d'eux. Un partenariat gym s'inscrit naturellement dans notre programme bien-être.</div>
+        <span class="type-badge">Populaire</span>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🛡️</div>
+        <div class="type-name">Assureurs</div>
+        <div class="type-desc">Les livreurs autonomes ont des besoins spécifiques en assurance. Proposez une couverture adaptée à ce profil sous-desservi au Canada.</div>
+        <span class="type-badge">Spécialisé</span>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🏪</div>
+        <div class="type-name">Commerces locaux</div>
+        <div class="type-desc">Épiceries, quincailleries, boutiques — tout commerce local qui veut plus de visibilité auprès d'une clientèle québécoise engagée et active.</div>
+        <span class="type-badge">Ouvert à tous</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESSUS -->
+  <div class="section" style="padding-top:0">
+    <div class="sec-label">Comment ça marche</div>
+    <h2 class="sec-title">Simple et rapide.</h2>
+    <div class="process">
+      <div class="proc-step"><div class="proc-n">01</div><div><div class="proc-title">Tu remplis le formulaire ci-dessous</div><div class="proc-desc">5 minutes. Décris ton entreprise, ton offre et la portée géographique que tu vises.</div></div></div>
+      <div class="proc-step"><div class="proc-n">02</div><div><div class="proc-title">On te contacte sous 48h</div><div class="proc-desc">Denis Morneau, fondateur de PorteàPorte, te répond personnellement pour discuter des modalités.</div></div></div>
+      <div class="proc-step"><div class="proc-n">03</div><div><div class="proc-title">On finalise l'entente</div><div class="proc-desc">On s'entend sur l'offre, la durée et les conditions. Aucun frais d'entrée — c'est du gagnant-gagnant.</div></div></div>
+      <div class="proc-step"><div class="proc-n">04</div><div><div class="proc-title">Ton logo apparaît dans l'app</div><div class="proc-desc">Ton entreprise est visible immédiatement dans la section bien-être livreurs et dans les communications PorteàPorte.</div></div></div>
+    </div>
+  </div>
+
+  <!-- PARTENAIRES ACTUELS -->
+  <div class="section" style="padding-top:0">
+    <div class="sec-label">Ils nous font déjà confiance</div>
+    <h2 class="sec-title">Nos partenaires actuels</h2>
+    <div class="partners-grid">
+      <div class="partner-card"><div class="partner-logo">⛽</div><div><div class="partner-name">Petro-Canada</div><div class="partner-offer">-5 cents/litre</div></div></div>
+      <div class="partner-card"><div class="partner-logo">🔧</div><div><div class="partner-name">Jiffy Lube / OK Tire</div><div class="partner-offer">-15% entretien</div></div></div>
+      <div class="partner-card"><div class="partner-logo">☕</div><div><div class="partner-name">Second Cup</div><div class="partner-offer">Café offert après 4h</div></div></div>
+      <div class="partner-card"><div class="partner-logo">💪</div><div><div class="partner-name">GoodLife / YMCA</div><div class="partner-offer">-20% abonnement</div></div></div>
+      <div class="partner-card"><div class="partner-logo">🩺</div><div><div class="partner-name">Maple.ca</div><div class="partner-offer">1 consultation/mois</div></div></div>
+      <div class="partner-card" style="border-style:dashed;border-color:rgba(184,245,62,.2);background:rgba(184,245,62,.03);cursor:pointer" onclick="document.getElementById('formulaire').scrollIntoView({behavior:'smooth'})">
+        <div class="partner-logo" style="background:rgba(184,245,62,.1);color:var(--lime)">+</div>
+        <div><div class="partner-name" style="color:var(--lime)">Votre entreprise</div><div class="partner-offer">Rejoindre le réseau →</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULAIRE -->
+  <div class="section" style="padding-top:0" id="formulaire">
+    <div class="form-card">
+      <div class="form-title">Soumettre une demande</div>
+      <div class="form-sub">Remplis ce formulaire et Denis te contacte personnellement sous 48h. Aucun frais. Aucun engagement.</div>
+
+      <form id="partner-form" onsubmit="submitForm(event)">
+        <div class="fr">
+          <div class="fg"><label class="fl">Ton prénom *</label><input class="fi" type="text" id="pf-prenom" placeholder="Marie-Claire" required></div>
+          <div class="fg"><label class="fl">Ton nom *</label><input class="fi" type="text" id="pf-nom" placeholder="Tremblay" required></div>
+        </div>
+        <div class="fg"><label class="fl">Nom de l'entreprise *</label><input class="fi" type="text" id="pf-entreprise" placeholder="Ex: Garage Tremblay & Fils" required></div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Courriel professionnel *</label><input class="fi" type="email" id="pf-email" placeholder="toi@entreprise.ca" required></div>
+          <div class="fg"><label class="fl">Téléphone</label><input class="fi" type="tel" id="pf-tel" placeholder="+1 (418) 555-0123"></div>
+        </div>
+        <div class="fg"><label class="fl">Type d'entreprise *</label>
+          <select class="fi" id="pf-type" required>
+            <option value="">Choisir...</option>
+            <option>⛽ Station-service</option><option>🔧 Garage / Entretien auto</option>
+            <option>☕ Café / Restaurant</option><option>💪 Gym / Bien-être</option>
+            <option>🛡️ Assurance</option><option>🩺 Santé / Médecine</option>
+            <option>🏪 Commerce local</option><option>📱 Technologie / App</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Ville(s) visée(s) *</label>
+          <select class="fi" id="pf-region" required>
+            <option value="">Choisir...</option>
+            <option>Québec et région</option><option>Montréal et région</option>
+            <option>Laval</option><option>Sherbrooke</option><option>Gatineau</option>
+            <option>Tout le Québec</option><option>National — Canada</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Offre que vous proposez aux livreurs *</label><input class="fi" type="text" id="pf-offre" placeholder="Ex: -10% sur tous les services, café gratuit chaque lundi..." required></div>
+        <div class="fg"><label class="fl">Décrivez votre entreprise et pourquoi ce partenariat vous intéresse</label><textarea class="fi" id="pf-message" placeholder="Quelques phrases sur votre entreprise, ce que vous espérez de ce partenariat..."></textarea></div>
+        <div class="fg"><label class="fl">Comment avez-vous entendu parler de PorteàPorte ?</label>
+          <select class="fi" id="pf-source">
+            <option>Bouche à oreille</option><option>Facebook</option><option>Instagram</option>
+            <option>Google</option><option>LinkedIn</option><option>Autre</option>
+          </select>
+        </div>
+        <button class="submit" type="submit">🤝 Soumettre ma demande →</button>
+      </form>
+
+      <div class="success" id="form-success">
+        <div style="font-size:48px;margin-bottom:12px">🎉</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--lime);letter-spacing:-1px;margin-bottom:8px">Demande reçue !</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Merci ! Denis te contacte personnellement sous 48 heures pour discuter des modalités du partenariat.<br><br>En attendant, tu peux visiter <a href="index.html" style="color:var(--lime)">porteaporte.site</a> pour en savoir plus sur la plateforme.</div>
+        <a href="index.html" style="display:inline-block;background:var(--lime);color:var(--ink);padding:12px 24px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;border-radius:2px;text-decoration:none">Retour au site →</a>
+      </div>
+
+      <div class="note" style="margin-top:14px">🍁 <strong>Aucun frais d'entrée :</strong> Le partenariat PorteàPorte est entièrement gratuit. On s'entend sur une offre mutuellement bénéfique — sans contrat contraignant ni engagement minimum.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-copy">© 2026 PorteàPorte ·  ·  · <a href="faq.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">❓ FAQ</a><a href="suivi-livraison.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">📦 Suivi colis</a><a href="legal.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">CGU & Confidentialité</a> · porteaporte.site · Canada 🍁</div>
+  <div style="display:flex;gap:16px">
+    <a href="index.html" class="footer-link">Accueil</a>
+    <a href="livreur.html" class="footer-link">Devenir livreur</a>
+    <a href="mailto:partenaires@porteaporte.site" class="footer-link">partenaires@porteaporte.site</a>
+  </div>
+</footer>
+
+<script>
+async function notifier(type, data) {
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data })
+    });
+  } catch(e) { console.log('Notif:', e.message); }
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+  const data = {
+    prenom: document.getElementById('pf-prenom')?.value || '',
+    nom: document.getElementById('pf-nom')?.value || '',
+    email: document.getElementById('pf-email')?.value || '',
+    tel: document.getElementById('pf-tel')?.value || '',
+    entreprise: document.getElementById('pf-entreprise')?.value || '',
+    type: document.getElementById('pf-type')?.value || '',
+    region: document.getElementById('pf-region')?.value || '',
+    offre: document.getElementById('pf-offre')?.value || '',
+    message: document.getElementById('pf-message')?.value || '',
+    source: document.getElementById('pf-source')?.value || ''
+  };
+  await notifier('partenaire', data);
+  document.getElementById('partner-form').style.display='none';
+  document.getElementById('form-success').classList.add('show');
+  window.scrollTo({top:document.getElementById('formulaire').offsetTop,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

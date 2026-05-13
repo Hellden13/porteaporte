@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteàPorte — XP, badges et streaks. Programme de fidélité gamifié pour livreurs et expéditeurs. Gagne des récompenses à chaque livraison 🍁">
+<meta property="og:title" content="PorteàPorte 🍁">
+<meta property="og:description" content="PorteàPorte — XP, badges et streaks. Programme de fidélité gamifié pour livreurs et expéditeurs. Gagne des récompenses à chaque livraison 🍁">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteàPorte — Mon Profil & Récompenses 🍁</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;--orange:#FF8C00;--purple:#A78BFA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+nav{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.95);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.ntab{padding:6px 12px;border-radius:2px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .15s;background:none;font-family:'Bricolage Grotesque',sans-serif}
+.ntab:hover{color:var(--paper)}
+.ntab.on{background:rgba(184,245,62,.1);border-color:var(--lime);color:var(--lime)}
+.back{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.back:hover{color:var(--lime)}
+
+/* PAGES */
+.page{display:none;max-width:940px;margin:0 auto;padding:28px 24px 80px}
+.page.on{display:block}
+
+/* CARDS */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:12px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* PROFIL HERO */
+.profile-hero{background:var(--smoke);border:1px solid rgba(184,245,62,.2);border-radius:4px;padding:28px;margin-bottom:16px;position:relative;overflow:hidden}
+.profile-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(184,245,62,.05)}
+.profile-av{width:72px;height:72px;border-radius:50%;background:rgba(184,245,62,.12);border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.profile-info{flex:1}
+.profile-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:-.5px}
+.profile-level{font-size:12px;color:var(--lime);font-weight:500;margin-top:2px}
+.profile-stats{display:flex;gap:20px;margin-top:12px;flex-wrap:wrap}
+.ps{text-align:center}
+.ps-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--lime);letter-spacing:-.5px;line-height:1}
+.ps-l{font-size:10px;color:var(--muted)}
+
+/* XP BAR */
+.xp-section{margin-top:16px}
+.xp-header{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px}
+.xp-label{color:var(--muted)}
+.xp-val{color:var(--lime);font-weight:500}
+.xp-bar{height:10px;background:var(--border);border-radius:5px;overflow:hidden;position:relative}
+.xp-fill{height:100%;border-radius:5px;background:var(--lime);transition:width 1.5s cubic-bezier(0.16,1,0.3,1);position:relative}
+.xp-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;background:rgba(255,255,255,.4);border-radius:2px}
+.level-badges{display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--muted)}
+
+/* STREAK */
+.streak-display{display:flex;align-items:center;gap:16px;background:rgba(255,140,0,.06);border:1px solid rgba(255,140,0,.2);border-radius:4px;padding:16px 20px;margin-bottom:12px}
+.streak-fire{font-size:40px;animation:flicker 1.5s ease-in-out infinite}
+@keyframes flicker{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.streak-n{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--orange);letter-spacing:-2px;line-height:1}
+.streak-weeks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.streak-week{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-direction:column;gap:1px}
+.streak-week.done{border-color:var(--orange);background:rgba(255,140,0,.1);color:var(--orange)}
+.streak-week.current{border-color:var(--lime);background:rgba(184,245,62,.1);color:var(--lime);animation:pulse-border 2s infinite}
+@keyframes pulse-border{0%,100%{box-shadow:0 0 0 0 rgba(184,245,62,.4)}50%{box-shadow:0 0 0 5px rgba(184,245,62,0)}}
+.streak-week.empty{color:var(--muted)}
+
+/* BADGES */
+.badges-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
+.badge-item{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px 8px;text-align:center;transition:all .25s;cursor:pointer;position:relative}
+.badge-item:hover{transform:translateY(-4px);border-color:rgba(184,245,62,.25)}
+.badge-item.earned{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.06)}
+.badge-item.earned::after{content:'✓';position:absolute;top:6px;right:6px;font-size:9px;color:var(--lime);font-weight:700}
+.badge-item.locked{opacity:.4}
+.badge-icon{font-size:26px;margin-bottom:6px}
+.badge-name{font-size:9px;font-weight:500;color:var(--paper);letter-spacing:.3px}
+.badge-desc{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
+.badge-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:8px 12px;font-size:11px;white-space:nowrap;z-index:10;color:var(--paper)}
+.badge-item:hover .badge-tooltip{display:block}
+
+/* TIPS */
+.tips-card{background:rgba(11,255,203,.04);border:1px solid rgba(11,255,203,.15);border-radius:4px;padding:20px;margin-bottom:12px}
+.tip-amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.tip-btn{border:2px solid rgba(11,255,203,.2);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;background:transparent}
+.tip-btn:hover,.tip-btn.selected{border-color:var(--teal);background:rgba(11,255,203,.08)}
+.tip-btn.selected .tip-pct{color:var(--teal)}
+.tip-pct{font-family:'Bebas Neue',sans-serif;font-size:26px;color:rgba(245,240,232,.5);letter-spacing:-1px;line-height:1;transition:color .2s}
+.tip-val{font-size:11px;color:var(--muted);margin-top:3px}
+.tip-custom{display:flex;gap:8px;margin-top:10px}
+.tip-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(11,255,203,.2);border-radius:2px;padding:9px 12px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.tip-input:focus{border-color:var(--teal)}
+.tip-input::placeholder{color:rgba(245,240,232,.2)}
+.tip-submit{background:var(--teal);color:var(--ink);border:none;padding:9px 18px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;transition:all .2s;white-space:nowrap}
+.tip-submit:hover{opacity:.88;transform:translateY(-1px)}
+
+/* BONUS HEURES */
+.hours-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
+.hour-slot{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:8px 4px;text-align:center;font-size:10px;transition:all .2s;cursor:default}
+.hour-slot.peak{border-color:rgba(255,140,0,.4);background:rgba(255,140,0,.08)}
+.hour-slot.super-peak{border-color:rgba(255,77,77,.4);background:rgba(255,77,77,.08)}
+.hour-slot.normal{color:var(--muted)}
+.hour-time{font-size:9px;font-weight:500;margin-bottom:3px}
+.hour-bonus{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:-.5px;line-height:1}
+.hour-slot.peak .hour-bonus{color:var(--orange)}
+.hour-slot.super-peak .hour-bonus{color:var(--red)}
+.hour-slot.normal .hour-bonus{color:var(--muted)}
+.live-bonus{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.25);border-radius:4px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse-red 1.2s infinite;flex-shrink:0}
+@keyframes pulse-red{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,77,77,.4)}50%{opacity:.5;box-shadow:0 0 0 6px rgba(255,77,77,0)}}
+
+/* PARRAINAGE */
+.ref-hero{background:rgba(184,245,62,.05);border:1px solid rgba(184,245,62,.18);border-radius:4px;padding:24px;text-align:center;margin-bottom:12px}
+.ref-code-big{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:6px;color:var(--lime);margin:12px 0}
+.share-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.sh{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:2px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Bricolage Grotesque',sans-serif}
+.sh-sms{background:#25D366;color:#fff}
+.sh-fb{background:#1877F2;color:#fff}
+.sh-copy{background:var(--s2);color:var(--lime);border:1px solid rgba(184,245,62,.3)}
+.sh:hover{opacity:.88;transform:translateY(-1px)}
+
+/* MINI LEADERBOARD */
+.lb-mini{display:flex;flex-direction:column;gap:8px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s2);border:1px solid var(--border);border-radius:4px;transition:border-color .2s}
+.lb-row:hover{border-color:rgba(184,245,62,.2)}
+.lb-row.me{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.04)}
+.lb-rank{font-family:'Bebas Neue',sans-serif;font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.lb-av{width:32px;height:32px;border-radius:50%;background:rgba(184,245,62,.1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.lb-name{font-size:13px;font-weight:500;flex:1}
+.lb-pts{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--lime);letter-spacing:-.5px}
+
+/* FORM ELEMENTS */
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi::placeholder{color:rgba(245,240,232,.2)}
+select.fi option{background:#141918}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:2px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.bp{background:var(--lime);color:var(--ink)}.bp:hover{background:var(--teal)}
+.bs{background:transparent;color:var(--paper);border:1px solid var(--border)}.bs:hover{background:var(--s2)}
+
+/* PROGRESS BAR */
+.pb{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.pbf{height:100%;border-radius:3px;background:var(--lime)}
+
+/* NOTE */
+.note{padding:10px 14px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:10px}
+.note strong{color:var(--paper)}
+
+/* TAG */
+.tag{display:inline-flex;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:500}
+.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.tb{background:rgba(61,255,197,.1);color:var(--teal);border:1px solid rgba(61,255,197,.2)}
+.to{background:rgba(255,184,60,.1);color:var(--orange);border:1px solid rgba(255,184,60,.2)}
+.tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.tv{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+/* TOAST */
+.toast{position:fixed;top:70px;right:20px;background:var(--s2);border:1px solid rgba(184,245,62,.3);border-radius:4px;padding:12px 16px;font-size:12px;transform:translateX(120%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);z-index:999;max-width:260px}
+.toast.show{transform:translateX(0)}
+
+/* CONFETTI */
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+@media(max-width:700px){
+  nav{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .nav-tabs{order:3;width:100%}
+  .page{padding:20px 14px 60px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .badges-grid{grid-template-columns:repeat(4,1fr)}
+  .hours-grid{grid-template-columns:repeat(4,1fr)}
+  .tip-amounts{grid-template-columns:repeat(4,1fr)}
+  .profile-stats{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"><span id="toast-msg">✅ Copié !</span></div>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <div class="nav-tabs">
+    <button class="ntab on" onclick="showPage('profil',this)">👤 Mon profil & XP</button>
+    <button class="ntab" onclick="showPage('badges',this)">🏅 Badges</button>
+    <button class="ntab" onclick="showPage('streak',this)">🔥 Séries</button>
+    <button class="ntab" onclick="showPage('tips',this)">💸 Pourboires</button>
+    <button class="ntab" onclick="showPage('bonus',this)">⚡ Bonus pointe</button>
+    <button class="ntab" onclick="showPage('parrainage',this)">🤝 Parrainage</button>
+  </div>
+  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">👤 Mon compte</a><a href="index.html" class="back">← Retour</a>
+</nav>
+
+<!-- ═══════════════ PROFIL & XP ═══════════════ -->
+<div class="page on" id="page-profil">
+
+  <div class="profile-hero">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div class="profile-av">😊</div>
+      <div class="profile-info">
+        <div class="profile-name" id="p-name">Denis Morneau</div>
+        <div class="profile-level">🥉 Niveau Bronze · Expéditeur & Livreur</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="tag tg">Fondateur 🍁</span>
+          <span class="tag tb">Certifié</span>
+          <span class="tag to">🔥 Streak actif</span>
+        </div>
+      </div>
+      <div class="profile-stats">
+        <div class="ps"><div class="ps-n" id="p-livraisons">7</div><div class="ps-l">Livraisons</div></div>
+        <div class="ps"><div class="ps-n" id="p-coins" style="color:var(--gold)">425</div><div class="ps-l">PorteCoins</div></div>
+        <div class="ps"><div class="ps-n" id="p-streak" style="color:var(--orange)">3</div><div class="ps-l">Semaines streak</div></div>
+        <div class="ps"><div class="ps-n" id="p-badges">4</div><div class="ps-l">Badges</div></div>
+        <div class="ps"><div class="ps-n" id="p-parrains" style="color:var(--purple)">2</div><div class="ps-l">Parrainages</div></div>
+      </div>
+    </div>
+
+    <div class="xp-section">
+      <div class="xp-header">
+        <span class="xp-label">Expérience — Bronze → Argent</span>
+        <span class="xp-val"><span id="xp-current">425</span> / 1 000 XP</span>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+      <div class="level-badges">
+        <span>🥉 Bronze</span><span>🥈 Argent (1 000)</span><span>🥇 Or (2 500)</span><span>💎 Élite (5 000)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULATEUR XP -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🎮 Simulateur — Comment gagner de l'XP</div>
+    <div class="g4" style="margin-bottom:14px">
+      <div class="card2" style="text-align:center;cursor:pointer" onclick="addXP(50,'📦 Livraison envoyée')">
+        <div style="font-size:22px;margin-bottom:6px">📦</div>
+        <div style="font-size:12px;font-weight:500">Colis envoyé</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)">+50 XP</div>
+        <div style="font-size:10px;color:var(--muted)">Clique pour simuler</div>
+      </div>
+      <div class="card2" style="text-align:center;cursor:pointer" onclick="addXP(75,'🚗 Livraison effectuée')">
+        <div style="font-size:22px;margin-bottom:6px">🚗</div>
+        <div style="font-size:12px;font-weight:500">Livraison faite</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)">+75 XP</div>
+        <div style="font-size:10px;color:var(--muted)">Clique pour simuler</div>
+      </div>
+      <div class="card2" style="text-align:center;cursor:pointer" onclick="addXP(25,'⭐ Avis 5 étoiles')">
+        <div style="font-size:22px;margin-bottom:6px">⭐</div>
+        <div style="font-size:12px;font-weight:500">Avis 5 étoiles</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)">+25 XP</div>
+        <div style="font-size:10px;color:var(--muted)">Clique pour simuler</div>
+      </div>
+      <div class="card2" style="text-align:center;cursor:pointer" onclick="addXP(250,'🤝 Parrainage réussi')">
+        <div style="font-size:22px;margin-bottom:6px">🤝</div>
+        <div style="font-size:12px;font-weight:500">Parrainage</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime)">+250 XP</div>
+        <div style="font-size:10px;color:var(--muted)">Clique pour simuler</div>
+      </div>
+    </div>
+    <div class="note">💡 <strong>Prochaine récompense :</strong> À 1 000 XP → Niveau Argent + 100 PorteCoins bonus + badge "Montée en grade" + accès aux livraisons premium.</div>
+  </div>
+
+  <!-- HISTORIQUE XP -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">📜 Historique récent</div>
+    <div id="xp-history" style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+      <div class="card2" style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🎁 Bonus bienvenue · Fondateur</span><span style="color:var(--lime);font-weight:600">+50 XP</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between"><span style="color:var(--muted)">📦 Colis envoyé · Lévis→Montréal</span><span style="color:var(--lime);font-weight:600">+50 XP</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🤝 Parrainage · Marc-Antoine L.</span><span style="color:var(--lime);font-weight:600">+250 XP</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🔥 Bonus streak semaine 3</span><span style="color:var(--orange);font-weight:600">+75 XP</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BADGES ═══════════════ -->
+<div class="page" id="page-badges">
+
+  <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">🏅 Tes badges — 4 gagnés sur 12</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Clique sur un badge pour voir comment le gagner.</div>
+
+  <div class="badges-grid">
+    <!-- GAGNÉS -->
+    <div class="badge-item earned" onclick="showBadge(this,'Fondateur 🍁','Inscrit parmi les 500 premiers · Exclusif pour toujours')">
+      <div class="badge-tooltip">Fondateur 🍁</div>
+      <div class="badge-icon">🍁</div>
+      <div class="badge-name">Fondateur</div>
+      <div class="badge-desc">Top 500 inscrits</div>
+    </div>
+    <div class="badge-item earned" onclick="showBadge(this,'Premier envoi 📦','Ta première livraison complétée avec succès')">
+      <div class="badge-tooltip">Premier envoi</div>
+      <div class="badge-icon">📦</div>
+      <div class="badge-name">Premier envoi</div>
+      <div class="badge-desc">1re livraison</div>
+    </div>
+    <div class="badge-item earned" onclick="showBadge(this,'Ambassadeur 🤝','Ton premier parrainage réussi')">
+      <div class="badge-tooltip">1er parrainage</div>
+      <div class="badge-icon">🤝</div>
+      <div class="badge-name">Ambassadeur</div>
+      <div class="badge-desc">1er parrainage</div>
+    </div>
+    <div class="badge-item earned" onclick="showBadge(this,'Fidèle 🔥','3 semaines de streak consécutives')">
+      <div class="badge-tooltip">3 semaines streak</div>
+      <div class="badge-icon">🔥</div>
+      <div class="badge-name">Fidèle</div>
+      <div class="badge-desc">Streak 3 semaines</div>
+    </div>
+
+    <!-- À GAGNER -->
+    <div class="badge-item locked" onclick="showBadge(this,'Écolo 🌱','Effectuer 5 livraisons via livreur vélo ou électrique')">
+      <div class="badge-tooltip">5 livraisons éco</div>
+      <div class="badge-icon">🌱</div>
+      <div class="badge-name">Écolo</div>
+      <div class="badge-desc">5 livraisons vertes</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Noctambule 🌙','3 livraisons effectuées entre 22h et 6h')">
+      <div class="badge-tooltip">3 livraisons nocturnes</div>
+      <div class="badge-icon">🌙</div>
+      <div class="badge-name">Noctambule</div>
+      <div class="badge-desc">3 nuits livrées</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Explorateur QC 🗺️','Livraisons dans 5 villes différentes du Québec')">
+      <div class="badge-tooltip">5 villes au Québec</div>
+      <div class="badge-icon">🗺️</div>
+      <div class="badge-name">Explorateur QC</div>
+      <div class="badge-desc">5 villes livrées</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Client fidèle ⭐','10 livraisons envoyées en tant qu\'expéditeur')">
+      <div class="badge-tooltip">10 colis envoyés</div>
+      <div class="badge-icon">⭐</div>
+      <div class="badge-name">Client fidèle</div>
+      <div class="badge-desc">10 colis envoyés</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Route express ⚡','5 livraisons express en moins de 2h')">
+      <div class="badge-tooltip">5 livraisons express</div>
+      <div class="badge-icon">⚡</div>
+      <div class="badge-name">Route express</div>
+      <div class="badge-desc">5 livraisons 2h</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Héros local ❤️','Participer à une mission communautaire')">
+      <div class="badge-tooltip">Mission solidaire</div>
+      <div class="badge-icon">❤️</div>
+      <div class="badge-name">Héros local</div>
+      <div class="badge-desc">1 mission solidaire</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Super ambassadeur 💎','15 parrainages réussis')">
+      <div class="badge-tooltip">15 parrainages</div>
+      <div class="badge-icon">💎</div>
+      <div class="badge-name">Super Ambassadeur</div>
+      <div class="badge-desc">15 parrainages</div>
+    </div>
+    <div class="badge-item locked" onclick="showBadge(this,'Gagnant 🎁','Remporter le tirage mensuel')">
+      <div class="badge-tooltip">Gagner le tirage</div>
+      <div class="badge-icon">🎁</div>
+      <div class="badge-name">Gagnant</div>
+      <div class="badge-desc">Tirage mensuel</div>
+    </div>
+  </div>
+
+  <!-- BADGE DETAIL -->
+  <div class="card" id="badge-detail" style="display:none;border-color:rgba(184,245,62,.25);background:rgba(184,245,62,.04)">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="font-size:48px" id="bd-icon">🍁</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime)" id="bd-name">Fondateur</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px" id="bd-desc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:12px">🏅 <strong>Chaque badge gagné = +25 XP bonus + notification push</strong> · Les badges "Fondateur" et "Gagnant" sont les plus rares — exclusifs et affichés en priorité sur ton profil public.</div>
+</div>
+
+<!-- ═══════════════ STREAK ═══════════════ -->
+<div class="page" id="page-streak">
+
+  <div class="streak-display">
+    <div style="font-size:40px">🔥</div>
+    <div>
+      <div style="font-size:11px;color:var(--orange);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Série active</div>
+      <div class="streak-n" id="streak-count">3</div>
+      <div style="font-size:12px;color:var(--muted)">semaines consécutives · +75 XP bonus</div>
+    </div>
+    <div style="margin-left:auto;text-align:right">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Prochain palier</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:-1px">5 sem.</div>
+      <div style="font-size:11px;color:var(--muted)">= +200 XP + PorteCoins</div>
+    </div>
+  </div>
+
+  <!-- SEMAINES VISUELLES -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">📅 Tes semaines cette année</div>
+    <div class="streak-weeks" id="streak-weeks">
+      <!-- Généré par JS -->
+    </div>
+    <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--orange);background:rgba(255,140,0,.1);display:inline-block"></span>Semaine complète</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--lime);background:rgba(184,245,62,.1);display:inline-block"></span>Semaine en cours</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border);display:inline-block"></span>À venir</span>
+    </div>
+  </div>
+
+  <!-- PALIERS STREAK -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🏆 Récompenses par palier de série</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card2" style="display:flex;align-items:center;gap:14px;border-color:rgba(255,140,0,.2);background:rgba(255,140,0,.04)">
+        <div style="font-size:28px;width:40px;text-align:center">🔥</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">3 semaines <span style="color:var(--orange)">(actuel)</span></div>
+          <div style="font-size:11px;color:var(--muted)">+75 XP bonus · Badge "Fidèle" débloqué</div>
+        </div>
+        <span class="tag to">Atteint ✓</span>
+      </div>
+      <div class="card2" style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:28px;width:40px;text-align:center">🔥🔥</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">5 semaines</div>
+          <div style="font-size:11px;color:var(--muted)">+200 XP · 50 PorteCoins · Priorité matching</div>
+        </div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:60%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">3/5 sem.</div></div>
+      </div>
+      <div class="card2" style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:28px;width:40px;text-align:center">🔥🔥🔥</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">10 semaines</div>
+          <div style="font-size:11px;color:var(--muted)">+500 XP · 100 PorteCoins · 1 livraison gratuite</div>
+        </div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:30%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">3/10 sem.</div></div>
+      </div>
+      <div class="card2" style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:28px;width:40px;text-align:center">👑</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">52 semaines</div>
+          <div style="font-size:11px;color:var(--muted)">Abonnement Premium 1 an GRATUIT + badge légendaire</div>
+        </div>
+        <span class="tag tv">Légendaire</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">⚠️ <strong>Attention :</strong> Si tu passes une semaine sans livraison, ton streak repart à zéro. Un streak freeze (1 semaine de grâce) est disponible à 200 PorteCoins dans la boutique de récompenses.</div>
+</div>
+
+<!-- ═══════════════ POURBOIRES ═══════════════ -->
+<div class="page" id="page-tips">
+
+  <div class="tips-card">
+    <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">💸 Laisser un pourboire au livreur</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">100% du pourboire va au livreur. PorteàPorte ne prend aucune commission sur les tips. C'est ta façon de dire merci pour un service exceptionnel.</div>
+
+    <!-- Livraison de référence -->
+    <div class="card2" style="margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">🚗</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">Livraison PP-2847</div>
+        <div style="font-size:11px;color:var(--muted)">Marc-Antoine L. · Lévis → Montréal · 87,50 $</div>
+      </div>
+      <span class="tag tg">Livré ✓</span>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase">Choisir un montant</div>
+    <div class="tip-amounts">
+      <div class="tip-btn" onclick="selectTip(this,5)">
+        <div class="tip-pct">5%</div>
+        <div class="tip-val" id="tip-val-5">4,38 $</div>
+      </div>
+      <div class="tip-btn" onclick="selectTip(this,10)">
+        <div class="tip-pct">10%</div>
+        <div class="tip-val" id="tip-val-10">8,75 $</div>
+      </div>
+      <div class="tip-btn selected" onclick="selectTip(this,15)">
+        <div class="tip-pct" style="color:var(--teal)">15%</div>
+        <div class="tip-val" id="tip-val-15">13,13 $</div>
+      </div>
+      <div class="tip-btn" onclick="selectTip(this,20)">
+        <div class="tip-pct">20%</div>
+        <div class="tip-val" id="tip-val-20">17,50 $</div>
+      </div>
+    </div>
+
+    <div class="tip-custom">
+      <input class="tip-input" type="number" id="tip-custom-val" placeholder="Montant personnalisé ($)" min="1" max="200" step="0.5">
+      <button class="tip-submit" onclick="submitTip()">💸 Envoyer le tip</button>
+    </div>
+
+    <div style="margin-top:14px;background:var(--s3);border-radius:4px;padding:12px 14px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="color:var(--muted)">Livraison payée</span><span>87,50 $</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="color:var(--muted)">Pourboire sélectionné</span><span style="color:var(--teal)" id="tip-selected-display">13,13 $ (15%)</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid var(--border);padding-top:8px;margin-top:5px"><span>Total à débiter</span><span style="color:var(--lime)" id="tip-total-display">100,63 $</span></div>
+    </div>
+  </div>
+
+  <!-- IMPACT DU TIP -->
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:12px">📊 Revenus livreurs avec tips</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Commission base (88%)</span><span>77,00 $</span></div><div class="pb"><div class="pbf" style="width:77%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Bonus performance</span><span>8,50 $</span></div><div class="pb"><div class="pbf" style="width:20%;background:var(--orange)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--teal)">Pourboire (100%)</span><span style="color:var(--teal)">13,13 $</span></div><div class="pb"><div class="pbf" style="width:15%;background:var(--teal)"></div></div></div>
+        <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;font-weight:600"><span>Total livreur</span><span style="color:var(--lime)">98,63 $</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:12px">❤️ Pourquoi les tips changent tout</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted)">
+        <div style="padding:8px;background:var(--s3);border-radius:4px">Les livreurs avec tips ont un taux de rétention de <strong style="color:var(--paper)">3× supérieur</strong> selon les données Uber et DoorDash.</div>
+        <div style="padding:8px;background:var(--s3);border-radius:4px">Un livreur bien payé livre <strong style="color:var(--paper)">plus vite et avec plus de soin</strong>. Le tip crée un cercle vertueux.</div>
+        <div style="padding:8px;background:var(--s3);border-radius:4px">Chaque tip déclenche une <strong style="color:var(--paper)">notification de gratitude</strong> au livreur avec ton prénom.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BONUS HEURES DE POINTE ═══════════════ -->
+<div class="page" id="page-bonus">
+
+  <!-- LIVE BONUS -->
+  <div class="live-bonus">
+    <div class="live-dot"></div>
+    <div>
+      <div style="font-size:13px;font-weight:500">Bonus actif maintenant</div>
+      <div style="font-size:11px;color:var(--muted)" id="live-bonus-text">Soirée du vendredi · +15% sur toutes les livraisons</div>
+    </div>
+    <div style="margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--red);letter-spacing:-1px" id="live-bonus-pct">+15%</div>
+  </div>
+
+  <!-- GRILLE 24H -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">⏰ Grille des bonus — Toute la semaine</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;font-size:11px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,77,77,.3);border:1px solid rgba(255,77,77,.5);display:inline-block"></span>Heure de pointe (+15 à +25%)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,140,0,.2);border:1px solid rgba(255,140,0,.4);display:inline-block"></span>Bonus modéré (+5 à +10%)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--s2);border:1px solid var(--border);display:inline-block"></span>Tarif normal</span>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500">Semaine (lundi–jeudi)</div>
+    <div class="hours-grid">
+      <div class="hour-slot normal"><div class="hour-time">00h–06h</div><div class="hour-bonus">+0%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">06h–08h</div><div class="hour-bonus">+0%</div></div>
+      <div class="hour-slot peak"><div class="hour-time">08h–10h</div><div class="hour-bonus">+8%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">10h–12h</div><div class="hour-bonus">+0%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">12h–14h</div><div class="hour-bonus">+5%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">14h–16h</div><div class="hour-bonus">+0%</div></div>
+      <div class="hour-slot peak"><div class="hour-time">16h–18h</div><div class="hour-bonus">+10%</div></div>
+      <div class="hour-slot super-peak"><div class="hour-time">18h–21h</div><div class="hour-bonus">+15%</div></div>
+      <div class="hour-slot peak"><div class="hour-time">21h–23h</div><div class="hour-bonus">+8%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">23h–00h</div><div class="hour-bonus">+5%</div></div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);margin:14px 0 8px;font-weight:500">Vendredi–Samedi (demande forte)</div>
+    <div class="hours-grid">
+      <div class="hour-slot normal"><div class="hour-time">00h–06h</div><div class="hour-bonus">+5%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">06h–10h</div><div class="hour-bonus">+0%</div></div>
+      <div class="hour-slot normal"><div class="hour-time">10h–14h</div><div class="hour-bonus">+5%</div></div>
+      <div class="hour-slot peak"><div class="hour-time">14h–17h</div><div class="hour-bonus">+10%</div></div>
+      <div class="hour-slot super-peak"><div class="hour-time">17h–22h</div><div class="hour-bonus">+20%</div></div>
+      <div class="hour-slot super-peak"><div class="hour-time">22h–00h</div><div class="hour-bonus">+25%</div></div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);margin:14px 0 8px;font-weight:500">Événements spéciaux (automatique)</div>
+    <div class="g3">
+      <div class="card2" style="text-align:center"><div style="font-size:20px;margin-bottom:5px">🎄</div><div style="font-size:11px;font-weight:500">Temps des fêtes</div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red)">+30%</div><div style="font-size:10px;color:var(--muted)">15 déc–2 jan</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:20px;margin-bottom:5px">🏷️</div><div style="font-size:11px;font-weight:500">Vendredi fou</div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red)">+25%</div><div style="font-size:10px;color:var(--muted)">Journée complète</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:20px;margin-bottom:5px">❄️</div><div style="font-size:11px;font-weight:500">Tempête de neige</div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red)">+35%</div><div style="font-size:10px;color:var(--muted)">Auto-activé météo</div></div>
+    </div>
+  </div>
+
+  <!-- CALCULATEUR GAINS -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🧮 Calculateur de gains livreur</div>
+    <div class="g2">
+      <div>
+        <label class="fl">Prix de la livraison ($)</label>
+        <input class="fi" type="number" id="calc-prix" value="85" min="20" oninput="calcGains()">
+        <label class="fl">Bonus heure de pointe (%)</label>
+        <select class="fi" id="calc-bonus" onchange="calcGains()">
+          <option value="0">Aucun bonus (tarif normal)</option>
+          <option value="5">+5% (légère demande)</option>
+          <option value="8">+8% (heure de pointe faible)</option>
+          <option value="10">+10% (pointe modérée)</option>
+          <option value="15" selected>+15% (soirée semaine)</option>
+          <option value="20">+20% (vendredi soir)</option>
+          <option value="25">+25% (samedi nuit)</option>
+          <option value="30">+30% (temps des fêtes)</option>
+          <option value="35">+35% (tempête de neige)</option>
+        </select>
+        <label class="fl">Pourboire (%)</label>
+        <select class="fi" id="calc-tip" onchange="calcGains()">
+          <option value="0">Aucun pourboire</option>
+          <option value="5">5%</option>
+          <option value="10" selected>10%</option>
+          <option value="15">15%</option>
+          <option value="20">20%</option>
+        </select>
+      </div>
+      <div>
+        <div class="card2" style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Résultat pour le livreur</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Prix de base</span><span id="g-base">85,00 $</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bonus pointe</span><span style="color:var(--orange)" id="g-bonus">+12,75 $</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Commission PP (12%)</span><span style="color:var(--red)" id="g-comm">−11,73 $</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--teal)">Pourboire (100%)</span><span style="color:var(--teal)" id="g-tip">+9,78 $</span></div>
+            <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;font-weight:600">
+              <span>Revenu total</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-.5px" id="g-total">95,80 $</span>
+            </div>
+          </div>
+        </div>
+        <div class="note">💡 Un livreur qui travaille aux bonnes heures + tips peut gagner jusqu'à <strong>+55%</strong> de plus qu'au tarif de base.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PARRAINAGE ═══════════════ -->
+<div class="page" id="page-parrainage">
+
+  <div class="ref-hero">
+    <div style="font-size:14px;color:var(--muted);margin-bottom:6px">Ton code de parrainage unique</div>
+    <div class="ref-code-big" id="ref-code-display">PP-REF-DENIS</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Chaque ami qui s'inscrit et complète sa première livraison → <strong style="color:var(--lime)">vous gagnez 25 $ chacun</strong></div>
+    <div class="share-btns">
+      <button class="sh sh-sms" onclick="shareSMS()">💬 SMS</button>
+      <button class="sh sh-fb" onclick="shareFB()">👥 Facebook</button>
+      <button class="sh sh-copy" onclick="copyRef()">🔗 Copier le lien</button>
+    </div>
+  </div>
+
+  <!-- PALIERS -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🏆 Paliers ambassadeur</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(255,140,0,.05);border:1px solid rgba(255,140,0,.2);border-radius:4px">
+        <span style="font-size:20px">🥉</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Bronze — 1 ami</div><div style="font-size:11px;color:var(--muted)">25 $ + badge Ambassadeur</div></div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:100%"></div></div><div style="font-size:10px;color:var(--lime);margin-top:2px">Atteint ✓</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:4px">
+        <span style="font-size:20px">🥈</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Argent — 5 amis</div><div style="font-size:11px;color:var(--muted)">150 $ + 1 livraison gratuite</div></div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:40%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">2/5</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:4px">
+        <span style="font-size:20px">🥇</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Or — 15 amis</div><div style="font-size:11px;color:var(--muted)">500 $ + Premium 3 mois</div></div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:13%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">2/15</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:4px">
+        <span style="font-size:20px">💎</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Super — 50 amis</div><div style="font-size:11px;color:var(--muted)">2 000 $ + VIP + nom sur le site</div></div>
+        <div><div class="pb" style="width:80px"><div class="pbf" style="width:4%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">2/50</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLASSEMENT -->
+  <div class="card">
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">📊 Classement des ambassadeurs</div>
+    <div class="lb-mini">
+      <div class="lb-row"><div class="lb-rank" style="color:var(--gold)">🥇</div><div class="lb-av">😊</div><div><div class="lb-name">Marie-Claire D.</div><div style="font-size:10px;color:var(--muted)">Laval · PP-REF-MCL47</div></div><div class="lb-pts">12</div><div style="font-size:10px;color:var(--muted);margin-left:4px">amis</div></div>
+      <div class="lb-row"><div class="lb-rank" style="color:var(--muted)">🥈</div><div class="lb-av">🧔</div><div><div class="lb-name">Marc-Antoine L.</div><div style="font-size:10px;color:var(--muted)">Québec · PP-REF-MAL22</div></div><div class="lb-pts">8</div><div style="font-size:10px;color:var(--muted);margin-left:4px">amis</div></div>
+      <div class="lb-row me"><div class="lb-rank" style="color:var(--lime)">3</div><div class="lb-av">😊</div><div><div class="lb-name">Denis M. <span class="tag tg" style="font-size:9px;padding:1px 5px">Toi</span></div><div style="font-size:10px;color:var(--muted)">Lévis · PP-REF-DENIS</div></div><div class="lb-pts">2</div><div style="font-size:10px;color:var(--muted);margin-left:4px">amis</div></div>
+      <div class="lb-row"><div class="lb-rank" style="color:var(--muted)">4</div><div class="lb-av">👩</div><div><div class="lb-name">Sophie B.</div><div style="font-size:10px;color:var(--muted)">Montréal · PP-REF-SB91</div></div><div class="lb-pts">1</div><div style="font-size:10px;color:var(--muted);margin-left:4px">ami</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let xp=425,maxXP=1000;
+let tipSelected=15,deliveryPrice=87.50;
+
+// Navigation
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(el)el.classList.add('on');
+  window.scrollTo({top:60,behavior:'smooth'});
+}
+
+// XP
+function animXP(){
+  const bar=document.getElementById('xp-bar');
+  setTimeout(()=>{bar.style.width=Math.min(xp/maxXP*100,100)+'%'},200);
+}
+animXP();
+
+function addXP(amount,label){
+  xp=Math.min(xp+amount,maxXP);
+  document.getElementById('xp-current').textContent=xp;
+  document.getElementById('p-coins').textContent=xp;
+  animXP();
+  const hist=document.getElementById('xp-history');
+  const div=document.createElement('div');
+  div.className='card2';div.style.cssText='display:flex;justify-content:space-between;animation:fadeIn .3s ease';
+  div.innerHTML=`<span style="color:var(--muted)">${label}</span><span style="color:var(--lime);font-weight:600">+${amount} XP</span>`;
+  hist.insertBefore(div,hist.firstChild);
+  showToast('🎉 +'+amount+' XP — '+label);
+  if(xp>=maxXP){setTimeout(()=>showToast('🏆 NIVEAU ARGENT ATTEINT ! +100 PorteCoins bonus !'),1000)}
+  // Confetti si milestone
+  if(amount>=200)launchConfetti();
+}
+
+// Badges
+function showBadge(el,name,desc){
+  document.getElementById('badge-detail').style.display='block';
+  document.getElementById('bd-icon').textContent=el.querySelector('.badge-icon').textContent;
+  document.getElementById('bd-name').textContent=name;
+  document.getElementById('bd-desc').textContent=desc;
+}
+
+// Streak weeks
+function buildStreakWeeks(){
+  const container=document.getElementById('streak-weeks');
+  for(let i=1;i<=16;i++){
+    const div=document.createElement('div');
+    div.className='streak-week '+(i<=3?'done':i===4?'current':'empty');
+    div.innerHTML=`<span style="font-size:8px;color:inherit">S${i}</span><span>${i<=3?'✓':i===4?'→':'·'}</span>`;
+    container.appendChild(div);
+  }
+}
+buildStreakWeeks();
+
+// Tips
+function selectTip(el,pct){
+  document.querySelectorAll('.tip-btn').forEach(b=>{b.classList.remove('selected');b.querySelector('.tip-pct').style.color=''});
+  el.classList.add('selected');
+  el.querySelector('.tip-pct').style.color='var(--teal)';
+  tipSelected=pct;
+  updateTipDisplay();
+}
+function updateTipDisplay(){
+  const tipAmt=Math.round(deliveryPrice*tipSelected/100*100)/100;
+  const total=Math.round((deliveryPrice+tipAmt)*100)/100;
+  document.getElementById('tip-selected-display').textContent=tipAmt.toFixed(2)+' $ ('+tipSelected+'%)';
+  document.getElementById('tip-total-display').textContent=total.toFixed(2)+' $';
+}
+updateTipDisplay();
+function submitTip(){
+  const custom=parseFloat(document.getElementById('tip-custom-val').value)||0;
+  const amt=custom>0?custom:Math.round(deliveryPrice*tipSelected/100*100)/100;
+  showToast('💸 Pourboire de '+amt.toFixed(2)+' $ envoyé à Marc-Antoine L. !');
+  launchConfetti();
+}
+
+// Gains calculator
+function calcGains(){
+  const prix=parseFloat(document.getElementById('calc-prix').value)||85;
+  const bonus=parseFloat(document.getElementById('calc-bonus').value)||0;
+  const tip=parseFloat(document.getElementById('calc-tip').value)||0;
+  const prixBonus=prix*(1+bonus/100);
+  const comm=prixBonus*0.12;
+  const livreur=prixBonus-comm;
+  const tipAmt=prix*tip/100;
+  const total=livreur+tipAmt;
+  const fmt=n=>n.toFixed(2)+' $';
+  document.getElementById('g-base').textContent=fmt(prix);
+  document.getElementById('g-bonus').textContent='+'+(prix*bonus/100).toFixed(2)+' $';
+  document.getElementById('g-comm').textContent='−'+fmt(comm);
+  document.getElementById('g-tip').textContent='+'+fmt(tipAmt);
+  document.getElementById('g-total').textContent=fmt(total);
+}
+calcGains();
+
+// Live bonus
+function updateLiveBonus(){
+  const h=new Date().getHours();
+  const day=new Date().getDay();
+  let pct=0,label='Tarif normal';
+  if(day===5||day===6){
+    if(h>=17&&h<22){pct=20;label='Vendredi/Samedi soirée · +20%'}
+    else if(h>=22){pct=25;label='Nuit weekend · +25%'}
+    else if(h>=14&&h<17){pct=10;label='Après-midi weekend · +10%'}
+  } else {
+    if(h>=18&&h<21){pct=15;label='Soirée semaine · +15%'}
+    else if(h>=16&&h<18){pct=10;label='Fin de journée · +10%'}
+    else if(h>=8&&h<10){pct=8;label='Matin pointe · +8%'}
+  }
+  document.getElementById('live-bonus-text').textContent=pct>0?label:'Pas de bonus actif en ce moment';
+  document.getElementById('live-bonus-pct').textContent=pct>0?'+'+pct+'%':'—';
+  document.getElementById('live-bonus-pct').style.color=pct>=15?'var(--red)':pct>0?'var(--orange)':'var(--muted)';
+}
+updateLiveBonus();
+
+// Parrainage
+let monCode='PP-REF-DENIS';
+function shareSMS(){window.open('sms:?body='+encodeURIComponent('Essaie PorteàPorte — livraison entre particuliers au Québec ! On gagne 25$ chacun avec mon code '+monCode+' → https://porteaporte.site'))}
+function shareFB(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent('https://porteaporte.site/?ref=DENIS'))}
+function copyRef(){navigator.clipboard.writeText('https://porteaporte.site/?ref=DENIS').then(()=>showToast('🔗 Lien copié !'))}
+
+// Toast
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Confetti
+function launchConfetti(){
+  const colors=['#B8F53E','#0BFFCB','#F5C842','#FF8C00'];
+  for(let i=0;i<18;i++){
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}%;width:8px;height:8px;background:${colors[i%4]};border-radius:50%;pointer-events:none;z-index:9999;animation:fall ${1+Math.random()*2}s linear forwards`;
+      document.body.appendChild(d);
+      setTimeout(()=>d.remove(),3000);
+    },i*80);
+  }
+}
+const style=document.createElement('style');
+style.textContent='@keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Parcourir les missions - PorteàPorte">
+    <title>Parcourir les missions - PorteàPorte</title>
+    <link rel="stylesheet" href="design-system.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/modal-helper.js"></script>
+    <style>
+        .missions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .mission-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mission-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .mission-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-accent);
+            margin: 10px 0;
+        }
+        .accept-btn {
+            background: var(--color-accent);
+            color: var(--color-surface);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        .accept-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="missions-container" id="missions-list"></div>
+
+    <script>
+        let missions = [];
+
+        async function loadMissions() {
+            try {
+                const { data, error } = await db.from('missions').select('*').limit(10);
+                if (error) throw error;
+                missions = data || [];
+                renderMissions();
+            } catch (err) {
+                console.error('Erreur chargement missions:', err);
+                showError('❌ Erreur lors du chargement des missions');
+            }
+        }
+
+        function renderMissions() {
+            const container = document.getElementById('missions-list');
+            container.innerHTML = missions.map(m => `
+                <div class="mission-card">
+                    <h3>${m.titre || 'Mission'}</h3>
+                    <p>${m.description || ''}</p>
+                    <p><strong>De:</strong> ${m.adresse_depart || 'N/A'}</p>
+                    <p><strong>À:</strong> ${m.adresse_arrivee || 'N/A'}</p>
+                    <div class="mission-price">$${m.prix || 0}</div>
+                    <button class="accept-btn" onclick="acceptMission('${m.id}', '${m.titre || 'Mission'}')">
+                        Accepter
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function acceptMission(id, title) {
+            try {
+                const confirmed = await showModal({
+                    title: '✅ Accepter cette mission?',
+                    description: `Vous acceptez: ${title}`,
+                    onConfirm: async () => {
+                        const { error } = await db.from('livraisons').insert([{
+                            mission_id: id,
+                            livreur_id: (await db.auth.getSession()).data.session.user.id,
+                            status: 'acceptee'
+                        }]);
+                        if (error) throw error;
+                        showSuccess('✅ Mission acceptée!');
+                        setTimeout(() => window.location.href = 'dashboard-livreur.html', 2000);
+                    }
+                });
+            } catch (err) {
+                showError('❌ Erreur: ' + err.message);
+            }
+        }
+
+        // Charger les missions au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadMissions, 1000);
+        });
+    </script>
+</body>
+</html>
+
