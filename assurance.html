@@ -485,7 +485,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div style="font-size:14px;font-weight:500;margin-bottom:6px">Tu as d'autres questions ?</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Notre équipe répond en moins de 2h en semaine, 4h le week-end.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button onclick="alert('Chat ouvert !')" style="background:var(--lime);color:var(--ink);border:none;padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px">💬 Chat en direct</button>
+      <button onclick="showError('Chat ouvert !')" style="background:var(--lime);color:var(--ink);border:none;padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px">💬 Chat en direct</button>
       <a href="mailto:assurance@porteaporte.site" style="background:transparent;color:var(--paper);border:1px solid var(--border);padding:10px 20px;font-size:13px;font-weight:500;border-radius:2px;text-decoration:none">📧 assurance@porteaporte.site</a>
     </div>
   </div>
@@ -510,8 +510,8 @@ function selectPlan(el,cls,name){
 let rStep=1;
 function goR(n){
   if(n>rStep){
-    if(rStep===1&&(!document.getElementById('r-code').value||!document.getElementById('r-nom').value||!document.getElementById('r-email').value)){alert('Veuillez remplir tous les champs.');return}
-    if(rStep===2&&(!document.getElementById('r-type').value||!document.getElementById('r-valeur').value)){alert('Veuillez remplir tous les champs.');return}
+    if(rStep===1&&(!document.getElementById('r-code').value||!document.getElementById('r-nom').value||!document.getElementById('r-email').value)){showError('Veuillez remplir tous les champs.');return}
+    if(rStep===2&&(!document.getElementById('r-type').value||!document.getElementById('r-valeur').value)){showError('Veuillez remplir tous les champs.');return}
     if(rStep===4) return;
     if(n===4) buildRecap();
   }
@@ -578,7 +578,7 @@ updateCalc();
 // SUIVI
 function rechercherRecl(){
   const val=document.getElementById('suivi-input').value.trim();
-  if(!val){alert('Entre un numéro de dossier CLM-XXXXX');return}
+  if(!val){showError('Entre un numéro de dossier CLM-XXXXX');return}
   document.getElementById('suivi-result').style.display='block';
   document.getElementById('suivi-ref').textContent=val.toUpperCase();
   window.scrollTo({top:400,behavior:'smooth'});
@@ -593,6 +593,7 @@ function toggleFaq(el){
 </script>
 </body>
 </html>
+
 
 
 

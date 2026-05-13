@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choisir ton rôle - PorteàPorte</title>
+    <title>Choisir ton rÃ´le - PorteÃ Porte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -169,7 +169,7 @@
         }
 
         .feature-list li::before {
-            content: '✓';
+            content: 'âœ“';
             color: var(--accent-cyan);
             font-weight: 700;
         }
@@ -278,31 +278,31 @@
 </head>
 <body>
     <header>
-        <span>🚚</span>
-        <span>PorteàPorte</span>
+        <span>ðŸšš</span>
+        <span>PorteÃ Porte</span>
     </header>
 
     <div class="container">
         <div class="title-section">
-            <h1 class="title">Quel est ton rôle?</h1>
+            <h1 class="title">Quel est ton rÃ´le?</h1>
             <p class="subtitle">Choisis pour continuer vers ton tableau de bord</p>
         </div>
 
         <div class="roles-grid">
             <!-- LIVREUR CARD -->
             <div class="role-card" id="livreur-card">
-                <div class="role-icon">🚴</div>
+                <div class="role-icon">ðŸš´</div>
                 <h2 class="role-title">Je suis Livreur</h2>
                 <p class="role-description">
-                    Accepte les livraisons et gagne de l'argent avec ta propre flexibilité.
+                    Accepte les livraisons et gagne de l'argent avec ta propre flexibilitÃ©.
                 </p>
                 <div class="role-features">
                     <h4>Avantages</h4>
                     <ul class="feature-list">
-                        <li>Gagne jusqu'à 60% par livraison</li>
+                        <li>Gagne jusqu'Ã  60% par livraison</li>
                         <li>Horaires flexibles</li>
-                        <li>Bonus et récompenses</li>
-                        <li>Assurance complète</li>
+                        <li>Bonus et rÃ©compenses</li>
+                        <li>Assurance complÃ¨te</li>
                         <li>Support 24/7</li>
                     </ul>
                 </div>
@@ -316,19 +316,19 @@
                 </div>
             </div>
 
-            <!-- EXPÉDITEUR CARD -->
+            <!-- EXPÃ‰DITEUR CARD -->
             <div class="role-card" id="expediteur-card">
-                <div class="role-icon">📦</div>
-                <h2 class="role-title">Je suis Expéditeur</h2>
+                <div class="role-icon">ðŸ“¦</div>
+                <h2 class="role-title">Je suis ExpÃ©diteur</h2>
                 <p class="role-description">
-                    Envoie des colis et économise jusqu'à 60% vs les géants de la livraison.
+                    Envoie des colis et Ã©conomise jusqu'Ã  60% vs les gÃ©ants de la livraison.
                 </p>
                 <div class="role-features">
                     <h4>Avantages</h4>
                     <ul class="feature-list">
                         <li>50-60% moins cher</li>
                         <li>Service humain et local</li>
-                        <li>Suivi en temps réel</li>
+                        <li>Suivi en temps rÃ©el</li>
                         <li>Soutien des orgas humanitaires</li>
                         <li>Compteur de livraisons pour concours</li>
                     </ul>
@@ -346,15 +346,16 @@
 
         <div class="bottom-section">
             <p class="bottom-text">
-                Veux-tu être les deux? <button type="button" class="link-button" onclick="selectRole('both')">Oui, je veux être livreur ET expéditeur</button>
+                Veux-tu Ãªtre les deux? <button type="button" class="link-button" onclick="selectRole('both')">Oui, je veux Ãªtre livreur ET expÃ©diteur</button>
             </p>
             <p class="bottom-text">
-                <button type="button" class="link-button" onclick="logout()">Se déconnecter</button>
+                <button type="button" class="link-button" onclick="logout()">Se dÃ©connecter</button>
             </p>
         </div>
     </div>
 
     <script src="js/supabase-config.js"></script>
+    <script src="js/modal-helper.js"></script>
     <script src="js/auth.js"></script>
     <script>
         var db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
@@ -363,7 +364,7 @@
             try {
                 if (!db) {
                     console.error('Erreur: client Supabase indisponible');
-                    alert('Connexion Supabase indisponible');
+                    showError('❌ Connexion Supabase indisponible');
                     return;
                 }
 
@@ -409,7 +410,7 @@
 
                 if (error) {
                     console.error('Erreur:', error);
-                    alert('Erreur lors de la mise à jour du profil');
+                    showError('❌ Erreur lors de la mise à jour du profil');
                     return;
                 }
 
@@ -423,15 +424,15 @@
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('Une erreur est survenue');
+                showError('❌ Une erreur est survenue');
             }
         }
 
         function learnMore(role) {
             if (role === 'livreur') {
-                alert('Livreur:\n\n- Gagne 60% par livraison\n- Accepte/refuse librement\n- Bonus pour performance\n- Couverture d\'assurance complète');
+                showSuccess('✅ Mode Livreur: Gagne 60% par livraison, accepte/refuse librement, bonus performance, assurance complète');
             } else {
-                alert('Expéditeur:\n\n- 50-60% moins cher que UPS\n- Suivi en temps réel\n- Service humain\n- Supporte les orgas locales');
+                showError('ExpÃ©diteur:\n\n- 50-60% moins cher que UPS\n- Suivi en temps rÃ©el\n- Service humain\n- Supporte les orgas locales');
             }
         }
 
@@ -450,3 +451,6 @@
     </script>
 </body>
 </html>
+
+
+
