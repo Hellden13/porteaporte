@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Envoyer un colis · PorteàPorte</title>
+<title>Envoyer un colis Â· PorteÃ Porte</title>
 <style>
 :root{--bg:#0A0C0F;--surface:#12151A;--border:#1F242C;--text:#E8EAED;--text-dim:#9BA1A9;--accent:#B8F53E}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -24,11 +24,11 @@ textarea{resize:vertical;min-height:100px}
 </head>
 <body>
 <div class="navbar">
-<div class="logo">PorteàPorte</div>
-<a href="/" style="color:var(--accent);text-decoration:none">← Accueil</a>
+<div class="logo">PorteÃ Porte</div>
+<a href="/" style="color:var(--accent);text-decoration:none">â† Accueil</a>
 </div>
 <div class="container">
-<h1>📮 Envoyer un colis</h1>
+<h1>ðŸ“® Envoyer un colis</h1>
 <form id="shipping-form">
 <div class="form-group">
 <label>Nom du destinataire</label>
@@ -40,7 +40,7 @@ textarea{resize:vertical;min-height:100px}
 </div>
 <div class="form-group">
 <label>Ville</label>
-<input type="text" required placeholder="Montréal">
+<input type="text" required placeholder="MontrÃ©al">
 </div>
 <div class="form-group">
 <label>Code postal</label>
@@ -52,7 +52,7 @@ textarea{resize:vertical;min-height:100px}
 </div>
 <div class="form-group">
 <label>Description du colis</label>
-<textarea required placeholder="Décris le contenu du colis..."></textarea>
+<textarea required placeholder="DÃ©cris le contenu du colis..."></textarea>
 </div>
 <button type="submit" class="btn">Envoyer mon colis</button>
 </form>
@@ -60,7 +60,7 @@ textarea{resize:vertical;min-height:100px}
 <script>
 document.getElementById('shipping-form').onsubmit=function(e){
 e.preventDefault();
-alert('✅ Demande d\'envoi enregistrée ! Un livreur te contactera bientôt.');
+showSuccess('âœ… Demande d\'envoi enregistrÃ©e ! Un livreur te contactera bientÃ´t.');
 this.reset();
 };
 </script>
