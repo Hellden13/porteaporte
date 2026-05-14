@@ -1,115 +1,180 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Parcourir les missions - PorteàPorte">
-    <title>Parcourir les missions - PorteàPorte</title>
-    <link rel="stylesheet" href="design-system.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/modal-helper.js"></script>
-    <style>
-        .missions-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        .mission-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .mission-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .mission-price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--color-accent);
-            margin: 10px 0;
-        }
-        .accept-btn {
-            background: var(--color-accent);
-            color: var(--color-surface);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-        .accept-btn:hover {
-            opacity: 0.9;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Missions disponibles pour livreurs verifies - PorteaPorte">
+  <title>Missions disponibles - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/modal-helper.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(10,12,16,.95);border-bottom:1px solid #1F2937}
+    .brand{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none;color:#F0F2F5}
+    .page{max-width:1120px;margin:0 auto;padding:32px 20px 56px}
+    .hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:24px}
+    h1{font-size:34px;line-height:1.12;margin-bottom:8px}
+    .muted{color:#A8ACB1;line-height:1.55}
+    .status{border:1px solid #1F2937;background:#111318;border-radius:8px;padding:12px 14px;color:#A8ACB1;font-size:14px}
+    .missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .mission-card{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .mission-card h2{font-size:18px}
+    .pill{display:inline-flex;align-items:center;width:max-content;border:1px solid #1F2937;border-radius:999px;padding:4px 9px;color:#A8ACB1;font-size:12px}
+    .route{display:grid;gap:5px;color:#F0F2F5}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .meta div{border:1px solid #1F2937;background:#0B0E13;border-radius:8px;padding:9px}
+    .meta span{display:block;color:#A8ACB1;font-size:11px;margin-bottom:2px}
+    .price{font-size:26px;font-weight:900;color:#00FF9F;margin-top:4px}
+    .empty{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:24px;color:#A8ACB1}
+    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,#00D9FF,#00FF9F);color:#0A0C10}
+    .btn.secondary{width:auto;background:#1A1F28;color:#F0F2F5;border:1px solid #1F2937;text-decoration:none}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    @media(max-width:720px){.topbar{padding:14px 16px}.hero{display:block}.hero .btn{margin-top:14px}.page{padding:24px 14px}h1{font-size:28px}}
+  </style>
 </head>
 <body>
-    <div class="missions-container" id="missions-list"></div>
+  <header class="topbar">
+    <a class="brand" href="/index.html">PorteàPorte</a>
+    <a class="btn secondary" href="/dashboard-livreur.html">Mon dashboard</a>
+  </header>
 
-    <script>
-        let missions = [];
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Missions disponibles</h1>
+        <p class="muted">Les adresses completes restent masquees avant acceptation. Seuls les livreurs verifies peuvent voir et accepter les vraies livraisons.</p>
+      </div>
+      <button class="btn secondary" type="button" onclick="loadMissions()">Rafraichir</button>
+    </section>
 
-        async function loadMissions() {
-            try {
-                const { data, error } = await db.from('missions').select('*').limit(10);
-                if (error) throw error;
-                missions = data || [];
-                renderMissions();
-            } catch (err) {
-                console.error('Erreur chargement missions:', err);
-                showError('❌ Erreur lors du chargement des missions');
-            }
-        }
+    <div id="status" class="status">Chargement des missions compatibles...</div>
+    <section id="missions-list" class="missions-grid" style="margin-top:16px"></section>
+  </main>
 
-        function renderMissions() {
-            const container = document.getElementById('missions-list');
-            container.innerHTML = missions.map(m => `
-                <div class="mission-card">
-                    <h3>${m.titre || 'Mission'}</h3>
-                    <p>${m.description || ''}</p>
-                    <p><strong>De:</strong> ${m.adresse_depart || 'N/A'}</p>
-                    <p><strong>À:</strong> ${m.adresse_arrivee || 'N/A'}</p>
-                    <div class="mission-price">$${m.prix || 0}</div>
-                    <button class="accept-btn" onclick="acceptMission('${m.id}', '${m.titre || 'Mission'}')">
-                        Accepter
-                    </button>
-                </div>
-            `).join('');
-        }
+  <script>
+    const db = window.getSupabaseClient();
+    let currentSession = null;
+    let missions = [];
 
-        async function acceptMission(id, title) {
-            try {
-                const confirmed = await showModal({
-                    title: '✅ Accepter cette mission?',
-                    description: `Vous acceptez: ${title}`,
-                    onConfirm: async () => {
-                        const { error } = await db.from('livraisons').insert([{
-                            mission_id: id,
-                            livreur_id: (await db.auth.getSession()).data.session.user.id,
-                            status: 'acceptee'
-                        }]);
-                        if (error) throw error;
-                        showSuccess('✅ Mission acceptée!');
-                        setTimeout(() => window.location.href = 'dashboard-livreur.html', 2000);
-                    }
-                });
-            } catch (err) {
-                showError('❌ Erreur: ' + err.message);
-            }
-        }
+    function money(value) {
+      const n = Number(value || 0);
+      return n.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    }
 
-        // Charger les missions au démarrage
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(loadMissions, 1000);
+    function text(value, fallback) {
+      return value === null || value === undefined || value === '' ? fallback : String(value);
+    }
+
+    function setStatus(message, type) {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.style.borderColor = type === 'error' ? '#EF4444' : '#1F2937';
+      el.style.color = type === 'error' ? '#ffb4b4' : '#A8ACB1';
+    }
+
+    async function requireSession() {
+      const { data } = await db.auth.getSession();
+      currentSession = data && data.session ? data.session : null;
+      if (!currentSession) {
+        setStatus('Connecte-toi comme livreur verifie pour voir les missions.', 'error');
+        await showModal({
+          title: 'Connexion requise',
+          description: 'Tu dois etre connecte avec un compte livreur verifie pour consulter les missions.',
+          confirmText: 'Connexion',
+          cancelText: 'Fermer',
+          onConfirm: () => { window.location.href = '/login.html'; }
         });
-    </script>
+        return false;
+      }
+      return true;
+    }
+
+    async function loadMissions() {
+      try {
+        if (!await requireSession()) return;
+        setStatus('Chargement des missions compatibles...', 'info');
+
+        const res = await fetch('/api/available-livraisons', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + currentSession.access_token
+          },
+          body: JSON.stringify({})
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Missions indisponibles');
+
+        missions = out.livraisons || [];
+        renderMissions(out.transport_mode || 'unknown');
+      } catch (err) {
+        console.error('Erreur chargement missions:', err);
+        setStatus(err.message || 'Erreur lors du chargement des missions', 'error');
+        document.getElementById('missions-list').innerHTML = '';
+      }
+    }
+
+    function renderMissions(mode) {
+      const container = document.getElementById('missions-list');
+      if (!missions.length) {
+        setStatus('Aucune mission compatible pour ton mode de transport actuellement.', 'info');
+        container.innerHTML = '<div class="empty">Reviens plus tard ou ajuste ta zone de livraison dans ton profil livreur.</div>';
+        return;
+      }
+
+      setStatus(`${missions.length} mission(s) compatible(s) trouvee(s). Mode: ${mode}.`, 'info');
+      container.innerHTML = missions.map((m) => `
+        <article class="mission-card">
+          <span class="pill">${text(m.code, 'Mission')}</span>
+          <h2>${text(m.type_colis, 'Colis')}</h2>
+          <div class="route">
+            <div><strong>Depart approx.:</strong> ${text(m.ville_depart, 'Ville masquee')}</div>
+            <div><strong>Arrivee approx.:</strong> ${text(m.ville_arrivee, 'Ville masquee')}</div>
+          </div>
+          <div class="meta">
+            <div><span>Poids</span>${text(m.poids_kg, 'N/D')} kg</div>
+            <div><span>Distance</span>${m.distance_km ? m.distance_km + ' km' : 'N/D'}</div>
+          </div>
+          <p class="muted">${text(m.compatibilite, 'Compatible avec ton profil')}</p>
+          <div class="price">${money(m.prix_total)}</div>
+          <button class="btn" type="button" onclick="acceptMission('${m.id}')">Accepter la mission</button>
+        </article>
+      `).join('');
+    }
+
+    async function acceptMission(id) {
+      const mission = missions.find((m) => m.id === id);
+      if (!mission) return showError('Mission introuvable.');
+
+      const ok = await showModal({
+        title: 'Accepter cette mission?',
+        description: `Trajet approx.: ${mission.ville_depart || 'depart'} vers ${mission.ville_arrivee || 'arrivee'}\nPaiement propose: ${money(mission.prix_total)}\n\nLes details complets seront debloques seulement apres assignation valide.`,
+        confirmText: 'Accepter',
+        cancelText: 'Annuler',
+        onConfirm: async () => {
+          const res = await fetch('/api/assign-driver', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + currentSession.access_token
+            },
+            body: JSON.stringify({ livraison_id: id })
+          });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(out.error || 'Assignation impossible');
+        }
+      });
+
+      if (ok) {
+        showSuccess('Mission acceptee. Ouverture du dashboard...');
+        window.setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMissions);
+  </script>
 </body>
 </html>
-
