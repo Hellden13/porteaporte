@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   function b64urlToBuffer(value) {
     value = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
     while (value.length % 4) value += '=';
@@ -67,7 +67,7 @@
     const options = await api('register-options');
     const credential = await navigator.credentials.create({ publicKey: prepareCreate(options.publicKey) });
     const result = await api('register-verify', { credential: serializeCredential(credential), device_name: navigator.userAgent.slice(0, 80) });
-    console.log('✅ connecte: passkey livreur enregistree');
+    // console.log('âœ… connecte: passkey livreur enregistree');
     return result;
   }
 
@@ -76,9 +76,10 @@
     const options = await api('auth-options');
     const assertion = await navigator.credentials.get({ publicKey: prepareGet(options.publicKey) });
     const result = await api('auth-verify', { assertion: serializeCredential(assertion) });
-    console.log('✅ connecte: livreur verifie par biometrie');
+    // console.log('âœ… connecte: livreur verifie par biometrie');
     return result;
   }
 
   window.PorteWebAuthn = { registerLivreurPasskey, verifyLivreurPasskey };
 })();
+

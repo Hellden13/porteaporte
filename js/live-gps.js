@@ -83,7 +83,7 @@
       return { ok: false, error: result };
     }
 
-    console.log('OK connecte: position GPS envoyee', livraisonId);
+    // console.log('OK connecte: position GPS envoyee', livraisonId);
     return { ok: true, payload: result.location || point };
   }
 
@@ -126,13 +126,13 @@
           filter: 'livraison_id=eq.' + livraisonId
         },
         (payload) => {
-          console.log('âœ… connectÃ©: position GPS reÃ§ue', livraisonId);
+          // console.log('âœ… connectÃ©: position GPS reÃ§ue', livraisonId);
           onLocation(payload.new);
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('âœ… connectÃ©: Realtime GPS actif', livraisonId);
+          // console.log('âœ… connectÃ©: Realtime GPS actif', livraisonId);
         }
       });
 
@@ -154,4 +154,5 @@
     unsubscribe
   };
 })();
+
 

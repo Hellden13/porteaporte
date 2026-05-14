@@ -1,14 +1,14 @@
-// ============================================================
-// PORTEÀPORTE — Vercel Function : Vérification Turnstile
+﻿// ============================================================
+// PORTEÃ€PORTE â€” Vercel Function : VÃ©rification Turnstile
 // Fichier : api/turnstile-verify.js
-// Utilisé par : compte.html, parrainage.html, index.html
+// UtilisÃ© par : compte.html, parrainage.html, index.html
 // ============================================================
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://porteaporte.site');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'MÃ©thode non autorisÃ©e' });
 
   const { token, action } = req.body;
   const SECRET = process.env.TURNSTILE_SECRET;
@@ -32,14 +32,15 @@ module.exports = async function handler(req, res) {
     const data = await verifyRes.json();
 
     if (data.success) {
-      console.log(`✅ Turnstile OK — action: ${action || 'unknown'} · IP: ${ip}`);
+      // console.log(`âœ… Turnstile OK â€” action: ${action || 'unknown'} Â· IP: ${ip}`);
       return res.status(200).json({ success: true });
     } else {
-      console.log(`❌ Turnstile FAIL — codes: ${data['error-codes']?.join(', ')}`);
-      return res.status(400).json({ success: false, error: 'Vérification échouée', codes: data['error-codes'] });
+      // console.log(`âŒ Turnstile FAIL â€” codes: ${data['error-codes']?.join(', ')}`);
+      return res.status(400).json({ success: false, error: 'VÃ©rification Ã©chouÃ©e', codes: data['error-codes'] });
     }
   } catch (err) {
     console.error('Erreur Turnstile:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
+

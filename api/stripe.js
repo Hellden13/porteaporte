@@ -1,27 +1,27 @@
-// ============================================================
-// PORTEÀPORTE — Backend Stripe Production
+﻿// ============================================================
+// PORTEÃ€PORTE â€” Backend Stripe Production
 // Fichier : api/stripe.js
 // ============================================================
 // VARIABLES VERCEL REQUISES :
 //   STRIPE_SECRET_KEY  = configured in Vercel environment variables
 //   SUPABASE_URL       = https://miqrircrfpzkmvvacgwt.supabase.co
-//   SUPABASE_SERVICE_KEY = eyJ... (service_role key — PAS anon)
+//   SUPABASE_SERVICE_KEY = eyJ... (service_role key â€” PAS anon)
 // ============================================================
 
-// ── DÉTECTION AUTOMATIQUE TEST / LIVE ──
-// En test: utilise les clés test, paiements simulés
-// En live: utilise les vraies clés après activation
+// â”€â”€ DÃ‰TECTION AUTOMATIQUE TEST / LIVE â”€â”€
+// En test: utilise les clÃ©s test, paiements simulÃ©s
+// En live: utilise les vraies clÃ©s aprÃ¨s activation
 
 module.exports = async function handler(req, res) {
-  // Déterminer le mode
+  // DÃ©terminer le mode
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
   const IS_LIVE = STRIPE_KEY && STRIPE_KEY.startsWith('sk_live_');
   const IS_TEST = STRIPE_KEY && STRIPE_KEY.startsWith('sk_test_');
   
   if (!STRIPE_KEY) {
-    console.log('⚠️ STRIPE_SECRET_KEY manquante — mode simulation');
+    // console.log('âš ï¸ STRIPE_SECRET_KEY manquante â€” mode simulation');
   } else {
-    console.log(IS_LIVE ? '🟢 Stripe LIVE activé' : '🔴 Stripe TEST mode');
+    // console.log(IS_LIVE ? 'ðŸŸ¢ Stripe LIVE activÃ©' : 'ðŸ”´ Stripe TEST mode');
   }
 
   // CORS
@@ -29,17 +29,17 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'MÃ©thode non autorisÃ©e' });
 
   const { action } = req.body;
   if (!action) return res.status(400).json({ error: 'Action manquante' });
 
-  if (!STRIPE_KEY) return res.status(500).json({ error: 'STRIPE_SECRET_KEY manquante — Ajoutez-la dans Vercel Settings' });
+  if (!STRIPE_KEY) return res.status(500).json({ error: 'STRIPE_SECRET_KEY manquante â€” Ajoutez-la dans Vercel Settings' });
 
   try {
     switch (action) {
 
-      // ── CRÉER UN PAYMENT INTENT (livraison ou PorteCoins) ──
+      // â”€â”€ CRÃ‰ER UN PAYMENT INTENT (livraison ou PorteCoins) â”€â”€
       case 'create_payment_intent': {
         return res.status(410).json({
           error: 'Action desactivee',
@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
         const intent = await stripeRequest('POST', '/v1/payment_intents', {
           amount: Math.round(montant_cents),
           currency: 'cad',
-          description: description || 'PorteàPorte — Livraison',
+          description: description || 'PorteÃ Porte â€” Livraison',
           receipt_email: customer_email || '',
           automatic_payment_methods: { enabled: 'true' },
           metadata: {
@@ -72,15 +72,15 @@ module.exports = async function handler(req, res) {
         */
       }
 
-      // ── ACHAT PORTECOIN ──
+      // â”€â”€ ACHAT PORTECOIN â”€â”€
       case 'achat_coins': {
         const { forfait, email_acheteur, email_destinataire, message_cadeau } = req.body;
 
         const FORFAITS = {
           starter:  { coins: 100,  prix_cents: 999,  label: 'Starter' },
-          populaire:{ coins: 325,  prix_cents: 1999, label: 'Populaire ⭐' },
+          populaire:{ coins: 325,  prix_cents: 1999, label: 'Populaire â­' },
           pro:      { coins: 900,  prix_cents: 3999, label: 'Pro' },
-          premium:  { coins: 3000, prix_cents: 7999, label: 'Premium 💎' }
+          premium:  { coins: 3000, prix_cents: 7999, label: 'Premium ðŸ’Ž' }
         };
 
         const pack = FORFAITS[forfait];
@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
         const intent = await stripeRequest('POST', '/v1/payment_intents', {
           amount: pack.prix_cents,
           currency: 'cad',
-          description: `PorteàPorte — ${pack.coins} PorteCoins (${pack.label})`,
+          description: `PorteÃ Porte â€” ${pack.coins} PorteCoins (${pack.label})`,
           receipt_email: email_acheteur,
           automatic_payment_methods: { enabled: 'true' },
           metadata: {
@@ -113,7 +113,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // ── CONFIRMER PAIEMENT ET CRÉDITER COINS ──
+      // â”€â”€ CONFIRMER PAIEMENT ET CRÃ‰DITER COINS â”€â”€
       case 'confirmer_coins': {
         const internalSecret = process.env.INTERNAL_API_SECRET;
         if (!internalSecret || req.headers['x-internal-webhook-secret'] !== internalSecret) {
@@ -123,18 +123,18 @@ module.exports = async function handler(req, res) {
         const { payment_intent_id } = req.body;
         if (!payment_intent_id) return res.status(400).json({ error: 'payment_intent_id manquant' });
 
-        // Vérifier que le paiement est bien succeeded
+        // VÃ©rifier que le paiement est bien succeeded
         const intent = await stripeRequest('GET', `/v1/payment_intents/${payment_intent_id}`, null, STRIPE_KEY);
 
         if (intent.status !== 'succeeded') {
-          return res.status(400).json({ error: 'Paiement non complété: ' + intent.status });
+          return res.status(400).json({ error: 'Paiement non complÃ©tÃ©: ' + intent.status });
         }
 
         const meta = intent.metadata;
         const coins = parseInt(meta.coins || '0');
         const emailDest = meta.email_destinataire || meta.email_acheteur;
 
-        // Créditer les coins dans Supabase via service_role
+        // CrÃ©diter les coins dans Supabase via service_role
         const SB_URL = process.env.SUPABASE_URL;
         const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 
@@ -162,7 +162,7 @@ module.exports = async function handler(req, res) {
                 p_user_id: user.id,
                 p_montant: coins,
                 p_type: 'achat_coins',
-                p_description: `Achat ${meta.forfait} — ${coins} PC · Stripe ${payment_intent_id.slice(-8)}`
+                p_description: `Achat ${meta.forfait} â€” ${coins} PC Â· Stripe ${payment_intent_id.slice(-8)}`
               })
             });
           }
@@ -192,13 +192,13 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ success: true, coins_credites: coins, email: emailDest });
       }
 
-      // ── WEBHOOK STRIPE (livraisons, remboursements) ──
+      // â”€â”€ WEBHOOK STRIPE (livraisons, remboursements) â”€â”€
       case 'webhook': {
-        // Pour les webhooks Stripe → utilise l'endpoint /api/stripe-webhook séparé
+        // Pour les webhooks Stripe â†’ utilise l'endpoint /api/stripe-webhook sÃ©parÃ©
         return res.status(200).json({ received: true });
       }
 
-      // ── CRÉER REMBOURSEMENT ──
+      // â”€â”€ CRÃ‰ER REMBOURSEMENT â”€â”€
       case 'remboursement': {
         const isAdmin = await requireAdmin(req);
         if (!isAdmin.ok) return res.status(isAdmin.status).json({ error: isAdmin.error });
@@ -221,7 +221,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // ── VÉRIFIER STATUT PAIEMENT ──
+      // â”€â”€ VÃ‰RIFIER STATUT PAIEMENT â”€â”€
       case 'statut': {
         const { payment_intent_id } = req.body;
         if (!payment_intent_id) {
@@ -246,7 +246,7 @@ module.exports = async function handler(req, res) {
   }
 }
 
-// ── HELPER : Appel API Stripe ──
+// â”€â”€ HELPER : Appel API Stripe â”€â”€
 async function stripeRequest(method, path, body, secretKey) {
   const url = `https://api.stripe.com${path}`;
   const headers = {
@@ -270,7 +270,7 @@ async function stripeRequest(method, path, body, secretKey) {
   return data;
 }
 
-// Aplatir les objets imbriqués pour Stripe (ex: metadata[key]=val)
+// Aplatir les objets imbriquÃ©s pour Stripe (ex: metadata[key]=val)
 async function requireAdmin(req) {
   const SB_URL = process.env.SUPABASE_URL;
   const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -315,3 +315,4 @@ function flattenParams(obj, prefix = '') {
   }
   return result;
 }
+
