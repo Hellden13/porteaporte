@@ -1,33 +1,23 @@
-﻿const CORS = {
+﻿// api/cancel-livraison.js - WITH AUDIT LOGGING
+const { log } = require('./logger');
+
+const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
 };
 
 async function getSessionUser(req, sbUrl, sbKey) {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!token) return null;
-
-  const r = await fetch(sbUrl + '/auth/v1/user', {
+  const r = await fetch(`${sbUrl}/auth/v1/user`, {
     headers: {
       apikey: sbKey,
-      Authorization: 'Bearer ' + token
+      Authorization: `Bearer ${token}`
     }
   });
   return r.ok ? r.json() : null;
-}
-
-async function getRole(userId, sbUrl, sbKey) {
-  const r = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}&select=role`, {
-    headers: {
-      apikey: sbKey,
-      Authorization: `Bearer ${sbKey}`
-    }
-  });
-  const rows = r.ok ? await r.json() : [];
-  return rows[0]?.role || null;
 }
 
 module.exports = async function handler(req, res) {
@@ -35,150 +25,155 @@ module.exports = async function handler(req, res) {
     Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
     return res.status(200).end();
   }
+
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Methode non autorisee' });
+
+  if (req.method !== 'POST') {
+    log('WARN', 'cancel_livraison_invalid_method', null, { method: req.method });
+    return res.status(405).json({ error: 'Méthode non autorisée' });
+  }
 
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
   const SB_URL = process.env.SUPABASE_URL;
   const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-  if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
-  if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
 
-  const session = await getSessionUser(req, SB_URL, SB_KEY);
-  if (!session) return res.status(401).json({ error: 'Session requise' });
-
-  const { livraison_id, raison } = req.body || {};
-  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
-
-  const livRes = await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}&select=id,expediteur_id,livreur_id,statut`, {
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`
-    }
-  });
-  const livraisons = livRes.ok ? await livRes.json() : [];
-  const livraison = livraisons[0];
-  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
-
-  const role = await getRole(session.id, SB_URL, SB_KEY);
-  const isAdmin = role === 'admin';
-  const allowed = isAdmin || livraison.expediteur_id === session.id;
-  if (!allowed) return res.status(403).json({ error: 'Seul admin ou expediteur peut annuler' });
-
-  if (['livre', 'livree', 'payee', 'delivered', 'paid'].includes(livraison.statut) && !isAdmin) {
-    return res.status(409).json({ error: 'Livraison deja livree/payee: ouverture litige requise' });
+  if (!STRIPE_KEY) {
+    log('ERROR', 'stripe_key_missing', null, {});
+    return res.status(503).json({ error: 'Stripe non configuré' });
   }
 
-  if (livraison.livreur_id && !isAdmin && !['paiement_autorise', 'confirme'].includes(livraison.statut)) {
-    return res.status(409).json({ error: 'Livreur deja en route: annulation directe bloquee, contacter support' });
+  if (!SB_URL || !SB_KEY) {
+    log('ERROR', 'supabase_config_missing', null, { hasSBUrl: !!SB_URL, hasSBKey: !!SB_KEY });
+    return res.status(503).json({ error: 'Supabase non configuré' });
   }
 
-  const txRes = await fetch(`${SB_URL}/rest/v1/transactions?livraison_id=eq.${livraison_id}&type=eq.paiement_livraison&select=id,stripe_payment_intent,statut,metadata&order=created_at.desc&limit=1`, {
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`
+  try {
+    const session = await getSessionUser(req, SB_URL, SB_KEY);
+    if (!session) {
+      log('WARN', 'cancel_livraison_unauthorized', null, {
+        ip: req.headers['x-forwarded-for'],
+      });
+      return res.status(401).json({ error: 'Session requise' });
     }
-  });
-  const txs = txRes.ok ? await txRes.json() : [];
-  const tx = txs[0];
-  if (!tx?.stripe_payment_intent) {
-    await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, {
-      method: 'PATCH',
-      headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify({ statut: 'annulee' })
-    }).catch(() => {});
 
-    return res.status(200).json({
-      success: true,
+    const { livraison_id, raison } = req.body || {};
+
+    if (!livraison_id) {
+      log('WARN', 'cancel_livraison_missing_id', session.id, {});
+      return res.status(400).json({ error: 'livraison_id requis' });
+    }
+
+    log('INFO', 'cancel_livraison_started', session.id, {
       livraison_id,
-      status: 'annulee',
-      stripe_action: 'none',
-      message: 'Livraison annulee sans paiement Stripe a rembourser'
+      raison: raison || 'no reason provided',
     });
-  }
 
-  const intentRes = await fetch(`https://api.stripe.com/v1/payment_intents/${tx.stripe_payment_intent}`, {
-    headers: {
-      Authorization: 'Bearer ' + STRIPE_KEY,
-      'Stripe-Version': '2024-04-10',
+    // Récupérer la livraison
+    const livRes = await fetch(
+      `${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}&select=id,expediteur_id,livreur_id,statut,prix_total,stripe_payment_intent`,
+      {
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`
+        }
+      }
+    );
+
+    const livraisons = livRes.ok ? await livRes.json() : [];
+    const livraison = livraisons[0];
+
+    if (!livraison) {
+      log('WARN', 'cancel_livraison_not_found', session.id, { livraison_id });
+      return res.status(404).json({ error: 'Livraison non trouvée' });
     }
-  });
-  const intent = await intentRes.json();
-  if (!intentRes.ok) return res.status(402).json({ error: intent.error?.message || 'Lecture Stripe impossible' });
 
-  if (['succeeded'].includes(intent.status) && !isAdmin) {
-    return res.status(409).json({ error: 'Paiement deja capture: remboursement admin/litige requis' });
-  }
+    // Vérifier droits
+    const isExpeditor = livraison.expediteur_id === session.id;
+    const isDriver = livraison.livreur_id === session.id;
 
-  if (['canceled', 'requires_payment_method'].includes(intent.status)) {
-    await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, {
-      method: 'PATCH',
-      headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify({ statut: 'annulee' })
-    }).catch(() => {});
+    if (!isExpeditor && !isDriver) {
+      log('WARN', 'cancel_livraison_unauthorized_user', session.id, {
+        livraison_id,
+        role: isExpeditor ? 'expediteur' : isDriver ? 'livreur' : 'unknown',
+      });
+      return res.status(403).json({ error: 'Non autorisé' });
+    }
 
-    return res.status(200).json({
-      success: true,
+    // Vérifier statut
+    if (!['pending', 'accepted', 'in_transit'].includes(livraison.statut)) {
+      log('WARN', 'cancel_livraison_invalid_status', session.id, {
+        livraison_id,
+        currentStatus: livraison.statut,
+      });
+      return res.status(400).json({ error: `Impossible d'annuler une livraison avec le statut: ${livraison.statut}` });
+    }
+
+    // Rembourser via Stripe si nécessaire
+    if (livraison.stripe_payment_intent) {
+      const stripe = require('stripe')(STRIPE_KEY);
+      try {
+        const refund = await stripe.refunds.create({
+          payment_intent: livraison.stripe_payment_intent,
+        });
+
+        log('AUDIT', 'delivery_refunded', session.id, {
+          livraison_id,
+          refundId: refund.id,
+          amount: livraison.prix_total,
+          raison,
+        });
+      } catch (e) {
+        log('ERROR', 'stripe_refund_failed', session.id, {
+          livraison_id,
+          error: e.message,
+        });
+        return res.status(500).json({ error: 'Erreur remboursement Stripe' });
+      }
+    }
+
+    // Marquer comme annulée
+    const cancelRes = await fetch(
+      `${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          statut: 'cancelled',
+          mis_a_jour_le: new Date().toISOString(),
+        }),
+      }
+    );
+
+    if (!cancelRes.ok) {
+      log('ERROR', 'cancel_livraison_db_update_failed', session.id, {
+        livraison_id,
+        status: cancelRes.status,
+      });
+      return res.status(500).json({ error: 'Erreur mise à jour BDD' });
+    }
+
+    log('AUDIT', 'delivery_cancelled', session.id, {
       livraison_id,
-      payment_intent_id: intent.id,
-      status: intent.status,
-      stripe_action: 'already_closed'
+      canceller: isExpeditor ? 'expediteur' : 'livreur',
+      raison: raison || 'no reason',
+      refunded: !!livraison.stripe_payment_intent,
     });
+
+    return res.json({
+      success: true,
+      message: 'Livraison annulée',
+      livraison_id,
+    });
+
+  } catch (error) {
+    log('ERROR', 'cancel_livraison_failed', req.headers['x-user-id'] || null, {
+      error: error.message,
+      stack: error.stack,
+    });
+    return res.status(500).json({ error: error.message });
   }
-
-  if (!['requires_capture', 'requires_confirmation', 'requires_action', 'processing'].includes(intent.status)) {
-    return res.status(409).json({ error: 'Statut Stripe non annulable: ' + intent.status });
-  }
-
-  const stripeResp = await fetch(`https://api.stripe.com/v1/payment_intents/${tx.stripe_payment_intent}/cancel`, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + STRIPE_KEY,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Stripe-Version': '2024-04-10',
-    },
-    body: new URLSearchParams({ cancellation_reason: 'requested_by_customer' }).toString()
-  });
-  const cancelled = await stripeResp.json();
-  if (!stripeResp.ok) return res.status(402).json({ error: cancelled.error?.message || 'Annulation Stripe impossible' });
-
-  await fetch(`${SB_URL}/rest/v1/transactions?id=eq.${tx.id}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({ statut: cancelled.status, metadata: { cancelled: true, raison: raison || null, cancelled_at: new Date().toISOString() } })
-  }).catch(() => {});
-
-  await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({ statut: 'annulee' })
-  }).catch(() => {});
-
-  return res.status(200).json({
-    success: true,
-    livraison_id,
-    payment_intent_id: cancelled.id,
-    status: cancelled.status,
-    stripe_action: 'cancelled_authorization'
-  });
 };
