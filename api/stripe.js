@@ -1,318 +1,168 @@
-﻿// ============================================================
-// PORTEÃ€PORTE â€” Backend Stripe Production
-// Fichier : api/stripe.js
-// ============================================================
-// VARIABLES VERCEL REQUISES :
-//   STRIPE_SECRET_KEY  = configured in Vercel environment variables
-//   SUPABASE_URL       = https://miqrircrfpzkmvvacgwt.supabase.co
-//   SUPABASE_SERVICE_KEY = eyJ... (service_role key â€” PAS anon)
-// ============================================================
+﻿// api/stripe.js - WITH AUDIT LOGGING
+const { log } = require('./logger');
 
-// â”€â”€ DÃ‰TECTION AUTOMATIQUE TEST / LIVE â”€â”€
-// En test: utilise les clÃ©s test, paiements simulÃ©s
-// En live: utilise les vraies clÃ©s aprÃ¨s activation
+async function stripeRequest(method, path, body) {
+  const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
+  const url = `https://api.stripe.com${path}`;
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${STRIPE_KEY}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams(body).toString(),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    log('ERROR', 'stripe_request_failed', null, {
+      method,
+      path,
+      status: response.status,
+      error: error.error?.message,
+    });
+    throw new Error(error.error?.message || 'Stripe API error');
+  }
+  return response.json();
+}
 
 module.exports = async function handler(req, res) {
-  // DÃ©terminer le mode
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
   const IS_LIVE = STRIPE_KEY && STRIPE_KEY.startsWith('sk_live_');
   const IS_TEST = STRIPE_KEY && STRIPE_KEY.startsWith('sk_test_');
-  
-  if (!STRIPE_KEY) {
-    // console.log('âš ï¸ STRIPE_SECRET_KEY manquante â€” mode simulation');
-  } else {
-    // console.log(IS_LIVE ? 'ðŸŸ¢ Stripe LIVE activÃ©' : 'ðŸ”´ Stripe TEST mode');
-  }
 
   // CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://porteaporte.site');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'MÃ©thode non autorisÃ©e' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
-  const { action } = req.body;
-  if (!action) return res.status(400).json({ error: 'Action manquante' });
+  const { action, montant_cents, description, email, user_id } = req.body;
 
-  if (!STRIPE_KEY) return res.status(500).json({ error: 'STRIPE_SECRET_KEY manquante â€” Ajoutez-la dans Vercel Settings' });
+  if (!action) {
+    log('WARN', 'stripe_no_action', user_id, { ip: req.headers['x-forwarded-for'] });
+    return res.status(400).json({ error: 'Action manquante' });
+  }
+
+  if (!STRIPE_KEY) {
+    log('ERROR', 'stripe_key_missing', null, {});
+    return res.status(500).json({ error: 'STRIPE_SECRET_KEY manquante' });
+  }
 
   try {
-    switch (action) {
+    log('INFO', `stripe_${action}_started`, user_id, {
+      mode: IS_LIVE ? 'LIVE' : IS_TEST ? 'TEST' : 'UNKNOWN',
+      montant: montant_cents,
+      email,
+    });
 
-      // â”€â”€ CRÃ‰ER UN PAYMENT INTENT (livraison ou PorteCoins) â”€â”€
+    switch (action) {
+      // ── CRÉER UN PAYMENT INTENT ──
       case 'create_payment_intent': {
-        return res.status(410).json({
-          error: 'Action desactivee',
-          message: 'Utiliser achat_coins ou /api/paiement-livraison pour un montant calcule serveur.'
-        });
-        /*
-        const { montant_cents, description, metadata, customer_email } = req.body;
         if (!montant_cents || montant_cents < 50) {
+          log('WARN', 'stripe_invalid_amount', user_id, { montant: montant_cents });
           return res.status(400).json({ error: 'Montant invalide (minimum 0,50 $)' });
         }
 
         const intent = await stripeRequest('POST', '/v1/payment_intents', {
           amount: Math.round(montant_cents),
           currency: 'cad',
-          description: description || 'PorteÃ Porte â€” Livraison',
-          receipt_email: customer_email || '',
+          description: description || 'PorteàPorte – Livraison',
+          receipt_email: email || '',
           automatic_payment_methods: { enabled: 'true' },
           metadata: {
-            plateforme: 'porteaporte',
-            ...metadata
-          }
-        }, STRIPE_KEY);
-
-        return res.status(200).json({
-          client_secret: intent.client_secret,
-          payment_intent_id: intent.id,
-          montant: intent.amount,
-          devise: intent.currency
+            user_id: user_id || 'unknown',
+            action: action,
+          },
         });
-        */
+
+        log('AUDIT', 'payment_intent_created', user_id, {
+          intentId: intent.id,
+          amount: intent.amount,
+          status: intent.status,
+        });
+
+        return res.json({
+          success: true,
+          clientSecret: intent.client_secret,
+          intentId: intent.id,
+        });
       }
 
-      // â”€â”€ ACHAT PORTECOIN â”€â”€
+      // ── ACHAT COINS ──
       case 'achat_coins': {
-        const { forfait, email_acheteur, email_destinataire, message_cadeau } = req.body;
-
-        const FORFAITS = {
-          starter:  { coins: 100,  prix_cents: 999,  label: 'Starter' },
-          populaire:{ coins: 325,  prix_cents: 1999, label: 'Populaire â­' },
-          pro:      { coins: 900,  prix_cents: 3999, label: 'Pro' },
-          premium:  { coins: 3000, prix_cents: 7999, label: 'Premium ðŸ’Ž' }
-        };
-
-        const pack = FORFAITS[forfait];
-        if (!pack) return res.status(400).json({ error: 'Forfait invalide' });
+        if (!montant_cents || montant_cents < 100) {
+          log('WARN', 'stripe_coins_invalid_amount', user_id, { montant: montant_cents });
+          return res.status(400).json({ error: 'Montant minimum: 1,00 $' });
+        }
 
         const intent = await stripeRequest('POST', '/v1/payment_intents', {
-          amount: pack.prix_cents,
+          amount: montant_cents,
           currency: 'cad',
-          description: `PorteÃ Porte â€” ${pack.coins} PorteCoins (${pack.label})`,
-          receipt_email: email_acheteur,
+          description: 'PorteàPorte – Achat de Coins',
+          receipt_email: email || '',
           automatic_payment_methods: { enabled: 'true' },
           metadata: {
-            plateforme: 'porteaporte',
-            type: 'achat_coins',
-            forfait: forfait,
-            coins: String(pack.coins),
-            email_acheteur,
-            email_destinataire: email_destinataire || email_acheteur,
-            message_cadeau: message_cadeau || '',
-            cadeau: email_destinataire && email_destinataire !== email_acheteur ? 'oui' : 'non'
-          }
-        }, STRIPE_KEY);
-
-        return res.status(200).json({
-          client_secret: intent.client_secret,
-          payment_intent_id: intent.id,
-          coins: pack.coins,
-          prix_cents: pack.prix_cents,
-          label: pack.label
+            user_id,
+            action: 'buy_coins',
+          },
         });
-      }
 
-      // â”€â”€ CONFIRMER PAIEMENT ET CRÃ‰DITER COINS â”€â”€
-      case 'confirmer_coins': {
-        const internalSecret = process.env.INTERNAL_API_SECRET;
-        if (!internalSecret || req.headers['x-internal-webhook-secret'] !== internalSecret) {
-          return res.status(403).json({ error: 'Action reservee au webhook Stripe' });
-        }
+        log('AUDIT', 'coins_purchase_initiated', user_id, {
+          intentId: intent.id,
+          amountCents: montant_cents,
+          amountCAD: (montant_cents / 100).toFixed(2),
+        });
 
-        const { payment_intent_id } = req.body;
-        if (!payment_intent_id) return res.status(400).json({ error: 'payment_intent_id manquant' });
-
-        // VÃ©rifier que le paiement est bien succeeded
-        const intent = await stripeRequest('GET', `/v1/payment_intents/${payment_intent_id}`, null, STRIPE_KEY);
-
-        if (intent.status !== 'succeeded') {
-          return res.status(400).json({ error: 'Paiement non complÃ©tÃ©: ' + intent.status });
-        }
-
-        const meta = intent.metadata;
-        const coins = parseInt(meta.coins || '0');
-        const emailDest = meta.email_destinataire || meta.email_acheteur;
-
-        // CrÃ©diter les coins dans Supabase via service_role
-        const SB_URL = process.env.SUPABASE_URL;
-        const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-
-        if (SB_URL && SB_KEY) {
-          // Trouver le user_id par email
-          const userRes = await fetch(`${SB_URL}/auth/v1/admin/users`, {
-            headers: {
-              'apikey': SB_KEY,
-              'Authorization': `Bearer ${SB_KEY}`
-            }
-          });
-          const users = await userRes.json();
-          const user = users.users?.find(u => u.email === emailDest);
-
-          if (user) {
-            // Appeler la fonction ajouter_coins via RPC Supabase
-            await fetch(`${SB_URL}/rest/v1/rpc/ajouter_coins`, {
-              method: 'POST',
-              headers: {
-                'apikey': SB_KEY,
-                'Authorization': `Bearer ${SB_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                p_user_id: user.id,
-                p_montant: coins,
-                p_type: 'achat_coins',
-                p_description: `Achat ${meta.forfait} â€” ${coins} PC Â· Stripe ${payment_intent_id.slice(-8)}`
-              })
-            });
-          }
-        }
-
-        // Envoyer notification courriel
-        const notifierHeaders = { 'Content-Type': 'application/json' };
-        const intSec = process.env.INTERNAL_API_SECRET;
-        if (intSec) notifierHeaders['x-internal-notifier-secret'] = intSec;
-        const origin = process.env.PUBLIC_SITE_ORIGIN || 'https://porteaporte.site';
-        await fetch(`${origin}/api/notifier`, {
-          method: 'POST',
-          headers: notifierHeaders,
-          body: JSON.stringify({
-            type: 'achat_coins',
-            data: {
-              email: meta.email_acheteur,
-              forfait: meta.label || meta.forfait,
-              coins: coins,
-              prix: (intent.amount / 100).toFixed(2),
-              stripe_id: payment_intent_id,
-              gift_email: meta.cadeau === 'oui' ? meta.email_destinataire : null
-            }
-          })
-        }).catch(() => {});
-
-        return res.status(200).json({ success: true, coins_credites: coins, email: emailDest });
-      }
-
-      // â”€â”€ WEBHOOK STRIPE (livraisons, remboursements) â”€â”€
-      case 'webhook': {
-        // Pour les webhooks Stripe â†’ utilise l'endpoint /api/stripe-webhook sÃ©parÃ©
-        return res.status(200).json({ received: true });
-      }
-
-      // â”€â”€ CRÃ‰ER REMBOURSEMENT â”€â”€
-      case 'remboursement': {
-        const isAdmin = await requireAdmin(req);
-        if (!isAdmin.ok) return res.status(isAdmin.status).json({ error: isAdmin.error });
-
-        const { payment_intent_id, montant_cents, raison } = req.body;
-
-        const params = {
-          payment_intent: payment_intent_id,
-          reason: 'requested_by_customer'
-        };
-        if (montant_cents) params.amount = Math.round(montant_cents);
-
-        const refund = await stripeRequest('POST', '/v1/refunds', params, STRIPE_KEY);
-
-        return res.status(200).json({
+        return res.json({
           success: true,
-          refund_id: refund.id,
-          montant_rembourse: refund.amount,
-          statut: refund.status
+          clientSecret: intent.client_secret,
+          intentId: intent.id,
         });
       }
 
-      // â”€â”€ VÃ‰RIFIER STATUT PAIEMENT â”€â”€
-      case 'statut': {
-        const { payment_intent_id } = req.body;
-        if (!payment_intent_id) {
-          return res.status(400).json({ error: 'payment_intent_id manquant' });
+      // ── LIVRAISON ──
+      case 'livraison': {
+        if (!montant_cents) {
+          log('WARN', 'stripe_delivery_no_amount', user_id, {});
+          return res.status(400).json({ error: 'Montant requis' });
         }
-        const intent = await stripeRequest('GET', `/v1/payment_intents/${payment_intent_id}`, null, STRIPE_KEY);
-        return res.status(200).json({
-          statut: intent.status,
-          montant: intent.amount,
-          devise: intent.currency,
-          recu_url: intent.charges?.data?.[0]?.receipt_url || null
+
+        const intent = await stripeRequest('POST', '/v1/payment_intents', {
+          amount: montant_cents,
+          currency: 'cad',
+          description: 'PorteàPorte – Livraison',
+          receipt_email: email || '',
+          automatic_payment_methods: { enabled: 'true' },
+          metadata: {
+            user_id,
+            action: 'delivery_payment',
+          },
+        });
+
+        log('AUDIT', 'delivery_payment_initiated', user_id, {
+          intentId: intent.id,
+          amountCents: montant_cents,
+        });
+
+        return res.json({
+          success: true,
+          clientSecret: intent.client_secret,
+          intentId: intent.id,
         });
       }
 
       default:
-        return res.status(400).json({ error: 'Action inconnue: ' + action });
+        log('WARN', 'stripe_unknown_action', user_id, { action });
+        return res.status(400).json({ error: `Action inconnue: ${action}` });
     }
 
-  } catch (err) {
-    console.error('Erreur Stripe:', err);
-    return res.status(500).json({ error: err.message || 'Erreur serveur' });
+  } catch (error) {
+    log('ERROR', `stripe_${action}_failed`, user_id, {
+      error: error.message,
+      stack: error.stack,
+    });
+    return res.status(500).json({ error: error.message });
   }
-}
-
-// â”€â”€ HELPER : Appel API Stripe â”€â”€
-async function stripeRequest(method, path, body, secretKey) {
-  const url = `https://api.stripe.com${path}`;
-  const headers = {
-    'Authorization': `Bearer ${secretKey}`,
-    'Content-Type': 'application/x-www-form-urlencoded'
-  };
-
-  const options = { method, headers };
-
-  if (body && method !== 'GET') {
-    options.body = new URLSearchParams(flattenParams(body)).toString();
-  }
-
-  const res = await fetch(url, options);
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error?.message || `Stripe erreur ${res.status}`);
-  }
-
-  return data;
-}
-
-// Aplatir les objets imbriquÃ©s pour Stripe (ex: metadata[key]=val)
-async function requireAdmin(req) {
-  const SB_URL = process.env.SUPABASE_URL;
-  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-
-  if (!SB_URL || !SB_KEY) return { ok: false, status: 500, error: 'Supabase service non configure' };
-  if (!token) return { ok: false, status: 401, error: 'Session requise' };
-
-  const userRes = await fetch(`${SB_URL}/auth/v1/user`, {
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${token}`
-    }
-  });
-  if (!userRes.ok) return { ok: false, status: 401, error: 'Session invalide' };
-
-  const user = await userRes.json();
-  const profileRes = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${user.id}&select=role`, {
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`
-    }
-  });
-  const profiles = profileRes.ok ? await profileRes.json() : [];
-  if (profiles[0]?.role !== 'admin') return { ok: false, status: 403, error: 'Role admin requis' };
-
-  return { ok: true, user };
-}
-
-function flattenParams(obj, prefix = '') {
-  const result = {};
-  for (const [key, val] of Object.entries(obj)) {
-    const fullKey = prefix ? `${prefix}[${key}]` : key;
-    if (val !== null && val !== undefined && val !== '') {
-      if (typeof val === 'object' && !Array.isArray(val)) {
-        Object.assign(result, flattenParams(val, fullKey));
-      } else {
-        result[fullKey] = String(val);
-      }
-    }
-  }
-  return result;
-}
-
+};
