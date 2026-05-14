@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proposer un trajet — PorteàPorte</title>
+<title>Proposer un trajet â PorteÃ Porte</title>
 <meta name="theme-color" content="#05080A">
 <style>
 :root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,.08)}
@@ -37,35 +37,35 @@ footer{padding:36px 0;color:var(--muted);font-size:13px}
 </head>
 <body>
 <nav>
-  <a class="logo" href="index.html">Porte<span>à</span>Porte</a>
-  <div class="nav"><a href="index.html">← Accueil</a></div>
+  <a class="logo" href="index.html">Porte<span>Ã </span>Porte</a>
+  <div class="nav"><a href="index.html">â Accueil</a></div>
 </nav>
 
 <main>
 <section class="hero">
   <div class="container">
     <div class="kicker">Proposer un trajet</div>
-    <h1>Ton coffre est vide ? Ton trajet peut aider quelqu’un.</h1>
-    <p class="lead">Publie un trajet que tu fais déjà. PorteàPorte pourra le matcher avec des colis ou objets compatibles sur ton chemin.</p>
+    <h1>Ton coffre est vide ? Ton trajet peut aider quelquâun.</h1>
+    <p class="lead">Publie un trajet que tu fais dÃ©jÃ . PorteÃ Porte pourra le matcher avec des colis ou objets compatibles sur ton chemin.</p>
 
     <div class="notice" id="message" style="display:none"></div>
 
     <form class="card" onsubmit="event.preventDefault(); demoSubmit('trajet')">
       <div class="grid">
         <div>
-          <label>Départ</label>
-          <input placeholder="Ex: Lévis" required>
+          <label>DÃ©part</label>
+          <input placeholder="Ex: LÃ©vis" required>
         </div>
         <div>
           <label>Destination</label>
-          <input placeholder="Ex: Trois-Rivières" required>
+          <input placeholder="Ex: Trois-RiviÃ¨res" required>
         </div>
         <div>
           <label>Date du trajet</label>
           <input type="date" required>
         </div>
         <div>
-          <label>Type de véhicule</label>
+          <label>Type de vÃ©hicule</label>
           <select required>
             <option value="">Choisir</option>
             <option>Voiture</option>
@@ -79,24 +79,24 @@ footer{padding:36px 0;color:var(--muted);font-size:13px}
 
       <div style="margin-top:14px">
         <label>Espace disponible</label>
-        <textarea placeholder="Ex: coffre vide, banquette arrière libre, espace pour meuble, poids maximum..."></textarea>
+        <textarea placeholder="Ex: coffre vide, banquette arriÃ¨re libre, espace pour meuble, poids maximum..."></textarea>
       </div>
 
-      <button class="btn" type="submit">🚗 Publier mon trajet</button>
-      <a class="btn btn-secondary" href="suivi.html">Voir une démo de suivi</a>
+      <button class="btn" type="submit">ð Publier mon trajet</button>
+      <a class="btn btn-secondary" href="suivi.html">Voir une dÃ©mo de suivi</a>
     </form>
   </div>
 </section>
 </main>
 
-<footer><div class="container">© 2026 PorteàPorte — plateforme collaborative québécoise.</div></footer>
+<footer><div class="container">Â© 2026 PorteÃ Porte â plateforme collaborative quÃ©bÃ©coise.</div></footer>
 <script>
 function demoSubmit(type) {
   const msg = document.getElementById('message');
   msg.style.display = 'block';
   msg.innerHTML = type === 'colis'
-    ? '✅ Demande enregistrée en mode démo. Prochaine étape : connecter ce formulaire à Supabase.'
-    : '✅ Trajet enregistré en mode démo. Prochaine étape : connecter ce formulaire au matching.';
+    ? 'â Demande enregistrÃ©e en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire Ã  Supabase.'
+    : 'â Trajet enregistrÃ© en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire au matching.';
   window.scrollTo({top: msg.offsetTop - 80, behavior:'smooth'});
 }
 </script>

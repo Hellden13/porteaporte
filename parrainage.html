@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/logo.svg">
-<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -12,13 +12,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<meta name="description" content="PorteàPorte — Programme de parrainage. 25 $ offerts à toi et ton ami à chaque invitation. Ambassadeurs, classement et récompenses 🤝🍁">
-<meta property="og:title" content="PorteàPorte 🍁">
-<meta property="og:description" content="PorteàPorte — Programme de parrainage. 25 $ offerts à toi et ton ami à chaque invitation. Ambassadeurs, classement et récompenses 🤝🍁">
+<meta name="description" content="PorteÃ Porte â Programme de parrainage. 25 $ offerts Ã  toi et ton ami Ã  chaque invitation. Ambassadeurs, classement et rÃ©compenses ð¤ð">
+<meta property="og:title" content="PorteÃ Porte ð">
+<meta property="og:description" content="PorteÃ Porte â Programme de parrainage. 25 $ offerts Ã  toi et ton ami Ã  chaque invitation. Ambassadeurs, classement et rÃ©compenses ð¤ð">
 <meta property="og:url" content="https://porteaporte.site">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PorteàPorte — Parrainage & Communauté 🍁</title>
+<title>PorteÃ Porte â Parrainage & CommunautÃ© ð</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -123,7 +123,7 @@ tr:hover td{background:rgba(184,245,62,.02)}
 .lb-pts-n{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--lime);letter-spacing:-.5px}
 .lb-pts-l{font-size:10px;color:var(--muted)}
 
-/* RÉCOMPENSES */
+/* RÃCOMPENSES */
 .reward-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
 .reward-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center;transition:all .2s;cursor:pointer}
 .reward-card:hover{border-color:rgba(184,245,62,.3);transform:translateY(-3px)}
@@ -165,118 +165,118 @@ tr:hover td{background:rgba(184,245,62,.02)}
 </head>
 <body>
 
-<div class="toast" id="toast"><span class="toast-dot"></span><span id="toast-msg">Copié !</span></div>
+<div class="toast" id="toast"><span class="toast-dot"></span><span id="toast-msg">CopiÃ© !</span></div>
 
 <nav>
-  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <a href="index.html" class="logo">Porte<span>Ã </span>Porte</a>
   <div class="nav-tabs">
-    <button class="ntab on" onclick="showPage('parrainage',this)">🤝 Parrainage</button>
-    <button class="ntab" onclick="showPage('communaute',this)">👥 Communauté</button>
-    <button class="ntab" onclick="showPage('rejoindre',this)">✉️ Rejoindre</button>
-    <button class="ntab" onclick="showPage('recompenses',this)">🎁 Récompenses</button>
+    <button class="ntab on" onclick="showPage('parrainage',this)">ð¤ Parrainage</button>
+    <button class="ntab" onclick="showPage('communaute',this)">ð¥ CommunautÃ©</button>
+    <button class="ntab" onclick="showPage('rejoindre',this)">âï¸ Rejoindre</button>
+    <button class="ntab" onclick="showPage('recompenses',this)">ð RÃ©compenses</button>
   </div>
-  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">👤 Mon compte</a><a href="index.html" class="back">← Retour</a>
+  <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-right:12px;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">ð¤ Mon compte</a><a href="index.html" class="back">â Retour</a>
 </nav>
 
 <div class="hero">
-  <div class="hero-badge">🍁 Programme communauté</div>
+  <div class="hero-badge">ð Programme communautÃ©</div>
   <h1>Invites. Gagne.<br><span>Grandis ensemble.</span></h1>
 </div>
 
-<!-- ════════════════════════════════
+<!-- ââââââââââââââââââââââââââââââââ
      PAGE : PARRAINAGE
-════════════════════════════════ -->
+ââââââââââââââââââââââââââââââââ -->
 <div class="page on" id="page-parrainage">
 
   <!-- MON CODE -->
   <div class="card">
-    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🎯 Ton code de parrainage personnel</div>
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">ð¯ Ton code de parrainage personnel</div>
     <div class="ref-code-box">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Partage ce code — chaque ami qui s'inscrit vous donne 25 $ à tous les deux</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Partage ce code â chaque ami qui s'inscrit vous donne 25 $ Ã  tous les deux</div>
       <div class="ref-code" id="mon-code">PP-REF-XXXXX</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:12px">ou ce lien : <span style="color:var(--lime)" id="mon-lien">porteaporte.site/?ref=XXXXX</span></div>
-      <button class="copy-btn" id="copy-code-btn" onclick="copyCode()">📋 Copier le code</button>
+      <button class="copy-btn" id="copy-code-btn" onclick="copyCode()">ð Copier le code</button>
     </div>
     <div class="share-row">
-      <button class="sh-btn sh-sms" onclick="shareMethod('sms')">💬 SMS</button>
-      <button class="sh-btn sh-fb" onclick="shareMethod('facebook')">👥 Facebook</button>
-      <button class="sh-btn sh-email" onclick="shareMethod('email')">✉️ Courriel</button>
-      <button class="sh-btn sh-copy" onclick="copyLink()">🔗 Copier le lien</button>
+      <button class="sh-btn sh-sms" onclick="shareMethod('sms')">ð¬ SMS</button>
+      <button class="sh-btn sh-fb" onclick="shareMethod('facebook')">ð¥ Facebook</button>
+      <button class="sh-btn sh-email" onclick="shareMethod('email')">âï¸ Courriel</button>
+      <button class="sh-btn sh-copy" onclick="copyLink()">ð Copier le lien</button>
     </div>
   </div>
 
   <!-- STATS PARRAINAGE -->
   <div class="sr">
-    <div class="st"><div class="sn" style="color:var(--lime)" id="stat-parraines">0</div><div class="sl">Amis parrainés</div></div>
-    <div class="st"><div class="sn" style="color:var(--teal)" id="stat-gagnes">0 $</div><div class="sl">Bonus gagnés</div></div>
-    <div class="st"><div class="sn" style="color:var(--gold)" id="stat-rang">—</div><div class="sl">Ton rang</div></div>
+    <div class="st"><div class="sn" style="color:var(--lime)" id="stat-parraines">0</div><div class="sl">Amis parrainÃ©s</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)" id="stat-gagnes">0 $</div><div class="sl">Bonus gagnÃ©s</div></div>
+    <div class="st"><div class="sn" style="color:var(--gold)" id="stat-rang">â</div><div class="sl">Ton rang</div></div>
     <div class="st"><div class="sn" style="color:#A78BFA" id="stat-prochain">25 $</div><div class="sl">Prochain bonus</div></div>
   </div>
 
   <!-- PROGRESSION -->
   <div class="card">
-    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🏆 Paliers de récompenses</div>
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">ð Paliers de rÃ©compenses</div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="pb-wrap">
-        <div class="pb-header"><span>🥉 Ambassadeur Bronze — 1 ami</span><span style="color:var(--lime)" id="prog-1">0/1</span></div>
+        <div class="pb-header"><span>ð¥ Ambassadeur Bronze â 1 ami</span><span style="color:var(--lime)" id="prog-1">0/1</span></div>
         <div class="pb"><div class="pbf" id="pbf-1" style="width:0%"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">Récompense : 25 $ en PorteCoins + badge "Ambassadeur"</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">RÃ©compense : 25 $ en PorteCoins + badge "Ambassadeur"</div>
       </div>
       <div class="pb-wrap">
-        <div class="pb-header"><span>🥈 Ambassadeur Argent — 5 amis</span><span style="color:var(--lime)" id="prog-5">0/5</span></div>
+        <div class="pb-header"><span>ð¥ Ambassadeur Argent â 5 amis</span><span style="color:var(--lime)" id="prog-5">0/5</span></div>
         <div class="pb"><div class="pbf" id="pbf-5" style="width:0%;background:var(--teal)"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">Récompense : 150 $ en PorteCoins + 1 livraison gratuite</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">RÃ©compense : 150 $ en PorteCoins + 1 livraison gratuite</div>
       </div>
       <div class="pb-wrap">
-        <div class="pb-header"><span>🥇 Ambassadeur Or — 15 amis</span><span style="color:var(--lime)" id="prog-15">0/15</span></div>
+        <div class="pb-header"><span>ð¥ Ambassadeur Or â 15 amis</span><span style="color:var(--lime)" id="prog-15">0/15</span></div>
         <div class="pb"><div class="pbf" id="pbf-15" style="width:0%;background:var(--gold)"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">Récompense : 500 $ en PorteCoins + abonnement Premium 3 mois</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">RÃ©compense : 500 $ en PorteCoins + abonnement Premium 3 mois</div>
       </div>
       <div class="pb-wrap">
-        <div class="pb-header"><span>💎 Super Ambassadeur — 50 amis</span><span style="color:var(--lime)" id="prog-50">0/50</span></div>
+        <div class="pb-header"><span>ð Super Ambassadeur â 50 amis</span><span style="color:var(--lime)" id="prog-50">0/50</span></div>
         <div class="pb"><div class="pbf" id="pbf-50" style="width:0%;background:#A78BFA"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">Récompense : 2 000 $ + ticket VIP tirage + nom sur le site</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">RÃ©compense : 2 000 $ + ticket VIP tirage + nom sur le site</div>
       </div>
     </div>
     <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
       <div style="flex:1">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">Ajoute le nombre d'amis parrainés :</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">Ajoute le nombre d'amis parrainÃ©s :</div>
         <input type="number" id="nb-parraines" class="fi" min="0" max="200" value="0" oninput="updateProgression(this.value)" placeholder="0">
       </div>
-      <button class="btn-submit" style="width:auto;padding:10px 20px;margin-top:16px" onclick="updateProgression(document.getElementById('nb-parraines').value)">Mettre à jour</button>
+      <button class="btn-submit" style="width:auto;padding:10px 20px;margin-top:16px" onclick="updateProgression(document.getElementById('nb-parraines').value)">Mettre Ã  jour</button>
     </div>
   </div>
 
-  <!-- COMMENT ÇA MARCHE -->
+  <!-- COMMENT ÃA MARCHE -->
   <div class="card">
-    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">📋 Comment fonctionne le parrainage</div>
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">ð Comment fonctionne le parrainage</div>
     <div class="g3">
-      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">📤</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Tu partages</div><div style="font-size:11px;color:var(--muted)">Envoie ton code ou lien unique à un ami</div></div>
-      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">📝</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Il s'inscrit</div><div style="font-size:11px;color:var(--muted)">Ton ami crée son compte avec ton code</div></div>
-      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">🎉</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Vous gagnez 25 $ chacun</div><div style="font-size:11px;color:var(--muted)">Dès sa première livraison complétée</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">ð¤</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Tu partages</div><div style="font-size:11px;color:var(--muted)">Envoie ton code ou lien unique Ã  un ami</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">ð</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Il s'inscrit</div><div style="font-size:11px;color:var(--muted)">Ton ami crÃ©e son compte avec ton code</div></div>
+      <div class="card2" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">ð</div><div style="font-size:12px;font-weight:500;margin-bottom:4px">Vous gagnez 25 $ chacun</div><div style="font-size:11px;color:var(--muted)">DÃ¨s sa premiÃ¨re livraison complÃ©tÃ©e</div></div>
     </div>
-    <div class="note" style="margin-top:12px">💡 <strong>Aucune limite :</strong> Plus tu parraines, plus tu gagnes. Les PorteCoins n'expirent jamais et s'échangent contre de vraies récompenses.</div>
+    <div class="note" style="margin-top:12px">ð¡ <strong>Aucune limite :</strong> Plus tu parraines, plus tu gagnes. Les PorteCoins n'expirent jamais et s'Ã©changent contre de vraies rÃ©compenses.</div>
   </div>
 
 </div>
 
-<!-- ════════════════════════════════
-     PAGE : COMMUNAUTÉ (BANQUE DE DONNÉES)
-════════════════════════════════ -->
+<!-- ââââââââââââââââââââââââââââââââ
+     PAGE : COMMUNAUTÃ (BANQUE DE DONNÃES)
+ââââââââââââââââââââââââââââââââ -->
 <div class="page" id="page-communaute">
 
   <div class="export-bar">
-    <input class="search-input" type="text" id="search-input" placeholder="🔍 Rechercher par nom, ville, rôle..." oninput="filterTable()">
-    <button class="exp-btn green" onclick="exportCSV()">📥 Exporter CSV</button>
-    <button class="exp-btn" onclick="exportJSON()">📋 JSON</button>
+    <input class="search-input" type="text" id="search-input" placeholder="ð Rechercher par nom, ville, rÃ´le..." oninput="filterTable()">
+    <button class="exp-btn green" onclick="exportCSV()">ð¥ Exporter CSV</button>
+    <button class="exp-btn" onclick="exportJSON()">ð JSON</button>
     <div class="cf-turnstile" data-sitekey="0x4AAAAAADB-5XxJa080DSyJ" data-theme="dark" data-size="normal" style="margin:10px 0 4px"></div>
-    <button class="exp-btn" onclick="clearData()" style="border-color:rgba(255,77,77,.3);color:var(--red)">🗑️ Vider</button>
+    <button class="exp-btn" onclick="clearData()" style="border-color:rgba(255,77,77,.3);color:var(--red)">ðï¸ Vider</button>
   </div>
 
   <div class="sr">
     <div class="st"><div class="sn" style="color:var(--lime)" id="total-inscrits">0</div><div class="sl">Total inscrits</div></div>
     <div class="st"><div class="sn" style="color:var(--teal)" id="total-livreurs">0</div><div class="sl">Livreurs</div></div>
-    <div class="st"><div class="sn" style="color:var(--gold)" id="total-expediteurs">0</div><div class="sl">Expéditeurs</div></div>
+    <div class="st"><div class="sn" style="color:var(--gold)" id="total-expediteurs">0</div><div class="sl">ExpÃ©diteurs</div></div>
     <div class="st"><div class="sn" style="color:#A78BFA" id="total-entreprises">0</div><div class="sl">Entreprises</div></div>
     <div class="st"><div class="sn" style="color:var(--lime)" id="total-parrainages">0</div><div class="sl">Via parrainage</div></div>
   </div>
@@ -289,77 +289,77 @@ tr:hover td{background:rgba(184,245,62,.02)}
           <th>Nom</th>
           <th>Courriel</th>
           <th>Ville</th>
-          <th>Rôle</th>
+          <th>RÃ´le</th>
           <th>Code parrain</th>
           <th>Date</th>
           <th>Statut</th>
         </tr>
       </thead>
       <tbody id="table-body">
-        <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">Aucune inscription pour l'instant. Les inscriptions via le formulaire ci-dessous apparaîtront ici automatiquement.</td></tr>
+        <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">Aucune inscription pour l'instant. Les inscriptions via le formulaire ci-dessous apparaÃ®tront ici automatiquement.</td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- RÉPARTITION PAR VILLE -->
+  <!-- RÃPARTITION PAR VILLE -->
   <div class="g2">
     <div class="card">
-      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">📍 Répartition par ville</div>
-      <div id="ville-stats" style="font-size:12px;color:var(--muted)">Aucune donnée encore</div>
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">ð RÃ©partition par ville</div>
+      <div id="ville-stats" style="font-size:12px;color:var(--muted)">Aucune donnÃ©e encore</div>
     </div>
     <div class="card">
-      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">📊 Répartition par rôle</div>
-      <div id="role-stats" style="font-size:12px;color:var(--muted)">Aucune donnée encore</div>
+      <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">ð RÃ©partition par rÃ´le</div>
+      <div id="role-stats" style="font-size:12px;color:var(--muted)">Aucune donnÃ©e encore</div>
     </div>
   </div>
 
   <!-- TOP PARRAINS -->
   <div class="card">
-    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">🏆 Classement des ambassadeurs</div>
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:14px">ð Classement des ambassadeurs</div>
     <div id="leaderboard">
-      <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Le classement apparaîtra dès que des parrainages seront enregistrés.</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Le classement apparaÃ®tra dÃ¨s que des parrainages seront enregistrÃ©s.</div>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
+<!-- ââââââââââââââââââââââââââââââââ
      PAGE : FORMULAIRE REJOINDRE
-════════════════════════════════ -->
+ââââââââââââââââââââââââââââââââ -->
 <div class="page" id="page-rejoindre">
 
   <div class="g2">
     <div>
       <div class="card">
-        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:16px">✉️ Rejoindre la communauté PorteàPorte</div>
+        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:16px">âï¸ Rejoindre la communautÃ© PorteÃ Porte</div>
         <form id="join-form" onsubmit="handleJoin(event)">
           <div class="fr">
-            <div class="fg"><label class="fl">Prénom</label><input class="fi" type="text" id="f-prenom" placeholder="Denis" required></div>
+            <div class="fg"><label class="fl">PrÃ©nom</label><input class="fi" type="text" id="f-prenom" placeholder="Denis" required></div>
             <div class="fg"><label class="fl">Nom</label><input class="fi" type="text" id="f-nom" placeholder="Morneau" required></div>
           </div>
           <div class="fg"><label class="fl">Courriel</label><input class="fi" type="email" id="f-email" placeholder="denis@courriel.ca" required></div>
-          <div class="fg"><label class="fl">Téléphone</label><input class="fi" type="tel" id="f-tel" placeholder="+1 (418) 555-0123"></div>
+          <div class="fg"><label class="fl">TÃ©lÃ©phone</label><input class="fi" type="tel" id="f-tel" placeholder="+1 (418) 555-0123"></div>
           <div class="fr">
-            <div class="fg"><label class="fl">Ville</label><input class="fi" type="text" id="f-ville" placeholder="Lévis" required></div>
+            <div class="fg"><label class="fl">Ville</label><input class="fi" type="text" id="f-ville" placeholder="LÃ©vis" required></div>
             <div class="fg"><label class="fl">Province</label>
               <select class="fi" id="f-province">
-                <option>Québec</option><option>Ontario</option><option>Alberta</option>
+                <option>QuÃ©bec</option><option>Ontario</option><option>Alberta</option>
                 <option>Colombie-Britannique</option><option>Manitoba</option><option>Autre</option>
               </select>
             </div>
           </div>
-          <div class="fg"><label class="fl">Je suis intéressé par</label>
+          <div class="fg"><label class="fl">Je suis intÃ©ressÃ© par</label>
             <select class="fi" id="f-role" required>
               <option value="">Choisir...</option>
-              <option value="expediteur">📦 Envoyer des colis</option>
-              <option value="livreur">🚗 Devenir livreur certifié</option>
-              <option value="entreprise">🏢 Compte entreprise / B2B</option>
-              <option value="les deux">📦🚗 Les deux</option>
+              <option value="expediteur">ð¦ Envoyer des colis</option>
+              <option value="livreur">ð Devenir livreur certifiÃ©</option>
+              <option value="entreprise">ð¢ Compte entreprise / B2B</option>
+              <option value="les deux">ð¦ð Les deux</option>
             </select>
           </div>
           <div class="fg"><label class="fl">Code de parrainage (optionnel)</label><input class="fi" type="text" id="f-parrain" placeholder="PP-REF-XXXXX" style="text-transform:uppercase"></div>
           <div class="fg"><label class="fl">Comment as-tu entendu parler de nous ?</label>
             <select class="fi" id="f-source">
-              <option>Bouche à oreille / Ami</option>
+              <option>Bouche Ã  oreille / Ami</option>
               <option>Facebook</option>
               <option>Instagram</option>
               <option>Google</option>
@@ -368,34 +368,34 @@ tr:hover td{background:rgba(184,245,62,.02)}
             </select>
           </div>
           <div class="fg"><label class="fl">Message ou question (optionnel)</label>
-            <textarea class="fi" id="f-message" placeholder="Une question ? Une idée ? On veut vous entendre..." style="resize:vertical;min-height:60px"></textarea>
+            <textarea class="fi" id="f-message" placeholder="Une question ? Une idÃ©e ? On veut vous entendre..." style="resize:vertical;min-height:60px"></textarea>
           </div>
-          <button class="btn-submit" type="submit">🍁 Rejoindre la liste d'attente →</button>
+          <button class="btn-submit" type="submit">ð Rejoindre la liste d'attente â</button>
         </form>
         <div id="join-success" style="display:none;text-align:center;padding:24px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.2);border-radius:4px;margin-top:12px">
-          <div style="font-size:32px;margin-bottom:8px">🎉</div>
+          <div style="font-size:32px;margin-bottom:8px">ð</div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-1px;margin-bottom:6px">Tu es dans la liste !</div>
-          <div style="font-size:12px;color:var(--muted)">Ton code de parrainage personnel : <strong style="color:var(--lime)" id="new-ref-code">—</strong></div>
+          <div style="font-size:12px;color:var(--muted)">Ton code de parrainage personnel : <strong style="color:var(--lime)" id="new-ref-code">â</strong></div>
           <div style="font-size:11px;color:var(--muted);margin-top:6px">Partage-le pour gagner 25 $ par ami !</div>
-          <button class="btn-submit" style="margin-top:12px;padding:10px" onclick="showPage('parrainage',null)">Voir mon tableau de parrainage →</button>
+          <button class="btn-submit" style="margin-top:12px;padding:10px" onclick="showPage('parrainage',null)">Voir mon tableau de parrainage â</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">✓ Gratuit · ✓ Sans engagement · ✓ Loi 25 QC respectée</div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">â Gratuit Â· â Sans engagement Â· â Loi 25 QC respectÃ©e</div>
       </div>
     </div>
 
     <div>
       <div class="card" style="margin-bottom:12px">
-        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">🎁 Ce que tu gagnes en t'inscrivant</div>
+        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">ð Ce que tu gagnes en t'inscrivant</div>
         <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
-          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">✓</span><div><div style="font-weight:500">Accès prioritaire au lancement</div><div style="font-size:11px;color:var(--muted)">Tu es notifié avant tout le monde</div></div></div>
-          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">✓</span><div><div style="font-weight:500">Ton code de parrainage unique</div><div style="font-size:11px;color:var(--muted)">25 $ pour toi et chaque ami invité</div></div></div>
-          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">✓</span><div><div style="font-weight:500">50 PorteCoins offerts</div><div style="font-size:11px;color:var(--muted)">Bonus de bienvenue = 5 $ de valeur</div></div></div>
-          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">✓</span><div><div style="font-weight:500">Badge "Fondateur" exclusif</div><div style="font-size:11px;color:var(--muted)">Pour les 500 premiers inscrits seulement</div></div></div>
-          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">✓</span><div><div style="font-weight:500">Ticket gratuit au tirage mensuel</div><div style="font-size:11px;color:var(--muted)">Dès ton inscription, avant même la première livraison</div></div></div>
+          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">â</span><div><div style="font-weight:500">AccÃ¨s prioritaire au lancement</div><div style="font-size:11px;color:var(--muted)">Tu es notifiÃ© avant tout le monde</div></div></div>
+          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">â</span><div><div style="font-weight:500">Ton code de parrainage unique</div><div style="font-size:11px;color:var(--muted)">25 $ pour toi et chaque ami invitÃ©</div></div></div>
+          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">â</span><div><div style="font-weight:500">50 PorteCoins offerts</div><div style="font-size:11px;color:var(--muted)">Bonus de bienvenue = 5 $ de valeur</div></div></div>
+          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">â</span><div><div style="font-weight:500">Badge "Fondateur" exclusif</div><div style="font-size:11px;color:var(--muted)">Pour les 500 premiers inscrits seulement</div></div></div>
+          <div style="display:flex;gap:10px"><span style="color:var(--lime);font-size:16px">â</span><div><div style="font-weight:500">Ticket gratuit au tirage mensuel</div><div style="font-size:11px;color:var(--muted)">DÃ¨s ton inscription, avant mÃªme la premiÃ¨re livraison</div></div></div>
         </div>
       </div>
       <div class="card">
-        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:10px">📊 Inscriptions en direct</div>
+        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:10px">ð Inscriptions en direct</div>
         <div style="font-size:28px;font-family:'Bebas Neue',sans-serif;color:var(--lime);letter-spacing:-1px" id="live-count">0</div>
         <div style="font-size:11px;color:var(--muted)">personnes sur la liste d'attente</div>
         <div style="margin-top:12px">
@@ -405,31 +405,31 @@ tr:hover td{background:rgba(184,245,62,.02)}
           </div>
           <div class="pb"><div class="pbf" id="objectif-bar" style="width:0%;background:var(--teal)"></div></div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">🎯 Lancement dès 500 inscrits atteint !</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">ð¯ Lancement dÃ¨s 500 inscrits atteint !</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     PAGE : RÉCOMPENSES
-════════════════════════════════ -->
+<!-- ââââââââââââââââââââââââââââââââ
+     PAGE : RÃCOMPENSES
+ââââââââââââââââââââââââââââââââ -->
 <div class="page" id="page-recompenses">
 
   <div class="card" style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:4px">💎 Ton solde PorteCoins</div>
+        <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:4px">ð Ton solde PorteCoins</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--lime);letter-spacing:-2px;line-height:1" id="solde-coins">50</div>
-        <div style="font-size:11px;color:var(--muted)">≈ <span id="solde-valeur">5,00</span> $ de valeur · 10 coins = 1 $</div>
+        <div style="font-size:11px;color:var(--muted)">â <span id="solde-valeur">5,00</span> $ de valeur Â· 10 coins = 1 $</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Comment gagner plus de coins :</div>
         <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)">
-          <div>📦 1 livraison envoyée = +10 coins</div>
-          <div>🚗 1 livraison effectuée = +15 coins</div>
-          <div>⭐ Avis 5 étoiles reçu = +5 coins</div>
-          <div>🤝 Parrainage = +250 coins</div>
+          <div>ð¦ 1 livraison envoyÃ©e = +10 coins</div>
+          <div>ð 1 livraison effectuÃ©e = +15 coins</div>
+          <div>â­ Avis 5 Ã©toiles reÃ§u = +5 coins</div>
+          <div>ð¤ Parrainage = +250 coins</div>
         </div>
       </div>
     </div>
@@ -439,40 +439,40 @@ tr:hover td{background:rgba(184,245,62,.02)}
     </div>
   </div>
 
-  <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">🛒 Catalogue de récompenses</div>
+  <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">ð Catalogue de rÃ©compenses</div>
   <div class="reward-grid">
     <div class="reward-card" onclick="redeemReward(this,'Livraison gratuite',100)">
-      <div class="reward-icon">📦</div>
+      <div class="reward-icon">ð¦</div>
       <div class="reward-name">Livraison gratuite</div>
       <div class="reward-pts">100</div>
       <div class="reward-val">PorteCoins (10 $)</div>
     </div>
     <div class="reward-card" onclick="redeemReward(this,'Carte-cadeau 25$',250)">
-      <div class="reward-icon">🎁</div>
+      <div class="reward-icon">ð</div>
       <div class="reward-name">Carte-cadeau 25 $</div>
       <div class="reward-pts">250</div>
       <div class="reward-val">PorteCoins (25 $)</div>
     </div>
     <div class="reward-card" onclick="redeemReward(this,'Assurance gratuite',200)">
-      <div class="reward-icon">🛡️</div>
+      <div class="reward-icon">ð¡ï¸</div>
       <div class="reward-name">Assurance offerte</div>
       <div class="reward-pts">200</div>
       <div class="reward-val">PorteCoins (valeur 4,99 $)</div>
     </div>
     <div class="reward-card" onclick="redeemReward(this,'Rabais 15% livraison',150)">
-      <div class="reward-icon">💸</div>
+      <div class="reward-icon">ð¸</div>
       <div class="reward-name">Rabais 15 %</div>
       <div class="reward-pts">150</div>
       <div class="reward-val">PorteCoins sur prochaine livraison</div>
     </div>
     <div class="reward-card" onclick="redeemReward(this,'Ticket tirage double',300)">
-      <div class="reward-icon">🎟️</div>
+      <div class="reward-icon">ðï¸</div>
       <div class="reward-name">Double ticket tirage</div>
       <div class="reward-pts">300</div>
-      <div class="reward-val">PorteCoins · 2× chances de gagner</div>
+      <div class="reward-val">PorteCoins Â· 2Ã chances de gagner</div>
     </div>
     <div class="reward-card" onclick="redeemReward(this,'Abonnement Premium 1 mois',500)">
-      <div class="reward-icon">💎</div>
+      <div class="reward-icon">ð</div>
       <div class="reward-name">Premium 1 mois</div>
       <div class="reward-pts">500</div>
       <div class="reward-val">PorteCoins (valeur 9,99 $)</div>
@@ -480,21 +480,21 @@ tr:hover td{background:rgba(184,245,62,.02)}
   </div>
 
   <div class="card">
-    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">📜 Historique des transactions</div>
+    <div style="font-size:12px;color:var(--lime);font-weight:500;margin-bottom:12px">ð Historique des transactions</div>
     <div id="historique-coins" style="display:flex;flex-direction:column;gap:8px">
-      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:500">🎁 Bonus bienvenue</div><div style="font-size:10px;color:var(--muted)">À l'inscription</div></div><span style="color:var(--lime);font-weight:600;font-family:'Bebas Neue',sans-serif;font-size:18px">+50</span></div>
+      <div class="card2" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:500">ð Bonus bienvenue</div><div style="font-size:10px;color:var(--muted)">Ã l'inscription</div></div><span style="color:var(--lime);font-weight:600;font-family:'Bebas Neue',sans-serif;font-size:18px">+50</span></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">Les nouveaux gains apparaissent ici automatiquement</div>
   </div>
 </div>
 
 <script>
-// ══ STORAGE ══
+// ââ STORAGE ââ
 const KEY='pp_community';
 function getData(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
 function saveData(d){localStorage.setItem(KEY,JSON.stringify(d))}
 
-// ══ NAVIGATION ══
+// ââ NAVIGATION ââ
 function showPage(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
@@ -504,7 +504,7 @@ function showPage(id,el){
   window.scrollTo({top:100,behavior:'smooth'});
 }
 
-// ══ CODE PARRAINAGE ══
+// ââ CODE PARRAINAGE ââ
 function genCode(){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return 'PP-REF-'+Array.from({length:5},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
@@ -515,24 +515,24 @@ document.getElementById('mon-code').textContent=monCode;
 document.getElementById('mon-lien').textContent='porteaporte.site/?ref='+monCode.replace('PP-REF-','');
 
 function copyCode(){
-  navigator.clipboard.writeText(monCode).then(()=>showToast('Code copié : '+monCode));
+  navigator.clipboard.writeText(monCode).then(()=>showToast('Code copiÃ© : '+monCode));
   const btn=document.getElementById('copy-code-btn');
-  btn.textContent='✅ Copié !';btn.classList.add('copied');
-  setTimeout(()=>{btn.textContent='📋 Copier le code';btn.classList.remove('copied')},2000);
+  btn.textContent='â CopiÃ© !';btn.classList.add('copied');
+  setTimeout(()=>{btn.textContent='ð Copier le code';btn.classList.remove('copied')},2000);
 }
 function copyLink(){
   const url='https://porteaporte.site/?ref='+monCode.replace('PP-REF-','');
-  navigator.clipboard.writeText(url).then(()=>showToast('Lien copié !'));
+  navigator.clipboard.writeText(url).then(()=>showToast('Lien copiÃ© !'));
 }
 function shareMethod(m){
   const url='https://porteaporte.site/?ref='+monCode.replace('PP-REF-','');
-  const msg=encodeURIComponent('J\'utilise PorteàPorte pour livrer mes colis au Québec moins cher que Purolator ! Inscris-toi avec mon code et on gagne 25$ chacun : '+url);
+  const msg=encodeURIComponent('J\'utilise PorteÃ Porte pour livrer mes colis au QuÃ©bec moins cher que Purolator ! Inscris-toi avec mon code et on gagne 25$ chacun : '+url);
   if(m==='sms')window.open('sms:?body='+msg);
   else if(m==='facebook')window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(url));
-  else if(m==='email')window.open('mailto:?subject=Découvre PorteàPorte !&body='+msg);
+  else if(m==='email')window.open('mailto:?subject=DÃ©couvre PorteÃ Porte !&body='+msg);
 }
 
-// ══ PROGRESSION PARRAINAGE ══
+// ââ PROGRESSION PARRAINAGE ââ
 function updateProgression(n){
   n=Math.max(0,parseInt(n)||0);
   const paliers=[1,5,15,50];
@@ -545,13 +545,13 @@ function updateProgression(n){
   });
   document.getElementById('stat-parraines').textContent=n;
   document.getElementById('stat-gagnes').textContent=(n*25)+' $';
-  const rangs=['—','🥉 Bronze','🥈 Argent','🥇 Or','💎 Super'];
-  let rang='—';
-  if(n>=50)rang='💎 Super';else if(n>=15)rang='🥇 Or';else if(n>=5)rang='🥈 Argent';else if(n>=1)rang='🥉 Bronze';
+  const rangs=['â','ð¥ Bronze','ð¥ Argent','ð¥ Or','ð Super'];
+  let rang='â';
+  if(n>=50)rang='ð Super';else if(n>=15)rang='ð¥ Or';else if(n>=5)rang='ð¥ Argent';else if(n>=1)rang='ð¥ Bronze';
   document.getElementById('stat-rang').textContent=rang;
 }
 
-// ══ FORMULAIRE INSCRIPTION ══
+// ââ FORMULAIRE INSCRIPTION ââ
 function handleJoin(e){
   e.preventDefault();
   const prenom=document.getElementById('f-prenom').value.trim();
@@ -580,7 +580,7 @@ function handleJoin(e){
   data.push(entry);
   saveData(data);
 
-  // Si parrainage valide, créditer le parrain
+  // Si parrainage valide, crÃ©diter le parrain
   if(parrain&&parrain.startsWith('PP-REF-')){
     const parrainData=getData();
     const idx=parrainData.findIndex(d=>d.code===parrain);
@@ -591,10 +591,10 @@ function handleJoin(e){
   document.getElementById('join-success').style.display='block';
   document.getElementById('new-ref-code').textContent=newCode;
   updateLiveCount();
-  showToast('Bienvenue '+prenom+' ! 🎉');
+  showToast('Bienvenue '+prenom+' ! ð');
 }
 
-// ══ RENDER TABLE ══
+// ââ RENDER TABLE ââ
 function renderTable(filter=''){
   const data=getData();
   const tbody=document.getElementById('table-body');
@@ -608,12 +608,12 @@ function renderTable(filter=''){
     tbody.innerHTML=filtered.map((d,i)=>`
       <tr>
         <td style="color:var(--muted)">${d.numero||i+1}</td>
-        <td><div style="font-weight:500">${d.prenom} ${d.nom}</div><div style="font-size:10px;color:var(--muted)">${d.code||'—'}</div></td>
+        <td><div style="font-weight:500">${d.prenom} ${d.nom}</div><div style="font-size:10px;color:var(--muted)">${d.code||'â'}</div></td>
         <td style="color:var(--teal)">${d.email}</td>
         <td>${d.ville}, ${d.province||'QC'}</td>
         <td>${getRoleTag(d.role)}</td>
-        <td style="font-size:10px;font-family:monospace;color:var(--muted)">${d.parrain||'—'}</td>
-        <td style="color:var(--muted);font-size:11px">${d.date||'—'} ${d.heure||''}</td>
+        <td style="font-size:10px;font-family:monospace;color:var(--muted)">${d.parrain||'â'}</td>
+        <td style="color:var(--muted);font-size:11px">${d.date||'â'} ${d.heure||''}</td>
         <td>${getStatutTag(d.statut)}</td>
       </tr>
     `).join('');
@@ -632,15 +632,15 @@ function renderTable(filter=''){
   const villesSorted=Object.entries(villes).sort((a,b)=>b[1]-a[1]).slice(0,6);
   document.getElementById('ville-stats').innerHTML=villesSorted.length?
     villesSorted.map(([v,n])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${v}</span><span style="color:var(--lime);font-weight:500">${n}</span></div>`).join('')
-    :'<span style="color:var(--muted)">Aucune donnée encore</span>';
+    :'<span style="color:var(--muted)">Aucune donnÃ©e encore</span>';
 
-  // Rôles
-  const roles={'expediteur':'📦 Expéditeur','livreur':'🚗 Livreur','entreprise':'🏢 Entreprise','les deux':'📦🚗 Les deux'};
+  // RÃ´les
+  const roles={'expediteur':'ð¦ ExpÃ©diteur','livreur':'ð Livreur','entreprise':'ð¢ Entreprise','les deux':'ð¦ð Les deux'};
   const roleStats={};
   data.forEach(d=>{if(d.role){roleStats[d.role]=(roleStats[d.role]||0)+1}});
   document.getElementById('role-stats').innerHTML=Object.entries(roleStats).length?
     Object.entries(roleStats).map(([r,n])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${roles[r]||r}</span><span style="color:var(--lime);font-weight:500">${n}</span></div>`).join('')
-    :'<span style="color:var(--muted)">Aucune donnée encore</span>';
+    :'<span style="color:var(--muted)">Aucune donnÃ©e encore</span>';
 
   // Leaderboard parrains
   const parrainCount={};
@@ -648,38 +648,38 @@ function renderTable(filter=''){
   const lb=document.getElementById('leaderboard');
   const sorted=Object.entries(parrainCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
   if(sorted.length){
-    const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+    const medals=['ð¥','ð¥','ð¥','4ï¸â£','5ï¸â£'];
     const classes=['top1','top2','top3','',''];
     lb.innerHTML=sorted.map(([code,n],i)=>{
       const user=data.find(d=>d.code===code);
       return `<div class="lb-item ${classes[i]}">
         <div class="lb-rank">${medals[i]}</div>
-        <div class="lb-av" style="background:rgba(184,245,62,.12)">🤝</div>
+        <div class="lb-av" style="background:rgba(184,245,62,.12)">ð¤</div>
         <div class="lb-info">
           <div class="lb-name">${user?user.prenom+' '+user.nom:'Utilisateur'}</div>
-          <div class="lb-sub">${user?user.ville+', '+user.province:'—'} · Code ${code}</div>
+          <div class="lb-sub">${user?user.ville+', '+user.province:'â'} Â· Code ${code}</div>
         </div>
         <div class="lb-pts"><div class="lb-pts-n">${n}</div><div class="lb-pts-l">parrainages</div></div>
       </div>`;
     }).join('');
   } else {
-    lb.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Le classement apparaîtra dès que des parrainages seront enregistrés.</div>';
+    lb.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Le classement apparaÃ®tra dÃ¨s que des parrainages seront enregistrÃ©s.</div>';
   }
 }
 
 function getRoleTag(role){
-  const map={expediteur:'<span class="tag tg">📦 Expéditeur</span>',livreur:'<span class="tag tb">🚗 Livreur</span>',entreprise:'<span class="tag to">🏢 Entreprise</span>','les deux':'<span class="tag tv">📦🚗 Les deux</span>'};
-  return map[role]||'<span class="tag">—</span>';
+  const map={expediteur:'<span class="tag tg">ð¦ ExpÃ©diteur</span>',livreur:'<span class="tag tb">ð Livreur</span>',entreprise:'<span class="tag to">ð¢ Entreprise</span>','les deux':'<span class="tag tv">ð¦ð Les deux</span>'};
+  return map[role]||'<span class="tag">â</span>';
 }
 function getStatutTag(s){
   if(s==='Actif')return '<span class="tag tg">Actif</span>';
-  if(s==='Livré')return '<span class="tag tb">Livré</span>';
+  if(s==='LivrÃ©')return '<span class="tag tb">LivrÃ©</span>';
   return '<span class="tag" style="background:rgba(245,240,232,.07);color:var(--muted);border:1px solid var(--border)">En attente</span>';
 }
 
 function filterTable(){renderTable(document.getElementById('search-input').value)}
 
-// ══ LIVE COUNT ══
+// ââ LIVE COUNT ââ
 function updateLiveCount(){
   const n=getData().length;
   document.getElementById('live-count').textContent=n;
@@ -689,35 +689,35 @@ function updateLiveCount(){
 }
 updateLiveCount();
 
-// ══ EXPORT ══
+// ââ EXPORT ââ
 function exportCSV(){
   const data=getData();
-  if(!data.length){showToast('Aucune donnée à exporter');return}
-  const headers=['#','Prénom','Nom','Courriel','Téléphone','Ville','Province','Rôle','Code parrain','Source','Date','Heure','Code perso','Statut'];
+  if(!data.length){showToast('Aucune donnÃ©e Ã  exporter');return}
+  const headers=['#','PrÃ©nom','Nom','Courriel','TÃ©lÃ©phone','Ville','Province','RÃ´le','Code parrain','Source','Date','Heure','Code perso','Statut'];
   const rows=data.map(d=>[d.numero||'',d.prenom,d.nom,d.email,d.tel||'',d.ville,d.province||'QC',d.role,d.parrain||'',d.source||'',d.date||'',d.heure||'',d.code||'',d.statut||'']);
   const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='porteaporte-communaute-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-  showToast('CSV exporté ! ('+data.length+' entrées)');
+  showToast('CSV exportÃ© ! ('+data.length+' entrÃ©es)');
 }
 
 function exportJSON(){
   const data=getData();
-  if(!data.length){showToast('Aucune donnée à exporter');return}
+  if(!data.length){showToast('Aucune donnÃ©e Ã  exporter');return}
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='porteaporte-communaute-'+new Date().toISOString().slice(0,10)+'.json';a.click();
-  showToast('JSON exporté !');
+  showToast('JSON exportÃ© !');
 }
 
 function clearData(){
-  if(confirm('Vider toute la base de données ? Cette action est irréversible.')){
-    localStorage.removeItem(KEY);renderTable();updateLiveCount();showToast('Base vidée');
+  if(confirm('Vider toute la base de donnÃ©es ? Cette action est irrÃ©versible.')){
+    localStorage.removeItem(KEY);renderTable();updateLiveCount();showToast('Base vidÃ©e');
   }
 }
 
-// ══ RÉCOMPENSES ══
+// ââ RÃCOMPENSES ââ
 let coins=50;
 function redeemReward(el,name,cost){
   if(coins<cost){showToast('Pas assez de PorteCoins ! ('+cost+' requis)');return}
@@ -728,12 +728,12 @@ function redeemReward(el,name,cost){
   const hist=document.getElementById('historique-coins');
   const div=document.createElement('div');
   div.className='card2';div.style.cssText='display:flex;justify-content:space-between;align-items:center';
-  div.innerHTML=`<div><div style="font-size:12px;font-weight:500">🎁 ${name}</div><div style="font-size:10px;color:var(--muted)">${new Date().toLocaleDateString('fr-CA')}</div></div><span style="color:var(--red);font-weight:600;font-family:'Bebas Neue',sans-serif;font-size:18px">-${cost}</span>`;
+  div.innerHTML=`<div><div style="font-size:12px;font-weight:500">ð ${name}</div><div style="font-size:10px;color:var(--muted)">${new Date().toLocaleDateString('fr-CA')}</div></div><span style="color:var(--red);font-weight:600;font-family:'Bebas Neue',sans-serif;font-size:18px">-${cost}</span>`;
   hist.insertBefore(div,hist.firstChild);
-  showToast('✅ '+name+' échangé ! (−'+cost+' coins)');
+  showToast('â '+name+' Ã©changÃ© ! (â'+cost+' coins)');
 }
 
-// ══ TOAST ══
+// ââ TOAST ââ
 function showToast(msg){
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;
@@ -741,15 +741,15 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-// Ajouter quelques données démo si vide
+// Ajouter quelques donnÃ©es dÃ©mo si vide
 const demo=getData();
 if(demo.length===0){
   const demos=[
-    {id:1,numero:1,prenom:'Denis',nom:'Morneau',email:'denismorneaubtc@gmail.com',tel:'+1-418-555-0001',ville:'Lévis',province:'Québec',role:'les deux',parrain:'',source:'Fondateur',message:'',code:'PP-REF-DENIS',date:'2026-04-19',heure:'09:00',statut:'Actif',coins:500},
-    {id:2,numero:2,prenom:'Marie-Claire',nom:'Tremblay',email:'marie@exemple.ca',tel:'',ville:'Montréal',province:'Québec',role:'expediteur',parrain:'PP-REF-DENIS',source:'Bouche à oreille / Ami',message:'Très intéressée !',code:genCode(),date:'2026-04-19',heure:'09h14',statut:'En attente',coins:50},
-    {id:3,numero:3,prenom:'Marc-Antoine',nom:'Lapointe',email:'marc@exemple.ca',tel:'+1-514-555-0002',ville:'Québec',province:'Québec',role:'livreur',parrain:'PP-REF-DENIS',source:'Facebook',message:'Je fais MTL-QC chaque semaine',code:genCode(),date:'2026-04-19',heure:'09h22',statut:'En attente',coins:50},
-    {id:4,numero:4,prenom:'Sophie',nom:'Bouchard',email:'sophie@exemple.ca',tel:'',ville:'Laval',province:'Québec',role:'expediteur',parrain:'',source:'Instagram',message:'',code:genCode(),date:'2026-04-19',heure:'10h05',statut:'En attente',coins:50},
-    {id:5,numero:5,prenom:'Ahmed',nom:'Rachidi',email:'ahmed@exemple.ca',tel:'+1-438-555-0003',ville:'Sherbrooke',province:'Québec',role:'livreur',parrain:'PP-REF-DENIS',source:'Postes Canada annonce',message:'Livraison dispo 7 jours/7',code:genCode(),date:'2026-04-19',heure:'10h18',statut:'En attente',coins:50},
+    {id:1,numero:1,prenom:'Denis',nom:'Morneau',email:'denismorneaubtc@gmail.com',tel:'+1-418-555-0001',ville:'LÃ©vis',province:'QuÃ©bec',role:'les deux',parrain:'',source:'Fondateur',message:'',code:'PP-REF-DENIS',date:'2026-04-19',heure:'09:00',statut:'Actif',coins:500},
+    {id:2,numero:2,prenom:'Marie-Claire',nom:'Tremblay',email:'marie@exemple.ca',tel:'',ville:'MontrÃ©al',province:'QuÃ©bec',role:'expediteur',parrain:'PP-REF-DENIS',source:'Bouche Ã  oreille / Ami',message:'TrÃ¨s intÃ©ressÃ©e !',code:genCode(),date:'2026-04-19',heure:'09h14',statut:'En attente',coins:50},
+    {id:3,numero:3,prenom:'Marc-Antoine',nom:'Lapointe',email:'marc@exemple.ca',tel:'+1-514-555-0002',ville:'QuÃ©bec',province:'QuÃ©bec',role:'livreur',parrain:'PP-REF-DENIS',source:'Facebook',message:'Je fais MTL-QC chaque semaine',code:genCode(),date:'2026-04-19',heure:'09h22',statut:'En attente',coins:50},
+    {id:4,numero:4,prenom:'Sophie',nom:'Bouchard',email:'sophie@exemple.ca',tel:'',ville:'Laval',province:'QuÃ©bec',role:'expediteur',parrain:'',source:'Instagram',message:'',code:genCode(),date:'2026-04-19',heure:'10h05',statut:'En attente',coins:50},
+    {id:5,numero:5,prenom:'Ahmed',nom:'Rachidi',email:'ahmed@exemple.ca',tel:'+1-438-555-0003',ville:'Sherbrooke',province:'QuÃ©bec',role:'livreur',parrain:'PP-REF-DENIS',source:'Postes Canada annonce',message:'Livraison dispo 7 jours/7',code:genCode(),date:'2026-04-19',heure:'10h18',statut:'En attente',coins:50},
   ];
   saveData(demos);
 }

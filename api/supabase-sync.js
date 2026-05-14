@@ -1,6 +1,6 @@
-// api/supabase-sync.js — PorteàPorte
-// Pieds en L'air S.E.N.C. — Denis Morneau — Lévis QC
-// Sans dépendances externes — fetch natif uniquement
+﻿// api/supabase-sync.js â PorteÃ Porte
+// Pieds en L'air S.E.N.C. â Denis Morneau â LÃ©vis QC
+// Sans dÃ©pendances externes â fetch natif uniquement
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
@@ -11,15 +11,15 @@ const CORS = {
 
 const NE = [
   {nom:'Voisin', min:0,   max:19,  commission_rabais:0,    pc_par_envoi:10},
-  {nom:'Habitué',min:20,  max:49,  commission_rabais:0.05, pc_par_envoi:12},
-  {nom:'Fidèle', min:50,  max:99,  commission_rabais:0.10, pc_par_envoi:15},
+  {nom:'HabituÃ©',min:20,  max:49,  commission_rabais:0.05, pc_par_envoi:12},
+  {nom:'FidÃ¨le', min:50,  max:99,  commission_rabais:0.10, pc_par_envoi:15},
   {nom:'VIP',    min:100, max:9999,commission_rabais:0.15, pc_par_envoi:20},
 ];
 const NL = [
   {nom:'Bronze',min:0,   max:999,    mult:1.0},
   {nom:'Argent',min:1000,max:2499,   mult:1.1},
   {nom:'Or',    min:2500,max:4999,   mult:1.25},
-  {nom:'Élite', min:5000,max:9999999,mult:1.5},
+  {nom:'Ãlite', min:5000,max:9999999,mult:1.5},
 ];
 
 function getNiveau(arr, val) {
@@ -74,14 +74,14 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
   Object.entries(CORS).forEach(([k,v]) => res.setHeader(k,v));
-  if (req.method !== 'POST') return res.status(405).json({error:'Méthode non autorisée'});
+  if (req.method !== 'POST') return res.status(405).json({error:'MÃ©thode non autorisÃ©e'});
 
   // Accepter SUPABASE_SERVICE_KEY OU SUPABASE_ANON_KEY comme fallback
   const SB  = process.env.SUPABASE_URL;
   const KEY = process.env.SUPABASE_SERVICE_KEY;
 
   if (!SB || !KEY) {
-    return res.status(503).json({error:'Supabase non configuré', env_missing:true,
+    return res.status(503).json({error:'Supabase non configurÃ©', env_missing:true,
       hint:'Ajouter SUPABASE_URL et SUPABASE_SERVICE_KEY dans Vercel Environment Variables'});
   }
 
@@ -130,7 +130,7 @@ module.exports = async function handler(req, res) {
         const data = await r.json().catch(()=>({}));
         await sbPost('transactions', {
           user_id, type:'bonus_bienvenue', montant_coins:50,
-          description:'🎁 Bonus bienvenue', cree_le:new Date().toISOString(),
+          description:'ð Bonus bienvenue', cree_le:new Date().toISOString(),
         }).catch(()=>{});
         if (parrain_code) {
           const pars = await sbGet('profiles', `code_pp=ilike.${parrain_code}&select=id,coins,prenom&limit=1`).catch(()=>[]);
@@ -138,8 +138,8 @@ module.exports = async function handler(req, res) {
             const par = pars[0];
             await sbPatch('profiles', `id=eq.${par.id}`, {coins:(par.coins||0)+250}).catch(()=>{});
             await sbPost('transactions', [
-              {user_id:par.id, type:'parrainage_recu', montant_coins:250, description:'🤝 Parrainage', cree_le:new Date().toISOString()},
-              {user_id, type:'parrainage_bonus', montant_coins:50, description:'🤝 Bonus parrainage — '+par.prenom, cree_le:new Date().toISOString()},
+              {user_id:par.id, type:'parrainage_recu', montant_coins:250, description:'ð¤ Parrainage', cree_le:new Date().toISOString()},
+              {user_id, type:'parrainage_bonus', montant_coins:50, description:'ð¤ Bonus parrainage â '+par.prenom, cree_le:new Date().toISOString()},
             ]).catch(()=>{});
           }
         }
@@ -165,14 +165,14 @@ module.exports = async function handler(req, res) {
             niveau_livreur:nv.nom,
             score_confiance:Math.min(100,Math.round((prof.score_confiance||75)*0.9+(avis_recu||4)*20*0.1))};
           txs.push({user_id, type:'livraison_effectuee', montant_coins:cg,
-            description:`🚗 Livraison · ${colis_id||''}`, cree_le:new Date().toISOString()});
+            description:`ð Livraison Â· ${colis_id||''}`, cree_le:new Date().toISOString()});
         } else {
           const ne = (prof.envois||0)+1;
           const nv = getNiveau(NE, ne);
           cg = nv.pc_par_envoi; xg = 50;
           u = {...u, coins:(prof.coins||0)+cg, xp:(prof.xp||0)+xg, envois:ne, niveau_expediteur:nv.nom};
           txs.push({user_id, type:'envoi_complete', montant_coins:cg,
-            description:`📦 Colis · ${colis_id||''}`, cree_le:new Date().toISOString()});
+            description:`ð¦ Colis Â· ${colis_id||''}`, cree_le:new Date().toISOString()});
         }
         await sbPatch('profiles', `id=eq.${user_id}`, u);
         if (txs.length) await sbPost('transactions', txs).catch(()=>{});
@@ -192,21 +192,21 @@ module.exports = async function handler(req, res) {
         const nouveau = Math.max(0, coins+montant);
         await sbPatch('profiles', `id=eq.${user_id}`, {coins:nouveau, mis_a_jour:new Date().toISOString()});
         await sbPost('transactions', {user_id, type, montant_coins:montant,
-          description:description||(montant>0?'+ Coins ajoutés':'- Coins déduits'),
+          description:description||(montant>0?'+ Coins ajoutÃ©s':'- Coins dÃ©duits'),
           cree_le:new Date().toISOString()}).catch(()=>{});
         return res.status(200).json({success:true, nouveau_solde:nouveau, delta:montant});
       }
 
       case 'transfert_coins': {
         const {user_id_source, code_destinataire, montant} = p;
-        if (!user_id_source||!code_destinataire||!montant) return res.status(400).json({error:'Paramètres manquants'});
+        if (!user_id_source||!code_destinataire||!montant) return res.status(400).json({error:'ParamÃ¨tres manquants'});
         if (!session || session.id !== user_id_source) return res.status(401).json({error:'Session source requise'});
         if (montant<10||montant>1000) return res.status(400).json({error:'Montant entre 10 et 1000 PC'});
         const dests = await sbGet('profiles', `code_pp=ilike.${code_destinataire}&select=id,prenom,coins&limit=1`);
         if (!dests[0]) return res.status(404).json({error:'Destinataire introuvable'});
         const dest = dests[0];
         const srcs = await sbGet('profiles', `id=eq.${user_id_source}&select=coins,prenom&limit=1`);
-        if (!srcs[0]) return res.status(404).json({error:'Expéditeur introuvable'});
+        if (!srcs[0]) return res.status(404).json({error:'ExpÃ©diteur introuvable'});
         const src = srcs[0];
         if ((src.coins||0)<montant) return res.status(400).json({error:'Solde insuffisant'});
         await Promise.all([
@@ -214,9 +214,9 @@ module.exports = async function handler(req, res) {
           sbPatch('profiles', `id=eq.${dest.id}`, {coins:(dest.coins||0)+montant}),
           sbPost('transactions', [
             {user_id:user_id_source, type:'transfert_sortant', montant_coins:-montant,
-              description:`🔄 Transfert → ${dest.prenom}`, cree_le:new Date().toISOString()},
+              description:`ð Transfert â ${dest.prenom}`, cree_le:new Date().toISOString()},
             {user_id:dest.id, type:'transfert_entrant', montant_coins:montant,
-              description:`🔄 Transfert reçu de ${src.prenom}`, cree_le:new Date().toISOString()},
+              description:`ð Transfert reÃ§u de ${src.prenom}`, cree_le:new Date().toISOString()},
           ]),
         ]);
         return res.status(200).json({success:true, montant_transfere:montant,

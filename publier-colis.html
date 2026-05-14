@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Publier un colis — PorteàPorte</title>
+<title>Publier un colis â PorteÃ Porte</title>
 <meta name="theme-color" content="#05080A">
 <style>
 :root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,.08)}
@@ -37,66 +37,66 @@ footer{padding:36px 0;color:var(--muted);font-size:13px}
 </head>
 <body>
 <nav>
-  <a class="logo" href="index.html">Porte<span>à</span>Porte</a>
-  <div class="nav"><a href="index.html">← Accueil</a></div>
+  <a class="logo" href="index.html">Porte<span>Ã </span>Porte</a>
+  <div class="nav"><a href="index.html">â Accueil</a></div>
 </nav>
 
 <main>
 <section class="hero">
   <div class="container">
     <div class="kicker">Publier une demande</div>
-    <h1>Fais transporter ton colis par quelqu’un qui passe déjà par là.</h1>
-    <p class="lead">Ajoute les détails de ton objet. Le système pourra ensuite trouver les conducteurs compatibles selon le trajet, la taille, l’horaire et la confiance.</p>
+    <h1>Fais transporter ton colis par quelquâun qui passe dÃ©jÃ  par lÃ .</h1>
+    <p class="lead">Ajoute les dÃ©tails de ton objet. Le systÃ¨me pourra ensuite trouver les conducteurs compatibles selon le trajet, la taille, lâhoraire et la confiance.</p>
 
     <div class="notice" id="message" style="display:none"></div>
 
     <form class="card" onsubmit="event.preventDefault(); demoSubmit('colis')">
       <div class="grid">
         <div>
-          <label>Ville de départ</label>
-          <input placeholder="Ex: Québec" required>
+          <label>Ville de dÃ©part</label>
+          <input placeholder="Ex: QuÃ©bec" required>
         </div>
         <div>
-          <label>Ville d’arrivée</label>
-          <input placeholder="Ex: Montréal" required>
+          <label>Ville dâarrivÃ©e</label>
+          <input placeholder="Ex: MontrÃ©al" required>
         </div>
         <div>
-          <label>Type d’objet</label>
+          <label>Type dâobjet</label>
           <select required>
             <option value="">Choisir</option>
             <option>Colis</option>
             <option>Meuble Marketplace</option>
-            <option>Électroménager</option>
-            <option>Boîtes</option>
+            <option>ÃlectromÃ©nager</option>
+            <option>BoÃ®tes</option>
             <option>Autre</option>
           </select>
         </div>
         <div>
-          <label>Budget souhaité</label>
+          <label>Budget souhaitÃ©</label>
           <input placeholder="Ex: 45 $" required>
         </div>
       </div>
 
       <div style="margin-top:14px">
         <label>Description</label>
-        <textarea placeholder="Dimensions, poids approximatif, fragilité, adresse générale, contraintes..."></textarea>
+        <textarea placeholder="Dimensions, poids approximatif, fragilitÃ©, adresse gÃ©nÃ©rale, contraintes..."></textarea>
       </div>
 
-      <button class="btn" type="submit">📦 Publier la demande</button>
-      <a class="btn btn-secondary" href="suivi.html">Voir une démo de suivi</a>
+      <button class="btn" type="submit">ð¦ Publier la demande</button>
+      <a class="btn btn-secondary" href="suivi.html">Voir une dÃ©mo de suivi</a>
     </form>
   </div>
 </section>
 </main>
 
-<footer><div class="container">© 2026 PorteàPorte — plateforme collaborative québécoise.</div></footer>
+<footer><div class="container">Â© 2026 PorteÃ Porte â plateforme collaborative quÃ©bÃ©coise.</div></footer>
 <script>
 function demoSubmit(type) {
   const msg = document.getElementById('message');
   msg.style.display = 'block';
   msg.innerHTML = type === 'colis'
-    ? '✅ Demande enregistrée en mode démo. Prochaine étape : connecter ce formulaire à Supabase.'
-    : '✅ Trajet enregistré en mode démo. Prochaine étape : connecter ce formulaire au matching.';
+    ? 'â Demande enregistrÃ©e en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire Ã  Supabase.'
+    : 'â Trajet enregistrÃ© en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire au matching.';
   window.scrollTo({top: msg.offsetTop - 80, behavior:'smooth'});
 }
 </script>

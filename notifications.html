@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Notifications - PorteàPorte">
-    <title>Notifications - PorteàPorte</title>
+    <meta name="description" content="Notifications - PorteÃ Porte">
+    <title>Notifications - PorteÃ Porte</title>
     
     <link rel="stylesheet" href="design-system.css">
     
@@ -197,10 +197,10 @@
     <nav class="navbar">
         <div class="container">
             <div class="navbar-content">
-                <div class="navbar-brand">🚚 PorteàPorte</div>
+                <div class="navbar-brand">ð PorteÃ Porte</div>
                 <div id="auth-user-info" class="flex items-center gap-md">
                     <span id="auth-user-name" class="text-sm font-semibold"></span>
-                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
+                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">DÃ©connexion</button>
                 </div>
             </div>
         </div>
@@ -211,8 +211,8 @@
         <!-- HEADER -->
         <div class="notifications-header">
             <div class="notifications-title">
-                <h1>🔔 Notifications</h1>
-                <p class="text-secondary">Restez informé de toutes vos activités</p>
+                <h1>ð Notifications</h1>
+                <p class="text-secondary">Restez informÃ© de toutes vos activitÃ©s</p>
             </div>
             <div class="notification-actions">
                 <button class="btn btn-ghost btn-sm" onclick="markAllAsRead()">Tout lire</button>
@@ -222,19 +222,19 @@
 
         <!-- TABS -->
         <div class="notification-tabs">
-            <button class="notification-tab active" onclick="filterNotifications('all')">📬 Tous (0)</button>
-            <button class="notification-tab" onclick="filterNotifications('unread')">🆕 Non lus (0)</button>
-            <button class="notification-tab" onclick="filterNotifications('missions')">📦 Livraisons (0)</button>
-            <button class="notification-tab" onclick="filterNotifications('payments')">💰 Paiements (0)</button>
-            <button class="notification-tab" onclick="filterNotifications('messages')">💬 Messages (0)</button>
+            <button class="notification-tab active" onclick="filterNotifications('all')">ð¬ Tous (0)</button>
+            <button class="notification-tab" onclick="filterNotifications('unread')">ð Non lus (0)</button>
+            <button class="notification-tab" onclick="filterNotifications('missions')">ð¦ Livraisons (0)</button>
+            <button class="notification-tab" onclick="filterNotifications('payments')">ð° Paiements (0)</button>
+            <button class="notification-tab" onclick="filterNotifications('messages')">ð¬ Messages (0)</button>
         </div>
 
         <!-- NOTIFICATIONS LIST -->
         <div id="notifications-container" class="notifications-list">
             <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-icon">ð­</div>
                 <div class="empty-state-title">Aucune notification</div>
-                <div class="empty-state-text">Vous êtes à jour!</div>
+                <div class="empty-state-text">Vous Ãªtes Ã  jour!</div>
             </div>
         </div>
     </div>
@@ -248,25 +248,25 @@
         let allNotifications = [];
         let currentFilter = 'all';
 
-        // Notifications de démo
+        // Notifications de dÃ©mo
         const demoNotifications = [
             {
                 id: '1',
                 type: 'mission_accepted',
-                icon: '✅',
-                title: 'Livraison acceptée',
-                message: 'Votre livraison "Colis pour Montréal" a été acceptée par un livreur',
+                icon: 'â',
+                title: 'Livraison acceptÃ©e',
+                message: 'Votre livraison "Colis pour MontrÃ©al" a Ã©tÃ© acceptÃ©e par un livreur',
                 timestamp: new Date(Date.now() - 5 * 60000),
                 read: false,
                 category: 'missions',
-                action: 'Voir détails'
+                action: 'Voir dÃ©tails'
             },
             {
                 id: '2',
                 type: 'payment_received',
-                icon: '💳',
-                title: 'Paiement reçu',
-                message: 'Vous avez reçu $25.00 pour la livraison #12345',
+                icon: 'ð³',
+                title: 'Paiement reÃ§u',
+                message: 'Vous avez reÃ§u $25.00 pour la livraison #12345',
                 timestamp: new Date(Date.now() - 30 * 60000),
                 read: false,
                 category: 'payments',
@@ -275,20 +275,20 @@
             {
                 id: '3',
                 type: 'coins_earned',
-                icon: '🎁',
-                title: '50 PorteCoins gagnés!',
-                message: 'Vous avez complété votre 5e livraison! Bonus: 50 PorteCoins',
+                icon: 'ð',
+                title: '50 PorteCoins gagnÃ©s!',
+                message: 'Vous avez complÃ©tÃ© votre 5e livraison! Bonus: 50 PorteCoins',
                 timestamp: new Date(Date.now() - 2 * 3600000),
                 read: true,
                 category: 'missions',
-                action: 'Voir récompenses'
+                action: 'Voir rÃ©compenses'
             },
             {
                 id: '4',
                 type: 'rating_received',
-                icon: '⭐',
-                title: '5 étoiles reçues',
-                message: 'Un utilisateur vous a laissé une excellente évaluation',
+                icon: 'â­',
+                title: '5 Ã©toiles reÃ§ues',
+                message: 'Un utilisateur vous a laissÃ© une excellente Ã©valuation',
                 timestamp: new Date(Date.now() - 5 * 3600000),
                 read: true,
                 category: 'messages',
@@ -297,9 +297,9 @@
             {
                 id: '5',
                 type: 'new_mission',
-                icon: '📬',
+                icon: 'ð¬',
                 title: 'Nouvelle livraison disponible',
-                message: 'Une nouvelle livraison "$30 - Montréal vers Laval" vient d\'arriver',
+                message: 'Une nouvelle livraison "$30 - MontrÃ©al vers Laval" vient d\'arriver',
                 timestamp: new Date(Date.now() - 24 * 3600000),
                 read: true,
                 category: 'missions',
@@ -315,7 +315,7 @@
             const user = AUTH_API.getUser();
             document.getElementById('auth-user-name').textContent = `${user.prenom} ${user.nom}`;
 
-            // Charger les notifications (démo pour maintenant)
+            // Charger les notifications (dÃ©mo pour maintenant)
             allNotifications = demoNotifications;
             displayNotifications();
             updateTabCounts();
@@ -332,9 +332,9 @@
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-icon">ð­</div>
                         <div class="empty-state-title">Aucune notification</div>
-                        <div class="empty-state-text">Vous êtes à jour!</div>
+                        <div class="empty-state-text">Vous Ãªtes Ã  jour!</div>
                     </div>
                 `;
                 return;
@@ -390,7 +390,7 @@
         }
 
         function clearAll() {
-            if (confirm('Êtes-vous sûr de vouloir effacer toutes les notifications?')) {
+            if (confirm('Ãtes-vous sÃ»r de vouloir effacer toutes les notifications?')) {
                 allNotifications = [];
                 displayNotifications();
                 updateTabCounts();
@@ -409,15 +409,15 @@
             document.querySelectorAll('.notification-tab').forEach(tab => {
                 const text = tab.textContent;
                 if (text.includes('Tous')) {
-                    tab.textContent = `📬 Tous (${counts.all})`;
+                    tab.textContent = `ð¬ Tous (${counts.all})`;
                 } else if (text.includes('Non lus')) {
-                    tab.textContent = `🆕 Non lus (${counts.unread})`;
+                    tab.textContent = `ð Non lus (${counts.unread})`;
                 } else if (text.includes('Livraisons')) {
-                    tab.textContent = `📦 Livraisons (${counts.missions})`;
+                    tab.textContent = `ð¦ Livraisons (${counts.missions})`;
                 } else if (text.includes('Paiements')) {
-                    tab.textContent = `💰 Paiements (${counts.payments})`;
+                    tab.textContent = `ð° Paiements (${counts.payments})`;
                 } else if (text.includes('Messages')) {
-                    tab.textContent = `💬 Messages (${counts.messages})`;
+                    tab.textContent = `ð¬ Messages (${counts.messages})`;
                 }
             });
         }
@@ -426,7 +426,7 @@
             const now = new Date();
             const seconds = Math.floor((now - date) / 1000);
 
-            if (seconds < 60) return 'À l\'instant';
+            if (seconds < 60) return 'Ã l\'instant';
             if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)}m`;
             if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)}h`;
             return `Il y a ${Math.floor(seconds / 86400)}j`;

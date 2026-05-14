@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Porte à Porte</title>
+    <title>Admin Dashboard - Porte Ã  Porte</title>
     <style>
         * {
             margin: 0;
@@ -207,12 +207,12 @@
     <!-- NAVBAR -->
     <div class="navbar">
         <div>
-            <h1>⚙️ Admin Dashboard</h1>
-            <small style="color: #9BA1A9;">Porte à Porte - Gestion</small>
+            <h1>âï¸ Admin Dashboard</h1>
+            <small style="color: #9BA1A9;">Porte Ã  Porte - Gestion</small>
         </div>
         <div>
-            <a href="/">← Accueil</a>
-            <a href="javascript:logout()">Déconnexion</a>
+            <a href="/">â Accueil</a>
+            <a href="javascript:logout()">DÃ©connexion</a>
         </div>
     </div>
 
@@ -221,26 +221,26 @@
         <!-- STATS CARDS -->
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">👥 Total Utilisateurs</div>
+                <div class="stat-label">ð¥ Total Utilisateurs</div>
                 <div class="stat-value" id="users-badge">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">📦 Total Livraisons</div>
+                <div class="stat-label">ð¦ Total Livraisons</div>
                 <div class="stat-value" id="deliveries-badge">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">🚗 Total Livreurs</div>
+                <div class="stat-label">ð Total Livreurs</div>
                 <div class="stat-value" id="drivers-badge">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">💰 Total Transactions</div>
+                <div class="stat-label">ð° Total Transactions</div>
                 <div class="stat-value" id="transactions-badge">0</div>
             </div>
         </div>
 
         <!-- UTILISATEURS -->
         <div class="section">
-            <h2>👥 Utilisateurs (Profiles)</h2>
+            <h2>ð¥ Utilisateurs (Profiles)</h2>
             <div class="loading">Chargement...</div>
             <table id="users-table" style="display: none;">
                 <thead>
@@ -248,7 +248,7 @@
                         <th>ID</th>
                         <th>Nom</th>
                         <th>Email</th>
-                        <th>Rôle</th>
+                        <th>RÃ´le</th>
                         <th>Statut</th>
                         <th>Note</th>
                     </tr>
@@ -259,7 +259,7 @@
 
         <!-- LIVRAISONS -->
         <div class="section">
-            <h2>📦 Livraisons (Missions)</h2>
+            <h2>ð¦ Livraisons (Missions)</h2>
             <div class="loading">Chargement...</div>
             <table id="deliveries-table" style="display: none;">
                 <thead>
@@ -278,7 +278,7 @@
 
         <!-- LIVREURS -->
         <div class="section">
-            <h2>🚗 Livreurs</h2>
+            <h2>ð Livreurs</h2>
             <div class="loading">Chargement...</div>
             <table id="drivers-table" style="display: none;">
                 <thead>
@@ -298,7 +298,7 @@
 
         <!-- TRANSACTIONS -->
         <div class="section">
-            <h2>💰 Transactions (Paiements)</h2>
+            <h2>ð° Transactions (Paiements)</h2>
             <div class="loading">Chargement...</div>
             <table id="transactions-table" style="display: none;">
                 <thead>
@@ -328,7 +328,7 @@
             else window.location.href = '/login.html';
         }
 
-        // Afficher les tables une fois chargées
+        // Afficher les tables une fois chargÃ©es
         document.addEventListener('DOMContentLoaded', async () => {
             const adminSession = window.PorteAuth ? await window.PorteAuth.requireAdmin('/login.html') : null;
             if (!adminSession) return;
@@ -340,7 +340,7 @@
             setTimeout(() => {
                 const tables = document.querySelectorAll('table');
                 tables.forEach(table => {
-                    // Afficher la table si elle a des données
+                    // Afficher la table si elle a des donnÃ©es
                     if (table.querySelector('tbody tr')) {
                         table.style.display = 'table';
                         table.previousElementSibling.style.display = 'none'; // Cacher "Chargement..."

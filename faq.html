@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/logo.svg">
-<meta name="apple-mobile-web-app-title" content="PorteàPorte">
+<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <meta name="theme-color" content="#05080A">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="PorteàPorte FAQ — Toutes les réponses à vos questions sur la livraison entre particuliers, les PorteCoins, la sécurité et le covoiturage au Québec 🍁">
-<title>PorteàPorte — Questions fréquentes 🍁</title>
+<meta name="description" content="PorteÃ Porte FAQ â Toutes les rÃ©ponses Ã  vos questions sur la livraison entre particuliers, les PorteCoins, la sÃ©curitÃ© et le covoiturage au QuÃ©bec ð">
+<title>PorteÃ Porte â Questions frÃ©quentes ð</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -80,153 +80,153 @@ footer{border-top:1px solid var(--border);padding:24px 40px;background:var(--smo
 </head>
 <body>
 <nav>
-  <a href="index.html" class="logo">Porte<span>à</span>Porte</a>
+  <a href="index.html" class="logo">Porte<span>Ã </span>Porte</a>
   <div style="display:flex;gap:12px;align-items:center">
-    <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">👤 Mon compte</a>
-    <a href="index.html" class="back">← Retour</a>
+    <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">ð¤ Mon compte</a>
+    <a href="index.html" class="back">â Retour</a>
   </div>
 </nav>
 
 <div class="hero">
   <div class="hero-badge">Centre d'aide</div>
-  <h1>Questions<br><span>fréquentes</span></h1>
-  <p class="hero-sub">Tout ce que tu dois savoir sur PorteàPorte — livraison, paiement, sécurité, covoiturage et PorteCoins.</p>
+  <h1>Questions<br><span>frÃ©quentes</span></h1>
+  <p class="hero-sub">Tout ce que tu dois savoir sur PorteÃ Porte â livraison, paiement, sÃ©curitÃ©, covoiturage et PorteCoins.</p>
   <div class="search-wrap">
     <input class="search-input" type="text" placeholder="Chercher une question..." id="faq-search" oninput="filtrer(this.value)">
-    <span class="search-icon">🔍</span>
+    <span class="search-icon">ð</span>
   </div>
 </div>
 
 <div class="cats">
   <button class="cat-btn on" onclick="filterCat('all',this)">Toutes</button>
-  <button class="cat-btn" onclick="filterCat('livraison',this)">📦 Livraison</button>
-  <button class="cat-btn" onclick="filterCat('livreur',this)">🚗 Livreurs</button>
-  <button class="cat-btn" onclick="filterCat('paiement',this)">💳 Paiement</button>
-  <button class="cat-btn" onclick="filterCat('securite',this)">🔐 Sécurité</button>
-  <button class="cat-btn" onclick="filterCat('coins',this)">🪙 PorteCoins</button>
-  <button class="cat-btn" onclick="filterCat('covoiturage',this)">🚙 Covoiturage</button>
-  <button class="cat-btn" onclick="filterCat('legal',this)">⚖️ Légal</button>
+  <button class="cat-btn" onclick="filterCat('livraison',this)">ð¦ Livraison</button>
+  <button class="cat-btn" onclick="filterCat('livreur',this)">ð Livreurs</button>
+  <button class="cat-btn" onclick="filterCat('paiement',this)">ð³ Paiement</button>
+  <button class="cat-btn" onclick="filterCat('securite',this)">ð SÃ©curitÃ©</button>
+  <button class="cat-btn" onclick="filterCat('coins',this)">ðª PorteCoins</button>
+  <button class="cat-btn" onclick="filterCat('covoiturage',this)">ð Covoiturage</button>
+  <button class="cat-btn" onclick="filterCat('legal',this)">âï¸ LÃ©gal</button>
 </div>
 
 <div class="faq-wrap">
 
-  <div class="no-results" id="no-results">Aucun résultat pour cette recherche. <a href="mailto:bonjour@porteaporte.site" style="color:var(--lime)">Contacte-nous</a> directement !</div>
+  <div class="no-results" id="no-results">Aucun rÃ©sultat pour cette recherche. <a href="mailto:bonjour@porteaporte.site" style="color:var(--lime)">Contacte-nous</a> directement !</div>
 
   <!-- LIVRAISON -->
   <div class="faq-section" data-cat="livraison">
-    <div class="section-title">📦 Livraison</div>
+    <div class="section-title">ð¦ Livraison</div>
 
     <div class="faq-item" data-q="comment envoyer colis fonctionner livraison">
-      <div class="faq-q" onclick="toggle(this)">Comment ça fonctionne pour envoyer un colis ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment Ã§a fonctionne pour envoyer un colis ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tu publies une annonce avec la description de ton colis (type, poids, valeur, destination). Les livreurs certifiés sur cet itinéraire voient ton annonce et soumettent des offres. Tu choisis le livreur, paies en escrow sécurisé, et ton colis est livré. À la réception, tu confirmes et le livreur reçoit son paiement.
-        <div class="highlight">⏱️ De l'annonce à la livraison : généralement 24 à 72 heures</div>
+        Tu publies une annonce avec la description de ton colis (type, poids, valeur, destination). Les livreurs certifiÃ©s sur cet itinÃ©raire voient ton annonce et soumettent des offres. Tu choisis le livreur, paies en escrow sÃ©curisÃ©, et ton colis est livrÃ©. Ã la rÃ©ception, tu confirmes et le livreur reÃ§oit son paiement.
+        <div class="highlight">â±ï¸ De l'annonce Ã  la livraison : gÃ©nÃ©ralement 24 Ã  72 heures</div>
       </div></div>
     </div>
 
     <div class="faq-item" data-q="quels types colis peuvent etre envoyes acceptes">
       <div class="faq-q" onclick="toggle(this)">Quels types de colis puis-je envoyer ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tu peux envoyer pratiquement n'importe quoi : électronique, vêtements, meubles, documents, alimentaire non périssable, vélos, équipements sportifs. <strong>Sont interdits :</strong> drogues, armes, matières dangereuses, alcool sans permis, contrefaçons. Consulte nos <a href="legal.html">CGU</a> pour la liste complète.
+        Tu peux envoyer pratiquement n'importe quoi : Ã©lectronique, vÃªtements, meubles, documents, alimentaire non pÃ©rissable, vÃ©los, Ã©quipements sportifs. <strong>Sont interdits :</strong> drogues, armes, matiÃ¨res dangereuses, alcool sans permis, contrefaÃ§ons. Consulte nos <a href="legal.html">CGU</a> pour la liste complÃ¨te.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="combien coute prix tarif livraison">
-      <div class="faq-q" onclick="toggle(this)">Combien coûte une livraison ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Combien coÃ»te une livraison ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Le prix est négocié directement entre toi et le livreur. En moyenne, c'est <strong>40 à 70% moins cher</strong> qu'un service de messagerie traditionnel comme Purolator ou UPS. Pour un trajet Montréal → Québec, compte environ 25-60 $ selon le poids et l'urgence.
+        Le prix est nÃ©gociÃ© directement entre toi et le livreur. En moyenne, c'est <strong>40 Ã  70% moins cher</strong> qu'un service de messagerie traditionnel comme Purolator ou UPS. Pour un trajet MontrÃ©al â QuÃ©bec, compte environ 25-60 $ selon le poids et l'urgence.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="combien temps delai livraison">
-      <div class="faq-q" onclick="toggle(this)">Dans quel délai mon colis sera-t-il livré ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Dans quel dÃ©lai mon colis sera-t-il livrÃ© ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Ça dépend des livreurs disponibles sur ton trajet. En général : <strong>Express (24h)</strong> pour les trajets fréquents comme Montréal-Québec, <strong>2-3 jours</strong> pour les régions, <strong>Flexible</strong> si tu n'es pas pressé (souvent moins cher). Tu peux préciser ta date souhaitée dans l'annonce.
+        Ãa dÃ©pend des livreurs disponibles sur ton trajet. En gÃ©nÃ©ral : <strong>Express (24h)</strong> pour les trajets frÃ©quents comme MontrÃ©al-QuÃ©bec, <strong>2-3 jours</strong> pour les rÃ©gions, <strong>Flexible</strong> si tu n'es pas pressÃ© (souvent moins cher). Tu peux prÃ©ciser ta date souhaitÃ©e dans l'annonce.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="suivre colis tracking gps">
-      <div class="faq-q" onclick="toggle(this)">Puis-je suivre mon colis en temps réel ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Puis-je suivre mon colis en temps rÃ©el ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Oui ! Une fois la livraison confirmée, tu reçois un code de suivi (ex: PP-AB12CD). Va sur <a href="suivi-livraison.html">porteaporte.site/suivi</a> et entre ton code. Tu vois la carte GPS, la position du livreur, l'ETA et toutes les étapes de progression. Tu reçois aussi des notifications courriel à chaque étape clé.
+        Oui ! Une fois la livraison confirmÃ©e, tu reÃ§ois un code de suivi (ex: PP-AB12CD). Va sur <a href="suivi-livraison.html">porteaporte.site/suivi</a> et entre ton code. Tu vois la carte GPS, la position du livreur, l'ETA et toutes les Ã©tapes de progression. Tu reÃ§ois aussi des notifications courriel Ã  chaque Ã©tape clÃ©.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="adresses visibles masquees acceptation livraison confidentialite">
       <div class="faq-q" onclick="toggle(this)">Les adresses sont-elles visibles ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Non. Les adresses complètes restent masquées avant l'acceptation de la livraison.
+        Non. Les adresses complÃ¨tes restent masquÃ©es avant l'acceptation de la livraison.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="colis perdu endommage brise probleme">
-      <div class="faq-q" onclick="toggle(this)">Que se passe-t-il si mon colis est perdu ou endommagé ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Que se passe-t-il si mon colis est perdu ou endommagÃ© ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Un litige peut être ouvert. Les preuves comme photos, GPS, messages et historique de livraison peuvent être utilisées.
+        Un litige peut Ãªtre ouvert. Les preuves comme photos, GPS, messages et historique de livraison peuvent Ãªtre utilisÃ©es.
       </div></div>
     </div>
   </div>
 
   <!-- LIVREURS -->
   <div class="faq-section" data-cat="livreur">
-    <div class="section-title">🚗 Livreurs</div>
+    <div class="section-title">ð Livreurs</div>
 
     <div class="faq-item" data-q="comment devenir livreur inscription certifie">
-      <div class="faq-q" onclick="toggle(this)">Comment devenir livreur certifié ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment devenir livreur certifiÃ© ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
         1. Inscription sur <a href="livreur.html">porteaporte.site/livreur</a><br>
-        2. Vérification KYC : pièce d'identité + selfie biométrique (5 minutes)<br>
+        2. VÃ©rification KYC : piÃ¨ce d'identitÃ© + selfie biomÃ©trique (5 minutes)<br>
         3. Permis de conduire seulement si tu livres avec un vehicule motorise<br>
-        4. Réception de ta carte officielle PorteàPorte<br>
-        5. Tu commences à accepter des livraisons sur tes trajets habituels !
-        <div class="highlight">🎯 Pas besoin d'être disponible à temps plein — tu choisis tes livraisons selon tes trajets</div>
+        4. RÃ©ception de ta carte officielle PorteÃ Porte<br>
+        5. Tu commences Ã  accepter des livraisons sur tes trajets habituels !
+        <div class="highlight">ð¯ Pas besoin d'Ãªtre disponible Ã  temps plein â tu choisis tes livraisons selon tes trajets</div>
       </div></div>
     </div>
 
     <div class="faq-item" data-q="combien gagner revenu livreur salaire argent">
       <div class="faq-q" onclick="toggle(this)">Combien puis-je gagner comme livreur ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tu gardes <strong>88% du prix de chaque livraison</strong>. Nos livreurs actifs gagnent en moyenne 800-1 500 $/mois en livrant sur leurs trajets habituels. Les Livreurs Élite (score &gt; 95%) peuvent atteindre 2 500-3 500 $/mois avec les bonus mensuels inclus. C'est un revenu d'appoint idéal, pas un emploi principal.
+        Tu gardes <strong>88% du prix de chaque livraison</strong>. Nos livreurs actifs gagnent en moyenne 800-1 500 $/mois en livrant sur leurs trajets habituels. Les Livreurs Ãlite (score &gt; 95%) peuvent atteindre 2 500-3 500 $/mois avec les bonus mensuels inclus. C'est un revenu d'appoint idÃ©al, pas un emploi principal.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="vehicule besoin transport remorque velo">
-      <div class="faq-q" onclick="toggle(this)">Quel véhicule puis-je utiliser ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Quel vÃ©hicule puis-je utiliser ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        PorteàPorte supporte <strong>15 types de véhicules</strong> : voiture personnelle, VUS, fourgonnette, camion, camion avec remorque (fermée, ouverte, porte-voiture), vélo, trottinette électrique, véhicule hybride/électrique. Les transports écologiques (vélo, électrique) reçoivent un <strong>bonus automatique de +10 à +20%</strong>.
+        PorteÃ Porte supporte <strong>15 types de vÃ©hicules</strong> : voiture personnelle, VUS, fourgonnette, camion, camion avec remorque (fermÃ©e, ouverte, porte-voiture), vÃ©lo, trottinette Ã©lectrique, vÃ©hicule hybride/Ã©lectrique. Les transports Ã©cologiques (vÃ©lo, Ã©lectrique) reÃ§oivent un <strong>bonus automatique de +10 Ã  +20%</strong>.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="assurance voiture employe travailleur autonome">
       <div class="faq-q" onclick="toggle(this)">Suis-je couvert par mon assurance auto ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tu es <strong>travailleur autonome</strong>, pas un employé de PorteàPorte. Tu dois vérifier avec ton assureur que ton assurance couvre les livraisons commerciales occasionnelles. Certains assureurs offrent des avenants spécifiques pour ce type d'activité. PorteàPorte couvre le colis, pas ton véhicule.
+        Tu es <strong>travailleur autonome</strong>, pas un employÃ© de PorteÃ Porte. Tu dois vÃ©rifier avec ton assureur que ton assurance couvre les livraisons commerciales occasionnelles. Certains assureurs offrent des avenants spÃ©cifiques pour ce type d'activitÃ©. PorteÃ Porte couvre le colis, pas ton vÃ©hicule.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="impot taxe declaration revenu t4a">
-      <div class="faq-q" onclick="toggle(this)">Comment déclarer mes revenus de livreur ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment dÃ©clarer mes revenus de livreur ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tes revenus PorteàPorte sont des revenus d'emploi autonome à déclarer sur le formulaire <strong>T2125</strong> (fédéral) et TP-80 (Québec). PorteàPorte t'enverra un T4A si tes revenus dépassent 500 $/an. Si tu gagnes plus de 30 000 $, tu dois t'inscrire à la TPS/TVQ. Consulte un comptable pour ta situation personnelle.
+        Tes revenus PorteÃ Porte sont des revenus d'emploi autonome Ã  dÃ©clarer sur le formulaire <strong>T2125</strong> (fÃ©dÃ©ral) et TP-80 (QuÃ©bec). PorteÃ Porte t'enverra un T4A si tes revenus dÃ©passent 500 $/an. Si tu gagnes plus de 30 000 $, tu dois t'inscrire Ã  la TPS/TVQ. Consulte un comptable pour ta situation personnelle.
       </div></div>
     </div>
   </div>
 
   <!-- PAIEMENT -->
   <div class="faq-section" data-cat="paiement">
-    <div class="section-title">💳 Paiement</div>
+    <div class="section-title">ð³ Paiement</div>
 
     <div class="faq-item" data-q="escrow paiement securise comment fonctionne">
-      <div class="faq-q" onclick="toggle(this)">Le paiement est-il sécurisé ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Le paiement est-il sÃ©curisÃ© ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Oui. Le paiement est protégé et le livreur est payé seulement après confirmation de livraison.
+        Oui. Le paiement est protÃ©gÃ© et le livreur est payÃ© seulement aprÃ¨s confirmation de livraison.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="colis assures automatiquement protection livraison assurance">
-      <div class="faq-q" onclick="toggle(this)">Les colis sont-ils assurés automatiquement ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Les colis sont-ils assurÃ©s automatiquement ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Non. La protection livraison est optionnelle. Sans protection payée, aucune couverture contractuelle ne s'applique.
+        Non. La protection livraison est optionnelle. Sans protection payÃ©e, aucune couverture contractuelle ne s'applique.
       </div></div>
     </div>
 
@@ -238,158 +238,158 @@ footer{border-top:1px solid var(--border);padding:24px 40px;background:var(--smo
     </div>
 
     <div class="faq-item" data-q="modes paiement carte credit visa mastercard">
-      <div class="faq-q" onclick="toggle(this)">Quels modes de paiement sont acceptés ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Quels modes de paiement sont acceptÃ©s ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Toutes les cartes de crédit et débit Visa, Mastercard, American Express. Apple Pay et Google Pay (sur appareils compatibles). Paiement par PorteCoins (si solde suffisant). Les paiements sont traités par <strong>Stripe Canada</strong> (certifié PCI-DSS niveau 1 — le niveau de sécurité le plus élevé).
+        Toutes les cartes de crÃ©dit et dÃ©bit Visa, Mastercard, American Express. Apple Pay et Google Pay (sur appareils compatibles). Paiement par PorteCoins (si solde suffisant). Les paiements sont traitÃ©s par <strong>Stripe Canada</strong> (certifiÃ© PCI-DSS niveau 1 â le niveau de sÃ©curitÃ© le plus Ã©levÃ©).
       </div></div>
     </div>
 
     <div class="faq-item" data-q="remboursement annulation livraison">
-      <div class="faq-q" onclick="toggle(this)">Puis-je annuler et être remboursé ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Puis-je annuler et Ãªtre remboursÃ© ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Oui, mais des frais peuvent s'appliquer selon l'état de la livraison.
+        Oui, mais des frais peuvent s'appliquer selon l'Ã©tat de la livraison.
       </div></div>
     </div>
 
-    <div class="faq-item" data-q="quand livreur reçoit paiement virement">
-      <div class="faq-q" onclick="toggle(this)">Quand le livreur reçoit-il son paiement ? <span class="faq-icon">+</span></div>
+    <div class="faq-item" data-q="quand livreur reÃ§oit paiement virement">
+      <div class="faq-q" onclick="toggle(this)">Quand le livreur reÃ§oit-il son paiement ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Après confirmation de réception ou résolution du dossier selon le cas.
+        AprÃ¨s confirmation de rÃ©ception ou rÃ©solution du dossier selon le cas.
       </div></div>
     </div>
   </div>
 
-  <!-- SÉCURITÉ -->
+  <!-- SÃCURITÃ -->
   <div class="faq-section" data-cat="securite">
-    <div class="section-title">🔐 Sécurité</div>
+    <div class="section-title">ð SÃ©curitÃ©</div>
 
     <div class="faq-item" data-q="securite confiance kyc verification identite livreur">
-      <div class="faq-q" onclick="toggle(this)">Comment PorteàPorte vérifie-t-il les livreurs ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment PorteÃ Porte vÃ©rifie-t-il les livreurs ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
         Tous les livreurs passent par un processus KYC obligatoire : piece d'identite officielle, selfie en temps reel et verification du profil. Le permis de conduire est demande seulement pour les livraisons en vehicule motorise. Les livreurs recoivent une <strong>carte officielle PorteaPorte</strong> avec QR code verifiable.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="livreur non verifie voir colis reels informations sensibles">
-      <div class="faq-q" onclick="toggle(this)">Un livreur non vérifié peut-il voir les colis ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Un livreur non vÃ©rifiÃ© peut-il voir les colis ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Non. Un livreur non vérifié ne doit pas voir les colis réels ni les informations sensibles.
+        Non. Un livreur non vÃ©rifiÃ© ne doit pas voir les colis rÃ©els ni les informations sensibles.
       </div></div>
     </div>
 
-    <div class="faq-item" data-q="données personnelles confidentialité protection">
-      <div class="faq-q" onclick="toggle(this)">Comment mes données personnelles sont-elles protégées ? <span class="faq-icon">+</span></div>
+    <div class="faq-item" data-q="donnÃ©es personnelles confidentialitÃ© protection">
+      <div class="faq-q" onclick="toggle(this)">Comment mes donnÃ©es personnelles sont-elles protÃ©gÃ©es ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Tes données sont protégées conformément à la <strong>Loi 25 du Québec</strong> et à la LPRPDE fédérale. Chiffrement SSL/TLS sur toutes les communications, données de paiement jamais stockées sur nos serveurs (Stripe gère ça), base de données avec sécurité Row Level Security. Consulte notre <a href="legal.html">Politique de confidentialité</a>.
+        Tes donnÃ©es sont protÃ©gÃ©es conformÃ©ment Ã  la <strong>Loi 25 du QuÃ©bec</strong> et Ã  la LPRPDE fÃ©dÃ©rale. Chiffrement SSL/TLS sur toutes les communications, donnÃ©es de paiement jamais stockÃ©es sur nos serveurs (Stripe gÃ¨re Ã§a), base de donnÃ©es avec sÃ©curitÃ© Row Level Security. Consulte notre <a href="legal.html">Politique de confidentialitÃ©</a>.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="arnaque fraude protection que faire">
-      <div class="faq-q" onclick="toggle(this)">Comment PorteàPorte protège-t-il contre les arnaques ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment PorteÃ Porte protÃ¨ge-t-il contre les arnaques ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Plusieurs couches de protection : <strong>Escrow Stripe</strong> (l'argent ne va jamais directement au livreur avant livraison), <strong>KYC obligatoire</strong> des livreurs, <strong>Système d'évaluation</strong> (les mauvais acteurs sont exclus), <strong>Cloudflare Turnstile</strong> (anti-bots sur tous les formulaires), <strong>Score de confiance</strong> visible pour chaque livreur.
+        Plusieurs couches de protection : <strong>Escrow Stripe</strong> (l'argent ne va jamais directement au livreur avant livraison), <strong>KYC obligatoire</strong> des livreurs, <strong>SystÃ¨me d'Ã©valuation</strong> (les mauvais acteurs sont exclus), <strong>Cloudflare Turnstile</strong> (anti-bots sur tous les formulaires), <strong>Score de confiance</strong> visible pour chaque livreur.
       </div></div>
     </div>
   </div>
 
   <!-- PORTECOIN -->
   <div class="faq-section" data-cat="coins">
-    <div class="section-title">🪙 PorteCoins</div>
+    <div class="section-title">ðª PorteCoins</div>
 
     <div class="faq-item" data-q="portecoin quoi comment gagner valeur">
       <div class="faq-q" onclick="toggle(this)">Qu'est-ce que les PorteCoins ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Les PorteCoins sont la monnaie virtuelle interne de PorteàPorte — comme les points Aéroplan ou les Stars Starbucks. 1 PorteCoin ≈ 0,10 $. Tu en gagnes à chaque livraison, parrainage, mission ou évaluation 5★. Tu peux les utiliser pour des livraisons gratuites, des récompenses ou les offrir en cadeau.
-        <div class="highlight">🪙 50 PorteCoins offerts à l'inscription = valeur de 5 $</div>
+        Les PorteCoins sont la monnaie virtuelle interne de PorteÃ Porte â comme les points AÃ©roplan ou les Stars Starbucks. 1 PorteCoin â 0,10 $. Tu en gagnes Ã  chaque livraison, parrainage, mission ou Ã©valuation 5â. Tu peux les utiliser pour des livraisons gratuites, des rÃ©compenses ou les offrir en cadeau.
+        <div class="highlight">ðª 50 PorteCoins offerts Ã  l'inscription = valeur de 5 $</div>
       </div></div>
     </div>
 
     <div class="faq-item" data-q="portecoin acheter expirer rembourser">
-      <div class="faq-q" onclick="toggle(this)">Les PorteCoins expirent-ils ? Peuvent-ils être remboursés ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Les PorteCoins expirent-ils ? Peuvent-ils Ãªtre remboursÃ©s ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Les PorteCoins <strong>expirent après 24 mois d'inactivité</strong> du compte. Ils ne peuvent <strong>pas être remboursés en argent</strong> — c'est une monnaie virtuelle interne, pas une crypto ou une monnaie légale. Ils peuvent être transférés à un autre utilisateur (max 1 000 PC par transfert).
+        Les PorteCoins <strong>expirent aprÃ¨s 24 mois d'inactivitÃ©</strong> du compte. Ils ne peuvent <strong>pas Ãªtre remboursÃ©s en argent</strong> â c'est une monnaie virtuelle interne, pas une crypto ou une monnaie lÃ©gale. Ils peuvent Ãªtre transfÃ©rÃ©s Ã  un autre utilisateur (max 1 000 PC par transfert).
       </div></div>
     </div>
 
     <div class="faq-item" data-q="portecoin offrir cadeau envoyer ami">
       <div class="faq-q" onclick="toggle(this)">Puis-je offrir des PorteCoins en cadeau ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Oui ! Tu peux acheter des forfaits PorteCoins et les envoyer à n'importe quel utilisateur PorteàPorte par courriel. Idéal comme cadeau de Noël ou de fête. Tu peux aussi ajouter un message personnalisé. Les coins sont crédités instantanément sur le compte du destinataire.
+        Oui ! Tu peux acheter des forfaits PorteCoins et les envoyer Ã  n'importe quel utilisateur PorteÃ Porte par courriel. IdÃ©al comme cadeau de NoÃ«l ou de fÃªte. Tu peux aussi ajouter un message personnalisÃ©. Les coins sont crÃ©ditÃ©s instantanÃ©ment sur le compte du destinataire.
       </div></div>
     </div>
   </div>
 
   <!-- COVOITURAGE -->
   <div class="faq-section" data-cat="covoiturage">
-    <div class="section-title">🚙 Covoiturage</div>
+    <div class="section-title">ð Covoiturage</div>
 
     <div class="faq-item" data-q="covoiturage transport personnes comment fonctionne">
-      <div class="faq-q" onclick="toggle(this)">Comment fonctionne le covoiturage PorteàPorte ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment fonctionne le covoiturage PorteÃ Porte ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Même principe que la livraison de colis, mais pour les personnes ! Tu publies ta demande (ville départ → arrivée, date), ou tu offres des places dans ta voiture. Les conducteurs certifiés PorteàPorte (mêmes vérifications KYC que les livreurs) proposent leurs trajets. Paiement sécurisé en escrow.
+        MÃªme principe que la livraison de colis, mais pour les personnes ! Tu publies ta demande (ville dÃ©part â arrivÃ©e, date), ou tu offres des places dans ta voiture. Les conducteurs certifiÃ©s PorteÃ Porte (mÃªmes vÃ©rifications KYC que les livreurs) proposent leurs trajets. Paiement sÃ©curisÃ© en escrow.
       </div></div>
     </div>
 
     <div class="faq-item" data-q="covoiturage legal permis taxi uber ctq">
-      <div class="faq-q" onclick="toggle(this)">Le covoiturage PorteàPorte est-il légal au Québec ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Le covoiturage PorteÃ Porte est-il lÃ©gal au QuÃ©bec ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        <strong>Oui — et voici pourquoi.</strong> PorteàPorte est une <strong>plateforme numérique de mise en relation</strong>, comme Poparide ou AmigoExpress qui opèrent légalement au Canada depuis des années. Le modèle est légal car :<br><br>
-        ① Les conducteurs partagent leurs <strong>frais réels</strong> (essence, usure) — pas un profit<br>
-        ② Ils effectuent des trajets qu'ils auraient fait de toute façon<br>
-        ③ Le covoiturage n'est pas leur activité principale<br><br>
-        PorteàPorte ne possède aucun véhicule et n'est pas un transporteur — nous facilitons uniquement la mise en relation entre membres vérifiés.
-        <div class="highlight">🍁 Voir <a href="legal.html">Article 15 de nos CGU</a> — Nature de la plateforme</div>
+        <strong>Oui â et voici pourquoi.</strong> PorteÃ Porte est une <strong>plateforme numÃ©rique de mise en relation</strong>, comme Poparide ou AmigoExpress qui opÃ¨rent lÃ©galement au Canada depuis des annÃ©es. Le modÃ¨le est lÃ©gal car :<br><br>
+        â  Les conducteurs partagent leurs <strong>frais rÃ©els</strong> (essence, usure) â pas un profit<br>
+        â¡ Ils effectuent des trajets qu'ils auraient fait de toute faÃ§on<br>
+        â¢ Le covoiturage n'est pas leur activitÃ© principale<br><br>
+        PorteÃ Porte ne possÃ¨de aucun vÃ©hicule et n'est pas un transporteur â nous facilitons uniquement la mise en relation entre membres vÃ©rifiÃ©s.
+        <div class="highlight">ð Voir <a href="legal.html">Article 15 de nos CGU</a> â Nature de la plateforme</div>
       </div></div>
     </div>
 
     <div class="faq-item" data-q="covoiturage prix tarif combien passager">
-      <div class="faq-q" onclick="toggle(this)">Combien coûte un trajet en covoiturage ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Combien coÃ»te un trajet en covoiturage ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        Les montants sont proposés par le conducteur pour couvrir ses <strong>frais réels de déplacement</strong> (carburant ≈ 0.18$/km, usure). Le passager contribue proportionnellement à ces frais. Exemples : <strong>Montréal → Québec</strong> (270km) : 15-25 $ de contribution aux frais, <strong>Québec → Lévis</strong> (15km) : 3-8 $. Les montants varient selon le véhicule et le nombre de passagers.
+        Les montants sont proposÃ©s par le conducteur pour couvrir ses <strong>frais rÃ©els de dÃ©placement</strong> (carburant â 0.18$/km, usure). Le passager contribue proportionnellement Ã  ces frais. Exemples : <strong>MontrÃ©al â QuÃ©bec</strong> (270km) : 15-25 $ de contribution aux frais, <strong>QuÃ©bec â LÃ©vis</strong> (15km) : 3-8 $. Les montants varient selon le vÃ©hicule et le nombre de passagers.
       </div></div>
     </div>
   </div>
 
-  <!-- LÉGAL -->
+  <!-- LÃGAL -->
   <div class="faq-section" data-cat="legal">
-    <div class="section-title">⚖️ Légal</div>
+    <div class="section-title">âï¸ LÃ©gal</div>
 
     <div class="faq-item" data-q="entreprise societe ou situe porteaporte">
-      <div class="faq-q" onclick="toggle(this)">Où est basée PorteàPorte ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">OÃ¹ est basÃ©e PorteÃ Porte ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
-        PorteàPorte est fondée à <strong>Lévis, Québec, Canada</strong> par Denis Morneau. La société est en cours d'incorporation comme Société par actions (SPA) sous les lois du Québec. Le site est hébergé sur l'infrastructure Vercel (serveurs nord-américains).
+        PorteÃ Porte est fondÃ©e Ã  <strong>LÃ©vis, QuÃ©bec, Canada</strong> par Denis Morneau. La sociÃ©tÃ© est en cours d'incorporation comme SociÃ©tÃ© par actions (SPA) sous les lois du QuÃ©bec. Le site est hÃ©bergÃ© sur l'infrastructure Vercel (serveurs nord-amÃ©ricains).
       </div></div>
     </div>
 
     <div class="faq-item" data-q="contacter support aide probleme contact">
-      <div class="faq-q" onclick="toggle(this)">Comment contacter le support PorteàPorte ? <span class="faq-icon">+</span></div>
+      <div class="faq-q" onclick="toggle(this)">Comment contacter le support PorteÃ Porte ? <span class="faq-icon">+</span></div>
       <div class="faq-a"><div class="faq-a-inner">
         Par courriel : <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a><br>
         Litiges : <a href="mailto:litiges@porteaporte.site">litiges@porteaporte.site</a><br>
         Partenariats : <a href="mailto:partenaires@porteaporte.site">partenaires@porteaporte.site</a><br>
-        Confidentialité : <a href="mailto:confidentialite@porteaporte.site">confidentialite@porteaporte.site</a><br><br>
-        Délai de réponse habituel : <strong>24-48 heures</strong> en jours ouvrables.
+        ConfidentialitÃ© : <a href="mailto:confidentialite@porteaporte.site">confidentialite@porteaporte.site</a><br><br>
+        DÃ©lai de rÃ©ponse habituel : <strong>24-48 heures</strong> en jours ouvrables.
       </div></div>
     </div>
   </div>
 
   <!-- CTA -->
   <div class="faq-cta">
-    <h3>Tu n'as pas trouvé ta réponse ?</h3>
-    <p>Notre équipe répond en moins de 48h. Écris-nous directement !</p>
-    <a href="mailto:bonjour@porteaporte.site" class="btn bp">✉️ Nous écrire</a>
-    <a href="compte.html" class="btn bs">👤 Mon compte</a>
+    <h3>Tu n'as pas trouvÃ© ta rÃ©ponse ?</h3>
+    <p>Notre Ã©quipe rÃ©pond en moins de 48h. Ãcris-nous directement !</p>
+    <a href="mailto:bonjour@porteaporte.site" class="btn bp">âï¸ Nous Ã©crire</a>
+    <a href="compte.html" class="btn bs">ð¤ Mon compte</a>
   </div>
 
 </div>
 
 <footer>
-  <div class="footer-copy">© 2026 PorteàPorte · Lévis, Québec, Canada 🍁 · <a href="contact.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">✉️ Contact</a></div>
+  <div class="footer-copy">Â© 2026 PorteÃ Porte Â· LÃ©vis, QuÃ©bec, Canada ð Â· <a href="contact.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">âï¸ Contact</a></div>
   <div class="footer-links">
     <a href="index.html">Accueil</a>
     <a href="legal.html">CGU</a>
-    <a href="suivi-livraison.html">📦 Suivi</a>
-    <a href="covoiturage.html">🚗 Covoiturage</a>
+    <a href="suivi-livraison.html">ð¦ Suivi</a>
+    <a href="covoiturage.html">ð Covoiturage</a>
   </div>
 </footer>
 
@@ -430,11 +430,11 @@ function filterCat(cat, btn) {
 </script>
 
 <script>
-// Service Worker PWA — PorteàPorte
+// Service Worker PWA â PorteÃ Porte
 if('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('SW PorteàPorte actif'))
+      .then(() => console.log('SW PorteÃ Porte actif'))
       .catch(() => {});
   });
 }

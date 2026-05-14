@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Profil - PorteÀPorte</title>
+    <title>Mon Profil - PorteÃPorte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -217,7 +217,7 @@
     <div class="container">
         <div class="header">
             <h1>Mon Profil</h1>
-            <a href="/dashboard-livreur.html" class="btn-back">← Retour</a>
+            <a href="/dashboard-livreur.html" class="btn-back">â Retour</a>
         </div>
 
         <div id="loadingContainer" class="loading">
@@ -227,7 +227,7 @@
         <div id="profileContainer" style="display: none;">
             <div class="profile-grid">
                 <div class="profile-card">
-                    <div class="avatar">👤</div>
+                    <div class="avatar">ð¤</div>
                     <div class="profile-name" id="profileName">Nom</div>
                     <div class="profile-email" id="profileEmail">email@example.com</div>
                     <div class="profile-stats">
@@ -251,10 +251,10 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="section-title">📋 Informations personnelles</div>
+                    <div class="section-title">ð Informations personnelles</div>
                     <div class="info-row">
-                        <span class="info-label">Prénom</span>
-                        <span class="info-value" id="infoPrénom">-</span>
+                        <span class="info-label">PrÃ©nom</span>
+                        <span class="info-value" id="infoPrÃ©nom">-</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Nom</span>
@@ -265,11 +265,11 @@
                         <span class="info-value" id="infoEmail">-</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Téléphone</span>
-                        <span class="info-value" id="infoTéléphone">-</span>
+                        <span class="info-label">TÃ©lÃ©phone</span>
+                        <span class="info-value" id="infoTÃ©lÃ©phone">-</span>
                     </div>
 
-                    <div class="section-title" style="margin-top: 1.5rem;">🗺️ Localisation</div>
+                    <div class="section-title" style="margin-top: 1.5rem;">ðºï¸ Localisation</div>
                     <div class="info-row">
                         <span class="info-label">Ville</span>
                         <span class="info-value" id="infoVille">-</span>
@@ -279,7 +279,7 @@
                         <span class="info-value" id="infoProvince">-</span>
                     </div>
 
-                    <div class="section-title" style="margin-top: 1.5rem;">🎖️ Performance</div>
+                    <div class="section-title" style="margin-top: 1.5rem;">ðï¸ Performance</div>
                     <div class="info-row">
                         <span class="info-label">Niveau</span>
                         <span class="info-value" id="infoNiveau">-</span>
@@ -290,7 +290,7 @@
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="logout()">🚪 Se déconnecter</button>
+                        <button class="btn btn-primary" onclick="logout()">ðª Se dÃ©connecter</button>
                     </div>
                 </div>
             </div>
@@ -331,9 +331,9 @@
                     document.getElementById('xp').textContent = profile.xp || 0;
                     document.getElementById('coins').textContent = `$${((profile.coins || 0) / 100).toFixed(2)}`;
 
-                    document.getElementById('infoPrénom').textContent = profile.prenom || '-';
+                    document.getElementById('infoPrÃ©nom').textContent = profile.prenom || '-';
                     document.getElementById('infoNom').textContent = profile.nom || '-';
-                    document.getElementById('infoTéléphone').textContent = profile.telephone || '-';
+                    document.getElementById('infoTÃ©lÃ©phone').textContent = profile.telephone || '-';
                     document.getElementById('infoVille').textContent = profile.ville || '-';
                     document.getElementById('infoProvince').textContent = profile.province || '-';
                     document.getElementById('infoNiveau').textContent = profile.niveau || '-';
@@ -344,12 +344,12 @@
                 document.getElementById('infoEmail').textContent = userEmail;
 
             } catch (error) {
-                document.getElementById('loadingContainer').innerHTML = '❌ Erreur: ' + error.message;
+                document.getElementById('loadingContainer').innerHTML = 'â Erreur: ' + error.message;
             }
         }
 
         async function logout() {
-            if (confirm('Es-tu sûr de vouloir te déconnecter?')) {
+            if (confirm('Es-tu sÃ»r de vouloir te dÃ©connecter?')) {
                 await db.auth.signOut();
                 localStorage.removeItem('auth_token');
                 window.location.href = '/index.html';

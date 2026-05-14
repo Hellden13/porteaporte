@@ -1,4 +1,4 @@
-// Endpoint historique neutralise en production.
+﻿// Endpoint historique neutralise en production.
 // Les operations d'installation/migration doivent passer par les fichiers SQL
 // versionnes et par le dashboard Supabase, jamais par une route publique.
 

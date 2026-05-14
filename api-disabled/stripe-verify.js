@@ -1,7 +1,7 @@
-// ============================================================
-// PORTEÀPORTE — Vercel Function : Vérification paiement Stripe
+﻿// ============================================================
+// PORTEÃPORTE â Vercel Function : VÃ©rification paiement Stripe
 // Fichier : api/stripe-verify.js
-// Usage : Vérifier côté serveur qu'un paiement est bien réussi
+// Usage : VÃ©rifier cÃ´tÃ© serveur qu'un paiement est bien rÃ©ussi
 // ============================================================
 module.exports = async function handler(req, res) {
   const allow = process.env.ALLOWED_ORIGIN || 'https://porteaporte.site';
@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
     'Content-Type, x-internal-notifier-secret, x-internal-webhook-secret'
   );
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'MÃ©thode non autorisÃ©e' });
 
   const secretCfg = process.env.INTERNAL_API_SECRET;
   if (secretCfg && secretCfg.length >= 16) {

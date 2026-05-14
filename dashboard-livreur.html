@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord Livreur - PorteÀPorte</title>
+    <title>Tableau de Bord Livreur - PorteÃPorte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -279,10 +279,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Tableau de Bord</h1>
+            <h1>ð Tableau de Bord</h1>
             <div class="header-actions">
-                <a href="/profile.html" class="btn btn-secondary">👤 Mon Profil</a>
-                <button class="btn btn-secondary" onclick="logout()">🚪 Déconnecter</button>
+                <a href="/profile.html" class="btn btn-secondary">ð¤ Mon Profil</a>
+                <button class="btn btn-secondary" onclick="logout()">ðª DÃ©connecter</button>
             </div>
         </div>
 
@@ -292,34 +292,34 @@
 
         <div id="dashboardContainer" style="display: none;">
             <div class="security-note">
-                <strong>Sécurité livreur :</strong> Un compte livreur non vérifié peut avoir un accès limité aux livraisons.
+                <strong>SÃ©curitÃ© livreur :</strong> Un compte livreur non vÃ©rifiÃ© peut avoir un accÃ¨s limitÃ© aux livraisons.
             </div>
 
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">📦</div>
+                    <div class="stat-icon">ð¦</div>
                     <div class="stat-label">Livraisons ce mois</div>
                     <div class="stat-value" id="deliveriesMonth">0</div>
                     <div class="stat-change" id="deliveriesChange">+0 vs mois dernier</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">💰</div>
+                    <div class="stat-icon">ð°</div>
                     <div class="stat-label">Revenus ce mois</div>
                     <div class="stat-value" id="earningsMonth">$0.00</div>
                     <div class="stat-change" id="earningsChange">+$0.00 vs mois dernier</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">⭐</div>
+                    <div class="stat-icon">â­</div>
                     <div class="stat-label">Score moyen</div>
                     <div class="stat-value" id="scoreAverage">0.0</div>
-                    <div class="stat-change">sur 5 étoiles</div>
+                    <div class="stat-change">sur 5 Ã©toiles</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">🎖️</div>
+                    <div class="stat-icon">ðï¸</div>
                     <div class="stat-label">Niveau</div>
                     <div class="stat-value" id="userLevel">1</div>
                     <div class="stat-change" id="xpProgress">0 / 1000 XP</div>
@@ -329,19 +329,19 @@
             <!-- Action Buttons -->
             <div class="actions-grid">
                 <a href="/map.html" class="action-btn">
-                    <div class="action-btn-icon">🗺️</div>
+                    <div class="action-btn-icon">ðºï¸</div>
                     <div class="action-btn-text">Voir les livraisons</div>
                 </a>
                 <a href="/browse-missions.html" class="action-btn">
-                    <div class="action-btn-icon">📲</div>
+                    <div class="action-btn-icon">ð²</div>
                     <div class="action-btn-text">Chercher une livraison</div>
                 </a>
                 <a href="/profile.html" class="action-btn">
-                    <div class="action-btn-icon">👤</div>
-                    <div class="action-btn-text">Éditer mon profil</div>
+                    <div class="action-btn-icon">ð¤</div>
+                    <div class="action-btn-text">Ãditer mon profil</div>
                 </a>
                 <a href="/livreur.html" class="action-btn">
-                    <div class="action-btn-icon">💡</div>
+                    <div class="action-btn-icon">ð¡</div>
                     <div class="action-btn-text">Conseils & astuces</div>
                 </a>
             </div>
@@ -350,9 +350,9 @@
             <div class="content-grid">
                 <!-- Recent Deliveries -->
                 <div class="card">
-                    <div class="card-title">📦 Livraisons récentes</div>
+                    <div class="card-title">ð¦ Livraisons rÃ©centes</div>
                     <p style="color:#9BA1A9;font-size:.9rem;line-height:1.6;margin-bottom:1rem">
-                        Marquez une livraison comme livrée seulement après remise réelle du colis.
+                        Marquez une livraison comme livrÃ©e seulement aprÃ¨s remise rÃ©elle du colis.
                     </p>
                     <div id="driverActionMessage" style="display:none;margin-bottom:16px;padding:12px 14px;border:1px solid #1F2937;border-radius:8px;background:#111318;color:#F0F2F5"></div>
                     <div id="recentDeliveries">
@@ -362,7 +362,7 @@
 
                 <!-- Earnings Breakdown -->
                 <div class="card">
-                    <div class="card-title">💵 Répartition revenus</div>
+                    <div class="card-title">ðµ RÃ©partition revenus</div>
                     <div class="earnings-chart">
                         <div class="earnings-bar">
                             <div class="earnings-label">Toi (60%)</div>
@@ -372,7 +372,7 @@
                             <div class="earnings-value" id="yourCut">$0.00</div>
                         </div>
                         <div class="earnings-bar">
-                            <div class="earnings-label">PorteÀPorte (12%)</div>
+                            <div class="earnings-label">PorteÃPorte (12%)</div>
                             <div class="earnings-progress">
                                 <div class="earnings-fill" style="width: 12%; background: rgba(11, 255, 203, 0.5);"></div>
                             </div>
@@ -417,7 +417,7 @@
                     .single();
 
                 if (!profile) {
-                    document.getElementById('loadingContainer').innerHTML = '❌ Profil non trouvé';
+                    document.getElementById('loadingContainer').innerHTML = 'â Profil non trouvÃ©';
                     return;
                 }
 
@@ -462,7 +462,7 @@
                 await loadDriverDeliveries(userId);
 
             } catch (error) {
-                document.getElementById('loadingContainer').innerHTML = '❌ Erreur: ' + error.message;
+                document.getElementById('loadingContainer').innerHTML = 'â Erreur: ' + error.message;
             }
         }
 
@@ -558,7 +558,7 @@
         }
 
         async function logout() {
-            if (confirm('Es-tu sûr de vouloir te déconnecter?')) {
+            if (confirm('Es-tu sÃ»r de vouloir te dÃ©connecter?')) {
                 await db.auth.signOut();
                 localStorage.removeItem('auth_token');
                 window.location.href = '/index.html';

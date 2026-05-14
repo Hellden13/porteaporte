@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fonctionnement — PorteàPorte</title>
+<title>Fonctionnement â PorteÃ Porte</title>
 <meta name="theme-color" content="#05080A">
 <style>
 :root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,.08)}
@@ -37,40 +37,40 @@ footer{padding:36px 0;color:var(--muted);font-size:13px}
 </head>
 <body>
 <nav>
-  <a class="logo" href="index.html">Porte<span>à</span>Porte</a>
-  <div class="nav"><a href="index.html">← Accueil</a></div>
+  <a class="logo" href="index.html">Porte<span>Ã </span>Porte</a>
+  <div class="nav"><a href="index.html">â Accueil</a></div>
 </nav>
 
 <main>
 <section class="hero">
   <div class="container">
-    <div class="kicker">Comment ça marche</div>
+    <div class="kicker">Comment Ã§a marche</div>
     <h1>Une plateforme simple, humaine et intelligente.</h1>
-    <p class="lead">Le principe : utiliser les trajets déjà existants pour transporter des objets à moindre coût, avec un système qui protège la confiance.</p>
+    <p class="lead">Le principe : utiliser les trajets dÃ©jÃ  existants pour transporter des objets Ã  moindre coÃ»t, avec un systÃ¨me qui protÃ¨ge la confiance.</p>
 
     <div class="steps">
       <div class="step"><strong>01</strong><br>Une personne publie un colis ou un besoin de transport.</div>
-      <div class="step"><strong>02</strong><br>Un conducteur publie un trajet qu’il fait déjà.</div>
-      <div class="step"><strong>03</strong><br>Le système propose les meilleurs matchs compatibles.</div>
+      <div class="step"><strong>02</strong><br>Un conducteur publie un trajet quâil fait dÃ©jÃ .</div>
+      <div class="step"><strong>03</strong><br>Le systÃ¨me propose les meilleurs matchs compatibles.</div>
     </div>
 
     <div class="card">
-      <h2 style="font-size:34px">Le rôle de l’IA</h2>
-      <p class="lead">L’IA ne remplace pas l’humain. Elle aide à matcher, optimiser, détecter les risques et simplifier l’expérience 24/7.</p>
+      <h2 style="font-size:34px">Le rÃ´le de lâIA</h2>
+      <p class="lead">LâIA ne remplace pas lâhumain. Elle aide Ã  matcher, optimiser, dÃ©tecter les risques et simplifier lâexpÃ©rience 24/7.</p>
     </div>
   </div>
 </section>
 </main>
 
 <div id="message" class="container" style="display:none;margin-bottom:24px;background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:6px;padding:14px;color:var(--paper);font-weight:700"></div>
-<footer><div class="container">© 2026 PorteàPorte — plateforme collaborative québécoise.</div></footer>
+<footer><div class="container">Â© 2026 PorteÃ Porte â plateforme collaborative quÃ©bÃ©coise.</div></footer>
 <script>
 function demoSubmit(type) {
   const msg = document.getElementById('message');
   msg.style.display = 'block';
   msg.innerHTML = type === 'colis'
-    ? '✅ Demande enregistrée en mode démo. Prochaine étape : connecter ce formulaire à Supabase.'
-    : '✅ Trajet enregistré en mode démo. Prochaine étape : connecter ce formulaire au matching.';
+    ? 'â Demande enregistrÃ©e en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire Ã  Supabase.'
+    : 'â Trajet enregistrÃ© en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire au matching.';
   window.scrollTo({top: msg.offsetTop - 80, behavior:'smooth'});
 }
 </script>

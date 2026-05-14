@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - PorteàPorte</title>
+    <title>Connexion - PorteÃ Porte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -382,9 +382,9 @@
 <body>
     <div class="container">
         <div class="logo-section">
-            <div class="logo">🚚</div>
-            <div class="logo-text">PorteàPorte</div>
-            <div class="tagline">Livraison peer-to-peer du Québec</div>
+            <div class="logo">ð</div>
+            <div class="logo-text">PorteÃ Porte</div>
+            <div class="tagline">Livraison peer-to-peer du QuÃ©bec</div>
         </div>
 
         <div class="card">
@@ -394,7 +394,7 @@
             <!-- TABS -->
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('email')">Email</button>
-                <button class="tab" onclick="switchTab('phone')">Téléphone</button>
+                <button class="tab" onclick="switchTab('phone')">TÃ©lÃ©phone</button>
                 <button class="tab" onclick="switchTab('oauth')">OAuth</button>
             </div>
 
@@ -410,7 +410,7 @@
 
                 <div class="input-group">
                     <label>Mot de passe</label>
-                    <input type="password" id="passwordInput" placeholder="••••••••">
+                    <input type="password" id="passwordInput" placeholder="â¢â¢â¢â¢â¢â¢â¢â¢">
                 </div>
 
                 <div class="checkbox-group">
@@ -423,11 +423,11 @@
                 </button>
 
                 <div class="link-text">
-                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                    Pas encore de compte? <a href="role-choice.html">CrÃ©er un compte</a>
                 </div>
 
                 <div class="link-text" style="margin-top: 0.8rem;">
-                    <button type="button" class="text-link-button" onclick="showForgotPassword()">Mot de passe oublié?</button>
+                    <button type="button" class="text-link-button" onclick="showForgotPassword()">Mot de passe oubliÃ©?</button>
                 </div>
                 <div class="link-text" style="margin-top: 0.8rem;">
                     <button type="button" class="text-link-button" onclick="resendConfirmationEmail()">Renvoyer le courriel de confirmation</button>
@@ -437,10 +437,10 @@
             <!-- PHONE TAB -->
             <div id="phone-tab" class="tab-content">
                 <h2 class="card-title">Connexion par SMS</h2>
-                <p class="card-subtitle">Reçois un code sur ton téléphone</p>
+                <p class="card-subtitle">ReÃ§ois un code sur ton tÃ©lÃ©phone</p>
 
                 <div class="input-group">
-                    <label>Numéro de téléphone</label>
+                    <label>NumÃ©ro de tÃ©lÃ©phone</label>
                     <div class="phone-input-wrapper">
                         <select class="input-group country-code" id="countryCode" style="padding: 0.9rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);">
                             <option value="+1">+1 (CA)</option>
@@ -457,16 +457,16 @@
 
                 <div id="phoneCodeSection" style="display: none; margin-top: 1.5rem;">
                     <div class="input-group">
-                        <label>Code de vérification</label>
+                        <label>Code de vÃ©rification</label>
                         <input type="text" id="phoneCode" placeholder="123456" maxlength="6">
                     </div>
                     <button class="btn btn-primary" onclick="verifyPhoneCode()">
-                        Vérifier le code
+                        VÃ©rifier le code
                     </button>
                 </div>
 
                 <div class="link-text">
-                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                    Pas encore de compte? <a href="role-choice.html">CrÃ©er un compte</a>
                 </div>
             </div>
 
@@ -477,15 +477,15 @@
 
                 <div class="oauth-buttons">
                     <button class="oauth-btn" onclick="loginWithGoogle()">
-                        <span class="oauth-icon">🔵</span>
+                        <span class="oauth-icon">ðµ</span>
                         Continuer avec Google
                     </button>
                     <button class="oauth-btn" onclick="loginWithFacebook()">
-                        <span class="oauth-icon">👥</span>
+                        <span class="oauth-icon">ð¥</span>
                         Continuer avec Facebook
                     </button>
                     <button class="oauth-btn" onclick="loginWithApple()">
-                        <span class="oauth-icon">🍎</span>
+                        <span class="oauth-icon">ð</span>
                         Continuer avec Apple
                     </button>
                 </div>
@@ -493,7 +493,7 @@
                 <div class="divider">ou</div>
 
                 <div class="link-text">
-                    Pas encore de compte? <a href="role-choice.html">Créer un compte</a>
+                    Pas encore de compte? <a href="role-choice.html">CrÃ©er un compte</a>
                 </div>
             </div>
         </div>
@@ -515,14 +515,14 @@
         // Error/Success messages
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = '❌ ' + message;
+            errorEl.textContent = 'â ' + message;
             errorEl.classList.add('show');
             setTimeout(() => errorEl.classList.remove('show'), 5000);
         }
 
         function showSuccess(message) {
             const successEl = document.getElementById('successMessage');
-            successEl.textContent = '✓ ' + message;
+            successEl.textContent = 'â ' + message;
             successEl.classList.add('show');
             setTimeout(() => successEl.classList.remove('show'), 5000);
         }
@@ -545,7 +545,7 @@
 
                 if (error) throw error;
 
-                showSuccess('Connexion réussie!');
+                showSuccess('Connexion rÃ©ussie!');
                 localStorage.setItem('auth_token', data.session.access_token);
                 setTimeout(() => {
                     window.location.href = 'role-choice.html';
@@ -569,7 +569,7 @@
             const fullPhone = countryCode + phone.replace(/\D/g, '');
 
             if (!phone) {
-                showError('Numéro de téléphone requis');
+                showError('NumÃ©ro de tÃ©lÃ©phone requis');
                 return;
             }
 
@@ -580,7 +580,7 @@
 
                 if (error) throw error;
 
-                showSuccess('Code envoyé par SMS!');
+                showSuccess('Code envoyÃ© par SMS!');
                 document.getElementById('phoneCodeSection').style.display = 'block';
                 phoneSessionId = data.session?.id;
             } catch (error) {
@@ -606,7 +606,7 @@
 
                 if (error) throw error;
 
-                showSuccess('Vérification réussie!');
+                showSuccess('VÃ©rification rÃ©ussie!');
                 localStorage.setItem('auth_token', data.session.access_token);
                 setTimeout(() => {
                     window.location.href = 'role-choice.html';
@@ -669,7 +669,7 @@
                 db.auth.resetPasswordForEmail(email, {
                     redirectTo: window.location.origin + '/login.html?reset=1'
                 }).then(() => {
-                    showSuccess('Email de réinitialisation envoyé!');
+                    showSuccess('Email de rÃ©initialisation envoyÃ©!');
                 }).catch(error => {
                     showError(error.message);
                 });

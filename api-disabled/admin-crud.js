@@ -1,4 +1,4 @@
-// Endpoint neutralise.
+﻿// Endpoint neutralise.
 // Le CRUD admin frontend vit dans /js/admin-crud.js.
 // Les operations serveur admin doivent passer par des endpoints dedies proteges.
 
