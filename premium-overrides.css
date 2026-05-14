@@ -2,7 +2,7 @@
 
 /* Boutons Premium */
 button, .btn, a.btn, [class*="btn"] {
-  background: linear-gradient(135deg, #0BFFCB 0%, #00C9A3 100%);
+  background: linear-gradient(135deg, #0BFFCB 0%, #00C9A3 100%) !important;
   color: #0A0C0F !important;
   border: none !important;
   padding: 12px 24px !important;
@@ -13,12 +13,12 @@ button, .btn, a.btn, [class*="btn"] {
   box-shadow: 0 0 20px rgba(11, 255, 203, 0.2) !important;
 }
 
-button:hover, .btn:hover, a.btn:hover {
+button:hover, .btn:hover, a.btn:hover, [class*="btn"]:hover {
   box-shadow: 0 0 30px rgba(11, 255, 203, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-button:active, .btn:active, a.btn:active {
+button:active, .btn:active, a.btn:active, [class*="btn"]:active {
   transform: translateY(0) !important;
 }
 
@@ -35,7 +35,7 @@ button:active, .btn:active, a.btn:active {
 }
 
 /* Cards Glassmorphism */
-.card, [class*="card"], [class*="mission"], [class*="container"] {
+.card, [class*="card"], [class*="mission"], .container {
   background: rgba(18, 21, 26, 0.6) !important;
   border: 1px solid rgba(31, 36, 44, 0.5) !important;
   border-radius: 12px !important;
@@ -75,10 +75,11 @@ h1, h2, h3, h4, h5, h6 {
 
 h1, h2 {
   color: #0BFFCB !important;
+  font-weight: 800 !important;
 }
 
 /* Text */
-body, p, a, span {
+body, p, span {
   color: #E8EAED !important;
 }
 
@@ -116,6 +117,21 @@ a:hover {
 body {
   background: #0A0C0F !important;
   color: #E8EAED !important;
+}
+
+/* Tables */
+table, tr, td, th {
+  border-color: #1F242C !important;
+  color: #E8EAED !important;
+}
+
+/* Status badges */
+.badge, [class*="status"], [class*="badge"] {
+  background: rgba(11, 255, 203, 0.1) !important;
+  border: 1px solid rgba(11, 255, 203, 0.3) !important;
+  color: #0BFFCB !important;
+  border-radius: 16px !important;
+  padding: 4px 12px !important;
 }
 
 /* Responsive */
