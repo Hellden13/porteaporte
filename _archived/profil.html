@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Profil - PorteÀPorte</title>
+    <title>Mon Profil - PorteÃ€Porte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -121,7 +121,7 @@
     <div class="container">
         <div class="header">
             <h1>Mon Profil</h1>
-            <a href="/dashboard-livreur.html" class="btn-back">← Retour</a>
+            <a href="/dashboard-livreur.html" class="btn-back">â† Retour</a>
         </div>
 
         <div id="loadingContainer" class="loading">
@@ -131,7 +131,7 @@
         <div id="profileContainer" style="display: none;">
             <div class="profile-grid">
                 <div class="profile-card">
-                    <div class="avatar">👤</div>
+                    <div class="avatar">ðŸ‘¤</div>
                     <div class="profile-name" id="profileName">Nom</div>
                     <div class="profile-email" id="profileEmail">email@example.com</div>
                     <div class="profile-stats">
@@ -155,10 +155,10 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="section-title">📋 Infos personnelles</div>
+                    <div class="section-title">ðŸ“‹ Infos personnelles</div>
                     <div class="info-row">
-                        <span class="info-label">Prénom</span>
-                        <span class="info-value" id="infoPrénom">-</span>
+                        <span class="info-label">PrÃ©nom</span>
+                        <span class="info-value" id="infoPrÃ©nom">-</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Nom</span>
@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="logout()">🚪 Déconnecter</button>
+                        <button class="btn btn-primary" onclick="logout()">ðŸšª DÃ©connecter</button>
                     </div>
                 </div>
             </div>
@@ -214,7 +214,7 @@
                     document.getElementById('score').textContent = (profile.score || 0).toFixed(1);
                     document.getElementById('xp').textContent = profile.xp || 0;
                     document.getElementById('coins').textContent = `$${((profile.coins || 0) / 100).toFixed(2)}`;
-                    document.getElementById('infoPrénom').textContent = profile.prenom || '-';
+                    document.getElementById('infoPrÃ©nom').textContent = profile.prenom || '-';
                     document.getElementById('infoNom').textContent = profile.nom || '-';
                     document.getElementById('infoVille').textContent = profile.ville || '-';
                 }
@@ -224,12 +224,12 @@
 
             } catch (error) {
                 console.error('Erreur:', error);
-                document.getElementById('loadingContainer').innerHTML = '❌ Erreur: ' + error.message;
+                document.getElementById('loadingContainer').innerHTML = 'âŒ Erreur: ' + error.message;
             }
         }
 
         async function logout() {
-            if (confirm('Déconnecter?')) {
+            if (confirm('DÃ©connecter?')) {
                 await db.auth.signOut();
                 window.location.href = '/index.html';
             }
