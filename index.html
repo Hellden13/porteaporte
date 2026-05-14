@@ -1,39 +1,170 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PorteàPorte - Plateforme québécoise de livraison collaborative">
-    <title>PorteàPorte - Livraison Collaborative</title>
-    <link rel="stylesheet" href="design-system.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/modal-helper.js"></script>
-    <script src="js/auth.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PorteaPorte - Livraison Collaborative</title>
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      padding: var(--spacing-lg);
+    }
+    
+    .hero h1 {
+      font-size: clamp(28px, 8vw, 56px);
+      margin-bottom: var(--spacing-md);
+      color: var(--accent);
+      font-weight: 800;
+    }
+    
+    .hero p {
+      font-size: clamp(16px, 4vw, 24px);
+      margin-bottom: var(--spacing-xl);
+      color: var(--text-primary);
+      max-width: 600px;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    
+    nav a {
+      color: var(--text-primary);
+      text-decoration: none;
+      margin: 0 var(--spacing-md);
+      transition: color 0.2s;
+    }
+    
+    nav a:hover {
+      color: var(--accent);
+    }
+    
+    .features {
+      padding: var(--spacing-xl);
+      background: var(--bg-primary);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .feature-card {
+      background: var(--bg-secondary);
+      padding: var(--spacing-lg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .feature-card h3 {
+      color: var(--accent);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: var(--spacing-lg);
+      text-align: center;
+      color: var(--text-primary);
+    }
+    
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+      }
+      
+      nav {
+        display: none;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <nav style="display:flex; justify-content:space-between; padding:20px; background:#12151A; color:#E8EAED;">
-        <h1>🍁 PorteàPorte</h1>
-        <div>
-            <a href="#" style="color:#0BFFCB; margin:0 20px; text-decoration:none;">Comment ça marche</a>
-            <a href="#" style="color:#0BFFCB; margin:0 20px; text-decoration:none;">Pour livreurs</a>
-            <a href="#" style="color:#0BFFCB; margin:0 20px; text-decoration:none;">Pour expéditeurs</a>
-            <button onclick="window.location='/login.html'" style="background:#0BFFCB; color:#0A0C0F; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">Connexion</button>
-        </div>
+  <header>
+    <div class="logo">PorteaPorte</div>
+    <nav>
+      <a href="#features">Comment ca marche</a>
+      <a href="#livreurs">Pour livreurs</a>
+      <a href="#expediteurs">Pour expediteurs</a>
+      <a href="login.html">Connexion</a>
     </nav>
-    
-    <main style="text-align:center; padding:100px 20px; background:#0A0C0F; color:#E8EAED; min-height:80vh;">
-        <h2 style="font-size:3rem; color:#0BFFCB; margin:20px 0;">Quelqu'un passe déjà dans ta direction</h2>
-        <p style="font-size:1.2rem; color:#999; margin:20px 0;">La plateforme québécoise qui connecte les livreurs avec les expéditeurs. Plus simple, plus rapide, plus humain.</p>
-        
-        <div style="margin:40px 0;">
-            <button onclick="window.location='/role-choice.html'" style="background:#0BFFCB; color:#0A0C0F; border:none; padding:15px 30px; font-size:1.1rem; border-radius:4px; cursor:pointer; margin:10px;">Calculer mon économie</button>
-            <button onclick="window.location='/role-choice.html'" style="background:transparent; color:#0BFFCB; border:2px solid #0BFFCB; padding:15px 30px; font-size:1.1rem; border-radius:4px; cursor:pointer; margin:10px;">Créer un compte</button>
-        </div>
-    </main>
-    
-    <footer style="background:#12151A; color:#E8EAED; text-align:center; padding:20px; margin-top:40px;">
-        <p>© 2026 PorteàPorte. Tous droits réservés. | <a href="/confidentialite.html" style="color:#0BFFCB; text-decoration:none;">Confidentialité</a> | <a href="/cgu.html" style="color:#0BFFCB; text-decoration:none;">CGU</a></p>
-    </footer>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>Quelqu'un passe deja dans ta direction</h1>
+      <p>La plateforme quebecoise qui connecte les livreurs avec les expediteurs. Plus simple, plus rapide, plus humain.</p>
+      <div class="cta-buttons">
+        <button onclick="window.location='/role-choice.html'">Commencer</button>
+        <button class="btn-secondary" onclick="window.location='#features'">En savoir plus</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="feature-card">
+      <h3>Pour les livreurs</h3>
+      <p>Acceptez des livraisons a votre convenance et gagnez des revenus supplementaires.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Pour les expediteurs</h3>
+      <p>Envoyez vos colis de facon economique et ecologique avec nos livreurs de confiance.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Securise et fiable</h3>
+      <p>Authentification WebAuthn, paiements Stripe, et suivi GPS en temps reel.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 PorteaPorte. <a href="cgu.html" style="color:var(--accent);text-decoration:none;">CGU</a> | <a href="confidentialite.html" style="color:var(--accent);text-decoration:none;">Confidentialite</a></p>
+  </footer>
 </body>
 </html>
