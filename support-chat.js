@@ -1,36 +1,36 @@
-(function() {
+﻿(function() {
   const KNOWLEDGE_BASE = {
     'public|colis|publier|envoyer|transport': { 
       title: 'Publier un colis', 
-      response: 'Pour publier un colis sur PorteàPorte:\n\n1. Clique sur "Commencer maintenant"\n2. Remplis: ville départ, arrivée, type objet, description, budget\n3. Système cherche trajets compatibles\n4. Tu confirmes le livreur\n5. Suivi GPS en temps réel' 
+      response: 'Pour publier un colis sur PorteÃ Porte:\n\n1. Clique sur "Commencer maintenant"\n2. Remplis: ville dÃ©part, arrivÃ©e, type objet, description, budget\n3. SystÃ¨me cherche trajets compatibles\n4. Tu confirmes le livreur\n5. Suivi GPS en temps rÃ©el' 
     },
     'trajet|proposer|conducteur|livreur|route': { 
       title: 'Proposer un trajet', 
-      response: 'Tu fais un trajet et tu veux gagner?\n\n1. Indique départ et destination\n2. Date/heure du trajet\n3. Type de véhicule\n4. Espace disponible\n\nSystème te propose colis compatibles. Accepte, ramasse, livre, tu es payé!' 
+      response: 'Tu fais un trajet et tu veux gagner?\n\n1. Indique dÃ©part et destination\n2. Date/heure du trajet\n3. Type de vÃ©hicule\n4. Espace disponible\n\nSystÃ¨me te propose colis compatibles. Accepte, ramasse, livre, tu es payÃ©!' 
     },
     'paiement|payer|prix|cout|tarif|argent|transaction': { 
       title: 'Paiement', 
-      response: 'Paiement sécurisé:\n\n✓ Argent retenu à la création\n✓ Pas d\'échange liquide\n✓ Confirmé après livraison\n✓ Typiquement 5-15$ par km\n✓ Zéro frais cachés' 
+      response: 'Paiement sÃ©curisÃ©:\n\nâœ“ Argent retenu Ã  la crÃ©ation\nâœ“ Pas d\'Ã©change liquide\nâœ“ ConfirmÃ© aprÃ¨s livraison\nâœ“ Typiquement 5-15$ par km\nâœ“ ZÃ©ro frais cachÃ©s' 
     },
     'securite|verifie|verification|identite|confiance|danger|arnaque': { 
-      title: 'Sécurité', 
-      response: 'Confiance = cœur de PorteàPorte:\n\n✓ Profils vérifiés\n✓ Évaluations 1-5 étoiles\n✓ Suivi GPS intelligent\n✓ Preuve de ramassage/livraison\n✓ Paiement sécurisé\n\nProblème? Garde preuves et contacte équipe' 
+      title: 'SÃ©curitÃ©', 
+      response: 'Confiance = cÅ“ur de PorteÃ Porte:\n\nâœ“ Profils vÃ©rifiÃ©s\nâœ“ Ã‰valuations 1-5 Ã©toiles\nâœ“ Suivi GPS intelligent\nâœ“ Preuve de ramassage/livraison\nâœ“ Paiement sÃ©curisÃ©\n\nProblÃ¨me? Garde preuves et contacte Ã©quipe' 
     },
     'suivi|tracking|ou est|livraison|statut|progression': { 
       title: 'Suivi', 
-      response: 'Suis ton colis en temps réel!\n\nTu verras:\n✓ Statut (ramassé, en route, livré)\n✓ GPS du livreur\n✓ Étapes avec heures\n✓ Profil livreur/notes\n✓ Notifications chaque étape' 
+      response: 'Suis ton colis en temps rÃ©el!\n\nTu verras:\nâœ“ Statut (ramassÃ©, en route, livrÃ©)\nâœ“ GPS du livreur\nâœ“ Ã‰tapes avec heures\nâœ“ Profil livreur/notes\nâœ“ Notifications chaque Ã©tape' 
     },
     'communaute|bonus|reward|tirage|organisme|entraide|redonner': { 
-      title: 'Communauté', 
-      response: 'PorteàPorte = communauté québécoise!\n\n🏆 Livreurs:\n✓ Bonus mensuels\n✓ Badges/reconnaissance\n\n🎁 Tous:\n✓ Tirages mensuels\n✓ Points fidélité\n\n❤️ Local:\n✓ Organismes soutenus\n✓ Régions éloignées aidées' 
+      title: 'CommunautÃ©', 
+      response: 'PorteÃ Porte = communautÃ© quÃ©bÃ©coise!\n\nðŸ† Livreurs:\nâœ“ Bonus mensuels\nâœ“ Badges/reconnaissance\n\nðŸŽ Tous:\nâœ“ Tirages mensuels\nâœ“ Points fidÃ©litÃ©\n\nâ¤ï¸ Local:\nâœ“ Organismes soutenus\nâœ“ RÃ©gions Ã©loignÃ©es aidÃ©es' 
     },
     'urgent|probleme|erreur|souci|aide|crise': { 
-      title: 'Problème urgent', 
-      response: 'Je comprends, c\'est important!\n\nGarde les preuves:\n✓ Screenshots messages\n✓ Photos colis\n✓ Code livraison\n✓ Dates/heures exactes\n\nContacte équipe PorteàPorte:\n📧 bonjour@porteaporte.site' 
+      title: 'ProblÃ¨me urgent', 
+      response: 'Je comprends, c\'est important!\n\nGarde les preuves:\nâœ“ Screenshots messages\nâœ“ Photos colis\nâœ“ Code livraison\nâœ“ Dates/heures exactes\n\nContacte Ã©quipe PorteÃ Porte:\nðŸ“§ bonjour@porteaporte.site' 
     },
     'default': { 
-      title: 'PorteàPorte Support', 
-      response: 'Salut! 👋 Comment je peux aider?\n\n📦 Publier un colis\n🚗 Proposer un trajet\n💳 Paiement\n🔒 Sécurité\n📍 Suivi\n❤️ Communauté\n⚡ Problème urgent' 
+      title: 'PorteÃ Porte Support', 
+      response: 'Salut! ðŸ‘‹ Comment je peux aider?\n\nðŸ“¦ Publier un colis\nðŸš— Proposer un trajet\nðŸ’³ Paiement\nðŸ”’ SÃ©curitÃ©\nðŸ“ Suivi\nâ¤ï¸ CommunautÃ©\nâš¡ ProblÃ¨me urgent' 
     }
   };
 
@@ -47,17 +47,17 @@
 
   function createWidget() {
     const btn = document.createElement('button');
-    btn.innerHTML = '💬';
+    btn.innerHTML = 'ðŸ’¬';
     btn.style.cssText = 'position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;background:#B8F53E;color:#05080A;border:none;cursor:pointer;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999;display:flex;align-items:center;justify-content:center;transition:all 0.3s;';
     
     btn.addEventListener('mouseover', function() { this.style.transform = 'scale(1.1)'; });
     btn.addEventListener('mouseout', function() { this.style.transform = 'scale(1)'; });
     
     btn.addEventListener('click', function() {
-      const msg = prompt('💬 PorteàPorte Support\n\nTa question?');
+      const msg = prompt('ðŸ’¬ PorteÃ Porte Support\n\nTa question?');
       if (msg) {
         const response = findResponse(msg);
-        alert('📌 ' + response.title + '\n\n' + response.response);
+        showSuccess('ðŸ“Œ ' + response.title + '\n\n' + response.response);
       }
     });
     
