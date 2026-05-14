@@ -8,6 +8,20 @@
   --brand-text: #F0F2F5;
   --brand-muted: #A8ACB1;
   --brand-border: #1F2937;
+  --bg-primary: var(--brand-bg-dark);
+  --bg-secondary: var(--brand-bg-surface);
+  --color-background: var(--brand-bg-dark);
+  --color-surface: var(--brand-bg-surface);
+  --color-border: var(--brand-border);
+  --color-primary: var(--brand-cyan);
+  --color-accent: var(--brand-lime);
+  --color-text-primary: var(--brand-text);
+  --color-text-secondary: var(--brand-muted);
+  --text-primary: var(--brand-text);
+  --text-secondary: var(--brand-muted);
+  --accent: var(--brand-cyan);
+  --radius-lg: 10px;
+  --z-sticky: 50;
 }
 
 body {
@@ -15,11 +29,13 @@ body {
   color: var(--brand-text) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
   letter-spacing: 0 !important;
+  min-height: 100vh;
 }
 
 nav,
 .navbar,
-header {
+header,
+.dashboard-header {
   background: rgba(10, 12, 16, .95) !important;
   border-bottom: 1px solid var(--brand-border) !important;
 }
@@ -29,6 +45,13 @@ header {
   font-weight: 900 !important;
   letter-spacing: -1px !important;
   color: var(--brand-text) !important;
+}
+
+.navbar-brand,
+.brand {
+  color: var(--brand-text) !important;
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
 }
 
 .logo span,
@@ -52,7 +75,14 @@ a,
 .faq-item,
 .content-sec,
 .plan,
-.form-section {
+.form-section,
+.feature-card,
+.stat-badge,
+.metric-card,
+.quick-action,
+.action-btn,
+.mission-card,
+.dashboard-card {
   background: var(--brand-bg-surface) !important;
   border-color: var(--brand-border) !important;
   border-radius: 8px !important;
@@ -81,9 +111,43 @@ textarea:focus,
 .btn,
 .btn-next,
 .pay-btn,
-button[type="submit"] {
+.action-btn,
+button[type="submit"],
+button:not(.text-link-button):not(.search-btn) {
   background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
   color: var(--brand-bg-dark) !important;
   border-radius: 8px !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.btn.secondary,
+.btn-secondary,
+.btn.ghost,
+.btn-ghost {
+  background: #1A1F28 !important;
+  color: var(--brand-text) !important;
+  border: 1px solid var(--brand-border) !important;
+}
+
+h1, h2, h3 {
+  letter-spacing: 0 !important;
+}
+
+h1,
+.hero h1,
+.header-title h1 {
+  color: var(--brand-text) !important;
+}
+
+.muted,
+p,
+.stat-label,
+.os-label {
+  color: var(--brand-muted);
+}
+
+@media (max-width: 760px) {
+  body { overflow-x: hidden; }
+  header, .navbar, nav { padding-left: 16px !important; padding-right: 16px !important; }
+  .container, .page, main { max-width: 100%; }
 }

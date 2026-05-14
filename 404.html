@@ -1,94 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/logo.svg">
-<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<meta name="theme-color" content="#05080A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex">
-<title>PorteÃ Porte â Page introuvable ð</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;700;800&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--smoke:#141918;--muted:#8A9490;--border:rgba(255,255,255,0.07)}
-body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:hidden}
-.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(184,245,62,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(184,245,62,.03) 1px,transparent 1px);background-size:60px 60px;animation:drift 30s linear infinite;pointer-events:none}
-@keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
-.glow{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(rgba(184,245,62,.06),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-.content{position:relative;z-index:1;max-width:500px}
-.code{font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,25vw,200px);letter-spacing:-8px;line-height:1;color:var(--paper);opacity:.08;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;user-select:none}
-.icon{font-size:64px;margin-bottom:16px;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:-1px;margin-bottom:12px;line-height:1}
-h1 span{color:var(--lime)}
-p{font-size:15px;color:var(--muted);line-height:1.7;font-weight:300;margin-bottom:32px;max-width:380px;margin-left:auto;margin-right:auto}
-.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{padding:12px 24px;border-radius:2px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
-.bp{background:var(--lime);color:var(--ink)}.bp:hover{background:#d4ff5e;transform:translateY(-2px)}
-.bs{background:transparent;color:var(--paper);border:1px solid rgba(245,240,232,.15)}.bs:hover{border-color:rgba(245,240,232,.4)}
-.links{margin-top:40px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.link{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}.link:hover{color:var(--lime)}
-.search-wrap{position:relative;max-width:360px;margin:0 auto 24px}
-.search-input{width:100%;background:var(--smoke);border:1px solid var(--border);padding:11px 44px 11px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:13px;outline:none;border-radius:2px;transition:border-color .2s}
-.search-input:focus{border-color:rgba(184,245,62,.3)}
-.search-input::placeholder{color:rgba(245,240,232,.2)}
-.search-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;transition:color .2s}
-.search-btn:hover{color:var(--lime)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Page introuvable - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
+    .box{width:min(620px,100%);background:#111318;border:1px solid #1F2937;border-radius:12px;padding:30px}
+    .code{font-size:86px;font-weight:950;color:#00FF9F;line-height:1}
+    h1{font-size:32px;margin:10px 0}
+    p{max-width:480px;margin:0 auto 20px;line-height:1.6}
+    .links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+    .btn{width:auto;text-decoration:none}
+  </style>
 </head>
 <body>
-<div class="grid"></div>
-<div class="glow"></div>
-<div class="code">404</div>
-<div class="content">
-  <div class="icon">ð¦</div>
-  <h1>Ce colis s'est <span>perdu</span> en chemin.</h1>
-  <p>La page que tu cherches n'existe pas ou a Ã©tÃ© dÃ©placÃ©e. Pas de panique â ton livreur PorteÃ Porte aurait retrouvÃ© le chemin !</p>
-  <div class="search-wrap">
-    <input class="search-input" type="text" placeholder="Chercher une page..." id="search" onkeydown="if(event.key==='Enter')goSearch()">
-    <button class="search-btn" onclick="goSearch()">â</button>
-  </div>
-  <div class="btns">
-    <a href="index.html" class="btn bp">ð  Retour Ã  l'accueil</a>
-    <a href="expediteur.html" class="btn bs">ð¦ Envoyer un colis</a>
-  </div>
-  <div class="links">
-    <a href="livreur.html" class="link">Devenir livreur</a>
-    <a href="compte.html" class="link">Mon compte</a>
-    <a href="assurance.html" class="link">Assurance</a>
-    <a href="covoiturage.html" class="link">Covoiturage</a>
-    <a href="legal.html" class="link">CGU</a>
-    <a href="mailto:bonjour@porteaporte.site" class="link">Contact</a>
-  </div>
-</div>
-<script>
-function goSearch(){
-  const q = document.getElementById('search').value.trim().toLowerCase();
-  if(!q) return;
-  const map = {
-    'colis':'expediteur.html','livraison':'expediteur.html','envoyer':'expediteur.html',
-    'livreur':'livreur.html','livrer':'livreur.html','conducteur':'livreur.html',
-    'covoiturage':'covoiturage.html','trajet':'covoiturage.html','transport':'covoiturage.html',
-    'compte':'compte.html','connexion':'compte.html','inscription':'compte.html',
-    'assurance':'assurance.html','garantie':'assurance.html',
-    'paiement':'paiement.html','portecoin':'paiement.html','coin':'paiement.html',
-    'parrainage':'parrainage.html','parrain':'parrainage.html',
-    'cgu':'legal.html','confidentialite':'legal.html','legal':'legal.html',
-    'partenaire':'partenaire.html','presentation':'presentation.html',
-  };
-  for(const [k,v] of Object.entries(map)){
-    if(q.includes(k)){ window.location.href = v; return; }
-  }
-  window.location.href = 'index.html';
-}
-</script>
+  <main class="box">
+    <div class="code">404</div>
+    <h1>Page introuvable</h1>
+    <p>Le lien a peut-etre change pendant la beta. Utilise les raccourcis ci-dessous pour revenir au bon endroit.</p>
+    <div class="links">
+      <a class="btn" href="/index.html">Accueil</a>
+      <a class="btn secondary" href="/create-mission.html">Creer une livraison</a>
+      <a class="btn secondary" href="/livreur.html">Devenir livreur</a>
+      <a class="btn secondary" href="/profile.html">Mon profil</a>
+      <a class="btn secondary" href="/assurance.html">Protection</a>
+      <a class="btn secondary" href="/cgu.html">CGU</a>
+    </div>
+  </main>
 </body>
 </html>
