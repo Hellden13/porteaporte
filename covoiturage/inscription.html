@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inscription covoiturage — PorteÀPorte</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0A0F1E; --surface: #111827; --surface2: #1A2235;
+      --border: #1E2A3A; --green: #B8F53E; --cyan: #00D9FF;
+      --text: #E8EDF5; --muted: #8A9BB0; --danger: #FF6B6B; --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    nav { background: rgba(10,15,30,.96); border-bottom: 1px solid var(--border); padding: 14px clamp(18px,4vw,48px); display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-weight: 800; color: var(--green); font-size: 1.1rem; text-decoration: none; }
+
+    .page-wrap { max-width: 640px; margin: 0 auto; padding: clamp(32px,5vw,56px) clamp(18px,4vw,32px) 80px; }
+
+    /* PROGRESS */
+    .progress-bar { display: flex; align-items: center; gap: 0; margin-bottom: 40px; }
+    .step-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--muted); font-size: .8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .3s; }
+    .step-dot.active { border-color: var(--green); color: var(--green); background: rgba(184,245,62,.1); }
+    .step-dot.done { border-color: var(--green); background: var(--green); color: #0A0F1E; }
+    .step-line { flex: 1; height: 2px; background: var(--border); transition: background .3s; }
+    .step-line.done { background: var(--green); }
+
+    /* CARDS */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; margin-bottom: 20px; }
+    .card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+    .card-sub { font-size: .85rem; color: var(--muted); margin-bottom: 24px; }
+
+    /* ROLE CHOICE */
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media(max-width:480px){ .role-grid { grid-template-columns: 1fr; } }
+    .role-card { border: 2px solid var(--border); border-radius: 12px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s; }
+    .role-card:hover { border-color: rgba(184,245,62,.4); background: rgba(184,245,62,.04); }
+    .role-card.selected { border-color: var(--green); background: rgba(184,245,62,.08); }
+    .role-icon { font-size: 2rem; margin-bottom: 10px; }
+    .role-name { font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+    .role-desc { font-size: .78rem; color: var(--muted); line-height: 1.4; }
+
+    /* FORM */
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: .78rem; color: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 7px; }
+    .field input, .field select, .field textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: var(--text); font-size: .95rem; font-family: inherit; transition: border-color .15s; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--green); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:460px){ .field-row { grid-template-columns: 1fr; } }
+
+    /* TOGGLES */
+    .toggle-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+    .toggle-item { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-size: .85rem; cursor: pointer; transition: all .15s; user-select: none; }
+    .toggle-item.on { border-color: var(--green); background: rgba(184,245,62,.08); color: var(--green); }
+    .toggle-item input { display: none; }
+
+    /* LEGAL CHECK */
+    .legal-check { background: rgba(0,217,255,.06); border: 1px solid rgba(0,217,255,.2); border-radius: 10px; padding: 16px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+    .legal-check input[type=checkbox] { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--green); cursor: pointer; }
+    .legal-check label { font-size: .84rem; color: #A8C0D0; line-height: 1.55; cursor: pointer; }
+    .legal-check a { color: var(--cyan); }
+
+    /* BTN */
+    .btn-next { width: 100%; background: var(--green); color: #0A0F1E; border: none; border-radius: 10px; padding: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity .15s; margin-top: 8px; }
+    .btn-next:hover { opacity: .9; }
+    .btn-next:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-back { background: transparent; border: 1.5px solid var(--border); color: var(--muted); border-radius: 10px; padding: 11px 22px; font-size: .9rem; cursor: pointer; }
+    .btn-back:hover { background: var(--surface2); }
+
+    .error-msg { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); border-radius: 8px; padding: 10px 14px; color: #FF9090; font-size: .85rem; margin-bottom: 16px; display: none; }
+    .success-panel { text-align: center; padding: 48px 24px; }
+    .success-panel .big-icon { font-size: 4rem; margin-bottom: 20px; }
+    .success-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
+    .success-panel p { color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+    .success-links { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn-outline { border: 1.5px solid var(--border); background: transparent; color: var(--text); border-radius: 10px; padding: 12px 24px; font-size: .9rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background .15s; }
+    .btn-outline:hover { background: var(--surface2); }
+
+    /* HIDDEN */
+    .step-section { display: none; }
+    .step-section.active { display: block; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">PorteÀPorte</a>
+  <a href="/covoiturage-info.html" style="color:var(--muted);font-size:.85rem;text-decoration:none">← Retour info covoiturage</a>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- PROGRESS -->
+  <div class="progress-bar" id="progress-bar">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3">3</div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-dot" id="dot-4">4</div>
+  </div>
+
+  <div id="error-box" class="error-msg"></div>
+
+  <!-- ÉTAPE 1 — Choix du rôle -->
+  <div class="step-section active" id="step-1">
+    <div class="card">
+      <div class="card-title">Je veux…</div>
+      <div class="card-sub">Choisissez votre rôle dans la communauté covoiturage.</div>
+      <div class="role-grid">
+        <div class="role-card" id="role-conducteur" onclick="selectRole('conducteur')">
+          <div class="role-icon">🚗</div>
+          <div class="role-name">Conduire</div>
+          <div class="role-desc">Je publie mes trajets et partage mes frais avec des passagers.</div>
+        </div>
+        <div class="role-card" id="role-passager" onclick="selectRole('passager')">
+          <div class="role-icon">🧳</div>
+          <div class="role-name">Voyager</div>
+          <div class="role-desc">Je cherche des trajets et réserve une place dans le véhicule d'un conducteur.</div>
+        </div>
+        <div class="role-card" id="role-les_deux" onclick="selectRole('les_deux')">
+          <div class="role-icon">🔄</div>
+          <div class="role-name">Les deux</div>
+          <div class="role-desc">Je conduis parfois, je voyage d'autres fois. Accès complet.</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-next" id="btn-1" onclick="goStep(2)" disabled>Continuer →</button>
+  </div>
+
+  <!-- ÉTAPE 2 — Profil de base -->
+  <div class="step-section" id="step-2">
+    <div class="card">
+      <div class="card-title">Votre profil</div>
+      <div class="card-sub">Ces informations sont visibles par les autres membres.</div>
+      <div class="field-row">
+        <div class="field"><label>Prénom *</label><input type="text" id="prenom" placeholder="Marie" autocomplete="given-name"></div>
+        <div class="field"><label>Nom *</label><input type="text" id="nom" placeholder="Tremblay" autocomplete="family-name"></div>
+      </div>
+      <div class="field"><label>Courriel *</label><input type="email" id="email" placeholder="marie@exemple.com" autocomplete="email"></div>
+      <div class="field"><label>Mot de passe *</label><input type="password" id="password" placeholder="8 caractères minimum"></div>
+      <div class="field"><label>Téléphone *</label><input type="tel" id="telephone" placeholder="418-555-0100" autocomplete="tel"></div>
+      <div class="field"><label>Ville principale</label><input type="text" id="ville" placeholder="Québec" autocomplete="address-level2"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="btn-back" onclick="goStep(1)">← Retour</button>
+      <button class="btn-next" style="flex:1" onclick="validateStep2()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 — Détails selon rôle -->
+  <div class="step-section" id="step-3">
+    <!-- Conducteur -->
+    <div id="conducteur-section">
+      <div class="card">
+        <div class="card-title">Votre véhicule</div>
+        <div class="card-sub">Ces informations aident les passagers à choisir votre trajet.</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Type de véhicule</label>
+            <select id="vehicule-type">
+              <option value="berline">Berline</option>
+              <option value="suv">SUV / VUS</option>
+              <option value="camionnette">Camionnette</option>
+              <option value="fourgonnette">Fourgonnette</option>
+              <option value="compacte">Compacte</option>
+              <option value="electrique">Électrique</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Places disponibles</label>
+            <select id="places">
+              <option value="1">1 place</option>
+              <option value="2" selected>2 places</option>
+              <option value="3">3 places</option>
+              <option value="4">4 places</option>
+              <option value="5">5 places</option>
+              <option value="6">6 places</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Taille du coffre</label>
+          <select id="coffre">
+            <option value="petit">Petit — sacs à dos seulement</option>
+            <option value="moyen" selected>Moyen — valise cabine</option>
+            <option value="grand">Grand — grande valise</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Vos préférences</div>
+        <div class="card-sub">Indiquez ce que vous acceptez dans votre véhicule.</div>
+        <div class="toggle-grid">
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-animaux">🐾 Animaux acceptés</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-bagages">🧳 Gros bagages</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-arrets">📍 Arrêts supplémentaires</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-nonsmoker" checked>🚭 Non-fumeur</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-femmes">👩 Femmes seulement</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-enfant">🧒 Siège enfant dispo</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pref-accessible">♿ Accessible</label>
+        </div>
+        <div class="field" style="margin-top:18px;">
+          <label>Règles personnelles (optionnel)</label>
+          <textarea id="regles-perso" placeholder="Ex : musique douce seulement, pas de nourriture dans le véhicule…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passager -->
+    <div id="passager-section" style="display:none">
+      <div class="card">
+        <div class="card-title">Vos habitudes de voyage</div>
+        <div class="card-sub">Aidez les conducteurs à savoir à quoi s'attendre.</div>
+        <div class="toggle-grid">
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pax-bagage">🧳 Gros bagage fréquent</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pax-animal">🐾 Voyage avec animal</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pax-arret">📍 Besoin d'arrêts</label>
+          <label class="toggle-item" onclick="tog(this)"><input type="checkbox" id="pax-accessible">♿ Accessibilité requise</label>
+        </div>
+        <div class="field" style="margin-top:18px;">
+          <label>Besoins particuliers (optionnel)</label>
+          <textarea id="pax-notes" placeholder="Ex : voyage souvent Québec–Montréal le vendredi, besoin d'un coffre grand…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="btn-back" onclick="goStep(2)">← Retour</button>
+      <button class="btn-next" style="flex:1" onclick="goStep(4)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 — Acceptation règlements + création compte -->
+  <div class="step-section" id="step-4">
+    <div class="card">
+      <div class="card-title">Règlements et confirmation</div>
+      <div class="card-sub">Lisez et acceptez les règles avant de créer votre compte.</div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;max-height:200px;overflow-y:auto;font-size:.83rem;color:var(--muted);line-height:1.65;">
+        <strong style="color:var(--text);display:block;margin-bottom:10px">Principes fondamentaux</strong>
+        <p>Le covoiturage sur PorteÀPorte est basé sur le partage de frais d'un trajet existant. Le conducteur doit effectuer ce trajet pour lui-même, indépendamment des passagers. La compensation demandée ne doit pas dépasser les frais raisonnables (essence, usure, péages).</p>
+        <br>
+        <strong style="color:var(--text);display:block;margin-bottom:10px">Responsabilités</strong>
+        <p>Le conducteur est responsable de son permis de conduire valide, de son assurance automobile, de l'état de son véhicule et du respect du Code de la route. Les passagers doivent respecter les règles du conducteur et signaler tout problème via la plateforme.</p>
+        <br>
+        <strong style="color:var(--text);display:block;margin-bottom:10px">Interdits</strong>
+        <p>Il est interdit de publier un trajet uniquement pour transporter des passagers. Il est interdit de fixer un prix abusif. Tout comportement dangereux, harcelant ou frauduleux entraîne la suspension immédiate du compte.</p>
+        <br>
+        <strong style="color:var(--text);display:block;margin-bottom:10px">Cadre légal</strong>
+        <p>Ce service ne constitue pas un service de taxi ni du transport commercial. Il repose sur le partage de frais, conformément à l'interprétation d'Éducaloi et de la Commission des transports du Québec.</p>
+      </div>
+
+      <div class="legal-check">
+        <input type="checkbox" id="accept-regles" onchange="checkFinal()">
+        <label for="accept-regles">J'ai lu et j'accepte le <a href="/covoiturage/regles.html" target="_blank">règlement complet du covoiturage</a>. Je comprends que le covoiturage est un partage de frais, pas un service de transport rémunéré.</label>
+      </div>
+      <div class="legal-check">
+        <input type="checkbox" id="accept-cgv" onchange="checkFinal()">
+        <label for="accept-cgv">J'accepte les <a href="/cgv.html" target="_blank">conditions générales d'utilisation</a> de PorteÀPorte.</label>
+      </div>
+      <div class="legal-check">
+        <input type="checkbox" id="accept-age" onchange="checkFinal()">
+        <label for="accept-age">Je confirme avoir au moins 18 ans et détenir un permis de conduire valide (si je souhaite conduire).</label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="btn-back" onclick="goStep(3)">← Retour</button>
+      <button class="btn-next" id="btn-final" style="flex:1" onclick="createAccount()" disabled>Créer mon compte covoiturage</button>
+    </div>
+  </div>
+
+  <!-- SUCCÈS -->
+  <div class="step-section" id="step-success">
+    <div class="card success-panel">
+      <div class="big-icon">🎉</div>
+      <h2>Bienvenue dans la communauté !</h2>
+      <p>Votre compte covoiturage est créé. Vous avez gagné le badge <strong style="color:var(--green)">🌱 Nouveau covoitureur</strong> et <strong style="color:var(--green)">50 XP</strong> de départ.</p>
+      <div class="success-links">
+        <a href="/covoiturage.html" class="btn-outline">Trouver un trajet</a>
+        <a href="/covoiturage-publier.html" class="btn-outline">Publier un trajet</a>
+        <a href="/dashboard-covoiturage.html" class="btn-next" style="width:auto;margin-top:0;display:inline-block;text-decoration:none;padding:12px 24px">Mon dashboard →</a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script src="/js/auth-api.js"></script>
+<script>
+  let selectedRole = null;
+  let currentStep  = 1;
+
+  function selectRole(role) {
+    selectedRole = role;
+    ['conducteur','passager','les_deux'].forEach(r => {
+      document.getElementById('role-' + r).classList.toggle('selected', r === role);
+    });
+    document.getElementById('btn-1').disabled = false;
+  }
+
+  function tog(el) {
+    el.classList.toggle('on');
+  }
+
+  function goStep(n) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep = n;
+    document.getElementById('step-' + n).classList.add('active');
+    updateProgress();
+
+    if (n === 3) {
+      const isConducteur = selectedRole === 'conducteur' || selectedRole === 'les_deux';
+      document.getElementById('conducteur-section').style.display = isConducteur ? 'block' : 'none';
+      document.getElementById('passager-section').style.display   = !isConducteur ? 'block' : 'none';
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    for (let i = 1; i <= 4; i++) {
+      const dot  = document.getElementById('dot-' + i);
+      const line = document.getElementById('line-' + i);
+      if (i < currentStep) {
+        dot.classList.add('done'); dot.classList.remove('active');
+        if (line) line.classList.add('done');
+      } else if (i === currentStep) {
+        dot.classList.add('active'); dot.classList.remove('done');
+        if (line) line.classList.remove('done');
+      } else {
+        dot.classList.remove('active','done');
+        if (line) line.classList.remove('done');
+      }
+    }
+  }
+
+  function validateStep2() {
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom    = document.getElementById('nom').value.trim();
+    const email  = document.getElementById('email').value.trim();
+    const pwd    = document.getElementById('password').value;
+    const tel    = document.getElementById('telephone').value.trim();
+    if (!prenom || !nom || !email || !pwd || !tel) {
+      showError('Tous les champs obligatoires doivent être remplis.');
+      return;
+    }
+    if (pwd.length < 8) {
+      showError('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+    hideError();
+    goStep(3);
+  }
+
+  function checkFinal() {
+    const ok = document.getElementById('accept-regles').checked &&
+               document.getElementById('accept-cgv').checked &&
+               document.getElementById('accept-age').checked;
+    document.getElementById('btn-final').disabled = !ok;
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+
+  async function createAccount() {
+    const btn = document.getElementById('btn-final');
+    btn.disabled = true;
+    btn.textContent = 'Création en cours…';
+
+    try {
+      const db = getSupabaseClient();
+
+      // 1. Créer le compte Supabase Auth
+      const { data: authData, error: authErr } = await db.auth.signUp({
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        options:  { data: { prenom: document.getElementById('prenom').value.trim(), nom: document.getElementById('nom').value.trim() } }
+      });
+
+      if (authErr) { showError(authErr.message); btn.disabled = false; btn.textContent = 'Créer mon compte covoiturage'; return; }
+
+      // 2. Mettre à jour le profil avec les données covoiturage
+      const isConducteur = selectedRole === 'conducteur' || selectedRole === 'les_deux';
+      const profileUpdate = {
+        prenom:    document.getElementById('prenom').value.trim(),
+        nom:       document.getElementById('nom').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        ville:     document.getElementById('ville').value.trim(),
+        cov_role:  selectedRole,
+      };
+
+      if (isConducteur) {
+        profileUpdate.cov_vehicule_type = document.getElementById('vehicule-type').value;
+        profileUpdate.cov_places        = parseInt(document.getElementById('places').value);
+        profileUpdate.cov_coffre        = document.getElementById('coffre').value;
+        profileUpdate.cov_animaux       = document.getElementById('pref-animaux').checked;
+        profileUpdate.cov_bagages       = document.getElementById('pref-bagages').checked;
+        profileUpdate.cov_arrets        = document.getElementById('pref-arrets').checked;
+        profileUpdate.cov_nonsmoker     = document.getElementById('pref-nonsmoker').checked;
+        profileUpdate.cov_femmes        = document.getElementById('pref-femmes').checked;
+        profileUpdate.cov_enfant        = document.getElementById('pref-enfant').checked;
+        profileUpdate.cov_accessible    = document.getElementById('pref-accessible').checked;
+        profileUpdate.cov_regles_perso  = document.getElementById('regles-perso').value.trim() || null;
+      } else {
+        profileUpdate.cov_pax_bagage    = document.getElementById('pax-bagage').checked;
+        profileUpdate.cov_pax_animal    = document.getElementById('pax-animal').checked;
+        profileUpdate.cov_pax_arret     = document.getElementById('pax-arret').checked;
+        profileUpdate.cov_pax_accessible= document.getElementById('pax-accessible').checked;
+        profileUpdate.cov_pax_notes     = document.getElementById('pax-notes').value.trim() || null;
+      }
+
+      if (authData.user) {
+        await db.from('profiles').upsert({ id: authData.user.id, ...profileUpdate });
+
+        // 3. Attribuer badge "Nouveau covoitureur" + 50 XP via API
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
+          await fetch('/api/cov-onboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({ role: selectedRole })
+          }).catch(() => {});
+        }
+      }
+
+      // 4. Succès
+      document.getElementById('step-' + currentStep).classList.remove('active');
+      document.getElementById('step-success').classList.add('active');
+      document.getElementById('progress-bar').style.display = 'none';
+
+    } catch (e) {
+      showError('Une erreur est survenue. Veuillez réessayer.');
+      btn.disabled = false;
+      btn.textContent = 'Créer mon compte covoiturage';
+    }
+  }
+</script>
+</body>
+</html>

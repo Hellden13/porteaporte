@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mon covoiturage — PorteÀPorte</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
+      --border:#1E2A3A; --green:#B8F53E; --cyan:#00D9FF;
+      --text:#E8EDF5; --muted:#8A9BB0; --danger:#FF6B6B; --radius:14px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    a{color:inherit;text-decoration:none;}
+
+    /* NAV */
+    nav{background:rgba(10,15,30,.96);border-bottom:1px solid var(--border);padding:14px clamp(18px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;}
+    .nav-logo{font-weight:800;color:var(--green);font-size:1.1rem;}
+    .nav-links{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .nav-links a{padding:7px 14px;border-radius:8px;font-size:.85rem;font-weight:600;color:var(--muted);transition:all .15s;}
+    .nav-links a:hover,.nav-links a.active{background:var(--surface2);color:var(--text);}
+    .btn-green{background:var(--green);color:#0A0F1E;padding:8px 18px;border-radius:8px;font-weight:800;font-size:.85rem;}
+
+    /* LAYOUT */
+    .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px);}
+    @media(max-width:768px){.layout{grid-template-columns:1fr;} .sidebar{display:none;}}
+    .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 16px;}
+    .sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;margin-bottom:4px;}
+    .sidebar-item:hover,.sidebar-item.active{background:var(--surface2);color:var(--text);}
+    .sidebar-item.active{color:var(--green);}
+    .sidebar-icon{font-size:1rem;width:20px;text-align:center;}
+    .sidebar-sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
+    .main{padding:clamp(20px,3vw,36px) clamp(18px,3vw,36px);overflow-y:auto;}
+
+    /* HEADER */
+    .dash-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+    .dash-header h1{font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:900;}
+    .dash-header p{color:var(--muted);font-size:.9rem;margin-top:4px;}
+    .role-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);color:var(--green);border-radius:100px;padding:5px 14px;font-size:.78rem;font-weight:700;margin-top:8px;}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;}
+    .stat-val{font-size:1.8rem;font-weight:900;line-height:1;margin-bottom:5px;}
+    .stat-label{font-size:.78rem;color:var(--muted);font-weight:600;}
+
+    /* SECTION */
+    .section-block{margin-bottom:32px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+    .section-head h2{font-size:1rem;font-weight:800;}
+    .section-head a,.section-head button{font-size:.8rem;color:var(--cyan);background:none;border:none;cursor:pointer;font-weight:600;padding:0;}
+
+    /* XP BAR */
+    .xp-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;margin-bottom:28px;}
+    .xp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+    .xp-level{font-size:1.2rem;font-weight:800;}
+    .xp-next{font-size:.82rem;color:var(--muted);}
+    .xp-bar{height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+    .xp-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:100px;transition:width .8s ease;}
+    .xp-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:7px;}
+
+    /* RIDES TABLE */
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:var(--surface2);font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left;}
+    td{padding:12px 14px;font-size:.87rem;border-top:1px solid var(--border);}
+    .empty-msg{text-align:center;color:var(--muted);font-size:.85rem;padding:32px;}
+    .status-chip{display:inline-block;border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+
+    /* BADGES */
+    .badges-row{display:flex;flex-wrap:wrap;gap:10px;}
+    .badge-pill{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;}
+    .badge-pill .ico{font-size:1.1rem;}
+    .badge-pill.earned{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.06);}
+    .badge-pill .bname{font-weight:600;}
+    .badge-pill .bloc{color:var(--muted);font-size:.75rem;}
+    .locked-icon{opacity:.35;filter:grayscale(1);}
+
+    /* MISSIONS */
+    .missions-list{display:flex;flex-direction:column;gap:10px;}
+    .mission-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+    .mission-icon{font-size:1.2rem;flex-shrink:0;}
+    .mission-info{flex:1;min-width:0;}
+    .mission-name{font-size:.9rem;font-weight:700;margin-bottom:3px;}
+    .mission-desc{font-size:.78rem;color:var(--muted);}
+    .mission-prog-wrap{min-width:100px;text-align:right;}
+    .mission-prog-bar{height:6px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-bottom:4px;}
+    .mission-prog-fill{height:100%;background:var(--green);border-radius:100px;transition:width .5s;}
+    .mission-prog-label{font-size:.72rem;color:var(--muted);}
+    .mission-done{color:var(--green);font-size:.8rem;font-weight:700;}
+
+    /* REVIEWS */
+    .reviews-list{display:flex;flex-direction:column;gap:10px;}
+    .review-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+    .review-stars{color:#FFB74D;font-size:1rem;margin-bottom:5px;}
+    .review-text{font-size:.85rem;color:var(--text);margin-bottom:6px;}
+    .review-meta{font-size:.75rem;color:var(--muted);}
+
+    /* TABS */
+    .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;}
+    .tab{padding:9px 16px;border-radius:8px 8px 0 0;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;border:none;background:none;}
+    .tab.active{color:var(--green);border-bottom:2px solid var(--green);}
+
+    /* LOADING */
+    .loading{text-align:center;padding:40px;color:var(--muted);}
+    .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* MOBILE TAB BAR */
+    .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom);z-index:99;}
+    @media(max-width:768px){.mobile-tabs{display:flex;}}
+    .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.65rem;color:var(--muted);padding:6px 4px;cursor:pointer;transition:color .15s;}
+    .mob-tab.active{color:var(--green);}
+    .mob-tab .ico{font-size:1.2rem;}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">PorteÀPorte</a>
+  <div class="nav-links">
+    <a href="/covoiturage.html">Trouver un trajet</a>
+    <a href="/covoiturage-publier.html" class="btn-green">+ Publier</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-item active" onclick="showSection('overview')"><span class="sidebar-icon">🏠</span> Vue d'ensemble</div>
+    <div class="sidebar-item" onclick="showSection('trajets')"><span class="sidebar-icon">🚗</span> Mes trajets</div>
+    <div class="sidebar-item" onclick="showSection('reservations')"><span class="sidebar-icon">🎫</span> Réservations</div>
+    <div class="sidebar-item" onclick="showSection('missions')"><span class="sidebar-icon">🎯</span> Missions</div>
+    <div class="sidebar-item" onclick="showSection('badges')"><span class="sidebar-icon">🏆</span> Badges</div>
+    <div class="sidebar-item" onclick="showSection('avis')"><span class="sidebar-icon">⭐</span> Avis</div>
+    <hr class="sidebar-sep">
+    <div class="sidebar-item" onclick="showSection('signalements')"><span class="sidebar-icon">🚩</span> Signalements</div>
+    <div class="sidebar-item" onclick="window.location.href='/covoiturage-info.html'"><span class="sidebar-icon">ℹ️</span> Guide</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-content">
+    <div class="loading" id="initial-loading">
+      <div class="spinner"></div>
+      <p>Chargement de votre tableau de bord…</p>
+    </div>
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-tabs">
+  <div class="mob-tab active" onclick="showSection('overview')"><span class="ico">🏠</span>Accueil</div>
+  <div class="mob-tab" onclick="showSection('trajets')"><span class="ico">🚗</span>Trajets</div>
+  <div class="mob-tab" onclick="showSection('reservations')"><span class="ico">🎫</span>Réservations</div>
+  <div class="mob-tab" onclick="showSection('missions')"><span class="ico">🎯</span>Missions</div>
+  <div class="mob-tab" onclick="showSection('badges')"><span class="ico">🏆</span>Badges</div>
+</nav>
+
+<script src="/js/auth-api.js"></script>
+<script>
+let dashData  = null;
+let userProfile = null;
+let currentSection = 'overview';
+
+const LEVELS = [
+  { n:1, name:'Nouveau',          min:0,    max:199,  color:'#8B9BB0' },
+  { n:2, name:'Fiable',           min:200,  max:499,  color:'#00D9FF' },
+  { n:3, name:'Habitué',          min:500,  max:999,  color:'#B8F53E' },
+  { n:4, name:'Ambassadeur',      min:1000, max:1999, color:'#FFB74D' },
+  { n:5, name:'Capitaine régional', min:2000, max:9999, color:'#B8F53E' },
+];
+
+function getLevel(xp) {
+  return LEVELS.slice().reverse().find(l => xp >= l.min) || LEVELS[0];
+}
+
+async function init() {
+  const db = getSupabaseClient();
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+
+  const [profileRes, dashRes] = await Promise.all([
+    db.from('profiles').select('*').eq('id', session.user.id).single(),
+    fetch('/api/cov-dashboard', { headers: { 'Authorization': 'Bearer ' + session.access_token } })
+  ]);
+
+  userProfile = profileRes.data || {};
+  dashData    = dashRes.ok ? await dashRes.json() : {};
+
+  document.getElementById('initial-loading').remove();
+  renderSection('overview');
+}
+
+function showSection(name) {
+  currentSection = name;
+  document.querySelectorAll('.sidebar-item').forEach((el,i) => {
+    const sections = ['overview','trajets','reservations','missions','badges','avis','signalements'];
+    el.classList.toggle('active', sections[i] === name);
+  });
+  document.querySelectorAll('.mob-tab').forEach((el,i) => {
+    const sections = ['overview','trajets','reservations','missions','badges'];
+    el.classList.toggle('active', sections[i] === name);
+  });
+  renderSection(name);
+}
+
+function renderSection(name) {
+  const main = document.getElementById('main-content');
+  switch(name) {
+    case 'overview':      main.innerHTML = buildOverview(); break;
+    case 'trajets':       main.innerHTML = buildTrajets(); break;
+    case 'reservations':  main.innerHTML = buildReservations(); break;
+    case 'missions':      main.innerHTML = buildMissions(); break;
+    case 'badges':        main.innerHTML = buildBadges(); break;
+    case 'avis':          main.innerHTML = buildAvis(); break;
+    case 'signalements':  main.innerHTML = buildSignalements(); break;
+  }
+}
+
+function $m(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-CA',{dateStyle:'medium'}) : '—'; }
+function fmtDT(d)   { return d ? new Date(d).toLocaleString('fr-CA',{dateStyle:'short',timeStyle:'short'}) : '—'; }
+
+function statusChip(s) {
+  const map = {
+    publie: ['#B8F53E','#0D2A00','Publié'],
+    complet: ['#00D9FF','#002233','Complet'],
+    annule: ['#FF6B6B','#2A0000','Annulé'],
+    termine: ['#5A6A7A','#111','Terminé'],
+    confirme: ['#B8F53E','#0D2A00','Confirmé'],
+    en_attente: ['#FFB74D','#1A0F00','En attente'],
+    annule_passager: ['#FF6B6B','#2A0000','Annulé'],
+    annule_chauffeur: ['#FF6B6B','#2A0000','Annulé'],
+    complete: ['#5A6A7A','#111','Complété'],
+  };
+  const [bg,fg,label] = map[s] || ['#3A4A5A','#8A9BB0',s];
+  return `<span class="status-chip" style="background:${bg};color:${fg}">${label}</span>`;
+}
+
+// ── OVERVIEW ──
+function buildOverview() {
+  const xp     = userProfile.xp || 0;
+  const level  = getLevel(xp);
+  const nextL  = LEVELS.find(l => l.n === level.n + 1) || level;
+  const pct    = level.n < 5 ? Math.round((xp - level.min) / (nextL.min - level.min) * 100) : 100;
+
+  const rides     = dashData.my_rides     || [];
+  const bookings  = dashData.my_bookings  || [];
+  const missions  = dashData.missions     || [];
+  const badges    = dashData.badges       || [];
+
+  const activeRides   = rides.filter(r => r.status === 'publie').length;
+  const confirmedBook = bookings.filter(b => b.status === 'confirme').length;
+  const earnedBadges  = badges.filter(b => b.earned).length;
+  const doneMissions  = missions.filter(m => m.done).length;
+  const isConducteur  = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux';
+  const roleLabel     = { conducteur:'🚗 Conducteur', passager:'🧳 Passager', les_deux:'🔄 Conducteur & Passager' }[userProfile.cov_role] || '—';
+
+  return `
+  <div class="dash-header">
+    <div>
+      <h1>Bonjour, ${userProfile.prenom || 'vous'} 👋</h1>
+      <p>Votre tableau de bord covoiturage PorteÀPorte</p>
+      <div class="role-badge">${roleLabel}</div>
+    </div>
+    ${isConducteur ? `<a href="/covoiturage-publier.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem;white-space:nowrap">+ Publier un trajet</a>` : `<a href="/covoiturage.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem;white-space:nowrap">Trouver un trajet</a>`}
+  </div>
+
+  <!-- XP BAR -->
+  <div class="xp-bar-wrap">
+    <div class="xp-top">
+      <span class="xp-level" style="color:${level.color}">Niveau ${level.n} — ${level.name}</span>
+      <span class="xp-next">${xp} XP${level.n < 5 ? ` · ${nextL.min - xp} XP avant ${nextL.name}` : ' · Niveau maximum'}</span>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
+    <div class="xp-labels"><span>${level.min} XP</span><span>${level.n < 5 ? nextL.min + ' XP' : '∞'}</span></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${activeRides}</div><div class="stat-label">Trajets actifs</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${confirmedBook}</div><div class="stat-label">Réservations confirmées</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#FFB74D">${earnedBadges}</div><div class="stat-label">Badges obtenus</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${doneMissions}/${missions.length}</div><div class="stat-label">Missions complétées</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--text)">${xp}</div><div class="stat-label">XP total</div></div>
+  </div>
+
+  <!-- PROCHAINS TRAJETS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Prochains trajets</h2><button onclick="showSection('trajets')">Voir tout →</button></div>
+    <div class="table-wrap">
+      ${rides.filter(r=>r.status==='publie').slice(0,3).length === 0
+        ? `<p class="empty-msg">Aucun trajet publié. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publiez votre premier trajet →</a></p>`
+        : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th></tr></thead><tbody>
+          ${rides.filter(r=>r.status==='publie').slice(0,3).map(r=>`<tr>
+            <td>${r.start_city||'?'} → ${r.end_city||'?'}</td>
+            <td style="color:var(--muted)">${fmtDT(r.departure_time)}</td>
+            <td>${r.available_seats} pl.</td>
+            <td>${statusChip(r.status)}</td>
+          </tr>`).join('')}
+        </tbody></table>`}
+    </div>
+  </div>
+
+  <!-- MISSIONS EN COURS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Missions en cours</h2><button onclick="showSection('missions')">Voir tout →</button></div>
+    <div class="missions-list">
+      ${missions.filter(m=>!m.done).slice(0,3).map(m=>`
+      <div class="mission-row">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc">${m.description} · <span style="color:var(--green);font-weight:700">+${m.xp_reward} XP</span></div>
+        </div>
+        <div class="mission-prog-wrap">
+          <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>
+          <div class="mission-prog-label">${m.progress||0}/${m.target||1}</div>
+        </div>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;padding:12px 0">Aucune mission en cours.</p>'}
+    </div>
+  </div>
+
+  <!-- BADGES RÉCENTS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Badges récents</h2><button onclick="showSection('badges')">Voir tout →</button></div>
+    <div class="badges-row">
+      ${badges.filter(b=>b.earned).slice(0,6).map(b=>`
+      <div class="badge-pill earned"><span class="ico">${b.icon||'🏅'}</span><div><div class="bname">${b.name}</div><div class="bloc">${fmtDate(b.earned_at)}</div></div></div>
+      `).join('') || '<p style="color:var(--muted);font-size:.85rem">Complétez des missions pour gagner vos premiers badges.</p>'}
+    </div>
+  </div>`;
+}
+
+// ── TRAJETS ──
+function buildTrajets() {
+  const rides    = dashData.my_rides    || [];
+  const bookings = dashData.my_bookings || [];
+  const isConducteur = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux';
+
+  return `
+  <div class="dash-header">
+    <div><h1>Mes trajets</h1><p>Trajets publiés et réservations en tant que passager</p></div>
+    ${isConducteur ? `<a href="/covoiturage-publier.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem">+ Publier</a>` : ''}
+  </div>
+
+  ${isConducteur ? `
+  <div class="section-block">
+    <div class="section-head"><h2>Trajets publiés (${rides.length})</h2></div>
+    <div class="table-wrap">
+      ${rides.length === 0
+        ? `<p class="empty-msg">Aucun trajet publié. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publier mon premier trajet →</a></p>`
+        : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+          ${rides.map(r=>`<tr>
+            <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
+            <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
+            <td>${r.available_seats} pl.</td>
+            <td>${statusChip(r.status)}</td>
+            <td><a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a></td>
+          </tr>`).join('')}
+        </tbody></table>`}
+    </div>
+  </div>` : ''}
+
+  <div class="section-block">
+    <div class="section-head"><h2>Mes réservations passager (${bookings.length})</h2></div>
+    <div class="table-wrap">
+      ${bookings.length === 0
+        ? `<p class="empty-msg">Aucune réservation. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
+        : `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th></tr></thead><tbody>
+          ${bookings.map(b=>`<tr>
+            <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+            <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
+            <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+            <td>${statusChip(b.status)}</td>
+          </tr>`).join('')}
+        </tbody></table>`}
+    </div>
+  </div>`;
+}
+
+// ── RÉSERVATIONS REÇUES ──
+function buildReservations() {
+  const rides = dashData.my_rides || [];
+  const allBookings = (dashData.ride_bookings || []);
+
+  return `
+  <div class="dash-header"><div><h1>Réservations reçues</h1><p>Passagers qui ont réservé vos trajets</p></div></div>
+  <div class="table-wrap">
+    ${allBookings.length === 0
+      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant.</p>`
+      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Montant</th><th>Statut</th></tr></thead><tbody>
+        ${allBookings.map(b=>`<tr>
+          <td>${b.passenger_prenom||'—'}</td>
+          <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+          <td>${b.seats_reserved} pl.</td>
+          <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+          <td>${statusChip(b.status)}</td>
+        </tr>`).join('')}
+      </tbody></table>`}
+  </div>`;
+}
+
+// ── MISSIONS ──
+function buildMissions() {
+  const missions = dashData.missions || [];
+  const done   = missions.filter(m=>m.done);
+  const active = missions.filter(m=>!m.done);
+
+  return `
+  <div class="dash-header"><div><h1>Missions</h1><p>Accomplissez des défis pour gagner XP et badges</p></div></div>
+
+  ${active.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>En cours (${active.length})</h2></div>
+    <div class="missions-list">
+      ${active.map(m=>`
+      <div class="mission-row">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc">${m.description}</div>
+          <div style="margin-top:5px"><span style="background:rgba(184,245,62,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(0,217,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
+        </div>
+        <div class="mission-prog-wrap" style="min-width:120px">
+          <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>
+          <div class="mission-prog-label">${m.progress||0} / ${m.target||1} — ${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${done.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>Complétées (${done.length})</h2></div>
+    <div class="missions-list">
+      ${done.map(m=>`
+      <div class="mission-row" style="opacity:.65">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc" style="color:var(--muted)">${fmtDate(m.completed_at)}</div>
+        </div>
+        <div class="mission-done">✅ +${m.xp_reward} XP</div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${missions.length === 0 ? '<p style="color:var(--muted);text-align:center;padding:40px">Les missions se chargent au prochain trajet.</p>' : ''}`;
+}
+
+// ── BADGES ──
+function buildBadges() {
+  const badges = dashData.badges || [];
+  const earned = badges.filter(b=>b.earned);
+  const locked = badges.filter(b=>!b.earned);
+
+  return `
+  <div class="dash-header"><div><h1>Badges</h1><p>${earned.length} badge${earned.length!==1?'s':''} obtenu${earned.length!==1?'s':''} sur ${badges.length}</p></div></div>
+
+  ${earned.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>Obtenus</h2></div>
+    <div class="badges-row">
+      ${earned.map(b=>`
+      <div class="badge-pill earned">
+        <span class="ico">${b.icon||'🏅'}</span>
+        <div><div class="bname">${b.name}</div><div class="bloc">${fmtDate(b.earned_at)}</div></div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <div class="section-block">
+    <div class="section-head"><h2>À débloquer</h2></div>
+    <div class="badges-row">
+      ${locked.map(b=>`
+      <div class="badge-pill">
+        <span class="ico locked-icon">${b.icon||'🏅'}</span>
+        <div><div class="bname" style="color:var(--muted)">${b.name}</div><div class="bloc">${b.condition||''}</div></div>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem">Tous les badges débloqués. 🎉</p>'}
+    </div>
+  </div>`;
+}
+
+// ── AVIS ──
+function buildAvis() {
+  const reviews = dashData.reviews || [];
+  const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
+
+  return `
+  <div class="dash-header">
+    <div>
+      <h1>Avis reçus</h1>
+      ${avg ? `<p>Note moyenne : <strong style="color:var(--green);font-size:1.1rem">${avg} ⭐</strong> · ${reviews.length} avis</p>` : '<p style="color:var(--muted)">Aucun avis reçu pour l\'instant.</p>'}
+    </div>
+  </div>
+  <div class="reviews-list">
+    ${reviews.map(r=>`
+    <div class="review-row">
+      <div class="review-stars">${'⭐'.repeat(Math.round(r.rating||0))}</div>
+      <div class="review-text">${r.comment||'—'}</div>
+      <div class="review-meta">${fmtDate(r.created_at)}</div>
+    </div>`).join('') || '<p style="color:var(--muted);text-align:center;padding:40px">Les avis s\'afficheront après vos premiers trajets.</p>'}
+  </div>`;
+}
+
+// ── SIGNALEMENTS ──
+function buildSignalements() {
+  const reports = dashData.reports || [];
+
+  return `
+  <div class="dash-header"><div><h1>Signalements</h1><p>Signalements que vous avez soumis</p></div></div>
+  <div class="table-wrap">
+    ${reports.length === 0
+      ? `<p class="empty-msg">Aucun signalement soumis.</p>`
+      : `<table><thead><tr><th>Raison</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+        ${reports.map(r=>`<tr>
+          <td>${r.reason||'—'}</td>
+          <td>${statusChip(r.status)}</td>
+          <td style="color:var(--muted);font-size:.8rem">${fmtDate(r.created_at)}</td>
+        </tr>`).join('')}
+      </tbody></table>`}
+  </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
