@@ -113,6 +113,38 @@
                      {
                          "source":  "/api/admin-rewards",
                          "destination":  "/api/platform?endpoint=admin-rewards"
+                     },
+                     {
+                         "source":  "/api/ride-create",
+                         "destination":  "/api/platform?endpoint=ride-create"
+                     },
+                     {
+                         "source":  "/api/ride-search",
+                         "destination":  "/api/platform?endpoint=ride-search"
+                     },
+                     {
+                         "source":  "/api/ride-detail",
+                         "destination":  "/api/platform?endpoint=ride-detail"
+                     },
+                     {
+                         "source":  "/api/ride-book",
+                         "destination":  "/api/platform?endpoint=ride-book"
+                     },
+                     {
+                         "source":  "/api/ride-cancel",
+                         "destination":  "/api/platform?endpoint=ride-cancel"
+                     },
+                     {
+                         "source":  "/api/ride-my-rides",
+                         "destination":  "/api/platform?endpoint=ride-my-rides"
+                     },
+                     {
+                         "source":  "/api/ride-admin",
+                         "destination":  "/api/platform?endpoint=ride-admin"
+                     },
+                     {
+                         "source":  "/api/ride-report",
+                         "destination":  "/api/platform?endpoint=ride-report"
                      }
                  ],
     "headers":  [
