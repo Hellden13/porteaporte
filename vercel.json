@@ -1,6 +1,14 @@
 {
     "cleanUrls":  false,
     "trailingSlash":  false,
+    "redirects": [
+        { "source": "/(.*\\.sql)",  "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.bat)",  "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.ps1)",  "destination": "/404.html", "permanent": false },
+        { "source": "/BACKEND-(.*\\.md)", "destination": "/404.html", "permanent": false },
+        { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },
+        { "source": "/test-login.html", "destination": "/404.html", "permanent": false }
+    ],
     "rewrites":  [
                      {
                          "source":  "/api/capture-payment",

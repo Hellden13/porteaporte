@@ -287,7 +287,7 @@
     // Auth guard
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-      if (!db) return;
+      if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
       const { data: { session } } = await db.auth.getSession();
       if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; }
     })();
@@ -367,7 +367,7 @@
       btn.disabled = true; btn.textContent = 'Publication...';
 
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-      if (!db) { btn.disabled = false; btn.textContent = '🚗 Publier mon trajet'; return; }
+      if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
       const { data: { session } } = await db.auth.getSession();
       if (!session) { window.location.href = '/login.html'; return; }
 
