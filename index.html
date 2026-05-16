@@ -653,8 +653,15 @@
     <!-- ===== BANNIÈRE COVOITURAGE ===== -->
     <section style="padding: 0 clamp(18px,4vw,48px) 72px;">
       <div style="max-width:1120px;margin:0 auto;">
-        <a href="role-choice.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+        <a href="/covoiturage-info.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;position:relative;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
           <img src="/assets/banniere-covoiturage.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits" style="width:100%;height:auto;display:block;">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.72));padding:28px 32px 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div>
+              <div style="color:#B8F53E;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Nouveau — Covoiturage communautaire</div>
+              <div style="color:#fff;font-size:clamp(1rem,2.5vw,1.35rem);font-weight:700;line-height:1.3">Partagez vos frais de route.<br>Aidez quelqu'un en même temps.</div>
+            </div>
+            <span style="background:#B8F53E;color:#0A0F1E;font-size:.82rem;font-weight:800;padding:10px 22px;border-radius:8px;white-space:nowrap;flex-shrink:0">Découvrir →</span>
+          </div>
         </a>
       </div>
     </section>

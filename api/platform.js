@@ -1609,6 +1609,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-my-rides') return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')    return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')   return await rideReport(req, res, ctx, body);
+    if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
+    if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
+    if (endpoint === 'cov-progress')  return await covProgress(req, res, ctx, body);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -1727,7 +1730,15 @@ const RIDE_FEE_LUGGAGE   = 5.00;
 const RIDE_FEE_PET       = 8.00;
 const RIDE_FEE_STOP      = 3.00;
 
-function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats }) {
+function groupBonusPct(confirmedPassengers) {
+  const n = Number(confirmedPassengers) || 0;
+  if (n >= 4) return 0.15;
+  if (n === 3) return 0.10;
+  if (n === 2) return 0.05;
+  return 0;
+}
+
+function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats, confirmedPassengers }) {
   const cpk = Number(costPerKm) || RIDE_COST_PER_KM;
   const totalKm = Number(totalDistanceKm) || 0;
   const paxKm   = Number(passengerDistanceKm) || totalKm;
@@ -1735,7 +1746,11 @@ function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLug
 
   const totalCostBase = totalKm * cpk;
   const paxSharePct   = totalKm > 0 ? (paxKm / totalKm) : 1;
-  const paxBase       = totalCostBase * paxSharePct * nSeats;
+  const paxBaseRaw    = totalCostBase * paxSharePct * nSeats;
+
+  // Bonus groupe : réduction sur la part de base
+  const bonus    = groupBonusPct(confirmedPassengers);
+  const paxBase  = Math.round(paxBaseRaw * (1 - bonus) * 100) / 100;
 
   const luggageFee = hasLuggage ? RIDE_FEE_LUGGAGE : 0;
   const petFee     = hasPet     ? RIDE_FEE_PET     : 0;
@@ -2192,4 +2207,194 @@ async function rideReport(req, res, ctx, body) {
 
   if (!r.ok) return res.status(400).json({ error: 'Signalement impossible' });
   return res.status(200).json({ success: true, message: 'Signalement reçu. Notre équipe va examiner.' });
+}
+
+/* ── COV DASHBOARD ─────────────────────────────────────────── */
+async function covDashboard(req, res, ctx) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+  const uid = ctx.session.id;
+
+  const [
+    ridesRes, bookingsRes, receivedRes,
+    missionsRes, badgesRes, reportsRes, reviewsRes
+  ] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/rides?driver_id=eq.${uid}&order=departure_time.desc&limit=50&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?passenger_id=eq.${uid}&order=created_at.desc&limit=50&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?select=*,passenger_profile:profiles!passenger_id(prenom)&ride_id=in.(${encodeURIComponent('select id from rides where driver_id = \'' + uid + '\'')})&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?user_id=eq.${uid}&select=*,mission:cov_missions(*)`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges?user_id=eq.${uid}&select=*,badge:cov_badges(*)`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_reports?reporter_id=eq.${uid}&order=created_at.desc&limit=20&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/cov_reviews?reviewed_id=eq.${uid}&order=created_at.desc&limit=20&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+  ]);
+
+  const rawMissions = missionsRes.ok ? await missionsRes.json() : [];
+  const rawBadges   = badgesRes.ok   ? await badgesRes.json()   : [];
+
+  // Charger tous les badges du catalogue pour montrer ceux non débloqués
+  const allBadgesRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?select=*`, { headers: sbHeaders(ctx.sbKey) });
+  const allBadges    = allBadgesRes.ok ? await allBadgesRes.json() : [];
+  const earnedSlugs  = rawBadges.map(b => b.badge?.slug);
+
+  const badges = allBadges.map(b => ({
+    ...b,
+    earned:    earnedSlugs.includes(b.slug),
+    earned_at: rawBadges.find(ub => ub.badge?.slug === b.slug)?.earned_at || null,
+  }));
+
+  // Charger toutes les missions du catalogue
+  const allMissionsRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_missions?active=eq.true&select=*`, { headers: sbHeaders(ctx.sbKey) });
+  const allMissions    = allMissionsRes.ok ? await allMissionsRes.json() : [];
+  const missions = allMissions.map(m => {
+    const progress = rawMissions.find(um => um.mission_id === m.id);
+    return {
+      ...m,
+      progress:     progress?.progress || 0,
+      done:         progress?.done     || false,
+      completed_at: progress?.completed_at || null,
+    };
+  });
+
+  const receivedBookings = receivedRes.ok ? (await receivedRes.json()).map(b => ({
+    ...b, passenger_prenom: b.passenger_profile?.prenom || null, passenger_profile: undefined
+  })) : [];
+
+  return res.status(200).json({
+    my_rides:      ridesRes.ok      ? await ridesRes.json()      : [],
+    my_bookings:   bookingsRes.ok   ? await bookingsRes.json()   : [],
+    ride_bookings: receivedBookings,
+    missions,
+    badges,
+    reports:       reportsRes.ok    ? await reportsRes.json()    : [],
+    reviews:       reviewsRes.ok    ? await reviewsRes.json()    : [],
+  });
+}
+
+/* ── COV ONBOARD — badge + XP à l'inscription ─────────────── */
+async function covOnboard(req, res, ctx) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+  const uid = ctx.session.id;
+
+  // Badge "nouveau_covoitureur"
+  const badgeRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?slug=eq.nouveau_covoitureur&select=id`, { headers: sbHeaders(ctx.sbKey) });
+  const badges   = badgeRes.ok ? await badgeRes.json() : [];
+  if (badges[0]) {
+    await fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ user_id: uid, badge_id: badges[0].id }),
+    });
+  }
+
+  // +50 XP de bienvenue
+  await covGrantXP(ctx, uid, 50, 'Inscription covoiturage');
+
+  return res.status(200).json({ success: true, xp: 50, badge: 'nouveau_covoitureur' });
+}
+
+/* ── COV PROGRESS — mise à jour mission après un trajet ───── */
+async function covProgress(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+  const uid    = ctx.session.id;
+  const { event, ride_id, booking_id, distance_km, passenger_count } = body;
+
+  if (!event) return res.status(400).json({ error: 'event requis' });
+
+  // Charger toutes les missions actives
+  const missionsRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_missions?active=eq.true&select=*`, { headers: sbHeaders(ctx.sbKey) });
+  const missions    = missionsRes.ok ? await missionsRes.json() : [];
+
+  const updates = [];
+
+  for (const mission of missions) {
+    const qualifies = await missionQualifies(mission.slug, event, { distance_km, passenger_count });
+    if (!qualifies) continue;
+
+    // Récupérer ou créer la progression
+    const progRes = await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?user_id=eq.${uid}&mission_id=eq.${mission.id}&select=*`, { headers: sbHeaders(ctx.sbKey) });
+    const progs   = progRes.ok ? await progRes.json() : [];
+    const current = progs[0];
+
+    if (current?.done) continue;
+
+    const newProg = (current?.progress || 0) + 1;
+    const done    = newProg >= mission.target;
+
+    if (current) {
+      await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?id=eq.${current.id}`, {
+        method: 'PATCH',
+        headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify({ progress: newProg, done, completed_at: done ? new Date().toISOString() : null }),
+      });
+    } else {
+      await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions`, {
+        method: 'POST',
+        headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify({ user_id: uid, mission_id: mission.id, progress: newProg, done, completed_at: done ? new Date().toISOString() : null }),
+      });
+    }
+
+    if (done) {
+      await covGrantXP(ctx, uid, mission.xp_reward, `Mission: ${mission.name}`);
+
+      if (mission.badge_slug) {
+        const bRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?slug=eq.${mission.badge_slug}&select=id`, { headers: sbHeaders(ctx.sbKey) });
+        const bs   = bRes.ok ? await bRes.json() : [];
+        if (bs[0]) {
+          await fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges`, {
+            method: 'POST',
+            headers: sbHeaders(ctx.sbKey),
+            body: JSON.stringify({ user_id: uid, badge_id: bs[0].id }),
+          });
+        }
+      }
+      updates.push({ mission: mission.slug, xp: mission.xp_reward, badge: mission.badge_slug });
+    }
+  }
+
+  return res.status(200).json({ success: true, updates });
+}
+
+/* ── HELPERS ───────────────────────────────────────────────── */
+async function covGrantXP(ctx, uid, amount, reason) {
+  await fetch(`${ctx.sbUrl}/rest/v1/cov_xp_log`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ user_id: uid, amount, reason }),
+  });
+  // Incrémenter cov_xp dans profiles
+  const profRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}&select=cov_xp`, { headers: sbHeaders(ctx.sbKey) });
+  const profs   = profRes.ok ? await profRes.json() : [];
+  const current = profs[0]?.cov_xp || 0;
+  const newXp   = current + amount;
+  const level   = newXp >= 2000 ? 5 : newXp >= 1000 ? 4 : newXp >= 500 ? 3 : newXp >= 200 ? 2 : 1;
+  await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ cov_xp: newXp, cov_level: level }),
+  });
+  // Aussi incrémenter le XP global
+  const gXp = (profs[0]?.xp || 0) + amount;
+  await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ xp: gXp }),
+  });
+}
+
+function missionQualifies(slug, event, { distance_km = 0, passenger_count = 0 }) {
+  switch (slug) {
+    case 'premier_trajet':     return event === 'ride_complete';
+    case 'cinq_trajets':       return event === 'ride_complete';
+    case 'dix_trajets':        return event === 'ride_complete';
+    case 'ponctualite':        return event === 'ride_complete';
+    case 'ambassadeur':        return event === 'ride_complete';
+    case 'trajet_complet':     return event === 'ride_full';
+    case 'groupe_optimise':    return event === 'ride_full';
+    case 'eco_route':          return event === 'ride_complete' && distance_km >= 50 && passenger_count >= 2;
+    case 'aide_communautaire': return event === 'community_help';
+    case 'route_regionale':    return event === 'ride_complete' && distance_km >= 80;
+    case 'grand_explorateur':  return event === 'ride_complete' && distance_km >= 200;
+    case 'premier_avis':       return event === 'review_left';
+    default: return false;
+  }
 }

@@ -145,6 +145,18 @@
                      {
                          "source":  "/api/ride-report",
                          "destination":  "/api/platform?endpoint=ride-report"
+                     },
+                     {
+                         "source":  "/api/cov-dashboard",
+                         "destination":  "/api/platform?endpoint=cov-dashboard"
+                     },
+                     {
+                         "source":  "/api/cov-onboard",
+                         "destination":  "/api/platform?endpoint=cov-onboard"
+                     },
+                     {
+                         "source":  "/api/cov-progress",
+                         "destination":  "/api/platform?endpoint=cov-progress"
                      }
                  ],
     "headers":  [

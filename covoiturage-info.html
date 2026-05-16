@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Covoiturage — PorteÀPorte</title>
+  <meta name="description" content="Covoiturage communautaire légal au Québec. Partagez vos frais de trajet, rencontrez vos voisins, réduisez votre impact.">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0A0F1E;
+      --surface: #111827;
+      --surface2: #1A2235;
+      --border: #1E2A3A;
+      --green: #B8F53E;
+      --cyan: #00D9FF;
+      --text: #E8EDF5;
+      --muted: #8A9BB0;
+      --danger: #FF6B6B;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(10,15,30,.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px clamp(18px,4vw,48px); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .nav-logo { font-weight: 800; font-size: 1.1rem; color: var(--green); }
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-links a { padding: 7px 16px; border-radius: 8px; font-size: .85rem; font-weight: 600; transition: background .15s; }
+    .nav-links a:hover { background: var(--surface2); }
+    .btn-primary { background: var(--green); color: #0A0F1E; padding: 9px 20px; border-radius: 8px; font-weight: 800; font-size: .85rem; transition: opacity .15s; }
+    .btn-primary:hover { opacity: .9; }
+
+    /* HERO */
+    .hero { position: relative; overflow: hidden; min-height: 540px; display: flex; align-items: center; }
+    .hero-bg { position: absolute; inset: 0; background: url('/assets/banniere-covoiturage.png') center/cover no-repeat; filter: brightness(.35); }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,15,30,.85) 0%, rgba(10,15,30,.4) 100%); }
+    .hero-content { position: relative; padding: clamp(60px,8vw,100px) clamp(24px,5vw,80px); max-width: 720px; }
+    .hero-badge { display: inline-block; background: rgba(184,245,62,.15); border: 1px solid rgba(184,245,62,.3); color: var(--green); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(1.9rem,4.5vw,3rem); font-weight: 900; line-height: 1.15; margin-bottom: 18px; }
+    .hero h1 span { color: var(--green); }
+    .hero p { font-size: clamp(.95rem,1.8vw,1.1rem); color: #C8D4E0; max-width: 560px; margin-bottom: 32px; }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-lg { padding: 14px 28px; border-radius: 10px; font-weight: 800; font-size: 1rem; transition: all .2s; cursor: pointer; border: none; }
+    .btn-green { background: var(--green); color: #0A0F1E; }
+    .btn-green:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+    .btn-outline:hover { background: var(--surface2); }
+
+    /* SECTIONS */
+    .section { padding: clamp(56px,7vw,96px) clamp(18px,4vw,48px); max-width: 1120px; margin: 0 auto; }
+    .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--green); margin-bottom: 12px; }
+    .section-title { font-size: clamp(1.5rem,3.5vw,2.2rem); font-weight: 800; margin-bottom: 14px; line-height: 1.25; }
+    .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin-bottom: 48px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    /* LEGAL BANNER */
+    .legal-banner { background: rgba(0,217,255,.07); border: 1px solid rgba(0,217,255,.2); border-radius: var(--radius); padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; }
+    .legal-banner .icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+    .legal-banner p { font-size: .9rem; color: #B0D4E0; line-height: 1.6; }
+    .legal-banner strong { color: var(--cyan); }
+
+    /* HOW IT WORKS */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
+    .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-size: 5rem; font-weight: 900; color: rgba(184,245,62,.06); line-height: 1; }
+    .step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,245,62,.12); border: 1.5px solid rgba(184,245,62,.3); color: var(--green); font-weight: 800; font-size: .9rem; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .step-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .step-card p { font-size: .88rem; color: var(--muted); line-height: 1.55; }
+
+    /* PRICE CALC */
+    .price-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; max-width: 680px; }
+    .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    @media(max-width:500px){ .price-grid { grid-template-columns: 1fr; } }
+    .price-input label { display: block; font-size: .78rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+    .price-input input, .price-input select { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: .95rem; }
+    .price-input input:focus, .price-input select:focus { outline: none; border-color: var(--green); }
+    .price-options { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+    .opt-toggle { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: .83rem; cursor: pointer; transition: all .15s; user-select: none; }
+    .opt-toggle.active { border-color: var(--green); background: rgba(184,245,62,.08); color: var(--green); }
+    .opt-toggle input { display: none; }
+    .price-result { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: .88rem; color: var(--muted); border-bottom: 1px solid rgba(30,42,58,.5); }
+    .price-row:last-child { border-bottom: none; }
+    .price-row.total { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+    .price-row.total .val { color: var(--green); font-size: 1.25rem; }
+    .price-row .val { color: var(--text); font-weight: 600; }
+    .price-legal { margin-top: 14px; font-size: .78rem; color: var(--muted); font-style: italic; }
+    .price-warn { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #FF9090; margin-top: 12px; display: none; }
+
+    /* BONUS GROUPE */
+    .bonus-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .bonus-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 24px 20px; text-align: center; transition: border-color .2s; }
+    .bonus-card.best { border-color: var(--green); }
+    .bonus-card .seats { font-size: 2rem; font-weight: 900; color: var(--green); margin-bottom: 4px; }
+    .bonus-card .label { font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
+    .bonus-card .reduction { font-size: 1.1rem; font-weight: 700; }
+    .bonus-card .badge-tag { display: inline-block; background: rgba(184,245,62,.12); color: var(--green); border-radius: 6px; padding: 3px 10px; font-size: .72rem; font-weight: 700; margin-top: 8px; }
+
+    /* MISSIONS */
+    .missions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .mission-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; display: flex; gap: 16px; align-items: flex-start; }
+    .mission-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .mission-card h4 { font-size: .95rem; font-weight: 700; margin-bottom: 5px; }
+    .mission-card p { font-size: .82rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+    .xp-pill { display: inline-block; background: rgba(184,245,62,.1); color: var(--green); border-radius: 6px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
+
+    /* BADGES */
+    .badges-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+    .badge-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; min-width: 200px; flex: 1; }
+    .badge-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .badge-item .name { font-size: .88rem; font-weight: 700; margin-bottom: 2px; }
+    .badge-item .desc { font-size: .75rem; color: var(--muted); }
+
+    /* NIVEAUX */
+    .levels-list { display: flex; flex-direction: column; gap: 16px; }
+    .level-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .level-num { width: 48px; height: 48px; border-radius: 50%; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .level-info { flex: 1; min-width: 180px; }
+    .level-info .name { font-weight: 700; font-size: 1rem; margin-bottom: 3px; }
+    .level-info .xp { font-size: .8rem; color: var(--muted); }
+    .level-perks { display: flex; gap: 8px; flex-wrap: wrap; }
+    .perk-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: .75rem; color: var(--muted); }
+
+    /* SÉCURITÉ */
+    .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .security-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 22px; }
+    .security-card .ico { font-size: 1.6rem; margin-bottom: 12px; }
+    .security-card h4 { font-size: .95rem; font-weight: 700; margin-bottom: 7px; }
+    .security-card p { font-size: .85rem; color: var(--muted); line-height: 1.55; }
+
+    /* RULES PREVIEW */
+    .rules-preview { background: var(--surface); border: 1.5px solid rgba(0,217,255,.2); border-radius: var(--radius); padding: 32px; }
+    .rules-preview h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--cyan); }
+    .rule-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+    .rule-item:last-child { border-bottom: none; }
+    .rule-check { color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .rule-x { color: var(--danger); font-weight: 700; flex-shrink: 0; }
+
+    /* CTA FINAL */
+    .cta-section { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border-top: 1px solid var(--border); padding: clamp(56px,7vw,96px) clamp(18px,4vw,48px); text-align: center; }
+    .cta-section h2 { font-size: clamp(1.6rem,3vw,2.4rem); font-weight: 900; margin-bottom: 14px; }
+    .cta-section p { color: var(--muted); font-size: 1.05rem; margin-bottom: 36px; max-width: 540px; margin-left: auto; margin-right: auto; }
+    .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 24px clamp(18px,4vw,48px); text-align: center; font-size: .8rem; color: var(--muted); }
+
+    @media(max-width:600px) {
+      .hero-ctas { flex-direction: column; }
+      .btn-lg { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">PorteÀPorte</a>
+  <div class="nav-links">
+    <a href="/covoiturage.html">Chercher un trajet</a>
+    <a href="/covoiturage-publier.html">Publier</a>
+    <a href="/covoiturage-info.html#regles">Règles</a>
+    <a href="/covoiturage/inscription.html" class="btn-primary">S'inscrire</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Covoiturage communautaire — Québec</div>
+    <h1>Vous faites déjà la route ?<br><span>Partagez les frais.</span></h1>
+    <p>PorteÀPorte facilite le covoiturage basé sur le partage équitable des frais d'un trajet déjà prévu. Légal, transparent, humain.</p>
+    <div class="hero-ctas">
+      <a href="/covoiturage.html" class="btn-lg btn-green">Trouver une place</a>
+      <a href="/covoiturage-publier.html" class="btn-lg btn-outline">Publier mon trajet</a>
+      <a href="/covoiturage/inscription.html" class="btn-lg btn-outline">M'inscrire</a>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL BANNER -->
+<div style="padding: 0 clamp(18px,4vw,48px); margin-top: -1px; background: var(--surface); border-bottom: 1px solid var(--border);">
+  <div style="max-width:1120px; margin:0 auto; padding: 18px 0;">
+    <div class="legal-banner">
+      <div class="icon">⚖️</div>
+      <p><strong>Cadre légal Québec</strong> — Ce service repose sur le <strong>partage de frais</strong> d'un trajet existant, conformément à l'interprétation d'Éducaloi et de la Commission des transports du Québec. Le conducteur fait déjà ce trajet pour lui-même. La compensation ne dépasse pas les frais réellement engagés. <strong>Ce n'est pas un service de taxi ni du transport rémunéré.</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- COMMENT ÇA MARCHE -->
+<div style="background: var(--bg);">
+  <div class="section">
+    <div class="section-label">Fonctionnement</div>
+    <h2 class="section-title">Simple, transparent, équitable</h2>
+    <p class="section-sub">Quatre étapes, zéro complication.</p>
+    <div class="steps">
+      <div class="step-card" data-n="1">
+        <div class="step-num">1</div>
+        <h3>Le conducteur publie</h3>
+        <p>Il publie un trajet qu'il fait déjà — avec ses horaires, ses villes, son véhicule et ses préférences.</p>
+      </div>
+      <div class="step-card" data-n="2">
+        <div class="step-num">2</div>
+        <h3>Les passagers réservent</h3>
+        <p>Ils choisissent leur point d'embarquement et de débarquement. Le prix s'ajuste à leur portion réelle du trajet.</p>
+      </div>
+      <div class="step-card" data-n="3">
+        <div class="step-num">3</div>
+        <h3>Les frais se partagent</h3>
+        <p>Le calcul est automatique et transparent. Chacun paie sa juste part selon la distance parcourue.</p>
+      </div>
+      <div class="step-card" data-n="4">
+        <div class="step-num">4</div>
+        <h3>Tout le monde économise</h3>
+        <p>Plus le véhicule est plein, plus chacun économise. Un bonus groupe s'applique automatiquement.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CALCULATEUR DE PRIX -->
+<div style="background: var(--surface);">
+  <div class="section">
+    <div class="section-label">Transparence tarifaire</div>
+    <h2 class="section-title">Le prix s'ajuste à votre portion réelle</h2>
+    <p class="section-sub">Simulez votre part de frais avant de réserver. Aucune surprise.</p>
+    <div class="price-box">
+      <div class="price-grid">
+        <div class="price-input">
+          <label>Distance totale du trajet (km)</label>
+          <input type="number" id="dist-total" value="120" min="5" max="1000" oninput="calcDemo()">
+        </div>
+        <div class="price-input">
+          <label>Votre portion (km)</label>
+          <input type="number" id="dist-pax" value="80" min="5" max="1000" oninput="calcDemo()">
+        </div>
+        <div class="price-input">
+          <label>Nombre de passagers</label>
+          <select id="nb-pax" onchange="calcDemo()">
+            <option value="1">1 passager</option>
+            <option value="2" selected>2 passagers</option>
+            <option value="3">3 passagers</option>
+            <option value="4">4 passagers</option>
+          </select>
+        </div>
+        <div class="price-input">
+          <label>Coût/km (par défaut 0.35$)</label>
+          <input type="number" id="cout-km" value="0.35" min="0.10" max="0.50" step="0.01" oninput="calcDemo()">
+        </div>
+      </div>
+      <div class="price-options">
+        <label class="opt-toggle" onclick="toggleOpt(this)">
+          <input type="checkbox" id="opt-bagage"> 🧳 Gros bagage (+5$)
+        </label>
+        <label class="opt-toggle" onclick="toggleOpt(this)">
+          <input type="checkbox" id="opt-animal"> 🐾 Animal (+8$)
+        </label>
+        <label class="opt-toggle" onclick="toggleOpt(this)">
+          <input type="checkbox" id="opt-arret"> 📍 Arrêt extra (+3$)
+        </label>
+      </div>
+      <div class="price-result" id="price-result">
+        <div class="price-row"><span>Distance totale trajet</span><span class="val" id="r-dist-total">120 km</span></div>
+        <div class="price-row"><span>Votre portion</span><span class="val" id="r-dist-pax">80 km</span></div>
+        <div class="price-row"><span>Part de base</span><span class="val" id="r-base">—</span></div>
+        <div class="price-row" id="r-bonus-row" style="display:none"><span>🎉 Bonus groupe (−<span id="r-bonus-pct">0</span>%)</span><span class="val" id="r-bonus" style="color:#B8F53E">—</span></div>
+        <div class="price-row" id="r-extras-row" style="display:none"><span>Options</span><span class="val" id="r-extras">—</span></div>
+        <div class="price-row"><span>Frais plateforme (10%)</span><span class="val" id="r-fee">—</span></div>
+        <div class="price-row total"><span>Vous payez</span><span class="val" id="r-total">—</span></div>
+      </div>
+      <div class="price-warn" id="price-warn">⚠️ Le montant dépasse le seuil recommandé de 0,50$/km. Vérifiez votre saisie.</div>
+      <p class="price-legal">Le montant est calculé pour partager les frais raisonnables du trajet. Aucun profit pour le conducteur.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- BONUS GROUPE -->
+<div style="background: var(--bg);">
+  <div class="section">
+    <div class="section-label">Bonus de groupe</div>
+    <h2 class="section-title">Plus de monde = moins de coûts pour chacun</h2>
+    <p class="section-sub">Quand le véhicule se remplit, tout le monde profite d'une réduction automatique.</p>
+    <div class="bonus-grid">
+      <div class="bonus-card">
+        <div class="seats">1</div>
+        <div class="label">passager</div>
+        <div class="reduction">Prix normal</div>
+        <div class="badge-tag">Standard</div>
+      </div>
+      <div class="bonus-card">
+        <div class="seats">2</div>
+        <div class="label">passagers</div>
+        <div class="reduction" style="color:var(--cyan)">−5% chacun</div>
+        <div class="badge-tag">Économique</div>
+      </div>
+      <div class="bonus-card">
+        <div class="seats">3</div>
+        <div class="label">passagers</div>
+        <div class="reduction" style="color:var(--green)">−10% chacun</div>
+        <div class="badge-tag">Optimisé</div>
+      </div>
+      <div class="bonus-card best">
+        <div class="seats">🚗</div>
+        <div class="label">Auto pleine</div>
+        <div class="reduction" style="color:var(--green)">−15% + badge</div>
+        <div class="badge-tag">🏆 Auto pleine</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- MISSIONS -->
+<div style="background: var(--surface);">
+  <div class="section">
+    <div class="section-label">Missions</div>
+    <h2 class="section-title">Des défis qui récompensent votre impact</h2>
+    <p class="section-sub">Chaque trajet compte. Accomplissez des missions, gagnez des XP et des badges.</p>
+    <div class="missions-grid">
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🚗</div>
+        <div>
+          <h4>Premier trajet partagé</h4>
+          <p>Complétez votre tout premier trajet en covoiturage.</p>
+          <span class="xp-pill">+50 XP — Badge "Premier trajet utile"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(0,217,255,.1)">🎯</div>
+        <div>
+          <h4>Trajet complet</h4>
+          <p>Toutes les places de votre trajet sont réservées.</p>
+          <span class="xp-pill">+100 XP — Badge "Auto pleine"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🌿</div>
+        <div>
+          <h4>Éco-route</h4>
+          <p>Trajet de 50 km+ avec au moins 2 passagers.</p>
+          <span class="xp-pill">+150 XP — Badge "Moins d'essence"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(255,183,77,.1)">⏱️</div>
+        <div>
+          <h4>Ponctualité</h4>
+          <p>5 trajets consécutifs sans retard signalé.</p>
+          <span class="xp-pill">+200 XP — Badge "Fiable sur la route"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🤝</div>
+        <div>
+          <h4>Aide communautaire</h4>
+          <p>Trajet aidant une personne âgée, un étudiant ou une personne sans véhicule.</p>
+          <span class="xp-pill">+180 XP — Badge "Coup de main local"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(0,217,255,.1)">🗺️</div>
+        <div>
+          <h4>Route régionale</h4>
+          <p>Trajet Québec–Lévis, Québec–Montréal ou région éloignée.</p>
+          <span class="xp-pill">+120 XP — Badge "Connecteur régional"</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(184,245,62,.1)">⭐</div>
+        <div>
+          <h4>Ambassadeur local</h4>
+          <p>10 trajets complétés avec une note de 4,8 et plus.</p>
+          <span class="xp-pill">+300 XP — Priorité de visibilité</span>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon" style="background:rgba(255,107,107,.1)">🏔️</div>
+        <div>
+          <h4>Grand explorateur</h4>
+          <p>Complétez 3 trajets de plus de 200 km.</p>
+          <span class="xp-pill">+250 XP — Badge "Grand trajet"</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- BADGES -->
+<div style="background: var(--bg);">
+  <div class="section">
+    <div class="section-label">Badges</div>
+    <h2 class="section-title">Votre réputation se voit</h2>
+    <p class="section-sub">Chaque badge est un signe de confiance visible sur votre profil.</p>
+    <div class="badges-grid">
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🌱</div><div><div class="name">Nouveau covoitureur</div><div class="desc">Premier compte covoiturage créé</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">✅</div><div><div class="name">Conducteur vérifié</div><div class="desc">Profil et véhicule validés</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🧑‍🤝‍🧑</div><div><div class="name">Passager fiable</div><div class="desc">Jamais annulé à moins de 24h</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">🚗</div><div><div class="name">Premier trajet utile</div><div class="desc">Premier covoiturage complété</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">🎯</div><div><div class="name">Auto pleine</div><div class="desc">Véhicule complet au départ</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🌿</div><div><div class="name">Éco-route</div><div class="desc">50 km+ avec 2 passagers min.</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">⏱️</div><div><div class="name">Fiable sur la route</div><div class="desc">5 trajets sans retard</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🤝</div><div><div class="name">Coup de main local</div><div class="desc">Aide à la communauté</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">⭐</div><div><div class="name">Ambassadeur PorteÀPorte</div><div class="desc">10 trajets, note 4,8+</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🗺️</div><div><div class="name">Connecteur régional</div><div class="desc">Trajets interrégionaux Québec</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,107,107,.12)">❤️</div><div><div class="name">Trajet solidaire</div><div class="desc">Aide proactive à autrui</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🏆</div><div><div class="name">Groupe optimisé</div><div class="desc">Auto pleine 3 fois de suite</div></div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- NIVEAUX -->
+<div style="background: var(--surface);">
+  <div class="section">
+    <div class="section-label">Progression</div>
+    <h2 class="section-title">Plus vous covoiturez, plus vous progressez</h2>
+    <p class="section-sub">Cinq niveaux, chacun avec des avantages concrets sur la plateforme.</p>
+    <div class="levels-list">
+      <div class="level-row">
+        <div class="level-num" style="background:rgba(139,155,176,.12);color:#8B9BB0">1</div>
+        <div class="level-info"><div class="name">Nouveau</div><div class="xp">0 – 199 XP</div></div>
+        <div class="level-perks">
+          <span class="perk-chip">Profil covoiturage</span>
+          <span class="perk-chip">Recherche & réservation</span>
+          <span class="perk-chip">Badge "Nouveau covoitureur"</span>
+        </div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="background:rgba(0,217,255,.12);color:var(--cyan)">2</div>
+        <div class="level-info"><div class="name">Fiable</div><div class="xp">200 – 499 XP</div></div>
+        <div class="level-perks">
+          <span class="perk-chip">Trajets récurrents</span>
+          <span class="perk-chip">Missions intermédiaires</span>
+          <span class="perk-chip">Badge profil visible</span>
+        </div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="background:rgba(184,245,62,.12);color:var(--green)">3</div>
+        <div class="level-info"><div class="name">Habitué</div><div class="xp">500 – 999 XP</div></div>
+        <div class="level-perks">
+          <span class="perk-chip">Meilleure visibilité</span>
+          <span class="perk-chip">Missions exclusives</span>
+          <span class="perk-chip">Accès gros trajets</span>
+        </div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="background:rgba(255,183,77,.12);color:#FFB74D">4</div>
+        <div class="level-info"><div class="name">Ambassadeur</div><div class="xp">1 000 – 1 999 XP</div></div>
+        <div class="level-perks">
+          <span class="perk-chip">Priorité dans les résultats</span>
+          <span class="perk-chip">Support prioritaire</span>
+          <span class="perk-chip">Badge Ambassadeur</span>
+        </div>
+      </div>
+      <div class="level-row" style="border-color:rgba(184,245,62,.3);">
+        <div class="level-num" style="background:rgba(184,245,62,.2);color:var(--green)">5</div>
+        <div class="level-info"><div class="name">Capitaine régional</div><div class="xp">2 000+ XP</div></div>
+        <div class="level-perks">
+          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Visibilité maximale</span>
+          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Missions capitaine</span>
+          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Badge exclusif</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SÉCURITÉ -->
+<div style="background: var(--bg);">
+  <div class="section">
+    <div class="section-label">Sécurité</div>
+    <h2 class="section-title">Votre sécurité, notre priorité</h2>
+    <p class="section-sub">Chaque mesure est conçue pour que vous puissiez voyager en confiance.</p>
+    <div class="security-grid">
+      <div class="security-card"><div class="ico">👤</div><h4>Profils vérifiés</h4><p>Téléphone et email confirmés pour chaque utilisateur. Photo de profil requise pour les conducteurs.</p></div>
+      <div class="security-card"><div class="ico">⭐</div><h4>Système de notes</h4><p>Après chaque trajet, conducteur et passager se notent mutuellement. La note est publique et permanente.</p></div>
+      <div class="security-card"><div class="ico">📍</div><h4>Adresses protégées</h4><p>L'adresse précise du conducteur n'est partagée qu'après confirmation de la réservation.</p></div>
+      <div class="security-card"><div class="ico">🚩</div><h4>Signalement</h4><p>Tout comportement inapproprié peut être signalé directement depuis la fiche du trajet.</p></div>
+      <div class="security-card"><div class="ico">🗂️</div><h4>Historique complet</h4><p>Chaque trajet est enregistré. L'historique est accessible depuis votre tableau de bord.</p></div>
+      <div class="security-card"><div class="ico">🛡️</div><h4>Suspension des abus</h4><p>PorteÀPorte peut suspendre tout compte en cas d'abus, de fraude ou de comportement dangereux.</p></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- RÈGLEMENTS RÉSUMÉ -->
+<div id="regles" style="background: var(--surface);">
+  <div class="section">
+    <div class="section-label">Règlements</div>
+    <h2 class="section-title">Ce que vous devez savoir</h2>
+    <p class="section-sub">Les principes fondamentaux du covoiturage légal sur PorteÀPorte.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div class="rules-preview">
+        <h3>✅ Ce qui est permis</h3>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Le conducteur fait le trajet pour lui-même, même sans passager</span></div>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Demander une contribution pour partager les frais d'essence et d'usure</span></div>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Fixer des règles de conduite dans son véhicule (musique, arrêts, etc.)</span></div>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Accepter ou refuser une réservation selon ses préférences</span></div>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Déclarer des options : animal, bagage, arrêt supplémentaire</span></div>
+        <div class="rule-item"><span class="rule-check">✓</span><span>Annuler un trajet avec un préavis raisonnable</span></div>
+      </div>
+      <div class="rules-preview" style="border-color:rgba(255,107,107,.2);">
+        <h3 style="color:var(--danger)">❌ Ce qui est interdit</h3>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Publier un trajet uniquement pour transporter des passagers (pas votre destination)</span></div>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Fixer un prix qui dépasse raisonnablement les frais du trajet</span></div>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Transporter des marchandises, substances illicites ou objets dangereux</span></div>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Conduire sous l'influence de l'alcool ou de drogues</span></div>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Harceler, intimider ou manquer de respect à un autre utilisateur</span></div>
+        <div class="rule-item"><span class="rule-x">✗</span><span>Contourner la plateforme pour des paiements hors système</span></div>
+      </div>
+    </div>
+    <div style="margin-top:24px;text-align:center;">
+      <a href="/covoiturage/regles.html" class="btn-lg btn-outline" style="display:inline-block">Lire le règlement complet →</a>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <h2>Chaque place vide peut aider quelqu'un.</h2>
+  <p>Rejoignez la communauté PorteÀPorte. Publiez votre premier trajet ou trouvez une place en quelques secondes.</p>
+  <div class="cta-buttons">
+    <a href="/covoiturage/inscription.html" class="btn-lg btn-green">Créer mon profil covoiturage</a>
+    <a href="/covoiturage.html" class="btn-lg btn-outline">Voir les trajets disponibles</a>
+    <a href="/covoiturage-publier.html" class="btn-lg btn-outline">Publier un trajet</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>PorteÀPorte — Covoiturage communautaire au Québec · <a href="/covoiturage/regles.html" style="color:var(--cyan)">Règlements</a> · <a href="/covoiturage/inscription.html" style="color:var(--cyan)">S'inscrire</a></p>
+  <p style="margin-top:6px">Ce service facilite le partage de frais d'un trajet existant. Il ne constitue pas un service de taxi ni du transport commercial.</p>
+</footer>
+
+<script>
+  function toggleOpt(el) {
+    el.classList.toggle('active');
+    calcDemo();
+  }
+
+  function calcDemo() {
+    const distTotal = parseFloat(document.getElementById('dist-total').value) || 120;
+    const distPax   = Math.min(parseFloat(document.getElementById('dist-pax').value) || 80, distTotal);
+    const nbPax     = parseInt(document.getElementById('nb-pax').value) || 1;
+    const coutKm    = Math.min(parseFloat(document.getElementById('cout-km').value) || 0.35, 0.50);
+
+    const bagage = document.getElementById('opt-bagage').checked ? 5 : 0;
+    const animal = document.getElementById('opt-animal').checked ? 8 : 0;
+    const arret  = document.getElementById('opt-arret').checked  ? 3 : 0;
+
+    const totalCost  = distTotal * coutKm;
+    const paxBase    = totalCost * (distPax / distTotal);
+
+    const bonusPct   = nbPax === 1 ? 0 : nbPax === 2 ? 5 : nbPax === 3 ? 10 : 15;
+    const bonusAmt   = paxBase * (bonusPct / 100);
+    const paxAfterBonus = paxBase - bonusAmt;
+
+    const extras  = bagage + animal + arret;
+    const subtotal = paxAfterBonus + extras;
+    const fee     = subtotal * 0.10;
+    const total   = subtotal + fee;
+
+    document.getElementById('r-dist-total').textContent = distTotal + ' km';
+    document.getElementById('r-dist-pax').textContent   = distPax + ' km';
+    document.getElementById('r-base').textContent       = '$' + paxBase.toFixed(2);
+
+    const bonusRow = document.getElementById('r-bonus-row');
+    bonusRow.style.display = bonusPct > 0 ? 'flex' : 'none';
+    document.getElementById('r-bonus-pct').textContent = bonusPct;
+    document.getElementById('r-bonus').textContent = '−$' + bonusAmt.toFixed(2);
+
+    const extrasRow = document.getElementById('r-extras-row');
+    extrasRow.style.display = extras > 0 ? 'flex' : 'none';
+    document.getElementById('r-extras').textContent = '+$' + extras.toFixed(2);
+
+    document.getElementById('r-fee').textContent   = '$' + fee.toFixed(2);
+    document.getElementById('r-total').textContent = '$' + total.toFixed(2);
+
+    const warn = document.getElementById('price-warn');
+    warn.style.display = coutKm >= 0.50 ? 'block' : 'none';
+  }
+
+  calcDemo();
+</script>
+</body>
+</html>
