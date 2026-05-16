@@ -581,6 +581,10 @@
                         <span class="stats-item-value" id="user-xp">0 XP</span>
                     </div>
                     <div class="stats-item">
+                        <span class="stats-item-label">Points Impact</span>
+                        <span class="stats-item-value" id="user-points">— pts</span>
+                    </div>
+                    <div class="stats-item">
                         <span class="stats-item-label">Score</span>
                         <span class="stats-item-value" id="user-score">—</span>
                     </div>
@@ -593,6 +597,14 @@
                         <span class="stats-item-value" id="user-balance">$0</span>
                     </div>
                 </div>
+            </div>
+            <!-- Points Impact & Badges -->
+            <div class="sidebar-card" id="growth-sidebar" style="display:none">
+                <div class="sidebar-title">Mes récompenses</div>
+                <div id="exp-badges-row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                <div id="exp-level-info" style="font-size:0.8rem;color:#9BA1A9;line-height:1.5"></div>
+                <a href="/programme-points.html" style="display:block;margin-top:10px;font-size:0.8rem;color:var(--brand-lime,#B8F53E)">Voir le programme Points Impact →</a>
+                <a href="/parrainage.html" style="display:block;margin-top:4px;font-size:0.8rem;color:#9BA1A9">🤝 Parrainer un ami</a>
             </div>
         </aside>
     </div>
@@ -629,6 +641,7 @@
             document.getElementById('user-balance').textContent = '$' + ((profile.coins || 0) / 100).toFixed(2);
 
             await loadMissions();
+            loadGrowthSidebar();
             setupRealtime();
             document.getElementById('quick-create-form')?.addEventListener('submit', createQuickLivraison);
         }
@@ -683,6 +696,48 @@
                 btn.disabled = false;
                 btn.textContent = 'Créer et passer au paiement';
             }
+        }
+
+        async function loadGrowthSidebar() {
+            try {
+                const user = AUTH_API.getUser();
+                const session = user?.session;
+                if (!session?.access_token) return;
+                const r = await fetch('/api/growth-dashboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+                    body: JSON.stringify({})
+                });
+                if (!r.ok) return;
+                const d = await r.json();
+
+                // Points Impact
+                const ptEl = document.getElementById('user-points');
+                if (ptEl) ptEl.textContent = (d.points_balance || 0) + ' pts';
+
+                // Sidebar growth card
+                const card = document.getElementById('growth-sidebar');
+                if (!card) return;
+                card.style.display = 'block';
+
+                // Badges
+                const badgesRow = document.getElementById('exp-badges-row');
+                const badges = d.badges_earned || [];
+                badgesRow.innerHTML = badges.length
+                    ? badges.slice(0, 8).map(b => `<span title="${b.badges?.name || 'Badge'}" style="font-size:1.4rem;cursor:help">${b.badges?.icon || '🏅'}</span>`).join('')
+                      + (badges.length > 8 ? `<span style="font-size:0.78rem;color:#9BA1A9;align-self:center">+${badges.length - 8}</span>` : '')
+                    : '<span style="font-size:0.78rem;color:#9BA1A9">Complète des missions pour débloquer des badges.</span>';
+
+                // Niveau XP
+                const lvl = d.level;
+                const levelEl = document.getElementById('exp-level-info');
+                if (lvl?.current) {
+                    levelEl.innerHTML = `
+                        <strong style="color:#E8EDF5">${lvl.current.icon || ''} Niveau ${lvl.current.level} — ${lvl.current.name}</strong><br>
+                        XP : ${d.xp || 0} · ${lvl.progress || 0}% vers ${lvl.next ? lvl.next.name : 'niveau max'}
+                    `;
+                }
+            } catch (e) { /* silencieux */ }
         }
 
         async function loadMissions() {

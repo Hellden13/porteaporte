@@ -165,6 +165,38 @@
                      {
                          "source":  "/api/cov-progress",
                          "destination":  "/api/platform?endpoint=cov-progress"
+                     },
+                     {
+                         "source":  "/api/growth-dashboard",
+                         "destination":  "/api/platform?endpoint=growth-dashboard"
+                     },
+                     {
+                         "source":  "/api/referral-get",
+                         "destination":  "/api/platform?endpoint=referral-get"
+                     },
+                     {
+                         "source":  "/api/referral-use",
+                         "destination":  "/api/platform?endpoint=referral-use"
+                     },
+                     {
+                         "source":  "/api/badges-list",
+                         "destination":  "/api/platform?endpoint=badges-list"
+                     },
+                     {
+                         "source":  "/api/badges-grant",
+                         "destination":  "/api/platform?endpoint=badges-grant"
+                     },
+                     {
+                         "source":  "/api/xp-history",
+                         "destination":  "/api/platform?endpoint=xp-history"
+                     },
+                     {
+                         "source":  "/api/points-history",
+                         "destination":  "/api/platform?endpoint=points-history"
+                     },
+                     {
+                         "source":  "/api/admin-growth",
+                         "destination":  "/api/platform?endpoint=admin-growth"
                      }
                  ],
     "headers":  [
