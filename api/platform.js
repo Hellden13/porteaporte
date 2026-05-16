@@ -2158,16 +2158,16 @@ async function rideAdmin(req, res, ctx, body) {
   const limit = Number(body.limit || url.searchParams.get('limit') || 100);
 
   const [ridesRes, bookingsRes, reportsRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/rides?order=created_at.desc&limit=${limit}&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?order=created_at.desc&limit=${limit}&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_reports?order=created_at.desc&limit=50&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/rides?order=created_at.desc&limit=${limit}&select=*,driver_profile:profiles!driver_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?order=created_at.desc&limit=${limit}&select=*,passenger_profile:profiles!passenger_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_reports?order=created_at.desc&limit=50&select=*,reporter_profile:profiles!reporter_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
   ]);
 
-  return res.status(200).json({
-    rides:    ridesRes.ok    ? await ridesRes.json()    : [],
-    bookings: bookingsRes.ok ? await bookingsRes.json() : [],
-    reports:  reportsRes.ok  ? await reportsRes.json()  : [],
-  });
+  const rides    = ridesRes.ok    ? (await ridesRes.json()).map(r => ({ ...r, driver_prenom: r.driver_profile?.prenom || null, driver_profile: undefined }))       : [];
+  const bookings = bookingsRes.ok ? (await bookingsRes.json()).map(b => ({ ...b, passenger_prenom: b.passenger_profile?.prenom || null, passenger_profile: undefined })) : [];
+  const reports  = reportsRes.ok  ? (await reportsRes.json()).map(r => ({ ...r, reporter_prenom: r.reporter_profile?.prenom || null, reporter_profile: undefined }))    : [];
+
+  return res.status(200).json({ rides, bookings, reports });
 }
 
 async function rideReport(req, res, ctx, body) {

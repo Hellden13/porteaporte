@@ -235,7 +235,8 @@
     <a href="#section-revenus"   class="nav-link"><span class="icon">💰</span> Revenus</a>
     <a href="#section-litiges"   class="nav-link"><span class="icon">⚠️</span> Litiges</a>
     <a href="#section-rewards"   class="nav-link"><span class="icon">★</span> Missions & tirages</a>
-    <a href="#section-impact"    class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <a href="#section-impact"      class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <a href="#section-covoiturage" class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
     <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
     <a href="/dashboard-expediteur.html" class="nav-link"><span class="icon">↗</span> Dashboard expéditeur</a>
@@ -487,6 +488,70 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════ COVOITURAGE ═══ -->
+    <div id="section-covoiturage" class="section">
+      <div class="section-title">Covoiturage — Vue d'ensemble</div>
+
+      <div class="stats-grid" style="margin-bottom:20px" id="cov-stats">
+        <div class="stat-card"><div class="stat-value" id="cov-total-rides">—</div><div class="stat-label">Trajets publiés</div></div>
+        <div class="stat-card"><div class="stat-value" id="cov-active-rides">—</div><div class="stat-label">Trajets actifs</div></div>
+        <div class="stat-card"><div class="stat-value" id="cov-total-bookings">—</div><div class="stat-label">Réservations</div></div>
+        <div class="stat-card"><div class="stat-value" id="cov-open-reports">—</div><div class="stat-label">Signalements ouverts</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:8px">Trajets récents</div>
+      <div class="table-card">
+        <table id="cov-rides-table">
+          <thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Prix/km</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="cov-rides-body"><tr><td colspan="6" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Réservations récentes</div>
+      <div class="table-card">
+        <table id="cov-bookings-table">
+          <thead><tr><th>ID</th><th>Trajet</th><th>Passager</th><th>Places</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="cov-bookings-body"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Signalements covoiturage</div>
+      <div class="table-card">
+        <table id="cov-reports-table">
+          <thead><tr><th>Date</th><th>Raison</th><th>Trajet</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="cov-reports-body"><tr><td colspan="5" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Seuils tarifaires</div>
+      <div class="impact-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">COÛT/KM PAR DÉFAUT</div>
+          <div style="font-size:1.6rem;font-weight:900;color:var(--brand-lime)">0,35 $/km</div>
+          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Configurable dans platform.js → RIDE_COST_PER_KM</div>
+        </div>
+        <div>
+          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">MAXIMUM LÉGAL SUGGÉRÉ</div>
+          <div style="font-size:1.6rem;font-weight:900;color:#FFB800">0,50 $/km</div>
+          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Alerte automatique si dépassé · RIDE_MAX_COST_PER_KM</div>
+        </div>
+        <div>
+          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">FRAIS PLATEFORME</div>
+          <div style="font-size:1.6rem;font-weight:900;color:var(--brand-cyan)">10%</div>
+          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Prélevés sur la part passager · RIDE_PLATFORM_PCT</div>
+        </div>
+        <div>
+          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">SUPPLÉMENTS</div>
+          <div style="font-size:.92rem;font-weight:700;color:var(--brand-text);line-height:1.8">
+            🧳 Bagages : +5,00 $<br>
+            🐾 Animal : +8,00 $<br>
+            📍 Arrêt : +3,00 $
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 </div>
 
@@ -693,6 +758,70 @@
     await loadLitiges(window.db);
   }
 
+  async function loadCovoiturage() {
+    const user = AUTH_API.getUser();
+    if (!user?.session?.access_token) return;
+    try {
+      const res = await fetch('/api/ride-admin', {
+        headers: { 'Authorization': 'Bearer ' + user.session.access_token }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const rides    = data.rides    || [];
+      const bookings = data.bookings || [];
+      const reports  = data.reports  || [];
+
+      document.getElementById('cov-total-rides').textContent    = rides.length;
+      document.getElementById('cov-active-rides').textContent   = rides.filter(r => r.status === 'publie').length;
+      document.getElementById('cov-total-bookings').textContent = bookings.length;
+      document.getElementById('cov-open-reports').textContent   = reports.filter(r => r.status === 'ouvert').length;
+
+      document.getElementById('cov-rides-body').innerHTML = rides.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun trajet</td></tr>'
+        : rides.map(r => {
+            const statusColor = { publie: '#B8F53E', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA';
+            return `<tr>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${r.id.slice(0,8)}…</td>
+              <td>${r.start_city || '?'} → ${r.end_city || '?'}</td>
+              <td style="color:#A8B0BA;font-size:.8rem">${r.driver_prenom || r.driver_id?.slice(0,8) || '—'}</td>
+              <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}</td>
+              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
+              <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
+            </tr>`;
+          }).join('');
+
+      document.getElementById('cov-bookings-body').innerHTML = bookings.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucune réservation</td></tr>'
+        : bookings.map(b => {
+            const statusColor = { confirme: '#B8F53E', en_attente: '#FFB347', annule_passager: '#FF6B6B', annule_chauffeur: '#FF6B6B', complete: '#5A6A7A' }[b.status] || '#A8B0BA';
+            return `<tr>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${b.id.slice(0,8)}…</td>
+              <td style="font-family:monospace;color:#A8B0BA;font-size:.75rem">${b.ride_id?.slice(0,8) || '—'}…</td>
+              <td style="color:#A8B0BA;font-size:.8rem">${b.passenger_prenom || b.passenger_id?.slice(0,8) || '—'}</td>
+              <td style="color:#B8F53E;font-weight:700">${b.total_passenger ? Number(b.total_passenger).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}) : '—'}</td>
+              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${b.status}</span></td>
+              <td style="color:#5A6A7A;font-size:.8rem">${b.created_at ? new Date(b.created_at).toLocaleDateString('fr-CA') : '—'}</td>
+            </tr>`;
+          }).join('');
+
+      document.getElementById('cov-reports-body').innerHTML = reports.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucun signalement</td></tr>'
+        : reports.map(r => {
+            const statusColor = { ouvert: '#FF6B6B', en_traitement: '#FFB347', resolu: '#B8F53E', ferme: '#5A6A7A' }[r.status] || '#A8B0BA';
+            return `<tr>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${r.id.slice(0,8)}…</td>
+              <td style="color:#A8B0BA;font-size:.8rem">${r.reporter_prenom || r.reporter_id?.slice(0,8) || '—'}</td>
+              <td>${r.reason || '—'}</td>
+              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
+              <td style="color:#5A6A7A;font-size:.8rem">${r.created_at ? new Date(r.created_at).toLocaleDateString('fr-CA') : '—'}</td>
+            </tr>`;
+          }).join('');
+    } catch (e) {
+      console.error('loadCovoiturage:', e);
+    }
+  }
+
   async function loadData() {
     const db = window.db;
     if (!db) return;
@@ -706,6 +835,7 @@
     ]);
     loadRevenus(db);
     loadLitiges(db);
+    loadCovoiturage();
 
     if (profiles) {
       const currentAdminId = AUTH_API.getUser()?.id;
