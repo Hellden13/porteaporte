@@ -1,0 +1,416 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail du trajet · Covoiturage PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      background: rgba(10,12,16,0.85); border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+
+    .page-inner {
+      max-width: 1080px; margin: 0 auto;
+      padding: 40px clamp(18px,4vw,48px) 80px;
+      display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start;
+    }
+    @media (max-width: 860px) { .page-inner { grid-template-columns: 1fr; } }
+
+    /* LEFT */
+    .ride-main {}
+    .back-link { color: var(--brand-muted); text-decoration: none; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px; }
+    .back-link:hover { color: var(--brand-lime); }
+
+    .ride-header { margin-bottom: 28px; }
+    .ride-route-big {
+      display: flex; align-items: center; gap: 14px;
+      font-size: clamp(1.4rem,3vw,2rem); font-weight: 900; color: var(--brand-text);
+      margin-bottom: 10px;
+    }
+    .ride-route-big .arr { color: var(--brand-lime); }
+    .ride-date { color: var(--brand-muted); font-size: 0.95rem; margin-bottom: 14px; }
+
+    .badges-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--brand-border);
+      font-size: 0.8rem; color: var(--brand-muted);
+    }
+    .badge.green { background: rgba(184,245,62,0.08); border-color: rgba(184,245,62,0.3); color: var(--brand-lime); }
+    .badge.blue  { background: rgba(0,217,255,0.08);  border-color: rgba(0,217,255,0.3);  color: var(--brand-cyan); }
+
+    .card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;
+    }
+    .card h3 { margin: 0 0 16px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--brand-lime); }
+
+    .driver-row { display: flex; align-items: center; gap: 14px; }
+    .driver-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(184,245,62,0.15); border: 2px solid var(--brand-lime);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 900; color: var(--brand-lime); flex-shrink: 0;
+    }
+    .driver-name { font-weight: 800; font-size: 1.05rem; color: var(--brand-text); }
+    .driver-meta { font-size: 0.82rem; color: var(--brand-muted); margin-top: 2px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-item { background: var(--brand-bg-dark); border-radius: 8px; padding: 12px; }
+    .info-item .lbl { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-muted); margin-bottom: 4px; }
+    .info-item .val { font-size: 0.95rem; font-weight: 700; color: var(--brand-text); }
+
+    .options-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .legal-note {
+      background: rgba(184,245,62,0.06); border: 1px solid rgba(184,245,62,0.2);
+      border-radius: 8px; padding: 12px 16px; font-size: 0.82rem;
+      color: var(--brand-muted); line-height: 1.55; margin-bottom: 18px;
+    }
+    .legal-note strong { color: var(--brand-lime); }
+
+    /* RIGHT — BOOKING PANEL */
+    .booking-panel {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 24px; position: sticky; top: 80px;
+    }
+    .booking-panel h3 { margin: 0 0 20px; font-size: 1.1rem; color: var(--brand-text); }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-muted); }
+    .field input, .field select {
+      padding: 10px 12px; background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border); border-radius: 8px;
+      color: var(--brand-text); font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--brand-lime); }
+
+    .option-check {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.85rem; color: var(--brand-muted); margin-bottom: 10px; cursor: pointer;
+    }
+    .option-check input { accent-color: var(--brand-lime); }
+
+    /* PRICE BREAKDOWN */
+    .breakdown { border-top: 1px solid var(--brand-border); padding-top: 16px; margin-top: 16px; }
+    .brow { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; }
+    .brow span:first-child { color: var(--brand-muted); }
+    .brow span:last-child  { color: var(--brand-text); font-weight: 600; }
+    .brow.total { border-top: 1px solid var(--brand-border); margin-top: 8px; padding-top: 10px; font-weight: 900; font-size: 1.05rem; }
+    .brow.total span { color: var(--brand-lime); }
+    .over-warn { color: #FFB800; font-size: 0.78rem; margin-top: 6px; }
+
+    .report-link { display: block; text-align: center; margin-top: 14px; font-size: 0.78rem; color: var(--brand-muted); cursor: pointer; }
+    .report-link:hover { color: var(--brand-danger, #e53e3e); }
+
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--brand-bg-dark); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .success-msg { background: rgba(144,238,144,0.1); border: 1px solid #90EE90; border-radius: 8px; padding: 16px; text-align: center; color: #90EE90; font-weight: 700; display: none; }
+    .error-msg   { color: var(--brand-danger,#e53e3e); font-size: 0.82rem; margin-top: 8px; display: none; }
+
+    #loading-state { text-align: center; padding: 80px; color: var(--brand-muted); }
+    #error-state   { text-align: center; padding: 80px; color: var(--brand-muted); display: none; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
+    <a class="btn btn-ghost" href="/covoiturage.html">← Tous les trajets</a>
+  </header>
+
+  <div id="loading-state">⏳ Chargement du trajet...</div>
+  <div id="error-state">❌ Trajet introuvable. <a href="/covoiturage.html" style="color:var(--brand-lime)">Retour</a></div>
+
+  <div class="page-inner" id="page-content" style="display:none;">
+    <!-- LEFT -->
+    <div class="ride-main">
+      <a class="back-link" href="/covoiturage.html">← Retour aux trajets</a>
+
+      <div class="ride-header">
+        <div class="ride-route-big">
+          <span id="r-from"></span>
+          <span class="arr">→</span>
+          <span id="r-to"></span>
+        </div>
+        <div class="ride-date" id="r-date"></div>
+        <div class="badges-row" id="r-badges"></div>
+      </div>
+
+      <!-- Conducteur -->
+      <div class="card">
+        <h3>Conducteur</h3>
+        <div class="driver-row">
+          <div class="driver-avatar" id="d-avatar">?</div>
+          <div>
+            <div class="driver-name" id="d-name">—</div>
+            <div class="driver-meta" id="d-meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos trajet -->
+      <div class="card">
+        <h3>Détails du trajet</h3>
+        <div class="info-grid" id="r-info-grid"></div>
+      </div>
+
+      <!-- Options -->
+      <div class="card" id="r-options-card">
+        <h3>Options disponibles</h3>
+        <div class="options-list" id="r-options"></div>
+      </div>
+
+      <!-- Règles -->
+      <div class="card" id="r-rules-card" style="display:none;">
+        <h3>Règles du conducteur</h3>
+        <p id="r-rules" style="margin:0;color:var(--brand-muted);font-size:0.9rem;line-height:1.65;"></p>
+      </div>
+
+      <!-- Legal -->
+      <div class="legal-note">
+        <strong>ℹ️ Rappel légal :</strong> Ce covoiturage est basé sur le <strong>partage des frais réels</strong> d'un trajet existant.
+        Il ne s'agit pas d'un service de taxi ou de transport commercial.
+        <a href="/covoiturage/regles.html" style="color:var(--brand-lime);">Règles complètes →</a>
+      </div>
+    </div>
+
+    <!-- RIGHT — BOOKING -->
+    <div class="booking-panel" id="booking-panel">
+      <h3>Réserver une place</h3>
+
+      <div class="field">
+        <label>Point d'embarquement</label>
+        <input type="text" id="b-pickup" placeholder="Ex : Vieux-Québec">
+      </div>
+      <div class="field">
+        <label>Point de débarquement</label>
+        <input type="text" id="b-dropoff" placeholder="Ex : Plateau-Mont-Royal">
+      </div>
+      <div class="field">
+        <label>Nombre de places</label>
+        <select id="b-seats" onchange="updateBreakdown()">
+          <option value="1">1 place</option>
+          <option value="2">2 places</option>
+          <option value="3">3 places</option>
+        </select>
+      </div>
+
+      <label class="option-check" id="opt-luggage-wrap" style="display:none;">
+        <input type="checkbox" id="b-luggage" onchange="updateBreakdown()"> 🧳 Gros bagages (+5,00 $)
+      </label>
+      <label class="option-check" id="opt-pet-wrap" style="display:none;">
+        <input type="checkbox" id="b-pet" onchange="updateBreakdown()"> 🐾 Animal de compagnie (+8,00 $)
+      </label>
+      <label class="option-check" id="opt-stop-wrap" style="display:none;">
+        <input type="checkbox" id="b-stop" onchange="updateBreakdown()"> 📍 Arrêt intermédiaire (+3,00 $)
+      </label>
+
+      <div class="field">
+        <label>Message au conducteur (facultatif)</label>
+        <input type="text" id="b-msg" placeholder="Ex : J'ai un petit chien calme">
+      </div>
+
+      <div class="breakdown" id="breakdown">
+        <div class="brow"><span>Chargement...</span><span></span></div>
+      </div>
+
+      <button class="btn" style="width:100%;margin-top:16px;" id="book-btn" onclick="bookRide()">Réserver ma place</button>
+      <div class="success-msg" id="book-success">✅ Réservation envoyée ! Le conducteur va confirmer.</div>
+      <div class="error-msg"   id="book-error"></div>
+
+      <a class="report-link" onclick="reportRide()">🚨 Signaler ce trajet</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    const rideId = new URLSearchParams(window.location.search).get('id');
+    let rideData = null;
+
+    function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+    function fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+
+    async function loadRide() {
+      if (!rideId) { showError(); return; }
+      try {
+        const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        const session = db ? (await db.auth.getSession()).data.session : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        const res  = await fetch('/api/ride-detail?ride_id=' + rideId + '&endpoint=ride-detail', { headers });
+        const data = await res.json();
+        if (!res.ok || !data.ride) { showError(); return; }
+
+        rideData = data;
+        renderRide(data);
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('page-content').style.display  = 'grid';
+        updateBreakdown();
+      } catch(e) { showError(); }
+    }
+
+    function showError() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display   = 'block';
+    }
+
+    function renderRide(data) {
+      const r = data.ride, d = data.driver || {};
+
+      // Route
+      document.getElementById('r-from').textContent = r.start_city + (r.start_sector ? ' · ' + r.start_sector : '');
+      document.getElementById('r-to').textContent   = r.end_city   + (r.end_sector   ? ' · ' + r.end_sector   : '');
+      document.getElementById('r-date').textContent = fmtDate(r.departure_time) + (r.flexibility_minutes > 0 ? ' (± ' + r.flexibility_minutes + ' min)' : '');
+
+      // Badges
+      const badges = [];
+      if (d.verified)              badges.push('<span class="badge green">✅ Conducteur vérifié</span>');
+      if (r.accepts_pets)          badges.push('<span class="badge">🐾 Animaux</span>');
+      if (r.accepts_large_luggage) badges.push('<span class="badge">🧳 Gros bagages</span>');
+      if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts intermédiaires</span>');
+      if (r.non_smoker)            badges.push('<span class="badge">🚭 Non-fumeur</span>');
+      if (r.accessible)            badges.push('<span class="badge blue">♿ Accessible</span>');
+      if (r.child_seat_available)  badges.push('<span class="badge">🪑 Siège enfant</span>');
+      if (r.women_only)            badges.push('<span class="badge">👩 Femmes seulement</span>');
+      document.getElementById('r-badges').innerHTML = badges.join('');
+
+      // Driver
+      const initial = (d.prenom || 'C')[0].toUpperCase();
+      document.getElementById('d-avatar').textContent = initial;
+      document.getElementById('d-name').textContent   = d.prenom || 'Conducteur';
+      document.getElementById('d-meta').textContent   = (d.verified ? 'Profil vérifié · ' : '') + (d.member_since ? 'Membre depuis ' + d.member_since : '');
+
+      // Infos
+      document.getElementById('r-info-grid').innerHTML = [
+        ['🗺️ Distance', (r.total_distance_km || '—') + ' km'],
+        ['🚗 Véhicule', r.vehicle_type || '—'],
+        ['🎒 Coffre', r.trunk_size || '—'],
+        ['🪑 Places dispo', r.available_seats + ' place' + (r.available_seats>1?'s':'')],
+      ].map(([lbl,val]) => `<div class="info-item"><div class="lbl">${lbl}</div><div class="val">${val}</div></div>`).join('');
+
+      // Options booking panel
+      if (r.accepts_large_luggage) document.getElementById('opt-luggage-wrap').style.display = 'flex';
+      if (r.accepts_pets)          document.getElementById('opt-pet-wrap').style.display     = 'flex';
+      if (r.accepts_extra_stops)   document.getElementById('opt-stop-wrap').style.display    = 'flex';
+
+      // Règles
+      if (r.personal_rules) {
+        document.getElementById('r-rules').textContent = r.personal_rules;
+        document.getElementById('r-rules-card').style.display = 'block';
+      }
+    }
+
+    function updateBreakdown() {
+      if (!rideData) return;
+      const r      = rideData.ride;
+      const seats  = Number(document.getElementById('b-seats').value) || 1;
+      const luggage = document.getElementById('b-luggage')?.checked;
+      const pet     = document.getElementById('b-pet')?.checked;
+      const stop    = document.getElementById('b-stop')?.checked;
+
+      const dist   = r.total_distance_km || 100;
+      const cpk    = r.cost_per_km || 0.35;
+      const total  = dist * cpk;
+      const share  = total / r.available_seats * seats;
+      const lugFee = luggage ? 5 : 0;
+      const petFee = pet     ? 8 : 0;
+      const stopFee= stop    ? 3 : 0;
+      const sub    = share + lugFee + petFee + stopFee;
+      const platFee= Math.round(sub * 0.10 * 100) / 100;
+      const total2 = Math.round((sub + platFee) * 100) / 100;
+      const max    = dist * 0.50 / r.available_seats * seats;
+      const over   = total2 > max * 1.05;
+
+      document.getElementById('breakdown').innerHTML = `
+        <div class="brow"><span>Distance (${dist} km × ${cpk} $/km)</span><span>${fmt(total)}</span></div>
+        <div class="brow"><span>Votre portion (${seats} place${seats>1?'s':('')})</span><span>${fmt(share)}</span></div>
+        ${lugFee  ? '<div class="brow"><span>🧳 Gros bagages</span><span>+' + fmt(lugFee)  + '</span></div>' : ''}
+        ${petFee  ? '<div class="brow"><span>🐾 Animal</span><span>+'        + fmt(petFee)  + '</span></div>' : ''}
+        ${stopFee ? '<div class="brow"><span>📍 Arrêt intermédiaire</span><span>+' + fmt(stopFee) + '</span></div>' : ''}
+        <div class="brow"><span>Frais plateforme (10%)</span><span>${fmt(platFee)}</span></div>
+        <div class="brow total"><span>Total à payer</span><span>${fmt(total2)}</span></div>
+        <div class="brow" style="margin-top:4px;"><span style="font-size:0.78rem;color:var(--brand-muted)">Conducteur reçoit</span><span style="font-size:0.78rem;color:var(--brand-cyan)">${fmt(sub)}</span></div>
+        ${over ? '<div class="over-warn">⚠️ Prix élevé — basé sur le partage des frais réels</div>' : ''}
+      `;
+    }
+
+    async function bookRide() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href); return; }
+
+      const btn = document.getElementById('book-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Réservation...';
+
+      const body = {
+        endpoint: 'ride-book',
+        ride_id:         rideId,
+        pickup_city:     document.getElementById('b-pickup').value.trim() || rideData.ride.start_city,
+        dropoff_city:    document.getElementById('b-dropoff').value.trim() || rideData.ride.end_city,
+        pickup_sector:   document.getElementById('b-pickup').value.trim(),
+        dropoff_sector:  document.getElementById('b-dropoff').value.trim(),
+        seats_reserved:  Number(document.getElementById('b-seats').value),
+        has_large_luggage: document.getElementById('b-luggage')?.checked || false,
+        has_pet:           document.getElementById('b-pet')?.checked     || false,
+        extra_stops_count: document.getElementById('b-stop')?.checked    ? 1 : 0,
+        special_requests:  document.getElementById('b-msg').value.trim() || null,
+      };
+
+      try {
+        const res  = await fetch('/api/ride-book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          btn.style.display = 'none';
+          document.getElementById('book-success').style.display = 'block';
+        } else {
+          document.getElementById('book-error').style.display = 'block';
+          document.getElementById('book-error').textContent = '⚠️ ' + (data.error || 'Erreur lors de la réservation.');
+          btn.disabled = false; btn.textContent = 'Réserver ma place';
+        }
+      } catch(e) {
+        document.getElementById('book-error').style.display = 'block';
+        document.getElementById('book-error').textContent = '⚠️ Erreur réseau. Réessayez.';
+        btn.disabled = false; btn.textContent = 'Réserver ma place';
+      }
+    }
+
+    async function reportRide() {
+      const reason = prompt('Pourquoi signalez-vous ce trajet ?');
+      if (!reason) return;
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { alert('Connexion requise pour signaler.'); return; }
+      await fetch('/api/ride-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'ride-report', ride_id: rideId, reason }),
+      });
+      alert('Signalement reçu. Merci — notre équipe va examiner ce trajet.');
+    }
+
+    loadRide();
+  </script>
+</body>
+</html>
