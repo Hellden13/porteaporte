@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test modal - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/modal-helper.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:grid;place-items:center;padding:24px}
+    main{width:min(720px,100%);background:#111318;border:1px solid #1F2937;border-radius:12px;padding:28px}
+    h1{font-size:30px;margin-bottom:12px}
+    p{color:#A8ACB1;line-height:1.6;margin-bottom:18px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{width:auto;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Test modal PorteaPorte</h1>
+    <p>Page de test pour valider les remplacements de alert()/confirm() avant de les appliquer aux workflows sensibles.</p>
+    <div class="row">
+      <button class="btn" type="button" onclick="testConfirm()">Confirmation</button>
+      <button class="btn" type="button" onclick="showSuccess('Succes affiche correctement.')">Toast succes</button>
+      <button class="btn" type="button" onclick="showError('Erreur affichee correctement.')">Toast erreur</button>
+    </div>
+  </main>
+  <script>
+    async function testConfirm() {
+      const ok = await showConfirm({
+        title: 'Accepter cette mission?',
+        description: 'Cette action simule une confirmation sensible.',
+        confirmText: 'Accepter',
+        cancelText: 'Annuler'
+      });
+      if (ok) showSuccess('Confirmation recue.');
+      else showInfo('Action annulee.');
+    }
+  </script>
+</body>
+</html>

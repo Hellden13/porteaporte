@@ -1,0 +1,21 @@
+﻿-- Correctif statuts livraisons PorteaPorte
+-- A executer dans Supabase SQL Editor si le paiement/creation bloque sur livraisons_statut_check.
+
+alter table public.livraisons drop constraint if exists livraisons_statut_check;
+
+alter table public.livraisons add constraint livraisons_statut_check check (
+  statut in (
+    'en_attente',
+    'publie',
+    'paiement_autorise',
+    'confirme',
+    'en_route',
+    'ramasse',
+    'livre',
+    'payee',
+    'annule',
+    'annulee',
+    'litige',
+    'rembourse'
+  )
+);

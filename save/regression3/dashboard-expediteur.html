@@ -1,0 +1,699 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard expéditeur - PorteàPorte">
+    <title>Dashboard expéditeur - PorteàPorte</title>
+    
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+    
+    <style>
+        body { padding: 0; }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: 24px 0;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr 320px;
+            }
+        }
+
+        .dashboard-header {
+            background: var(--brand-bg-surface);
+            border-bottom: 1px solid var(--brand-bg-surface-light);
+            padding: 20px 0;
+            position: sticky;
+            top: 60px;
+            z-index: 10;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--brand-text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .header-stats { width: auto; }
+        }
+
+        .stat-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--brand-bg-dark);
+            border-radius: 10px;
+            border: 1px solid var(--brand-bg-surface-light);
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--brand-lime);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--brand-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+            letter-spacing: .04em;
+        }
+
+        .missions-section {
+            display: grid;
+            gap: 24px;
+        }
+
+        .missions-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--brand-bg-surface-light);
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--brand-muted);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: color .2s, border-color .2s;
+            white-space: nowrap;
+            margin-bottom: -1px;
+        }
+
+        .tab-button:hover { color: var(--brand-text); }
+
+        .tab-button.active {
+            color: var(--brand-lime);
+            border-bottom-color: var(--brand-lime);
+        }
+
+        .missions-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .missions-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 1024px) {
+            .missions-grid { grid-template-columns: 1fr; }
+        }
+
+        .mission-card {
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color .2s, transform .2s, box-shadow .2s;
+        }
+
+        .mission-card:hover {
+            border-color: var(--brand-lime);
+            box-shadow: 0 4px 24px rgba(184,245,62,.10);
+            transform: translateY(-2px);
+        }
+
+        .mission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+
+        .mission-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--brand-text);
+        }
+
+        .mission-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .mission-status.pending {
+            background: rgba(245,158,11,.15);
+            color: var(--brand-warning);
+        }
+
+        .mission-status.active {
+            background: rgba(11,255,203,.15);
+            color: var(--brand-lime);
+        }
+
+        .mission-status.completed {
+            background: rgba(16,185,129,.15);
+            color: var(--brand-success);
+        }
+
+        .mission-details {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--brand-bg-surface-light);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .detail-label { color: var(--brand-muted); }
+
+        .detail-value {
+            color: var(--brand-text);
+            font-weight: 600;
+        }
+
+        .mission-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .mission-price {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--brand-lime);
+        }
+
+        .mission-driver {
+            font-size: 0.8rem;
+            color: var(--brand-muted);
+        }
+
+        .mission-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mission-actions .btn { flex: 1; min-width: 120px; }
+
+        .mission-note {
+            font-size: 11px;
+            color: var(--brand-muted);
+            line-height: 1.5;
+            margin-top: 8px;
+            flex-basis: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar { display: none; }
+
+        @media (min-width: 1024px) {
+            .sidebar {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
+        .sidebar-card {
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--brand-lime);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .quick-actions { display: grid; gap: 8px; }
+
+        .quick-action-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 12px 14px;
+            background: var(--brand-bg-dark);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--brand-text);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: border-color .2s, background .2s;
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--brand-lime);
+            background: rgba(184,245,62,.05);
+            color: var(--brand-lime);
+        }
+
+        .stats-list { display: grid; gap: 8px; }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--brand-bg-dark);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .stats-item-label { color: var(--brand-muted); }
+
+        .stats-item-value {
+            font-weight: 700;
+            color: var(--brand-lime);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--brand-text);
+        }
+
+        .empty-state-text {
+            color: var(--brand-muted);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <div class="navbar-brand">PorteàPorte</div>
+                <div id="auth-user-info" class="flex items-center gap-md">
+                    <span id="auth-user-name" class="text-sm font-semibold"></span>
+                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- DASHBOARD HEADER -->
+    <section class="dashboard-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-title">
+                    <div id="header-welcome" style="font-size:.85rem;color:#9BA1A9;margin-bottom:4px">Bonjour,</div>
+                    <h1>Mes Expéditions</h1>
+                </div>
+                <div class="header-actions">
+                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="stat-pending">0</div>
+                        <div class="stat-label">En cours</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="stat-completed">0</div>
+                        <div class="stat-label">Complétées</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="stat-xp">0</div>
+                        <div class="stat-label">XP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <div class="container dashboard">
+        <div class="missions-section">
+            <!-- TABS -->
+            <div class="missions-tabs">
+                <button class="tab-button active" onclick="switchTab('all')">Toutes</button>
+                <button class="tab-button" onclick="switchTab('pending')">En attente</button>
+                <button class="tab-button" onclick="switchTab('completed')">Complétées</button>
+                <button class="tab-button" onclick="switchTab('disputes')">Litiges</button>
+            </div>
+
+            <!-- MISSIONS GRID -->
+            <div id="missions-container" class="missions-grid">
+                <div class="empty-state">
+                    <div class="empty-state-icon"></div>
+                    <div class="empty-state-title">Aucune livraison</div>
+                    <div class="empty-state-text">Créez votre première livraison pour commencer</div>
+                    <a href="create-mission.html" class="btn btn-primary">Créer une livraison</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <!-- QUICK ACTIONS -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">Actions rapides</div>
+                <div class="quick-actions">
+                    <a href="create-mission.html" class="quick-action-btn">Nouvelle livraison</a>
+                    <a href="browse-missions.html" class="quick-action-btn">Parcourir</a>
+                    <a href="profile.html" class="quick-action-btn">Mon profil</a>
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">Mon Profil</div>
+                <div class="stats-list">
+                    <div class="stats-item">
+                        <span class="stats-item-label">XP</span>
+                        <span class="stats-item-value" id="user-xp">0 XP</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-item-label">Score</span>
+                        <span class="stats-item-value" id="user-score">—</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-item-label">Total dépensé</span>
+                        <span class="stats-item-value" id="user-spent">$0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-item-label">Solde compte</span>
+                        <span class="stats-item-value" id="user-balance">$0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/modal-helper.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth-complete.js"></script>
+    
+    <script>
+        let currentTab = 'all';
+        let cachedLivraisons = [];
+        const captureInProgress = new Set();
+
+        async function initPage() {
+            if (!await AUTH_API.requireAuth('expediteur')) return;
+
+            const user = AUTH_API.getUser();
+            document.getElementById('auth-user-name').textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || user.email || '';
+
+            // Accueil personnalisé
+            const prenom = user.prenom || user.email?.split('@')[0] || '';
+            document.getElementById('header-welcome').textContent = 'Bonjour, ' + prenom + ' 👋';
+
+            // Stats profil sidebar
+            const profile = user.profile || {};
+            const xp = profile.xp || 0;
+            const score = profile.score || profile.score_confiance || 0;
+            document.getElementById('user-xp').textContent = xp + ' XP';
+            document.getElementById('stat-xp').textContent = xp;
+            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1) + '★' : '—';
+            document.getElementById('user-balance').textContent = '$' + ((profile.coins || 0) / 100).toFixed(2);
+
+            await loadMissions();
+        }
+
+        async function loadMissions() {
+            const db = window.db;
+            if (!db) return;
+
+            const { data, error } = await db
+                .from('livraisons')
+                .select('id,code,description,type_colis,ville_depart,ville_arrivee,adresse_depart,adresse_arrivee,poids_kg,prix_total,statut,livreur_id,created_at,cree_le')
+                .eq('expediteur_id', AUTH_API.getUser().id)
+                .order('cree_le', { ascending: false });
+
+            if (error) {
+                console.error('ERREUR livraisons expediteur:', error.message);
+                document.getElementById('missions-container').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">Erreur chargement</div>
+                        <div class="empty-state-text">${error.message}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            cachedLivraisons = data || [];
+            updateStats(cachedLivraisons);
+            displayMissions(cachedLivraisons);
+        }
+
+        function statusLabel(status) {
+            const labels = {
+                en_attente: 'Brouillon',
+                publie: 'Publiee',
+                paiement_autorise: 'Escrow autorise',
+                confirme: 'Livreur assigne',
+                en_route: 'En route',
+                ramasse: 'Ramassee',
+                livre: 'Livree - a confirmer',
+                payee: 'Payee',
+                annule: 'Annulee',
+                annulee: 'Annulee',
+                litige: 'Litige',
+                rembourse: 'Remboursee'
+            };
+            return labels[status] || status || 'En attente';
+        }
+
+        function statusClass(status) {
+            if (['payee', 'livre'].includes(status)) return 'completed';
+            if (['paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(status)) return 'active';
+            return 'pending';
+        }
+
+        function money(value) {
+            return Number(value || 0).toFixed(2) + ' $';
+        }
+
+        function dateLabel(value) {
+            if (!value) return '-';
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('fr-CA');
+        }
+
+        function updateStats(livraisons) {
+            const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(l.statut)).length;
+            const completed = livraisons.filter(l => ['livre', 'payee'].includes(l.statut)).length;
+            const spent = livraisons.reduce((sum, l) => sum + Number(l.prix_total || 0), 0);
+
+            document.getElementById('stat-total').textContent = livraisons.length;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('user-spent').textContent = money(spent);
+        }
+
+        function actionButtons(mission) {
+            const id = encodeURIComponent(mission.id);
+            const buttons = [`<a class="btn btn-ghost" href="gps-tracker.html?id=${id}">Suivi</a>`];
+
+            if (['en_attente', 'publie'].includes(mission.statut)) {
+                const params = new URLSearchParams({
+                    livraison_id: mission.id,
+                    montant: String(mission.prix_total || 0),
+                    dep: mission.ville_depart || '',
+                    arr: mission.ville_arrivee || '',
+                    type: mission.type_colis || 'colis',
+                    poids: String(mission.poids_kg || 1)
+                });
+                buttons.unshift(`<a class="btn btn-primary" href="paiement.html?${params.toString()}">Payer escrow</a>`);
+            }
+
+            if (mission.statut === 'livre') {
+                buttons.unshift(`<button class="btn btn-primary" type="button" data-capture-id="${mission.id}" onclick="capturePayment('${mission.id}', '${mission.statut}')">Confirmer reception</button>`);
+            }
+
+            if (['en_attente', 'publie', 'paiement_autorise', 'confirme'].includes(mission.statut)) {
+                buttons.push(`<button class="btn btn-ghost" type="button" onclick="cancelLivraison('${mission.id}')">Annuler</button>`);
+            }
+
+            return buttons.join('') + '<div class="mission-note">Confirmez la reception seulement lorsque vous avez bien recu votre colis. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+        }
+
+        async function cancelLivraison(livraisonId) {
+            if (!confirm('Annuler cette livraison? Si le paiement escrow est seulement autorise, Stripe annulera la preautorisation.')) return;
+            const user = AUTH_API.getUser();
+            const res = await fetch('/api/cancel-livraison', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + user.session.access_token
+                },
+                body: JSON.stringify({ livraison_id: livraisonId, raison: 'Annulation expediteur depuis dashboard' })
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showError('❌ ' + (result.error || 'Annulation impossible'));
+                return;
+            }
+            showSuccess('✅ ' + (result.message || 'Livraison annulée'));
+            await loadMissions();
+        }
+
+        async function capturePayment(livraisonId, statut) {
+            if (statut !== 'livre') {
+                showError('❌ La livraison doit etre marquee livree avant de liberer Stripe.');
+                return;
+            }
+            if (captureInProgress.has(livraisonId)) return;
+            if (!confirm('Confirmer la reception et liberer le paiement Stripe au livreur?')) return;
+            captureInProgress.add(livraisonId);
+            document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
+                btn.disabled = true;
+                btn.textContent = 'Liberation...';
+            });
+            const user = AUTH_API.getUser();
+            try {
+                const res = await fetch('/api/capture-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + user.session.access_token
+                    },
+                    body: JSON.stringify({ livraison_id: livraisonId })
+                });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    showError('❌ ' + (result.error || 'Capture Stripe impossible'));
+                    return;
+                }
+                showSuccess('✅ Reception confirmee. Paiement libere au livreur.');
+                await loadMissions();
+            } finally {
+                captureInProgress.delete(livraisonId);
+                document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmer reception';
+                });
+            }
+        }
+
+        function displayMissions(missions) {
+            const container = document.getElementById('missions-container');
+            const filtered = missions.filter(m => {
+                if (currentTab === 'all') return true;
+                if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(m.statut);
+                if (currentTab === 'completed') return ['livre', 'payee'].includes(m.statut);
+                if (currentTab === 'disputes') return ['litige', 'rembourse'].includes(m.statut);
+                return false;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">Aucune livraison</div>
+                        <div class="empty-state-text">${currentTab === 'all' ? 'Creez votre premiere livraison' : 'Aucune livraison dans cette categorie'}</div>
+                        <a href="create-mission.html" class="btn btn-primary">Creer une livraison</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(mission => `
+                <div class="mission-card">
+                    <div class="mission-header">
+                        <h3 class="mission-title">${mission.type_colis || mission.description || 'Livraison'}</h3>
+                        <span class="mission-status ${statusClass(mission.statut)}">${statusLabel(mission.statut)}</span>
+                    </div>
+                    <div class="mission-details">
+                        <div class="detail-row"><span class="detail-label">De</span><span class="detail-value">${mission.ville_depart || 'Depart'}</span></div>
+                        <div class="detail-row"><span class="detail-label">A</span><span class="detail-value">${mission.ville_arrivee || 'Arrivee'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Colis</span><span class="detail-value">${mission.type_colis || 'Colis'}${mission.poids_kg ? ' - ' + mission.poids_kg + ' kg' : ''}</span></div>
+                        <div class="detail-row"><span class="detail-label">Creee</span><span class="detail-value">${dateLabel(mission.cree_le || mission.created_at)}</span></div>
+                    </div>
+                    <div class="mission-footer">
+                        <div class="mission-price">${money(mission.prix_total)}</div>
+                        ${mission.livreur_id ? `<div class="mission-driver">Livreur assigne</div>` : `<div class="mission-driver">En attente de livreur</div>`}
+                    </div>
+                    <div class="mission-actions">${actionButtons(mission)}</div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+            displayMissions(cachedLivraisons);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
+        }
+    </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>
+

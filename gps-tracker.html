@@ -9,56 +9,36 @@
 <script src="/js/auth.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
-  if (window.PorteAuth) await window.PorteAuth.requireVerifiedDriver('/livreur.html');
+  const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+  if (!db) return;
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.href = '/login.html'; }
 });
-    </script>
-    <!-- Google Maps: cle via /api/maps-config (GOOGLE_MAPS_API_KEY sur Vercel), pas dans le depot -->
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0A0C0F;
-            color: #E8EAED;
+            background: var(--brand-bg-dark);
+            color: var(--brand-text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-
         .navbar {
-            background: #12151A;
-            border-bottom: 1px solid #1F242C;
+            background: var(--brand-bg-surface);
+            border-bottom: 1px solid var(--brand-bg-surface-light);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #B8F53E;
-        }
-
-        .navbar-links {
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        .navbar-links a {
-            color: #9BA1A9;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .navbar-links a:hover {
-            color: #B8F53E;
-        }
-
+        .navbar-brand { font-weight: bold; font-size: 1.2rem; color: var(--brand-lime); }
+        .navbar-links { display: flex; gap: 1.5rem; }
+        .navbar-links a { color: var(--brand-muted); text-decoration: none; transition: color 0.2s; }
+        .navbar-links a:hover { color: var(--brand-lime); }
         .container {
             flex: 1;
             display: grid;
@@ -66,34 +46,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             gap: 1rem;
             padding: 1rem;
         }
-
         @media (max-width: 1024px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                order: -1;
-            }
+            .container { grid-template-columns: 1fr; }
+            .sidebar { order: -1; }
         }
-
         .map-container {
-            background: #12151A;
-            border: 1px solid #1F242C;
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
             border-radius: 8px;
             overflow: hidden;
-            position: relative;
         }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            min-height: 500px;
-        }
-
+        #map { width: 100%; height: 100%; min-height: 500px; }
         .sidebar {
-            background: #12151A;
-            border: 1px solid #1F242C;
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
             border-radius: 8px;
             padding: 1.5rem;
             overflow-y: auto;
@@ -101,75 +67,31 @@ document.addEventListener('DOMContentLoaded', async function () {
             flex-direction: column;
             gap: 1.5rem;
         }
-
-        .section {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
+        .section { display: flex; flex-direction: column; gap: 0.75rem; }
         .section h3 {
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #B8F53E;
-            border-bottom: 1px solid #1F242C;
+            color: var(--brand-lime);
+            border-bottom: 1px solid var(--brand-bg-surface-light);
             padding-bottom: 0.5rem;
         }
-
         .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem;
-            background: #0A0C0F;
+            background: var(--brand-bg-dark);
             border-radius: 4px;
-            border-left: 3px solid #B8F53E;
+            border-left: 3px solid var(--brand-lime);
         }
-
-        .info-label {
-            font-size: 0.8rem;
-            color: #9BA1A9;
-            text-transform: uppercase;
-        }
-
-        .info-value {
-            font-size: 1rem;
-            color: #B8F53E;
-            font-weight: bold;
-        }
-
-        .tracking-status {
-            padding: 1rem;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .status-active {
-            background: #006400;
-            color: #90EE90;
-            border: 1px solid #90EE90;
-        }
-
-        .status-inactive {
-            background: #333;
-            color: #999;
-            border: 1px solid #666;
-        }
-
-        .status-error {
-            background: #8B0000;
-            color: #FFB6B6;
-            border: 1px solid #FFB6B6;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
+        .info-label { font-size: 0.8rem; color: var(--brand-muted); text-transform: uppercase; }
+        .info-value { font-size: 1rem; color: var(--brand-lime); font-weight: bold; }
+        .tracking-status { padding: 1rem; border-radius: 4px; text-align: center; font-weight: bold; }
+        .status-active   { background: #006400; color: #90EE90; border: 1px solid #90EE90; }
+        .status-inactive { background: #333;    color: #999;    border: 1px solid #666; }
+        .status-error    { background: #8B0000; color: #FFB6B6; border: 1px solid #FFB6B6; }
+        .controls { display: flex; flex-direction: column; gap: 0.5rem; }
         button {
             padding: 0.75rem;
             border: none;
@@ -181,173 +103,46 @@ document.addEventListener('DOMContentLoaded', async function () {
             font-size: 0.85rem;
             letter-spacing: 0.5px;
         }
-
-        .btn-primary {
-            background: #B8F53E;
-            color: #0A0C0F;
-        }
-
-        .btn-primary:hover {
-            background: #a5dd2d;
-        }
-
-        .btn-primary:disabled {
-            background: #666;
-            color: #999;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .btn-secondary {
-            background: #1F242C;
-            color: #B8F53E;
-            border: 1px solid #B8F53E;
-        }
-
-        .btn-secondary:hover {
-            background: #B8F53E;
-            color: #0A0C0F;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-
-        .stat-card {
-            background: #0A0C0F;
-            border: 1px solid #1F242C;
+        .btn-primary { background: var(--brand-lime); color: var(--brand-bg-dark); }
+        .btn-primary:hover { background: #a5dd2d; }
+        .btn-primary:disabled { background: #666; color: #999; cursor: not-allowed; opacity: 0.5; }
+        .btn-secondary { background: var(--brand-bg-surface-light); color: var(--brand-lime); border: 1px solid var(--brand-lime); }
+        .btn-secondary:hover { background: var(--brand-lime); color: var(--brand-bg-dark); }
+        .btn-secondary.active { background: var(--brand-lime); color: var(--brand-bg-dark); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .stat-card { background: var(--brand-bg-dark); border: 1px solid var(--brand-bg-surface-light); border-radius: 4px; padding: 0.75rem; text-align: center; }
+        .stat-value { font-size: 1.5rem; color: var(--brand-lime); font-weight: bold; }
+        .stat-label { font-size: 0.7rem; color: var(--brand-muted); text-transform: uppercase; margin-top: 0.25rem; }
+        .alert { padding: 0.75rem; border-radius: 4px; font-size: 0.85rem; border-left: 3px solid; }
+        .alert-info    { background: #1a1f2e; border-left-color: var(--brand-lime);   color: var(--brand-lime); }
+        .alert-warning { background: #2e2400; border-left-color: #FFB800;             color: #FFB800; }
+        .alert-error   { background: #2e1a1a; border-left-color: var(--brand-danger); color: var(--brand-danger); }
+        .alert-success { background: #1a2e1a; border-left-color: #90EE90;             color: #90EE90; }
+        .mode-toggle { display: flex; gap: 0.5rem; }
+        .mode-toggle button { flex: 1; padding: 0.5rem; font-size: 0.8rem; }
+        #confirm-btn {
+            background: #16a34a;
+            color: #fff;
+            border: none;
             border-radius: 4px;
-            padding: 0.75rem;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            color: #B8F53E;
+            padding: 0.85rem;
             font-weight: bold;
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-            color: #9BA1A9;
-            text-transform: uppercase;
-            margin-top: 0.25rem;
-        }
-
-        .alert {
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            border-left: 3px solid;
-        }
-
-        .alert-info {
-            background: #1a1f2e;
-            border-left-color: #0BFFCB;
-            color: #0BFFCB;
-        }
-
-        .alert-warning {
-            background: #2e2400;
-            border-left-color: #FFB800;
-            color: #FFB800;
-        }
-
-        .alert-error {
-            background: #2e1a1a;
-            border-left-color: #FF6B6B;
-            color: #FF6B6B;
-        }
-
-        .alert-success {
-            background: #1a2e1a;
-            border-left-color: #90EE90;
-            color: #90EE90;
-        }
-
-        .route-info {
-            padding: 0.75rem;
-            background: #0A0C0F;
-            border: 1px solid #1F242C;
-            border-radius: 4px;
             font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+            text-transform: none;
+            letter-spacing: 0;
         }
-
-        .route-info strong {
-            color: #B8F53E;
-        }
-
-        .marker-popup {
-            background: #12151A;
-            border: 1px solid #1F242C;
-            border-radius: 4px;
-            padding: 1rem;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        }
-
-        .marker-popup h4 {
-            color: #B8F53E;
-            margin-bottom: 0.5rem;
-        }
-
-        .marker-popup p {
-            font-size: 0.85rem;
-            color: #9BA1A9;
-            margin: 0.25rem 0;
-        }
-
-        .spinner {
-            border: 2px solid #1F242C;
-            border-top: 2px solid #B8F53E;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .back-link {
-            color: #B8F53E;
-            text-decoration: none;
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .mode-toggle {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .mode-toggle button {
-            flex: 1;
-            padding: 0.5rem;
-            font-size: 0.8rem;
-        }
-
-        .mode-toggle button.active {
-            background: #B8F53E;
-            color: #0A0C0F;
-        }
+        #confirm-btn:hover { background: #15803d; }
+        #confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
-    <link rel="stylesheet" >
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
 </head>
 <body>
     <div class="navbar">
         <div class="navbar-brand">🚚 PorteàPorte - Suivi GPS</div>
         <div class="navbar-links">
-            <a href="/suivi.html">← Retour au suivi</a>
+            <a href="javascript:history.back()">← Retour</a>
             <a href="/" onclick="logout(); return false;">Déconnexion</a>
         </div>
     </div>
@@ -358,50 +153,38 @@ document.addEventListener('DOMContentLoaded', async function () {
         </div>
 
         <div class="sidebar">
-            <!-- Mode Selection -->
             <div class="section">
                 <h3>Mode de suivi</h3>
                 <div class="mode-toggle">
-                    <button id="mode-livreur" class="btn-secondary active">📍 Je suis le livreur</button>
-                    <button id="mode-client" class="btn-secondary">👁ï¸ Suivre une livraison</button>
+                    <button id="mode-livreur" class="btn-secondary active">📍 Je livre</button>
+                    <button id="mode-client"  class="btn-secondary">👁 Suivre</button>
                 </div>
             </div>
 
-            <!-- Status -->
             <div class="section">
                 <h3>Statut</h3>
-                <div class="tracking-status status-inactive" id="status">
-                    ⚪ GPS Inactif
-                </div>
+                <div class="tracking-status status-inactive" id="status">⚪ GPS Inactif</div>
             </div>
 
-            <!-- Controls for Delivery Person -->
-            <div class="section" id="livreur-controls" style="display: none;">
+            <div class="section" id="livreur-controls">
                 <h3>Contrôles livreur</h3>
                 <div class="controls">
                     <button id="start-tracking" class="btn-primary">🟢 Démarrer le suivi</button>
-                    <button id="stop-tracking" class="btn-primary" disabled>🔴 Arrêter le suivi</button>
+                    <button id="stop-tracking"  class="btn-primary" disabled>🔴 Arrêter le suivi</button>
                 </div>
-                <div id="accuracy-info" style="font-size: 0.85rem; color: #9BA1A9; text-align: center; display: none;">
-                    Précision: <span id="accuracy-value">--</span>m
+                <div id="accuracy-info" style="font-size:0.85rem;color:#9BA1A9;text-align:center;display:none;">
+                    Précision : <span id="accuracy-value">--</span> m
+                </div>
+                <div id="confirm-section" style="display:none;margin-top:0.5rem;">
+                    <button id="confirm-btn">✅ Confirmer la livraison</button>
                 </div>
             </div>
 
-            <!-- Controls for Client -->
-            <div class="section" id="client-controls" style="display: none;">
-                <h3>Suivi du colis</h3>
-                <input type="text" id="tracking-code" placeholder="Code de suivi (ex: PP-12345)" style="
-                    background: #0A0C0F;
-                    border: 1px solid #1F242C;
-                    color: #E8EAED;
-                    padding: 0.5rem;
-                    border-radius: 4px;
-                    margin-bottom: 0.5rem;
-                ">
-                <button id="load-tracking" class="btn-primary">🔍 Charger le suivi</button>
+            <div class="section" id="client-controls" style="display:none;">
+                <h3>Position du livreur</h3>
+                <div id="client-status" style="font-size:0.85rem;color:var(--brand-muted);text-align:center;">En attente...</div>
             </div>
 
-            <!-- Location Info -->
             <div class="section">
                 <h3>📍 Localisation actuelle</h3>
                 <div class="info-item">
@@ -418,7 +201,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </div>
             </div>
 
-            <!-- Distance & Speed -->
             <div class="section">
                 <h3>📊 Statistiques</h3>
                 <div class="stats-grid">
@@ -433,381 +215,263 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </div>
             </div>
 
-            <!-- Alerts -->
-            <div id="alerts-container" style="display: none;">
+            <div id="alerts-container" style="display:none;">
                 <div id="alert-message" class="alert alert-info"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // ═════════════════════════════════════════════════════════════════════
-        // CONFIGURATION GPS & MAPS
-        // ═════════════════════════════════════════════════════════════════════
+        let map, userMarker, livreurMarker, polyline;
+        let watchId = null, clientPollInterval = null;
+        let locationHistory = [], isTracking = false, mode = 'livreur';
+        const params = new URLSearchParams(window.location.search);
+        const livraisonId = params.get('id') || params.get('livraison_id');
 
-        let map;
-        let userMarker;
-        let polyline;
-        let watchId;
-        let locationHistory = [];
-        let isTracking = false;
-        let mode = 'livreur'; // 'livreur' ou 'client'
-        let lastLocation = null;
-
-        async function loadGoogleMapsThenInit() {
-            if (typeof google !== 'undefined' && google.maps) {
-                initMap();
-                return;
-            }
-            try {
-                var r = await fetch('/api/maps-config');
-                var j = await r.json();
-                if (!j || !j.key) {
-                    showAlert('Carte indisponible: configure GOOGLE_MAPS_API_KEY sur Vercel', 'error');
-                    return;
-                }
-                await new Promise(function (resolve, reject) {
-                    var cb = '__gmapsCb_' + Math.random().toString(36).slice(2);
-                    window[cb] = function () {
-                        try { resolve(); } finally { delete window[cb]; }
-                    };
-                    var s = document.createElement('script');
-                    s.async = true;
-                    s.onerror = function () { reject(new Error('maps')); };
-                    s.src =
-                        'https://maps.googleapis.com/maps/api/js?key=' +
-                        encodeURIComponent(j.key) +
-                        '&libraries=geometry,places&callback=' +
-                        cb;
-                    document.head.appendChild(s);
-                });
-                initMap();
-            } catch (e) {
-                console.error(e);
-                showAlert('Impossible de charger Google Maps', 'error');
-            }
-        }
-
-        // ═════════════════════════════════════════════════════════════════════
-        // Initialiser Google Maps
-        // ═════════════════════════════════════════════════════════════════════
-        
         function initMap() {
-            const defaultLocation = { lat: 45.5017, lng: -73.5673 }; // Montréal
-
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 15,
-                center: defaultLocation,
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                styles: [
-                    {
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#1a1f2e" }]
-                    },
-                    {
-                        "elementType": "labels.text.stroke",
-                        "stylers": [{ "color": "#1a1f2e" }]
-                    },
-                    {
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#b8f53e" }]
-                    },
-                    {
-                        "featureType": "road",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#38414e" }]
-                    },
-                    {
-                        "featureType": "road",
-                        "elementType": "geometry.stroke",
-                        "stylers": [{ "color": "#212a3a" }]
-                    },
-                    {
-                        "featureType": "poi",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#202d3f" }]
-                    }
-                ]
-            });
-
-            // Créer le polyline pour la route
-            polyline = new google.maps.Polyline({
-                path: [],
-                geodesic: true,
-                strokeColor: '#B8F53E',
-                strokeOpacity: 1.0,
-                strokeWeight: 3,
-                map: map
-            });
-
-            // Créer le marqueur utilisateur
-            userMarker = new google.maps.Marker({
-                map: map,
-                icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
-                title: 'Votre position'
-            });
+            map = L.map('map').setView([46.7749, -71.2783], 12);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+            polyline = L.polyline([], { color: '#B8F53E', weight: 4 }).addTo(map);
+            userMarker = L.circleMarker([46.7749, -71.2783], {
+                radius: 10, fillColor: '#B8F53E', color: '#0A0C0F', weight: 2, fillOpacity: 1
+            }).addTo(map).bindPopup('Votre position');
         }
-
-        // ═════════════════════════════════════════════════════════════════════
-        // GÉOLOCALISATION
-        // ═════════════════════════════════════════════════════════════════════
 
         function startTracking() {
-            if (!navigator.geolocation) {
-                showAlert('Géolocalisation non supportée par votre navigateur', 'error');
-                return;
-            }
-
+            if (!navigator.geolocation) { showAlert('Géolocalisation non supportée', 'error'); return; }
             isTracking = true;
             locationHistory = [];
             updateStatus('active', '🟢 GPS Actif');
-
-            // Options pour une meilleure précision
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            };
-
-            watchId = navigator.geolocation.watchPosition(
-                handleLocationSuccess,
-                handleLocationError,
-                options
-            );
-
+            watchId = navigator.geolocation.watchPosition(handleLocationSuccess, handleLocationError,
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
             document.getElementById('start-tracking').disabled = true;
-            document.getElementById('stop-tracking').disabled = false;
-
-            showAlert('Suivi GPS activé. Mise à jour en direct...', 'success');
+            document.getElementById('stop-tracking').disabled  = false;
+            document.getElementById('accuracy-info').style.display = 'block';
+            if (livraisonId) {
+                document.getElementById('confirm-section').style.display = 'block';
+                showAlert('Suivi GPS actif — position transmise en temps réel.', 'success');
+            } else {
+                showAlert('Suivi GPS actif (aucune livraison liée).', 'info');
+            }
         }
 
         function stopTracking() {
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-            }
+            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isTracking = false;
             updateStatus('inactive', '⚪ GPS Arrêté');
-
             document.getElementById('start-tracking').disabled = false;
-            document.getElementById('stop-tracking').disabled = true;
-
-            showAlert('Suivi GPS arrêté', 'warning');
+            document.getElementById('stop-tracking').disabled  = true;
         }
 
         function handleLocationSuccess(position) {
             const { latitude, longitude, altitude, accuracy } = position.coords;
             const heading = position.coords.heading || 0;
-
-            lastLocation = { latitude, longitude, altitude, accuracy, heading };
             locationHistory.push({ latitude, longitude, timestamp: Date.now() });
-
-            // Mettre à jour l'affichage
-            document.getElementById('latitude').textContent = latitude.toFixed(6);
+            document.getElementById('latitude').textContent  = latitude.toFixed(6);
             document.getElementById('longitude').textContent = longitude.toFixed(6);
-            document.getElementById('altitude').textContent = altitude ? altitude.toFixed(0) + 'm' : '--';
+            document.getElementById('altitude').textContent  = altitude ? altitude.toFixed(0) + ' m' : '--';
             document.getElementById('accuracy-value').textContent = accuracy.toFixed(0);
-
-            // Mettre à jour le marqueur
-            userMarker.setPosition({ lat: latitude, lng: longitude });
-
-            // Mettre à jour le chemin
-            const path = polyline.getPath();
-            path.push({ lat: latitude, lng: longitude });
-
-            // Centrer la carte sur l'utilisateur
-            map.setCenter({ lat: latitude, lng: longitude });
-
-            // Calculer la distance et la vitesse
+            userMarker.setLatLng([latitude, longitude]);
+            polyline.addLatLng([latitude, longitude]);
+            map.setView([latitude, longitude], map.getZoom());
             calculateStats();
-
-            // Sauvegarder la position en Supabase (optionnel)
-            savLocationToSupabase(latitude, longitude, accuracy);
+            savLocationToSupabase(latitude, longitude, accuracy, position.coords.speed, heading);
         }
 
         function handleLocationError(error) {
-            let message = '';
-            let type = 'error';
-
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    message = '❌ Accès GPS refusé. Veuillez autoriser la géolocalisation.';
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = '⚠ï¸ Position indisponible. Vérifiez votre connexion.';
-                    type = 'warning';
-                    break;
-                case error.TIMEOUT:
-                    message = '⏱ï¸ Délai d\'attente dépassé. Nouvelle tentative...';
-                    type = 'warning';
-                    break;
-                default:
-                    message = '❌ Erreur GPS: ' + error.message;
-            }
-
-            showAlert(message, type);
-            updateStatus('error', message);
+            const msgs = { 1: ['❌ Accès GPS refusé.', 'error'], 2: ['Position indisponible.', 'warning'], 3: ["Délai dépassé.", 'warning'] };
+            const [msg, type] = msgs[error.code] || ['❌ Erreur GPS : ' + error.message, 'error'];
+            showAlert(msg, type);
+            updateStatus('error', msg);
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // CALCULS DE DISTANCE & VITESSE
-        // ═════════════════════════════════════════════════════════════════════
+        async function startClientTracking() {
+            if (!livraisonId) { document.getElementById('client-status').textContent = "Aucune livraison dans l'URL."; return; }
+            document.getElementById('client-status').textContent = 'Chargement...';
+            await fetchLivreurPosition();
+            clientPollInterval = setInterval(fetchLivreurPosition, 10000);
+        }
+
+        function stopClientTracking() {
+            if (clientPollInterval) { clearInterval(clientPollInterval); clientPollInterval = null; }
+        }
+
+        async function fetchLivreurPosition() {
+            try {
+                const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!db) return;
+                const { data: { session } } = await db.auth.getSession();
+                if (!session) return;
+                const res = await fetch('/api/tracking?livraison_id=' + livraisonId, {
+                    headers: { Authorization: 'Bearer ' + session.access_token }
+                });
+                if (!res.ok) { document.getElementById('client-status').textContent = 'Position indisponible.'; return; }
+                const data = await res.json();
+                const lat = data.livreur_lat ?? data.latitude;
+                const lng = data.livreur_lng ?? data.longitude;
+                if (lat == null || lng == null) {
+                    document.getElementById('client-status').textContent = "Le livreur n'a pas encore partagé sa position.";
+                    updateStatus('inactive', '⏳ En attente du livreur');
+                    return;
+                }
+                document.getElementById('latitude').textContent  = Number(lat).toFixed(6);
+                document.getElementById('longitude').textContent = Number(lng).toFixed(6);
+                document.getElementById('altitude').textContent  = '--';
+                document.getElementById('client-status').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-CA');
+                if (!livreurMarker) {
+                    livreurMarker = L.circleMarker([lat, lng], {
+                        radius: 12, fillColor: '#B8F53E', color: '#0A0C0F', weight: 2, fillOpacity: 1
+                    }).addTo(map).bindPopup('🚚 Livreur');
+                } else {
+                    livreurMarker.setLatLng([lat, lng]);
+                }
+                map.setView([lat, lng], Math.max(map.getZoom(), 14));
+                updateStatus('active', '🟢 Livreur en route');
+            } catch (err) {
+                console.error('fetchLivreurPosition:', err);
+                document.getElementById('client-status').textContent = 'Erreur de chargement.';
+            }
+        }
 
         function calculateStats() {
             if (locationHistory.length < 2) return;
-
-            // Calculer la distance totale
-            let totalDistance = 0;
+            let total = 0;
             for (let i = 1; i < locationHistory.length; i++) {
-                const prev = locationHistory[i - 1];
-                const curr = locationHistory[i];
-                totalDistance += getDistance(
-                    prev.latitude, prev.longitude,
-                    curr.latitude, curr.longitude
-                );
+                const p = locationHistory[i-1], c = locationHistory[i];
+                total += getDistance(p.latitude, p.longitude, c.latitude, c.longitude);
             }
-
-            document.getElementById('distance').textContent = (totalDistance / 1000).toFixed(2) + ' km';
-
-            // Calculer la vitesse
-            if (locationHistory.length >= 2) {
-                const prev = locationHistory[locationHistory.length - 2];
-                const curr = locationHistory[locationHistory.length - 1];
-                const timeDiff = (curr.timestamp - prev.timestamp) / 1000; // en secondes
-                const distance = getDistance(
-                    prev.latitude, prev.longitude,
-                    curr.latitude, curr.longitude
-                ); // en mètres
-
-                if (timeDiff > 0) {
-                    const speedMps = distance / timeDiff; // m/s
-                    const speedKmh = speedMps * 3.6; // km/h
-                    document.getElementById('speed').textContent = speedKmh.toFixed(1) + ' km/h';
-                }
+            document.getElementById('distance').textContent = (total / 1000).toFixed(2) + ' km';
+            const p = locationHistory[locationHistory.length - 2];
+            const c = locationHistory[locationHistory.length - 1];
+            const t = (c.timestamp - p.timestamp) / 1000;
+            if (t > 0) {
+                const d = getDistance(p.latitude, p.longitude, c.latitude, c.longitude);
+                document.getElementById('speed').textContent = (d / t * 3.6).toFixed(1) + ' km/h';
             }
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371000; // Rayon terrestre en mètres
+            const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // SAUVEGARDE EN SUPABASE
-        // ═════════════════════════════════════════════════════════════════════
-
-        async function savLocationToSupabase(lat, lng, accuracy) {
+        async function savLocationToSupabase(lat, lng, accuracy, speed, heading) {
             try {
-                var client = window.getSupabaseClient ? window.getSupabaseClient() : null;
-                if (!client) return;
-                var sess = await client.auth.getSession();
-                var session = sess && sess.data && sess.data.session;
+                const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!db || !livraisonId) return;
+                const { data: { session } } = await db.auth.getSession();
                 if (!session) return;
-                var url = window.PORTEAPORTE_SUPABASE_URL;
-                var anon = window.PORTEAPORTE_SUPABASE_ANON_KEY;
-                if (!url || !anon) return;
-                var response = await fetch(url + '/rest/v1/delivery_locations', {
+                const res = await fetch('/api/gps-update', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + session.access_token,
-                        apikey: anon,
-                    },
-                    body: JSON.stringify({
-                        user_id: session.user.id,
-                        latitude: lat,
-                        longitude: lng,
-                        accuracy: accuracy,
-                        timestamp: new Date().toISOString(),
-                    }),
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                    body: JSON.stringify({ livraison_id: livraisonId, latitude: lat, longitude: lng, accuracy, speed, heading, recorded_at: new Date().toISOString() })
                 });
+                if (!res.ok) console.warn('Erreur GPS API:', res.status);
+            } catch (err) { console.error('Erreur GPS API:', err); }
+        }
 
-                if (!response.ok) console.warn('Erreur Supabase:', response.status);
-            } catch (error) {
-                console.error('Erreur Supabase:', error);
+        async function confirmerLivraison() {
+            const btn = document.getElementById('confirm-btn');
+            btn.disabled = true;
+            btn.textContent = 'Envoi en cours...';
+            try {
+                const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!db) throw new Error('Client Supabase indisponible');
+                const { data: { session } } = await db.auth.getSession();
+                if (!session) throw new Error('Session expirée');
+                const res = await fetch('/api/confirm-delivery', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                    body: JSON.stringify({ livraison_id: livraisonId })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    stopTracking();
+                    btn.textContent = '✅ Livraison confirmée !';
+                    showAlert('Livraison confirmée ! Paiement en cours de traitement.', 'success');
+                    updateStatus('inactive', '✅ Livraison terminée');
+                } else {
+                    throw new Error(result.error || 'Erreur serveur');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = '✅ Confirmer la livraison';
+                showAlert('Erreur : ' + err.message, 'error');
             }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // MODE LIVREUR / CLIENT
-        // ═════════════════════════════════════════════════════════════════════
-
-        document.getElementById('mode-livreur').addEventListener('click', function() {
+        document.getElementById('mode-livreur').addEventListener('click', function () {
+            if (mode === 'livreur') return;
             mode = 'livreur';
+            stopClientTracking();
             document.getElementById('livreur-controls').style.display = 'flex';
-            document.getElementById('client-controls').style.display = 'none';
-            document.getElementById('mode-livreur').classList.add('active');
+            document.getElementById('client-controls').style.display  = 'none';
+            this.classList.add('active');
             document.getElementById('mode-client').classList.remove('active');
         });
 
-        document.getElementById('mode-client').addEventListener('click', function() {
+        document.getElementById('mode-client').addEventListener('click', function () {
+            if (mode === 'client') return;
             mode = 'client';
+            if (isTracking) stopTracking();
             document.getElementById('livreur-controls').style.display = 'none';
-            document.getElementById('client-controls').style.display = 'flex';
-            document.getElementById('mode-client').classList.add('active');
+            document.getElementById('client-controls').style.display  = 'flex';
+            this.classList.add('active');
             document.getElementById('mode-livreur').classList.remove('active');
-            stopTracking();
+            startClientTracking();
         });
-
-        // ═════════════════════════════════════════════════════════════════════
-        // EVENT LISTENERS
-        // ═════════════════════════════════════════════════════════════════════
 
         document.getElementById('start-tracking').addEventListener('click', startTracking);
         document.getElementById('stop-tracking').addEventListener('click', stopTracking);
-
-        document.getElementById('load-tracking').addEventListener('click', async function() {
-            const code = document.getElementById('tracking-code').value;
-            if (!code) {
-                showAlert('Entrez un code de suivi valide', 'error');
-                return;
-            }
-            // TODO: Charger la position depuis Supabase
-            showAlert('Chargement du suivi pour: ' + code, 'info');
-        });
-
-        // ═════════════════════════════════════════════════════════════════════
-        // UTILITAIRES
-        // ═════════════════════════════════════════════════════════════════════
+        document.getElementById('confirm-btn').addEventListener('click', confirmerLivraison);
 
         function updateStatus(type, message) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = 'tracking-status status-' + type;
+            const el = document.getElementById('status');
+            el.textContent = message;
+            el.className = 'tracking-status status-' + type;
         }
 
-        function showAlert(message, type = 'info') {
+        function showAlert(message, type) {
+            type = type || 'info';
             const container = document.getElementById('alerts-container');
-            const alert = document.getElementById('alert-message');
-            alert.textContent = message;
-            alert.className = 'alert alert-' + type;
+            const alertEl   = document.getElementById('alert-message');
+            alertEl.textContent = message;
+            alertEl.className   = 'alert alert-' + type;
             container.style.display = 'block';
-            setTimeout(() => { container.style.display = 'none'; }, 5000);
+            setTimeout(function () { container.style.display = 'none'; }, 6000);
         }
 
-        function logout() {
-            localStorage.removeItem('user');
+        async function logout() {
+            const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (db) await db.auth.signOut();
             window.location.href = '/login.html';
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // INITIALISATION
-        // ═════════════════════════════════════════════════════════════════════
-
-        window.addEventListener('DOMContentLoaded', function () {
-            loadGoogleMapsThenInit();
-            document.getElementById('accuracy-info').style.display = 'block';
+        window.addEventListener('DOMContentLoaded', async function () {
+            initMap();
+            if (!livraisonId) return;
+            const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (!db) return;
+            const { data: { session } } = await db.auth.getSession();
+            if (!session) return;
+            const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+            const isLivreur = profile && (profile.role === 'livreur' || profile.role === 'les deux');
+            if (isLivreur) {
+                showAlert('Livraison détectée — démarrage du suivi GPS...', 'info');
+                setTimeout(startTracking, 800);
+            } else {
+                document.getElementById('mode-client').click();
+            }
         });
 
-        // Arrêter le suivi quand on quitte la page
-        window.addEventListener('beforeunload', stopTracking);
+        window.addEventListener('beforeunload', function () { stopTracking(); stopClientTracking(); });
     </script>
 </body>
 </html>
-
-

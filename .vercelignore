@@ -32,7 +32,6 @@ skills
 files
 *.zip
 *.sql
-test-login.html
 test-vercel.html
 Nouveau Document texte*.txt
 cd
@@ -41,3 +40,5 @@ api/admin-crud.js
 api/installer.js
 GUIDE-DEPLOIEMENT-3-NIVEAUX.txt
 INDEX-TELECHARGEMENT.txt
+save/
+node_modules/

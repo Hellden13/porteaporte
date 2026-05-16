@@ -1,1278 +1,1005 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<link rel="manifest" href="/manifest.json">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
-<title>PorteÃ Porte â€” Dashboard Admin ðŸ”</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/supabase-config.js"></script>
-<script src="/js/auth.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', async function () {
-  if (window.PorteAuth) await window.PorteAuth.requireAdmin('/login.html');
-});
-</script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;
-  --smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;
-  --border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;
-  --orange:#FF8C00;--purple:#A78BFA;--blue:#60A5FA;
-}
-html{scroll-behavior:smooth}
-body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
-
-/* â”€â”€ LOGIN â”€â”€ */
-#login-screen{position:fixed;inset:0;background:var(--ink);z-index:9999;display:flex;align-items:center;justify-content:center}
-#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(184,245,62,.05),transparent 70%)}
-.login-box{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:36px;width:360px;position:relative;z-index:1}
-.ll{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:4px;display:flex;align-items:center;gap:10px}
-.ll span{color:var(--lime)}
-.ls{font-size:13px;color:var(--muted);margin-bottom:24px}
-.lf{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;margin-top:14px}
-.li{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:12px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;border-radius:2px;transition:border-color .2s}
-.li:focus{border-color:rgba(184,245,62,.4)}
-.li.err{border-color:var(--red);animation:shake .3s}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.lb{width:100%;background:var(--lime);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border-radius:2px;margin-top:16px;transition:all .2s}
-.lb:hover{background:var(--teal)}
-.lb:disabled{opacity:.5;cursor:not-allowed}
-.lerr{font-size:12px;color:var(--red);margin-top:10px;text-align:center;display:none}
-
-/* â”€â”€ TOPBAR â”€â”€ */
-#app{display:none}
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(5,8,10,.97);backdrop-filter:blur(14px)}
-.tlogo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
-.tlogo span{color:var(--lime)}
-.tright{display:flex;align-items:center;gap:14px}
-.tadmin{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--purple);font-size:11px;padding:5px 12px;border-radius:50px;font-weight:600}
-.tdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.tout-btn{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:2px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;transition:all .2s}
-.tout-btn:hover{background:rgba(255,77,77,.2)}
-
-/* â”€â”€ LAYOUT â”€â”€ */
-.layout{display:flex;min-height:calc(100vh - 56px)}
-.sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);padding:16px 0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;background:var(--smoke)}
-.sb-sec{padding:6px 18px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:18px;margin-bottom:4px}
-.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;cursor:pointer;border-left:3px solid transparent;color:var(--muted);transition:all .15s;font-weight:500}
-.sb-item:hover{background:rgba(184,245,62,.05);color:var(--paper)}
-.sb-item.on{background:rgba(184,245,62,.08);color:var(--lime);border-left-color:var(--lime)}
-.sb-icon{font-size:18px;width:24px;text-align:center}
-.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:50px}
-.sb-badge.o{background:var(--orange)}
-.sb-badge.g{background:#3B6D11}
-.sb-badge.p{background:var(--purple)}
-
-/* â”€â”€ CONTENT â”€â”€ */
-.content{flex:1;overflow-x:hidden;background:var(--ink)}
-.sec{padding:32px 36px;display:none;animation:fadeIn .3s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.sec.on{display:block}
-.slbl{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
-.stitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;margin-bottom:6px}
-.ssub{font-size:14px;color:var(--muted);margin-bottom:28px;font-weight:300}
-
-/* â”€â”€ CARDS â”€â”€ */
-.card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:14px;transition:border-color .2s}
-.card:hover{border-color:rgba(184,245,62,.15)}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.card-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px}
-.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
-.card3{background:var(--s3);border:1px solid rgba(255,255,255,.04);border-radius:4px;padding:12px}
-
-/* â”€â”€ GRIDS â”€â”€ */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.g2,.g3,.g4{grid-template-columns:1fr}}
-
-/* â”€â”€ STATS â”€â”€ */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
-.stat-card{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:all .2s}
-.stat-card:hover{border-color:rgba(184,245,62,.2);transform:translateY(-2px)}
-.stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--lime)}
-.stat-num.teal{color:var(--teal)}
-.stat-num.gold{color:var(--gold)}
-.stat-num.red{color:var(--red)}
-.stat-num.orange{color:var(--orange)}
-.stat-num.purple{color:var(--purple)}
-.stat-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase;font-weight:500}
-.stat-change{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
-.stat-change.up{color:#3FE88F}
-.stat-change.down{color:var(--red)}
-
-/* â”€â”€ TABLE â”€â”€ */
-.table-wrap{overflow-x:auto;border-radius:6px;border:1px solid var(--border);margin-bottom:14px;background:var(--smoke)}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:var(--s2);padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
-td{padding:12px 14px;border-bottom:1px solid var(--border)}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(184,245,62,.02)}
-
-/* â”€â”€ TAGS â”€â”€ */
-.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600}
-.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
-.tb{background:rgba(11,255,203,.1);color:var(--teal);border:1px solid rgba(11,255,203,.2)}
-.to{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}
-.tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
-.tv{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
-.tgo{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
-
-/* â”€â”€ BOUTONS â”€â”€ */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:4px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
-.bp{background:var(--lime);color:var(--ink)}.bp:hover{background:var(--teal);transform:translateY(-2px)}
-.bs{background:transparent;color:var(--paper);border:1px solid var(--border)}.bs:hover{background:var(--s2)}
-.bd{background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.2)}.bd:hover{background:rgba(255,77,77,.25)}
-.bi{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.2)}.bi:hover{background:rgba(96,165,250,.25)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-sm{padding:6px 12px;font-size:11px}
-
-/* â”€â”€ FORMS â”€â”€ */
-.form-group{margin-bottom:16px}
-.form-label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
-.form-input,.form-select,.form-textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 12px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:13px;outline:none;border-radius:4px;transition:border-color .2s}
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(184,245,62,.4)}
-.form-textarea{resize:vertical;min-height:100px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:768px){.form-row{grid-template-columns:1fr}}
-
-/* â”€â”€ ALERTS â”€â”€ */
-.alert{padding:12px 16px;border-radius:4px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:10px}
-.alert-success{background:rgba(63,232,143,.1);color:#3FE88F;border:1px solid rgba(63,232,143,.2)}
-.alert-warning{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}
-.alert-danger{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
-.alert-info{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
-
-/* â”€â”€ ACTIONS â”€â”€ */
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
-
-/* â”€â”€ MODAL â”€â”€ */
-.modal{position:fixed;inset:0;background:rgba(5,8,10,.95);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
-.modal.open{display:flex}
-.modal-content{background:var(--smoke);border:1px solid var(--border);border-radius:8px;padding:28px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;animation:modalIn .3s}
-@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.5px}
-.modal-close{background:transparent;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:all .2s}
-.modal-close:hover{background:var(--s2);color:var(--paper)}
-
-/* â”€â”€ RESPONSIVE â”€â”€ */
-@media(max-width:1024px){
-  .sidebar{width:200px}
-  .sb-item{font-size:12px;padding:8px 14px}
-}
-@media(max-width:768px){
-  .layout{flex-direction:column}
-  .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}
-  .sb-sec:first-child{margin-top:0}
-  .content{min-height:calc(100vh - 200px)}
-  .g2{grid-template-columns:1fr}
-  .topbar{padding:12px 16px}
-  .sec{padding:20px 16px}
-}
-
-/* â”€â”€ LOADING â”€â”€ */
-.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(184,245,62,.3);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* â”€â”€ EMPTY STATE â”€â”€ */
-.empty{text-align:center;padding:60px 20px;color:var(--muted)}
-.empty-icon{font-size:48px;margin-bottom:12px;opacity:.5}
-.empty-text{font-size:14px;margin-bottom:20px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <script>
+    if (window.location.protocol === 'file:') {
+      window.location.href = 'https://porteaporte.site/admin/dashboard-admin.html';
+    }
+  </script>
+  <style>
+    body { padding: 0; }
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: var(--brand-bg-dark);
+      border-right: 1px solid var(--brand-bg-surface-light);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--brand-lime);
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--brand-bg-surface-light);
+      margin-bottom: 16px;
+    }
+    .sidebar-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--brand-muted-dark);
+      padding: 8px 20px 4px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: var(--brand-muted);
+      text-decoration: none;
+      font-size: .875rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--brand-text);
+      background: rgba(184,245,62,.06);
+      border-left-color: var(--brand-lime);
+    }
+    .nav-link .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--brand-bg-surface-light);
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--brand-border);
+      color: var(--brand-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .875rem;
+      transition: all .2s;
+    }
+    .logout-btn:hover { border-color: var(--brand-danger); color: var(--brand-danger); }
+    .main { padding: 32px; overflow-y: auto; min-width: 0; }
+    .mobile-admin-nav {
+      display: none;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+      scrollbar-width: thin;
+    }
+    .mobile-admin-nav a {
+      flex: 0 0 auto;
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 999px;
+      color: var(--brand-muted);
+      text-decoration: none;
+      padding: 8px 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      background: var(--brand-bg-surface);
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--brand-text); margin: 0; }
+    .page-sub { font-size: .85rem; color: var(--brand-muted-dark); margin-top: 4px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-card-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--brand-muted-dark);
+      margin-bottom: 10px;
+    }
+    .stat-card-value { font-size: 2rem; font-weight: 800; color: var(--brand-lime); line-height: 1; }
+    .stat-card-sub { font-size: .8rem; color: var(--brand-muted-dark); margin-top: 6px; }
+    .section { margin-bottom: 32px; }
+    .section-title {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--brand-lime);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 14px;
+    }
+    .table-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    th {
+      background: var(--brand-bg-dark);
+      color: var(--brand-muted-dark);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      font-size: .875rem;
+      color: var(--brand-text);
+      border-top: 1px solid var(--brand-bg-surface-light);
+    }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .badge-admin     { background: rgba(184,245,62,.15);  color: var(--brand-lime); }
+    .badge-livreur   { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
+    .badge-expediteur{ background: rgba(46,123,255,.15);  color: var(--brand-blue); }
+    .badge-les-deux  { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
+    .badge-verified  { background: rgba(16,185,129,.15);  color: var(--brand-success); }
+    .badge-pending   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
+    .badge-rejected  { background: rgba(239,68,68,.15);   color: var(--brand-danger); }
+    .badge-livre     { background: rgba(16,185,129,.15);  color: var(--brand-success); }
+    .badge-en-route  { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
+    .badge-attente   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
+    .action-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--brand-border);
+      background: transparent;
+      color: var(--brand-muted);
+      font-size: .75rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .action-btn:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+    .action-btn.danger:hover { border-color: var(--brand-danger); color: var(--brand-danger); }
+    .empty-msg { text-align: center; color: var(--brand-muted-dark); padding: 32px; }
+    .impact-admin-grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:1100px){.impact-admin-grid{grid-template-columns:360px 1fr}}
+    .form-card{background:var(--brand-bg-surface);border:1px solid var(--brand-bg-surface-light);border-radius:12px;padding:18px}
+    .form-grid{display:grid;gap:10px}
+    .form-grid label{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--brand-muted-dark);font-weight:800}
+    .form-grid input,.form-grid textarea{width:100%;border:1px solid var(--brand-bg-surface-light);border-radius:8px;background:var(--brand-bg-dark);color:var(--brand-text);padding:10px;font:inherit}
+    .form-grid textarea{min-height:72px;resize:vertical}
+    .impact-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+    .impact-mini{background:var(--brand-bg-dark);border:1px solid var(--brand-bg-surface-light);border-radius:10px;padding:12px}
+    .impact-mini div:first-child{font-size:.7rem;color:var(--brand-muted-dark);text-transform:uppercase;letter-spacing:.05em}
+    .impact-mini div:last-child{font-size:1.2rem;color:var(--brand-lime);font-weight:900;margin-top:4px}
+    @media (max-width: 900px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 20px; }
+      .mobile-admin-nav { display: flex; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .main { padding: 16px; }
+      .page-title { font-size: 1.25rem; }
+      .stat-card { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      th, td { padding: 10px 12px; }
+    }
+  </style>
 </head>
 <body>
+<div class="admin-layout">
 
-<!-- Ã‰CRAN DE CONNEXION -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="ll">ðŸ” <span>PORTE</span>Ã€PORTE</div>
-    <div class="ls">Dashboard administrateur</div>
-    <label class="lf">Email admin</label>
-    <input type="email" id="login-email" class="li" placeholder="admin@porteaporte.site" value="admin@porteaporte.site">
-    <label class="lf">Mot de passe</label>
-    <input type="password" id="login-pwd" class="li" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
-    <button class="lb" onclick="login()">ðŸš€ Se connecter</button>
-    <div class="lerr" id="login-error">Identifiants incorrects</div>
-  </div>
-</div>
-
-<!-- APPLICATION -->
-<div id="app">
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="tlogo"><span class="tdot"></span> <span>PORTE</span>Ã€PORTE <span class="tadmin">ADMIN</span></div>
-    <div class="tright">
-      <div id="admin-name" style="font-size:12px;color:var(--muted)"></div>
-      <button class="tout-btn" onclick="logout()">ðŸšª DÃ©connexion</button>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⚡ PorteàPorte</div>
+    <div class="sidebar-label">Navigation</div>
+    <a href="#section-stats"     class="nav-link active"><span class="icon">📊</span> Tableau de bord</a>
+    <a href="#section-users"     class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
+    <a href="#section-livreurs"  class="nav-link"><span class="icon">🚚</span> Livreurs</a>
+    <a href="#section-livraisons"class="nav-link"><span class="icon">📦</span> Livraisons</a>
+    <a href="#section-revenus"   class="nav-link"><span class="icon">💰</span> Revenus</a>
+    <a href="#section-litiges"   class="nav-link"><span class="icon">⚠️</span> Litiges</a>
+    <a href="#section-rewards"   class="nav-link"><span class="icon">★</span> Missions & tirages</a>
+    <a href="#section-impact"    class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
+    <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
+    <a href="/dashboard-expediteur.html" class="nav-link"><span class="icon">↗</span> Dashboard expéditeur</a>
+    <a href="/dashboard-livreur.html"    class="nav-link"><span class="icon">↗</span> Dashboard livreur</a>
+    <a href="/transparence.html" class="nav-link"><span class="icon">↗</span> Page transparence</a>
+    <div class="sidebar-bottom">
+      <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
+      <button class="logout-btn" onclick="AUTH_API.logout()">Se déconnecter</button>
     </div>
-  </div>
+  </aside>
 
-  <!-- LAYOUT -->
-  <div class="layout">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <div class="sb-sec">ðŸ“Š Vue d'ensemble</div>
-      <div class="sb-item on" onclick="showSection('dashboard')">
-        <span class="sb-icon">ðŸ </span> Dashboard
-      </div>
-      <div class="sb-item" onclick="showSection('analytics')">
-        <span class="sb-icon">ðŸ“ˆ</span> Analytiques
-      </div>
-
-      <div class="sb-sec">ðŸ‘¥ Gestion</div>
-      <div class="sb-item" onclick="showSection('users')">
-        <span class="sb-icon">ðŸ‘¤</span> Utilisateurs
-        <span class="sb-badge" id="users-badge">0</span>
-      </div>
-      <div class="sb-item" onclick="showSection('deliveries')">
-        <span class="sb-icon">ðŸ“¦</span> Livraisons
-        <span class="sb-badge o" id="deliveries-badge">0</span>
-      </div>
-      <div class="sb-item" onclick="showSection('drivers')">
-        <span class="sb-icon">ðŸš—</span> Livreurs
-        <span class="sb-badge g" id="drivers-badge">0</span>
-      </div>
-
-      <div class="sb-sec">ðŸ’° Finances</div>
-      <div class="sb-item" onclick="showSection('transactions')">
-        <span class="sb-icon">ðŸ’³</span> Transactions
-      </div>
-      <div class="sb-item" onclick="showSection('coins')">
-        <span class="sb-icon">ðŸª™</span> PorteCoins
-      </div>
-      <div class="sb-item" onclick="showSection('payouts')">
-        <span class="sb-icon">ðŸ’¸</span> Paiements
-      </div>
-
-      <div class="sb-sec">ðŸŽ¯ Marketing</div>
-      <div class="sb-item" onclick="showSection('referrals')">
-        <span class="sb-icon">ðŸ¤</span> Parrainages
-      </div>
-      <div class="sb-item" onclick="showSection('notifications')">
-        <span class="sb-icon">ðŸ””</span> Notifications
-      </div>
-      <div class="sb-item" onclick="showSection('promos')">
-        <span class="sb-icon">ðŸŽ</span> Promotions
-      </div>
-
-      <div class="sb-sec">ðŸ› ï¸ SystÃ¨me</div>
-      <div class="sb-item" onclick="showSection('settings')">
-        <span class="sb-icon">âš™ï¸</span> ParamÃ¨tres
-      </div>
-      <div class="sb-item" onclick="showSection('logs')">
-        <span class="sb-icon">ðŸ“‹</span> Logs systÃ¨me
-      </div>
-      <div class="sb-item" onclick="showSection('security')">
-        <span class="sb-icon">ðŸ”’</span> SÃ©curitÃ©
+  <main class="main">
+    <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
+      <a href="#section-stats">Stats</a>
+      <a href="#section-users">Utilisateurs</a>
+      <a href="#section-livreurs">Livreurs</a>
+      <a href="#section-livraisons">Livraisons</a>
+      <a href="#section-rewards">Missions</a>
+      <a href="#section-impact">Transparence</a>
+    </nav>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard Administrateur</h1>
+        <div class="page-sub" id="admin-welcome">Chargement...</div>
       </div>
     </div>
 
-    <!-- CONTENU -->
-    <div class="content">
-      
-      <!-- DASHBOARD -->
-      <div class="sec on" id="sec-dashboard">
-        <div class="slbl">Vue d'ensemble</div>
-        <div class="stitle">Dashboard Principal</div>
-        <div class="ssub">Tous les indicateurs clÃ©s en temps rÃ©el</div>
-
-        <!-- STATS PRINCIPALES -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-num" id="stat-users">0</div>
-            <div class="stat-label">ðŸ‘¥ Utilisateurs</div>
-            <div class="stat-change up">â†— +12% cette semaine</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num teal" id="stat-deliveries">0</div>
-            <div class="stat-label">ðŸ“¦ Livraisons actives</div>
-            <div class="stat-change up">â†— +8 aujourd'hui</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num gold" id="stat-revenue">0 $</div>
-            <div class="stat-label">ðŸ’° Revenus du mois</div>
-            <div class="stat-change up">â†— +24% vs. mois dernier</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num purple" id="stat-drivers">0</div>
-            <div class="stat-label">ðŸš— Livreurs actifs</div>
-            <div class="stat-change up">â†— +5 cette semaine</div>
-          </div>
-        </div>
-
-        <!-- GRAPHIQUES -->
-        <div class="g2">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">ðŸ“ˆ Livraisons (7 derniers jours)</div>
-            </div>
-            <div id="chart-deliveries" style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
-              Graphique Ã  venir (Chart.js)
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">ðŸ’° Revenus (30 derniers jours)</div>
-            </div>
-            <div id="chart-revenue" style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
-              Graphique Ã  venir (Chart.js)
-            </div>
-          </div>
-        </div>
-
-        <!-- ACTIVITÃ‰ RÃ‰CENTE -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">ðŸ”¥ ActivitÃ© rÃ©cente</div>
-            <button class="btn btn-sm bs">RafraÃ®chir</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Heure</th>
-                  <th>Type</th>
-                  <th>DÃ©tails</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody id="activity-log">
-                <tr>
-                  <td>14:32</td>
-                  <td><span class="tag tg">Livraison</span></td>
-                  <td>PP-A8F2X4 â†’ MontrÃ©al-QuÃ©bec</td>
-                  <td><span class="tag tb">En cours</span></td>
-                </tr>
-                <tr>
-                  <td>14:18</td>
-                  <td><span class="tag tgo">Paiement</span></td>
-                  <td>Jean Tremblay â†’ 325 PorteCoins</td>
-                  <td><span class="tag tg">ComplÃ©tÃ©</span></td>
-                </tr>
-                <tr>
-                  <td>13:45</td>
-                  <td><span class="tag tv">Inscription</span></td>
-                  <td>Marie Dubois (Livreur)</td>
-                  <td><span class="tag tg">ApprouvÃ©</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div id="section-stats" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Utilisateurs</div>
+        <div class="stat-card-value" id="stat-users">—</div>
+        <div class="stat-card-sub">comptes actifs</div>
       </div>
-
-      <!-- ANALYTIQUES -->
-      <div class="sec" id="sec-analytics">
-        <div class="slbl">DonnÃ©es avancÃ©es</div>
-        <div class="stitle">Analytiques DÃ©taillÃ©es</div>
-        <div class="ssub">Analyse approfondie des performances</div>
-
-        <div class="alert alert-info">
-          ðŸ“Š <strong>PÃ©riode actuelle :</strong> 1er au 27 avril 2026
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-num orange">4.8</div>
-            <div class="stat-label">â­ Note moyenne</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num">98.2%</div>
-            <div class="stat-label">âœ… Taux de succÃ¨s</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num teal">24 min</div>
-            <div class="stat-label">â±ï¸ Temps moy. livraison</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num gold">47 $</div>
-            <div class="stat-label">ðŸ’µ Panier moyen</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">DÃ©tails des performances</div>
-          <div class="g2" style="margin-top:20px">
-            <div class="card2">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Nouveaux utilisateurs</div>
-              <div style="font-family:'Bebas Neue';font-size:28px;color:var(--lime)">+127</div>
-              <div style="font-size:11px;color:#3FE88F;margin-top:4px">â†— +32% vs. semaine prÃ©cÃ©dente</div>
-            </div>
-            <div class="card2">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Taux de conversion</div>
-              <div style="font-family:'Bebas Neue';font-size:28px;color:var(--teal)">23.4%</div>
-              <div style="font-size:11px;color:#3FE88F;margin-top:4px">â†— +5.2% vs. semaine prÃ©cÃ©dente</div>
-            </div>
-          </div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Livreurs vérifiés</div>
+        <div class="stat-card-value" id="stat-livreurs">—</div>
+        <div class="stat-card-sub">en service</div>
       </div>
-
-      <!-- UTILISATEURS -->
-      <div class="sec" id="sec-users">
-        <div class="slbl">Gestion des comptes</div>
-        <div class="stitle">Utilisateurs</div>
-        <div class="ssub">GÃ©rer tous les utilisateurs de la plateforme</div>
-
-        <div class="actions">
-          <button class="btn bp" onclick="openModal('add-user')">âž• Nouvel utilisateur</button>
-          <button class="btn bs">ðŸ“¥ Exporter CSV</button>
-          <button class="btn bs">ðŸ” Recherche avancÃ©e</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nom</th>
-                  <th>Email</th>
-                  <th>RÃ´le</th>
-                  <th>Coins</th>
-                  <th>XP</th>
-                  <th>Inscription</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="users-table">
-                <tr>
-                  <td colspan="8">
-                    <div class="empty">
-                      <div class="empty-icon">ðŸ‘¤</div>
-                      <div class="empty-text">Chargement des utilisateurs...</div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Livraisons totales</div>
+        <div class="stat-card-value" id="stat-livraisons">—</div>
+        <div class="stat-card-sub">toutes statuts</div>
       </div>
-
-      <!-- LIVRAISONS -->
-      <div class="sec" id="sec-deliveries">
-        <div class="slbl">Suivi des colis</div>
-        <div class="stitle">Livraisons</div>
-        <div class="ssub">Toutes les livraisons en cours et historique</div>
-
-        <div class="actions">
-          <button class="btn bp">ðŸ“¦ Nouvelle livraison</button>
-          <button class="btn bs">ðŸ” Filtrer par statut</button>
-          <button class="btn bs">ðŸ“¥ Exporter rapport</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>ExpÃ©diteur</th>
-                  <th>Livreur</th>
-                  <th>Trajet</th>
-                  <th>Statut</th>
-                  <th>Prix</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="deliveries-table">
-                <tr>
-                  <td colspan="8">
-                    <div class="empty">
-                      <div class="empty-icon">ðŸ“¦</div>
-                      <div class="empty-text">Chargement des livraisons...</div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- LIVREURS -->
-      <div class="sec" id="sec-drivers">
-        <div class="slbl">Transporteurs</div>
-        <div class="stitle">Livreurs CertifiÃ©s</div>
-        <div class="ssub">Gestion et validation des livreurs</div>
-
-        <div class="actions">
-          <button class="btn bp">âœ… Approuver en attente</button>
-          <button class="btn bs">ðŸ… Gestion des badges</button>
-          <button class="btn bs">ðŸ“Š Rapport de performance</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Niveau</th>
-                  <th>Score</th>
-                  <th>Livraisons</th>
-                  <th>Gains total</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="drivers-table">
-                <tr>
-                  <td colspan="7">
-                    <div class="empty">
-                      <div class="empty-icon">ðŸš—</div>
-                      <div class="empty-text">Chargement des livreurs...</div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- TRANSACTIONS -->
-      <div class="sec" id="sec-transactions">
-        <div class="slbl">Finances</div>
-        <div class="stitle">Transactions</div>
-        <div class="ssub">Historique complet des paiements Stripe</div>
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-num gold">12 458 $</div>
-            <div class="stat-label">ðŸ’° Volume total</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num teal">2 491 $</div>
-            <div class="stat-label">ðŸ’µ Commissions PP</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num">187</div>
-            <div class="stat-label">ðŸ’³ Transactions</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num orange">67 $</div>
-            <div class="stat-label">ðŸ“ˆ Transaction moy.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Utilisateur</th>
-                  <th>Type</th>
-                  <th>Montant</th>
-                  <th>Statut</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="transactions-table">
-                <tr>
-                  <td colspan="7">
-                    <div class="empty">
-                      <div class="empty-icon">ðŸ’³</div>
-                      <div class="empty-text">Chargement des transactions...</div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PORTECOINS -->
-      <div class="sec" id="sec-coins">
-        <div class="slbl">Ã‰conomie interne</div>
-        <div class="stitle">PorteCoins</div>
-        <div class="ssub">Gestion de la monnaie virtuelle</div>
-
-        <div class="alert alert-warning">
-          âš ï¸ <strong>Attention :</strong> L'ajout manuel de coins affecte l'Ã©conomie. Utiliser avec prÃ©caution.
-        </div>
-
-        <div class="actions">
-          <button class="btn bp" onclick="openModal('add-coins')">ðŸª™ Ajouter des coins</button>
-          <button class="btn bs">ðŸ“Š Rapport Ã©conomique</button>
-          <button class="btn bs">ðŸ’¸ Historique des achats</button>
-        </div>
-
-        <div class="g2">
-          <div class="card">
-            <div class="card-title">ðŸ“Š Statistiques PorteCoins</div>
-            <div style="margin-top:20px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:12px;color:var(--muted)">Coins en circulation</span>
-                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--gold)">45 280 ðŸª™</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:12px;color:var(--muted)">Valeur totale (CAD)</span>
-                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--teal)">2 715 $</span>
-              </div>
-              <div style="display:flex;justify-content:space-between">
-                <span style="font-size:12px;color:var(--muted)">Taux de conversion</span>
-                <span style="font-family:'Bebas Neue';font-size:20px;color:var(--lime)">1 ðŸª™ = 0.06 $</span>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">ðŸŽ Top acheteurs</div>
-            <div style="margin-top:16px">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px;margin-bottom:6px">
-                <span style="font-size:12px">Jean Tremblay</span>
-                <span style="font-size:12px;color:var(--gold)">3 000 ðŸª™</span>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px;margin-bottom:6px">
-                <span style="font-size:12px">Marie Dubois</span>
-                <span style="font-size:12px;color:var(--gold)">1 800 ðŸª™</span>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--s2);border-radius:4px">
-                <span style="font-size:12px">Pierre Gagnon</span>
-                <span style="font-size:12px;color:var(--gold)">1 200 ðŸª™</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAIEMENTS -->
-      <div class="sec" id="sec-payouts">
-        <div class="slbl">Versements livreurs</div>
-        <div class="stitle">Paiements aux Livreurs</div>
-        <div class="ssub">Gestion des virements et revenus</div>
-
-        <div class="alert alert-success">
-          âœ… <strong>Prochain virement automatique :</strong> 30 avril 2026 Ã  00h00
-        </div>
-
-        <div class="actions">
-          <button class="btn bp">ðŸ’¸ DÃ©clencher paiement manuel</button>
-          <button class="btn bs">ðŸ“Š Rapport mensuel</button>
-          <button class="btn bs">âš™ï¸ Configuration auto-payout</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Livreur</th>
-                  <th>Montant dÃ»</th>
-                  <th>DerniÃ¨re date</th>
-                  <th>MÃ©thode</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Marc Tremblay</td>
-                  <td style="font-weight:600;color:var(--lime)">485 $</td>
-                  <td>1er avril 2026</td>
-                  <td><span class="tag tb">Virement bancaire</span></td>
-                  <td><span class="tag to">En attente</span></td>
-                  <td><button class="btn btn-sm bp">Payer maintenant</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PARRAINAGES -->
-      <div class="sec" id="sec-referrals">
-        <div class="slbl">Marketing viral</div>
-        <div class="stitle">Programme de Parrainage</div>
-        <div class="ssub">Suivi et gestion des codes de parrainage</div>
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-num">127</div>
-            <div class="stat-label">ðŸ¤ Parrainages actifs</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num gold">3 175 $</div>
-            <div class="stat-label">ðŸ’° Bonus versÃ©s</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num teal">12.3%</div>
-            <div class="stat-label">ðŸ“ˆ Taux de conversion</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num purple">2.8</div>
-            <div class="stat-label">ðŸ‘¥ Parrainages moy./user</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">ðŸ† Top parrains</div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Parrain</th>
-                  <th>Code</th>
-                  <th>Utilisations</th>
-                  <th>Bonus gagnÃ©</th>
-                  <th>DerniÃ¨re utilisation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Jean Tremblay</td>
-                  <td><span class="tag tg">PP-REF-A8F2X4</span></td>
-                  <td style="font-weight:600">18</td>
-                  <td style="color:var(--gold);font-weight:600">450 $</td>
-                  <td>25 avril 2026</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- NOTIFICATIONS -->
-      <div class="sec" id="sec-notifications">
-        <div class="slbl">Communication</div>
-        <div class="stitle">Notifications Push</div>
-        <div class="ssub">Envoyer des messages Ã  tous les utilisateurs</div>
-
-        <div class="actions">
-          <button class="btn bp" onclick="openModal('send-notif')">ðŸ“£ Nouvelle notification</button>
-          <button class="btn bs">ðŸ“Š Statistiques d'engagement</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">ðŸ“¨ Historique des envois</div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Message</th>
-                  <th>Destinataires</th>
-                  <th>Taux d'ouverture</th>
-                  <th>EnvoyÃ© le</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>ðŸŽ‰ Lancement officiel PorteÃ Porte!</td>
-                  <td>1 247 utilisateurs</td>
-                  <td><span class="tag tg">78%</span></td>
-                  <td>15 avril 2026</td>
-                  <td><button class="btn btn-sm bs">Voir dÃ©tails</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PROMOTIONS -->
-      <div class="sec" id="sec-promos">
-        <div class="slbl">Marketing</div>
-        <div class="stitle">Promotions & Codes Promo</div>
-        <div class="ssub">CrÃ©er et gÃ©rer les campagnes promotionnelles</div>
-
-        <div class="actions">
-          <button class="btn bp" onclick="openModal('add-promo')">ðŸŽ Nouvelle promo</button>
-          <button class="btn bs">ðŸ“Š Rapport d'utilisation</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>RÃ©duction</th>
-                  <th>Utilisations</th>
-                  <th>Limite</th>
-                  <th>Expire le</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="tag tgo">LAUNCH2026</span></td>
-                  <td style="font-weight:600;color:var(--lime)">50%</td>
-                  <td>87 / âˆž</td>
-                  <td>IllimitÃ©</td>
-                  <td>31 dÃ©c 2026</td>
-                  <td><span class="tag tg">Actif</span></td>
-                  <td>
-                    <button class="btn btn-sm bs">Ã‰diter</button>
-                    <button class="btn btn-sm bd">DÃ©sactiver</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PARAMÃˆTRES -->
-      <div class="sec" id="sec-settings">
-        <div class="slbl">Configuration</div>
-        <div class="stitle">ParamÃ¨tres SystÃ¨me</div>
-        <div class="ssub">Configuration globale de la plateforme</div>
-
-        <div class="card">
-          <div class="card-title">âš™ï¸ ParamÃ¨tres gÃ©nÃ©raux</div>
-          <div class="form-group" style="margin-top:20px">
-            <label class="form-label">Nom de la plateforme</label>
-            <input type="text" class="form-input" value="PorteÃ Porte">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email de contact</label>
-            <input type="email" class="form-input" value="bonjour@porteaporte.site">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Commission PorteÃ Porte (%)</label>
-              <input type="number" class="form-input" value="20">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Bonus parrainage ($)</label>
-              <input type="number" class="form-input" value="25">
-            </div>
-          </div>
-          <button class="btn bp">ðŸ’¾ Sauvegarder</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">ðŸ’³ Configuration Stripe</div>
-          <div class="form-group" style="margin-top:20px">
-            <label class="form-label">ClÃ© publique (Live)</label>
-            <input type="text" class="form-input" value="Configure dans Vercel">
-          </div>
-          <div class="form-group">
-            <label class="form-label">ClÃ© secrÃ¨te (Live)</label>
-            <input type="password" class="form-input" value="">
-          </div>
-          <button class="btn bp">ðŸ”„ Tester la connexion</button>
-        </div>
-      </div>
-
-      <!-- LOGS -->
-      <div class="sec" id="sec-logs">
-        <div class="slbl">Monitoring</div>
-        <div class="stitle">Logs SystÃ¨me</div>
-        <div class="ssub">Historique complet des Ã©vÃ©nements</div>
-
-        <div class="actions">
-          <button class="btn bs">ðŸ” Filtrer par type</button>
-          <button class="btn bs">ðŸ“¥ TÃ©lÃ©charger logs</button>
-          <button class="btn bd">ðŸ—‘ï¸ Purger anciens logs</button>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Type</th>
-                  <th>Utilisateur</th>
-                  <th>Action</th>
-                  <th>DÃ©tails</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>2026-04-27 14:32:18</td>
-                  <td><span class="tag tb">INFO</span></td>
-                  <td>admin@porteaporte.site</td>
-                  <td>LOGIN</td>
-                  <td>Connexion rÃ©ussie depuis 142.114.x.x</td>
-                </tr>
-                <tr>
-                  <td>2026-04-27 14:18:05</td>
-                  <td><span class="tag tg">SUCCESS</span></td>
-                  <td>jean@example.com</td>
-                  <td>PAYMENT</td>
-                  <td>Achat de 325 PorteCoins (19.99 $)</td>
-                </tr>
-                <tr>
-                  <td>2026-04-27 13:45:22</td>
-                  <td><span class="tag to">WARNING</span></td>
-                  <td>system</td>
-                  <td>DELIVERY</td>
-                  <td>Livraison PP-A8F2X4 en retard de 15 min</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SÃ‰CURITÃ‰ -->
-      <div class="sec" id="sec-security">
-        <div class="slbl">Protection</div>
-        <div class="stitle">SÃ©curitÃ© & ModÃ©ration</div>
-        <div class="ssub">Gestion des accÃ¨s et signalements</div>
-
-        <div class="alert alert-danger">
-          ðŸš¨ <strong>3 signalements non traitÃ©s</strong> nÃ©cessitent votre attention
-        </div>
-
-        <div class="g2">
-          <div class="card">
-            <div class="card-title">ðŸ›¡ï¸ Utilisateurs suspendus</div>
-            <div style="margin-top:16px">
-              <div style="padding:12px;background:var(--s2);border-radius:4px;margin-bottom:8px">
-                <div style="font-size:13px;font-weight:600">Marc Dubois</div>
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Raison: Comportement inappropriÃ©</div>
-                <div style="margin-top:8px">
-                  <button class="btn btn-sm bp">RÃ©activer</button>
-                  <button class="btn btn-sm bd">Bannir dÃ©finitivement</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">ðŸš¨ Signalements rÃ©cents</div>
-            <div style="margin-top:16px">
-              <div style="padding:12px;background:var(--s2);border-radius:4px;margin-bottom:8px">
-                <div style="font-size:13px;font-weight:600">Livraison PP-X8F2A4</div>
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Colis endommagÃ© Ã  l'arrivÃ©e</div>
-                <div style="margin-top:8px">
-                  <button class="btn btn-sm bp">Investiguer</button>
-                  <button class="btn btn-sm bs">Rejeter</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- MODALS -->
-<!-- Modal Ajouter Utilisateur -->
-<div class="modal" id="modal-add-user">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">âž• Nouvel Utilisateur</div>
-      <button class="modal-close" onclick="closeModal('add-user')">âœ•</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">PrÃ©nom</label>
-        <input type="text" class="form-input" placeholder="Jean">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Nom</label>
-        <input type="text" class="form-input" placeholder="Tremblay">
+      <div class="stat-card">
+        <div class="stat-card-label">En attente vérif.</div>
+        <div class="stat-card-value" id="stat-pending-verif">—</div>
+        <div class="stat-card-sub">livreurs à valider</div>
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" placeholder="jean.tremblay@example.com">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">RÃ´le</label>
-        <select class="form-select">
-          <option>ExpÃ©diteur</option>
-          <option>Livreur</option>
-          <option>Les deux</option>
-          <option>Admin</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Coins initiaux</label>
-        <input type="number" class="form-input" value="50">
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn bp">âœ… CrÃ©er l'utilisateur</button>
-      <button class="btn bs" onclick="closeModal('add-user')">Annuler</button>
-    </div>
-  </div>
-</div>
 
-<!-- Modal Ajouter Coins -->
-<div class="modal" id="modal-add-coins">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">ðŸª™ Ajouter des PorteCoins</div>
-      <button class="modal-close" onclick="closeModal('add-coins')">âœ•</button>
+    <div id="section-users" class="section">
+      <div class="section-title">Tous les utilisateurs</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th><th>Email</th><th>Rôle</th><th>Statut livreur</th><th>XP</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-body">
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="alert alert-warning">
-      âš ï¸ Cette action est irrÃ©versible et affecte l'Ã©conomie
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email de l'utilisateur</label>
-      <input type="email" class="form-input" placeholder="utilisateur@example.com">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Nombre de coins</label>
-      <input type="number" class="form-input" placeholder="325">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Raison</label>
-      <textarea class="form-textarea" placeholder="Ex: Compensation pour problÃ¨me technique"></textarea>
-    </div>
-    <div class="actions">
-      <button class="btn bp">âœ… Ajouter les coins</button>
-      <button class="btn bs" onclick="closeModal('add-coins')">Annuler</button>
-    </div>
-  </div>
-</div>
 
-<!-- Modal Notification -->
-<div class="modal" id="modal-send-notif">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">ðŸ“£ Envoyer une Notification</div>
-      <button class="modal-close" onclick="closeModal('send-notif')">âœ•</button>
+    <div id="section-livreurs" class="section">
+      <div class="section-title">Livreurs en attente de vérification</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th><th>Email</th><th>Véhicule</th><th>Ville</th><th>Statut</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="livreurs-body">
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Titre</label>
-      <input type="text" class="form-input" placeholder="Ex: Nouvelle fonctionnalitÃ©!">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Message</label>
-      <textarea class="form-textarea" placeholder="Votre message ici..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Destinataires</label>
-      <select class="form-select">
-        <option>Tous les utilisateurs</option>
-        <option>ExpÃ©diteurs uniquement</option>
-        <option>Livreurs uniquement</option>
-        <option>Utilisateurs actifs</option>
-      </select>
-    </div>
-    <div class="actions">
-      <button class="btn bp">ðŸ“¤ Envoyer maintenant</button>
-      <button class="btn bs" onclick="closeModal('send-notif')">Annuler</button>
-    </div>
-  </div>
-</div>
 
-<!-- Modal Promo -->
-<div class="modal" id="modal-add-promo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">ðŸŽ Nouvelle Promotion</div>
-      <button class="modal-close" onclick="closeModal('add-promo')">âœ•</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Code promo</label>
-      <input type="text" class="form-input" placeholder="PROMO2026">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Type de rÃ©duction</label>
-        <select class="form-select">
-          <option>Pourcentage</option>
-          <option>Montant fixe</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Valeur</label>
-        <input type="number" class="form-input" placeholder="20">
+    <div id="section-livraisons" class="section">
+      <div class="section-title">Livraisons récentes</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>De → À</th><th>Statut</th><th>Prix</th><th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="livraisons-body">
+            <tr><td colspan="5" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Limite d'utilisation</label>
-        <input type="number" class="form-input" placeholder="100">
+
+    <!-- REVENUS -->
+    <div id="section-revenus" class="section">
+      <div class="section-title">Revenus — ce mois</div>
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-card-label">Chiffre d'affaires</div>
+          <div class="stat-card-value" id="rev-total">—</div>
+          <div class="stat-card-sub">livraisons payées</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Commission (15%)</div>
+          <div class="stat-card-value" id="rev-commission">—</div>
+          <div class="stat-card-sub">revenu plateforme</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Payé aux livreurs</div>
+          <div class="stat-card-value" id="rev-livreurs">—</div>
+          <div class="stat-card-sub">60% du prix</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Livraisons payées</div>
+          <div class="stat-card-value" id="rev-count">—</div>
+          <div class="stat-card-sub">ce mois-ci</div>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Date d'expiration</label>
-        <input type="date" class="form-input">
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Code</th><th>Trajet</th><th>Prix</th><th>Commission</th><th>Livreur (60%)</th><th>Date</th></tr></thead>
+          <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
       </div>
     </div>
-    <div class="actions">
-      <button class="btn bp">âœ… CrÃ©er la promo</button>
-      <button class="btn bs" onclick="closeModal('add-promo')">Annuler</button>
+
+    <!-- LITIGES -->
+    <div id="section-litiges" class="section">
+      <div class="section-title">Litiges & remboursements</div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Code</th><th>Trajet</th><th>Statut</th><th>Prix</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="litiges-body"><tr><td colspan="6" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
     </div>
-  </div>
+
+    <div id="section-rewards" class="section">
+      <div class="section-title">Missions, PorteCoins & tirages</div>
+      <div class="impact-summary">
+        <div class="impact-mini"><div>PorteCoins nets</div><div id="reward-admin-coins">—</div></div>
+        <div class="impact-mini"><div>Transactions PC</div><div id="reward-admin-tx">—</div></div>
+        <div class="impact-mini"><div>Tirages actifs</div><div id="reward-admin-draws">—</div></div>
+      </div>
+      <div class="impact-admin-grid">
+        <div class="form-card">
+          <form id="reward-mission-form" class="form-grid">
+            <label for="reward-mission-title">Titre mission</label>
+            <input id="reward-mission-title" placeholder="5 livraisons cette semaine">
+            <label for="reward-mission-description">Description</label>
+            <textarea id="reward-mission-description" placeholder="Des missions qui récompensent les bons gestes."></textarea>
+            <label for="reward-mission-target">Objectif</label>
+            <input id="reward-mission-target" type="number" min="1" value="1">
+            <label for="reward-mission-coins">Récompense PorteCoins</label>
+            <input id="reward-mission-coins" type="number" min="0" value="10">
+            <button class="action-btn" type="submit">Créer mission</button>
+          </form>
+        </div>
+        <div class="form-card">
+          <form id="reward-draw-form" class="form-grid">
+            <label for="reward-draw-title">Titre tirage</label>
+            <input id="reward-draw-title" placeholder="Tirage mensuel PorteaPorte">
+            <label for="reward-draw-description">Lots</label>
+            <textarea id="reward-draw-description" placeholder="Cartes essence, épicerie, entretien auto..."></textarea>
+            <label for="reward-draw-date">Date tirage</label>
+            <input id="reward-draw-date" type="date">
+            <label for="reward-draw-status">Statut</label>
+            <select id="reward-draw-status">
+              <option value="active">Actif ce mois-ci</option>
+              <option value="draft">Brouillon / gros tirage plus tard</option>
+              <option value="cancelled">Pas de tirage ce mois-ci</option>
+            </select>
+            <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0">
+              <input id="reward-draw-all-users" type="checkbox" checked style="width:auto">
+              Inclure tous les utilisateurs admissibles si personne ne participe
+            </label>
+            <button class="action-btn" type="submit">Créer tirage</button>
+          </form>
+        </div>
+      </div>
+      <div class="table-card" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Mission</th><th>Objectif</th><th>Récompense</th><th>Statut</th></tr></thead>
+          <tbody id="reward-missions-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="table-card" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Tirage</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="reward-draws-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="section-impact" class="section">
+      <div class="section-title">Transparence & organismes</div>
+      <div class="impact-summary">
+        <div class="impact-mini"><div>Fonds ce mois</div><div id="impact-admin-pool">—</div></div>
+        <div class="impact-mini"><div>Livraisons comptées</div><div id="impact-admin-deliveries">—</div></div>
+        <div class="impact-mini"><div>Répartition active</div><div id="impact-admin-allocation">—</div></div>
+      </div>
+      <div class="impact-admin-grid">
+        <div class="form-card">
+          <form id="impact-settings-form" class="form-grid">
+            <label for="impact-donation-rate">Pourcentage du fonds dons</label>
+            <input id="impact-donation-rate" type="number" min="0" max="100" step="0.1" value="5">
+            <label for="impact-commission-rate">Commission plateforme utilisée</label>
+            <input id="impact-commission-rate" type="number" min="0" max="100" step="0.1" value="12">
+            <label for="impact-public-note">Note publique</label>
+            <textarea id="impact-public-note" maxlength="400">Montants estimes en direct, confirmes mensuellement.</textarea>
+            <button class="action-btn" type="submit">Enregistrer les paramètres</button>
+          </form>
+        </div>
+        <div class="form-card">
+          <form id="impact-org-form" class="form-grid">
+            <input id="impact-org-id" type="hidden">
+            <label for="impact-org-name">Organisme</label>
+            <input id="impact-org-name" placeholder="Club des petits déjeuners">
+            <label for="impact-org-desc">Description</label>
+            <input id="impact-org-desc" placeholder="Aide alimentaire pour les enfants">
+            <label for="impact-org-url">Site web</label>
+            <input id="impact-org-url" placeholder="https://...">
+            <label for="impact-org-percent">Pourcentage de répartition</label>
+            <input id="impact-org-percent" type="number" min="0" max="100" step="0.1" value="0">
+            <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input id="impact-org-active" type="checkbox" checked style="width:auto"> Organisme actif</label>
+            <button class="action-btn" type="submit">Ajouter / mettre à jour</button>
+          </form>
+        </div>
+      </div>
+      <div class="table-card" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Organisme</th><th>Répartition</th><th>Montant estimé</th><th>Actif</th><th>Actions</th></tr></thead>
+          <tbody id="impact-orgs-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;color:var(--brand-muted-dark);font-size:.82rem">Règle recommandée : maximum 3 organismes actifs, total actif = 100 %.</div>
+
+      <div class="section-title" style="margin-top:24px">Demandes reçues</div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Organisme</th><th>Contact</th><th>Mission</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="impact-applications-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <script>
-// â”€â”€ SUPABASE CONFIG â”€â”€
-const SUPABASE_URL = 'https://votre-projet.supabase.co';
-const SUPABASE_ANON_KEY = 'votre-cle-anon';
-var supabaseClient =
-  typeof supabase !== 'undefined' && supabase.createClient
-    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
-
-// â”€â”€ Ã‰TAT â”€â”€
-let currentUser = null;
-
-// â”€â”€ LOGIN â”€â”€
-async function login() {
-  const email = document.getElementById('login-email').value.trim();
-  const pwd = document.getElementById('login-pwd').value;
-  const errEl = document.getElementById('login-error');
-  
-  // Login local desactive: utiliser login.html + role admin Supabase.
-  if (false) {
-    currentUser = { email, role: 'admin', nom: 'Admin' };
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('admin-name').textContent = currentUser.nom;
-    loadDashboardData();
-  } else {
-    errEl.textContent = 'Acces admin via login Supabase requis.';
-    errEl.style.display = 'block';
-    document.getElementById('login-email').classList.add('err');
-    document.getElementById('login-pwd').classList.add('err');
-    setTimeout(() => {
-      document.getElementById('login-email').classList.remove('err');
-      document.getElementById('login-pwd').classList.remove('err');
-    }, 500);
+  function roleBadge(role) {
+    const map = { admin:'badge-admin', livreur:'badge-livreur', expediteur:'badge-expediteur', 'les deux':'badge-les-deux' };
+    return `<span class="badge ${map[role]||'badge-attente'}">${role||'—'}</span>`;
   }
-}
 
-// â”€â”€ LOGOUT â”€â”€
-function logout() {
-  currentUser = null;
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-pwd').value = '';
-  document.getElementById('login-error').style.display = 'none';
-}
+  function driverBadge(s) {
+    const map = {
+      verified:       ['badge-verified', 'Vérifié'],
+      pending_review: ['badge-pending',  'En attente'],
+      rejected:       ['badge-rejected', 'Refusé'],
+      not_started:    ['badge-attente',  'Non démarré'],
+      suspended:      ['badge-rejected', 'Suspendu']
+    };
+    const [cls, label] = map[s] || ['badge-attente', s||'—'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
 
-// â”€â”€ NAVIGATION â”€â”€
-function showSection(sec) {
-  // Masquer toutes les sections
-  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
-  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('on'));
-  
-  // Afficher la section demandÃ©e
-  const secEl = document.getElementById('sec-' + sec);
-  if (secEl) secEl.classList.add('on');
-  
-  // Activer l'item dans la sidebar
-  event.currentTarget?.classList.add('on');
-  
-  // Charger les donnÃ©es si nÃ©cessaire
-  if (sec === 'users') loadUsers();
-  if (sec === 'deliveries') loadDeliveries();
-  if (sec === 'drivers') loadDrivers();
-  if (sec === 'transactions') loadTransactions();
-}
+  function livBadge(s) {
+    const map = {
+      livre:      ['badge-livre',     'Livré'],
+      en_route:   ['badge-en-route',  'En route'],
+      confirme:   ['badge-en-route',  'Confirmé'],
+      ramasse:    ['badge-en-route',  'Ramassé'],
+      payee:      ['badge-verified',  'Payé'],
+      en_attente: ['badge-attente',   'En attente'],
+      publie:     ['badge-attente',   'Publié'],
+      annule:     ['badge-rejected',  'Annulé'],
+      litige:     ['badge-rejected',  'Litige']
+    };
+    const [cls, label] = map[s] || ['badge-attente', s||'—'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
 
-// â”€â”€ MODALS â”€â”€
-function openModal(id) {
-  document.getElementById('modal-' + id).classList.add('open');
-}
+  function apiUrl(path) {
+    return window.location.protocol === 'file:' ? `https://porteaporte.site${path}` : path;
+  }
 
-function closeModal(id) {
-  document.getElementById('modal-' + id).classList.remove('open');
-}
+  async function setDriverStatus(userId, newStatus) {
+    const session = await window.db.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) { alert('Session admin requise'); return; }
 
-// â”€â”€ CHARGEMENT DES DONNÃ‰ES â”€â”€
-async function loadDashboardData() {
-  // Simuler le chargement (Ã  remplacer par vraies requÃªtes Supabase)
-  setTimeout(() => {
-    document.getElementById('stat-users').textContent = '1,247';
-    document.getElementById('stat-deliveries').textContent = '38';
-    document.getElementById('stat-revenue').textContent = '12,458 $';
-    document.getElementById('stat-drivers').textContent = '187';
-    
-    document.getElementById('users-badge').textContent = '1247';
-    document.getElementById('deliveries-badge').textContent = '38';
-    document.getElementById('drivers-badge').textContent = '187';
-  }, 500);
-}
+    const res = await fetch(apiUrl('/api/admin-update-driver-status'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ user_id: userId, driver_status: newStatus })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(out.error || 'Mise a jour impossible'); return; }
+    await loadData();
+  }
 
-async function loadUsers() {
-  // TODO: Charger depuis Supabase
-  const tbody = document.getElementById('users-table');
-  tbody.innerHTML = `
-    <tr>
-      <td>uuid-1234</td>
-      <td>Jean Tremblay</td>
-      <td>jean@example.com</td>
-      <td><span class="tag tb">ExpÃ©diteur</span></td>
-      <td style="color:var(--gold);font-weight:600">325 ðŸª™</td>
-      <td style="color:var(--lime);font-weight:600">1,280 XP</td>
-      <td>15 avr 2026</td>
-      <td>
-        <button class="btn btn-sm bs">Voir</button>
-        <button class="btn btn-sm bd">Suspendre</button>
-      </td>
-    </tr>
-  `;
-}
+  async function setUserAccess(userId, action, role) {
+    const me = AUTH_API.getUser();
+    if (userId === me?.id) {
+      alert('Protection active: tu ne peux pas retirer ton propre compte admin.');
+      return;
+    }
 
-async function loadDeliveries() {
-  const tbody = document.getElementById('deliveries-table');
-  tbody.innerHTML = `
-    <tr>
-      <td><span class="tag tg">PP-A8F2X4</span></td>
-      <td>Jean Tremblay</td>
-      <td>Marc Dubois</td>
-      <td>MontrÃ©al â†’ QuÃ©bec</td>
-      <td><span class="tag tb">En cours</span></td>
-      <td style="color:var(--lime);font-weight:600">67 $</td>
-      <td>27 avr 2026</td>
-      <td><button class="btn btn-sm bs">DÃ©tails</button></td>
-    </tr>
-  `;
-}
+    const expected = role === 'admin' && ['retirer', 'pause'].includes(action)
+      ? 'RETIRER_ADMIN'
+      : action === 'pause'
+      ? 'PAUSE'
+      : action === 'revision'
+      ? 'REVISION'
+      : 'RETIRER';
+    if (action === 'retirer') {
+      const typed = prompt(`Action sensible. Tape ${expected} pour retirer cet utilisateur.`);
+      if (typed !== expected) return;
+    } else if (action === 'pause') {
+      const typed = prompt(`Action sensible. Tape ${expected} pour mettre ce profil en pause.`);
+      if (typed !== expected) return;
+    } else if (action === 'revision') {
+      if (!confirm('Remettre ce livreur en revision? Il devra etre approuve de nouveau.')) return;
+    } else if (!confirm('Réactiver cet utilisateur?')) {
+      return;
+    }
+    const reason = ['retirer', 'pause', 'revision'].includes(action)
+      ? prompt('Raison admin interne (optionnelle)') || ''
+      : '';
 
-async function loadDrivers() {
-  const tbody = document.getElementById('drivers-table');
-  tbody.innerHTML = `
-    <tr>
-      <td>Marc Dubois</td>
-      <td><span class="tag tgo">Or ðŸ¥‡</span></td>
-      <td style="color:var(--lime);font-weight:600">92/100</td>
-      <td>47</td>
-      <td style="color:var(--gold);font-weight:600">2,480 $</td>
-      <td><span class="tag tg">Actif</span></td>
-      <td><button class="btn btn-sm bs">Voir profil</button></td>
-    </tr>
-  `;
-}
+    const session = await window.db.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) { alert('Session admin requise'); return; }
 
-async function loadTransactions() {
-  const tbody = document.getElementById('transactions-table');
-  tbody.innerHTML = `
-    <tr>
-      <td>pi_ABC123</td>
-      <td>Jean Tremblay</td>
-      <td><span class="tag tgo">PorteCoins</span></td>
-      <td style="color:var(--lime);font-weight:600">19.99 $</td>
-      <td><span class="tag tg">ComplÃ©tÃ©</span></td>
-      <td>27 avr 2026 14:18</td>
-      <td><button class="btn btn-sm bs">ReÃ§u</button></td>
-    </tr>
-  `;
-}
+    const res = await fetch(apiUrl('/api/admin-user-access'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        user_id: userId,
+        action,
+        reason,
+        confirmation: role === 'admin' && ['retirer', 'pause'].includes(action) ? 'RETIRER_ADMIN' : undefined
+      })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = out.details?.message || out.details?.error || '';
+      alert((out.error || 'Action impossible') + (detail ? '\n' + detail : ''));
+      return;
+    }
+    await loadData();
+  }
 
-// â”€â”€ ENTER KEY LOGIN â”€â”€
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-pwd').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') login();
+  function userActions(p, currentAdminId) {
+    if (p.id === currentAdminId) {
+      return '<span style="color:#B8F53E;font-size:.78rem;font-weight:800">Compte admin protégé</span>';
+    }
+    let driverActions = '';
+    if (['livreur', 'les deux'].includes(p.role)) {
+      driverActions = p.driver_status === 'pending_review'
+        ? `
+          <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">Approuver</button>
+          <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">Refuser</button>
+        `
+        : `<button class="action-btn" onclick="setUserAccess('${p.id}','revision','${p.role || ''}')">Vérifier de nouveau</button>`;
+    }
+    const accessAction = p.suspendu
+      ? `<button class="action-btn" onclick="setUserAccess('${p.id}','reactiver','${p.role || ''}')" style="margin-left:4px">Réactiver</button>`
+      : `
+        <button class="action-btn" onclick="setUserAccess('${p.id}','pause','${p.role || ''}')" style="margin-left:4px">Pause</button>
+        <button class="action-btn danger" onclick="setUserAccess('${p.id}','retirer','${p.role || ''}')" style="margin-left:4px">Retirer</button>
+      `;
+    return `${driverActions}${accessAction}`;
+  }
+
+  function $m(v) {
+    return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+  }
+
+  async function loadRevenus(db) {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const { data } = await db.from('livraisons')
+      .select('id,code,ville_depart,ville_arrivee,prix_total,cree_le,created_at')
+      .eq('statut', 'payee')
+      .gte('cree_le', monthStart)
+      .order('cree_le', { ascending: false });
+
+    const rows = data || [];
+    const total      = rows.reduce((s, r) => s + Number(r.prix_total || 0), 0);
+    const commission = total * 0.15;
+    const livreurs   = total * 0.60;
+
+    document.getElementById('rev-total').textContent      = $m(total);
+    document.getElementById('rev-commission').textContent = $m(commission);
+    document.getElementById('rev-livreurs').textContent   = $m(livreurs);
+    document.getElementById('rev-count').textContent      = rows.length;
+
+    document.getElementById('rev-body').innerHTML = rows.length === 0
+      ? '<tr><td colspan="6" class="empty-msg">Aucune livraison payée ce mois</td></tr>'
+      : rows.map(r => {
+          const prix = Number(r.prix_total || 0);
+          const date = r.cree_le || r.created_at;
+          return `<tr>
+            <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
+            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}</td>
+            <td style="color:#B8F53E;font-weight:700">${$m(prix)}</td>
+            <td style="color:#A8B0BA">${$m(prix * 0.15)}</td>
+            <td style="color:#A8B0BA">${$m(prix * 0.60)}</td>
+            <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
+          </tr>`;
+        }).join('');
+  }
+
+  async function loadLitiges(db) {
+    const { data } = await db.from('livraisons')
+      .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,created_at')
+      .in('statut', ['litige', 'rembourse'])
+      .order('cree_le', { ascending: false })
+      .limit(50);
+
+    const rows = data || [];
+    document.getElementById('litiges-body').innerHTML = rows.length === 0
+      ? '<tr><td colspan="6" class="empty-msg">Aucun litige en cours</td></tr>'
+      : rows.map(r => {
+          const date = r.cree_le || r.created_at;
+          const isLitige = r.statut === 'litige';
+          return `<tr>
+            <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
+            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}</td>
+            <td><span style="background:${isLitige ? '#7C2020' : '#1A3A1A'};color:${isLitige ? '#FF6B6B' : '#6BFF6B'};padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700">${isLitige ? '⚠️ Litige' : '✅ Remboursé'}</span></td>
+            <td style="color:#B8F53E;font-weight:700">${$m(r.prix_total)}</td>
+            <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
+            <td>${isLitige ? `<button class="action-btn danger" onclick="rembourserLivraison('${r.id}')">Rembourser</button>` : '—'}</td>
+          </tr>`;
+        }).join('');
+  }
+
+  async function rembourserLivraison(livraisonId) {
+    if (!confirm('Rembourser cette livraison via Stripe ?')) return;
+    const user = AUTH_API.getUser();
+    const res = await fetch('/api/refund-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user.session.access_token },
+      body: JSON.stringify({ livraison_id: livraisonId })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert('❌ ' + (out.error || 'Remboursement impossible')); return; }
+    alert('✅ Remboursement effectué.');
+    await loadLitiges(window.db);
+  }
+
+  async function loadData() {
+    const db = window.db;
+    if (!db) return;
+
+    const [{ data: profiles }, { data: livraisons }] = await Promise.all([
+      db.from('profiles').select('*').order('prenom'),
+      db.from('livraisons')
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,created_at')
+        .order('cree_le', { ascending: false })
+        .limit(30)
+    ]);
+    loadRevenus(db);
+    loadLitiges(db);
+
+    if (profiles) {
+      const currentAdminId = AUTH_API.getUser()?.id;
+      document.getElementById('stat-users').textContent = profiles.length;
+      document.getElementById('stat-livreurs').textContent = profiles.filter(p => p.driver_status === 'verified').length;
+      document.getElementById('stat-pending-verif').textContent = profiles.filter(p => p.driver_status === 'pending_review').length;
+
+      document.getElementById('users-body').innerHTML = profiles.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun utilisateur</td></tr>'
+        : profiles.map(p => `
+          <tr>
+            <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
+            <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
+            <td>${roleBadge(p.role)}</td>
+            <td>${p.suspendu ? driverBadge('suspended') : driverBadge(p.driver_status)}</td>
+            <td style="color:#B8F53E">${p.xp||0} XP</td>
+            <td>${userActions(p, currentAdminId)}</td>
+          </tr>`).join('');
+
+      const pending = profiles.filter(p => p.driver_status === 'pending_review');
+      document.getElementById('livreurs-body').innerHTML = pending.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun livreur en attente</td></tr>'
+        : pending.map(p => `
+          <tr>
+            <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
+            <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
+            <td>${p.vehicule||'—'}</td>
+            <td>${p.ville||'—'}</td>
+            <td>${driverBadge(p.driver_status)}</td>
+            <td>
+              <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
+              <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">✗ Refuser</button>
+            </td>
+          </tr>`).join('');
+    }
+
+    if (livraisons) {
+      document.getElementById('stat-livraisons').textContent = livraisons.length;
+      document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucune livraison</td></tr>'
+        : livraisons.map(l => {
+            const date = l.cree_le || l.created_at;
+            return `
+            <tr>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${l.code||'—'}</td>
+              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}</td>
+              <td>${livBadge(l.statut)}</td>
+              <td style="color:#B8F53E;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
+              <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
+            </tr>`;
+          }).join('');
+    }
+  }
+
+  function money(cents) {
+    return (Number(cents || 0) / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+  }
+
+  async function impactRequest(payload, method = 'POST') {
+    const user = AUTH_API.getUser();
+    const res = await fetch(apiUrl('/api/impact-admin'), {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + user.session.access_token
+      },
+      body: method === 'GET' ? undefined : JSON.stringify(payload || {})
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || 'Erreur impact');
+    return out;
+  }
+
+  async function loadImpact() {
+    try {
+      const out = await impactRequest(null, 'GET');
+      const impact = out.impact;
+      const settings = impact.settings || {};
+      document.getElementById('impact-donation-rate').value = settings.donation_rate_percent ?? 5;
+      document.getElementById('impact-commission-rate').value = settings.platform_commission_percent ?? 12;
+      document.getElementById('impact-public-note').value = settings.public_note || 'Montants estimes en direct, confirmes mensuellement.';
+      document.getElementById('impact-admin-pool').textContent = money(impact.totals?.donation_pool_cents);
+      document.getElementById('impact-admin-deliveries').textContent = impact.totals?.deliveries_count || 0;
+      document.getElementById('impact-admin-allocation').textContent = (impact.totals?.allocation_total_percent || 0) + '%';
+
+      const allocationMap = Object.fromEntries((impact.allocations || []).map(a => [a.id, a]));
+      const orgs = impact.organisations || [];
+      const applications = out.applications || [];
+      document.getElementById('impact-orgs-body').innerHTML = orgs.length ? orgs.map(org => {
+        const alloc = allocationMap[org.id] || {};
+        return `<tr>
+          <td><strong>${org.name || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${org.description || ''}</span></td>
+          <td style="color:#B8F53E;font-weight:800">${Number(org.allocation_percent || 0)}%</td>
+          <td>${money(alloc.amount_cents || 0)}</td>
+          <td>${org.active === false ? 'Non' : 'Oui'}</td>
+          <td>
+            <button class="action-btn" onclick="editImpactOrg('${org.id}')">Modifier</button>
+            <button class="action-btn danger" onclick="deleteImpactOrg('${org.id}')" style="margin-left:4px">Retirer</button>
+          </td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="5" class="empty-msg">Aucun organisme configure</td></tr>';
+      window.__impactOrgs = orgs;
+      document.getElementById('impact-applications-body').innerHTML = applications.length ? applications.map(app => `
+        <tr>
+          <td><strong>${app.organisation_name || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${app.website_url || ''}</span></td>
+          <td>${app.contact_name || '—'}<br><span style="color:#5A6A7A;font-size:.78rem">${app.email || ''}</span></td>
+          <td style="max-width:320px;color:#A8B0BA;font-size:.82rem">${(app.mission || '').slice(0, 180)}${(app.mission || '').length > 180 ? '...' : ''}</td>
+          <td>${app.status || 'pending'}</td>
+          <td>
+            <button class="action-btn" onclick="updateImpactApplication('${app.id}','approved')">Accepter</button>
+            <button class="action-btn" onclick="updateImpactApplication('${app.id}','contacted')" style="margin-left:4px">Contacter</button>
+            <button class="action-btn danger" onclick="updateImpactApplication('${app.id}','rejected')" style="margin-left:4px">Refuser</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="5" class="empty-msg">Aucune demande reçue</td></tr>';
+    } catch (err) {
+      document.getElementById('impact-orgs-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${err.message}</td></tr>`;
+    }
+  }
+
+  async function rewardsRequest(payload, method = 'POST') {
+    const user = AUTH_API.getUser();
+    const res = await fetch(apiUrl('/api/admin-rewards'), {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + user.session.access_token
+      },
+      body: method === 'GET' ? undefined : JSON.stringify(payload || {})
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || 'Erreur rewards');
+    return out;
+  }
+
+  async function loadRewardsAdmin() {
+    try {
+      const out = await rewardsRequest(null, 'GET');
+      document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ?? 0;
+      document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ?? 0;
+      document.getElementById('reward-admin-draws').textContent = (out.draws || []).filter(d => d.status === 'active').length;
+      document.getElementById('reward-missions-body').innerHTML = (out.missions || []).length ? out.missions.map(m => `
+        <tr>
+          <td><strong>${m.title || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${m.description || ''}</span></td>
+          <td>${m.objective_target || 1}</td>
+          <td style="color:#B8F53E;font-weight:800">${m.reward_coins || 0} PC</td>
+          <td>${m.status || 'active'}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="empty-msg">Aucune mission bonus</td></tr>';
+      document.getElementById('reward-draws-body').innerHTML = (out.draws || []).length ? out.draws.map(d => `
+        <tr>
+          <td><strong>${d.title || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${d.description || ''}</span></td>
+          <td>${d.draw_date || '—'}</td>
+          <td>${d.status || 'active'}</td>
+          <td>
+            <button class="action-btn" onclick="setDrawStatus('${d.id}','active')">Activer</button>
+            <button class="action-btn" onclick="setDrawStatus('${d.id}','cancelled')" style="margin-left:4px">Pas ce mois</button>
+            <button class="action-btn danger" onclick="runDrawNow('${d.id}')" style="margin-left:4px">Tirer gagnant</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="empty-msg">Aucun tirage</td></tr>';
+    } catch (err) {
+      document.getElementById('reward-missions-body').innerHTML = `<tr><td colspan="4" class="empty-msg">${err.message}</td></tr>`;
+      document.getElementById('reward-draws-body').innerHTML = `<tr><td colspan="4" class="empty-msg">${err.message}</td></tr>`;
+    }
+  }
+
+  async function setDrawStatus(id, status) {
+    try {
+      await rewardsRequest({ mode: 'update_draw_status', id, status });
+      await loadRewardsAdmin();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function runDrawNow(id) {
+    const typed = prompt('Action sensible. Tape TIRAGE pour choisir automatiquement un gagnant.');
+    if (typed !== 'TIRAGE') return;
+    try {
+      const out = await rewardsRequest({ mode: 'run_draw', id });
+      alert(`Gagnant choisi. Participants admissibles: ${out.candidates_count || 0}`);
+      await loadRewardsAdmin();
+    } catch (err) { alert(err.message); }
+  }
+
+  document.getElementById('reward-mission-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await rewardsRequest({
+        mode: 'create_mission',
+        title: document.getElementById('reward-mission-title').value.trim(),
+        description: document.getElementById('reward-mission-description').value.trim(),
+        objective_target: Number(document.getElementById('reward-mission-target').value || 1),
+        reward_coins: Number(document.getElementById('reward-mission-coins').value || 0),
+        objective_type: 'custom'
+      });
+      event.target.reset();
+      await loadRewardsAdmin();
+    } catch (err) { alert(err.message); }
   });
-});
-</script>
 
+  document.getElementById('reward-draw-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await rewardsRequest({
+        mode: 'create_draw',
+        title: document.getElementById('reward-draw-title').value.trim(),
+        description: document.getElementById('reward-draw-description').value.trim(),
+        draw_date: document.getElementById('reward-draw-date').value,
+        status: document.getElementById('reward-draw-status').value,
+        auto_include_all_users: document.getElementById('reward-draw-all-users').checked
+      });
+      event.target.reset();
+      await loadRewardsAdmin();
+    } catch (err) { alert(err.message); }
+  });
+
+  function editImpactOrg(id) {
+    const org = (window.__impactOrgs || []).find(o => o.id === id);
+    if (!org) return;
+    document.getElementById('impact-org-id').value = org.id;
+    document.getElementById('impact-org-name').value = org.name || '';
+    document.getElementById('impact-org-desc').value = org.description || '';
+    document.getElementById('impact-org-url').value = org.website_url || '';
+    document.getElementById('impact-org-percent').value = org.allocation_percent || 0;
+    document.getElementById('impact-org-active').checked = org.active !== false;
+  }
+
+  async function deleteImpactOrg(id) {
+    if (!confirm('Retirer cet organisme?')) return;
+    try {
+      await impactRequest({ mode: 'delete_org', id });
+      await loadImpact();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function updateImpactApplication(id, status) {
+    const admin_note = prompt('Note admin optionnelle') || '';
+    try {
+      await impactRequest({ mode: 'update_application', id, status, admin_note });
+      await loadImpact();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById('impact-settings-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await impactRequest({
+        mode: 'settings',
+        donation_rate_percent: Number(document.getElementById('impact-donation-rate').value || 0),
+        platform_commission_percent: Number(document.getElementById('impact-commission-rate').value || 0),
+        public_note: document.getElementById('impact-public-note').value.trim()
+      });
+      await loadImpact();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  document.getElementById('impact-org-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await impactRequest({
+        mode: 'upsert_org',
+        id: document.getElementById('impact-org-id').value || undefined,
+        name: document.getElementById('impact-org-name').value.trim(),
+        description: document.getElementById('impact-org-desc').value.trim(),
+        website_url: document.getElementById('impact-org-url').value.trim(),
+        allocation_percent: Number(document.getElementById('impact-org-percent').value || 0),
+        active: document.getElementById('impact-org-active').checked
+      });
+      event.target.reset();
+      document.getElementById('impact-org-id').value = '';
+      document.getElementById('impact-org-active').checked = true;
+      await loadImpact();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  async function init() {
+    if (!await AUTH_API.requireAuth('admin')) return;
+    const user = AUTH_API.getUser();
+    document.getElementById('admin-email').textContent = user.email || '';
+    document.getElementById('admin-welcome').textContent = 'Connecté en tant que ' + ([user.prenom, user.nom].filter(Boolean).join(' ') || user.email);
+    await loadData();
+    await loadRewardsAdmin();
+    await loadImpact();
+  }
+
+  init();
+</script>
 </body>
 </html>
-

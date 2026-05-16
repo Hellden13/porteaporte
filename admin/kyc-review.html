@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Révision KYC — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .topbar { display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 24px;background:rgba(10,12,16,.97);border-bottom:1px solid var(--brand-border);position:sticky;top:0;z-index:50; }
+    .brand { font-weight:900;font-size:18px;color:var(--brand-lime);text-decoration:none; }
+    .admin-badge { padding:3px 10px;border-radius:999px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#ff8a8a;font-size:11px;font-weight:800;text-transform:uppercase; }
+    .topbar-right { display:flex;gap:8px;align-items:center; }
+    .tbtn { padding:7px 13px;border:1px solid var(--brand-border);border-radius:7px;background:transparent;color:var(--brand-muted);font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s; }
+    .tbtn:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+
+    .page { max-width:1280px;margin:0 auto;padding:28px 20px 64px; }
+
+    /* ---- Filters bar ---- */
+    .filters-bar { display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap; }
+    .filter-tab { padding:7px 16px;border:1px solid var(--brand-border);border-radius:999px;background:transparent;color:var(--brand-muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s; }
+    .filter-tab.active { border-color:var(--brand-lime);color:var(--brand-lime);background:rgba(0,255,159,.07); }
+    .filters-bar input[type=search] { flex:1;min-width:180px;padding:8px 14px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:13px;outline:none; }
+    .filters-bar input[type=search]:focus { border-color:var(--brand-cyan); }
+    .count-badge { padding:3px 10px;border-radius:999px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);color:var(--brand-muted);font-size:12px;font-weight:700; }
+
+    /* ---- Stats row ---- */
+    .stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px; }
+    .stat-pill { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px; }
+    .stat-pill .sp-val { font-size:1.5rem;font-weight:900;color:var(--brand-lime); }
+    .stat-pill .sp-lbl { font-size:.75rem;color:var(--brand-muted);text-transform:uppercase;letter-spacing:.05em; }
+
+    /* ---- KYC cards grid ---- */
+    .kyc-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px; }
+
+    .kyc-card { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;overflow:hidden;transition:border-color .2s; }
+    .kyc-card:hover { border-color:var(--brand-cyan); }
+    .kyc-card.pending { border-left:3px solid #F59E0B; }
+    .kyc-card.approved { border-left:3px solid var(--brand-lime); }
+    .kyc-card.rejected { border-left:3px solid #EF4444; }
+
+    .kc-header { display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--brand-border); }
+    .kc-avatar { width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;color:var(--brand-bg-dark);flex-shrink:0; }
+    .kc-info { flex:1;min-width:0; }
+    .kc-name { font-weight:800;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .kc-email { color:var(--brand-muted);font-size:.75rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .kc-status { flex-shrink:0; }
+
+    .status-pill { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800; }
+    .status-pill.pending  { background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3); }
+    .status-pill.verified { background:rgba(0,255,159,.12);color:var(--brand-lime);border:1px solid rgba(0,255,159,.3); }
+    .status-pill.rejected { background:rgba(239,68,68,.12);color:#ff8a8a;border:1px solid rgba(239,68,68,.3); }
+
+    .kc-body { padding:14px 16px; }
+    .kc-fields { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px; }
+    .kc-field { padding:9px 10px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:7px; }
+    .kc-field-lbl { font-size:.67rem;color:var(--brand-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px; }
+    .kc-field-val { font-size:.82rem;font-weight:700; }
+
+    .eco-chip { display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:800;margin-bottom:10px; }
+    .eco-chip.high   { background:rgba(0,255,159,.15);color:var(--brand-lime);border:1px solid rgba(0,255,159,.3); }
+    .eco-chip.mid    { background:rgba(0,217,255,.12);color:var(--brand-cyan);border:1px solid rgba(0,217,255,.25); }
+    .eco-chip.low    { background:rgba(168,172,177,.08);color:var(--brand-muted);border:1px solid var(--brand-border); }
+
+    /* Docs preview */
+    .kc-docs { display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap; }
+    .doc-thumb { width:72px;height:54px;border-radius:7px;border:1px solid var(--brand-border);background:var(--brand-bg-dark);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;transition:border-color .2s;flex-shrink:0; }
+    .doc-thumb:hover { border-color:var(--brand-cyan); }
+    .doc-thumb img { width:100%;height:100%;object-fit:cover; }
+    .doc-thumb.missing { opacity:.4;cursor:default; }
+    .doc-label { font-size:.68rem;color:var(--brand-muted);text-align:center;margin-top:2px; }
+
+    /* Timeline */
+    .kc-timeline { font-size:.75rem;color:var(--brand-muted);margin-bottom:12px;display:flex;align-items:center;gap:6px; }
+    .kc-timeline strong { color:var(--brand-text); }
+
+    /* Actions */
+    .kc-actions { display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--brand-border);background:var(--brand-bg-dark); }
+    .btn-approve { flex:1;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--brand-lime),var(--brand-cyan));color:var(--brand-bg-dark);font-weight:800;font-size:13px;cursor:pointer;transition:opacity .2s; }
+    .btn-approve:hover { opacity:.85; }
+    .btn-approve:disabled { opacity:.4;cursor:not-allowed; }
+    .btn-reject { flex:1;padding:10px;border:1px solid rgba(239,68,68,.4);border-radius:8px;background:transparent;color:#ff8a8a;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s; }
+    .btn-reject:hover { background:rgba(239,68,68,.08); }
+    .btn-reject:disabled { opacity:.4;cursor:not-allowed; }
+    .btn-detail { padding:10px 14px;border:1px solid var(--brand-border);border-radius:8px;background:transparent;color:var(--brand-muted);font-weight:700;font-size:12px;cursor:pointer;transition:all .2s; }
+    .btn-detail:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+
+    /* Reject modal */
+    .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:28px;max-width:420px;width:90%; }
+    .modal h3 { font-size:1rem;font-weight:800;margin-bottom:8px; }
+    .modal p { color:var(--brand-muted);font-size:.86rem;margin-bottom:14px;line-height:1.6; }
+    .modal textarea { width:100%;padding:10px 12px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:13px;font-family:inherit;resize:vertical;min-height:80px;outline:none; }
+    .modal textarea:focus { border-color:var(--brand-cyan); }
+    .modal-actions { display:flex;gap:8px;margin-top:14px; }
+    .modal-cancel { flex:1;padding:10px;border:1px solid var(--brand-border);border-radius:8px;background:transparent;color:var(--brand-muted);font-weight:700;cursor:pointer; }
+    .modal-cancel:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+    .modal-confirm-reject { flex:1;padding:10px;border:none;border-radius:8px;background:#EF4444;color:#fff;font-weight:800;cursor:pointer; }
+
+    /* Image lightbox */
+    .lightbox { display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;align-items:center;justify-content:center;cursor:zoom-out; }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 24px 64px rgba(0,0,0,.6); }
+
+    /* Empty / loading */
+    .empty { grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--brand-muted);font-size:.9rem; }
+
+    @media(max-width:600px) {
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .kyc-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <a class="brand" href="/index.html">PorteàPorte</a>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div class="topbar-right">
+    <span id="adminName" style="color:var(--brand-muted);font-size:13px"></span>
+    <a class="tbtn" href="/admin/dashboard-admin.html">Dashboard</a>
+    <button class="tbtn" onclick="logout()">Déconnecter</button>
+  </div>
+</header>
+
+<main class="page">
+
+  <div style="margin-bottom:22px">
+    <h1 style="font-size:1.4rem;font-weight:900;margin-bottom:4px">Révision des dossiers KYC</h1>
+    <p style="color:var(--brand-muted);font-size:.88rem">Vérifie les documents et approuve ou refuse chaque demande. Délai cible : 24–48h.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-pill"><div class="sp-val" id="statTotal">—</div><div class="sp-lbl">Total soumis</div></div>
+    <div class="stat-pill"><div class="sp-val" style="color:#fbbf24" id="statPending">—</div><div class="sp-lbl">En attente</div></div>
+    <div class="stat-pill"><div class="sp-val" id="statApproved">—</div><div class="sp-lbl">Approuvés</div></div>
+    <div class="stat-pill"><div class="sp-val" style="color:#ff8a8a" id="statRejected">—</div><div class="sp-lbl">Refusés</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <button class="filter-tab active" data-filter="pending_review" onclick="setFilter('pending_review',this)">⏳ En attente</button>
+    <button class="filter-tab" data-filter="verified" onclick="setFilter('verified',this)">✅ Approuvés</button>
+    <button class="filter-tab" data-filter="rejected" onclick="setFilter('rejected',this)">❌ Refusés</button>
+    <button class="filter-tab" data-filter="all" onclick="setFilter('all',this)">Tous</button>
+    <input type="search" id="searchInput" placeholder="Rechercher par nom, email…" oninput="renderCards()">
+    <span class="count-badge" id="countBadge">0 dossiers</span>
+  </div>
+
+  <!-- Cards grid -->
+  <div class="kyc-grid" id="kycGrid">
+    <div class="empty">Chargement des dossiers…</div>
+  </div>
+
+</main>
+
+<!-- Reject reason modal -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <h3>Motif de refus</h3>
+    <p>Précise la raison du refus. Ce message sera envoyé au livreur par email.</p>
+    <textarea id="rejectReason" placeholder="Ex : Document expiré, photo illisible, selfie non conforme…"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeRejectModal()">Annuler</button>
+      <button class="modal-confirm-reject" onclick="confirmReject()">Confirmer le refus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+  const db = window.db || window.getSupabaseClient();
+  let session = null;
+  let allDossiers = [];
+  let activeFilter = 'pending_review';
+  let pendingRejectId = null;
+
+  const TRANSPORT_LABELS = { pieds:'À pied 🚶', velo:'Vélo 🚴', trottinette:'Trottinette 🛴', skateboard:'Skateboard 🛹', voiture_electrique:'Voiture élec. 🔋🚗', moto_electrique:'Moto élec. 🔋🏍️', camion_electrique:'Camion élec. 🔋🚛', voiture:'Voiture 🚗', moto:'Moto 🏍️', camion:'Camion 🚛' };
+  const DOC_LABELS = { assurance_maladie_ou_passeport:'Carte assurance maladie / Passeport', permis:'Permis de conduire' };
+
+  /* ============================
+     INIT
+  ============================= */
+  async function init() {
+    const { data } = await db.auth.getSession();
+    if (!data?.session) { window.location.href = '/login.html'; return; }
+    session = data.session;
+
+    const { data: p } = await db.from('profiles').select('role,nom').eq('id', session.user.id).single();
+    if (p?.role !== 'admin') { window.location.href = '/dashboard-livreur.html'; return; }
+    document.getElementById('adminName').textContent = p.nom || session.user.email;
+
+    await loadDossiers();
+  }
+
+  /* ============================
+     LOAD
+  ============================= */
+  async function loadDossiers() {
+    const { data, error } = await db
+      .from('kyc_submissions')
+      .select('*')
+      .order('soumis_le', { ascending: false });
+
+    const submissions = error ? [] : (data || []);
+
+    /* Fetch profiles for each submission */
+    const ids = submissions.map(d => d.user_id);
+    const { data: profiles } = ids.length
+      ? await db.from('profiles').select('id,nom,email,driver_status,eco_bonus').in('id', ids)
+      : { data: [] };
+    const profMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+
+    const dossiers = submissions.map(d => ({ ...d, _profile: profMap[d.user_id] || {} }));
+    const dossierUserIds = new Set(dossiers.map(d => d.user_id));
+
+    /* Fallback: anciens formulaires livreur mettent parfois seulement profiles.driver_status */
+    const { data: driverProfiles, error: profileError } = await db
+      .from('profiles')
+      .select('id,prenom,nom,email,telephone,ville,driver_status')
+      .in('role', ['livreur', 'les deux'])
+      .in('driver_status', ['pending_review', 'verified', 'rejected']);
+
+    if (profileError && error) {
+      document.getElementById('kycGrid').innerHTML = `<div class="empty">Erreur : ${error.message}</div>`;
+      return;
+    }
+
+    (driverProfiles || []).forEach(p => {
+      if (dossierUserIds.has(p.id)) return;
+      const parts = String(p.nom || '').trim().split(/\s+/).filter(Boolean);
+      dossiers.push({
+        user_id: p.id,
+        first_name: p.prenom || parts[0] || '',
+        last_name: p.prenom ? (p.nom || '') : parts.slice(1).join(' '),
+        dob: '',
+        phone: p.telephone || '',
+        address: p.ville || '',
+        transport_mode: '',
+        eco_bonus: 0,
+        doc_type: 'profil_livreur',
+        doc1_path: null,
+        doc2_path: null,
+        selfie_path: null,
+        statut: p.driver_status || 'pending_review',
+        soumis_le: new Date().toISOString(),
+        _profile: p,
+        _synthetic: true
+      });
+    });
+
+    allDossiers = dossiers;
+
+    /* Update stats */
+    document.getElementById('statTotal').textContent    = allDossiers.length;
+    document.getElementById('statPending').textContent  = allDossiers.filter(d => d.statut === 'pending_review').length;
+    document.getElementById('statApproved').textContent = allDossiers.filter(d => d.statut === 'verified').length;
+    document.getElementById('statRejected').textContent = allDossiers.filter(d => d.statut === 'rejected').length;
+
+    renderCards();
+  }
+
+  /* ============================
+     FILTER & RENDER
+  ============================= */
+  function setFilter(f, el) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderCards();
+  }
+
+  function renderCards() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const list = allDossiers.filter(d => {
+      const matchFilter = activeFilter === 'all' || d.statut === activeFilter;
+      const name  = `${d.first_name || ''} ${d.last_name || ''}`.toLowerCase();
+      const email = (d._profile.email || '').toLowerCase();
+      const matchSearch = !q || name.includes(q) || email.includes(q);
+      return matchFilter && matchSearch;
+    });
+
+    document.getElementById('countBadge').textContent = list.length + ' dossier' + (list.length !== 1 ? 's' : '');
+
+    if (!list.length) {
+      document.getElementById('kycGrid').innerHTML = '<div class="empty">Aucun dossier dans cette catégorie.</div>';
+      return;
+    }
+
+    document.getElementById('kycGrid').innerHTML = list.map(d => cardHtml(d)).join('');
+  }
+
+  function cardHtml(d) {
+    const name     = `${d.first_name || ''} ${d.last_name || ''}`.trim() || 'Sans nom';
+    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const email    = d._profile.email || '—';
+    const mode     = TRANSPORT_LABELS[d.transport_mode] || d.transport_mode || '—';
+    const doc      = DOC_LABELS[d.doc_type] || d.doc_type || '—';
+    const eco      = d.eco_bonus || 0;
+    const ecoClass = eco >= 15 ? 'high' : eco >= 5 ? 'mid' : 'low';
+    const ecoLabel = eco > 0 ? `🌱 +${eco}% Bonus éco` : 'Aucun bonus éco';
+    const date     = d.soumis_le ? new Date(d.soumis_le).toLocaleDateString('fr-CA', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const delay    = d.soumis_le ? Math.floor((Date.now() - new Date(d.soumis_le)) / 3600000) : 0;
+    const delayTxt = delay < 1 ? 'Il y a moins d\'1h' : delay < 24 ? `Il y a ${delay}h` : `Il y a ${Math.floor(delay/24)}j`;
+    const delayWarn = delay > 24 && d.statut === 'pending_review';
+
+    const isPending  = d.statut === 'pending_review';
+    const isApproved = d.statut === 'verified';
+    const statusCls  = isPending ? 'pending' : isApproved ? 'verified' : 'rejected';
+    const statusLbl  = isPending ? '⏳ En attente' : isApproved ? '✅ Approuvé' : '❌ Refusé';
+
+    return `
+    <div class="kyc-card ${statusCls}" id="card-${d.user_id}">
+      <div class="kc-header">
+        <div class="kc-avatar">${initials}</div>
+        <div class="kc-info">
+          <div class="kc-name">${name}</div>
+          <div class="kc-email">${email}</div>
+        </div>
+        <div class="kc-status"><span class="status-pill ${statusCls}">${statusLbl}</span></div>
+      </div>
+
+      <div class="kc-body">
+        <span class="eco-chip ${ecoClass}">${ecoLabel}</span>
+
+        <div class="kc-fields">
+          <div class="kc-field">
+            <div class="kc-field-lbl">Transport</div>
+            <div class="kc-field-val">${mode}</div>
+          </div>
+          <div class="kc-field">
+            <div class="kc-field-lbl">Document</div>
+            <div class="kc-field-val" style="font-size:.75rem">${doc}</div>
+          </div>
+          <div class="kc-field">
+            <div class="kc-field-lbl">Date de naissance</div>
+            <div class="kc-field-val">${d.dob || '—'}</div>
+          </div>
+          <div class="kc-field">
+            <div class="kc-field-lbl">Téléphone</div>
+            <div class="kc-field-val">${d.phone || '—'}</div>
+          </div>
+        </div>
+
+        <div class="kc-field" style="margin-bottom:12px">
+          <div class="kc-field-lbl">Adresse</div>
+          <div class="kc-field-val" style="font-size:.8rem">${d.address || '—'}</div>
+        </div>
+
+        <!-- Documents -->
+        <div style="font-size:.72rem;color:var(--brand-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Documents téléversés</div>
+        <div class="kc-docs">
+          ${docThumb(d.doc1_path, 'Recto', d.user_id)}
+          ${docThumb(d.doc2_path, 'Verso', d.user_id)}
+          ${docThumb(d.selfie_path, 'Selfie', d.user_id)}
+        </div>
+
+        <div class="kc-timeline" style="${delayWarn ? 'color:#fbbf24' : ''}">
+          🕐 Soumis le <strong>${date}</strong> · ${delayTxt}${delayWarn ? ' ⚠️ Délai dépassé' : ''}
+        </div>
+
+        ${d.statut === 'rejected' && d.reject_reason ? `<div style="padding:8px 10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:7px;font-size:.78rem;color:#ff8a8a;margin-bottom:4px"><strong>Motif :</strong> ${d.reject_reason}</div>` : ''}
+      </div>
+
+      <div class="kc-actions">
+        ${isPending ? `
+          <button class="btn-approve" onclick="approveKyc('${d.user_id}','${d.transport_mode}',${eco})">✅ Approuver</button>
+          <button class="btn-reject"  onclick="openRejectModal('${d.user_id}')">❌ Refuser</button>
+        ` : isApproved ? `
+          <button class="btn-reject" onclick="openRejectModal('${d.user_id}')">Révoquer</button>
+          <button class="btn-detail" onclick="alert('Profil livreur #${d.user_id}')">Voir profil</button>
+        ` : `
+          <button class="btn-approve" onclick="approveKyc('${d.user_id}','${d.transport_mode}',${eco})">Ré-approuver</button>
+          <button class="btn-detail" onclick="alert('Profil livreur #${d.user_id}')">Voir profil</button>
+        `}
+      </div>
+    </div>`;
+  }
+
+  function docThumb(path, label, userId) {
+    if (!path) return `<div><div class="doc-thumb missing">📄</div><div class="doc-label">${label} manquant</div></div>`;
+    return `<div>
+      <div class="doc-thumb" onclick="openDoc('${path}','${userId}')">📄</div>
+      <div class="doc-label">${label}</div>
+    </div>`;
+  }
+
+  /* ============================
+     APPROVE
+  ============================= */
+  async function approveKyc(userId, transportMode, ecoBonus) {
+    const card = document.getElementById('card-' + userId);
+    if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+
+    try {
+      await Promise.all([
+        db.from('kyc_submissions').update({ statut: 'verified', reviewed_at: new Date().toISOString(), reviewer_id: session.user.id }).eq('user_id', userId),
+        db.from('profiles').update({ driver_status: 'verified', transport_mode: transportMode, eco_bonus: ecoBonus }).eq('id', userId)
+      ]);
+      await loadDossiers();
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+      if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
+    }
+  }
+
+  /* ============================
+     REJECT
+  ============================= */
+  function openRejectModal(userId) {
+    pendingRejectId = userId;
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('rejectModal').classList.add('open');
+    setTimeout(() => document.getElementById('rejectReason').focus(), 300);
+  }
+
+  function closeRejectModal() {
+    pendingRejectId = null;
+    document.getElementById('rejectModal').classList.remove('open');
+  }
+
+  async function confirmReject() {
+    const reason = document.getElementById('rejectReason').value.trim();
+    if (!reason) { alert('Précise un motif de refus.'); return; }
+
+    const btn = document.querySelector('.modal-confirm-reject');
+    btn.disabled = true;
+    btn.textContent = 'Envoi…';
+
+    try {
+      await Promise.all([
+        db.from('kyc_submissions').update({ statut: 'rejected', reject_reason: reason, reviewed_at: new Date().toISOString(), reviewer_id: session.user.id }).eq('user_id', pendingRejectId),
+        db.from('profiles').update({ driver_status: 'rejected' }).eq('id', pendingRejectId)
+      ]);
+      closeRejectModal();
+      await loadDossiers();
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Confirmer le refus';
+    }
+  }
+
+  /* ============================
+     DOC VIEWER (lightbox)
+  ============================= */
+  async function openDoc(path, userId) {
+    try {
+      const { data } = await db.storage.from('kyc-documents').createSignedUrl(path, 120);
+      if (data?.signedUrl) {
+        document.getElementById('lightboxImg').src = data.signedUrl;
+        document.getElementById('lightbox').classList.add('open');
+      }
+    } catch (_) {
+      alert('Impossible d\'afficher ce document.');
+    }
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightboxImg').src = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeRejectModal(); } });
+
+  /* ============================
+     LOGOUT
+  ============================= */
+  async function logout() {
+    await db.auth.signOut();
+    window.location.href = '/login.html';
+  }
+
+  init();
+</script>
+</body>
+</html>

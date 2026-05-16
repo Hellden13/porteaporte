@@ -1,0 +1,250 @@
+﻿<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Missions disponibles pour livreurs verifies - PorteaPorte">
+  <title>Missions disponibles - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/modal-helper.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border)}
+    .brand{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none;color:var(--brand-text)}
+    .page{max-width:1120px;margin:0 auto;padding:32px 20px 56px}
+    .hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:24px}
+    h1{font-size:34px;line-height:1.12;margin-bottom:8px}
+    .muted{color:var(--brand-muted);line-height:1.55}
+    .status{border:1px solid var(--brand-border);background:var(--brand-bg-surface);border-radius:8px;padding:12px 14px;color:var(--brand-muted);font-size:14px}
+    .missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .mission-card{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .mission-card h2{font-size:18px}
+    .pill{display:inline-flex;align-items:center;width:max-content;border:1px solid var(--brand-border);border-radius:999px;padding:4px 9px;color:var(--brand-muted);font-size:12px}
+    .route{display:grid;gap:5px;color:var(--brand-text)}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .meta div{border:1px solid var(--brand-border);background:var(--brand-bg-dark);border-radius:8px;padding:9px}
+    .meta span{display:block;color:var(--brand-muted);font-size:11px;margin-bottom:2px}
+    .price{font-size:26px;font-weight:900;color:var(--brand-lime);margin-top:4px}
+    .empty{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:24px;color:var(--brand-muted)}
+    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:var(--brand-bg-dark)}
+    .btn.secondary{width:auto;background:var(--brand-bg-surface-light);color:var(--brand-text);border:1px solid var(--brand-border);text-decoration:none}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    /* Matching score */
+    .match-bar{margin:6px 0 2px;height:5px;background:var(--brand-border);border-radius:999px;overflow:hidden}
+    .match-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));transition:width .4s ease}
+    .match-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--brand-muted);margin-bottom:8px}
+    .match-score{font-weight:800;color:var(--brand-lime)}
+    .match-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+    .match-tag{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+    .tag-green{color:var(--brand-lime);border-color:rgba(0,255,159,.3);background:rgba(0,255,159,.07)}
+    .tag-yellow{color:#fbbf24;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07)}
+    .tag-red{color:#ff8a8a;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
+    @media(max-width:720px){.topbar{padding:14px 16px}.hero{display:block}.hero .btn{margin-top:14px}.page{padding:24px 14px}h1{font-size:28px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/index.html">PorteàPorte</a>
+    <a class="btn secondary" href="/dashboard-livreur.html">Mon dashboard</a>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Missions disponibles</h1>
+        <p class="muted">Les adresses completes restent masquees avant acceptation. Seuls les livreurs verifies peuvent voir et accepter les vraies livraisons.</p>
+      </div>
+      <button class="btn secondary" type="button" onclick="loadMissions()">Rafraichir</button>
+    </section>
+
+    <div id="status" class="status">Chargement des missions compatibles...</div>
+    <section id="missions-list" class="missions-grid" style="margin-top:16px"></section>
+  </main>
+
+  <script>
+    const db = window.getSupabaseClient();
+    let currentSession = null;
+    let missions = [];
+
+    function money(value) {
+      const n = Number(value || 0);
+      return n.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    }
+
+    function text(value, fallback) {
+      return value === null || value === undefined || value === '' ? fallback : String(value);
+    }
+
+    function setStatus(message, type) {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.style.borderColor = type === 'error' ? '#EF4444' : '#1F2937';
+      el.style.color = type === 'error' ? '#ffb4b4' : '#A8ACB1';
+    }
+
+    async function requireSession() {
+      const { data } = await db.auth.getSession();
+      currentSession = data && data.session ? data.session : null;
+      if (!currentSession) {
+        setStatus('Connecte-toi comme livreur verifie pour voir les missions.', 'error');
+        await showModal({
+          title: 'Connexion requise',
+          description: 'Tu dois etre connecte avec un compte livreur verifie pour consulter les missions.',
+          confirmText: 'Connexion',
+          cancelText: 'Fermer',
+          onConfirm: () => { window.location.href = '/login.html'; }
+        });
+        return false;
+      }
+      return true;
+    }
+
+    async function loadMissions() {
+      try {
+        if (window.PorteAuth && !await window.PorteAuth.requireVerifiedDriver('/livreur.html')) return;
+        if (!await requireSession()) return;
+        setStatus('Chargement des missions compatibles...', 'info');
+
+        const res = await fetch('/api/available-livraisons', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + currentSession.access_token
+          },
+          body: JSON.stringify({})
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error((out.error || `Erreur ${res.status}`) + (out.details ? ': ' + out.details : ''));
+
+        missions = out.livraisons || [];
+        renderMissions(out.transport_mode || 'unknown');
+      } catch (err) {
+        console.error('Erreur chargement missions:', err);
+        setStatus(err.message || 'Erreur lors du chargement des missions', 'error');
+        document.getElementById('missions-list').innerHTML = '';
+      }
+    }
+
+    function computeMatchScore(m, mode) {
+      let score = 60; // base
+      const tags = [];
+
+      // Transport compatibility
+      const dist = m.distance_km || 0;
+      const poids = m.poids_kg || 0;
+      if (mode === 'velo') {
+        if (dist <= 15 && poids <= 10) { score += 30; tags.push({t:'Trajet idéal vélo', c:'green'}); }
+        else if (dist > 30) { score -= 25; tags.push({t:'Trop loin pour vélo', c:'red'}); }
+        else if (poids > 15) { score -= 20; tags.push({t:'Colis lourd', c:'yellow'}); }
+      } else if (mode === 'voiture') {
+        if (dist >= 20 && dist <= 100) { score += 20; tags.push({t:'Distance idéale', c:'green'}); }
+        if (poids <= 50) { score += 10; }
+      } else if (mode === 'camion' || mode === 'camionnette') {
+        if (poids >= 20) { score += 25; tags.push({t:'Charge adaptée', c:'green'}); }
+        score += 10;
+      } else {
+        score += 10;
+      }
+
+      // Price attractiveness
+      const gain = (m.prix_total || 0) * 0.60;
+      if (gain >= 30) { score += 15; tags.push({t:'Bon gain', c:'green'}); }
+      else if (gain >= 15) { score += 7; tags.push({t:'Gain correct', c:'yellow'}); }
+
+      // Distance bonus (short = easier)
+      if (dist > 0 && dist <= 20) { score += 5; tags.push({t:'Livraison courte', c:'green'}); }
+
+      // Compatibility text hint
+      if (m.compatibilite && m.compatibilite.toLowerCase().includes('idéal')) score += 10;
+
+      score = Math.max(10, Math.min(100, score));
+      return { score, tags };
+    }
+
+    function matchLabel(score) {
+      if (score >= 85) return 'Excellent match';
+      if (score >= 65) return 'Bon match';
+      if (score >= 45) return 'Match moyen';
+      return 'Match faible';
+    }
+
+    function renderMissions(mode) {
+      const container = document.getElementById('missions-list');
+      if (!missions.length) {
+        setStatus('Aucune mission compatible pour ton mode de transport actuellement.', 'info');
+        container.innerHTML = '<div class="empty">Reviens plus tard ou ajuste ta zone de livraison dans ton profil livreur.</div>';
+        return;
+      }
+
+      // Sort by match score descending
+      const scored = missions.map(m => ({ ...m, _match: computeMatchScore(m, mode) }));
+      scored.sort((a, b) => b._match.score - a._match.score);
+
+      setStatus(`${scored.length} mission(s) · triées par compatibilité · Mode: ${mode}.`, 'info');
+      container.innerHTML = scored.map((m) => {
+        const { score, tags } = m._match;
+        const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
+        return `
+        <article class="mission-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span class="pill">${text(m.code, 'Mission')}</span>
+            <span class="match-score">${score}% · ${matchLabel(score)}</span>
+          </div>
+          <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>
+          <div class="match-tags">
+            ${tags.map(tag => `<span class="match-tag tag-${tag.c}">${tag.t}</span>`).join('')}
+          </div>
+          <h2>${text(m.type_colis, 'Colis')}</h2>
+          <div class="route">
+            <div><strong>Départ approx. :</strong> ${text(m.ville_depart, 'Ville masquée')}</div>
+            <div><strong>Arrivée approx. :</strong> ${text(m.ville_arrivee, 'Ville masquée')}</div>
+          </div>
+          <div class="meta">
+            <div><span>Poids</span>${text(m.poids_kg, 'N/D')} kg</div>
+            <div><span>Distance</span>${m.distance_km ? m.distance_km + ' km' : 'N/D'}</div>
+          </div>
+          <div class="price">${money(m.prix_total)}</div>
+          <button class="btn" type="button" onclick="acceptMission('${m.id}')">Accepter la mission</button>
+        </article>`;
+      }).join('');
+    }
+
+    async function acceptMission(id) {
+      const mission = missions.find((m) => m.id === id);
+      if (!mission) return showError('Mission introuvable.');
+
+      const ok = await showModal({
+        title: 'Accepter cette mission?',
+        description: `Trajet approx.: ${mission.ville_depart || 'depart'} vers ${mission.ville_arrivee || 'arrivee'}\nPaiement propose: ${money(mission.prix_total)}\n\nLes details complets seront debloques seulement apres assignation valide.`,
+        confirmText: 'Accepter',
+        cancelText: 'Annuler',
+        onConfirm: async () => {
+          const res = await fetch('/api/assign-driver', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + currentSession.access_token
+            },
+            body: JSON.stringify({ livraison_id: id })
+          });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(out.error || 'Assignation impossible');
+        }
+      });
+
+      if (ok) {
+        showSuccess('Mission acceptee. Ouverture du dashboard...');
+        window.setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMissions);
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>
+

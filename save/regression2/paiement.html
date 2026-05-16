@@ -1,0 +1,631 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteaPorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteaPorte - Paiement securise. Escrow Stripe Canada, TPS/TVQ automatique, paiement libere apres confirmation.">
+<meta property="og:title" content="PorteaPorte">
+<meta property="og:description" content="PorteaPorte - Paiement securise. Escrow Stripe Canada, paiement libere apres confirmation.">
+<meta property="og:url" content="https://porteaporte.site">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteaPorte - Paiement securise</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;text-decoration:none;color:var(--paper)}
+.logo span{color:var(--lime)}
+.secure-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.secure-dot{width:8px;height:8px;border-radius:50%;background:var(--lime)}
+
+.layout{display:grid;grid-template-columns:1fr 380px;gap:32px;max-width:960px;margin:40px auto;padding:0 24px}
+
+/* RÉSUMÉ COMMANDE */
+.order-summary{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:24px;position:sticky;top:24px}
+.os-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;color:var(--lime);margin-bottom:16px}
+.os-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.06);font-size:13px}
+.os-item:last-child{border-bottom:none}
+.os-label{color:var(--muted)}
+.os-val{font-weight:500}
+.os-total{display:flex;justify-content:space-between;padding:14px 0 0;font-size:15px;font-weight:600;margin-top:4px;border-top:1px solid rgba(245,240,232,.15)}
+.os-total-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--lime);letter-spacing:-1px}
+.escrow-note{background:rgba(184,245,62,.05);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:12px;margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6}
+.escrow-note strong{color:var(--paper)}
+.escrow-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;margin-top:16px;padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(245,240,232,.08);border-radius:6px}
+.escrow-step{min-height:86px;display:flex;flex-direction:column;justify-content:center;gap:6px;text-align:center}
+.escrow-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;margin:0 auto;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.25);font-size:18px}
+.escrow-step strong{font-size:12px;color:var(--paper)}
+.escrow-step span{font-size:10px;color:var(--muted);line-height:1.35}
+.escrow-arrow{height:1px;background:linear-gradient(90deg,rgba(184,245,62,.25),rgba(11,255,203,.6));width:28px;position:relative}
+.escrow-arrow::after{content:'';position:absolute;right:-2px;top:-3px;width:7px;height:7px;border-top:1px solid rgba(11,255,203,.8);border-right:1px solid rgba(11,255,203,.8);transform:rotate(45deg)}
+
+/* FORMULAIRE PAIEMENT */
+.pay-form{display:flex;flex-direction:column;gap:0}
+.step-block{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:14px}
+.step-title{font-size:12px;font-weight:500;color:var(--lime);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.step-num{width:22px;height:22px;border-radius:50%;background:rgba(184,245,62,.15);border:1px solid rgba(184,245,62,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lime)}
+
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
+.fl:first-child{margin-top:0}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi::placeholder{color:rgba(245,240,232,.2)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* STRIPE ELEMENT */
+.stripe-wrap{background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);border-radius:2px;padding:12px 13px;transition:border-color .2s;margin-top:12px}
+.stripe-wrap.focused{border-color:rgba(184,245,62,.4)}
+#card-element{min-height:24px}
+#card-errors{color:var(--red);font-size:12px;margin-top:8px;display:none}
+
+/* BOUTON PAYER */
+.pay-btn{width:100%;background:var(--lime);color:var(--ink);border:none;padding:16px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;border-radius:2px;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.5px}
+.pay-btn:hover:not(:disabled){background:var(--teal);transform:translateY(-1px);box-shadow:0 12px 28px rgba(184,245,62,.22)}
+.pay-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.pay-btn .spinner{width:18px;height:18px;border:2px solid rgba(5,8,10,.3);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;display:none}
+.pay-btn.loading .spinner{display:block}
+.pay-btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.security-badges{display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.sec-badge{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+
+/* TEST MODE BANNER */
+
+.test-banner strong{color:#FAC775}
+
+/* SUCCÈS */
+.success-screen{display:none;text-align:center;padding:60px 20px}
+.success-screen.show{display:block}
+.success-icon{font-size:56px;margin-bottom:16px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.success-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,60px);letter-spacing:-1px;color:var(--lime);margin-bottom:10px}
+.success-sub{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 24px;line-height:1.65;font-weight:300}
+.transaction-id{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--paper);letter-spacing:2px;background:var(--smoke);border:1px solid rgba(184,245,62,.2);padding:10px 18px;border-radius:4px;margin:14px auto;display:inline-block}
+.transaction-id span{color:var(--lime)}
+.next-steps{display:flex;flex-direction:column;gap:8px;max-width:380px;margin:0 auto;text-align:left}
+.ns{display:flex;gap:10px;padding:10px 12px;background:var(--smoke);border:1px solid var(--border);border-radius:4px;font-size:12px}
+.ns-n{width:20px;height:20px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+
+@media(max-width:700px){
+  nav{padding:14px 16px}
+  .layout{grid-template-columns:1fr;gap:16px;padding:0 14px;margin:20px auto}
+  .order-summary{position:static}
+  .fr{grid-template-columns:1fr}
+  .escrow-flow{grid-template-columns:1fr;gap:10px}
+  .escrow-arrow{width:1px;height:24px;margin:0 auto;background:linear-gradient(180deg,rgba(184,245,62,.25),rgba(11,255,203,.6))}
+  .escrow-arrow::after{right:-3px;top:auto;bottom:-2px;transform:rotate(135deg)}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>&agrave;</span>Porte</a>
+  <div class="secure-badge"><span class="secure-dot"></span>Paiement s&eacute;curis&eacute; SSL &middot; Stripe Canada</div>
+</nav>
+
+<!-- SUCCES -->
+<div class="success-screen" id="success-screen">
+  <div style="max-width:480px;margin:0 auto">
+    <div class="success-icon">OK</div>
+    <div class="success-title">Paiement r&eacute;ussi !</div>
+    <p class="success-sub">Ton paiement est s&eacute;curis&eacute; en escrow. Il sera lib&eacute;r&eacute; au livreur uniquement apr&egrave;s confirmation de livraison.</p>
+    <div class="transaction-id">PP-<span id="tx-id">XXXXX</span></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:20px">Num&eacute;ro de transaction - garde-le</p>
+    <div class="next-steps">
+      <div class="ns"><div class="ns-n">1</div><div>Re&ccedil;u par courriel envoy&eacute;. V&eacute;rifie ta bo&icirc;te de r&eacute;ception.</div></div>
+      <div class="ns"><div class="ns-n">2</div><div>Les livreurs certifi&eacute;s vont voir ton annonce et faire des offres.</div></div>
+      <div class="ns"><div class="ns-n">3</div><div>D&egrave;s qu'un livreur est accept&eacute;, le GPS de suivi s'active automatiquement.</div></div>
+      <div class="ns"><div class="ns-n">4</div><div>Ton argent est prot&eacute;g&eacute; jusqu'&agrave; la confirmation de livraison.</div></div>
+    </div>
+    <a href="index.html" style="display:inline-block;margin-top:24px;background:var(--lime);color:var(--ink);border:none;padding:12px 28px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;border-radius:2px;text-decoration:none">&larr; Retour au site</a>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<div class="layout" id="checkout-layout">
+
+  <!-- FORMULAIRE -->
+  <div class="pay-form">
+
+    <!-- Mode production Stripe - paiements reels -->
+
+    <!-- ETAPE 1 : INFO EXPEDITEUR -->
+    <div class="step-block">
+      <div class="step-title"><span class="step-num">1</span>Tes informations</div>
+      <div class="fr">
+        <div><label class="fl">Pr&eacute;nom et nom</label><input class="fi" type="text" id="nom" placeholder="Denis Morneau" required></div>
+        <div><label class="fl">Courriel</label><input class="fi" type="email" id="email" placeholder="denis@courriel.ca" required></div>
+      </div>
+      <label class="fl">T&eacute;l&eacute;phone</label>
+      <input class="fi" type="tel" id="tel" placeholder="+1 (418) 555-0123">
+    </div>
+
+    <!-- ETAPE 2 : DETAILS COLIS -->
+    <div class="step-block">
+      <div class="step-title"><span class="step-num">2</span>Détails du colis</div>
+      <div class="fr">
+        <div>
+          <label class="fl">Ville de départ</label>
+          <input class="fi" type="text" id="ville-dep" placeholder="Lévis, QC" oninput="updatePrix()">
+        </div>
+        <div>
+          <label class="fl">Ville de destination</label>
+          <input class="fi" type="text" id="ville-arr" placeholder="Montréal, QC" oninput="updatePrix()">
+        </div>
+      </div>
+      <div class="fr">
+        <div>
+          <label class="fl">Type de colis</label>
+          <select class="fi" id="type-colis" onchange="updatePrix()">
+            <option value="1">📦 Petit colis</option>
+            <option value="1">🧳 Valises</option>
+            <option value="1.3">📱 Électronique</option>
+            <option value="1.6">🛋 Meubles</option>
+            <option value="2.5">🚗 Véhicule</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Poids estimé (kg)</label>
+          <input class="fi" type="number" id="poids" placeholder="10" value="10" min="1" oninput="updatePrix()">
+        </div>
+      </div>
+      <div class="fr">
+        <div>
+          <label class="fl">Plan d'assurance</label>
+          <select class="fi" id="assurance" onchange="updatePrix()">
+            <option value="0">Aucune protection - 0 $ - couverture 0 $</option>
+            <option value="1">Base - 1 $ - couverture max 50 $</option>
+            <option value="2.99">Standard - 2,99 $ - couverture max 250 $</option>
+            <option value="5.99">Plus - 5,99 $ - couverture max 1 000 $</option>
+          </select>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">La couverture est limitee a la valeur declaree du colis et au plafond du plan choisi.</div>
+        </div>
+        <div>
+          <label class="fl">Mode de prix</label>
+          <select class="fi" id="mode-prix" onchange="updatePrix()">
+            <option value="fixe">🎯 Prix fixe</option>
+            <option value="offre">🤝 Appel d'offres</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3 : CARTE DE CRÉDIT -->
+    <div class="step-block">
+      <div class="step-title"><span class="step-num">3</span>Informations de paiement</div>
+      <label class="fl">Carte de crédit ou débit</label>
+      <div class="stripe-wrap" id="stripe-wrap">
+        <div id="card-element"></div>
+      </div>
+      <div id="card-errors"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">🔒 Tes informations de carte sont chiffrées par Stripe et ne sont jamais stockées sur nos serveurs. Conforme PCI-DSS niveau 1.</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">Votre paiement est protege. Le livreur est paye seulement apres confirmation de livraison.</div>
+    </div>
+
+    <!-- PAYER -->
+    <button class="pay-btn" id="pay-btn" onclick="handlePayment()">
+      <div class="spinner"></div>
+      <span class="btn-text">🔒 Payer et sécuriser mon colis →</span>
+    </button>
+
+    <div class="security-badges">
+      <div class="sec-badge">🔒 SSL 256-bit</div>
+      <div class="sec-badge">💳 PCI-DSS</div>
+      <div class="sec-badge">🇨🇦 Stripe Canada</div>
+      <div class="sec-badge">🔐 Escrow protégé</div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6">En payant, tu acceptes les <a href="cgu.html" style="color:var(--lime)">CGU PorteàPorte</a> et la <a href="confidentialite.html" style="color:var(--lime)">politique de confidentialité</a>. Ton paiement est bloqué en escrow Stripe jusqu'à confirmation de livraison.</div>
+  </div>
+
+  <!-- RÉSUMÉ -->
+  <div>
+    <div class="order-summary">
+      <div class="os-title">📦 Résumé de la commande</div>
+      <div class="os-item"><span class="os-label">Trajet</span><span class="os-val" id="sum-trajet">?</span></div>
+      <div class="os-item"><span class="os-label">Type</span><span class="os-val" id="sum-type">Petit colis</span></div>
+      <div class="os-item"><span class="os-label">Prix de livraison</span><span class="os-val" id="sum-livraison">?</span></div>
+      <div class="os-item"><span class="os-label">Assurance</span><span class="os-val" id="sum-assurance">Gratuit</span></div>
+      <div class="os-item"><span class="os-label">Commission (12%)</span><span class="os-val" id="sum-comm">?</span></div>
+      <div class="os-item"><span class="os-label">TPS (5%)</span><span class="os-val" id="sum-tps">?</span></div>
+      <div class="os-item"><span class="os-label">TVQ (9,975%)</span><span class="os-val" id="sum-tvq">?</span></div>
+      <div class="os-total">
+        <span>Total</span>
+        <span class="os-total-val" id="sum-total">?</span>
+      </div>
+      <div class="escrow-note">
+        🔐 <strong>Paiement en escrow :</strong> Ton argent est bloqué chez Stripe et ne sera libéré au livreur qu'après ta confirmation de livraison. Si la livraison échoue, tu es remboursé automatiquement.
+      </div>
+
+      <div class="escrow-flow" aria-label="Fonctionnement de l'escrow Stripe">
+        <div class="escrow-step">
+          <div class="escrow-icon">🔒</div>
+          <strong>Argent protege</strong>
+          <span>Stripe autorise la carte et garde les fonds en attente.</span>
+        </div>
+        <div class="escrow-arrow"></div>
+        <div class="escrow-step">
+          <div class="escrow-icon">📦</div>
+          <strong>Livraison confirmee</strong>
+          <span>L'expediteur confirme la reception dans le suivi.</span>
+        </div>
+        <div class="escrow-arrow"></div>
+        <div class="escrow-step">
+          <div class="escrow-icon">✅</div>
+          <strong>Paiement libere</strong>
+          <span>L'API capture le PaymentIntent et marque la livraison payee.</span>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(245,240,232,.07)">
+        <div style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Distribution du paiement</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Livreur (88%)</span><span id="dist-livreur" style="color:var(--lime)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Commission PorteàPorte</span><span id="dist-comm" style="color:var(--muted)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Dons humanitaires (5%)</span><span id="dist-dons" style="color:var(--teal)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Tirage mensuel (2%)</span><span id="dist-tirage" style="color:var(--muted)">?</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ?? STRIPE INIT ??
+const db = window.getSupabaseClient();
+const stripe = Stripe('pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a');
+const elements = stripe.elements({
+  appearance:{
+    theme:'night',
+    variables:{
+      colorPrimary:'#B8F53E',
+      colorBackground:'rgba(255,255,255,0.05)',
+      colorText:'#F5F0E8',
+      colorDanger:'#FF4D4D',
+      fontFamily:'Bricolage Grotesque, sans-serif',
+      borderRadius:'2px',
+    }
+  }
+});
+const cardElement = elements.create('card',{
+  style:{
+    base:{
+      color:'#F5F0E8',
+      fontFamily:'Bricolage Grotesque, sans-serif',
+      fontSize:'14px',
+      '::placeholder':{color:'rgba(245,240,232,0.3)'}
+    },
+    invalid:{color:'#FF4D4D'}
+  }
+});
+cardElement.mount('#card-element');
+cardElement.on('focus',()=>document.getElementById('stripe-wrap').classList.add('focused'));
+cardElement.on('blur',()=>document.getElementById('stripe-wrap').classList.remove('focused'));
+cardElement.on('change',e=>{
+  const errEl=document.getElementById('card-errors');
+  if(e.error){errEl.textContent=e.error.message;errEl.style.display='block'}
+  else{errEl.style.display='none'}
+});
+
+// ?? CALCUL PRIX ??
+let prixLivraison=85;
+let paiementLivraisonExistante=false;
+let livraisonChargee=null;
+function hasExistingLivraisonParam(){
+  const params = new URLSearchParams(window.location.search);
+  return Boolean(params.get('livraison_id') || params.get('id'));
+}
+function updatePrix(){
+  if (paiementLivraisonExistante) return;
+  const dep=document.getElementById('ville-dep').value.trim();
+  const arr=document.getElementById('ville-arr').value.trim();
+  const poids=parseFloat(document.getElementById('poids').value)||10;
+  const mult=parseFloat(document.getElementById('type-colis').value)||1;
+  const ass=parseFloat(document.getElementById('assurance').value)||0;
+
+  // Estimation distance basée sur les villes
+  let dist=200;
+  if(dep&&arr&&dep.toLowerCase()!==arr.toLowerCase()){
+    const hash=(dep+arr).split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    dist=100+(hash%500);
+  }
+  prixLivraison=Math.round(Math.max((dist*0.15+poids*1.5+15)*mult,25));
+
+  const comm=Math.round(prixLivraison*0.12*100)/100;
+  const sousTotal=prixLivraison+ass+comm;
+  const tps=Math.round(sousTotal*0.05*100)/100;
+  const tvq=Math.round(sousTotal*0.09975*100)/100;
+  const total=Math.round((sousTotal+tps+tvq)*100)/100;
+  const partLivreur=Math.round(prixLivraison*0.88*100)/100;
+  const dons=Math.round(comm*0.05*100)/100;
+  const tirage=Math.round(comm*0.02*100)/100;
+
+  const fmt=n=>n.toFixed(2)+' $';
+  document.getElementById('sum-trajet').textContent=(dep&&arr)?dep+' → '+arr:'?';
+  document.getElementById('sum-livraison').textContent=fmt(prixLivraison);
+  document.getElementById('sum-assurance').textContent=ass===0?'Gratuit':fmt(ass);
+  document.getElementById('sum-comm').textContent=fmt(comm);
+  document.getElementById('sum-tps').textContent=fmt(tps);
+  document.getElementById('sum-tvq').textContent=fmt(tvq);
+  document.getElementById('sum-total').textContent=fmt(total);
+  document.getElementById('dist-livreur').textContent=fmt(partLivreur);
+  document.getElementById('dist-comm').textContent=fmt(comm);
+  document.getElementById('dist-dons').textContent=fmt(dons);
+  document.getElementById('dist-tirage').textContent=fmt(tirage);
+  document.getElementById('sum-type').textContent=document.getElementById('type-colis').options[document.getElementById('type-colis').selectedIndex].text;
+}
+if (!hasExistingLivraisonParam()) {
+  updatePrix();
+}
+
+// ?? PAIEMENT ??
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+async function getSessionOrThrow() {
+  const { data, error } = await db.auth.getSession();
+  if (error) throw new Error(error.message);
+  if (!data.session) throw new Error('Connecte-toi avant de securiser une livraison.');
+  return data.session;
+}
+
+function moneyValue(id) {
+  return Number(document.getElementById(id).textContent.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
+}
+
+function setFieldValue(id, value) {
+  const field = document.getElementById(id);
+  if (field) field.value = value === null || value === undefined ? '' : value;
+}
+
+function lockMissionFields() {
+  ['ville-dep', 'ville-arr', 'type-colis', 'poids', 'assurance', 'mode-prix'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.disabled = true;
+  });
+}
+
+function assuranceLabel(plan) {
+  const labels = {
+    none: 'Aucune protection - couverture 0 $',
+    base: 'Base - couverture max 50 $',
+    standard: 'Standard - couverture max 250 $',
+    plus: 'Plus - couverture max 1 000 $',
+    fragile: 'Fragile - ancienne option'
+  };
+  return labels[plan] || plan || 'Aucune protection - couverture 0 $';
+}
+
+async function hydrateBillingProfile() {
+  try {
+    const { data: sessionData } = await db.auth.getSession();
+    const session = sessionData && sessionData.session;
+    if (!session) return;
+
+    const emailField = document.getElementById('email');
+    const nameField = document.getElementById('nom');
+    if (emailField && !emailField.value) emailField.value = session.user.email || '';
+
+    const { data: profile } = await db
+      .from('profiles')
+      .select('prenom, nom, full_name, telephone, phone')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    if (profile) {
+      const fullName = profile.full_name || [profile.prenom, profile.nom].filter(Boolean).join(' ');
+      if (nameField && !nameField.value) nameField.value = fullName || session.user.email || '';
+
+      const phoneField = document.getElementById('tel');
+      if (phoneField && !phoneField.value) phoneField.value = profile.telephone || profile.phone || '';
+    }
+  } catch (err) {
+    console.warn('Profil paiement non charge:', err.message);
+  }
+}
+
+function applyExistingLivraison(livraison) {
+  paiementLivraisonExistante = true;
+  livraisonChargee = livraison;
+
+  setFieldValue('ville-dep', livraison.ville_depart || livraison.adresse_depart || '');
+  setFieldValue('ville-arr', livraison.ville_arrivee || livraison.adresse_arrivee || '');
+  setFieldValue('poids', livraison.poids_kg || 1);
+
+  const typeSelect = document.getElementById('type-colis');
+  if (typeSelect) {
+    const type = String(livraison.type_colis || '').toLowerCase();
+    const match = Array.from(typeSelect.options).find(option => option.text.toLowerCase().includes(type) || option.value === type);
+    if (match) typeSelect.value = match.value;
+  }
+
+  prixLivraison = Number(livraison.prix_total || 0);
+  const total = prixLivraison;
+  const comm = Math.round(total * 0.12 * 100) / 100;
+  const partLivreur = Math.round(total * 0.88 * 100) / 100;
+  const dons = Math.round(comm * 0.05 * 100) / 100;
+  const tirage = Math.round(comm * 0.02 * 100) / 100;
+  const fmt = n => Number(n || 0).toFixed(2) + ' $';
+
+  document.getElementById('sum-trajet').textContent = (livraison.ville_depart || '-') + ' -> ' + (livraison.ville_arrivee || '-');
+  document.getElementById('sum-type').textContent = livraison.type_colis || 'Colis';
+  document.getElementById('sum-livraison').textContent = fmt(total);
+  document.getElementById('sum-assurance').textContent = assuranceLabel(livraison.assurance_plan);
+  document.getElementById('sum-comm').textContent = 'Inclus';
+  document.getElementById('sum-tps').textContent = 'Inclus';
+  document.getElementById('sum-tvq').textContent = 'Inclus';
+  document.getElementById('sum-total').textContent = fmt(total);
+  document.getElementById('dist-livreur').textContent = fmt(partLivreur);
+  document.getElementById('dist-comm').textContent = fmt(comm);
+  document.getElementById('dist-dons').textContent = fmt(dons);
+  document.getElementById('dist-tirage').textContent = fmt(tirage);
+  lockMissionFields();
+}
+
+function applyUrlLivraisonFallback() {
+  const id = getParam('livraison_id') || getParam('id');
+  if (!id) return;
+
+  const montant = Number(getParam('montant') || 0);
+  const livraison = {
+    id,
+    ville_depart: getParam('dep') || '',
+    ville_arrivee: getParam('arr') || '',
+    type_colis: getParam('type') || 'Colis',
+    poids_kg: Number(getParam('poids') || 1),
+    prix_total: montant,
+    assurance_plan: getParam('assurance') || 'none'
+  };
+
+  if (montant > 0 || livraison.ville_depart || livraison.ville_arrivee) {
+    applyExistingLivraison(livraison);
+    return;
+  }
+
+  paiementLivraisonExistante = true;
+  document.getElementById('sum-trajet').textContent = 'Chargement...';
+  document.getElementById('sum-livraison').textContent = 'Chargement...';
+  document.getElementById('sum-total').textContent = 'Chargement...';
+  lockMissionFields();
+}
+
+async function loadExistingLivraison() {
+  const id = getParam('livraison_id') || getParam('id');
+  if (!id) return;
+  const session = await getSessionOrThrow();
+  const res = await fetch('/api/tracking?code=' + encodeURIComponent(id), {
+    headers: { Authorization: 'Bearer ' + session.access_token }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.livraison) throw new Error(data.error || 'Livraison introuvable');
+  applyExistingLivraison(data.livraison);
+}
+
+async function createLivraisonIfNeeded(session) {
+  const existing = getParam('livraison_id') || getParam('id');
+  if (existing) return existing;
+
+  const dep = document.getElementById('ville-dep').value.trim();
+  const arr = document.getElementById('ville-arr').value.trim();
+  if (!dep || !arr) throw new Error('Ville de depart et destination requises.');
+
+  const typeText = document.getElementById('type-colis').options[document.getElementById('type-colis').selectedIndex].text;
+  const assuranceText = document.getElementById('assurance').options[document.getElementById('assurance').selectedIndex].text;
+  const res = await fetch('/api/create-livraison', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token
+    },
+    body: JSON.stringify({
+      type: 'colis',
+      titre: 'Livraison ' + typeText,
+      description: 'Livraison creee depuis le paiement escrow',
+      type_colis: typeText,
+      ville_depart: dep,
+      ville_arrivee: arr,
+      adresse_depart: dep,
+      adresse_arrivee: arr,
+      prix_total: moneyValue('sum-total') || prixLivraison,
+      assurance_plan: assuranceText
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Creation de livraison impossible');
+  return data.livraison?.id || data.livraison_id;
+}
+
+async function handlePayment(){
+  const nom = document.getElementById('nom').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const errEl = document.getElementById('card-errors');
+  const btn = document.getElementById('pay-btn');
+
+  if(!nom || !email){ 
+    errEl.textContent = 'Remplis ton nom et courriel.';
+    errEl.style.display = 'block'; 
+    return; 
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Traitement en cours...';
+  btn.classList.add('loading');
+  errEl.style.display = 'none';
+
+  try {
+    // 1. Créer PaymentIntent côté serveur
+    const session = await getSessionOrThrow();
+    const livraisonId = await createLivraisonIfNeeded(session);
+
+    const piRes = await fetch('/api/paiement-livraison', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ livraison_id: livraisonId, currency: 'cad' })
+    });
+
+    const piData = await piRes.json();
+    if(!piRes.ok || !piData.client_secret) {
+      throw new Error(piData.error || 'Erreur serveur');
+    }
+
+    // 2. Confirmer le paiement avec Stripe.js
+    const { error, paymentIntent } = await stripe.confirmCardPayment(piData.client_secret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: { name: nom, email: email }
+      }
+    });
+
+    if(error) throw new Error(error.message);
+
+    // 3. Les fonds restent proteges: capture uniquement apres confirmation reception.
+    const montant = piData.montant_dollars || ((paymentIntent.amount || 0) / 100).toFixed(2);
+    window.location.href = `/confirmation.html?type=livraison&livraison_id=${encodeURIComponent(livraisonId)}&montant=${montant}&pi=${paymentIntent.id}`;
+
+  } catch(err) {
+    errEl.textContent = '❌ ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🔒 Payer et securiser mon colis →';
+    btn.classList.remove('loading');
+  }
+}
+
+hydrateBillingProfile();
+applyUrlLivraisonFallback();
+loadExistingLivraison().catch(err => {
+  const errEl = document.getElementById('card-errors');
+  errEl.textContent = err.message;
+  errEl.style.display = 'block';
+});
+
+</script>
+</body>
+</html>
+
+
+
+

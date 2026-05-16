@@ -1,0 +1,733 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi GPS en Direct · PorteàPorte</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  if (window.PorteAuth) await window.PorteAuth.requireVerifiedDriver('/livreur.html');
+});
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0A0C0F;
+            color: #E8EAED;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: #12151A;
+            border-bottom: 1px solid #1F242C;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #B8F53E;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .navbar-links a {
+            color: #9BA1A9;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .navbar-links a:hover {
+            color: #B8F53E;
+        }
+
+        .container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        .map-container {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        .sidebar {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .section h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #B8F53E;
+            border-bottom: 1px solid #1F242C;
+            padding-bottom: 0.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #0A0C0F;
+            border-radius: 4px;
+            border-left: 3px solid #B8F53E;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #9BA1A9;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #B8F53E;
+            font-weight: bold;
+        }
+
+        .tracking-status {
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #006400;
+            color: #90EE90;
+            border: 1px solid #90EE90;
+        }
+
+        .status-inactive {
+            background: #333;
+            color: #999;
+            border: 1px solid #666;
+        }
+
+        .status-error {
+            background: #8B0000;
+            color: #FFB6B6;
+            border: 1px solid #FFB6B6;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        button {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #B8F53E;
+            color: #0A0C0F;
+        }
+
+        .btn-primary:hover {
+            background: #a5dd2d;
+        }
+
+        .btn-primary:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn-secondary {
+            background: #1F242C;
+            color: #B8F53E;
+            border: 1px solid #B8F53E;
+        }
+
+        .btn-secondary:hover {
+            background: #B8F53E;
+            color: #0A0C0F;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            background: #0A0C0F;
+            border: 1px solid #1F242C;
+            border-radius: 4px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            color: #B8F53E;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #9BA1A9;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .alert {
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border-left: 3px solid;
+        }
+
+        .alert-info {
+            background: #1a1f2e;
+            border-left-color: #0BFFCB;
+            color: #0BFFCB;
+        }
+
+        .alert-warning {
+            background: #2e2400;
+            border-left-color: #FFB800;
+            color: #FFB800;
+        }
+
+        .alert-error {
+            background: #2e1a1a;
+            border-left-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+
+        .alert-success {
+            background: #1a2e1a;
+            border-left-color: #90EE90;
+            color: #90EE90;
+        }
+
+        .route-info {
+            padding: 0.75rem;
+            background: #0A0C0F;
+            border: 1px solid #1F242C;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .route-info strong {
+            color: #B8F53E;
+        }
+
+        .marker-popup {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 4px;
+            padding: 1rem;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .marker-popup h4 {
+            color: #B8F53E;
+            margin-bottom: 0.5rem;
+        }
+
+        .marker-popup p {
+            font-size: 0.85rem;
+            color: #9BA1A9;
+            margin: 0.25rem 0;
+        }
+
+        .spinner {
+            border: 2px solid #1F242C;
+            border-top: 2px solid #B8F53E;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            color: #B8F53E;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mode-toggle button {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .mode-toggle button.active {
+            background: #B8F53E;
+            color: #0A0C0F;
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-brand">🚚 PorteàPorte - Suivi GPS</div>
+        <div class="navbar-links">
+            <a href="/suivi.html">← Retour au suivi</a>
+            <a href="/" onclick="logout(); return false;">Déconnexion</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <!-- Mode Selection -->
+            <div class="section">
+                <h3>Mode de suivi</h3>
+                <div class="mode-toggle">
+                    <button id="mode-livreur" class="btn-secondary active">📍 Je suis le livreur</button>
+                    <button id="mode-client" class="btn-secondary">Suivre une livraison</button>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="section">
+                <h3>Statut</h3>
+                <div class="tracking-status status-inactive" id="status">
+                    ⚪ GPS Inactif
+                </div>
+            </div>
+
+            <!-- Controls for Delivery Person -->
+            <div class="section" id="livreur-controls">
+                <h3>Contrôles livreur</h3>
+                <div class="controls">
+                    <button id="start-tracking" class="btn-primary">🟢 Démarrer le suivi</button>
+                    <button id="stop-tracking" class="btn-primary" disabled>🔴 Arrêter le suivi</button>
+                </div>
+                <div id="accuracy-info" style="font-size: 0.85rem; color: #9BA1A9; text-align: center; display: none;">
+                    Précision: <span id="accuracy-value">--</span>m
+                </div>
+            </div>
+
+            <!-- Controls for Client -->
+            <div class="section" id="client-controls" style="display: none;">
+                <h3>Suivi du colis</h3>
+                <input type="text" id="tracking-code" placeholder="Code de suivi (ex: PP-12345)" style="
+                    background: #0A0C0F;
+                    border: 1px solid #1F242C;
+                    color: #E8EAED;
+                    padding: 0.5rem;
+                    border-radius: 4px;
+                    margin-bottom: 0.5rem;
+                ">
+                <button id="load-tracking" class="btn-primary">🔍 Charger le suivi</button>
+            </div>
+
+            <!-- Location Info -->
+            <div class="section">
+                <h3>📍 Localisation actuelle</h3>
+                <div class="info-item">
+                    <span class="info-label">Latitude</span>
+                    <span class="info-value" id="latitude">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Longitude</span>
+                    <span class="info-value" id="longitude">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Altitude</span>
+                    <span class="info-value" id="altitude">--</span>
+                </div>
+            </div>
+
+            <!-- Distance & Speed -->
+            <div class="section">
+                <h3>📊 Statistiques</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="distance">0 km</div>
+                        <div class="stat-label">Distance</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="speed">0 km/h</div>
+                        <div class="stat-label">Vitesse</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div id="alerts-container" style="display: none;">
+                <div id="alert-message" class="alert alert-info"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═════════════════════════════════════════════════════════════════════
+        // CONFIGURATION GPS & MAPS (Leaflet + OpenStreetMap)
+        // ═════════════════════════════════════════════════════════════════════
+
+        let map;
+        let userMarker;
+        let polyline;
+        let watchId;
+        let locationHistory = [];
+        let isTracking = false;
+        let mode = 'livreur';
+        let lastLocation = null;
+        const livraisonId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('livraison_id');
+
+        function initMap() {
+            map = L.map('map').setView([46.7749, -71.2783], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+            polyline = L.polyline([], { color: '#B8F53E', weight: 4 }).addTo(map);
+            userMarker = L.circleMarker([46.7749, -71.2783], {
+                radius: 10,
+                fillColor: '#B8F53E',
+                color: '#0A0C0F',
+                weight: 2,
+                fillOpacity: 1
+            }).addTo(map);
+        }
+
+
+        // ═════════════════════════════════════════════════════════════════════
+        // GÉOLOCALISATION
+        // ═════════════════════════════════════════════════════════════════════
+
+        function startTracking() {
+            if (!navigator.geolocation) {
+                showAlert('Géolocalisation non supportée par votre navigateur', 'error');
+                return;
+            }
+
+            isTracking = true;
+            locationHistory = [];
+            updateStatus('active', '🟢 GPS Actif');
+
+            watchId = navigator.geolocation.watchPosition(
+                handleLocationSuccess,
+                handleLocationError,
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+
+            document.getElementById('start-tracking').disabled = true;
+            document.getElementById('stop-tracking').disabled = false;
+
+            if (livraisonId) {
+                showAlert('Suivi GPS actif — position sauvegardée en temps réel.', 'success');
+            } else {
+                showAlert('Suivi GPS actif (pas de livraison liée — position visible sur la carte seulement).', 'info');
+            }
+        }
+
+        function stopTracking() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            isTracking = false;
+            updateStatus('inactive', '⚪ GPS Arrêté');
+
+            document.getElementById('start-tracking').disabled = false;
+            document.getElementById('stop-tracking').disabled = true;
+
+            showAlert('Suivi GPS arrêté', 'warning');
+        }
+
+        function handleLocationSuccess(position) {
+            const { latitude, longitude, altitude, accuracy } = position.coords;
+            const heading = position.coords.heading || 0;
+
+            lastLocation = { latitude, longitude, altitude, accuracy, heading };
+            locationHistory.push({ latitude, longitude, timestamp: Date.now() });
+
+            // Mettre à jour l'affichage
+            document.getElementById('latitude').textContent = latitude.toFixed(6);
+            document.getElementById('longitude').textContent = longitude.toFixed(6);
+            document.getElementById('altitude').textContent = altitude ? altitude.toFixed(0) + 'm' : '--';
+            document.getElementById('accuracy-value').textContent = accuracy.toFixed(0);
+
+            // Mettre à jour le marqueur
+            userMarker.setLatLng([latitude, longitude]);
+
+            // Mettre à jour le chemin
+            polyline.addLatLng([latitude, longitude]);
+
+            // Centrer la carte sur l'utilisateur
+            map.setView([latitude, longitude], map.getZoom());
+
+            // Calculer la distance et la vitesse
+            calculateStats();
+
+            // Sauvegarder la position en Supabase (optionnel)
+            savLocationToSupabase(latitude, longitude, accuracy, position.coords.speed, heading);
+        }
+
+        function handleLocationError(error) {
+            let message = '';
+            let type = 'error';
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message = '❌ Accès GPS refusé. Veuillez autoriser la géolocalisation.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'Position indisponible. Vérifiez votre connexion.';
+                    type = 'warning';
+                    break;
+                case error.TIMEOUT:
+                    message = 'Délai d\'attente dépassé. Nouvelle tentative...';
+                    type = 'warning';
+                    break;
+                default:
+                    message = '❌ Erreur GPS: ' + error.message;
+            }
+
+            showAlert(message, type);
+            updateStatus('error', message);
+        }
+
+        // ═════════════════════════════════════════════════════════════════════
+        // CALCULS DE DISTANCE & VITESSE
+        // ═════════════════════════════════════════════════════════════════════
+
+        function calculateStats() {
+            if (locationHistory.length < 2) return;
+
+            // Calculer la distance totale
+            let totalDistance = 0;
+            for (let i = 1; i < locationHistory.length; i++) {
+                const prev = locationHistory[i - 1];
+                const curr = locationHistory[i];
+                totalDistance += getDistance(
+                    prev.latitude, prev.longitude,
+                    curr.latitude, curr.longitude
+                );
+            }
+
+            document.getElementById('distance').textContent = (totalDistance / 1000).toFixed(2) + ' km';
+
+            // Calculer la vitesse
+            if (locationHistory.length >= 2) {
+                const prev = locationHistory[locationHistory.length - 2];
+                const curr = locationHistory[locationHistory.length - 1];
+                const timeDiff = (curr.timestamp - prev.timestamp) / 1000; // en secondes
+                const distance = getDistance(
+                    prev.latitude, prev.longitude,
+                    curr.latitude, curr.longitude
+                ); // en mètres
+
+                if (timeDiff > 0) {
+                    const speedMps = distance / timeDiff; // m/s
+                    const speedKmh = speedMps * 3.6; // km/h
+                    document.getElementById('speed').textContent = speedKmh.toFixed(1) + ' km/h';
+                }
+            }
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Rayon terrestre en mètres
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // ═════════════════════════════════════════════════════════════════════
+        // SAUVEGARDE EN SUPABASE
+        // ═════════════════════════════════════════════════════════════════════
+
+        async function savLocationToSupabase(lat, lng, accuracy, speed, heading) {
+            try {
+                var client = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!client) return;
+                var sess = await client.auth.getSession();
+                var session = sess && sess.data && sess.data.session;
+                if (!session) return;
+                if (!livraisonId) return;
+                var response = await fetch('/api/gps-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + session.access_token,
+                    },
+                    body: JSON.stringify({
+                        livraison_id: livraisonId,
+                        latitude: lat,
+                        longitude: lng,
+                        accuracy: accuracy,
+                        speed: speed,
+                        heading: heading,
+                        recorded_at: new Date().toISOString(),
+                    }),
+                });
+
+                if (!response.ok) console.warn('Erreur GPS API:', response.status);
+            } catch (error) {
+                console.error('Erreur GPS API:', error);
+            }
+        }
+
+        // ═════════════════════════════════════════════════════════════════════
+        // MODE LIVREUR / CLIENT
+        // ═════════════════════════════════════════════════════════════════════
+
+        document.getElementById('mode-livreur').addEventListener('click', function() {
+            mode = 'livreur';
+            document.getElementById('livreur-controls').style.display = 'flex';
+            document.getElementById('client-controls').style.display = 'none';
+            document.getElementById('mode-livreur').classList.add('active');
+            document.getElementById('mode-client').classList.remove('active');
+        });
+
+        document.getElementById('mode-client').addEventListener('click', function() {
+            mode = 'client';
+            document.getElementById('livreur-controls').style.display = 'none';
+            document.getElementById('client-controls').style.display = 'flex';
+            document.getElementById('mode-client').classList.add('active');
+            document.getElementById('mode-livreur').classList.remove('active');
+            stopTracking();
+        });
+
+        // ═════════════════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═════════════════════════════════════════════════════════════════════
+
+        document.getElementById('start-tracking').addEventListener('click', startTracking);
+        document.getElementById('stop-tracking').addEventListener('click', stopTracking);
+
+        document.getElementById('load-tracking').addEventListener('click', async function() {
+            const code = document.getElementById('tracking-code').value;
+            if (!code) {
+                showAlert('Entrez un code de suivi valide', 'error');
+                return;
+            }
+            // TODO: Charger la position depuis Supabase
+            showAlert('Chargement du suivi pour: ' + code, 'info');
+        });
+
+        // ═════════════════════════════════════════════════════════════════════
+        // UTILITAIRES
+        // ═════════════════════════════════════════════════════════════════════
+
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'tracking-status status-' + type;
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alerts-container');
+            const alert = document.getElementById('alert-message');
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type;
+            container.style.display = 'block';
+            setTimeout(() => { container.style.display = 'none'; }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        // ═════════════════════════════════════════════════════════════════════
+        // INITIALISATION
+        // ═════════════════════════════════════════════════════════════════════
+
+        window.addEventListener('DOMContentLoaded', function () {
+            initMap();
+            document.getElementById('accuracy-info').style.display = 'block';
+        });
+
+        // Arrêter le suivi quand on quitte la page
+        window.addEventListener('beforeunload', stopTracking);
+    </script>
+</body>
+</html>
+
+

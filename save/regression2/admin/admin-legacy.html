@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>PorteÃ Porte â€” Admin v2 ðŸ”</title>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--red:#FF4D4D;--gold:#F5C842;--orange:#FF8C00;--purple:#A78BFA;--blue:#60A5FA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+/* â”€â”€ LOGIN â”€â”€ */
+#login-screen{position:fixed;inset:0;background:var(--ink);z-index:9999;display:flex;align-items:center;justify-content:center}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(184,245,62,.05),transparent 70%)}
+.login-box{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:36px;width:340px;position:relative;z-index:1}
+.ll{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:4px}
+.ll span{color:var(--lime)}
+.ls{font-size:12px;color:var(--muted);margin-bottom:24px}
+.lf{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
+.li{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:11px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;border-radius:2px;transition:border-color .2s}
+.li:focus{border-color:rgba(184,245,62,.4)}
+.li.err{border-color:var(--red);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.lb{width:100%;background:var(--lime);color:var(--ink);border:none;padding:13px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border-radius:2px;margin-top:14px;transition:all .2s}
+.lb:hover{background:var(--teal)}
+.lerr{font-size:11px;color:var(--red);margin-top:7px;text-align:center;display:none}
+
+/* â”€â”€ APP â”€â”€ */
+#app{display:none}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:11px 24px;border-bottom:1px solid var(--border);background:rgba(5,8,10,.96);backdrop-filter:blur(14px)}
+.tlogo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px}
+.tlogo span{color:var(--lime)}
+.tbadge{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--purple);font-size:10px;padding:3px 10px;border-radius:50px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.5s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.tout-btn{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:50px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif}
+
+/* â”€â”€ LAYOUT â”€â”€ */
+.layout{display:flex;min-height:calc(100vh - 48px)}
+.sidebar{width:200px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto}
+.sb-sec{padding:4px 14px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-top:12px;margin-bottom:2px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;cursor:pointer;border-left:2px solid transparent;color:var(--muted);transition:all .15s}
+.sb-item:hover{background:rgba(184,245,62,.05);color:var(--paper)}
+.sb-item.on{background:rgba(184,245,62,.08);color:var(--lime);border-left-color:var(--lime)}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:50px}
+.sb-badge.o{background:var(--orange)}
+.sb-badge.g{background:#3B6D11}
+.content{flex:1;overflow-x:hidden}
+.sec{padding:24px 28px;display:none}
+.sec.on{display:block}
+.slbl{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:6px}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+
+/* â”€â”€ CARDS â”€â”€ */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:18px;margin-bottom:10px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px}
+.card3{background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+/* â”€â”€ STATS â”€â”€ */
+.sr{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.st{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:12px 16px;flex:1;min-width:90px}
+.sn{font-family:'Bebas Neue',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1}
+.sl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* â”€â”€ TABLE â”€â”€ */
+.tw{overflow-x:auto;border-radius:4px;border:1px solid var(--border);margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--s2);padding:8px 12px;text-align:left;font-size:9px;font-weight:500;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(184,245,62,.02)}
+
+/* â”€â”€ TAGS â”€â”€ */
+.tag{display:inline-flex;padding:2px 7px;border-radius:50px;font-size:10px;font-weight:500}
+.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.tb{background:rgba(61,255,197,.1);color:var(--teal);border:1px solid rgba(61,255,197,.2)}
+.to{background:rgba(255,184,60,.1);color:var(--orange);border:1px solid rgba(255,184,60,.2)}
+.tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.tv{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+/* â”€â”€ BOUTONS â”€â”€ */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:2px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.bp{background:var(--lime);color:var(--ink)}.bp:hover{background:var(--teal)}
+.bs{background:transparent;color:var(--paper);border:1px solid var(--border)}.bs:hover{background:var(--s2)}
+.bg{background:rgba(61,255,197,.1);color:var(--teal);border:1px solid rgba(61,255,197,.2)}
+.br{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.bo{background:rgba(255,184,60,.1);color:var(--orange);border:1px solid rgba(255,184,60,.2)}
+.bv{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.bg2{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+
+/* â”€â”€ FORM â”€â”€ */
+.fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:block;margin-top:10px}
+.fi{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:2px;padding:8px 11px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+select.fi option{background:#141918}
+textarea.fi{resize:vertical;min-height:70px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* â”€â”€ TOGGLE MASTER â”€â”€ */
+.section-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:4px;margin-bottom:7px;transition:all .2s}
+.section-toggle.off{opacity:.6;border-color:rgba(255,77,77,.2);background:rgba(255,77,77,.03)}
+.section-toggle.off .st-status{color:var(--red)}
+.st-left{display:flex;align-items:center;gap:10px}
+.st-icon{font-size:18px}
+.st-info{flex:1}
+.st-name{font-size:13px;font-weight:500}
+.st-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.st-status{font-size:11px;color:var(--lime);font-weight:600}
+
+/* â”€â”€ TOGGLE SWITCH â”€â”€ */
+.tgl{position:relative;display:inline-flex;align-items:center;cursor:pointer;gap:0}
+.tgl input{position:absolute;opacity:0;width:0;height:0}
+.ttrack{width:40px;height:22px;background:rgba(255,77,77,.3);border-radius:11px;transition:background .2s;flex-shrink:0}
+.tgl input:checked~.ttrack{background:var(--lime)}
+.tthumb{position:absolute;left:3px;top:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.tgl input:checked~.ttrack~.tthumb{transform:translateX(18px)}
+
+/* â”€â”€ RANGE â”€â”€ */
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;background:var(--border);border-radius:3px;outline:none;cursor:pointer;margin:8px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--lime);cursor:pointer}
+
+/* â”€â”€ PROGRESS â”€â”€ */
+.pb{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.pbf{height:100%;border-radius:2px;background:var(--lime);transition:width .5s}
+
+/* â”€â”€ PARTENAIRE CARD â”€â”€ */
+.partner-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:8px;position:relative}
+.partner-card.active{border-color:rgba(184,245,62,.25)}
+.partner-card.pending{border-color:rgba(255,184,60,.25)}
+.pc-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.pc-logo{width:40px;height:40px;border-radius:4px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pc-name{font-size:13px;font-weight:500}
+.pc-cat{font-size:10px;color:var(--muted);margin-top:2px}
+.pc-offer{font-size:11px;color:var(--teal);margin-bottom:6px}
+.pc-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* â”€â”€ ORGANISME DON â”€â”€ */
+.org-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:7px;display:flex;align-items:center;gap:12px}
+.org-card.active{border-color:rgba(11,255,203,.2)}
+.org-card.inactive{opacity:.5;border-color:rgba(255,77,77,.15)}
+.org-icon{font-size:24px;flex-shrink:0}
+.org-info{flex:1}
+.org-name{font-size:13px;font-weight:500}
+.org-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.org-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--teal);letter-spacing:-.5px}
+
+/* â”€â”€ NOTE â”€â”€ */
+.note{padding:9px 13px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:8px}
+.note strong{color:var(--paper)}
+.note-r{border-left-color:var(--red);background:rgba(255,77,77,.03)}
+.note-o{border-left-color:var(--orange);background:rgba(255,140,0,.03)}
+
+/* â”€â”€ TOAST â”€â”€ */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid rgba(184,245,62,.3);border-radius:4px;padding:11px 15px;font-size:12px;transform:translateX(130%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);z-index:999;max-width:260px}
+.toast.show{transform:translateX(0)}
+
+/* â”€â”€ TIRAGE â”€â”€ */
+.tirage-n{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--lime);letter-spacing:-2px;line-height:1}
+.winner-box{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:4px;padding:18px;text-align:center;display:none;margin-top:10px}
+.cd{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.cd-item{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:6px 12px;text-align:center;min-width:50px}
+.cd-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--lime);letter-spacing:-1px;line-height:1}
+.cd-l{font-size:9px;color:var(--muted)}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .sec{padding:16px 14px}
+  .g2,.g3,.g4,.fr{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast">âœ… SauvegardÃ© !</div>
+
+<!-- â”€â”€ LOGIN â”€â”€ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="ll">Porte<span>Ã </span>Porte</div>
+    <div class="ls">Panneau admin v2 â€” accÃ¨s fondateur seulement ðŸ”</div>
+    <label class="lf">Mot de passe</label>
+    <input class="li" type="password" id="mdp" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" onkeydown="if(event.key==='Enter')checkMdp()">
+    <label class="lf">PIN Ã  6 chiffres</label>
+    <input class="li" type="tel" id="pin" placeholder="000000" maxlength="6" onkeydown="if(event.key==='Enter')checkLogin()">
+    <button class="lb" onclick="checkLogin()">AccÃ©der au panneau â†’</button>
+    <div class="lerr" id="lerr">âŒ Identifiants incorrects</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:12px;text-align:center">AccÃ¨s fondateur seulement ðŸ”</div>
+  </div>
+</div>
+
+<!-- â”€â”€ APP â”€â”€ -->
+<div id="app">
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="tlogo">Porte<span>Ã </span>Porte</div>
+    <span class="tbadge">âš¡ Admin v2</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:11px;color:var(--teal);display:flex;align-items:center;gap:5px"><span class="tdot"></span>En ligne</span>
+    <button class="tout-btn" onclick="logout()">DÃ©connexion</button>
+  </div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-sec">Tableau de bord</div>
+  <div class="sb-item on" onclick="show('dashboard')">ðŸ“Š Vue d'ensemble</div>
+  <div class="sb-item" onclick="show('finances')">ðŸ’° Finances</div>
+
+  <div class="sb-sec">ContrÃ´les site</div>
+  <div class="sb-item" onclick="show('sections')">ðŸ”§ Sections du site</div>
+  <div class="sb-item" onclick="show('dons')">â¤ï¸ Dons & Organismes</div>
+  <div class="sb-item" onclick="show('partenaires')">ðŸ¤ Partenaires</div>
+
+  <div class="sb-sec">Utilisateurs</div>
+  <div class="sb-item" onclick="show('livreurs')">ðŸš— Livreurs <span class="sb-badge o">3</span></div>
+  <div class="sb-item" onclick="show('expediteurs')">ðŸ“¦ ExpÃ©diteurs</div>
+  <div class="sb-item" onclick="show('litiges')">âš ï¸ Litiges <span class="sb-badge">2</span></div>
+
+  <div class="sb-sec">OpÃ©rations</div>
+  <div class="sb-item" onclick="show('tirages')">ðŸŽ Tirages</div>
+  <div class="sb-item" onclick="show('colis-perdus')">ðŸ·ï¸ Colis non rÃ©clamÃ©s</div>
+  <div class="sb-item" onclick="show('assurance')">ðŸ›¡ï¸ Assurance</div>
+
+  <div class="sb-sec">Config</div>
+  <div class="sb-item" onclick="show('legal')">âš–ï¸ Guide lÃ©gal</div>
+  <div class="sb-item" onclick="show('config')">âš™ï¸ Configuration</div>
+</aside>
+
+<main class="content">
+
+<!-- â•â• DASHBOARD â•â• -->
+<section id="dashboard" class="sec on">
+  <div class="slbl">Vue d'ensemble</div>
+  <div class="stitle">Bonjour Denis ðŸ‘‹</div>
+  <div class="sr">
+    <div class="st"><div class="sn" style="color:var(--lime)">1 247</div><div class="sl">Inscrits</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)">89</div><div class="sl">Livreurs</div></div>
+    <div class="st"><div class="sn" style="color:var(--orange)">23 840 $</div><div class="sl">Revenu mois</div></div>
+    <div class="st"><div class="sn" style="color:var(--red)">2</div><div class="sl">Litiges</div></div>
+    <div class="st"><div class="sn" style="color:var(--gold)">750 $</div><div class="sl">Tirage</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)">14 280 $</div><div class="sl">Dons versÃ©s</div></div>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="card2" style="cursor:pointer;border-color:rgba(255,77,77,.2)" onclick="show('litiges')"><div style="font-size:18px;margin-bottom:5px">âš ï¸</div><div style="font-size:12px;font-weight:500">2 litiges urgents</div><div style="font-size:10px;color:var(--red)">Action requise Â· 30h</div></div>
+    <div class="card2" style="cursor:pointer;border-color:rgba(255,184,60,.2)" onclick="show('livreurs')"><div style="font-size:18px;margin-bottom:5px">ðŸš—</div><div style="font-size:12px;font-weight:500">3 demandes livreurs</div><div style="font-size:10px;color:var(--orange)">Ã€ certifier</div></div>
+    <div class="card2" style="cursor:pointer;border-color:rgba(184,245,62,.2)" onclick="show('sections')"><div style="font-size:18px;margin-bottom:5px">ðŸ”§</div><div style="font-size:12px;font-weight:500">ContrÃ´les du site</div><div style="font-size:10px;color:var(--lime)">Sections Â· Dons Â· Partenaires</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:10px">ðŸ’° RÃ©partition revenus</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--muted)">Commission (12%)</span><span style="color:var(--lime)">23 840 $</span></div><div class="pb"><div class="pbf" style="width:100%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--muted)">Assurance</span><span style="color:var(--lime)">2 130 $</span></div><div class="pb"><div class="pbf" style="width:35%;background:var(--teal)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--muted)">PorteCoins vendus</span><span style="color:var(--lime)">1 840 $</span></div><div class="pb"><div class="pbf" style="width:28%;background:var(--gold)"></div></div></div>
+        <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;justify-content:space-between;font-weight:600"><span>BÃ©nÃ©fice net</span><span style="color:var(--lime)">16 688 $</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:10px">ðŸŒ Impact dons ce mois</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
+        <div class="card3"><div style="display:flex;justify-content:space-between"><span>ðŸŽ Moisson MontrÃ©al</span><span style="color:var(--teal)">397 $</span></div></div>
+        <div class="card3"><div style="display:flex;justify-content:space-between"><span>ðŸ  Habitat HumanitÃ©</span><span style="color:var(--teal)">397 $</span></div></div>
+        <div class="card3"><div style="display:flex;justify-content:space-between"><span>ðŸŒ± Fondation Suzuki</span><span style="color:var(--teal)">398 $</span></div></div>
+        <div style="display:flex;justify-content:space-between;font-weight:600;padding-top:4px;border-top:1px solid var(--border)"><span>Total versÃ©</span><span style="color:var(--teal)">1 192 $</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â• FINANCES â•â• -->
+<section id="finances" class="sec">
+  <div class="slbl">ComptabilitÃ©</div>
+  <div class="stitle">ðŸ’° Finances</div>
+  <div class="sr">
+    <div class="st"><div class="sn" style="color:var(--lime)">16 688 $</div><div class="sl">BÃ©nÃ©fice net</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)">47 250 $</div><div class="sl">Fonds garantie</div></div>
+    <div class="st"><div class="sn" style="color:var(--orange)">14 280 $</div><div class="sl">Dons versÃ©s</div></div>
+    <div class="st"><div class="sn" style="color:var(--purple)">5 140 $</div><div class="sl">TPS/TVQ</div></div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Mois</th><th>Revenu brut</th><th>Commission</th><th>PorteCoins</th><th>Dons versÃ©s</th><th>BÃ©nÃ©fice net</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Avr 2026</td><td>198 667 $</td><td>23 840 $</td><td>1 840 $</td><td>1 192 $</td><td style="color:var(--lime)">16 688 $</td><td><span class="tag tb">En cours</span></td></tr>
+        <tr><td>Mar 2026</td><td>172 400 $</td><td>20 688 $</td><td>1 240 $</td><td>1 034 $</td><td style="color:var(--lime)">14 482 $</td><td><span class="tag tg">ClÃ´turÃ©</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- â•â• CONTRÃ”LE DES SECTIONS â•â• -->
+<section id="sections" class="sec">
+  <div class="slbl">ContrÃ´les du site</div>
+  <div class="stitle">ðŸ”§ Sections du site</div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Active ou dÃ©sactive chaque section du site en temps rÃ©el. Les visiteurs ne verront plus les sections dÃ©sactivÃ©es.</p>
+
+  <div id="sections-list">
+    <div class="section-toggle active" id="toggle-expediteur">
+      <div class="st-left">
+        <div class="st-icon">ðŸ“¦</div>
+        <div class="st-info"><div class="st-name">Formulaire expÃ©diteur</div><div class="st-desc">Envoyer un colis Â· expediteur.html</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="st-status" id="status-expediteur">EN LIGNE</span>
+        <label class="tgl"><input type="checkbox" checked onchange="toggleSection('expediteur',this)"><span class="ttrack"></span><span class="tthumb"></span></label>
+      </div>
+    </div>
+    <div class="section-toggle active" id="toggle-livreur">
+      <div class="st-left"><div class="st-icon">ðŸš—</div><div class="st-info"><div class="st-name">Inscription livreurs</div><div class="st-desc">Devenir livreur certifiÃ© Â· livreur.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-livreur">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('livreur',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-assurance">
+      <div class="st-left"><div class="st-icon">ðŸ›¡ï¸</div><div class="st-info"><div class="st-name">Assurance & RÃ©clamations</div><div class="st-desc">4 plans Â· calculateur Â· assurance.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-assurance">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('assurance',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-parrainage">
+      <div class="st-left"><div class="st-icon">ðŸ¤</div><div class="st-info"><div class="st-name">Programme parrainage</div><div class="st-desc">Codes uniques Â· 25$ par ami Â· parrainage.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-parrainage">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('parrainage',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-portecoin">
+      <div class="st-left"><div class="st-icon">ðŸª™</div><div class="st-info"><div class="st-name">Achat PorteCoins</div><div class="st-desc">4 forfaits Â· Stripe intÃ©grÃ© Â· index.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-portecoin">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('portecoin',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-missions">
+      <div class="st-left"><div class="st-icon">â¤ï¸</div><div class="st-info"><div class="st-name">Missions communautaires</div><div class="st-desc">Livraisons solidaires Â· unique.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-missions">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('missions',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-tirage">
+      <div class="st-left"><div class="st-icon">ðŸŽ</div><div class="st-info"><div class="st-name">Tirage mensuel</div><div class="st-desc">Cagnotte automatique Â· visible sur index.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-tirage">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('tirage',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-compte">
+      <div class="st-left"><div class="st-icon">ðŸ‘¤</div><div class="st-info"><div class="st-name">Comptes utilisateurs</div><div class="st-desc">Connexion Â· inscription Â· compte.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-compte">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('compte',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+    <div class="section-toggle active" id="toggle-coaching">
+      <div class="st-left"><div class="st-icon">ðŸ§ </div><div class="st-info"><div class="st-name">Coaching IA livreurs</div><div class="st-desc">Score Â· suggestions Â· unique.html</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span class="st-status" id="status-coaching">EN LIGNE</span><label class="tgl"><input type="checkbox" checked onchange="toggleSection('coaching',this)"><span class="ttrack"></span><span class="tthumb"></span></label></div>
+    </div>
+  </div>
+
+  <!-- MODE MAINTENANCE GLOBAL -->
+  <div class="card" style="margin-top:6px;border-color:rgba(255,77,77,.2);background:rgba(255,77,77,.03)">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--red)">ðŸš§ Mode maintenance global</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Affiche une page "Site en maintenance" Ã  tous les visiteurs Â· Tu gardes l'accÃ¨s admin</div>
+      </div>
+      <label class="tgl"><input type="checkbox" id="maintenance-toggle" onchange="toggleMaintenance(this)"><span class="ttrack"></span><span class="tthumb"></span></label>
+    </div>
+    <div id="maintenance-msg" style="display:none;margin-top:12px">
+      <label class="fl">Message de maintenance affichÃ© aux visiteurs</label>
+      <textarea class="fi" id="maintenance-text">PorteÃ Porte est en maintenance pour quelques heures. Nous revenons trÃ¨s bientÃ´t ! ðŸ</textarea>
+      <button class="btn bp" style="margin-top:8px" onclick="showToast('Message de maintenance sauvegardÃ© !')">Sauvegarder â†’</button>
+    </div>
+  </div>
+</section>
+
+<!-- â•â• DONS & ORGANISMES â•â• -->
+<section id="dons" class="sec">
+  <div class="slbl">Impact social</div>
+  <div class="stitle">â¤ï¸ Dons & Organismes</div>
+
+  <!-- % DES DONS -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:11px;color:var(--teal);font-weight:500;margin-bottom:14px">ðŸ“Š Pourcentage des bÃ©nÃ©fices allouÃ©s aux dons</div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <input type="range" id="don-pct-range" min="1" max="20" value="5" step="1" oninput="updateDonPct(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>1%</span><span>20%</span></div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--teal);letter-spacing:-2px;line-height:1" id="don-pct-display">5%</div>
+        <div style="font-size:10px;color:var(--muted)">des bÃ©nÃ©fices</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime);letter-spacing:-1px;line-height:1" id="don-montant">834 $</div>
+        <div style="font-size:10px;color:var(--muted)">ce mois estimÃ©</div>
+      </div>
+    </div>
+    <button class="btn bg" style="margin-top:12px" onclick="showToast('âœ… Pourcentage mis Ã  jour : '+document.getElementById(\'don-pct-display\').textContent)">Appliquer ce pourcentage â†’</button>
+  </div>
+
+  <!-- ORGANISMES ACTIFS -->
+  <div style="font-size:11px;color:var(--teal);font-weight:500;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+    <span>ðŸŒ Organismes bÃ©nÃ©ficiaires (<span id="org-count">3</span>/5 max)</span>
+    <button class="btn bg" onclick="ajouterOrganisme()">+ Ajouter</button>
+  </div>
+
+  <div id="org-list">
+    <div class="org-card active" id="org-0">
+      <div class="org-icon">ðŸŽ</div>
+      <div class="org-info"><div class="org-name">Moisson MontrÃ©al</div><div class="org-desc">Banque alimentaire Â· depuis le dÃ©but</div></div>
+      <div style="text-align:right">
+        <div class="org-pct" id="org-pct-0">33%</div>
+        <div style="font-size:10px;color:var(--muted)">des dons</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-left:8px">
+        <label class="tgl"><input type="checkbox" checked onchange="toggleOrg(0,this)"><span class="ttrack"></span><span class="tthumb"></span></label>
+        <button class="btn br" style="padding:3px 8px;font-size:10px" onclick="supprimerOrg(0)">âœ•</button>
+      </div>
+    </div>
+    <div class="org-card active" id="org-1">
+      <div class="org-icon">ðŸ </div>
+      <div class="org-info"><div class="org-name">Habitat pour l'HumanitÃ© Canada</div><div class="org-desc">Logements abordables Â· national</div></div>
+      <div style="text-align:right">
+        <div class="org-pct" id="org-pct-1">33%</div>
+        <div style="font-size:10px;color:var(--muted)">des dons</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-left:8px">
+        <label class="tgl"><input type="checkbox" checked onchange="toggleOrg(1,this)"><span class="ttrack"></span><span class="tthumb"></span></label>
+        <button class="btn br" style="padding:3px 8px;font-size:10px" onclick="supprimerOrg(1)">âœ•</button>
+      </div>
+    </div>
+    <div class="org-card active" id="org-2">
+      <div class="org-icon">ðŸŒ±</div>
+      <div class="org-info"><div class="org-name">Fondation David Suzuki</div><div class="org-desc">Compensation carbone Â· environnement</div></div>
+      <div style="text-align:right">
+        <div class="org-pct" id="org-pct-2">34%</div>
+        <div style="font-size:10px;color:var(--muted)">des dons</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-left:8px">
+        <label class="tgl"><input type="checkbox" checked onchange="toggleOrg(2,this)"><span class="ttrack"></span><span class="tthumb"></span></label>
+        <button class="btn br" style="padding:3px 8px;font-size:10px" onclick="supprimerOrg(2)">âœ•</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJOUTER UN ORGANISME -->
+  <div class="card" id="form-org" style="display:none;border-color:rgba(11,255,203,.2)">
+    <div style="font-size:11px;color:var(--teal);font-weight:500;margin-bottom:12px">âž• Nouvel organisme</div>
+    <div class="fr">
+      <div><label class="fl">Emoji / icÃ´ne</label><input class="fi" type="text" id="new-org-icon" placeholder="ðŸŒ¿" maxlength="4"></div>
+      <div><label class="fl">Nom de l'organisme</label><input class="fi" type="text" id="new-org-name" placeholder="Nom complet"></div>
+    </div>
+    <label class="fl">Description courte</label>
+    <input class="fi" type="text" id="new-org-desc" placeholder="Type d'organisme Â· portÃ©e">
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn bp" onclick="confirmerAjoutOrg()">Ajouter â†’</button>
+      <button class="btn bs" onclick="document.getElementById('form-org').style.display='none'">Annuler</button>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:8px">ðŸ’¡ <strong>RÃ©partition automatique :</strong> Le pourcentage de chaque organisme est calculÃ© automatiquement en divisant Ã©galement entre tous les organismes actifs. Tu peux en avoir jusqu'Ã  5 simultanÃ©ment.</div>
+</section>
+
+<!-- â•â• PARTENAIRES â•â• -->
+<section id="partenaires" class="sec">
+  <div class="slbl">RÃ©seau de confiance</div>
+  <div class="stitle">ðŸ¤ Partenaires</div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <!-- PARTENAIRES ACTIFS -->
+    <div>
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+        <span>âœ… Partenaires actifs (<span id="part-count">6</span>)</span>
+        <button class="btn bp" onclick="show('form-partenaire')" style="padding:5px 10px;font-size:11px">+ Ajouter</button>
+      </div>
+
+      <div class="partner-card active">
+        <div class="pc-head"><div class="pc-logo">â›½</div><div><div class="pc-name">Petro-Canada</div><div class="pc-cat">Essence Â· National</div></div><span class="tag tg" style="margin-left:auto">Actif</span></div>
+        <div class="pc-offer">-5 cents/litre sur prÃ©sentation carte PorteÃ Porte</div>
+        <div class="pc-actions"><button class="btn bs" style="padding:4px 9px;font-size:10px" onclick="editPartner(this)">Modifier</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="togglePartner(this)">DÃ©sactiver</button></div>
+      </div>
+      <div class="partner-card active">
+        <div class="pc-head"><div class="pc-logo">ðŸ”§</div><div><div class="pc-name">Jiffy Lube / OK Tire</div><div class="pc-cat">Entretien auto Â· QC</div></div><span class="tag tg" style="margin-left:auto">Actif</span></div>
+        <div class="pc-offer">-15% vidange d'huile et changement de pneus</div>
+        <div class="pc-actions"><button class="btn bs" style="padding:4px 9px;font-size:10px" onclick="editPartner(this)">Modifier</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="togglePartner(this)">DÃ©sactiver</button></div>
+      </div>
+      <div class="partner-card active">
+        <div class="pc-head"><div class="pc-logo">â˜•</div><div><div class="pc-name">Second Cup</div><div class="pc-cat">CafÃ© Â· Pause livreurs</div></div><span class="tag tg" style="margin-left:auto">Actif</span></div>
+        <div class="pc-offer">CafÃ© gratuit aprÃ¨s 4h de conduite consÃ©cutives</div>
+        <div class="pc-actions"><button class="btn bs" style="padding:4px 9px;font-size:10px" onclick="editPartner(this)">Modifier</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="togglePartner(this)">DÃ©sactiver</button></div>
+      </div>
+      <div class="partner-card active">
+        <div class="pc-head"><div class="pc-logo">ðŸ’ª</div><div><div class="pc-name">GoodLife / YMCA</div><div class="pc-cat">Gym Â· Bien-Ãªtre</div></div><span class="tag tg" style="margin-left:auto">Actif</span></div>
+        <div class="pc-offer">-20% sur l'abonnement mensuel</div>
+        <div class="pc-actions"><button class="btn bs" style="padding:4px 9px;font-size:10px" onclick="editPartner(this)">Modifier</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="togglePartner(this)">DÃ©sactiver</button></div>
+      </div>
+      <div class="partner-card active">
+        <div class="pc-head"><div class="pc-logo">ðŸ©º</div><div><div class="pc-name">Maple.ca</div><div class="pc-cat">TÃ©lÃ©mÃ©decine Â· Canada</div></div><span class="tag tg" style="margin-left:auto">Actif</span></div>
+        <div class="pc-offer">1 consultation mÃ©dicale gratuite par mois</div>
+        <div class="pc-actions"><button class="btn bs" style="padding:4px 9px;font-size:10px" onclick="editPartner(this)">Modifier</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="togglePartner(this)">DÃ©sactiver</button></div>
+      </div>
+      <div class="partner-card pending">
+        <div class="pc-head"><div class="pc-logo">ðŸ›¡ï¸</div><div><div class="pc-name">Intact Assurance</div><div class="pc-cat">Assurance auto+ Â· AMF</div></div><span class="tag to" style="margin-left:auto">En attente</span></div>
+        <div class="pc-offer">Couverture livraison professionnelle pour livreurs PP</div>
+        <div class="pc-actions"><button class="btn bg" style="padding:4px 9px;font-size:10px" onclick="showToast('Partenariat Intact activÃ© !')">âœ“ Activer</button><button class="btn br" style="padding:4px 9px;font-size:10px" onclick="showToast('RejetÃ©')">âœ— Rejeter</button></div>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE NOUVEAU PARTENAIRE -->
+    <div>
+      <div class="card" id="form-partenaire">
+        <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:14px">âž• Ajouter un partenaire</div>
+        <label class="fl">Nom de l'entreprise</label><input class="fi" type="text" id="np-nom" placeholder="Ex: Ultramar, Tim Hortons...">
+        <label class="fl">CatÃ©gorie</label>
+        <select class="fi" id="np-cat">
+          <option>â›½ Essence</option><option>ðŸ”§ Entretien auto</option><option>â˜• Restauration</option>
+          <option>ðŸ’ª Gym / Bien-Ãªtre</option><option>ðŸ©º SantÃ©</option><option>ðŸ›¡ï¸ Assurance</option>
+          <option>ðŸ›’ Commerce local</option><option>ðŸ¨ HÃ´tellerie</option><option>ðŸ“± Technologie</option><option>Autre</option>
+        </select>
+        <label class="fl">Offre exclusive livreurs</label>
+        <input class="fi" type="text" id="np-offre" placeholder="Ex: -10% sur tous les achats">
+        <label class="fl">PortÃ©e gÃ©ographique</label>
+        <select class="fi" id="np-portee">
+          <option>QuÃ©bec seulement</option><option>MontrÃ©al et rÃ©gion</option><option>National â€” Canada</option><option>Toutes provinces</option>
+        </select>
+        <label class="fl">Contact partenaire (courriel)</label>
+        <input class="fi" type="email" id="np-email" placeholder="contact@entreprise.ca">
+        <label class="fl">Notes internes</label>
+        <textarea class="fi" id="np-notes" placeholder="DÃ©tails de l'entente, conditions..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn bp" onclick="ajouterPartenaire()" style="flex:1">Ajouter le partenaire â†’</button>
+          <button class="btn bs" onclick="showToast('AnnulÃ©')">âœ•</button>
+        </div>
+      </div>
+
+      <!-- PAGE DEVENIR PARTENAIRE -->
+      <div class="card" style="border-color:rgba(184,245,62,.15);background:rgba(184,245,62,.03)">
+        <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">ðŸŒ Page publique "Devenir partenaire"</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">
+          Cette page explique aux entreprises comment rejoindre le rÃ©seau PorteÃ Porte. Elle est accessible depuis le footer du site.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="partenaire.html" target="_blank" class="btn bg">Voir la page â†’</a>
+          <button class="btn bs" onclick="show('partenaire-edit')">Modifier le contenu</button>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:var(--s3);border-radius:4px;font-size:11px;color:var(--muted)">
+          <strong style="color:var(--paper)">Avantages mis en avant :</strong><br>
+          ðŸ“£ Exposition Ã  1 247 utilisateurs actifs Â· ðŸš— 89 livreurs certifiÃ©s Â· ðŸ Audience QC ciblÃ©e Â· â¤ï¸ Image solidaire
+        </div>
+      </div>
+
+      <!-- DEMANDES ENTRANTES -->
+      <div class="card" style="border-color:rgba(255,184,60,.15)">
+        <div style="font-size:11px;color:var(--orange);font-weight:500;margin-bottom:10px">ðŸ“¥ Demandes de partenariat reÃ§ues <span class="sb-badge o" style="display:inline-block;border-radius:50px;padding:1px 7px;font-size:10px">2</span></div>
+        <div class="card3" style="margin-bottom:7px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:12px;font-weight:500">Tim Hortons Canada</div>
+            <span class="tag to">Nouveau</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">CafÃ© gratuit Â· Restauration Â· contact@timhortons.ca</div>
+          <div style="display:flex;gap:6px;margin-top:7px">
+            <button class="btn bg" style="padding:4px 9px;font-size:10px" onclick="showToast('Tim Hortons acceptÃ© !')">âœ“ Accepter</button>
+            <button class="btn br" style="padding:4px 9px;font-size:10px" onclick="showToast('RefusÃ©')">âœ— Refuser</button>
+          </div>
+        </div>
+        <div class="card3">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:12px;font-weight:500">Ultramar / Irving</div>
+            <span class="tag to">Nouveau</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">Essence Â· -6 cents/L Â· contact@ultramar.ca</div>
+          <div style="display:flex;gap:6px;margin-top:7px">
+            <button class="btn bg" style="padding:4px 9px;font-size:10px" onclick="showToast('Ultramar acceptÃ© !')">âœ“ Accepter</button>
+            <button class="btn br" style="padding:4px 9px;font-size:10px" onclick="showToast('RefusÃ©')">âœ— Refuser</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â• LIVREURS â•â• -->
+<section id="livreurs" class="sec">
+  <div class="slbl">Gestion</div>
+  <div class="stitle">ðŸš— Livreurs</div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Livreur</th><th>Transport</th><th>Score</th><th>Livraisons</th><th>KYC</th><th>Bonus</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td><div style="font-weight:500">Marc-Antoine L.</div><div style="font-size:10px;color:var(--muted)">PP-DR-00847</div></td><td><span class="tag tg">ðŸš— Voiture</span></td><td style="color:var(--lime)">97%</td><td>147</td><td><span class="tag tb">âœ“ OK</span></td><td style="color:var(--lime)">118 $</td><td><button class="btn bs" style="padding:3px 8px;font-size:10px">Voir</button></td></tr>
+        <tr><td><div style="font-weight:500">Sophie T.</div><div style="font-size:10px;color:var(--muted)">PP-DR-00623</div></td><td><span class="tag tg">ðŸš™ VUS</span></td><td style="color:var(--lime)">88%</td><td>62</td><td><span class="tag tb">âœ“ OK</span></td><td style="color:var(--lime)">72 $</td><td><button class="btn bs" style="padding:3px 8px;font-size:10px">Voir</button></td></tr>
+        <tr><td><div style="font-weight:500">Kevin M. <span class="tag tg" style="font-size:9px">ðŸŒ± Ã‰co</span></div><div style="font-size:10px;color:var(--muted)">PP-DR-01102</div></td><td><span class="tag tg">ðŸš² VÃ©lo Ã©lec.</span></td><td style="color:var(--orange)">76%</td><td>18</td><td><span class="tag to">â³ Attente</span></td><td style="color:var(--muted)">â€”</td><td><div style="display:flex;gap:4px"><button class="btn bg" style="padding:3px 8px;font-size:10px" onclick="showToast('Kevin certifiÃ© !')">âœ“</button><button class="btn br" style="padding:3px 8px;font-size:10px">âœ—</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- â•â• EXPÃ‰DITEURS â•â• -->
+<section id="expediteurs" class="sec">
+  <div class="slbl">Utilisateurs</div>
+  <div class="stitle">ðŸ“¦ ExpÃ©diteurs</div>
+  <div class="sr">
+    <div class="st"><div class="sn" style="color:var(--lime)">1 158</div><div class="sl">Actifs</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)">43</div><div class="sl">Entreprises B2B</div></div>
+    <div class="st"><div class="sn" style="color:var(--orange)">8 420</div><div class="sl">Colis livrÃ©s</div></div>
+  </div>
+</section>
+
+<!-- â•â• LITIGES â•â• -->
+<section id="litiges" class="sec">
+  <div class="slbl">RÃ©solution</div>
+  <div class="stitle">âš ï¸ Litiges</div>
+  <div class="g2">
+    <div class="card" style="border-color:rgba(255,77,77,.2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-weight:500">Litige #LIT-891</div><span class="tag tr">Urgent</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">Marie-Claire D. vs Kevin M.<br>TV endommagÃ©e Â· 850 $ Â· Standard</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn bg" onclick="showToast('850$ approuvÃ© !')">âœ“ Rembourser 850 $</button>
+        <button class="btn br" onclick="showToast('RejetÃ©')">âœ—</button>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(255,184,60,.2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-weight:500">Litige #LIT-889</div><span class="tag to">Normal</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">Jean-FranÃ§ois B. vs Sophie T.<br>Retard 2 jours Â· Plan Basique</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn bo" onclick="showToast('10$ en points accordÃ©s')">Donner 10 $ points</button>
+        <button class="btn bs" onclick="showToast('Score pÃ©nalisÃ©')">PÃ©naliser</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â• TIRAGES â•â• -->
+<section id="tirages" class="sec">
+  <div class="slbl">Tirages mensuels</div>
+  <div class="stitle">ðŸŽ Tirages</div>
+  <div class="g2">
+    <div class="card" style="background:rgba(184,245,62,.03);border-color:rgba(184,245,62,.18)">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">ðŸŽŠ Tirage Avril 2026</div>
+      <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.2);border-radius:4px;padding:18px;text-align:center;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Cagnotte</div>
+        <div class="tirage-n" id="tirage-n">750 $</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">1 247 participants</div>
+        <div class="cd">
+          <div class="cd-item"><div class="cd-n" id="cd-d">13</div><div class="cd-l">jours</div></div>
+          <div class="cd-item"><div class="cd-n" id="cd-h">07</div><div class="cd-l">h</div></div>
+          <div class="cd-item"><div class="cd-n" id="cd-m">22</div><div class="cd-l">min</div></div>
+        </div>
+      </div>
+      <label class="fl">Montant ($)</label>
+      <input class="fi" type="number" value="750" id="prize-input" oninput="document.getElementById('tirage-n').textContent=this.value+' $'">
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn bp" onclick="lancerTirage()" style="flex:1">ðŸŽ° Lancer !</button>
+        <button class="btn bs" onclick="showToast('SauvegardÃ© !')">Sauvegarder</button>
+      </div>
+      <div class="winner-box" id="winner-box">
+        <div style="font-size:32px;margin-bottom:8px">ðŸŽ‰</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">GAGNANT</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--lime)" id="winner-name">â€”</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:10px">
+          <button class="btn bp" onclick="showToast('Gagnant notifiÃ© !')">âœ‰ï¸ Notifier</button>
+          <button class="btn bg" onclick="showToast('AnnoncÃ© !')">ðŸ“¢ Annoncer</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:10px">ðŸ† Derniers gagnants</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+        <div style="display:flex;gap:10px"><span style="font-size:16px">ðŸ¥‡</span><div><div style="font-weight:500">Marie-Claire D. Â· Laval</div><div style="font-size:10px;color:var(--muted)">Mar 2026 Â· 620 $</div></div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:16px">ðŸ¥ˆ</span><div><div style="font-weight:500">Jean-FranÃ§ois B.</div><div style="font-size:10px;color:var(--muted)">FÃ©v 2026 Â· 480 $</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â• COLIS PERDUS â•â• -->
+<section id="colis-perdus" class="sec">
+  <div class="slbl">Entreposage</div>
+  <div class="stitle">ðŸ·ï¸ Colis non rÃ©clamÃ©s</div>
+  <div class="note-o note" style="margin-bottom:12px">âš–ï¸ <strong>LÃ©gal QC :</strong> Avis obligatoire aprÃ¨s 60 jours. EnchÃ¨res possibles aprÃ¨s 90 jours.</div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Colis</th><th>Jours</th><th>Valeur</th><th>Frais</th><th>Statut</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Ã‰lectronique Â· MTL</td><td style="color:var(--red)">94</td><td>~300 $</td><td style="color:var(--orange)">47 $</td><td><span class="tag tr">EnchÃ¨re</span></td><td><button class="btn bo" style="padding:3px 8px;font-size:10px" onclick="showToast('EnchÃ¨re lancÃ©e !')">Lancer</button></td></tr>
+        <tr><td>VÃªtements Â· QC</td><td style="color:var(--orange)">27</td><td>~80 $</td><td style="color:var(--muted)">13 $</td><td><span class="tag to">30 jours</span></td><td><button class="btn bs" style="padding:3px 8px;font-size:10px" onclick="showToast('Avis envoyÃ© !')">Avis 2</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- â•â• ASSURANCE â•â• -->
+<section id="assurance" class="sec">
+  <div class="slbl">Protection</div>
+  <div class="stitle">ðŸ›¡ï¸ Assurance</div>
+  <div class="sr">
+    <div class="st"><div class="sn" style="color:var(--lime)">47 250 $</div><div class="sl">Fonds garantie</div></div>
+    <div class="st"><div class="sn" style="color:var(--red)">5</div><div class="sl">RÃ©clamations</div></div>
+    <div class="st"><div class="sn" style="color:var(--teal)">4 200 $</div><div class="sl">RemboursÃ©s</div></div>
+  </div>
+</section>
+
+<!-- â•â• LÃ‰GAL â•â• -->
+<section id="legal" class="sec">
+  <div class="slbl">ConformitÃ©</div>
+  <div class="stitle">âš–ï¸ Guide lÃ©gal</div>
+  <div class="g2">
+    <div class="card2"><div style="font-size:12px;font-weight:500;color:var(--teal);margin-bottom:8px">âœ… SPA QuÃ©bec â€” REQ</div><div style="font-size:11px;color:var(--muted);line-height:1.7">registreentreprises.gouv.qc.ca Â· ~350 $ Â· Protection personnelle Â· RecommandÃ© avant tout paiement rÃ©el</div></div>
+    <div class="card2"><div style="font-size:12px;font-weight:500;color:var(--teal);margin-bottom:8px">ðŸ’³ Stripe Connect Canada</div><div style="font-size:11px;color:var(--muted);line-height:1.7">Escrow lÃ©gal Â· TPS/TVQ auto Â· CANAFE compliant Â· 2,9% + 0,30$/transaction</div></div>
+    <div class="card2"><div style="font-size:12px;font-weight:500;margin-bottom:8px">ðŸš— Statut livreurs</div><div style="font-size:11px;color:var(--muted);line-height:1.7">Travailleurs autonomes Â· T2125 Â· TPS/TVQ si &gt;30 000$/an Â· T4A si &gt;500$/livreur/an</div></div>
+    <div class="card2"><div style="font-size:12px;font-weight:500;margin-bottom:8px">ðŸŽ Tirages lÃ©gaux</div><div style="font-size:11px;color:var(--muted);line-height:1.7">Sans permis si participation gratuite possible Â· Ne pas appeler "loterie" Â· Ajouter option sans achat</div></div>
+  </div>
+</section>
+
+<!-- â•â• CONFIG â•â• -->
+<section id="config" class="sec">
+  <div class="slbl">ParamÃ¨tres</div>
+  <div class="stitle">âš™ï¸ Configuration</div>
+  <div class="g2" style="margin-bottom:12px">
+    <div class="card">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">ðŸ’° ParamÃ¨tres financiers</div>
+      <label class="fl">Commission globale (%)</label><input class="fi" type="number" value="12" min="5" max="25" oninput="showToast('ModifiÃ© â€” clique Sauvegarder')">
+      <label class="fl">% Bonus livreurs</label><input class="fi" type="number" value="20">
+      <label class="fl">% Dons humanitaires</label><input class="fi" type="number" value="5">
+      <label class="fl">% Fonds garantie</label><input class="fi" type="number" value="3">
+      <label class="fl">% Tirage mensuel</label><input class="fi" type="number" value="2">
+      <button class="btn bp" style="margin-top:12px;width:100%;justify-content:center" onclick="showToast('âœ… ParamÃ¨tres financiers sauvegardÃ©s !')">Sauvegarder â†’</button>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">ðŸ” SÃ©curitÃ© & SystÃ¨me</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox" checked><span class="ttrack"></span><span class="tthumb"></span> GPS obligatoire livreurs</label>
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox" checked><span class="ttrack"></span><span class="tthumb"></span> KYC avant 1Ã¨re livraison</label>
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox" checked><span class="ttrack"></span><span class="tthumb"></span> Escrow systÃ©matique</label>
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox" checked><span class="ttrack"></span><span class="tthumb"></span> Photo livraison obligatoire</label>
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox" checked><span class="ttrack"></span><span class="tthumb"></span> IA matching automatique</label>
+        <label class="tgl" style="gap:10px;font-size:12px"><input type="checkbox"><span class="ttrack"></span><span class="tthumb"></span> Bonus Ã©co automatique</label>
+      </div>
+      <label class="fl">Nouveau mot de passe admin</label>
+      <input class="fi" type="password" id="new-mdp" placeholder="Nouveau mot de passe">
+      <label class="fl">Confirmer</label>
+      <input class="fi" type="password" id="conf-mdp" placeholder="Confirmer">
+      <label class="fl">Nouveau PIN (6 chiffres)</label>
+      <input class="fi" type="tel" id="new-pin" placeholder="123456" maxlength="6">
+      <button class="btn br" style="margin-top:10px;width:100%;justify-content:center" onclick="changeCredentials()">Changer identifiants</button>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+</div>
+
+<script>
+// â”€â”€ LOGIN â”€â”€
+let failCount = 0;
+const MAX_FAILS = 5;
+
+function checkLogin(){
+  if(failCount >= MAX_FAILS){
+    document.getElementById('lerr').textContent='ðŸ”’ AccÃ¨s bloquÃ©. Rechargez la page.';
+    document.getElementById('lerr').style.display='block';
+    return;
+  }
+  const mdp = (document.getElementById('mdp').value || '').trim();
+  const pin = (document.getElementById('pin').value || '').trim();
+  if(false){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    updateCountdown();
+    failCount = 0;
+  } else {
+    failCount++;
+    document.getElementById('mdp').classList.add('err');
+    document.getElementById('pin').classList.add('err');
+    const rem = MAX_FAILS - failCount;
+    document.getElementById('lerr').textContent = failCount >= MAX_FAILS
+      ? 'Acces bloque. Rechargez la page.'
+      : 'Acces admin via login Supabase requis. ' + rem + ' tentative(s) restante(s).';
+    document.getElementById('lerr').style.display='block';
+    setTimeout(()=>{
+      document.getElementById('mdp').classList.remove('err');
+      document.getElementById('pin').classList.remove('err');
+      document.getElementById('lerr').style.display='none';
+    }, 3000);
+  }
+}
+function checkMdp(){}
+function logout(){if(confirm('DÃ©connexion ?')){location.reload()}}
+
+// â”€â”€ NAVIGATION â”€â”€
+function show(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('on'));
+  const el=document.getElementById(id);
+  if(el)el.classList.add('on');
+  document.querySelectorAll('.sb-item').forEach(s=>{
+    if(s.getAttribute('onclick')&&s.getAttribute('onclick').includes("'"+id+"'"))s.classList.add('on');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// â”€â”€ CONTRÃ”LE SECTIONS â”€â”€
+function toggleSection(name, cb){
+  const card=document.getElementById('toggle-'+name);
+  const status=document.getElementById('status-'+name);
+  if(cb.checked){
+    card.classList.remove('off');
+    if(status)status.textContent='EN LIGNE';
+    if(status)status.style.color='var(--lime)';
+    showToast('âœ… Section '+name+' activÃ©e');
+  } else {
+    card.classList.add('off');
+    if(status)status.textContent='HORS LIGNE';
+    if(status)status.style.color='var(--red)';
+    showToast('â›” Section '+name+' dÃ©sactivÃ©e');
+  }
+}
+function toggleMaintenance(cb){
+  document.getElementById('maintenance-msg').style.display=cb.checked?'block':'none';
+  showToast(cb.checked?'âš ï¸ Mode maintenance ACTIVÃ‰':'âœ… Site remis en ligne');
+}
+
+// â”€â”€ DONS â”€â”€
+const benef=16688;
+function updateDonPct(v){
+  document.getElementById('don-pct-display').textContent=v+'%';
+  document.getElementById('don-montant').textContent=Math.round(benef*v/100).toLocaleString('fr-CA')+' $';
+}
+
+// Organismes
+let orgs=[true,true,true,false,false];
+function recalcOrgs(){
+  const actifs=orgs.filter(Boolean).length;
+  document.getElementById('org-count').textContent=actifs;
+  let idx=0;
+  for(let i=0;i<orgs.length;i++){
+    if(orgs[i]){
+      const pctEl=document.getElementById('org-pct-'+i);
+      if(pctEl){
+        const share=idx===actifs-1?Math.ceil(100/actifs):Math.floor(100/actifs);
+        pctEl.textContent=share+'%';
+        idx++;
+      }
+    }
+  }
+}
+function toggleOrg(i,cb){
+  orgs[i]=cb.checked;
+  const card=document.getElementById('org-'+i);
+  if(card)card.classList.toggle('inactive',!cb.checked);
+  recalcOrgs();
+  showToast(cb.checked?'âœ… Organisme activÃ©':'â›” Organisme dÃ©sactivÃ©');
+}
+function supprimerOrg(i){
+  if(!confirm('Retirer cet organisme ?'))return;
+  const card=document.getElementById('org-'+i);
+  if(card)card.remove();
+  orgs[i]=false;
+  recalcOrgs();
+  showToast('Organisme retirÃ©');
+}
+function ajouterOrganisme(){
+  document.getElementById('form-org').style.display='block';
+  document.getElementById('form-org').scrollIntoView({behavior:'smooth'});
+}
+function confirmerAjoutOrg(){
+  const icon=document.getElementById('new-org-icon').value||'ðŸŒ¿';
+  const name=document.getElementById('new-org-name').value.trim();
+  const desc=document.getElementById('new-org-desc').value.trim();
+  if(!name){showToast('âŒ Entre le nom de l\'organisme');return}
+  const newIdx=orgs.length;
+  orgs.push(true);
+  const list=document.getElementById('org-list');
+  const div=document.createElement('div');
+  div.className='org-card active';div.id='org-'+newIdx;
+  div.innerHTML=`<div class="org-icon">${icon}</div><div class="org-info"><div class="org-name">${name}</div><div class="org-desc">${desc}</div></div><div style="text-align:right"><div class="org-pct" id="org-pct-${newIdx}">â€”</div><div style="font-size:10px;color:var(--muted)">des dons</div></div><div style="display:flex;flex-direction:column;gap:5px;margin-left:8px"><label class="tgl"><input type="checkbox" checked onchange="toggleOrg(${newIdx},this)"><span class="ttrack"></span><span class="tthumb"></span></label><button class="btn br" style="padding:3px 8px;font-size:10px" onclick="supprimerOrg(${newIdx})">âœ•</button></div>`;
+  list.appendChild(div);
+  document.getElementById('form-org').style.display='none';
+  document.getElementById('new-org-icon').value='';
+  document.getElementById('new-org-name').value='';
+  document.getElementById('new-org-desc').value='';
+  recalcOrgs();
+  showToast('âœ… '+name+' ajoutÃ© !');
+}
+
+// â”€â”€ PARTENAIRES â”€â”€
+function ajouterPartenaire(){
+  const nom=document.getElementById('np-nom').value.trim();
+  if(!nom){showToast('âŒ Entre le nom du partenaire');return}
+  const cat=document.getElementById('np-cat').value;
+  const offre=document.getElementById('np-offre').value.trim();
+  document.getElementById('np-nom').value='';
+  document.getElementById('np-offre').value='';
+  const cnt=document.getElementById('part-count');
+  cnt.textContent=parseInt(cnt.textContent)+1;
+  showToast('âœ… Partenaire "'+nom+'" ajoutÃ© !');
+}
+function togglePartner(btn){
+  const card=btn.closest('.partner-card');
+  const tag=card.querySelector('.tag');
+  if(card.classList.contains('active')){
+    card.classList.remove('active');
+    tag.textContent='Inactif';tag.className='tag tr';
+    btn.textContent='RÃ©activer';
+  } else {
+    card.classList.add('active');
+    tag.textContent='Actif';tag.className='tag tg';
+    btn.textContent='DÃ©sactiver';
+  }
+  showToast('Statut partenaire mis Ã  jour');
+}
+function editPartner(btn){showToast('Formulaire de modification â€” bientÃ´t disponible')}
+
+// â”€â”€ TIRAGES â”€â”€
+function lancerTirage(){
+  const p=['Marie-Claire D. Â· Laval','Marc-Antoine L. Â· QuÃ©bec','Sophie T. Â· MontrÃ©al','Ahmed R. Â· Laval'];
+  const w=p[Math.floor(Math.random()*p.length)];
+  document.getElementById('winner-name').textContent=w;
+  document.getElementById('winner-box').style.display='block';
+}
+
+// â”€â”€ CREDENTIALS â”€â”€
+function changeCredentials(){
+  const nm=document.getElementById('new-mdp').value;
+  const cm=document.getElementById('conf-mdp').value;
+  const np=document.getElementById('new-pin').value;
+  if(nm&&nm!==cm){showToast('âŒ Mots de passe diffÃ©rents');return}
+  if(np&&np.length!==6){showToast('âŒ PIN doit avoir 6 chiffres');return}
+  // Mettre Ã  jour les hashes â€” ne jamais stocker en clair
+  if(nm) sha256(nm).then(h => window._H_PASS = h);
+  if(np) sha256(np).then(h => window._H_PIN  = h);
+  showToast('âœ… Identifiants mis Ã  jour !');
+  document.getElementById('new-mdp').value='';
+  document.getElementById('conf-mdp').value='';
+  document.getElementById('new-pin').value='';
+}
+
+// â”€â”€ COUNTDOWN â”€â”€
+function updateCountdown(){
+  const now=new Date();
+  const next=new Date(now.getFullYear(),now.getMonth()+1,1);
+  const diff=next-now;
+  const d=Math.floor(diff/86400000);
+  const h=Math.floor((diff%86400000)/3600000);
+  const m=Math.floor((diff%3600000)/60000);
+  const cd=document.getElementById('cd-d');
+  if(cd){cd.textContent=String(d).padStart(2,'0');document.getElementById('cd-h').textContent=String(h).padStart(2,'0');document.getElementById('cd-m').textContent=String(m).padStart(2,'0')}
+}
+setInterval(updateCountdown,60000);
+
+// â”€â”€ TOAST â”€â”€
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
+

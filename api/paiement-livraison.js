@@ -178,6 +178,33 @@ module.exports = async function handler(req, res) {
       })
     }).catch((err) => console.error('[paiement-livraison] transaction:', err.message));
 
+    await fetch(`${SB_URL}/rest/v1/transaction_audit_events`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({
+        livraison_id: livraison.id,
+        user_id: session.id,
+        actor_id: session.id,
+        event_type: 'payment_intent_created_manual_capture',
+        amount_cents: montantCents,
+        currency,
+        stripe_payment_intent: intent.id,
+        status: intent.status,
+        evidence: {
+          source: 'api/paiement-livraison',
+          capture_method: 'manual',
+          colis_id: colisId,
+          created_for_dispute_retention: true
+        },
+        retention_until: new Date(Date.now() + 7 * 365 * 24 * 60 * 60 * 1000).toISOString()
+      })
+    }).catch((err) => console.error('[paiement-livraison] audit:', err.message));
+
     await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison.id}`, {
       method: 'PATCH',
       headers: {
@@ -205,4 +232,3 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
   }
 };
-

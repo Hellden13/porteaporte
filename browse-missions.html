@@ -8,36 +8,53 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth.js"></script>
   <script src="/js/modal-helper.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(10,12,16,.95);border-bottom:1px solid #1F2937}
-    .brand{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none;color:#F0F2F5}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border)}
+    .brand{font-weight:900;font-size:22px;letter-spacing:-1px;text-decoration:none;color:var(--brand-text)}
     .page{max-width:1120px;margin:0 auto;padding:32px 20px 56px}
     .hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:24px}
     h1{font-size:34px;line-height:1.12;margin-bottom:8px}
-    .muted{color:#A8ACB1;line-height:1.55}
-    .status{border:1px solid #1F2937;background:#111318;border-radius:8px;padding:12px 14px;color:#A8ACB1;font-size:14px}
+    .muted{color:var(--brand-muted);line-height:1.55}
+    .status{border:1px solid var(--brand-border);background:var(--brand-bg-surface);border-radius:8px;padding:12px 14px;color:var(--brand-muted);font-size:14px}
     .missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-    .mission-card{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .mission-card{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
     .mission-card h2{font-size:18px}
-    .pill{display:inline-flex;align-items:center;width:max-content;border:1px solid #1F2937;border-radius:999px;padding:4px 9px;color:#A8ACB1;font-size:12px}
-    .route{display:grid;gap:5px;color:#F0F2F5}
+    .pill{display:inline-flex;align-items:center;width:max-content;border:1px solid var(--brand-border);border-radius:999px;padding:4px 9px;color:var(--brand-muted);font-size:12px}
+    .route{display:grid;gap:5px;color:var(--brand-text)}
     .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .meta div{border:1px solid #1F2937;background:#0B0E13;border-radius:8px;padding:9px}
-    .meta span{display:block;color:#A8ACB1;font-size:11px;margin-bottom:2px}
-    .price{font-size:26px;font-weight:900;color:#00FF9F;margin-top:4px}
-    .empty{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:24px;color:#A8ACB1}
-    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,#00D9FF,#00FF9F);color:#0A0C10}
-    .btn.secondary{width:auto;background:#1A1F28;color:#F0F2F5;border:1px solid #1F2937;text-decoration:none}
+    .meta div{border:1px solid var(--brand-border);background:var(--brand-bg-dark);border-radius:8px;padding:9px}
+    .meta span{display:block;color:var(--brand-muted);font-size:11px;margin-bottom:2px}
+    .price{font-size:26px;font-weight:900;color:var(--brand-lime);margin-top:4px}
+    .empty{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:24px;color:var(--brand-muted)}
+    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:var(--brand-bg-dark)}
+    .btn.secondary{width:auto;background:var(--brand-bg-surface-light);color:var(--brand-text);border:1px solid var(--brand-border);text-decoration:none}
     .btn:disabled{opacity:.6;cursor:not-allowed}
+    /* Matching score */
+    .match-bar{margin:6px 0 2px;height:5px;background:var(--brand-border);border-radius:999px;overflow:hidden}
+    .match-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));transition:width .4s ease}
+    .match-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--brand-muted);margin-bottom:8px}
+    .match-score{font-weight:800;color:var(--brand-lime)}
+    .match-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+    .match-tag{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+    .tag-green{color:var(--brand-lime);border-color:rgba(0,255,159,.3);background:rgba(0,255,159,.07)}
+    .tag-yellow{color:#fbbf24;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07)}
+    .tag-red{color:#ff8a8a;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
+    /* Eco bonus */
+    .eco-gain{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:8px 12px;border-radius:8px;background:rgba(0,255,159,.07);border:1px solid rgba(0,255,159,.2)}
+    .eco-gain-left{font-size:11px;color:var(--brand-lime);font-weight:700}
+    .eco-gain-right{font-size:13px;font-weight:900;color:var(--brand-lime)}
+    .eco-banner-top{margin-bottom:16px;padding:12px 14px;border-radius:9px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);font-size:13px;color:var(--brand-lime);font-weight:700;display:flex;align-items:center;gap:10px}
+    .eco-banner-top span{color:var(--brand-muted);font-weight:400;font-size:12px}
     @media(max-width:720px){.topbar{padding:14px 16px}.hero{display:block}.hero .btn{margin-top:14px}.page{padding:24px 14px}h1{font-size:28px}}
   </style>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/index.html">PorteÃ Porte</a>
+    <a class="brand" href="/index.html">PorteàPorte</a>
     <a class="btn secondary" href="/dashboard-livreur.html">Mon dashboard</a>
   </header>
 
@@ -94,7 +111,12 @@
 
     async function loadMissions() {
       try {
+        if (window.PorteAuth && !await window.PorteAuth.requireVerifiedDriver('/livreur.html')) return;
         if (!await requireSession()) return;
+        /* Load eco bonus from profile */
+        const { data: prof } = await db.from('profiles').select('eco_bonus,transport_mode').eq('id', currentSession.user.id).single();
+        window._livreurEcoBonus = prof?.eco_bonus || 0;
+        window._livreurEcoMode  = prof?.transport_mode || '';
         setStatus('Chargement des missions compatibles...', 'info');
 
         const res = await fetch('/api/available-livraisons', {
@@ -106,7 +128,7 @@
           body: JSON.stringify({})
         });
         const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Missions indisponibles');
+        if (!res.ok) throw new Error((out.error || `Erreur ${res.status}`) + (out.details ? ': ' + out.details : ''));
 
         missions = out.livraisons || [];
         renderMissions(out.transport_mode || 'unknown');
@@ -117,6 +139,49 @@
       }
     }
 
+    function computeMatchScore(m, mode) {
+      let score = 60; // base
+      const tags = [];
+
+      // Transport compatibility
+      const dist = m.distance_km || 0;
+      const poids = m.poids_kg || 0;
+      if (mode === 'velo') {
+        if (dist <= 15 && poids <= 10) { score += 30; tags.push({t:'Trajet idéal vélo', c:'green'}); }
+        else if (dist > 30) { score -= 25; tags.push({t:'Trop loin pour vélo', c:'red'}); }
+        else if (poids > 15) { score -= 20; tags.push({t:'Colis lourd', c:'yellow'}); }
+      } else if (mode === 'voiture') {
+        if (dist >= 20 && dist <= 100) { score += 20; tags.push({t:'Distance idéale', c:'green'}); }
+        if (poids <= 50) { score += 10; }
+      } else if (mode === 'camion' || mode === 'camionnette') {
+        if (poids >= 20) { score += 25; tags.push({t:'Charge adaptée', c:'green'}); }
+        score += 10;
+      } else {
+        score += 10;
+      }
+
+      // Price attractiveness
+      const gain = (m.prix_total || 0) * 0.60;
+      if (gain >= 30) { score += 15; tags.push({t:'Bon gain', c:'green'}); }
+      else if (gain >= 15) { score += 7; tags.push({t:'Gain correct', c:'yellow'}); }
+
+      // Distance bonus (short = easier)
+      if (dist > 0 && dist <= 20) { score += 5; tags.push({t:'Livraison courte', c:'green'}); }
+
+      // Compatibility text hint
+      if (m.compatibilite && m.compatibilite.toLowerCase().includes('idéal')) score += 10;
+
+      score = Math.max(10, Math.min(100, score));
+      return { score, tags };
+    }
+
+    function matchLabel(score) {
+      if (score >= 85) return 'Excellent match';
+      if (score >= 65) return 'Bon match';
+      if (score >= 45) return 'Match moyen';
+      return 'Match faible';
+    }
+
     function renderMissions(mode) {
       const container = document.getElementById('missions-list');
       if (!missions.length) {
@@ -125,24 +190,60 @@
         return;
       }
 
-      setStatus(`${missions.length} mission(s) compatible(s) trouvee(s). Mode: ${mode}.`, 'info');
-      container.innerHTML = missions.map((m) => `
+      // Sort by match score descending
+      const scored = missions.map(m => ({ ...m, _match: computeMatchScore(m, mode) }));
+      scored.sort((a, b) => b._match.score - a._match.score);
+
+      /* Fetch livreur eco_bonus from profile (stored on loadMissions) */
+      const ecoBonus   = currentSession ? (window._livreurEcoBonus || 0) : 0;
+      const ecoMode    = window._livreurEcoMode || '';
+      const ECO_ICONS  = { pieds:'🚶', velo:'🚴', trottinette:'🛴', skateboard:'🛹', voiture_electrique:'🔋🚗', moto_electrique:'🔋🏍️', camion_electrique:'🔋🚛' };
+
+      let bannerHtml = '';
+      if (ecoBonus > 0) {
+        bannerHtml = `<div class="eco-banner-top">${ECO_ICONS[ecoMode] || '🌱'} Bonus écologique +${ecoBonus}% actif — ton gain réel est affiché sur chaque mission. <span>Merci de livrer vert !</span></div>`;
+      }
+
+      setStatus(`${scored.length} mission(s) · triées par compatibilité · Mode: ${mode}.`, 'info');
+      container.innerHTML = bannerHtml + scored.map((m) => {
+        const { score, tags } = m._match;
+        const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
+
+        const baseGain = (m.prix_total || 0) * 0.60;
+        const ecoGain  = baseGain * (ecoBonus / 100);
+        const totalGain = baseGain + ecoGain;
+
+        const gainHtml = ecoBonus > 0
+          ? `<div class="eco-gain">
+               <span class="eco-gain-left">🌱 Ton gain (60% + ${ecoBonus}% éco)</span>
+               <span class="eco-gain-right">${money(totalGain)}</span>
+             </div>`
+          : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
+
+        return `
         <article class="mission-card">
-          <span class="pill">${text(m.code, 'Mission')}</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span class="pill">${text(m.code, 'Mission')}</span>
+            <span class="match-score">${score}% · ${matchLabel(score)}</span>
+          </div>
+          <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>
+          <div class="match-tags">
+            ${tags.map(tag => `<span class="match-tag tag-${tag.c}">${tag.t}</span>`).join('')}
+          </div>
           <h2>${text(m.type_colis, 'Colis')}</h2>
           <div class="route">
-            <div><strong>Depart approx.:</strong> ${text(m.ville_depart, 'Ville masquee')}</div>
-            <div><strong>Arrivee approx.:</strong> ${text(m.ville_arrivee, 'Ville masquee')}</div>
+            <div><strong>Départ approx. :</strong> ${text(m.ville_depart, 'Ville masquée')}</div>
+            <div><strong>Arrivée approx. :</strong> ${text(m.ville_arrivee, 'Ville masquée')}</div>
           </div>
           <div class="meta">
             <div><span>Poids</span>${text(m.poids_kg, 'N/D')} kg</div>
             <div><span>Distance</span>${m.distance_km ? m.distance_km + ' km' : 'N/D'}</div>
           </div>
-          <p class="muted">${text(m.compatibilite, 'Compatible avec ton profil')}</p>
           <div class="price">${money(m.prix_total)}</div>
+          ${gainHtml}
           <button class="btn" type="button" onclick="acceptMission('${m.id}')">Accepter la mission</button>
-        </article>
-      `).join('');
+        </article>`;
+      }).join('');
     }
 
     async function acceptMission(id) {
@@ -176,6 +277,7 @@
 
     document.addEventListener('DOMContentLoaded', loadMissions);
   </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
 

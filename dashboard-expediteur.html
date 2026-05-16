@@ -3,323 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Dashboard ExpÃ©diteur - PorteÃ Porte">
-    <title>Dashboard ExpÃ©diteur - PorteÃ Porte</title>
+    <meta name="description" content="Dashboard expéditeur - PorteàPorte">
+    <title>Dashboard expéditeur - PorteàPorte</title>
     
-    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="/assets/brand-uniform.css">
     
     <style>
+        body { padding: 0; }
+
         .dashboard {
             display: grid;
             grid-template-columns: 1fr;
-            gap: var(--spacing-lg);
-            padding: var(--spacing-lg) 0;
+            gap: 24px;
+            padding: 24px 0;
             min-height: 100vh;
         }
-        
+
         @media (min-width: 1024px) {
             .dashboard {
-                grid-template-columns: 1fr 350px;
+                grid-template-columns: 1fr 320px;
             }
         }
-        
+
         .dashboard-header {
-            background: var(--color-surface);
-            border-bottom: 1px solid var(--color-border);
-            padding: var(--spacing-lg) 0;
+            background: var(--brand-bg-surface);
+            border-bottom: 1px solid var(--brand-bg-surface-light);
+            padding: 20px 0;
             position: sticky;
             top: 60px;
-            z-index: var(--z-sticky);
+            z-index: 10;
         }
-        
+
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: var(--spacing-md);
+            gap: 16px;
         }
-        
+
         .header-title h1 {
-            font-size: var(--font-size-2xl);
+            font-size: 1.5rem;
+            font-weight: 700;
             margin: 0;
+            color: var(--brand-text);
         }
-        
+
         .header-actions {
             display: flex;
-            gap: var(--spacing-sm);
+            gap: 8px;
         }
-        
+
         .header-stats {
             display: flex;
-            gap: var(--spacing-lg);
+            gap: 12px;
             flex-wrap: wrap;
+            width: 100%;
         }
-        
+
+        @media (min-width: 768px) {
+            .header-stats { width: auto; }
+        }
+
         .stat-badge {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: var(--spacing-md);
-            background: var(--color-background);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--color-border);
+            padding: 12px 20px;
+            background: var(--brand-bg-dark);
+            border-radius: 10px;
+            border: 1px solid var(--brand-bg-surface-light);
+            min-width: 80px;
         }
-        
+
         .stat-value {
-            font-size: var(--font-size-xl);
-            font-weight: var(--font-weight-bold);
-            color: var(--color-primary);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--brand-lime);
+            line-height: 1;
         }
-        
+
         .stat-label {
-            font-size: var(--font-size-xs);
-            color: var(--color-text-secondary);
-            margin-top: var(--spacing-xs);
+            font-size: 0.72rem;
+            color: var(--brand-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+            letter-spacing: .04em;
         }
-        
+
         .missions-section {
             display: grid;
-            gap: var(--spacing-lg);
+            gap: 24px;
         }
-        
-        .missions-tabs {
+
+        .quick-create {
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .quick-create-header {
             display: flex;
-            gap: var(--spacing-sm);
-            border-bottom: 1px solid var(--color-border);
-            overflow-x: auto;
-            padding-bottom: var(--spacing-sm);
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
-        
-        .tab-button {
-            padding: var(--spacing-sm) var(--spacing-md);
-            background: transparent;
-            border: none;
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            font-weight: var(--font-weight-medium);
-            font-size: var(--font-size-sm);
-            border-bottom: 2px solid transparent;
-            transition: all var(--transition-base);
-            white-space: nowrap;
+
+        .quick-create-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--brand-text);
+            margin: 0 0 4px;
         }
-        
-        .tab-button.active {
-            color: var(--color-primary);
-            border-bottom-color: var(--color-primary);
+
+        .quick-create-note {
+            color: var(--brand-muted);
+            font-size: .82rem;
+            line-height: 1.5;
         }
-        
-        .missions-grid {
+
+        .quick-create-grid {
             display: grid;
-            gap: var(--spacing-lg);
+            gap: 12px;
             grid-template-columns: 1fr;
         }
-        
+
+        @media (min-width: 760px) {
+            .quick-create-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .quick-create-grid .span-2 { grid-column: span 2; }
+        }
+
+        .form-field { display: grid; gap: 6px; }
+        .form-field label { color: var(--brand-muted); font-size: .78rem; font-weight: 700; }
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            min-height: 42px;
+            border-radius: 8px;
+            border: 1px solid var(--brand-bg-surface-light);
+            background: var(--brand-bg-dark);
+            color: var(--brand-text);
+            padding: 10px 12px;
+            font: inherit;
+        }
+
+        .form-field textarea { min-height: 72px; resize: vertical; }
+
+        .review-box {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 10px;
+            background: rgba(184,245,62,.04);
+            margin-top: 10px;
+        }
+
+        .review-box textarea {
+            width: 100%;
+            min-height: 64px;
+            border-radius: 8px;
+            border: 1px solid var(--brand-bg-surface-light);
+            background: var(--brand-bg-dark);
+            color: var(--brand-text);
+            padding: 10px;
+            font: inherit;
+        }
+
+        .missions-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--brand-bg-surface-light);
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--brand-muted);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: color .2s, border-color .2s;
+            white-space: nowrap;
+            margin-bottom: -1px;
+        }
+
+        .tab-button:hover { color: var(--brand-text); }
+
+        .tab-button.active {
+            color: var(--brand-lime);
+            border-bottom-color: var(--brand-lime);
+        }
+
+        .missions-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1fr;
+        }
+
         @media (min-width: 768px) {
-            .missions-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .missions-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        
+
         @media (min-width: 1024px) {
-            .missions-grid {
-                grid-template-columns: 1fr;
-            }
+            .missions-grid { grid-template-columns: 1fr; }
         }
-        
+
         .mission-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-lg);
-            transition: all var(--transition-base);
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color .2s, transform .2s, box-shadow .2s;
         }
-        
+
         .mission-card:hover {
-            border-color: var(--color-primary);
-            box-shadow: var(--shadow-md);
+            border-color: var(--brand-lime);
+            box-shadow: 0 4px 24px rgba(184,245,62,.10);
             transform: translateY(-2px);
         }
-        
+
         .mission-header {
             display: flex;
             justify-content: space-between;
-            align-items: start;
-            margin-bottom: var(--spacing-md);
+            align-items: flex-start;
+            margin-bottom: 14px;
+            gap: 10px;
         }
-        
+
         .mission-title {
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-bold);
+            font-size: 1rem;
+            font-weight: 700;
             margin: 0;
+            color: var(--brand-text);
         }
-        
+
         .mission-status {
             display: inline-flex;
             align-items: center;
-            padding: var(--spacing-xs) var(--spacing-sm);
-            border-radius: var(--radius-full);
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        
+
         .mission-status.pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--color-warning);
+            background: rgba(245,158,11,.15);
+            color: var(--brand-warning);
         }
-        
+
         .mission-status.active {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--color-info);
+            background: rgba(11,255,203,.15);
+            color: var(--brand-lime);
         }
-        
+
         .mission-status.completed {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--color-success);
+            background: rgba(16,185,129,.15);
+            color: var(--brand-success);
         }
-        
+
         .mission-details {
             display: grid;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-lg);
-            padding-bottom: var(--spacing-lg);
-            border-bottom: 1px solid var(--color-border);
+            gap: 6px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--brand-bg-surface-light);
         }
-        
+
         .detail-row {
             display: flex;
             justify-content: space-between;
-            font-size: var(--font-size-sm);
+            font-size: 0.875rem;
         }
-        
-        .detail-label {
-            color: var(--color-text-secondary);
-        }
-        
+
+        .detail-label { color: var(--brand-muted); }
+
         .detail-value {
-            color: var(--color-text);
-            font-weight: var(--font-weight-medium);
+            color: var(--brand-text);
+            font-weight: 600;
         }
-        
+
         .mission-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 14px;
         }
-        
+
         .mission-price {
-            font-size: var(--font-size-xl);
-            font-weight: var(--font-weight-bold);
-            color: var(--color-primary);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--brand-lime);
         }
-        
+
         .mission-driver {
-            font-size: var(--font-size-sm);
-            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+            color: var(--brand-muted);
         }
-        
+
         .mission-actions {
             display: flex;
-            gap: var(--spacing-sm);
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        
-        .mission-actions .btn {
-            flex: 1;
+
+        .mission-actions .btn { flex: 1; min-width: 120px; }
+
+        @media (max-width: 640px) {
+            .dashboard-header { top: 0; }
+            .header-content { align-items: stretch; }
+            .header-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .quick-create { padding: 16px; }
+            .quick-create-header .btn { width: 100%; justify-content: center; }
+            .quick-create-grid .span-2 { grid-column: auto; }
+            .mission-footer { align-items: stretch; flex-direction: column; }
+            .mission-actions { flex-direction: column; }
+            .mission-actions .btn { width: 100%; min-width: 0; }
         }
-        
+
+        .mission-note {
+            font-size: 11px;
+            color: var(--brand-muted);
+            line-height: 1.5;
+            margin-top: 8px;
+            flex-basis: 100%;
+        }
+
         /* SIDEBAR */
-        .sidebar {
-            display: none;
-        }
-        
+        .sidebar { display: none; }
+
         @media (min-width: 1024px) {
             .sidebar {
                 display: flex;
                 flex-direction: column;
-                gap: var(--spacing-lg);
+                gap: 16px;
             }
         }
-        
+
         .sidebar-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-lg);
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 20px;
         }
-        
+
         .sidebar-title {
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-bold);
-            margin-bottom: var(--spacing-md);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--brand-lime);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
         }
-        
-        .quick-actions {
-            display: grid;
-            gap: var(--spacing-sm);
-        }
-        
+
+        .quick-actions { display: grid; gap: 8px; }
+
         .quick-action-btn {
+            display: block;
             width: 100%;
             text-align: left;
-            padding: var(--spacing-md);
-            background: var(--color-background);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
+            padding: 12px 14px;
+            background: var(--brand-bg-dark);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 8px;
             cursor: pointer;
-            transition: all var(--transition-base);
-            color: var(--color-text);
+            color: var(--brand-text);
             text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: border-color .2s, background .2s;
         }
-        
+
         .quick-action-btn:hover {
-            border-color: var(--color-primary);
-            background: rgba(184, 245, 62, 0.05);
+            border-color: var(--brand-lime);
+            background: rgba(184,245,62,.05);
+            color: var(--brand-lime);
         }
-        
-        .stats-list {
-            display: grid;
-            gap: var(--spacing-sm);
-        }
-        
+
+        .stats-list { display: grid; gap: 8px; }
+
         .stats-item {
             display: flex;
             justify-content: space-between;
-            padding: var(--spacing-sm);
-            background: var(--color-background);
-            border-radius: var(--radius-lg);
-            font-size: var(--font-size-sm);
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--brand-bg-dark);
+            border-radius: 8px;
+            font-size: 0.875rem;
         }
-        
-        .stats-item-label {
-            color: var(--color-text-secondary);
-        }
-        
+
+        .stats-item-label { color: var(--brand-muted); }
+
         .stats-item-value {
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-primary);
+            font-weight: 700;
+            color: var(--brand-lime);
         }
-        
+
         .empty-state {
             text-align: center;
-            padding: var(--spacing-3xl) var(--spacing-lg);
+            padding: 48px 24px;
         }
-        
+
         .empty-state-icon {
             font-size: 3rem;
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 16px;
         }
-        
+
         .empty-state-title {
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-bold);
-            margin-bottom: var(--spacing-sm);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--brand-text);
         }
-        
+
         .empty-state-text {
-            color: var(--color-text-secondary);
-            margin-bottom: var(--spacing-xl);
+            color: var(--brand-muted);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -328,10 +438,10 @@
     <nav class="navbar">
         <div class="container">
             <div class="navbar-content">
-                <div class="navbar-brand">ðŸšš PorteÃ Porte</div>
+                <div class="navbar-brand">PorteàPorte</div>
                 <div id="auth-user-info" class="flex items-center gap-md">
                     <span id="auth-user-name" class="text-sm font-semibold"></span>
-                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">DÃ©connexion</button>
+                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
                 </div>
             </div>
         </div>
@@ -342,10 +452,11 @@
         <div class="container">
             <div class="header-content">
                 <div class="header-title">
-                    <h1>Mes Livraisons</h1>
+                    <div id="header-welcome" style="font-size:.85rem;color:#9BA1A9;margin-bottom:4px">Bonjour,</div>
+                    <h1>Mes Expéditions</h1>
                 </div>
                 <div class="header-actions">
-                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle Livraison</a>
+                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
                 </div>
                 <div class="header-stats">
                     <div class="stat-badge">
@@ -354,11 +465,15 @@
                     </div>
                     <div class="stat-badge">
                         <div class="stat-value" id="stat-pending">0</div>
-                        <div class="stat-label">En attente</div>
+                        <div class="stat-label">En cours</div>
                     </div>
                     <div class="stat-badge">
                         <div class="stat-value" id="stat-completed">0</div>
-                        <div class="stat-label">ComplÃ©tÃ©es</div>
+                        <div class="stat-label">Complétées</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="stat-xp">0</div>
+                        <div class="stat-label">XP</div>
                     </div>
                 </div>
             </div>
@@ -368,21 +483,79 @@
     <!-- MAIN CONTENT -->
     <div class="container dashboard">
         <div class="missions-section">
+            <section class="quick-create">
+                <div class="quick-create-header">
+                    <div>
+                        <h2 class="quick-create-title">Créer une livraison rapide</h2>
+                        <div class="quick-create-note">Les adresses complètes restent protégées. Le paiement escrow se fait à l'étape suivante.</div>
+                    </div>
+                    <a href="create-mission.html" class="btn btn-ghost">Formulaire complet</a>
+                </div>
+                <form id="quick-create-form" class="quick-create-grid">
+                    <div class="form-field">
+                        <label for="qc-ville-depart">Ville départ</label>
+                        <input id="qc-ville-depart" required autocomplete="address-level2" placeholder="Montréal">
+                    </div>
+                    <div class="form-field">
+                        <label for="qc-ville-arrivee">Ville arrivée</label>
+                        <input id="qc-ville-arrivee" required autocomplete="address-level2" placeholder="Laval">
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="qc-adresse-depart">Adresse de ramassage</label>
+                        <input id="qc-adresse-depart" required autocomplete="street-address" placeholder="Adresse complète">
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="qc-adresse-arrivee">Adresse de livraison</label>
+                        <input id="qc-adresse-arrivee" required autocomplete="street-address" placeholder="Adresse complète">
+                    </div>
+                    <div class="form-field">
+                        <label for="qc-type">Type de colis</label>
+                        <select id="qc-type">
+                            <option value="document">Document</option>
+                            <option value="vetements">Vêtements</option>
+                            <option value="electronique">Électronique</option>
+                            <option value="nourriture">Nourriture</option>
+                            <option value="fragile">Fragile</option>
+                            <option value="colis" selected>Autre colis</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="qc-poids">Poids estimé (kg)</label>
+                        <input id="qc-poids" type="number" min="0.1" step="0.1" value="1">
+                    </div>
+                    <div class="form-field">
+                        <label for="qc-valeur">Valeur déclarée ($)</label>
+                        <input id="qc-valeur" type="number" min="0" step="1" value="0">
+                    </div>
+                    <div class="form-field">
+                        <label for="qc-prix">Prix livraison ($)</label>
+                        <input id="qc-prix" type="number" min="1" step="0.01" value="5">
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="qc-notes">Notes spéciales</label>
+                        <textarea id="qc-notes" placeholder="Instructions utiles pour le livreur"></textarea>
+                    </div>
+                    <div class="span-2" style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+                        <button id="quick-create-btn" class="btn btn-primary" type="submit">Créer et passer au paiement</button>
+                    </div>
+                </form>
+            </section>
+
             <!-- TABS -->
             <div class="missions-tabs">
-                <button class="tab-button active" onclick="switchTab('all')">ðŸ“¦ Toutes</button>
-                <button class="tab-button" onclick="switchTab('pending')">â³ En attente</button>
-                <button class="tab-button" onclick="switchTab('completed')">âœ… ComplÃ©tÃ©es</button>
-                <button class="tab-button" onclick="switchTab('disputes')">âš ï¸ Litiges</button>
+                <button class="tab-button active" onclick="switchTab('all')">Toutes</button>
+                <button class="tab-button" onclick="switchTab('pending')">En attente</button>
+                <button class="tab-button" onclick="switchTab('completed')">Complétées</button>
+                <button class="tab-button" onclick="switchTab('disputes')">Litiges</button>
             </div>
 
             <!-- MISSIONS GRID -->
             <div id="missions-container" class="missions-grid">
                 <div class="empty-state">
-                    <div class="empty-state-icon">ðŸ“­</div>
+                    <div class="empty-state-icon"></div>
                     <div class="empty-state-title">Aucune livraison</div>
-                    <div class="empty-state-text">CrÃ©ez votre premiÃ¨re livraison pour commencer</div>
-                    <a href="create-mission.html" class="btn btn-primary">CrÃ©er une Livraison</a>
+                    <div class="empty-state-text">Créez votre première livraison pour commencer</div>
+                    <a href="create-mission.html" class="btn btn-primary">Créer une livraison</a>
                 </div>
             </div>
         </div>
@@ -391,28 +564,32 @@
         <aside class="sidebar">
             <!-- QUICK ACTIONS -->
             <div class="sidebar-card">
-                <div class="sidebar-title">âš¡ Actions Rapides</div>
+                <div class="sidebar-title">Actions rapides</div>
                 <div class="quick-actions">
-                    <a href="create-mission.html" class="quick-action-btn">ðŸ“¦ Nouvelle Livraison</a>
-                    <a href="browse-missions.html" class="quick-action-btn">ðŸ” Parcourir</a>
-                    <a href="profile.html" class="quick-action-btn">ðŸ‘¤ Mon Profil</a>
+                    <a href="create-mission.html" class="quick-action-btn">Nouvelle livraison</a>
+                    <a href="browse-missions.html" class="quick-action-btn">Parcourir</a>
+                    <a href="profile.html" class="quick-action-btn">Mon profil</a>
                 </div>
             </div>
 
             <!-- STATS -->
             <div class="sidebar-card">
-                <div class="sidebar-title">ðŸ“Š Statistiques</div>
+                <div class="sidebar-title">Mon Profil</div>
                 <div class="stats-list">
                     <div class="stats-item">
-                        <span class="stats-item-label">DÃ©pensÃ©s</span>
-                        <span class="stats-item-value" id="user-spent">$0</span>
+                        <span class="stats-item-label">XP</span>
+                        <span class="stats-item-value" id="user-xp">0 XP</span>
                     </div>
                     <div class="stats-item">
                         <span class="stats-item-label">Score</span>
-                        <span class="stats-item-value" id="user-score">5.0â˜…</span>
+                        <span class="stats-item-value" id="user-score">—</span>
                     </div>
                     <div class="stats-item">
-                        <span class="stats-item-label">Compte</span>
+                        <span class="stats-item-label">Total dépensé</span>
+                        <span class="stats-item-value" id="user-spent">$0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-item-label">Solde compte</span>
                         <span class="stats-item-value" id="user-balance">$0</span>
                     </div>
                 </div>
@@ -429,24 +606,94 @@
     <script>
         let currentTab = 'all';
         let cachedLivraisons = [];
+        const captureInProgress = new Set();
+        const reviewInProgress = new Set();
 
         async function initPage() {
             if (!await AUTH_API.requireAuth('expediteur')) return;
 
             const user = AUTH_API.getUser();
             document.getElementById('auth-user-name').textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || user.email || '';
+
+            // Accueil personnalisé
+            const prenom = user.prenom || user.email?.split('@')[0] || '';
+            document.getElementById('header-welcome').textContent = 'Bonjour, ' + prenom + ' 👋';
+
+            // Stats profil sidebar
+            const profile = user.profile || {};
+            const xp = profile.xp || 0;
+            const score = profile.score || profile.score_confiance || 0;
+            document.getElementById('user-xp').textContent = xp + ' XP';
+            document.getElementById('stat-xp').textContent = xp;
+            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1) + '★' : '—';
+            document.getElementById('user-balance').textContent = '$' + ((profile.coins || 0) / 100).toFixed(2);
+
             await loadMissions();
+            setupRealtime();
+            document.getElementById('quick-create-form')?.addEventListener('submit', createQuickLivraison);
+        }
+
+        async function createQuickLivraison(event) {
+            event.preventDefault();
+            const user = AUTH_API.getUser();
+            const btn = document.getElementById('quick-create-btn');
+            const payload = {
+                ville_depart: document.getElementById('qc-ville-depart').value.trim(),
+                ville_arrivee: document.getElementById('qc-ville-arrivee').value.trim(),
+                adresse_depart: document.getElementById('qc-adresse-depart').value.trim(),
+                adresse_arrivee: document.getElementById('qc-adresse-arrivee').value.trim(),
+                type_colis: document.getElementById('qc-type').value,
+                poids_kg: Number(document.getElementById('qc-poids').value || 1),
+                valeur_declaree: Number(document.getElementById('qc-valeur').value || 0),
+                prix_total: Number(document.getElementById('qc-prix').value || 0),
+                notes: document.getElementById('qc-notes').value.trim()
+            };
+            if (!payload.ville_depart || !payload.ville_arrivee || !payload.adresse_depart || !payload.adresse_arrivee || payload.prix_total <= 0) {
+                showError('❌ Remplis les villes, les adresses et un prix valide.');
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Création...';
+            try {
+                const res = await fetch('/api/create-livraison', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + user.session.access_token
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    showError('❌ ' + (result.error || 'Création impossible'));
+                    return;
+                }
+                const livraison = result.livraison || {};
+                const params = new URLSearchParams({
+                    livraison_id: livraison.id || '',
+                    montant: String(payload.prix_total),
+                    dep: payload.ville_depart,
+                    arr: payload.ville_arrivee,
+                    type: payload.type_colis,
+                    poids: String(payload.poids_kg)
+                });
+                showSuccess('✅ Livraison créée. Redirection vers le paiement escrow.');
+                setTimeout(() => { window.location.href = 'paiement.html?' + params.toString(); }, 700);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Créer et passer au paiement';
+            }
         }
 
         async function loadMissions() {
-            const db = window.supabase;
+            const db = window.db;
             if (!db) return;
 
             const { data, error } = await db
                 .from('livraisons')
                 .select('id,code,description,type_colis,ville_depart,ville_arrivee,adresse_depart,adresse_arrivee,poids_kg,prix_total,statut,livreur_id,created_at,cree_le')
                 .eq('expediteur_id', AUTH_API.getUser().id)
-                .order('created_at', { ascending: false });
+                .order('cree_le', { ascending: false });
 
             if (error) {
                 console.error('ERREUR livraisons expediteur:', error.message);
@@ -511,7 +758,13 @@
 
         function actionButtons(mission) {
             const id = encodeURIComponent(mission.id);
-            const buttons = [`<a class="btn btn-ghost" href="gps-tracker.html?id=${id}">Suivi</a>`];
+            const buttons = [];
+            if (['confirme','en_route','ramasse'].includes(mission.statut)) {
+                buttons.push(`<a class="btn btn-ghost" href="map.html?id=${id}">Suivi GPS</a>`);
+            }
+            if (mission.livreur_id && ['confirme','en_route','ramasse','livre'].includes(mission.statut)) {
+                buttons.push(`<a class="btn btn-ghost" href="messagerie.html?livraison=${id}">💬 Livreur</a>`);
+            }
 
             if (['en_attente', 'publie'].includes(mission.statut)) {
                 const params = new URLSearchParams({
@@ -526,14 +779,75 @@
             }
 
             if (mission.statut === 'livre') {
-                buttons.unshift(`<a class="btn btn-primary" href="gps-tracker.html?id=${id}">Confirmer reception</a>`);
+                buttons.unshift(`<button class="btn btn-primary" type="button" data-capture-id="${mission.id}" onclick="capturePayment('${mission.id}', '${mission.statut}')">Confirmer reception</button>`);
+            }
+
+            if (mission.statut === 'payee' && mission.livreur_id) {
+                buttons.push(`<button class="btn btn-ghost" type="button" onclick="toggleReview('${mission.id}')">Laisser un avis</button>`);
             }
 
             if (['en_attente', 'publie', 'paiement_autorise', 'confirme'].includes(mission.statut)) {
                 buttons.push(`<button class="btn btn-ghost" type="button" onclick="cancelLivraison('${mission.id}')">Annuler</button>`);
             }
 
-            return buttons.join('') + '<div style="flex-basis:100%;font-size:11px;color:var(--color-text-secondary);line-height:1.5;margin-top:6px">Confirmez la reception seulement lorsque vous avez bien recu votre colis. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+            return buttons.join('') + '<div class="mission-note">Confirmez la reception seulement lorsque vous avez bien recu votre colis. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+        }
+
+        function reviewBox(mission) {
+            if (mission.statut !== 'payee' || !mission.livreur_id) return '';
+            return `
+                <form id="review-${mission.id}" class="review-box" style="display:none" onsubmit="submitReview(event,'${mission.id}')">
+                    <div class="form-field">
+                        <label for="rating-${mission.id}">Note livreur</label>
+                        <select id="rating-${mission.id}">
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Très bien</option>
+                            <option value="3">3 - Correct</option>
+                            <option value="2">2 - À améliorer</option>
+                            <option value="1">1 - Problème important</option>
+                        </select>
+                    </div>
+                    <textarea id="comment-${mission.id}" maxlength="800" placeholder="Commentaire court et utile"></textarea>
+                    <div style="display:flex;justify-content:flex-end;gap:8px">
+                        <button class="btn btn-primary" type="submit">Envoyer l'avis</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function toggleReview(livraisonId) {
+            const box = document.getElementById('review-' + livraisonId);
+            if (box) box.style.display = box.style.display === 'none' ? 'grid' : 'none';
+        }
+
+        async function submitReview(event, livraisonId) {
+            event.preventDefault();
+            if (reviewInProgress.has(livraisonId)) return;
+            reviewInProgress.add(livraisonId);
+            const user = AUTH_API.getUser();
+            try {
+                const res = await fetch('/api/create-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + user.session.access_token
+                    },
+                    body: JSON.stringify({
+                        livraison_id: livraisonId,
+                        rating: Number(document.getElementById('rating-' + livraisonId).value || 5),
+                        comment: document.getElementById('comment-' + livraisonId).value.trim()
+                    })
+                });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    showError('❌ ' + (result.error || 'Avis impossible'));
+                    return;
+                }
+                showSuccess('✅ Avis envoyé. Merci.');
+                document.getElementById('review-' + livraisonId).style.display = 'none';
+            } finally {
+                reviewInProgress.delete(livraisonId);
+            }
         }
 
         async function cancelLivraison(livraisonId) {
@@ -554,6 +868,44 @@
             }
             showSuccess('✅ ' + (result.message || 'Livraison annulée'));
             await loadMissions();
+        }
+
+        async function capturePayment(livraisonId, statut) {
+            if (statut !== 'livre') {
+                showError('❌ La livraison doit etre marquee livree avant de liberer Stripe.');
+                return;
+            }
+            if (captureInProgress.has(livraisonId)) return;
+            if (!confirm('Confirmer la reception et liberer le paiement Stripe au livreur?')) return;
+            captureInProgress.add(livraisonId);
+            document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
+                btn.disabled = true;
+                btn.textContent = 'Liberation...';
+            });
+            const user = AUTH_API.getUser();
+            try {
+                const res = await fetch('/api/capture-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + user.session.access_token
+                    },
+                    body: JSON.stringify({ livraison_id: livraisonId })
+                });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    showError('❌ ' + (result.error || 'Capture Stripe impossible'));
+                    return;
+                }
+                showSuccess('✅ Reception confirmee. Paiement libere au livreur.');
+                await loadMissions();
+            } finally {
+                captureInProgress.delete(livraisonId);
+                document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmer reception';
+                });
+            }
         }
 
         function displayMissions(missions) {
@@ -594,6 +946,7 @@
                         ${mission.livreur_id ? `<div class="mission-driver">Livreur assigne</div>` : `<div class="mission-driver">En attente de livreur</div>`}
                     </div>
                     <div class="mission-actions">${actionButtons(mission)}</div>
+                    ${reviewBox(mission)}
                 </div>
             `).join('');
         }
@@ -605,15 +958,27 @@
             displayMissions(cachedLivraisons);
         }
 
+        function setupRealtime() {
+            const db = window.getSupabaseClient();
+            const userId = AUTH_API.getUser()?.id;
+            if (!db || !userId) return;
+
+            db.channel('expediteur-livraisons')
+              .on('postgres_changes', {
+                  event: '*',
+                  schema: 'public',
+                  table: 'livraisons',
+                  filter: `expediteur_id=eq.${userId}`
+              }, () => loadMissions())
+              .subscribe();
+        }
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPage);
         } else {
             initPage();
         }
     </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
-
-
-
-

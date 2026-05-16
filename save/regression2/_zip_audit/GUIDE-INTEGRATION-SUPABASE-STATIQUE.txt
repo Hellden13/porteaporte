@@ -1,0 +1,297 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔗 GUIDE INTÉGRATION - DASHBOARD ADMIN STATIQUE + SUPABASE
+═══════════════════════════════════════════════════════════════════════════════
+
+TYPE DE PROJET: HTML/CSS/JS statique (PAS React/Vite/npm)
+OBJECTIF: Connecter le dashboard admin à Supabase RÉELLEMENT
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 FICHIERS À INSTALLER/MODIFIER
+═══════════════════════════════════════════════════════════════════════════════
+
+FICHIER 1: js/admin-crud.js (NOUVEAU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Contient:
+  • Credentials Supabase (URL + ANON KEY)
+  • Librairie Supabase depuis CDN (jsonjsdelivr)
+  • Fonctions CRUD pour:
+    - loadUsers() / createUser() / updateUser() / deleteUser()
+    - loadDeliveries() / createDelivery() / updateDelivery() / deleteDelivery()
+    - loadDrivers()
+    - loadTransactions()
+  • initDashboard() pour charger tout au démarrage
+
+FICHIER 2: admin-dashboard.html (REMPLACER CELUI EXISTANT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Contient:
+  • IDs corrects pour les tables:
+    ✓ users-table, users-badge
+    ✓ deliveries-table, deliveries-badge
+    ✓ drivers-table, drivers-badge
+    ✓ transactions-table, transactions-badge
+  • Import du script admin-crud.js
+  • Tablesavec structure HTML simple
+  • Styles sombre (matching PorteàPorte)
+
+═══════════════════════════════════════════════════════════════════════════════
+🚀 ÉTAPES D'INSTALLATION
+═══════════════════════════════════════════════════════════════════════════════
+
+ÉTAPE 1: Créer le dossier js/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Chemin: C:\Users\User\OneDrive\Desktop\Site\js\
+
+Créer le dossier s'il n'existe pas:
+  1. Ouvre l'explorateur
+  2. Va dans: C:\Users\User\OneDrive\Desktop\Site\
+  3. Clique droit → Nouveau dossier
+  4. Nommme: js
+  5. ✅ Dossier créé
+
+ÉTAPE 2: Copier admin-crud.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Télécharge: admin-crud.js
+  2. Copie dans: C:\Users\User\OneDrive\Desktop\Site\js\
+  3. ✅ Fichier en place
+
+ÉTAPE 3: Remplacer admin-dashboard.html
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Télécharge: admin-dashboard-CORRIGE.html
+  2. Renomme en: admin-dashboard.html
+  3. Copie dans: C:\Users\User\OneDrive\Desktop\Site\
+  4. Remplace le fichier existant
+  5. ✅ Dashboard mis à jour
+
+ÉTAPE 4: Vérifier la structure
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ton dossier Site/ doit contenir:
+
+  Site/
+  ├── admin-dashboard.html (✅ nouveau)
+  ├── login.html
+  ├── index.html
+  ├── ... (autres fichiers)
+  └── js/
+      └── admin-crud.js (✅ nouveau)
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ TESTER LOCALEMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+Ouvrir dans le navigateur:
+  → file:///C:\Users\User\OneDrive\Desktop\Site\admin-dashboard.html
+
+Ou si tu as un serveur local:
+  → http://localhost:3000/admin-dashboard.html
+
+Ouvrir la CONSOLE (F12 → Console):
+
+Vérifier ces messages:
+  ✅ "✅ Supabase connecté"
+  ✅ "✅ Fonctions CRUD chargées"
+  ✅ "🚀 Initialisation du dashboard admin..."
+  ✅ "✅ Dashboard admin initialisé"
+
+═══════════════════════════════════════════════════════════════════════════════
+🧪 TESTER LES FONCTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Dans la CONSOLE du navigateur (F12), taper:
+
+1️⃣ CHARGER LES UTILISATEURS:
+   adminCRUD.loadUsers()
+   
+   Résultat attendu:
+     ✅ "🔄 Chargement des utilisateurs..."
+     ✅ "✅ Utilisateurs chargés: X"
+     ✅ La table se remplit avec les données
+
+2️⃣ CHARGER LES LIVRAISONS:
+   adminCRUD.loadDeliveries()
+   
+   Résultat attendu:
+     ✅ "🔄 Chargement des livraisons..."
+     ✅ "✅ Livraisons chargées: X"
+
+3️⃣ CHARGER LES LIVREURS:
+   adminCRUD.loadDrivers()
+   
+   Résultat attendu:
+     ✅ "🔄 Chargement des livreurs..."
+     ✅ "✅ Livreurs chargés: X"
+
+4️⃣ CHARGER LES TRANSACTIONS:
+   adminCRUD.loadTransactions()
+   
+   Résultat attendu:
+     ✅ "🔄 Chargement des transactions..."
+     ✅ "✅ Transactions chargées: X"
+
+Si tu vois "❌ Erreur":
+  → La table n'existe peut-être pas dans Supabase
+  → Lire la section "Créer les tables Supabase" ci-dessous
+
+═══════════════════════════════════════════════════════════════════════════════
+🗄️ CRÉER LES TABLES SUPABASE
+═══════════════════════════════════════════════════════════════════════════════
+
+Si les tables n'existent pas, les créer dans Supabase:
+
+URL Supabase: https://supabase.com/dashboard/project/miqrircrfpzkmvvacgwt/sql
+
+CRÉER: profiles (utilisateurs)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  prenom TEXT,
+  nom TEXT,
+  role TEXT DEFAULT 'expediteur', -- 'expediteur' ou 'livreur'
+  actif BOOLEAN DEFAULT true,
+  score NUMERIC DEFAULT 0, -- Note 0-5
+  coins INTEGER DEFAULT 0, -- PorteCoins
+  livraisons INTEGER DEFAULT 0,
+  cree_le TIMESTAMP DEFAULT NOW(),
+  mis_a_jour_le TIMESTAMP DEFAULT NOW()
+);
+
+CRÉER: missions (livraisons)
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE TABLE missions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  titre TEXT,
+  description TEXT,
+  depart TEXT,
+  arrivee TEXT,
+  date TIMESTAMP,
+  prix NUMERIC DEFAULT 0,
+  statut TEXT DEFAULT 'en_attente', -- 'en_attente', 'en_route', 'livree'
+  expediteur_id UUID REFERENCES profiles(id),
+  livreur_id UUID REFERENCES profiles(id),
+  cree_le TIMESTAMP DEFAULT NOW()
+);
+
+CRÉER: payment_transactions (paiements)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE TABLE payment_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  delivery_id UUID REFERENCES missions(id),
+  total_amount NUMERIC NOT NULL,
+  livreur_amount NUMERIC,
+  porteaporte_amount NUMERIC,
+  causes_amount NUMERIC,
+  concours_amount NUMERIC,
+  claude_amount NUMERIC,
+  fees_amount NUMERIC,
+  status TEXT DEFAULT 'pending', -- 'pending', 'released', 'refunded'
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+═══════════════════════════════════════════════════════════════════════════════
+🔐 SÉCURITÉ
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ Credentials Supabase (dans admin-crud.js):
+   SUPABASE_URL = 'https://miqrircrfpzkmvvacgwt.supabase.co'
+   SUPABASE_ANON_KEY = 'eyJhbGci...'
+
+   ⚠️ IMPORTANT:
+     • Cette clé ANON est publique (visible en frontend)
+     • Elle ne peut créer/modifier/supprimer que ce que RLS permet
+     • Configurer RLS dans Supabase pour protéger les données
+
+   RLS À CONFIGURER:
+     ✓ Permettre lecture profiles si connecté
+     ✓ Permettre création de profil à l'inscription
+     ✓ Permettre update du propre profil
+     ✓ Restreindre suppression admin seulement
+
+═══════════════════════════════════════════════════════════════════════════════
+📝 EXEMPLE: CRÉER UN UTILISATEUR DEPUIS CONSOLE
+═══════════════════════════════════════════════════════════════════════════════
+
+adminCRUD.createUser({
+  prenom: 'Marc',
+  nom: 'Livreur',
+  email: 'marc@test.com',
+  role: 'livreur'
+})
+
+Résultat attendu:
+  ✅ "🟢 Création utilisateur: marc@test.com"
+  ✅ "✅ Utilisateur créé"
+  → La table se réactualise automatiquement
+
+═══════════════════════════════════════════════════════════════════════════════
+🐛 DÉPANNAGE
+═══════════════════════════════════════════════════════════════════════════════
+
+ERREUR: "Supabase non initialisé"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cause: admin-crud.js ne s'est pas chargé
+Solution:
+  1. Vérifier que js/admin-crud.js existe
+  2. Vérifier le chemin dans le HTML: <script src="js/admin-crud.js"></script>
+  3. Recharger la page (Ctrl+Shift+R pour vider le cache)
+
+ERREUR: "relation profiles does not exist"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cause: La table n'existe pas dans Supabase
+Solution:
+  1. Aller sur Supabase SQL Editor
+  2. Créer la table (voir section "CRÉER LES TABLES" ci-dessus)
+  3. Rafraîchir le dashboard
+
+ERREUR: "429 Too Many Requests"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cause: Trop de requêtes d'un coup
+Solution:
+  • Attendre 60 secondes
+  • Supabase gratuit a des limits
+
+ERREUR: Tableau vide mais pas d'erreur
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cause: La table existe mais est vide
+Solution:
+  • C'est normal si aucun utilisateur n'a été créé
+  • Créer des données de test
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 FONCTIONNALITÉS DISPONIBLES
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ UTILISATEURS (profiles):
+  • adminCRUD.loadUsers() → Affiche tous les utilisateurs
+  • adminCRUD.createUser(data) → Créer un utilisateur
+  • adminCRUD.updateUser(id, data) → Modifier un utilisateur
+  • adminCRUD.deleteUser(id) → Supprimer un utilisateur
+
+✅ LIVRAISONS (missions):
+  • adminCRUD.loadDeliveries() → Affiche toutes les livraisons
+  • adminCRUD.createDelivery(data) → Créer une livraison
+  • adminCRUD.updateDelivery(id, data) → Modifier une livraison
+  • adminCRUD.deleteDelivery(id) → Supprimer une livraison
+
+✅ LIVREURS (profiles filtrés):
+  • adminCRUD.loadDrivers() → Affiche les livreurs (role='livreur')
+
+✅ TRANSACTIONS (payment_transactions):
+  • adminCRUD.loadTransactions() → Affiche les transactions
+
+═══════════════════════════════════════════════════════════════════════════════
+🎯 PROCHAINES ÉTAPES
+═══════════════════════════════════════════════════════════════════════════════
+
+Après avoir testé avec succès:
+
+1. Ajouter des buttons EDIT/DELETE sur les tables
+2. Créer des modaux pour ajouter/modifier utilisateurs
+3. Ajouter filtrage et recherche
+4. Intégrer avec les autres pages du site
+5. Ajouter notifications (toast messages)
+6. Configurer RLS Supabase pour sécurité
+
+═══════════════════════════════════════════════════════════════════════════════
+Créé: 6 mai 2026
+Status: ✅ PRÊT À DÉPLOYER
+═══════════════════════════════════════════════════════════════════════════════

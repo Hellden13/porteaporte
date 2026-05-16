@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#05080A">
+<meta name="description" content="Contactez l'Ã©quipe PorteÃ Porte â support, partenariats, investisseurs et presse.">
+<title>PorteÃ Porte â Nous contacter ð</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--smoke:#141918;--s2:#1C2220;--s3:#232B28;--muted:#8A9490;--border:rgba(255,255,255,0.07);--gold:#F5C842;--teal:#0BFFCB;--red:#FF4D4D}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh}
+
+/* NAV */
+.navbar{position:sticky;top:0;z-index:100;background:rgba(5,8,10,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:20px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-links{display:flex;gap:20px;margin-left:auto;align-items:center}
+.nav-links a{color:var(--muted);font-size:13px;text-decoration:none;transition:color .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--lime)}
+.nav-cta{background:var(--lime);color:var(--ink)!important;padding:7px 16px;border-radius:4px;font-weight:700;font-size:13px}
+
+/* HERO */
+.hero{padding:80px 24px 60px;text-align:center;max-width:800px;margin:0 auto}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.2);color:var(--lime);font-size:11px;font-weight:600;padding:5px 14px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;margin-bottom:24px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,80px);letter-spacing:2px;line-height:1;margin-bottom:16px}
+.hero h1 span{color:var(--lime)}
+.hero p{font-size:17px;color:var(--muted);line-height:1.7}
+
+/* TABS */
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 24px;margin-bottom:48px}
+.tab{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s}
+.tab:hover{border-color:rgba(184,245,62,.3);color:var(--paper)}
+.tab.active{background:rgba(184,245,62,.1);border-color:rgba(184,245,62,.3);color:var(--lime)}
+
+/* MAIN LAYOUT */
+.main{max-width:1100px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:1fr 380px;gap:32px;align-items:start}
+.main.full{grid-template-columns:1fr}
+
+/* CARD */
+.card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:20px}
+.card-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.single{grid-template-columns:1fr}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.fi{background:var(--s3);border:1px solid var(--border);color:var(--paper);padding:10px 14px;border-radius:6px;font-size:13px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border .2s;width:100%}
+.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi.error{border-color:var(--red)}
+.fi option{background:var(--s3)}
+textarea.fi{min-height:130px;resize:vertical;line-height:1.6}
+.form-error{font-size:11px;color:var(--red);display:none;margin-top:2px}
+.form-error.show{display:block}
+
+/* SUJET PILLS */
+.sujet-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+.sujet-pill{background:var(--s3);border:2px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s;font-size:12px;font-weight:600}
+.sujet-pill:hover{border-color:rgba(184,245,62,.3)}
+.sujet-pill.selected{border-color:var(--lime);background:rgba(184,245,62,.06);color:var(--lime)}
+.sujet-pill .sujet-icon{font-size:22px;display:block;margin-bottom:5px}
+
+/* BTN */
+.btn-primary{background:var(--lime);color:var(--ink);border:none;padding:13px 28px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;width:100%;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:#a8e832}
+.btn-primary:disabled{background:var(--s3);color:var(--muted);cursor:not-allowed}
+
+/* SIDEBAR INFO */
+.info-bloc{margin-bottom:20px}
+.info-bloc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px}
+.info-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--s2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;text-decoration:none;color:var(--paper);transition:border-color .2s}
+.info-item:hover{border-color:rgba(184,245,62,.2)}
+.info-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.info-label{font-size:13px;font-weight:600;margin-bottom:2px}
+.info-desc{font-size:11px;color:var(--muted)}
+.info-val{font-size:12px;color:var(--lime);margin-top:4px;font-weight:600}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--border);padding:18px 0}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.faq-chevron{font-size:12px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.faq-item.open .faq-chevron{transform:rotate(180deg)}
+.faq-a{font-size:13px;color:var(--muted);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s}
+.faq-item.open .faq-a{max-height:300px;padding-top:12px}
+
+/* EQUIPE */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.team-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:22px;text-align:center}
+.team-av{width:64px;height:64px;background:var(--s3);border:2px solid var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px}
+.team-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.team-role{font-size:12px;color:var(--muted);margin-bottom:10px}
+.team-badges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.team-badge{font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+
+/* INVESTISSEUR */
+.inv-section{background:linear-gradient(135deg,rgba(184,245,62,.06),rgba(11,255,203,.03));border:1px solid rgba(184,245,62,.2);border-radius:12px;padding:32px}
+.inv-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:var(--lime);margin-bottom:12px}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:20px 0}
+.inv-item{padding:14px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--border)}
+.inv-item-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.inv-item-val{font-size:14px;font-weight:700}
+
+/* SUCCESS */
+.success-box{display:none;text-align:center;padding:40px 20px}
+.success-box.show{display:block}
+.success-icon{font-size:56px;margin-bottom:16px}
+.success-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:var(--lime);margin-bottom:10px}
+.success-sub{font-size:14px;color:var(--muted);line-height:1.7}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* SPINNER */
+.spinner{width:18px;height:18px;border:2px solid rgba(5,8,10,.3);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SECTION TABS */
+.tab-section{display:none}
+.tab-section.active{display:block}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}
+  .navbar .nav-links{display:none}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+
+<div id="toast"><span id="toast-msg"></span></div>
+
+<!-- NAV -->
+<nav class="navbar">
+  <a href="index.html" class="logo">Porte<span>Ã </span>Porte</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="expediteur.html">Envoyer</a>
+    <a href="livreur.html">Livrer</a>
+    <a href="presentation.html">Ã propos</a>
+    <a href="contact.html" class="active nav-cta">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">ð¬ On vous rÃ©pond sous 24h</div>
+  <h1>Parlons<br><span>ensemble</span></h1>
+  <p>Une question, un partenariat, une opportunitÃ© d'investissement ou simplement envie de nous dire bonjour â on est lÃ .</p>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('support',this)">ð Support</button>
+  <button class="tab" onclick="switchTab('partenariat',this)">ð¤ Partenariat</button>
+  <button class="tab" onclick="switchTab('investisseur',this)">ð¼ Investisseurs</button>
+  <button class="tab" onclick="switchTab('presse',this)">ð° Presse</button>
+  <button class="tab" onclick="switchTab('faq',this)">â FAQ</button>
+</div>
+
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<!-- TAB: SUPPORT                        -->
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<div class="tab-section active" id="tab-support">
+  <div class="main">
+    <div>
+      <!-- Sujet -->
+      <div class="card">
+        <div class="card-title">Choisissez un sujet</div>
+        <div class="card-sub">Pour un traitement plus rapide, sÃ©lectionnez la catÃ©gorie qui correspond Ã  votre demande.</div>
+
+        <div class="sujet-grid" id="sujet-grid">
+          <div class="sujet-pill" onclick="selSujet(this,'ProblÃ¨me de livraison')"><span class="sujet-icon">ð¦</span>Livraison</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Paiement et facturation')"><span class="sujet-icon">ð³</span>Paiement</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Compte et profil')"><span class="sujet-icon">ð¤</span>Mon compte</div>
+          <div class="sujet-pill" onclick="selSujet(this,'PorteCoins')"><span class="sujet-icon">ðª</span>PorteCoins</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Certification livreur')"><span class="sujet-icon">ðªª</span>Certification</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Assurance')"><span class="sujet-icon">ð¡ï¸</span>Assurance</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Covoiturage')"><span class="sujet-icon">ð</span>Covoiturage</div>
+          <div class="sujet-pill" onclick="selSujet(this,'Autre question')"><span class="sujet-icon">ð¬</span>Autre</div>
+        </div>
+
+        <!-- Formulaire -->
+        <div id="form-contact">
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">PrÃ©nom *</label>
+              <input class="fi" id="c-prenom" type="text" placeholder="Marc-Antoine">
+              <span class="form-error" id="err-prenom">PrÃ©nom requis</span>
+            </div>
+            <div class="fg">
+              <label class="fl">Nom *</label>
+              <input class="fi" id="c-nom" type="text" placeholder="Labrecque">
+              <span class="form-error" id="err-nom">Nom requis</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Courriel *</label>
+              <input class="fi" id="c-email" type="email" placeholder="ton@email.com">
+              <span class="form-error" id="err-email">Courriel invalide</span>
+            </div>
+            <div class="fg">
+              <label class="fl">TÃ©lÃ©phone</label>
+              <input class="fi" id="c-tel" type="tel" placeholder="418-555-0000">
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Code de suivi (si livraison)</label>
+            <input class="fi" id="c-code" type="text" placeholder="PP-AB12CD" maxlength="10" style="font-family:monospace">
+          </div>
+          <div class="fg">
+            <label class="fl">Votre message *</label>
+            <textarea class="fi" id="c-message" placeholder="DÃ©crivez votre situation en dÃ©tail..."></textarea>
+            <span class="form-error" id="err-message">Message requis (min 20 caractÃ¨res)</span>
+          </div>
+
+          <!-- Turnstile -->
+          <div style="display:flex;justify-content:center;margin:20px 0">
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAABDnfMr5lVz0Y9_G" data-theme="dark" data-callback="onTurnstile"></div>
+          </div>
+
+          <button class="btn-primary" id="btn-submit" onclick="envoyerMessage()" disabled>
+            <div class="spinner" id="spinner"></div>
+            <span id="btn-label">â³ Valide le captcha pour envoyer</span>
+          </button>
+        </div>
+
+        <!-- SuccÃ¨s -->
+        <div class="success-box" id="success-box">
+          <div class="success-icon">âï¸</div>
+          <div class="success-title">Message envoyÃ© !</div>
+          <div class="success-sub">Merci <span id="success-prenom">!</span> Notre Ã©quipe vous rÃ©pondra sous 24h ouvrables Ã  <strong id="success-email"></strong>.<br><br>Si votre demande est urgente, vous pouvez aussi nous joindre directement par courriel Ã  <a href="mailto:support@porteaporte.site" style="color:var(--lime)">support@porteaporte.site</a></div>
+          <button class="btn-primary" style="margin-top:24px;max-width:300px;margin-left:auto;margin-right:auto" onclick="window.location.href='index.html'">â Retour Ã  l'accueil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="info-bloc">
+        <div class="info-bloc-title">Nous joindre directement</div>
+        <a class="info-item" href="mailto:support@porteaporte.site">
+          <span class="info-icon">ð§</span>
+          <div>
+            <div class="info-label">Support gÃ©nÃ©ral</div>
+            <div class="info-val">support@porteaporte.site</div>
+            <div class="info-desc">RÃ©ponse sous 24h ouvrables</div>
+          </div>
+        </a>
+        <a class="info-item" href="mailto:investisseurs@porteaporte.site">
+          <span class="info-icon">ð¼</span>
+          <div>
+            <div class="info-label">Investisseurs</div>
+            <div class="info-val">investisseurs@porteaporte.site</div>
+            <div class="info-desc">Denis Morneau â Fondateur</div>
+          </div>
+        </a>
+        <a class="info-item" href="mailto:partenariats@porteaporte.site">
+          <span class="info-icon">ð¤</span>
+          <div>
+            <div class="info-label">Partenariats</div>
+            <div class="info-val">partenariats@porteaporte.site</div>
+            <div class="info-desc">Commerces & organisations</div>
+          </div>
+        </a>
+        <a class="info-item" href="mailto:presse@porteaporte.site">
+          <span class="info-icon">ð°</span>
+          <div>
+            <div class="info-label">Relations presse</div>
+            <div class="info-val">presse@porteaporte.site</div>
+            <div class="info-desc">MÃ©dias & journalistes</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="info-bloc">
+        <div class="info-bloc-title">Localisation</div>
+        <div class="info-item" style="cursor:default">
+          <span class="info-icon">ð</span>
+          <div>
+            <div class="info-label">Pieds en L'air S.E.N.C.</div>
+            <div class="info-desc">LÃ©vis, QuÃ©bec, Canada<br>G6V â Rive-Sud de QuÃ©bec</div>
+            <div class="info-val" style="color:var(--muted)">Bureau virtuel Â· Ãquipe distribuÃ©e</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-bloc">
+        <div class="info-bloc-title">RÃ©seaux sociaux</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="https://facebook.com/porteaporte" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:var(--s2);border:1px solid var(--border);border-radius:6px;font-size:12px;text-decoration:none;color:var(--paper);display:flex;align-items:center;gap:6px;transition:border .2s" onmouseover="this.style.borderColor='rgba(184,245,62,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">Facebook</a>
+          <a href="https://instagram.com/porteaporte" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:var(--s2);border:1px solid var(--border);border-radius:6px;font-size:12px;text-decoration:none;color:var(--paper);display:flex;align-items:center;gap:6px;transition:border .2s" onmouseover="this.style.borderColor='rgba(184,245,62,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">Instagram</a>
+          <a href="https://www.linkedin.com/company/porteaporte" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:var(--s2);border:1px solid var(--border);border-radius:6px;font-size:12px;text-decoration:none;color:var(--paper);display:flex;align-items:center;gap:6px;transition:border .2s" onmouseover="this.style.borderColor='rgba(184,245,62,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">LinkedIn</a>
+          <a href="https://x.com/porteaporte" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:var(--s2);border:1px solid var(--border);border-radius:6px;font-size:12px;text-decoration:none;color:var(--paper);display:flex;align-items:center;gap:6px;transition:border .2s" onmouseover="this.style.borderColor='rgba(184,245,62,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">X / Twitter</a>
+        </div>
+      </div>
+
+      <!-- DÃ©lais de rÃ©ponse -->
+      <div class="card" style="padding:20px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px">â±ï¸ DÃ©lais de rÃ©ponse</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--muted)">ð¨ Urgent (livraison en cours)</span>
+            <span style="color:var(--red);font-weight:600">&lt; 2h</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--muted)">ð³ Paiement & remboursement</span>
+            <span style="color:var(--gold);font-weight:600">&lt; 4h</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--muted)">ð¤ Compte & profil</span>
+            <span style="color:var(--lime);font-weight:600">&lt; 24h</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--muted)">ð¤ Partenariat & presse</span>
+            <span style="color:var(--lime);font-weight:600">&lt; 48h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<!-- TAB: PARTENARIAT                   -->
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<div class="tab-section" id="tab-partenariat">
+  <div class="main">
+    <div>
+      <div class="card">
+        <div class="card-title">ð¤ Proposer un partenariat</div>
+        <div class="card-sub">Vous Ãªtes un commerce local, une organisation communautaire, une municipalitÃ© ou une entreprise qui souhaite s'intÃ©grer Ã  l'Ã©cosystÃ¨me PorteÃ Porte ? Parlez-nous de votre projet.</div>
+
+        <div class="fg">
+          <label class="fl">Organisation *</label>
+          <input class="fi" id="p-org" type="text" placeholder="Ãpicerie Dupont inc.">
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label class="fl">Nom du responsable *</label>
+            <input class="fi" id="p-nom" type="text" placeholder="Marie Tremblay">
+          </div>
+          <div class="fg">
+            <label class="fl">Courriel *</label>
+            <input class="fi" id="p-email" type="email" placeholder="marie@organisation.ca">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Type de partenariat souhaitÃ© *</label>
+          <select class="fi" id="p-type">
+            <option value="">â SÃ©lectionner â</option>
+            <option>Livraison last-mile pour mon commerce</option>
+            <option>RÃ©compense PorteCoins partenaire</option>
+            <option>Partenariat bien-Ãªtre livreurs (carburant, entretien)</option>
+            <option>Organisation communautaire (missions solidaires)</option>
+            <option>IntÃ©gration API B2B (e-commerce)</option>
+            <option>MunicipalitÃ© / organisme public</option>
+            <option>Autre type de partenariat</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">DÃ©crivez votre projet *</label>
+          <textarea class="fi" id="p-message" placeholder="Parlez-nous de votre organisation, de vos besoins de livraison et de ce que vous pourriez offrir en retour..."></textarea>
+        </div>
+        <div style="display:flex;justify-content:center;margin:20px 0">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAABDnfMr5lVz0Y9_G" data-theme="dark" data-callback="onTurnstileP"></div>
+        </div>
+        <button class="btn-primary" id="btn-partenariat" onclick="envoyerPartenariat()" disabled>
+          <span>Soumettre ma proposition de partenariat â</span>
+        </button>
+      </div>
+
+      <!-- Types de partenariats -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:20px">Nos types de partenariats</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+          <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:24px;margin-bottom:8px">ð</div>
+            <div style="font-weight:700;margin-bottom:6px">CommerÃ§ants locaux</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Offrez la livraison Ã  domicile via PorteÃ Porte. Vos clients commandent, nos livreurs livrent. Commission compÃ©titive, zÃ©ro infrastructure.</div>
+          </div>
+          <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:24px;margin-bottom:8px">â½</div>
+            <div style="font-weight:700;margin-bottom:6px">Bien-Ãªtre livreurs</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Carburant, entretien, restauration â offrez des rÃ©ductions Ã  nos livreurs certifiÃ©s en Ã©change d'une visibilitÃ© sur la plateforme.</div>
+          </div>
+          <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:24px;margin-bottom:8px">ð</div>
+            <div style="font-weight:700;margin-bottom:6px">Organismes solidaires</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Missions solidaires gratuites pour vos bÃ©nÃ©ficiaires. PorteÃ Porte verse un % de ses bÃ©nÃ©fices aux organismes partenaires.</div>
+          </div>
+          <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:24px;margin-bottom:8px">ð</div>
+            <div style="font-weight:700;margin-bottom:6px">IntÃ©gration API B2B</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Connectez votre systÃ¨me de commandes Shopify, WooCommerce ou custom Ã  notre API de livraison. Phase 2 â inscrivez-vous dÃ¨s maintenant.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px">ð Nos chiffres partenaires</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="padding:12px;background:var(--s3);border-radius:6px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Livreurs certifiÃ©s (Phase 1)</div>
+            <div style="font-size:22px;font-weight:700;font-family:'Bebas Neue',sans-serif;color:var(--lime)">1 000</div>
+          </div>
+          <div style="padding:12px;background:var(--s3);border-radius:6px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Zone de couverture initiale</div>
+            <div style="font-size:22px;font-weight:700;font-family:'Bebas Neue',sans-serif;color:var(--teal)">QuÃ©bec</div>
+          </div>
+          <div style="padding:12px;background:var(--s3);border-radius:6px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Commission partenaire</div>
+            <div style="font-size:22px;font-weight:700;font-family:'Bebas Neue',sans-serif;color:var(--gold)">NÃ©gociable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<!-- TAB: INVESTISSEURS                 -->
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<div class="tab-section" id="tab-investisseur">
+  <div class="main full" style="max-width:900px;margin:0 auto;padding:0 24px 80px">
+    <div class="inv-section">
+      <div class="inv-title">ð¼ OpportunitÃ© d'investissement</div>
+      <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px">PorteÃ Porte est en phase de lancement avec une infrastructure technique complÃ¨te dÃ©jÃ  dÃ©ployÃ©e. Nous cherchons des partenaires alignÃ©s sur notre vision de la livraison collaborative, Ã©thique et ancrÃ©e dans les communautÃ©s canadiennes.</p>
+      <div class="inv-grid">
+        <div class="inv-item"><div class="inv-item-lbl">Stade</div><div class="inv-item-val">PrÃ©-lancement Â· Infra live</div></div>
+        <div class="inv-item"><div class="inv-item-lbl">Revenus</div><div class="inv-item-val">Commission 12% + PC + B2B</div></div>
+        <div class="inv-item"><div class="inv-item-lbl">MarchÃ© Phase 1</div><div class="inv-item-val">QuÃ©bec â 8,7M hab.</div></div>
+        <div class="inv-item"><div class="inv-item-lbl">Fondateur</div><div class="inv-item-val">Denis Morneau â LÃ©vis QC</div></div>
+        <div class="inv-item"><div class="inv-item-lbl">Structure</div><div class="inv-item-val">Pieds en L'air S.E.N.C.</div></div>
+        <div class="inv-item"><div class="inv-item-lbl">Stack technique</div><div class="inv-item-val">Vercel + Supabase + Stripe</div></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <a href="presentation.html" class="btn-primary" style="width:auto;padding:12px 24px;text-decoration:none">ð Voir la prÃ©sentation complÃ¨te</a>
+        <a href="mailto:investisseurs@porteaporte.site" class="btn-primary" style="width:auto;padding:12px 24px;background:var(--s3);color:var(--paper);border:1px solid var(--border);text-decoration:none">ð§ Contacter Denis directement</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Demander le deck investisseur complet</div>
+      <div class="card-sub">Pitch deck PDF, modÃ¨le financier, projections Phase 1-3 et plan d'affaires dÃ©taillÃ©. Transmis sous NDA sur demande.</div>
+      <div class="form-row">
+        <div class="fg"><label class="fl">Nom complet *</label><input class="fi" id="i-nom" type="text" placeholder="Sophie Bouchard"></div>
+        <div class="fg"><label class="fl">Fonds / Organisation *</label><input class="fi" id="i-org" type="text" placeholder="Investissement QuÃ©bec"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label class="fl">Courriel professionnel *</label><input class="fi" id="i-email" type="email" placeholder="sophie@fonds.ca"></div>
+        <div class="fg"><label class="fl">TÃ©lÃ©phone</label><input class="fi" id="i-tel" type="tel" placeholder="514-555-0000"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">CapacitÃ© d'investissement indicative</label>
+        <select class="fi" id="i-montant">
+          <option value="">â SÃ©lectionner â</option>
+          <option>Moins de 50 000 $</option>
+          <option>50 000 $ â 250 000 $</option>
+          <option>250 000 $ â 1 M$</option>
+          <option>1 M$ â 5 M$</option>
+          <option>5 M$ et plus</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Message ou questions spÃ©cifiques</label>
+        <textarea class="fi" id="i-message" placeholder="Quels aspects du modÃ¨le vous intÃ©ressent particuliÃ¨rement ?"></textarea>
+      </div>
+      <div style="display:flex;justify-content:center;margin:20px 0">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAABDnfMr5lVz0Y9_G" data-theme="dark" data-callback="onTurnstileI"></div>
+      </div>
+      <button class="btn-primary" id="btn-investisseur" onclick="envoyerInvestisseur()" disabled>
+        <span>ð¥ Demander le deck investisseur</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<!-- TAB: PRESSE                        -->
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<div class="tab-section" id="tab-presse">
+  <div class="main full" style="max-width:900px;margin:0 auto;padding:0 24px 80px">
+    <div class="card">
+      <div class="card-title">ð° Kit presse PorteÃ Porte</div>
+      <div class="card-sub">Journalistes, blogueurs et crÃ©ateurs de contenu â voici les ressources pour couvrir PorteÃ Porte.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px">
+        <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border);text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">ð¼ï¸</div>
+          <div style="font-weight:700;margin-bottom:6px">Logos & Assets</div>
+          <div style="font-size:12px;color:var(--muted)">Logos vectoriels, couleurs officielles, typographie</div>
+          <button onclick="showToast('ð¦ Kit envoyÃ© par courriel')" style="margin-top:12px;width:100%;padding:8px;background:var(--lime);color:var(--ink);border:none;border-radius:4px;font-weight:700;font-size:12px;cursor:pointer">TÃ©lÃ©charger</button>
+        </div>
+        <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border);text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">ð</div>
+          <div style="font-weight:700;margin-bottom:6px">CommuniquÃ©s de presse</div>
+          <div style="font-size:12px;color:var(--muted)">Annonces officielles et historique des lancements</div>
+          <button onclick="showToast('ð Disponible sous 48h')" style="margin-top:12px;width:100%;padding:8px;background:var(--s2);color:var(--paper);border:1px solid var(--border);border-radius:4px;font-weight:700;font-size:12px;cursor:pointer">Demander</button>
+        </div>
+        <div style="padding:18px;background:var(--s3);border-radius:8px;border:1px solid var(--border);text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">ðï¸</div>
+          <div style="font-weight:700;margin-bottom:6px">Entrevue fondateur</div>
+          <div style="font-size:12px;color:var(--muted)">Denis Morneau disponible pour entrevues mÃ©dias</div>
+          <button onclick="switchTab('support',document.querySelector('.tab'))" style="margin-top:12px;width:100%;padding:8px;background:var(--s2);color:var(--paper);border:1px solid var(--border);border-radius:4px;font-weight:700;font-size:12px;cursor:pointer">Demander</button>
+        </div>
+      </div>
+      <div style="background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.12);border-radius:8px;padding:20px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">Contact presse direct</div>
+        <div style="font-size:13px;color:var(--muted)">Pour toute demande urgente : <a href="mailto:presse@porteaporte.site" style="color:var(--lime)">presse@porteaporte.site</a> â RÃ©ponse garantie sous 4h ouvrables.</div>
+      </div>
+    </div>
+
+    <!-- Faits clÃ©s pour journalistes -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:20px">ð Faits clÃ©s pour journalistes</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">FondÃ©e</div>
+          <div style="font-size:16px;font-weight:700">2025 â LÃ©vis, QC</div>
+        </div>
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Pages dÃ©ployÃ©es</div>
+          <div style="font-size:16px;font-weight:700;color:var(--lime)">30+ pages live</div>
+        </div>
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Paiements</div>
+          <div style="font-size:16px;font-weight:700;color:var(--lime)">Stripe LIVE actif</div>
+        </div>
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">DiffÃ©renciateur #1</div>
+          <div style="font-size:16px;font-weight:700">KYC biomÃ©trique</div>
+        </div>
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Mission sociale</div>
+          <div style="font-size:16px;font-weight:700;color:var(--teal)">Livraisons gratuites aÃ®nÃ©Â·eÂ·s</div>
+        </div>
+        <div style="padding:14px;background:var(--s3);border-radius:6px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Structure lÃ©gale</div>
+          <div style="font-size:16px;font-weight:700">Pieds en L'air S.E.N.C.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<!-- TAB: FAQ                           -->
+<!-- âââââââââââââââââââââââââââââââââââ -->
+<div class="tab-section" id="tab-faq">
+  <div class="main full" style="max-width:800px;margin:0 auto;padding:0 24px 80px">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:24px">â Questions frÃ©quentes</div>
+
+      <div id="faq-list"></div>
+    </div>
+
+    <!-- Ãquipe -->
+    <div class="card" style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:20px">ð¥ L'Ã©quipe fondatrice</div>
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-av">ð¨âð¼</div>
+          <div class="team-name">Denis Morneau</div>
+          <div class="team-role">Fondateur & CEO â LÃ©vis, QC</div>
+          <div class="team-badges"><span class="team-badge">Vision</span><span class="team-badge">Tech</span><span class="team-badge">CommunautÃ©</span></div>
+        </div>
+        <div class="team-card" style="opacity:.6">
+          <div class="team-av" style="border-color:var(--muted)">â</div>
+          <div class="team-name">Poste ouvert</div>
+          <div class="team-role">CTO â DÃ©veloppement backend</div>
+          <div class="team-badges"><span class="team-badge" style="color:var(--muted);border-color:var(--border)">On recrute</span></div>
+        </div>
+        <div class="team-card" style="opacity:.6">
+          <div class="team-av" style="border-color:var(--muted)">â</div>
+          <div class="team-name">Poste ouvert</div>
+          <div class="team-role">CMO â Marketing & croissance</div>
+          <div class="team-badges"><span class="team-badge" style="color:var(--muted);border-color:var(--border)">On recrute</span></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:14px;background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.12);border-radius:6px;font-size:12px;color:var(--muted)">
+        ð¼ Vous voulez rejoindre l'aventure PorteÃ Porte ? Envoyez votre profil Ã  <a href="mailto:carrieres@porteaporte.site" style="color:var(--lime)">carrieres@porteaporte.site</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var _turnstileSupport = false, _turnstileP = false, _turnstileI = false;
+var _sujetSelectionne = '';
+
+// ââ TURNSTILE CALLBACKS ââ
+function onTurnstile(t){_turnstileSupport=true;var b=document.getElementById('btn-submit');if(b){b.disabled=false;document.getElementById('btn-label').textContent='âï¸ Envoyer mon message';}}
+function onTurnstileP(t){_turnstileP=true;var b=document.getElementById('btn-partenariat');if(b)b.disabled=false;}
+function onTurnstileI(t){_turnstileI=true;var b=document.getElementById('btn-investisseur');if(b)b.disabled=false;}
+
+// ââ TABS ââ
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  var el = document.getElementById('tab-'+name);
+  if (el) el.classList.add('active');
+  if (btn) btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ââ SUJET ââ
+function selSujet(el, val) {
+  document.querySelectorAll('.sujet-pill').forEach(function(p){p.classList.remove('selected');});
+  el.classList.add('selected');
+  _sujetSelectionne = val;
+}
+
+// ââ VALIDATION ââ
+function valChamp(id, errId, test) {
+  var el = document.getElementById(id);
+  var err = document.getElementById(errId);
+  var val = el ? el.value.trim() : '';
+  var ok = test(val);
+  if (el) el.classList.toggle('error', !ok);
+  if (err) err.classList.toggle('show', !ok);
+  return ok;
+}
+
+// ââ ENVOYER SUPPORT ââ
+async function envoyerMessage() {
+  if (!_turnstileSupport) { showToast('â ï¸ Valide le captcha'); return; }
+  var ok = true;
+  ok = valChamp('c-prenom','err-prenom',function(v){return v.length>=2;}) && ok;
+  ok = valChamp('c-nom','err-nom',function(v){return v.length>=2;}) && ok;
+  ok = valChamp('c-email','err-email',function(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}) && ok;
+  ok = valChamp('c-message','err-message',function(v){return v.length>=20;}) && ok;
+  if (!ok) return;
+
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  document.getElementById('spinner').style.display = 'inline-block';
+  document.getElementById('btn-label').textContent = 'Envoi en coursâ¦';
+
+  var prenom = document.getElementById('c-prenom').value.trim();
+  var email = document.getElementById('c-email').value.trim();
+  var message = document.getElementById('c-message').value.trim();
+  var code = document.getElementById('c-code').value.trim();
+
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type: 'contact_support',
+        prenom: prenom,
+        email: email,
+        sujet: _sujetSelectionne || 'Demande gÃ©nÃ©rale',
+        message: message,
+        code_livraison: code || null,
+        tel: document.getElementById('c-tel').value.trim()
+      })
+    });
+  } catch(e) {}
+
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('form-contact').style.display = 'none';
+  document.getElementById('success-prenom').textContent = prenom + ' !';
+  document.getElementById('success-email').textContent = email;
+  document.getElementById('success-box').classList.add('show');
+}
+
+// ââ ENVOYER PARTENARIAT ââ
+async function envoyerPartenariat() {
+  if (!_turnstileP) return;
+  var btn = document.getElementById('btn-partenariat');
+  btn.disabled = true;
+  btn.textContent = 'Envoiâ¦';
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type: 'contact_partenariat',
+        organisation: document.getElementById('p-org').value,
+        nom: document.getElementById('p-nom').value,
+        email: document.getElementById('p-email').value,
+        type_partenariat: document.getElementById('p-type').value,
+        message: document.getElementById('p-message').value
+      })
+    });
+  } catch(e) {}
+  showToast('â Proposition envoyÃ©e ! RÃ©ponse sous 48h.');
+  btn.textContent = 'â Proposition envoyÃ©e !';
+}
+
+// ââ ENVOYER INVESTISSEUR ââ
+async function envoyerInvestisseur() {
+  if (!_turnstileI) return;
+  var btn = document.getElementById('btn-investisseur');
+  btn.disabled = true;
+  btn.textContent = 'Envoiâ¦';
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type: 'contact_investisseur',
+        nom: document.getElementById('i-nom').value,
+        organisation: document.getElementById('i-org').value,
+        email: document.getElementById('i-email').value,
+        tel: document.getElementById('i-tel').value,
+        montant: document.getElementById('i-montant').value,
+        message: document.getElementById('i-message').value
+      })
+    });
+  } catch(e) {}
+  showToast('â Demande reÃ§ue ! Deck envoyÃ© sous 24h.');
+  btn.innerHTML = '<span>â Demande envoyÃ©e â Deck en prÃ©paration</span>';
+}
+
+// ââ FAQ ââ
+var FAQS = [
+  {q:'Comment fonctionne la livraison PorteÃ Porte ?', a:'Vous publiez votre colis sur la plateforme avec le trajet souhaitÃ©. Notre algorithme IA trouve les livreurs certifiÃ©s disponibles sur ce trajet et vous propose les meilleurs matchs. Vous choisissez, payez via escrow Stripe, et le livreur est notifiÃ©. Le suivi GPS est actif pendant toute la livraison.'},
+  {q:'Comment sont vÃ©rifiÃ©s les livreurs ?', a:'Chaque livreur passe par un processus KYC en 5 Ã©tapes : profil complet, vÃ©rification du vÃ©hicule et assurance, upload de documents officiels (permis SAAQ, assurance, immatriculation), vÃ©rification biomÃ©trique en temps rÃ©el, et attribution d\'un score de confiance initial de 72-79/100. Ce score Ã©volue avec chaque livraison.'},
+  {q:'Que couvre l\'assurance colis ?', a:'PorteÃ Porte propose 3 niveaux d\'assurance : Basique (jusqu\'Ã  500$, incluse), Standard (jusqu\'Ã  5 000$, 1,99$/envoi) et Premium (jusqu\'Ã  50 000$, 4,99$/envoi). L\'assurance couvre les dommages, pertes et vols pendant le transport. Elle est automatiquement active dÃ¨s que le livreur prend possession du colis.'},
+  {q:'Quand est-ce que le livreur est payÃ© ?', a:'Le paiement est en escrow (bloquÃ©) dÃ¨s la commande via Stripe. Le livreur reÃ§oit son paiement uniquement aprÃ¨s que l\'expÃ©diteur confirme la rÃ©ception ou aprÃ¨s 72h sans contestation. Cette mÃ©canique protÃ¨ge les deux parties.'},
+  {q:'Que sont les PorteCoins ?', a:'Les PorteCoins (PC) sont la monnaie interne de PorteÃ Porte. 1 PC = 0,10$. Vous en gagnez Ã  chaque livraison, avec des bonus pour les Ã©valuations 5 Ã©toiles, les streaks hebdomadaires et les missions solidaires. Ils peuvent Ãªtre utilisÃ©s pour rÃ©duire le coÃ»t de vos prochaines livraisons, offerts en cadeau ou Ã©changÃ©s contre des rÃ©compenses partenaires.'},
+  {q:'Comment fonctionne le covoiturage ?', a:'Le covoiturage PorteÃ Porte fonctionne comme BlaBlaCar mais avec le systÃ¨me de confiance KYC en plus. Les conducteurs publient leurs trajets, les passagers peuvent les rÃ©server. Le paiement se fait via PorteCoins ou directement. Cette fonctionnalitÃ© est disponible sur la page Covoiturage du site.'},
+  {q:'Est-ce que PorteÃ Porte est disponible dans ma ville ?', a:'PorteÃ Porte est en phase de lancement au QuÃ©bec, avec une concentration initiale sur la Rive-Sud de QuÃ©bec, LÃ©vis, QuÃ©bec ville, MontrÃ©al et Sherbrooke. L\'expansion vers d\'autres rÃ©gions du QuÃ©bec puis vers l\'Ontario est prÃ©vue dans la Phase 2 (fin 2026). Inscrivez-vous sur la liste d\'attente pour Ãªtre notifiÃ©.'},
+  {q:'Comment signaler un problÃ¨me avec une livraison ?', a:'En cas de problÃ¨me, contactez notre support via ce formulaire en sÃ©lectionnant "ProblÃ¨me de livraison" et en indiquant votre code de suivi PP-XXXXXX. Nous intervenons sous 2h pour les livraisons en cours. Le litige est traitÃ© par notre Ã©quipe avec accÃ¨s aux logs GPS, photos et communications pour une rÃ©solution Ã©quitable.'},
+  {q:'Est-ce que je peux devenir livreur Ã  temps partiel ?', a:'Absolument. PorteÃ Porte est conÃ§u pour les livreurs Ã  temps partiel, les personnes qui font des trajets rÃ©guliers (domicile-travail, etc.) et qui veulent optimiser leurs dÃ©placements. Vous choisissez vos disponibilitÃ©s, votre zone et le type de colis que vous acceptez.'},
+  {q:'Comment est calculÃ©e la commission PorteÃ Porte ?', a:'PorteÃ Porte prÃ©lÃ¨ve 12% sur chaque livraison (commission de service). Les livreurs reÃ§oivent donc 88% du prix affichÃ©. Le calcul du prix suggÃ©rÃ© prend en compte la distance, le poids, le type de colis et les conditions du marchÃ© via notre algorithme de matching.'},
+];
+
+function renderFAQ() {
+  var list = document.getElementById('faq-list');
+  if (!list) return;
+  list.innerHTML = FAQS.map(function(f,i) {
+    return '<div class="faq-item" id="faq-'+i+'">' +
+      '<div class="faq-q" onclick="toggleFAQ('+i+')">' + f.q + '<span class="faq-chevron">â¼</span></div>' +
+      '<div class="faq-a">' + f.a + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleFAQ(i) {
+  var item = document.getElementById('faq-'+i);
+  item.classList.toggle('open');
+}
+
+// ââ TOAST ââ
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(function(){t.classList.remove('show');}, 4000);
+}
+
+// ââ INIT ââ
+renderFAQ();
+
+// Ouvrir tab depuis URL hash
+var hash = window.location.hash.replace('#','');
+if (['partenariat','investisseur','presse','faq'].includes(hash)) {
+  var tabBtns = document.querySelectorAll('.tab');
+  var tabNames = ['support','partenariat','investisseur','presse','faq'];
+  tabNames.forEach(function(name,i) {
+    if (name === hash) switchTab(name, tabBtns[i]);
+  });
+}
+</script>
+</body>
+</html>

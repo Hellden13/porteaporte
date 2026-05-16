@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Creer une livraison PorteaPorte">
+  <title>Creer une livraison - PorteaPorte</title>
+  <style>
+    body{background:#070b0f;color:#f5f0e8;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;margin:0}
+    .page{max-width:760px;margin:0 auto;padding:34px 20px 70px}
+    .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+    .brand{font-weight:900;letter-spacing:.2px;color:#b8f53e}.muted{color:#a9b0ad}.small{font-size:13px}
+    h1{font-size:clamp(32px,5vw,48px);line-height:1.02;margin:0 0 8px;font-weight:900;letter-spacing:0}
+    .panel{background:#12171d;border:1px solid #27313a;border-radius:8px;padding:26px;margin-top:22px}
+    .section-title{font-size:18px;font-weight:800;color:#b8f53e;margin:0 0 18px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.full{grid-column:1/-1}
+    label{font-size:14px;font-weight:750;margin-bottom:8px;display:block;color:#f5f0e8}
+    input,select,textarea{width:100%;box-sizing:border-box;border:1px solid #27313a;background:#070b0f;color:#f5f0e8;border-radius:8px;padding:12px 14px;font:inherit;min-height:44px}
+    textarea{min-height:96px;resize:vertical}.hint{font-size:12px;color:#a9b0ad;margin-top:6px}
+    .check{display:flex;gap:10px;align-items:center;background:#090f14;border:1px solid #27313a;border-radius:8px;padding:12px}.check input{width:auto;min-height:0}
+    .price{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.35);border-radius:8px;padding:18px;text-align:center}.price strong{font-size:30px;color:#b8f53e}
+    .actions{display:flex;gap:12px;margin-top:24px}.btn{border:0;border-radius:8px;padding:13px 18px;font-weight:850;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center;align-items:center}.primary{background:#b8f53e;color:#071008;flex:1}.ghost{background:#151b21;color:#f5f0e8;border:1px solid #27313a}.btn:disabled{opacity:.6;cursor:wait}
+    .msg{display:none;border-radius:8px;padding:16px 18px;margin:18px 0;line-height:1.45}.msg.show{display:block}.err{background:#2a1012;border:1px solid #ff4d4d;color:#ff6b6b}.ok{background:#102417;border:1px solid #2ecc71;color:#b8f53e}
+    @media(max-width:640px){.grid{grid-template-columns:1fr}.actions{flex-direction:column}.top{align-items:flex-start;gap:10px;flex-direction:column}}
+  </style>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+  <main class="page">
+    <div class="top">
+      <div class="brand">PorteaPorte</div>
+      <div class="small muted"><span id="auth-user-name"></span> <button class="btn ghost" type="button" onclick="AUTH_API.logout()">Deconnexion</button></div>
+    </div>
+
+    <h1>Creer une nouvelle livraison</h1>
+    <p class="muted">Remplis les informations du colis. Les adresses completes restent protegees et ne seront affichees qu'au livreur assigne.</p>
+    <p class="hint">Les adresses completes restent masquees jusqu'a l'acceptation de la livraison.</p>
+
+    <div id="success-message" class="msg ok">Livraison creee. Ouverture du paiement escrow...</div>
+    <div id="error-message" class="msg err">Erreur.</div>
+
+    <form id="create-mission-form" novalidate>
+      <section class="panel">
+        <div class="section-title">Informations generales</div>
+        <div class="grid">
+          <div class="full"><label for="title">Titre de la livraison *</label><input id="title" required placeholder="Ex: Lettre importante"></div>
+          <div class="full"><label for="description">Description *</label><textarea id="description" required placeholder="Contenu, dimensions, precautions speciales"></textarea></div>
+          <div><label for="weight">Poids estime (kg) *</label><input id="weight" type="number" min="0.1" step="0.1" required placeholder="0.5"></div>
+          <div><label for="declared-value">Valeur declaree (CAD)</label><input id="declared-value" type="number" min="0" step="0.01" placeholder="50"></div>
+          <div><label for="category">Categorie *</label><select id="category" required><option value="">Choisir</option><option value="colis">Colis</option><option value="document">Document</option><option value="nourriture">Nourriture</option><option value="meuble">Meuble</option><option value="electronique">Electronique</option><option value="autre">Autre</option></select></div>
+          <div><label for="deadline">Delai souhaite *</label><select id="deadline" required><option value="">Choisir</option><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="3-7days">3 a 7 jours</option><option value="flexible">Flexible</option></select></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">Localisation</div>
+        <div class="grid">
+          <div class="full"><label for="pickup-address">Adresse de depart *</label><input id="pickup-address" required placeholder="123 rue Exemple, Quebec"></div>
+          <div><label for="pickup-city">Ville depart *</label><input id="pickup-city" required placeholder="Quebec"></div>
+          <div><label for="pickup-postal">Code postal depart *</label><input id="pickup-postal" required placeholder="G1A 1A1"></div>
+          <div class="full"><label for="delivery-address">Adresse de livraison *</label><input id="delivery-address" required placeholder="456 rue Exemple, Montreal"></div>
+          <div><label for="delivery-city">Ville livraison *</label><input id="delivery-city" required placeholder="Montreal"></div>
+          <div><label for="delivery-postal">Code postal livraison *</label><input id="delivery-postal" required placeholder="H1A 1A1"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">Options et prix</div>
+        <div class="grid">
+          <div class="full"><label for="special-instructions">Instructions speciales</label><textarea id="special-instructions" placeholder="Ex: appeler avant, fragile, laisser au concierge"></textarea></div>
+          <label class="check"><input id="is-fragile" type="checkbox"> Colis fragile</label>
+          <label class="check"><input id="requires-signature" type="checkbox"> Signature requise</label>
+          <label class="check"><input id="requires-photo" type="checkbox"> Photo requise</label>
+          <label class="check"><input id="is-priority" type="checkbox"> Priorite +5 CAD</label>
+          <div class="full"><label for="insurance-plan">Protection colis *</label><select id="insurance-plan" required><option value="none">Aucune protection - 0 CAD - couverture 0 CAD</option><option value="base">Base - 1 CAD - couverture max 50 CAD</option><option value="standard">Standard - 2.99 CAD - couverture max 250 CAD</option><option value="plus">Plus - 5.99 CAD - couverture max 1000 CAD</option></select><div class="hint">La protection livraison est optionnelle. Sans protection payee, aucune couverture contractuelle ne s'applique.</div></div>
+          <div class="full"><label for="base-price">Prix de base (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="15.00"><div class="hint">Minimum 5 CAD. Les frais de service sont ajoutes au total.</div></div>
+          <div class="price full"><div class="muted">Prix total estime</div><strong id="total-price">$0.00</strong></div>
+        </div>
+      </section>
+
+      <div class="actions"><a href="dashboard-expediteur.html" class="btn ghost">Annuler</a><button type="button" id="create-livraison-btn" class="btn primary">Creer la livraison</button></div>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth-complete.js"></script>
+  <script>
+    function el(id){return document.getElementById(id)}
+    function showError(message){const box=el('error-message'); box.textContent='ERREUR: '+message; box.classList.add('show'); box.scrollIntoView({behavior:'smooth',block:'center'})}
+    function hideMessages(){el('error-message').classList.remove('show'); el('success-message').classList.remove('show')}
+    const INSURANCE_PLANS={none:{premium:0,coverage:0,label:'Aucune protection'},base:{premium:1,coverage:50,label:'Base'},standard:{premium:2.99,coverage:250,label:'Standard'},plus:{premium:5.99,coverage:1000,label:'Plus'}};
+    function selectedInsurance(){const key=el('insurance-plan').value||'none'; const plan=INSURANCE_PLANS[key]||INSURANCE_PLANS.none; const declared=parseFloat(el('declared-value').value)||0; return {...plan,key,covered:Math.min(declared,plan.coverage)}}
+    function updatePrice(){const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const total=base+(base*.12)+priority+insurance.premium; el('total-price').textContent='$'+total.toFixed(2)}
+    function missingField(){return Array.from(document.querySelectorAll('#create-mission-form [required]')).find(f=>!String(f.value||'').trim())}
+    function labelFor(field){const label=document.querySelector('label[for="'+field.id+'"]'); return label?label.textContent.replace('*','').trim():field.id}
+    async function initPage(){if(!await AUTH_API.requireAuth('expediteur')) return; const user=AUTH_API.getUser(); el('auth-user-name').textContent=((user.prenom||'')+' '+(user.nom||'')).trim()}
+    async function createLivraison(e){
+      if(e&&e.preventDefault)e.preventDefault(); hideMessages();
+      const missing=missingField(); if(missing){showError('Champ requis manquant: '+labelFor(missing)); missing.focus(); return false}
+      const btn=el('create-livraison-btn'); btn.disabled=true; btn.textContent='Creation en cours...';
+      try{
+        const client=window.getSupabaseClient&&window.getSupabaseClient(); if(!client) throw new Error('Client Supabase indisponible. Recharge la page.');
+        const {data,error}=await client.auth.getSession(); if(error) throw new Error(error.message); if(!data.session) throw new Error('Session expiree. Reconnecte-toi.');
+        const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const total=Math.round((base+(base*.12)+priority+insurance.premium)*100)/100;
+        const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',el('deadline').value?'Delai: '+el('deadline').value:'','Assurance: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | couverture max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_total:total,notes,assurance_plan:insurance.key};
+        const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
+        const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
+        const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison creee, mais ID introuvable.');
+        const payParams=new URLSearchParams({livraison_id:id,montant:String(total),dep:payload.ville_depart,arr:payload.ville_arrivee,type:payload.type_colis,poids:String(payload.poids_kg),assurance:payload.assurance_plan});
+        el('success-message').classList.add('show'); setTimeout(()=>{window.location.href='paiement.html?'+payParams.toString()},500);
+      }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Creer la livraison'}
+      return false;
+    }
+    document.addEventListener('DOMContentLoaded',()=>{['base-price','is-priority','insurance-plan','declared-value'].forEach(id=>el(id).addEventListener('input',updatePrice)); el('create-mission-form').addEventListener('submit',createLivraison); el('create-livraison-btn').addEventListener('click',createLivraison); initPage();});
+  </script>
+</body>
+</html>
+

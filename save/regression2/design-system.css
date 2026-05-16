@@ -1,0 +1,74 @@
+﻿/* PorteàPorte Design System */
+:root {
+  /* Colors */
+  --bg-primary: #0A0C0F;
+  --bg-secondary: #12151A;
+  --border: #1F242C;
+  --text-primary: #E8EAED;
+  --accent: #0BFFCB;
+  --success: #10B981;
+  --danger: #EF4444;
+  
+  /* Typography */
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  line-height: 1.6;
+}
+
+button, a.btn {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover, a.btn:hover {
+  opacity: 0.9;
+}
+
+input, textarea, select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}

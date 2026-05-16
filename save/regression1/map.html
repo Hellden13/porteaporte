@@ -1,0 +1,18 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirection...</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+  <p>Redirection en cours...</p>
+  <script>
+    // GPS tracker requires a delivery ID — redirect to dashboard instead
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || params.get('livraison_id');
+    window.location.href = id ? '/gps-tracker.html?id=' + encodeURIComponent(id) : '/dashboard-livreur.html';
+  </script>
+</body>
+</html>
+

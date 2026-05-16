@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test RLS Multi-Users - PorteàPorte</title>
+  <link rel="stylesheet" href="design-system.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/modal-helper.js"></script>
+  <style>
+    body { background: #0A0C0F; color: #E8EAED; font-family: Arial; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #0BFFCB; }
+    .test-section { background: #12151A; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #0BFFCB; }
+    .test-case { background: #1F242C; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    button { background: #0BFFCB; color: #0A0C0F; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+    button:hover { background: #00D9B8; }
+    .result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .success { background: #10B981; }
+    .error { background: #EF4444; }
+    .info { background: #3B82F6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Test RLS Multi-Users</h1>
+    <p>Validez que les 3 profils voient/n'ont accès qu'à ce qu'ils doivent.</p>
+
+    <div class="test-section">
+      <h2>Profil 1: Expéditeur</h2>
+      <div class="test-case">
+        <p>✓ Doit voir: Ses propres missions (expediteur_id = auth.uid())</p>
+        <p>✗ Ne doit PAS voir: Missions d'autres expéditeurs</p>
+        <button onclick="testExpeditor()">Tester Expéditeur</button>
+        <div id="result-expeditor" class="result"></div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Profil 2: Livreur NON vérifié</h2>
+      <div class="test-case">
+        <p>✓ Doit voir: Missions disponibles (status = 'pending')</p>
+        <p>✗ Ne doit PAS: Accepter une mission (backend bloque)</p>
+        <button onclick="testLivreurNonVerified()">Tester Livreur Non-Vérifié</button>
+        <div id="result-livreur-noverif" class="result"></div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Profil 3: Livreur Vérifié</h2>
+      <div class="test-case">
+        <p>✓ Doit voir: Missions disponibles</p>
+        <p>✓ Doit POUVOIR: Accepter une mission</p>
+        <button onclick="testLivreurVerified()">Tester Livreur Vérifié</button>
+        <div id="result-livreur-verif" class="result"></div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Summary</h2>
+      <button onclick="runAllTests()">🚀 Exécuter Tous les Tests</button>
+      <div id="summary" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const db = window.supabase;
+
+    async function testExpeditor() {
+      try {
+        const { data: { user } } = await db.auth.getUser();
+        if (!user) return showError('Non authentifié');
+
+        const { data, error } = await db
+          .from('livraisons')
+          .select('*')
+          .eq('expediteur_id', user.id)
+          .limit(5);
+
+        if (error) throw error;
+        document.getElementById('result-expeditor').innerHTML = 
+          `<div class="result success">✅ Expéditeur voit ${data.length} missions</div>`;
+      } catch (e) {
+        document.getElementById('result-expeditor').innerHTML = 
+          `<div class="result error">❌ ${e.message}</div>`;
+      }
+    }
+
+    async function testLivreurNonVerified() {
+      try {
+        const { data: { user } } = await db.auth.getUser();
+        if (!user) return showError('Non authentifié');
+
+        // Test 1: Voir missions disponibles
+        const { data: missions, error: err1 } = await db
+          .from('livraisons')
+          .select('*')
+          .eq('status', 'pending')
+          .is('livreur_id', null)
+          .limit(5);
+
+        if (err1) throw err1;
+
+        // Test 2: Essayer d'en accepter une (doit être bloqué par backend)
+        const { error: err2 } = await db
+          .from('livraisons')
+          .update({ livreur_id: user.id, status: 'accepted' })
+          .eq('id', missions[0]?.id || 'fake-id');
+
+        const blocked = err2 ? '✅ Correctement bloqué par backend' : '❌ FAILLE: Non-vérifié a accepté!';
+        
+        document.getElementById('result-livreur-noverif').innerHTML = 
+          `<div class="result info">
+            Missions vues: ${missions.length}<br>
+            Acceptation: ${blocked}
+          </div>`;
+      } catch (e) {
+        document.getElementById('result-livreur-noverif').innerHTML = 
+          `<div class="result error">❌ ${e.message}</div>`;
+      }
+    }
+
+    async function testLivreurVerified() {
+      try {
+        const { data: { user } } = await db.auth.getUser();
+        if (!user) return showError('Non authentifié');
+
+        const { data, error } = await db
+          .from('livraisons')
+          .select('*')
+          .eq('livreur_id', user.id)
+          .limit(5);
+
+        if (error) throw error;
+        document.getElementById('result-livreur-verif').innerHTML = 
+          `<div class="result success">✅ Livreur vérifié voit ${data.length} missions assignées</div>`;
+      } catch (e) {
+        document.getElementById('result-livreur-verif').innerHTML = 
+          `<div class="result error">❌ ${e.message}</div>`;
+      }
+    }
+
+    async function runAllTests() {
+      testExpeditor();
+      testLivreurNonVerified();
+      testLivreurVerified();
+      showSuccess('Tests lancés!');
+    }
+  </script>
+</body>
+</html>

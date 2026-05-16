@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expéditeur - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .box{max-width:760px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px;text-align:center}
+    .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+    .btn{display:inline-flex;width:auto;text-decoration:none}
+    p{line-height:1.6}
+  </style>
+</head>
+<body>
+  <main class="box">
+    <h1>Espace expéditeur</h1>
+    <p>Crée une livraison, autorise le paiement escrow Stripe et suis ton colis jusqu'à la confirmation de réception.</p>
+    <div class="actions">
+      <a class="btn" href="/create-mission.html">Créer une livraison</a>
+      <a class="btn secondary" href="/dashboard-expediteur.html">Mon dashboard</a>
+      <a class="btn secondary" href="/assurance.html">Protection livraison</a>
+    </div>
+  </main>
+</body>
+</html>

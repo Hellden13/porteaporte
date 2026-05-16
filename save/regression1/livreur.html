@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification livreur - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/modal-helper.js"></script>
+  <style>
+    body{padding:24px}
+    .wrap{max-width:900px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
+    .brand{text-decoration:none;font-size:1.25rem}
+    .panel{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:24px;margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    label{display:grid;gap:7px;font-weight:700;color:#F0F2F5}
+    .hint{color:#A8ACB1;line-height:1.6}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .btn{display:inline-flex;width:auto;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <a class="brand" href="/index.html">PorteàPorte</a>
+      <a class="btn secondary" href="/dashboard-livreur.html">Dashboard</a>
+    </div>
+
+    <section class="panel">
+      <h1>Vérification livreur</h1>
+      <p class="hint">Pour protéger les expéditeurs, les colis et les adresses, un livreur doit être vérifié avant de voir les vraies missions. Pour la livraison à pied ou à vélo, un permis de conduire n'est pas obligatoire.</p>
+    </section>
+
+    <form id="driverForm" class="panel">
+      <div class="grid">
+        <label>Prénom
+          <input id="prenom" name="prenom" autocomplete="given-name" required>
+        </label>
+        <label>Nom
+          <input id="nom" name="nom" autocomplete="family-name" required>
+        </label>
+        <label>Téléphone
+          <input id="telephone" name="telephone" autocomplete="tel" required>
+        </label>
+        <label>Ville principale
+          <input id="ville" name="ville" autocomplete="address-level2" required>
+        </label>
+        <label>Province
+          <select id="province" name="province">
+            <option value="QC">Québec</option>
+            <option value="ON">Ontario</option>
+            <option value="NB">Nouveau-Brunswick</option>
+          </select>
+        </label>
+        <label>Mode de livraison
+          <select id="transport_mode" name="transport_mode">
+            <option value="walking">À pied</option>
+            <option value="bike">Vélo</option>
+            <option value="car">Auto</option>
+            <option value="van">Fourgonnette</option>
+          </select>
+        </label>
+      </div>
+
+      <label style="margin-top:14px">
+        Zone ou trajet habituel
+        <textarea id="trajet" name="trajet" rows="4" placeholder="Exemple : Rosemont, Plateau, centre-ville Montréal"></textarea>
+      </label>
+
+      <label style="margin-top:14px;display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:500">
+        <input id="consent" type="checkbox" required style="width:auto;margin-top:4px">
+        <span>J'accepte les conditions livreur et je consens à la vérification de mon profil.</span>
+      </label>
+
+      <div class="actions">
+        <button class="btn" type="submit">Envoyer ma vérification</button>
+        <a class="btn secondary" href="/profile.html">Mon profil</a>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    const form = document.getElementById('driverForm');
+
+    async function init() {
+      const { data } = await db.auth.getSession();
+      if (!data || !data.session) {
+        window.location.href = '/login.html';
+        return;
+      }
+      const user = data.session.user;
+      const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+      if (profile) {
+        document.getElementById('prenom').value = profile.prenom || '';
+        document.getElementById('nom').value = profile.nom || '';
+        document.getElementById('telephone').value = profile.telephone || '';
+        document.getElementById('ville').value = profile.ville || '';
+        document.getElementById('province').value = profile.province || 'QC';
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const { data } = await db.auth.getSession();
+      if (!data || !data.session) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const body = {
+        prenom: document.getElementById('prenom').value.trim(),
+        nom: document.getElementById('nom').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        ville: document.getElementById('ville').value.trim(),
+        province: document.getElementById('province').value,
+        vehicule: document.getElementById('transport_mode').value,
+        transport_mode: document.getElementById('transport_mode').value,
+        trajet: document.getElementById('trajet').value.trim(),
+        consent_accepted: form.consent.checked
+      };
+
+      const res = await fetch('/api/submit-driver-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + data.session.access_token
+        },
+        body: JSON.stringify(body)
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showError(result.error || 'Vérification impossible pour le moment.');
+        return;
+      }
+      showSuccess('Demande envoyée. Ton profil livreur est maintenant en révision.');
+      setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
+    });
+
+    init();
+  </script>
+</body>
+</html>

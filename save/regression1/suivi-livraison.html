@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi livraison - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body{padding:24px}
+    .wrap{max-width:980px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:24px}
+    .brand{text-decoration:none;font-size:1.25rem}
+    .panel{background:#111318;border:1px solid #1F2937;border-radius:10px;padding:22px;margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+    .kv{background:#0B0E13;border:1px solid #1F2937;border-radius:8px;padding:12px}
+    .label{font-size:.78rem;color:#A8ACB1;text-transform:uppercase;margin-bottom:6px}
+    .value{font-weight:800;color:#F0F2F5;word-break:break-word}
+    .note{color:#A8ACB1;line-height:1.6}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .btn{display:inline-flex;text-decoration:none;width:auto}
+    .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#6B7280;margin-right:8px}
+    .live-dot.on{background:#00FF9F;box-shadow:0 0 0 5px rgba(0,255,159,.12)}
+    .map-preview{min-height:190px;border:1px solid #1F2937;border-radius:10px;background:#0B0E13;display:grid;place-items:center;color:#A8ACB1;margin-top:14px;text-align:center;padding:18px}
+    .map-preview.has-location{background:linear-gradient(135deg,rgba(0,217,255,.08),rgba(0,255,159,.08))}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <a class="brand" href="/index.html">PorteàPorte</a>
+      <a class="btn secondary" href="/dashboard-livreur.html" id="dashBtn">Dashboard</a>
+    </div>
+
+    <section class="panel">
+      <h1>Suivi de livraison</h1>
+      <p class="note">Le GPS, les photos, les messages et l'historique de livraison peuvent servir de preuves en cas de litige.</p>
+      <div id="status" class="note" style="margin-top:14px"><span id="liveDot" class="live-dot"></span>Chargement du suivi...</div>
+      <div id="details" class="grid" style="display:none"></div>
+      <div class="actions">
+        <a id="gpsLink" class="btn" href="/gps-tracker.html">Ouvrir le GPS</a>
+        <a id="mapsLink" class="btn secondary" href="#" target="_blank" rel="noopener" style="display:none">Ouvrir la carte</a>
+        <button class="btn secondary" type="button" onclick="loadTracking(true)">Rafraîchir</button>
+        <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expéditeur</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Position live</h2>
+      <div id="gpsState" class="note">Aucune position GPS reçue pour le moment.</div>
+      <div id="gpsDetails" class="grid" style="display:none"></div>
+      <div id="mapPreview" class="map-preview">La carte s'activera dès qu'une position GPS valide sera reçue.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Confirmation</h2>
+      <p class="note">Une fois la réception confirmée, le paiement peut être libéré au livreur selon les règles Stripe et l'état du dossier.</p>
+    </section>
+  </main>
+
+  <script>
+    const id = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('livraison_id');
+    const statusEl = document.getElementById('status');
+    const detailsEl = document.getElementById('details');
+    const gpsDetailsEl = document.getElementById('gpsDetails');
+    const gpsStateEl = document.getElementById('gpsState');
+    const gpsLink = document.getElementById('gpsLink');
+    const mapsLink = document.getElementById('mapsLink');
+    const mapPreview = document.getElementById('mapPreview');
+    let refreshTimer = null;
+
+    if (id) gpsLink.href = '/gps-tracker.html?id=' + encodeURIComponent(id);
+
+    function item(label, value) {
+      return `<div class="kv"><div class="label">${label}</div><div class="value">${value || '-'}</div></div>`;
+    }
+
+    function ageLabel(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '-';
+      const seconds = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
+      if (seconds < 60) return seconds + ' sec';
+      const minutes = Math.round(seconds / 60);
+      if (minutes < 60) return minutes + ' min';
+      return Math.round(minutes / 60) + ' h';
+    }
+
+    function renderLocation(location) {
+      if (!location || location.latitude === undefined || location.longitude === undefined) {
+        const dot = getLiveDot();
+        if (dot) dot.classList.remove('on');
+        gpsDetailsEl.style.display = 'none';
+        mapsLink.style.display = 'none';
+        mapPreview.classList.remove('has-location');
+        mapPreview.textContent = 'La carte s'activera dès qu'une position GPS valide sera reçue.';
+        gpsStateEl.textContent = 'Aucune position GPS reçue pour le moment.';
+        return;
+      }
+
+      const lat = Number(location.latitude);
+      const lng = Number(location.longitude);
+      const recordedAt = location.recorded_at || location.created_at;
+      const dot = getLiveDot();
+      if (dot) dot.classList.add('on');
+      gpsStateEl.textContent = 'Dernière position GPS reçue il y a ' + ageLabel(recordedAt) + '.';
+      gpsDetailsEl.style.display = 'grid';
+      gpsDetailsEl.innerHTML = [
+        item('Latitude', lat.toFixed(6)),
+        item('Longitude', lng.toFixed(6)),
+        item('Précision', location.accuracy_m ? Math.round(Number(location.accuracy_m)) + ' m' : '-'),
+        item('Vitesse', location.speed ? Number(location.speed).toFixed(1) + ' m/s' : '-'),
+        item('Reçu il y a', ageLabel(recordedAt)),
+        item('Heure GPS', recordedAt ? new Date(recordedAt).toLocaleString('fr-CA') : '-')
+      ].join('');
+      mapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+      mapsLink.style.display = 'inline-flex';
+      mapPreview.classList.add('has-location');
+      mapPreview.innerHTML = `<strong>Position GPS active</strong><br>${lat.toFixed(6)}, ${lng.toFixed(6)}<br><span class="note">Clique sur "Ouvrir la carte" pour voir l'emplacement.</span>`;
+    }
+
+    async function loadTracking(manual) {
+      if (!id) {
+        statusEl.textContent = 'Aucun identifiant de livraison fourni.';
+        return;
+      }
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data } = await db.auth.getSession();
+      if (!data || !data.session) {
+        window.location.href = '/login.html';
+        return;
+      }
+      // Set dashboard link based on user role
+      db.from('profiles').select('role').eq('id', data.session.user.id).single().then(({ data: p }) => {
+        const dashMap = { livreur: '/dashboard-livreur.html', expediteur: '/dashboard-expediteur.html', 'les deux': '/role-choice.html', admin: '/admin/dashboard-admin.html' };
+        const btn = document.getElementById('dashBtn');
+        if (btn && p?.role) btn.href = dashMap[p.role] || '/dashboard-expediteur.html';
+      });
+      const res = await fetch('/api/tracking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + data.session.access_token
+        },
+        body: JSON.stringify({ code: id })
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const dot = getLiveDot();
+        if (dot) dot.classList.remove('on');
+        statusEl.textContent = result.error || 'Suivi indisponible pour cette livraison.';
+        return;
+      }
+      const l = result.livraison || {};
+      statusEl.innerHTML = '<span id="liveDot" class="live-dot on"></span>Suivi sécurisé chargé' + (manual ? ' à l’instant.' : '.');
+      detailsEl.style.display = 'grid';
+      detailsEl.innerHTML = [
+        item('Statut', l.statut),
+        item('Code', l.code),
+        item('Départ', l.ville_depart),
+        item('Arrivée', l.ville_arrivee),
+        item('Colis', l.type_colis || l.type),
+        item('Montant', l.prix_total ? Number(l.prix_total).toFixed(2) + ' $' : '-')
+      ].join('');
+      renderLocation(result.latest_location);
+    }
+
+    loadTracking(false);
+    refreshTimer = setInterval(() => loadTracking(false), 10000);
+    window.addEventListener('beforeunload', () => {
+      if (refreshTimer) clearInterval(refreshTimer);
+    });
+  </script>
+</body>
+</html>
+    function getLiveDot() {
+      return document.querySelector('#status .live-dot');
+    }

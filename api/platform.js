@@ -56,14 +56,13 @@ function isEmailVerified(session, profile) {
 }
 
 function isVerifiedDriver(session, profile) {
+  if (profile?.role === 'admin' && !profile?.suspendu) return true;
   return Boolean(
     profile &&
     !profile.suspendu &&
     isEmailVerified(session, profile) &&
-    (profile.role === 'admin' || (
-      ['livreur', 'les deux'].includes(profile.role) &&
-      profile.driver_status === 'verified'
-    ))
+    ['livreur', 'les deux'].includes(profile.role) &&
+    profile.driver_status === 'verified'
   );
 }
 
@@ -156,6 +155,9 @@ async function callNotifier(type, data) {
 }
 
 function deliveryEligibility(profile, livraison) {
+  if (profile?.role === 'admin') {
+    return { allowed: true, reason: 'Accès admin', mode: 'motor', routeKm: estimateRouteKm(livraison?.ville_depart, livraison?.ville_arrivee) };
+  }
   const mode = driverTransportMode(profile);
   const driverCity = normalizeCity(profile?.ville || '');
   const fromCity = normalizeCity(livraison?.ville_depart || '');
@@ -282,6 +284,15 @@ async function createLivraison(req, res, ctx, body) {
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
+  await deliverPush(ctx, {
+    type: 'nouvelle_mission',
+    data: {
+      id: livraison?.id,
+      ville_depart: livraison?.ville_depart || payload.ville_depart,
+      ville_arrivee: livraison?.ville_arrivee || payload.ville_arrivee,
+      prix_total: livraison?.prix_total ?? payload.prix_total
+    }
+  }).catch((err) => console.error('[push nouvelle_mission]', err.message));
   return res.status(200).json({ success: true, livraison });
 }
 
@@ -388,20 +399,21 @@ async function gpsUpdate(req, res, ctx, body) {
     livreur_id: livraison.livreur_id || ctx.session.id,
     latitude,
     longitude,
-    accuracy: body.accuracy === undefined ? null : toNumber(body.accuracy),
+    accuracy_m: body.accuracy === undefined ? null : toNumber(body.accuracy),
     speed: body.speed === undefined ? null : toNumber(body.speed),
     heading: body.heading === undefined ? null : toNumber(body.heading),
+    recorded_at: body.recorded_at || new Date().toISOString(),
     source: 'api',
   };
 
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/delivery_locations`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify(point)
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(400).json({ error: 'GPS update impossible', details: data });
-  return res.status(200).json({ success: true, location: Array.isArray(data) ? data[0] : data });
+  const insert = await insertWithSchemaFallback(
+    `${ctx.sbUrl}/rest/v1/delivery_locations`,
+    sbHeaders(ctx.sbKey),
+    point,
+    ['accuracy_m', 'speed', 'heading', 'recorded_at', 'source']
+  );
+  if (!insert.ok) return res.status(400).json({ error: 'GPS update impossible', details: insert.data });
+  return res.status(200).json({ success: true, location: Array.isArray(insert.data) ? insert.data[0] : insert.data });
 }
 
 async function availableLivraisons(req, res, ctx) {
@@ -410,7 +422,7 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=eq.paiement_autorise&select=id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,created_at,cree_le&order=created_at.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -458,11 +470,21 @@ async function tracking(req, res, ctx, body) {
   const participant = admin || livraison.expediteur_id === ctx.session.id || livraison.livreur_id === ctx.session.id;
   if (!participant) return res.status(403).json({ error: 'Suivi reserve aux participants de la livraison' });
 
-  const latestRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/delivery_locations?livraison_id=eq.${livraison.id}&select=latitude,longitude,accuracy,speed,heading,recorded_at,created_at&order=recorded_at.desc&limit=1`,
+  let latestRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/delivery_locations?livraison_id=eq.${livraison.id}&select=latitude,longitude,accuracy_m,speed,heading,recorded_at,created_at&order=recorded_at.desc&limit=1`,
     { headers: sbHeaders(ctx.sbKey) }
   );
-  const latestRows = latestRes.ok ? await latestRes.json() : [];
+  let latestRows = latestRes.ok ? await latestRes.json() : [];
+  if (!latestRes.ok) {
+    latestRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/delivery_locations?livraison_id=eq.${livraison.id}&select=latitude,longitude,accuracy,speed,heading,recorded_at,created_at&order=recorded_at.desc&limit=1`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    latestRows = latestRes.ok ? await latestRes.json() : [];
+    if (latestRows[0] && latestRows[0].accuracy !== undefined && latestRows[0].accuracy_m === undefined) {
+      latestRows[0].accuracy_m = latestRows[0].accuracy;
+    }
+  }
 
   return res.status(200).json({
     success: true,
@@ -510,36 +532,57 @@ async function submitDriverVerification(req, res, ctx, body) {
   }
 
   const nextDriverStatus = ctx.profile.driver_status === 'verified' ? 'verified' : 'pending_review';
-  const patch = {
+
+  // Build patch in layers: required fields first, optional extended fields added progressively
+  const patchBase = {
     prenom: firstName,
     nom: lastName,
-    email: ctx.session.email || ctx.profile.email || null,
     telephone: phone,
     ville: city,
-    vehicule,
-    trajet_principal: route,
     verification_status: nextDriverStatus === 'verified' ? 'verified' : 'pending',
     driver_status: nextDriverStatus,
     mis_a_jour_le: new Date().toISOString()
   };
-  if (province) patch.province = province;
-  if (transportMode) patch.transport_mode = transportMode;
 
-  let r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(ctx.session.id)}`, {
-    method: 'PATCH',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify(patch)
-  });
+  const patchFull = {
+    ...patchBase,
+    vehicule,
+    trajet_principal: route,
+  };
+  if (province) patchFull.province = province;
+  if (transportMode) patchFull.transport_mode = transportMode;
+
+  const profileUrl = `${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(ctx.session.id)}`;
+
+  // Try 1: full patch with all optional columns
+  let r = await fetch(profileUrl, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patchFull) });
   let data = await r.json().catch(() => ({}));
 
-  if (!r.ok && data && /column .* does not exist/i.test(JSON.stringify(data))) {
-    delete patch.province;
-    delete patch.transport_mode;
-    r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(ctx.session.id)}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify(patch)
-    });
+  // Try 2: remove extended transport columns
+  if (!r.ok && /column .* does not exist/i.test(JSON.stringify(data))) {
+    const patch2 = { ...patchFull };
+    delete patch2.province;
+    delete patch2.transport_mode;
+    r = await fetch(profileUrl, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch2) });
+    data = await r.json().catch(() => ({}));
+  }
+
+  // Try 3: remove vehicule and trajet_principal (columns may not exist yet in DB)
+  if (!r.ok && /column .* does not exist/i.test(JSON.stringify(data))) {
+    r = await fetch(profileUrl, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patchBase) });
+    data = await r.json().catch(() => ({}));
+  }
+
+  // Try 4: remove driver_status / verification_status (SQL migration not yet run)
+  if (!r.ok && /column .* does not exist/i.test(JSON.stringify(data))) {
+    const patchMinimal = {
+      prenom: firstName,
+      nom: lastName,
+      telephone: phone,
+      ville: city,
+      mis_a_jour_le: new Date().toISOString()
+    };
+    r = await fetch(profileUrl, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patchMinimal) });
     data = await r.json().catch(() => ({}));
   }
 
@@ -548,6 +591,31 @@ async function submitDriverVerification(req, res, ctx, body) {
   }
 
   const updated = Array.isArray(data) ? data[0] : data;
+  const birthDate = String(body.birth_date || body.dob || '').trim();
+  const kycPayload = {
+    user_id: ctx.session.id,
+    first_name: firstName,
+    last_name: lastName,
+    dob: /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? birthDate : '1900-01-01',
+    phone,
+    address: [city, province].filter(Boolean).join(', '),
+    transport_mode: transportMode || vehicule,
+    eco_bonus: 0,
+    doc_type: body.doc_type || 'profil_livreur',
+    statut: nextDriverStatus,
+    soumis_le: new Date().toISOString()
+  };
+  const kycRes = await fetch(`${ctx.sbUrl}/rest/v1/kyc_submissions?on_conflict=user_id`, {
+    method: 'POST',
+    headers: {
+      ...sbHeaders(ctx.sbKey),
+      Prefer: 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify(kycPayload)
+  }).catch(err => ({ ok: false, json: async () => ({ error: err.message }) }));
+  const kycSaved = Boolean(kycRes && kycRes.ok);
+  const kycError = kycSaved ? null : await kycRes.json().catch(() => ({}));
+
   const cardId = 'PP-DR-' + String(ctx.session.id || '').slice(0, 8).toUpperCase();
   const notify = await callNotifier('carte_livreur', {
     user_id: ctx.session.id,
@@ -564,7 +632,9 @@ async function submitDriverVerification(req, res, ctx, body) {
   return res.status(200).json({
     success: true,
     driver_status: updated.driver_status || nextDriverStatus,
-    verification_status: updated.verification_status || patch.verification_status,
+    verification_status: updated.verification_status || patchBase.verification_status,
+    kyc_saved: kycSaved,
+    kyc_error: kycError,
     card_id: cardId,
     email_sent: Boolean(notify.ok),
     email_error: notify.ok ? null : notify.data
@@ -642,6 +712,104 @@ async function adminUpdateDriverStatus(req, res, ctx, body) {
 
   return res.status(200).json({ success: true, profile: updated });
 }
+
+async function adminSetUserAccess(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+
+  const userId = body.user_id || body.id;
+  const action = String(body.action || '').trim();
+  if (!userId || !['retirer', 'pause', 'reactiver', 'revision'].includes(action)) {
+    return res.status(400).json({ error: 'user_id et action valide requis' });
+  }
+
+  if (userId === ctx.session.id) {
+    return res.status(403).json({ error: 'Protection active: impossible de retirer ton propre compte admin' });
+  }
+
+  let targetRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,role,suspendu,driver_status`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  if (!targetRes.ok) {
+    targetRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,role,suspendu`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+  }
+  const targetRows = targetRes.ok ? await targetRes.json() : [];
+  const target = targetRows[0];
+  if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+  if (target.role === 'admin' && body.confirmation !== 'RETIRER_ADMIN') {
+    return res.status(403).json({ error: 'Protection admin: confirmation speciale requise pour retirer un autre admin' });
+  }
+
+  const now = new Date().toISOString();
+  const reason = String(body.reason || body.raison || '').trim().slice(0, 400);
+  const patch = ['retirer', 'pause'].includes(action)
+    ? {
+        suspendu: true,
+        driver_status: ['verified', 'pending_review'].includes(target.driver_status) ? 'suspended' : undefined,
+        verification_status: 'suspended',
+        raison_suspension: reason || (action === 'pause' ? 'Profil mis en pause par admin' : 'Utilisateur retire par admin'),
+        mis_a_jour_le: now
+      }
+    : action === 'revision'
+    ? {
+        suspendu: false,
+        driver_status: 'pending_review',
+        verification_status: 'pending',
+        raison_suspension: reason || 'Verification demandee de nouveau par admin',
+        mis_a_jour_le: now
+      }
+    : {
+        suspendu: false,
+        driver_status: target.driver_status === 'suspended' ? 'not_started' : target.driver_status,
+        verification_status: target.driver_status === 'suspended' ? 'pending' : undefined,
+        raison_suspension: null,
+        mis_a_jour_le: now
+      };
+
+  Object.keys(patch).forEach((key) => patch[key] === undefined && delete patch[key]);
+
+  const profilePatchUrl = `${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`;
+  const fallbackPatches = ['retirer', 'pause'].includes(action)
+    ? [
+        patch,
+        { suspendu: true, verification_status: 'suspended', mis_a_jour_le: now },
+        { suspendu: true, mis_a_jour_le: now },
+        { suspendu: true }
+      ]
+    : action === 'revision'
+    ? [
+        patch,
+        { suspendu: false, driver_status: 'pending_review', verification_status: 'pending', mis_a_jour_le: now },
+        { suspendu: false, driver_status: 'pending_review', mis_a_jour_le: now },
+        { suspendu: false, mis_a_jour_le: now }
+      ]
+    : [
+        patch,
+        { suspendu: false, verification_status: 'pending', mis_a_jour_le: now },
+        { suspendu: false, mis_a_jour_le: now },
+        { suspendu: false }
+      ];
+
+  let r;
+  let data;
+  for (const candidate of fallbackPatches) {
+    r = await fetch(profilePatchUrl, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(candidate)
+    });
+    data = await r.json().catch(() => ({}));
+    if (r.ok) break;
+  }
+  if (!r.ok) return res.status(400).json({ error: 'Mise a jour acces utilisateur impossible', details: data });
+
+  return res.status(200).json({ success: true, action, profile: Array.isArray(data) ? data[0] : data });
+}
+
 async function notifications(req, res, ctx, body) {
   if (req.method === 'GET' || body.mode === 'list') {
     const r = await fetch(`${ctx.sbUrl}/rest/v1/notifications?user_id=eq.${ctx.session.id}&select=*&order=created_at.desc&limit=50`, {
@@ -703,6 +871,667 @@ async function refundPayment(req, res, ctx, body) {
   return res.status(200).json({ success: true, refund_id: refund.id, status: refund.status, amount: refund.amount });
 }
 
+async function createReview(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role expediteur requis' });
+  }
+
+  const livraisonId = body.livraison_id || body.livraisonId || body.delivery_id;
+  const rating = Math.round(toNumber(body.rating || body.note, 0));
+  const comment = String(body.comment || body.commentaire || '').trim().slice(0, 800);
+  if (!livraisonId || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'livraison_id et note 1-5 requis' });
+  }
+
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,expediteur_id,livreur_id,statut`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = livRes.ok ? await livRes.json() : [];
+  const livraison = rows[0];
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  const admin = roleIn(ctx.profile, ['admin']);
+  if (!admin && livraison.expediteur_id !== ctx.session.id) {
+    return res.status(403).json({ error: 'Avis reserve a l expediteur de la livraison' });
+  }
+  if (!livraison.livreur_id) return res.status(409).json({ error: 'Aucun livreur assigne a evaluer' });
+  if (!['livre', 'payee'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Avis possible seulement apres livraison' });
+  }
+
+  const reviewPayload = {
+    reviewed_id: livraison.livreur_id,
+    reviewer_id: ctx.session.id,
+    rating,
+    comment,
+    delivery_id: livraison.id
+  };
+  let r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(reviewPayload)
+  });
+  let data = await r.json().catch(() => ({}));
+
+  if (!r.ok && /column .* does not exist|Could not find/i.test(JSON.stringify(data))) {
+    const legacyPayload = {
+      livreur_id: livraison.livreur_id,
+      expediteur_id: ctx.session.id,
+      livraison_id: livraison.id,
+      note: rating,
+      commentaire: comment
+    };
+    r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(legacyPayload)
+    });
+    data = await r.json().catch(() => ({}));
+  }
+
+  if (!r.ok) {
+    const evalPayload = {
+      livraison_id: livraison.id,
+      auteur_id: ctx.session.id,
+      cible_id: livraison.livreur_id,
+      note: rating,
+      commentaire: comment
+    };
+    r = await fetch(`${ctx.sbUrl}/rest/v1/evaluations`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(evalPayload)
+    });
+    data = await r.json().catch(() => ({}));
+  }
+
+  if (!r.ok) return res.status(400).json({ error: 'Creation avis impossible', details: data });
+  return res.status(200).json({ success: true, review: Array.isArray(data) ? data[0] : data });
+}
+
+async function fetchImpactState(sbUrl, sbKey) {
+  const settingsRes = await fetch(`${sbUrl}/rest/v1/impact_settings?select=*&id=eq.default&limit=1`, {
+    headers: sbHeaders(sbKey)
+  });
+  const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
+  const settings = settingsRows[0] || {
+    id: 'default',
+    donation_rate_percent: 5,
+    platform_commission_percent: 12,
+    public_note: 'Montants estimes en direct, confirmes mensuellement.'
+  };
+
+  const orgRes = await fetch(`${sbUrl}/rest/v1/impact_organisations?select=*&order=sort_order.asc,name.asc`, {
+    headers: sbHeaders(sbKey)
+  });
+  const organisations = orgRes.ok ? await orgRes.json() : [];
+  const activeOrgs = organisations.filter((org) => org.active !== false).slice(0, 3);
+
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  const month = monthStart.toISOString().slice(0, 10);
+
+  const livRes = await fetch(
+    `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at,cree_le&statut=in.(payee,livre)&cree_le=gte.${monthStart.toISOString()}&cree_le=lt.${nextMonth.toISOString()}&limit=1000`,
+    { headers: sbHeaders(sbKey) }
+  );
+  let livraisons = livRes.ok ? await livRes.json() : [];
+  if (!livRes.ok) {
+    const fallback = await fetch(
+      `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at&statut=in.(payee,livre)&created_at=gte.${monthStart.toISOString()}&created_at=lt.${nextMonth.toISOString()}&limit=1000`,
+      { headers: sbHeaders(sbKey) }
+    );
+    livraisons = fallback.ok ? await fallback.json() : [];
+  }
+
+  const revenueCents = livraisons.reduce((sum, row) => {
+    const amount = toNumber(row.prix_total ?? row.prix_final ?? row.prix, 0);
+    return sum + Math.round(amount * 100);
+  }, 0);
+  const commissionRate = Math.max(0, toNumber(settings.platform_commission_percent, 12));
+  const donationRate = Math.max(0, toNumber(settings.donation_rate_percent, 5));
+  const commissionCents = Math.round(revenueCents * commissionRate / 100);
+  const donationPoolCents = Math.round(commissionCents * donationRate / 100);
+  const allocationTotal = activeOrgs.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
+
+  const allocations = activeOrgs.map((org) => {
+    const percent = allocationTotal > 0 ? Math.max(0, toNumber(org.allocation_percent, 0)) : (activeOrgs.length ? 100 / activeOrgs.length : 0);
+    return {
+      id: org.id,
+      name: org.name,
+      description: org.description || '',
+      website_url: org.website_url || '',
+      allocation_percent: Math.round(percent * 100) / 100,
+      amount_cents: Math.round(donationPoolCents * percent / 100)
+    };
+  });
+
+  return {
+    month,
+    generated_at: new Date().toISOString(),
+    settings,
+    organisations,
+    active_organisations: activeOrgs.length,
+    totals: {
+      deliveries_count: livraisons.length,
+      revenue_cents: revenueCents,
+      commission_cents: commissionCents,
+      donation_pool_cents: donationPoolCents,
+      donation_rate_percent: donationRate,
+      platform_commission_percent: commissionRate,
+      allocation_total_percent: Math.round(allocationTotal * 100) / 100,
+      status: 'estimated'
+    },
+    allocations
+  };
+}
+
+async function impactPublic(req, res, ctx) {
+  const state = await fetchImpactState(ctx.sbUrl, ctx.sbKey);
+  const publicState = {
+    month: state.month,
+    generated_at: state.generated_at,
+    note: state.settings.public_note || 'Montants estimes en direct, confirmes mensuellement.',
+    totals: state.totals,
+    allocations: state.allocations
+  };
+  return res.status(200).json({ success: true, impact: publicState });
+}
+
+async function impactApplicationPublic(req, res, ctx, body) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+  const organisationName = String(body.organisation_name || body.name || '').trim().slice(0, 160);
+  const contactName = String(body.contact_name || '').trim().slice(0, 120);
+  const email = String(body.email || '').trim().toLowerCase().slice(0, 180);
+  const phone = String(body.phone || '').trim().slice(0, 60);
+  const websiteUrl = String(body.website_url || '').trim().slice(0, 250);
+  const mission = String(body.mission || '').trim().slice(0, 1200);
+  const requestedSupport = String(body.requested_support || '').trim().slice(0, 800);
+
+  if (!organisationName || !contactName || !email || !mission) {
+    return res.status(400).json({ error: 'Organisation, contact, courriel et mission requis' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Courriel invalide' });
+  }
+
+  const payload = {
+    organisation_name: organisationName,
+    contact_name: contactName,
+    email,
+    phone,
+    website_url: websiteUrl,
+    mission,
+    requested_support: requestedSupport,
+    status: 'pending',
+    created_at: new Date().toISOString()
+  };
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_applications`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(payload)
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.status(400).json({ error: 'Demande impossible', details: data });
+  return res.status(200).json({ success: true, application: Array.isArray(data) ? data[0] : data });
+}
+
+async function impactAdmin(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  if (req.method === 'GET' || body.mode === 'list') {
+    const state = await fetchImpactState(ctx.sbUrl, ctx.sbKey);
+    const appRes = await fetch(`${ctx.sbUrl}/rest/v1/impact_applications?select=*&order=created_at.desc&limit=100`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    const applications = appRes.ok ? await appRes.json() : [];
+    return res.status(200).json({ success: true, impact: state, applications });
+  }
+
+  if (body.mode === 'settings') {
+    const donationRate = Math.max(0, Math.min(100, toNumber(body.donation_rate_percent, 5)));
+    const commissionRate = Math.max(0, Math.min(100, toNumber(body.platform_commission_percent, 12)));
+    const payload = {
+      id: 'default',
+      donation_rate_percent: donationRate,
+      platform_commission_percent: commissionRate,
+      public_note: String(body.public_note || '').slice(0, 400),
+      updated_by: ctx.session.id,
+      updated_at: new Date().toISOString()
+    };
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_settings?on_conflict=id`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Parametres impact impossibles', details: data });
+    return res.status(200).json({ success: true, settings: Array.isArray(data) ? data[0] : data });
+  }
+
+  if (body.mode === 'upsert_org') {
+    const name = String(body.name || '').trim().slice(0, 120);
+    if (!name) return res.status(400).json({ error: 'Nom organisme requis' });
+    const payload = {
+      name,
+      description: String(body.description || '').trim().slice(0, 300),
+      website_url: String(body.website_url || '').trim().slice(0, 250),
+      active: body.active !== false,
+      allocation_percent: Math.max(0, Math.min(100, toNumber(body.allocation_percent, 0))),
+      sort_order: Math.round(toNumber(body.sort_order, 0)),
+      updated_at: new Date().toISOString()
+    };
+    if (body.id) payload.id = body.id;
+
+    const currentState = await fetchImpactState(ctx.sbUrl, ctx.sbKey).catch(() => ({ organisations: [] }));
+    const simulated = (currentState.organisations || [])
+      .filter((org) => !body.id || org.id !== body.id)
+      .concat({ id: body.id || 'new', ...payload });
+    const active = simulated.filter((org) => org.active !== false);
+    const activeTotal = active.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
+    if (active.length > 3) {
+      return res.status(409).json({ error: 'Maximum 3 organismes actifs a la fois' });
+    }
+    if (activeTotal > 100.01) {
+      return res.status(409).json({ error: 'La repartition active ne peut pas depasser 100%' });
+    }
+
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_organisations${body.id ? '?on_conflict=id' : ''}`, {
+      method: 'POST',
+      headers: body.id ? { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates' } : sbHeaders(ctx.sbKey),
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Sauvegarde organisme impossible', details: data });
+    return res.status(200).json({ success: true, organisation: Array.isArray(data) ? data[0] : data });
+  }
+
+  if (body.mode === 'delete_org') {
+    const id = body.id;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_organisations?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: sbHeaders(ctx.sbKey, 'return=minimal')
+    });
+    if (!r.ok) return res.status(400).json({ error: 'Suppression organisme impossible' });
+    return res.status(200).json({ success: true });
+  }
+
+  if (body.mode === 'update_application') {
+    const id = body.id;
+    const status = String(body.status || '').trim();
+    if (!id || !['pending', 'approved', 'rejected', 'contacted'].includes(status)) {
+      return res.status(400).json({ error: 'id et statut valide requis' });
+    }
+    const patch = {
+      status,
+      admin_note: String(body.admin_note || '').trim().slice(0, 800),
+      reviewed_by: ctx.session.id,
+      reviewed_at: new Date().toISOString()
+    };
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_applications?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(patch)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Mise a jour demande impossible', details: data });
+
+    let createdOrganisation = null;
+    if (status === 'approved') {
+      const appRows = Array.isArray(data) ? data : [data];
+      const app = appRows[0];
+      if (app?.organisation_name) {
+        const existingRes = await fetch(
+          `${ctx.sbUrl}/rest/v1/impact_organisations?name=eq.${encodeURIComponent(app.organisation_name)}&select=id,name&limit=1`,
+          { headers: sbHeaders(ctx.sbKey) }
+        );
+        const existing = existingRes.ok ? await existingRes.json() : [];
+        if (!existing.length) {
+          const orgPayload = {
+            name: app.organisation_name,
+            description: app.mission || app.requested_support || '',
+            website_url: app.website_url || '',
+            active: false,
+            allocation_percent: 0,
+            sort_order: 99,
+            updated_at: new Date().toISOString()
+          };
+          const orgRes = await fetch(`${ctx.sbUrl}/rest/v1/impact_organisations`, {
+            method: 'POST',
+            headers: sbHeaders(ctx.sbKey),
+            body: JSON.stringify(orgPayload)
+          });
+          const orgData = await orgRes.json().catch(() => ({}));
+          if (orgRes.ok) createdOrganisation = Array.isArray(orgData) ? orgData[0] : orgData;
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      application: Array.isArray(data) ? data[0] : data,
+      organisation_created: createdOrganisation
+    });
+  }
+
+  return res.status(400).json({ error: 'Mode impact inconnu' });
+}
+
+function defaultRewardMissions() {
+  const now = new Date();
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59));
+  return [
+    {
+      id: 'default-5-week',
+      title: '5 livraisons cette semaine',
+      description: 'Completer 5 livraisons pour debloquer un bonus de regularite.',
+      objective_type: 'deliveries_week',
+      objective_target: 5,
+      reward_coins: 50,
+      deadline: monthEnd.toISOString(),
+      status: 'active'
+    },
+    {
+      id: 'default-perfect',
+      title: 'Service impeccable',
+      description: 'Maintenir une note moyenne de 4.8 ou plus sur 10 livraisons.',
+      objective_type: 'rating',
+      objective_target: 10,
+      reward_coins: 75,
+      deadline: monthEnd.toISOString(),
+      status: 'active'
+    },
+    {
+      id: 'default-community',
+      title: 'Coup de main communautaire',
+      description: 'Aider un aine ou une demande solidaire approuvee.',
+      objective_type: 'community',
+      objective_target: 1,
+      reward_coins: 50,
+      deadline: monthEnd.toISOString(),
+      status: 'active'
+    }
+  ];
+}
+
+function computeDriverLevel(profile, coinsBalance) {
+  const deliveries = Number(profile?.livraisons || 0);
+  const score = Number(profile?.score || profile?.score_confiance || 0) / 20;
+  const levels = [
+    { level: 1, name: 'Nouveau', min_deliveries: 0, min_score: 0, benefit: 'Acces aux missions locales.' },
+    { level: 2, name: 'Fiable', min_deliveries: 10, min_score: 4.5, benefit: 'Meilleure visibilite sur les missions.' },
+    { level: 3, name: 'Ambassadeur', min_deliveries: 50, min_score: 4.7, benefit: 'Missions prioritaires et badges avances.' },
+    { level: 4, name: 'Capitaine regional', min_deliveries: 100, min_score: 4.8, benefit: 'Missions exclusives et priorite regionale.' }
+  ];
+  const current = [...levels].reverse().find((lvl) => deliveries >= lvl.min_deliveries && score >= lvl.min_score) || levels[0];
+  const next = levels.find((lvl) => lvl.level === current.level + 1) || null;
+  return { current, next, deliveries, score: Math.round(score * 10) / 10, coins_balance: coinsBalance };
+}
+
+async function rewardsDashboard(req, res, ctx) {
+  const missionsRes = await fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&status=eq.active&order=created_at.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const missions = missionsRes.ok ? await missionsRes.json() : defaultRewardMissions();
+
+  const missionIds = missions.map((m) => m.id).filter((id) => !String(id).startsWith('default-'));
+  let progress = [];
+  if (missionIds.length) {
+    const progressRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/user_missions?select=*&user_id=eq.${ctx.session.id}&mission_id=in.(${missionIds.join(',')})`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    progress = progressRes.ok ? await progressRes.json() : [];
+  }
+
+  const txRes = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount,reason,created_at&user_id=eq.${ctx.session.id}&order=created_at.desc&limit=100`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const txs = txRes.ok ? await txRes.json() : [];
+  const txBalance = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  const fallbackCoins = Number(ctx.profile?.porte_coins || ctx.profile?.portecoins || 0);
+  const coinsBalance = txs.length ? txBalance : fallbackCoins;
+
+  const drawsRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&status=eq.active&order=draw_date.asc&limit=5`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const draws = drawsRes.ok ? await drawsRes.json() : [];
+  const drawIds = draws.map((d) => d.id);
+  let entries = [];
+  if (drawIds.length) {
+    const entriesRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?select=draw_id,entries&user_id=eq.${ctx.session.id}&draw_id=in.(${drawIds.join(',')})`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    entries = entriesRes.ok ? await entriesRes.json() : [];
+  }
+
+  return res.status(200).json({
+    success: true,
+    porte_coins_balance: coinsBalance,
+    transactions: txs.slice(0, 10),
+    missions,
+    progress,
+    draws,
+    entries,
+    level: computeDriverLevel(ctx.profile, coinsBalance),
+    legal_notice: 'Les tirages sont soumis aux reglements officiels. Aucun achat requis lorsque requis par la loi. Les PorteCoins n ont aucune valeur monetaire.'
+  });
+}
+
+async function drawEnter(req, res, ctx, body) {
+  const drawId = body.draw_id || body.drawId;
+  const entries = Math.max(1, Math.min(50, Math.round(toNumber(body.entries, 1))));
+  if (!drawId) return res.status(400).json({ error: 'draw_id requis' });
+  const cost = entries * 10;
+
+  const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&status=eq.active&select=id,title,draw_date&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const draws = drawRes.ok ? await drawRes.json() : [];
+  if (!draws.length) return res.status(404).json({ error: 'Tirage actif introuvable' });
+
+  const txRes = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&user_id=eq.${ctx.session.id}&limit=1000`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const txs = txRes.ok ? await txRes.json() : [];
+  const balance = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  if (balance < cost) return res.status(409).json({ error: 'PorteCoins insuffisants', balance, cost });
+
+  const debitRes = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      user_id: ctx.session.id,
+      amount: -cost,
+      reason: 'draw_entry',
+      metadata: { draw_id: drawId, entries }
+    })
+  });
+  const debit = await debitRes.json().catch(() => ({}));
+  if (!debitRes.ok) return res.status(400).json({ error: 'Debit PorteCoins impossible', details: debit });
+
+  const entryRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ draw_id: drawId, user_id: ctx.session.id, entries, cost_coins: cost })
+  });
+  const entry = await entryRes.json().catch(() => ({}));
+  if (!entryRes.ok) return res.status(400).json({ error: 'Participation impossible', details: entry });
+  return res.status(200).json({ success: true, entries, cost, balance_after: balance - cost });
+}
+
+function pickWeightedWinner(candidates) {
+  const total = candidates.reduce((sum, row) => sum + Math.max(1, Number(row.entries_weight || row.entries || 1)), 0);
+  if (!total) return null;
+  const crypto = require('crypto');
+  let roll = crypto.randomInt(1, total + 1);
+  for (const row of candidates) {
+    roll -= Math.max(1, Number(row.entries_weight || row.entries || 1));
+    if (roll <= 0) return row;
+  }
+  return candidates[candidates.length - 1] || null;
+}
+
+async function runMonthlyDraw(ctx, drawId) {
+  const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&select=*&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const drawRows = drawRes.ok ? await drawRes.json() : [];
+  const draw = drawRows[0];
+  if (!draw) return { ok: false, status: 404, error: 'Tirage introuvable' };
+  if (draw.status === 'completed') return { ok: false, status: 409, error: 'Tirage deja complete' };
+  if (draw.status === 'cancelled') return { ok: false, status: 409, error: 'Tirage annule' };
+
+  const existingRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_winners?draw_id=eq.${encodeURIComponent(drawId)}&select=id,user_id&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const existing = existingRes.ok ? await existingRes.json() : [];
+  if (existing.length) return { ok: false, status: 409, error: 'Un gagnant existe deja pour ce tirage' };
+
+  const entriesRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?draw_id=eq.${encodeURIComponent(drawId)}&select=user_id,entries`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const entries = entriesRes.ok ? await entriesRes.json() : [];
+  const grouped = new Map();
+  entries.forEach((entry) => grouped.set(entry.user_id, (grouped.get(entry.user_id) || 0) + Number(entry.entries || 0)));
+  let candidates = [...grouped.entries()].map(([user_id, entries_weight]) => ({ user_id, entries_weight }));
+
+  if (!candidates.length && draw.auto_include_all_users !== false) {
+    const profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,email,role&suspendu=eq.false&role=in.(livreur,expediteur,les%20deux)&limit=2000`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    const profiles = profilesRes.ok ? await profilesRes.json() : [];
+    candidates = profiles.map((profile) => ({
+      user_id: profile.id,
+      entries_weight: 1,
+      user_email: profile.email,
+      user_role: profile.role
+    }));
+  }
+  if (!candidates.length) return { ok: false, status: 409, error: 'Aucun participant admissible' };
+
+  const winner = pickWeightedWinner(candidates);
+  const profileRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(winner.user_id)}&select=id,email,role&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const profiles = profileRes.ok ? await profileRes.json() : [];
+  const profile = profiles[0] || {};
+
+  const winnerRes = await insertWithSchemaFallback(
+    `${ctx.sbUrl}/rest/v1/draw_winners`,
+    sbHeaders(ctx.sbKey),
+    {
+      draw_id: drawId,
+      user_id: winner.user_id,
+      prize_title: draw.title || 'Tirage PorteaPorte',
+      published: false,
+      entries_weight: winner.entries_weight || 1,
+      user_email: profile.email || winner.user_email || '',
+      user_role: profile.role || winner.user_role || '',
+      selected_by: ctx.session.id
+    },
+    ['entries_weight', 'user_email', 'user_role', 'selected_by']
+  );
+  if (!winnerRes.ok) return { ok: false, status: 400, error: 'Enregistrement gagnant impossible', details: winnerRes.data };
+
+  await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+    body: JSON.stringify({ status: 'completed', winner_selected_at: new Date().toISOString() })
+  }).catch(() => {});
+
+  return { ok: true, winner: Array.isArray(winnerRes.data) ? winnerRes.data[0] : winnerRes.data, candidates_count: candidates.length };
+}
+
+async function adminRewards(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  if (req.method === 'GET' || body.mode === 'list') {
+    const [missionsRes, drawsRes, txRes] = await Promise.all([
+      fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&order=draw_date.desc&limit=50`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&limit=1000`, { headers: sbHeaders(ctx.sbKey) })
+    ]);
+    const missions = missionsRes.ok ? await missionsRes.json() : [];
+    const draws = drawsRes.ok ? await drawsRes.json() : [];
+    const txs = txRes.ok ? await txRes.json() : [];
+    return res.status(200).json({
+      success: true,
+      missions,
+      draws,
+      stats: {
+        coins_issued_net: txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0),
+        transactions_count: txs.length,
+        active_draws: draws.filter((d) => d.status === 'active').length,
+        cancelled_draws: draws.filter((d) => d.status === 'cancelled').length
+      }
+    });
+  }
+
+  if (body.mode === 'create_mission') {
+    const payload = {
+      title: String(body.title || '').trim().slice(0, 140),
+      description: String(body.description || '').trim().slice(0, 800),
+      objective_type: String(body.objective_type || 'custom').trim().slice(0, 80),
+      objective_target: Math.max(1, Math.round(toNumber(body.objective_target, 1))),
+      reward_coins: Math.max(0, Math.round(toNumber(body.reward_coins, 0))),
+      deadline: body.deadline || null,
+      status: body.status || 'active'
+    };
+    if (!payload.title) return res.status(400).json({ error: 'Titre requis' });
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/missions`, { method: 'POST', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(payload) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Creation mission impossible', details: data });
+    return res.status(200).json({ success: true, mission: Array.isArray(data) ? data[0] : data });
+  }
+
+  if (body.mode === 'create_draw') {
+    const payload = {
+      title: String(body.title || '').trim().slice(0, 140),
+      description: String(body.description || '').trim().slice(0, 800),
+      draw_date: body.draw_date,
+      status: body.status || 'active',
+      rules_url: body.rules_url || '/reglements-tirage.html',
+      auto_include_all_users: body.auto_include_all_users !== false,
+      admin_note: String(body.admin_note || '').trim().slice(0, 500)
+    };
+    if (!payload.title || !payload.draw_date) return res.status(400).json({ error: 'Titre et date requis' });
+    const insert = await insertWithSchemaFallback(
+      `${ctx.sbUrl}/rest/v1/monthly_draws`,
+      sbHeaders(ctx.sbKey),
+      payload,
+      ['auto_include_all_users', 'admin_note']
+    );
+    if (!insert.ok) return res.status(400).json({ error: 'Creation tirage impossible', details: insert.data });
+    return res.status(200).json({ success: true, draw: Array.isArray(insert.data) ? insert.data[0] : insert.data });
+  }
+
+  if (body.mode === 'update_draw_status') {
+    const id = body.id || body.draw_id;
+    const status = String(body.status || '').trim();
+    const allowed = new Set(['draft', 'active', 'closed', 'completed', 'cancelled']);
+    if (!id || !allowed.has(status)) return res.status(400).json({ error: 'id et statut valide requis' });
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ status, updated_at: new Date().toISOString() })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Mise a jour tirage impossible', details: data });
+    return res.status(200).json({ success: true, draw: Array.isArray(data) ? data[0] : data });
+  }
+
+  if (body.mode === 'run_draw') {
+    const id = body.id || body.draw_id;
+    if (!id) return res.status(400).json({ error: 'draw_id requis' });
+    const result = await runMonthlyDraw(ctx, id);
+    if (!result.ok) return res.status(result.status || 400).json({ error: result.error, details: result.details });
+    return res.status(200).json({ success: true, winner: result.winner, candidates_count: result.candidates_count });
+  }
+
+  return res.status(400).json({ error: 'Mode rewards inconnu' });
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
@@ -710,42 +1539,171 @@ module.exports = async function handler(req, res) {
   }
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
 
-  const body = req.body || {};
-  const endpoint = endpointFromReq(req, body);
-  const sbUrl = process.env.SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_KEY;
-  if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
-
-  const session = await getSession(req, sbUrl, sbKey);
-  if (!session) return res.status(401).json({ error: 'Session requise' });
-  const profile = await getProfile(session.id, sbUrl, sbKey);
-  if (!profile || profile.suspendu || profile.verification_status === 'suspended') {
-    return res.status(403).json({ error: 'Profil invalide ou suspendu' });
-  }
-
-  const ctx = { sbUrl, sbKey, stripeKey: process.env.STRIPE_SECRET_KEY, session, profile };
-
+  let endpoint = 'unknown';
   try {
-    if (endpoint === 'create-livraison') return createLivraison(req, res, ctx, body);
-    if (endpoint === 'assign-driver') return assignDriver(req, res, ctx, body);
-    if (endpoint === 'gps-update') return gpsUpdate(req, res, ctx, body);
-    if (endpoint === 'confirm-delivery') return confirmDelivery(req, res, ctx, body);
-    if (endpoint === 'available-livraisons') return availableLivraisons(req, res, ctx, body);
-    if (endpoint === 'tracking') return tracking(req, res, ctx, body);
-    if (endpoint === 'notifications') return notifications(req, res, ctx, body);
-    if (endpoint === 'submit-driver-verification') return submitDriverVerification(req, res, ctx, body);
-    if (endpoint === 'request-driver-card') return requestDriverCard(req, res, ctx, body);
-    if (endpoint === 'admin-update-driver-status') return adminUpdateDriverStatus(req, res, ctx, body);
-    if (endpoint === 'refund-payment') return refundPayment(req, res, ctx, body);
+    const body = req.body || {};
+    endpoint = endpointFromReq(req, body);
+    const sbUrl = (process.env.SUPABASE_URL || '').replace(/[﻿​]/g, '').trim();
+    const sbKey = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[﻿​]/g, '').trim();
+    if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    const internalHeader = req.headers['x-internal-notifier-secret'];
+    const internal = Boolean(internalSecret && internalHeader && internalHeader === internalSecret);
+
+    if (endpoint === 'impact-public') {
+      return await impactPublic(req, res, { sbUrl, sbKey });
+    }
+    if (endpoint === 'impact-application') {
+      return await impactApplicationPublic(req, res, { sbUrl, sbKey }, body);
+    }
+
+    if (endpoint === 'push-send' && internal) {
+      const ctx = {
+        sbUrl,
+        sbKey,
+        stripeKey: process.env.STRIPE_SECRET_KEY,
+        session: { id: 'internal', email: 'internal@porteaporte.site' },
+        profile: { role: 'admin', suspendu: false },
+        internal: true
+      };
+      return await pushSend(req, res, ctx, body);
+    }
+
+    const session = await getSession(req, sbUrl, sbKey);
+    if (!session) return res.status(401).json({ error: 'Session requise' });
+    const profile = await getProfile(session.id, sbUrl, sbKey);
+    if (!profile || profile.suspendu || profile.verification_status === 'suspended') {
+      return res.status(403).json({ error: 'Profil invalide ou suspendu' });
+    }
+
+    const ctx = { sbUrl, sbKey, stripeKey: process.env.STRIPE_SECRET_KEY, session, profile };
+
+    if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
+    if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
+    if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
+    if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
+    if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
+    if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
+    if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
+    if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);
+    if (endpoint === 'request-driver-card') return await requestDriverCard(req, res, ctx, body);
+    if (endpoint === 'admin-update-driver-status') return await adminUpdateDriverStatus(req, res, ctx, body);
+    if (endpoint === 'retirer') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'retirer' });
+    if (endpoint === 'pause-user') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'pause' });
+    if (endpoint === 'reactiver-user') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'reactiver' });
+    if (endpoint === 'revision-user') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'revision' });
+    if (endpoint === 'admin-user-access') return await adminSetUserAccess(req, res, ctx, body);
+    if (endpoint === 'refund-payment') return await refundPayment(req, res, ctx, body);
+    if (endpoint === 'create-review') return await createReview(req, res, ctx, body);
+    if (endpoint === 'impact-admin') return await impactAdmin(req, res, ctx, body);
+    if (endpoint === 'rewards-dashboard') return await rewardsDashboard(req, res, ctx);
+    if (endpoint === 'draw-enter') return await drawEnter(req, res, ctx, body);
+    if (endpoint === 'admin-rewards') return await adminRewards(req, res, ctx, body);
+    if (endpoint === 'push-subscribe') return await pushSubscribe(req, res, ctx, body);
+    if (endpoint === 'push-send') return await pushSend(req, res, ctx, body);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
-    console.error('[platform]', endpoint, err.message);
+    console.error('[platform]', endpoint, err.message, err.stack);
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
   }
 };
 
+/* ============================================================
+   PUSH NOTIFICATIONS
+============================================================ */
+async function pushSubscribe(req, res, ctx, body) {
+  const { subscription } = body;
+  const userId = ctx.session.id;
+  if (req.method === 'DELETE') {
+    const ep = body.endpoint;
+    if (!ep) return res.status(400).json({ error: 'endpoint requis' });
+    await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(ep)}`, {
+      method: 'DELETE', headers: sbHeaders(ctx.sbKey)
+    });
+    return res.status(200).json({ ok: true });
+  }
+  if (!subscription?.endpoint) return res.status(400).json({ error: 'subscription requise' });
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify({
+      user_id:  userId,
+      endpoint: subscription.endpoint,
+      p256dh:   subscription.keys?.p256dh,
+      auth:     subscription.keys?.auth,
+      cree_le:  new Date().toISOString()
+    })
+  });
+  return res.status(r.ok ? 200 : 500).json({ ok: r.ok });
+}
 
+async function deliverPush(ctx, body) {
+  const webpush = require('web-push');
+  const vapidPublic = (process.env.VAPID_PUBLIC_KEY || '').trim();
+  const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || '').trim();
+  if (!vapidPublic || !vapidPrivate) {
+    return { ok: false, status: 503, error: 'VAPID non configure', sent: 0, failed: 0 };
+  }
 
+  webpush.setVapidDetails(
+    'mailto:bonjour@porteaporte.site',
+    vapidPublic,
+    vapidPrivate
+  );
 
+  const TEMPLATES = {
+    nouvelle_mission: d => ({ title: '📦 Nouvelle mission !', body: `${d.ville_depart} → ${d.ville_arrivee} · ${d.prix_total} $`, tag: 'mission-' + d.id, data: { url: '/browse-missions.html' } }),
+    mission_assignee: d => ({ title: '✅ Mission confirmée !', body: `Livraison ${d.code}`, tag: 'assigned-' + d.id, data: { url: '/map.html?id=' + d.id } }),
+    kyc_approuve:     () => ({ title: '🎉 Vérification approuvée !', body: 'Tu peux maintenant accepter des livraisons.', tag: 'kyc-ok', data: { url: '/dashboard-livreur.html' } }),
+    kyc_rejete:       d  => ({ title: '⚠️ Dossier KYC refusé', body: d.raison || 'Consulte ta messagerie.', tag: 'kyc-ko', data: { url: '/kyc.html' } }),
+    message_recu:     d  => ({ title: '💬 Nouveau message', body: (d.expediteur || 'Client') + ' : ' + (d.apercu || ''), tag: 'msg-' + d.conv_id, data: { url: '/messagerie.html?conv=' + d.conv_id } }),
+    paiement_libere:  d  => ({ title: '💰 Paiement libéré !', body: `${d.montant} $ déposés sur ton compte.`, tag: 'pay-' + d.livraison_id, data: { url: '/dashboard-livreur.html' } })
+  };
 
+  const { type, data = {}, userIds = null } = body;
+  if (!type || !TEMPLATES[type]) return { ok: false, status: 400, error: 'type invalide', sent: 0, failed: 0 };
+  const payload = TEMPLATES[type](data);
 
+  let targetUserIds = Array.isArray(userIds) ? userIds : null;
+  if (!targetUserIds && type === 'nouvelle_mission') {
+    const driversRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/profiles?select=id&role=in.(livreur,les%20deux)&suspendu=eq.false&driver_status=eq.verified&disponible=eq.true&limit=500`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    const drivers = driversRes.ok ? await driversRes.json() : [];
+    targetUserIds = drivers.map((driver) => driver.id).filter(Boolean);
+    if (!targetUserIds.length) return { ok: true, sent: 0, failed: 0, targeted: 0 };
+  }
+
+  let url = `${ctx.sbUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth`;
+  if (targetUserIds?.length) url += `&user_id=in.(${targetUserIds.join(',')})`;
+  const r   = await fetch(url, { headers: sbHeaders(ctx.sbKey) });
+  const subs = r.ok ? await r.json() : [];
+  if (!subs.length) return { ok: true, sent: 0, failed: 0, targeted: targetUserIds?.length || null };
+
+  const results = await Promise.allSettled(
+    subs.map(s => webpush.sendNotification(
+      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+      JSON.stringify(payload)
+    ).catch(async err => {
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(s.endpoint)}`, {
+          method: 'DELETE', headers: sbHeaders(ctx.sbKey)
+        });
+      }
+      throw err;
+    }))
+  );
+
+  const sent = results.filter(r => r.status === 'fulfilled').length;
+  return { ok: true, sent, failed: results.length - sent, targeted: targetUserIds?.length || null };
+}
+
+async function pushSend(req, res, ctx, body) {
+  if (!ctx.internal && !['admin', 'expediteur'].includes(ctx.profile?.role)) {
+    return res.status(403).json({ error: 'Non autorise' });
+  }
+
+  const result = await deliverPush(ctx, body);
+  return res.status(result.status || (result.ok ? 200 : 400)).json(result);
+}

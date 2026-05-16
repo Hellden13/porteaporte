@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification livreur - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .topbar { display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,12,16,.97);border-bottom:1px solid var(--brand-border); }
+    .brand { font-weight:900;font-size:19px;color:var(--brand-lime);text-decoration:none; }
+    .topbar-btn { padding:7px 13px;border:1px solid var(--brand-border);border-radius:7px;background:transparent;color:var(--brand-muted);font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s; }
+    .topbar-btn:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+
+    .page { max-width:760px;margin:0 auto;padding:36px 20px 80px; }
+
+    /* ---- Steps ---- */
+    .steps { display:flex;align-items:center;margin-bottom:36px; }
+    .step { display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative; }
+    .step:not(:last-child)::after { content:'';position:absolute;top:15px;left:55%;right:-45%;height:2px;background:var(--brand-border);z-index:0; }
+    .step.done:not(:last-child)::after { background:var(--brand-lime); }
+    .step-dot { width:30px;height:30px;border-radius:50%;border:2px solid var(--brand-border);background:var(--brand-bg-surface);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:var(--brand-muted);position:relative;z-index:1;transition:all .3s; }
+    .step.active .step-dot { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+    .step.done .step-dot { border-color:var(--brand-lime);background:var(--brand-lime);color:var(--brand-bg-dark); }
+    .step-lbl { font-size:.65rem;font-weight:700;color:var(--brand-muted);text-align:center; }
+    .step.active .step-lbl { color:var(--brand-text); }
+    .step.done .step-lbl { color:var(--brand-lime); }
+
+    /* ---- Panels ---- */
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .panel-title { font-size:1.3rem;font-weight:900;margin-bottom:6px; }
+    .panel-desc { color:var(--brand-muted);font-size:.9rem;line-height:1.65;margin-bottom:26px; }
+
+    /* ---- Transport mode grid ---- */
+    .transport-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px; }
+    .transport-card {
+      border:2px solid var(--brand-border);border-radius:12px;padding:16px 12px;
+      text-align:center;cursor:pointer;transition:all .2s;background:var(--brand-bg-surface);
+      position:relative;
+    }
+    .transport-card:hover { border-color:var(--brand-cyan);background:rgba(0,217,255,0.04); }
+    .transport-card.selected { border-color:var(--brand-lime);background:rgba(0,255,159,0.06); }
+    .transport-card input[type=radio] { position:absolute;opacity:0;pointer-events:none; }
+    .transport-icon { font-size:28px;margin-bottom:8px; }
+    .transport-name { font-weight:800;font-size:.85rem;margin-bottom:4px; }
+    .transport-reqs { font-size:.7rem;color:var(--brand-muted);line-height:1.5; }
+    .eco-badge {
+      display:inline-flex;align-items:center;gap:4px;margin-top:7px;
+      padding:3px 8px;border-radius:999px;font-size:.68rem;font-weight:800;
+    }
+    .eco-20 { background:rgba(0,255,159,.18);color:#00FF9F;border:1px solid rgba(0,255,159,.35); }
+    .eco-15 { background:rgba(0,255,159,.12);color:#57ffbc;border:1px solid rgba(0,255,159,.25); }
+    .eco-10 { background:rgba(0,217,255,.12);color:#00D9FF;border:1px solid rgba(0,217,255,.25); }
+    .eco-5  { background:rgba(0,217,255,.07);color:#00aad4;border:1px solid rgba(0,217,255,.18); }
+    .eco-0  { background:rgba(168,172,177,.07);color:var(--brand-muted);border:1px solid var(--brand-border); }
+
+    /* ---- Eco summary box ---- */
+    .eco-summary {
+      display:none;
+      padding:16px;background:rgba(0,255,159,.07);border:1px solid rgba(0,255,159,.25);
+      border-radius:10px;margin-bottom:20px;
+    }
+    .eco-summary.show { display:block; }
+    .eco-summary h3 { color:var(--brand-lime);font-size:.95rem;margin-bottom:4px; }
+    .eco-summary p { color:var(--brand-muted);font-size:.82rem;line-height:1.6; }
+
+    /* ---- Form fields ---- */
+    .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px; }
+    .form-full { grid-column:1/-1; }
+    .field { display:flex;flex-direction:column;gap:6px; }
+    .field label { font-size:.78rem;font-weight:700;color:var(--brand-muted);text-transform:uppercase;letter-spacing:.05em; }
+    .field input,.field select,.field textarea { padding:11px 14px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:9px;color:var(--brand-text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s; }
+    .field input:focus,.field select:focus { border-color:var(--brand-cyan); }
+    .field .hint { font-size:.73rem;color:var(--brand-muted); }
+
+    /* ---- Doc requirements box ---- */
+    .doc-required {
+      display:none;
+      margin-bottom:20px;padding:14px 16px;
+      background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;
+    }
+    .doc-required.show { display:block; }
+    .doc-required h3 { font-size:.88rem;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px; }
+    .doc-required ul { list-style:none;padding:0;display:flex;flex-direction:column;gap:6px; }
+    .doc-required li { font-size:.82rem;color:var(--brand-muted);display:flex;align-items:center;gap:8px; }
+    .doc-required li::before { content:'✓';color:var(--brand-lime);font-weight:900;flex-shrink:0; }
+
+    /* ---- Upload zones ---- */
+    .upload-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px; }
+    .upload-zone {
+      border:2px dashed var(--brand-border);border-radius:12px;padding:22px 14px;
+      text-align:center;cursor:pointer;transition:all .2s;position:relative;
+      background:var(--brand-bg-surface);
+    }
+    .upload-zone:hover,.upload-zone.drag { border-color:var(--brand-cyan);background:rgba(0,217,255,.04); }
+    .upload-zone.done { border-color:var(--brand-lime);background:rgba(0,255,159,.04);border-style:solid; }
+    .upload-zone.hidden { display:none; }
+    .upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer; }
+    .upload-icon { font-size:26px;margin-bottom:6px; }
+    .upload-label { font-weight:800;font-size:.82rem;margin-bottom:3px; }
+    .upload-hint { font-size:.72rem;color:var(--brand-muted); }
+    .upload-fname { font-size:.74rem;color:var(--brand-lime);font-weight:700;margin-top:5px;word-break:break-all; }
+
+    /* ---- Selfie ---- */
+    .selfie-wrap { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;overflow:hidden;margin-bottom:16px; }
+    #selfieVideo { width:100%;max-height:240px;display:block;background:#000;object-fit:cover; }
+    #selfiePreview { display:none;width:100%;max-height:240px;object-fit:cover; }
+    .selfie-controls { padding:12px 14px;display:flex;gap:10px; }
+
+    /* ---- Consents ---- */
+    .consents { display:flex;flex-direction:column;gap:10px;margin-bottom:22px; }
+    .consent-row { display:flex;gap:12px;align-items:flex-start;padding:13px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:9px; }
+    .consent-row input[type=checkbox] { width:17px;height:17px;flex-shrink:0;accent-color:var(--brand-lime);margin-top:2px; }
+    .consent-text { font-size:.83rem;line-height:1.55;color:var(--brand-muted); }
+    .consent-text strong { color:var(--brand-text); }
+    .consent-text a { color:var(--brand-cyan); }
+
+    /* ---- Status ---- */
+    .status-msg { display:none;padding:11px 15px;border-radius:9px;font-size:.86rem;margin-bottom:14px;line-height:1.5; }
+    .status-msg.success { background:rgba(0,255,159,.1);border:1px solid rgba(0,255,159,.3);color:var(--brand-lime);display:block; }
+    .status-msg.error   { background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ffb4b4;display:block; }
+    .status-msg.info    { background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.25);color:var(--brand-cyan);display:block; }
+
+    /* ---- Buttons ---- */
+    .nav-btns { display:flex;gap:10px;justify-content:flex-end;margin-top:10px; }
+    .btn-back { padding:12px 20px;border:1px solid var(--brand-border);border-radius:9px;background:transparent;color:var(--brand-muted);font-weight:700;font-size:14px;cursor:pointer; }
+    .btn-back:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+    .btn-next { padding:12px 24px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--brand-lime),var(--brand-cyan));color:var(--brand-bg-dark);font-weight:800;font-size:14px;cursor:pointer;transition:opacity .2s,transform .2s; }
+    .btn-next:hover { opacity:.88;transform:translateY(-1px); }
+    .btn-next:disabled { opacity:.4;cursor:not-allowed;transform:none; }
+
+    /* ---- State banners ---- */
+    .state-banner { max-width:560px;margin:60px auto;padding:32px;background:var(--brand-bg-surface);border-radius:16px;text-align:center; }
+    .state-banner .icon { font-size:52px;margin-bottom:14px; }
+    .state-banner h2 { margin-bottom:8px; }
+    .state-banner p { color:var(--brand-muted);line-height:1.6;margin-bottom:20px; }
+    .state-banner a { display:inline-block;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;background:var(--brand-lime);color:var(--brand-bg-dark); }
+
+    @media(max-width:600px) {
+      .transport-grid { grid-template-columns:1fr 1fr; }
+      .form-grid,.upload-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/index.html">PorteàPorte</a>
+  <a class="topbar-btn" href="/dashboard-livreur.html">← Dashboard</a>
+</header>
+
+<div class="page">
+
+  <!-- State: verified -->
+  <div id="stateVerified" style="display:none">
+    <div class="state-banner" style="border:1px solid rgba(0,255,159,.3)">
+      <div class="icon">✅</div>
+      <h2 style="color:var(--brand-lime)">Identité vérifiée</h2>
+      <p>Tu es un livreur vérifié PorteàPorte. Ton bonus écologique est actif sur chaque livraison.</p>
+      <a href="/browse-missions.html">Voir les missions</a>
+    </div>
+  </div>
+
+  <!-- State: pending -->
+  <div id="statePending" style="display:none">
+    <div class="state-banner" style="border:1px solid rgba(245,158,11,.3)">
+      <div class="icon">⏳</div>
+      <h2 style="color:#F59E0B">Dossier en cours d'examen</h2>
+      <p>Tes documents ont été soumis. Notre équipe les examine sous <strong>24 à 48 heures</strong>. Tu recevras une notification par email.</p>
+      <a href="/dashboard-livreur.html" style="background:var(--brand-border);color:var(--brand-text)">Retour au dashboard</a>
+    </div>
+  </div>
+
+  <!-- KYC form -->
+  <div id="kycForm">
+    <div style="margin-bottom:28px">
+      <h1 style="font-size:1.55rem;font-weight:900;margin-bottom:6px">Vérification livreur</h1>
+      <p style="color:var(--brand-muted);line-height:1.65">Les documents requis varient selon ton mode de transport. Délai d'approbation : <strong>24 à 48 heures</strong>.</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps" id="stepsBar">
+      <div class="step active" id="s1"><div class="step-dot">1</div><div class="step-lbl">Transport</div></div>
+      <div class="step" id="s2"><div class="step-dot">2</div><div class="step-lbl">Infos</div></div>
+      <div class="step" id="s3"><div class="step-dot">3</div><div class="step-lbl">Documents</div></div>
+      <div class="step" id="s4"><div class="step-dot">4</div><div class="step-lbl">Selfie</div></div>
+      <div class="step" id="s5"><div class="step-dot">5</div><div class="step-lbl">Consentements</div></div>
+    </div>
+
+    <div id="statusMsg" class="status-msg"></div>
+
+    <!-- ===== STEP 1 : MODE DE TRANSPORT ===== -->
+    <div class="panel active" id="panel1">
+      <h2 class="panel-title">Ton mode de transport</h2>
+      <p class="panel-desc">Choisis le véhicule principal que tu utilises pour livrer. Les documents requis et le bonus écologique dépendent de ce choix.</p>
+
+      <div class="transport-grid" id="transportGrid">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="eco-summary" id="ecoSummary">
+        <h3 id="ecoSummaryTitle">🌱 Bonus écologique</h3>
+        <p id="ecoSummaryDesc"></p>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-next" id="step1Next" onclick="goStep(2)" disabled>Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 2 : INFOS PERSONNELLES ===== -->
+    <div class="panel" id="panel2">
+      <h2 class="panel-title">Informations personnelles</h2>
+      <p class="panel-desc">Ces informations doivent correspondre exactement aux documents que tu soumettras.</p>
+
+      <div class="form-grid">
+        <div class="field"><label>Prénom</label><input type="text" id="firstName" placeholder="Jean" autocomplete="given-name"></div>
+        <div class="field"><label>Nom de famille</label><input type="text" id="lastName" placeholder="Tremblay" autocomplete="family-name"></div>
+        <div class="field"><label>Date de naissance</label><input type="date" id="dob" max="2006-01-01"></div>
+        <div class="field"><label>Téléphone</label><input type="tel" id="phone" placeholder="+1 514 123 4567" autocomplete="tel"></div>
+        <div class="field form-full"><label>Adresse complète</label><input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address"></div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goStep(1)">← Retour</button>
+        <button class="btn-next" onclick="goStep(3)">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 3 : DOCUMENTS ===== -->
+    <div class="panel" id="panel3">
+      <h2 class="panel-title">Documents requis</h2>
+      <p class="panel-desc" id="docsDesc">Téléverse les documents correspondant à ton mode de transport.</p>
+
+      <div class="doc-required show" id="docRequiredBox">
+        <h3 id="docRequiredTitle">📋 Documents nécessaires</h3>
+        <ul id="docRequiredList"></ul>
+      </div>
+
+      <div class="upload-grid">
+        <!-- Doc 1 : permis / carte assurance / passeport (recto) -->
+        <div class="upload-zone" id="doc1Zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'doc1')">
+          <input type="file" id="doc1File" accept="image/*,.pdf" onchange="handleFile(this,'doc1')">
+          <div class="upload-icon" id="doc1Icon">📄</div>
+          <div class="upload-label" id="doc1Label">Document principal</div>
+          <div class="upload-hint">Recto · JPG, PNG, PDF · max 10 MB</div>
+          <div class="upload-fname" id="doc1Name"></div>
+        </div>
+
+        <!-- Doc 2 : verso (si applicable) -->
+        <div class="upload-zone" id="doc2Zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'doc2')">
+          <input type="file" id="doc2File" accept="image/*,.pdf" onchange="handleFile(this,'doc2')">
+          <div class="upload-icon">📄</div>
+          <div class="upload-label" id="doc2Label">Verso</div>
+          <div class="upload-hint">Face arrière · si applicable</div>
+          <div class="upload-fname" id="doc2Name"></div>
+        </div>
+      </div>
+
+      <p style="color:var(--brand-muted);font-size:.76rem;line-height:1.6">
+        Document lisible, sans reflet, complet dans le cadre. Toutes les informations doivent être visibles.
+      </p>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goStep(2)">← Retour</button>
+        <button class="btn-next" onclick="goStep(4)" id="step3Next">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 4 : SELFIE ===== -->
+    <div class="panel" id="panel4">
+      <h2 class="panel-title">Photo en temps réel</h2>
+      <p class="panel-desc" id="selfieDesc">Prends un selfie pour confirmer ton identité. Bon éclairage, visage bien visible, pas de lunettes de soleil.</p>
+
+      <div class="selfie-wrap">
+        <video id="selfieVideo" autoplay muted playsinline></video>
+        <canvas id="selfieCanvas" style="display:none"></canvas>
+        <img id="selfiePreview" alt="Selfie capturé">
+      </div>
+
+      <div class="selfie-controls">
+        <button class="btn-next" id="captureBtn" onclick="captureSelfie()" style="flex:1">📸 Prendre la photo</button>
+        <button class="btn-back" id="retakeBtn" onclick="retakeSelfie()" style="display:none">Recommencer</button>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goStep(3);stopCamera()">← Retour</button>
+        <button class="btn-next" id="step4Next" onclick="goStep(5);stopCamera()" disabled>Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 5 : CONSENTEMENTS ===== -->
+    <div class="panel" id="panel5">
+      <h2 class="panel-title">Consentements</h2>
+      <p class="panel-desc">Lis et coche chaque point avant de soumettre ton dossier.</p>
+
+      <!-- Récapitulatif choix -->
+      <div style="background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="font-size:.78rem;color:var(--brand-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Récapitulatif de ta demande</div>
+        <div id="summaryBlock" style="font-size:.88rem;line-height:1.8"></div>
+      </div>
+
+      <div class="consents">
+        <label class="consent-row">
+          <input type="checkbox" id="c1" onchange="updateSubmit()">
+          <span class="consent-text"><strong>Exactitude :</strong> Je certifie que tous les documents et informations fournis sont authentiques, valides et m'appartiennent.</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="c2" onchange="updateSubmit()">
+          <span class="consent-text"><strong>Données personnelles :</strong> J'autorise PorteàPorte à traiter mes informations conformément à la <a href="/confidentialite.html">politique de confidentialité</a> et à la Loi 25.</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="c3" onchange="updateSubmit()">
+          <span class="consent-text"><strong>Conditions :</strong> J'accepte les <a href="/cgu.html">CGU</a> et m'engage à respecter les règles de la plateforme.</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="c4" onchange="updateSubmit()">
+          <span class="consent-text"><strong>Bonus écologique :</strong> Je comprends que le bonus s'applique uniquement si mon mode de transport correspond bien à celui déclaré, et que toute fausse déclaration entraîne la suspension du compte.</span>
+        </label>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goStep(4)">← Retour</button>
+        <button class="btn-next" id="submitBtn" onclick="submitKyc()" disabled>Soumettre mon dossier ✓</button>
+      </div>
+    </div>
+
+  </div><!-- /kycForm -->
+</div>
+
+<script>
+  const db = window.db || window.getSupabaseClient();
+  let session = null;
+  let currentStep = 1;
+  let selectedMode = null;
+  let files = { doc1: null, doc2: null, selfie: null };
+  let camStream = null;
+
+  /* ================================================================
+     TRANSPORT MODES CONFIG
+  ================================================================ */
+  const MODES = {
+    pieds: {
+      label: 'À pied',
+      icon: '🚶',
+      eco: 20,
+      ecoCls: 'eco-20',
+      docs: ['assurance_maladie_ou_passeport'],
+      selfieRequired: false,
+      doc1Label: 'Carte assurance maladie ou Passeport',
+      doc1Icon: '🪪',
+      doc2Label: null,
+      maxKg: 5, maxKm: 5,
+      reqList: ['Carte d\'assurance maladie (RAMQ) valide', 'OU Passeport canadien valide']
+    },
+    velo: {
+      label: 'Vélo',
+      icon: '🚴',
+      eco: 15,
+      ecoCls: 'eco-15',
+      docs: ['assurance_maladie_ou_passeport'],
+      selfieRequired: false,
+      doc1Label: 'Carte assurance maladie ou Passeport',
+      doc1Icon: '🪪',
+      doc2Label: null,
+      maxKg: 15, maxKm: 25,
+      reqList: ['Carte d\'assurance maladie (RAMQ) valide', 'OU Passeport canadien valide']
+    },
+    trottinette: {
+      label: 'Trottinette',
+      icon: '🛴',
+      eco: 15,
+      ecoCls: 'eco-15',
+      docs: ['assurance_maladie_ou_passeport'],
+      selfieRequired: false,
+      doc1Label: 'Carte assurance maladie ou Passeport',
+      doc1Icon: '🪪',
+      doc2Label: null,
+      maxKg: 10, maxKm: 15,
+      reqList: ['Carte d\'assurance maladie (RAMQ) valide', 'OU Passeport canadien valide']
+    },
+    skateboard: {
+      label: 'Skateboard',
+      icon: '🛹',
+      eco: 15,
+      ecoCls: 'eco-15',
+      docs: ['assurance_maladie_ou_passeport'],
+      selfieRequired: false,
+      doc1Label: 'Carte assurance maladie ou Passeport',
+      doc1Icon: '🪪',
+      doc2Label: null,
+      maxKg: 5, maxKm: 8,
+      reqList: ['Carte d\'assurance maladie (RAMQ) valide', 'OU Passeport canadien valide']
+    },
+    voiture_electrique: {
+      label: 'Voiture élec.',
+      icon: '🔋🚗',
+      eco: 10,
+      ecoCls: 'eco-10',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 100, maxKm: 200,
+      reqList: ['Permis de conduire valide (recto + verso)', 'Selfie de confirmation']
+    },
+    moto_electrique: {
+      label: 'Moto élec.',
+      icon: '🔋🏍️',
+      eco: 10,
+      ecoCls: 'eco-10',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 30, maxKm: 150,
+      reqList: ['Permis de conduire valide (recto + verso)', 'Selfie de confirmation']
+    },
+    camion_electrique: {
+      label: 'Camion élec.',
+      icon: '🔋🚛',
+      eco: 5,
+      ecoCls: 'eco-5',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 1000, maxKm: 300,
+      reqList: ['Permis de conduire valide classe appropriée (recto + verso)', 'Selfie de confirmation']
+    },
+    voiture: {
+      label: 'Voiture',
+      icon: '🚗',
+      eco: 0,
+      ecoCls: 'eco-0',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 100, maxKm: 300,
+      reqList: ['Permis de conduire valide (recto + verso)', 'Selfie de confirmation']
+    },
+    moto: {
+      label: 'Moto',
+      icon: '🏍️',
+      eco: 0,
+      ecoCls: 'eco-0',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 30, maxKm: 200,
+      reqList: ['Permis de conduire valide (recto + verso)', 'Selfie de confirmation']
+    },
+    camion: {
+      label: 'Camion',
+      icon: '🚛',
+      eco: 0,
+      ecoCls: 'eco-0',
+      docs: ['permis'],
+      selfieRequired: true,
+      doc1Label: 'Permis de conduire (recto)',
+      doc1Icon: '🪪',
+      doc2Label: 'Permis de conduire (verso)',
+      maxKg: 2000, maxKm: 500,
+      reqList: ['Permis de conduire valide classe appropriée (recto + verso)', 'Selfie de confirmation']
+    }
+  };
+
+  /* ================================================================
+     INIT
+  ================================================================ */
+  async function init() {
+    const { data } = await db.auth.getSession();
+    if (!data?.session) { window.location.href = '/login.html'; return; }
+    session = data.session;
+
+    const { data: p } = await db.from('profiles').select('driver_status').eq('id', session.user.id).single();
+    if (p?.driver_status === 'verified') {
+      document.getElementById('kycForm').style.display = 'none';
+      document.getElementById('stateVerified').style.display = 'block';
+      return;
+    }
+    if (p?.driver_status === 'pending_review') {
+      document.getElementById('kycForm').style.display = 'none';
+      document.getElementById('statePending').style.display = 'block';
+      return;
+    }
+    buildTransportGrid();
+  }
+
+  /* ================================================================
+     TRANSPORT GRID
+  ================================================================ */
+  function buildTransportGrid() {
+    const grid = document.getElementById('transportGrid');
+    grid.innerHTML = Object.entries(MODES).map(([key, m]) => `
+      <label class="transport-card" id="tc-${key}" onclick="selectMode('${key}')">
+        <input type="radio" name="transport" value="${key}">
+        <div class="transport-icon">${m.icon}</div>
+        <div class="transport-name">${m.label}</div>
+        <div class="transport-reqs">${m.reqList[0].replace(' valide', '').replace(' (recto + verso)', '')}</div>
+        ${m.eco > 0
+          ? `<div class="eco-badge ${m.ecoCls}">🌱 +${m.eco}% éco</div>`
+          : `<div class="eco-badge eco-0">Standard</div>`}
+      </label>
+    `).join('');
+  }
+
+  function selectMode(key) {
+    selectedMode = key;
+    document.querySelectorAll('.transport-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('tc-' + key).classList.add('selected');
+    document.getElementById('step1Next').disabled = false;
+
+    const m = MODES[key];
+    const eco = document.getElementById('ecoSummary');
+    const title = document.getElementById('ecoSummaryTitle');
+    const desc = document.getElementById('ecoSummaryDesc');
+
+    if (m.eco > 0) {
+      eco.className = 'eco-summary show';
+      title.textContent = `🌱 Bonus écologique : +${m.eco}%`;
+      desc.textContent = `En choisissant ${m.label}, tu reçois un bonus de ${m.eco}% sur chaque livraison effectuée. Ce bonus s'ajoute à ta part de 60% du prix total. Ex : pour une livraison à 30 $, tu gagnes ${(30 * 0.60 * (1 + m.eco / 100)).toFixed(2)} $ au lieu de ${(30 * 0.60).toFixed(2)} $.`;
+    } else {
+      eco.className = 'eco-summary show';
+      title.textContent = '⛽ Aucun bonus écologique';
+      desc.textContent = `Les livraisons en ${m.label} (énergie fossile) ne donnent pas droit au bonus éco. Pour obtenir un bonus, utilise un véhicule électrique ou un mode de transport actif.`;
+    }
+  }
+
+  /* ================================================================
+     STEP NAVIGATION
+  ================================================================ */
+  function goStep(n) {
+    if (!validateStep(currentStep)) return;
+
+    for (let i = 1; i <= 5; i++) {
+      const s = document.getElementById('s' + i);
+      const dot = s.querySelector('.step-dot');
+      s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+      dot.textContent = i < n ? '✓' : i;
+    }
+
+    document.getElementById('panel' + currentStep).classList.remove('active');
+    currentStep = n;
+    document.getElementById('panel' + n).classList.add('active');
+    clearStatus();
+
+    if (n === 3) setupDocPanel();
+    if (n === 4) {
+      const m = MODES[selectedMode];
+      if (!m.selfieRequired) {
+        // Skip selfie for eco modes
+        document.getElementById('selfieDesc').textContent = 'Pas de permis requis, mais une photo de confirmation est recommandée pour sécuriser ton compte.';
+      }
+      startCamera();
+    }
+    if (n === 5) buildSummary();
+  }
+
+  function validateStep(n) {
+    if (n === 1 && !selectedMode) { showStatus('Sélectionne ton mode de transport.', 'error'); return false; }
+    if (n === 2) {
+      const vals = ['firstName','lastName','dob','phone','address'].map(id => document.getElementById(id).value.trim());
+      if (vals.some(v => !v)) { showStatus('Remplis tous les champs.', 'error'); return false; }
+      const age = (Date.now() - new Date(document.getElementById('dob').value)) / (1000*60*60*24*365.25);
+      if (age < 18) { showStatus('Tu dois avoir 18 ans ou plus.', 'error'); return false; }
+    }
+    if (n === 3 && !files.doc1) { showStatus('Téléverse au moins le document principal.', 'error'); return false; }
+    if (n === 4 && !files.selfie) {
+      const m = MODES[selectedMode];
+      if (m.selfieRequired) { showStatus('Le selfie est obligatoire pour ce mode de transport.', 'error'); return false; }
+    }
+    return true;
+  }
+
+  /* ================================================================
+     DOC PANEL CONFIG
+  ================================================================ */
+  function setupDocPanel() {
+    const m = MODES[selectedMode];
+
+    // Doc 1
+    document.getElementById('doc1Label').textContent = m.doc1Label;
+    document.getElementById('doc1Icon').textContent = m.doc1Icon;
+
+    // Doc 2
+    const z2 = document.getElementById('doc2Zone');
+    if (m.doc2Label) {
+      z2.classList.remove('hidden');
+      document.getElementById('doc2Label').textContent = m.doc2Label;
+    } else {
+      z2.classList.add('hidden');
+    }
+
+    // Required list
+    document.getElementById('docRequiredList').innerHTML = m.reqList.map(r =>
+      `<li>${r}</li>`).join('');
+    document.getElementById('docRequiredTitle').textContent =
+      m.docs.includes('permis') ? '🪪 Permis de conduire requis' : '🪪 Pièce d\'identité requise';
+  }
+
+  /* ================================================================
+     FILE UPLOADS
+  ================================================================ */
+  function handleFile(input, key) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { showStatus('Fichier trop volumineux (max 10 MB).', 'error'); return; }
+    files[key] = file;
+    document.getElementById(key + 'Name').textContent = '✓ ' + file.name;
+    document.getElementById(key + 'Zone').classList.add('done');
+  }
+
+  function handleDrop(e, key) {
+    e.preventDefault();
+    document.getElementById(key + 'Zone').classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    files[key] = file;
+    document.getElementById(key + 'Name').textContent = '✓ ' + file.name;
+    document.getElementById(key + 'Zone').classList.add('done');
+  }
+
+  /* ================================================================
+     SELFIE / CAMERA
+  ================================================================ */
+  async function startCamera() {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      const v = document.getElementById('selfieVideo');
+      v.srcObject = camStream;
+      v.style.display = 'block';
+      document.getElementById('selfiePreview').style.display = 'none';
+      document.getElementById('captureBtn').style.display = 'block';
+      document.getElementById('retakeBtn').style.display = 'none';
+      document.getElementById('step4Next').disabled = true;
+    } catch (_) {
+      addManualSelfieUpload();
+    }
+  }
+
+  function captureSelfie() {
+    const v = document.getElementById('selfieVideo');
+    const c = document.getElementById('selfieCanvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    c.toBlob(blob => {
+      files.selfie = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+      const img = document.getElementById('selfiePreview');
+      img.src = URL.createObjectURL(blob);
+      img.style.display = 'block';
+      v.style.display = 'none';
+      document.getElementById('captureBtn').style.display = 'none';
+      document.getElementById('retakeBtn').style.display = 'inline-block';
+      document.getElementById('step4Next').disabled = false;
+      stopCamera();
+    }, 'image/jpeg', 0.92);
+  }
+
+  function retakeSelfie() { files.selfie = null; document.getElementById('step4Next').disabled = true; startCamera(); }
+  function stopCamera() { if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; } }
+
+  function addManualSelfieUpload() {
+    document.querySelector('.selfie-wrap').innerHTML = `
+      <div class="upload-zone" style="border-style:dashed;margin:12px;border-radius:10px;padding:28px 14px">
+        <input type="file" accept="image/*" onchange="handleSelfieManual(this)">
+        <div class="upload-icon">🤳</div>
+        <div class="upload-label">Téléverser un selfie</div>
+        <div class="upload-hint">Photo récente, visage bien visible</div>
+        <div class="upload-fname" id="selfieManualName"></div>
+      </div>`;
+  }
+
+  function handleSelfieManual(input) {
+    const file = input.files[0];
+    if (!file) return;
+    files.selfie = file;
+    document.getElementById('selfieManualName').textContent = '✓ ' + file.name;
+    document.getElementById('step4Next').disabled = false;
+  }
+
+  /* ================================================================
+     SUMMARY
+  ================================================================ */
+  function buildSummary() {
+    const m = MODES[selectedMode];
+    const nom = `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`;
+    const eco = m.eco > 0 ? `<span style="color:var(--brand-lime);font-weight:800">+${m.eco}% bonus écologique actif</span>` : 'Aucun bonus éco';
+    document.getElementById('summaryBlock').innerHTML = `
+      <div>👤 <strong>${nom}</strong></div>
+      <div>${m.icon} Mode : <strong>${m.label}</strong></div>
+      <div>📋 Document : <strong>${m.doc1Label}</strong></div>
+      <div>🌱 ${eco}</div>
+      <div>⏳ Délai d'approbation : <strong>24 à 48 heures</strong></div>`;
+  }
+
+  /* ================================================================
+     SUBMIT
+  ================================================================ */
+  function updateSubmit() {
+    document.getElementById('submitBtn').disabled =
+      !['c1','c2','c3','c4'].every(id => document.getElementById(id).checked);
+  }
+
+  async function submitKyc() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Soumission…';
+
+    try {
+      const userId = session.user.id;
+      const m = MODES[selectedMode];
+
+      const upload = async (file, path) => {
+        if (!file) return null;
+        const { data, error } = await db.storage.from('kyc-documents').upload(path, file, { upsert: true });
+        if (error) throw new Error('Upload: ' + error.message);
+        return data.path;
+      };
+
+      const base = `${userId}/kyc`;
+      const [doc1Path, doc2Path, selfiePath] = await Promise.all([
+        upload(files.doc1,   `${base}/doc1_${Date.now()}`),
+        upload(files.doc2,   `${base}/doc2_${Date.now()}`),
+        upload(files.selfie, `${base}/selfie_${Date.now()}`)
+      ]);
+
+      const { error: kycError } = await db.from('kyc_submissions').upsert({
+        user_id:        userId,
+        first_name:     document.getElementById('firstName').value.trim(),
+        last_name:      document.getElementById('lastName').value.trim(),
+        dob:            document.getElementById('dob').value,
+        phone:          document.getElementById('phone').value.trim(),
+        address:        document.getElementById('address').value.trim(),
+        transport_mode: selectedMode,
+        eco_bonus:      m.eco,
+        doc_type:       m.docs[0],
+        doc1_path:      doc1Path,
+        doc2_path:      doc2Path,
+        selfie_path:    selfiePath,
+        statut:         'pending_review',
+        soumis_le:      new Date().toISOString()
+      }, { onConflict: 'user_id' });
+      if (kycError) throw new Error('Dossier: ' + kycError.message);
+
+      const { error: profileError } = await db.from('profiles').update({
+        driver_status:  'pending_review',
+        transport_mode: selectedMode,
+        eco_bonus:      m.eco,
+        nom: `${document.getElementById('firstName').value.trim()} ${document.getElementById('lastName').value.trim()}`
+      }).eq('id', userId);
+      if (profileError) throw new Error('Profil: ' + profileError.message);
+
+      document.getElementById('kycForm').style.display = 'none';
+      document.getElementById('statePending').style.display = 'block';
+
+    } catch (err) {
+      showStatus('Erreur : ' + err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Soumettre mon dossier ✓';
+    }
+  }
+
+  /* ================================================================
+     UTILS
+  ================================================================ */
+  function showStatus(msg, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    el.className = 'status-msg ' + type;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function clearStatus() {
+    const el = document.getElementById('statusMsg');
+    el.className = 'status-msg';
+    el.textContent = '';
+  }
+
+  init();
+</script>
+</body>
+</html>

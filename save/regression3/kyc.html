@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification d'identité - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; background: rgba(10,12,16,.97);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand { font-weight: 900; font-size: 19px; color: var(--brand-lime); text-decoration: none; }
+    .topbar-btn {
+      padding: 7px 13px; border: 1px solid var(--brand-border); border-radius: 7px;
+      background: transparent; color: var(--brand-muted); font-size: 12px; font-weight: 700;
+      cursor: pointer; text-decoration: none; transition: all .2s;
+    }
+    .topbar-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+
+    .page { max-width: 720px; margin: 0 auto; padding: 36px 20px 64px; }
+
+    /* ---- Progress steps ---- */
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 36px;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      right: -50%;
+      height: 2px;
+      background: var(--brand-border);
+      z-index: 0;
+    }
+    .step.done:not(:last-child)::after { background: var(--brand-lime); }
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--brand-border);
+      background: var(--brand-bg-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--brand-muted);
+      position: relative;
+      z-index: 1;
+      transition: all .3s;
+    }
+    .step.active .step-circle { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+    .step.done .step-circle { border-color: var(--brand-lime); background: var(--brand-lime); color: var(--brand-bg-dark); }
+    .step-label { font-size: 0.7rem; font-weight: 700; color: var(--brand-muted); text-align: center; }
+    .step.active .step-label { color: var(--brand-text); }
+    .step.done .step-label { color: var(--brand-lime); }
+
+    /* ---- Section panels ---- */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .panel-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 6px; }
+    .panel-desc { color: var(--brand-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 28px; }
+
+    /* ---- Form ---- */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .form-full { grid-column: 1 / -1; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.82rem; font-weight: 700; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .field input, .field select, .field textarea {
+      padding: 11px 14px;
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 9px;
+      color: var(--brand-text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-cyan); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field .hint { font-size: 0.74rem; color: var(--brand-muted); }
+
+    /* ---- Upload zones ---- */
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .upload-zone {
+      border: 2px dashed var(--brand-border);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--brand-cyan); background: rgba(0,217,255,0.04); }
+    .upload-zone.done { border-color: var(--brand-lime); background: rgba(0,255,159,0.04); border-style: solid; }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-label { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+    .upload-hint { font-size: 0.74rem; color: var(--brand-muted); }
+    .upload-filename { font-size: 0.78rem; color: var(--brand-lime); font-weight: 700; margin-top: 6px; word-break: break-all; }
+
+    /* ---- Selfie zone ---- */
+    .selfie-wrap {
+      position: relative;
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    #selfieVideo { width: 100%; max-height: 260px; display: block; background: #000; object-fit: cover; }
+    #selfieCanvas { display: none; }
+    .selfie-controls { padding: 14px 16px; display: flex; gap: 10px; }
+
+    /* ---- Consentements ---- */
+    .consents { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .consent-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px;
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 9px;
+    }
+    .consent-row input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--brand-lime); margin-top: 1px; }
+    .consent-text { font-size: 0.85rem; line-height: 1.55; color: var(--brand-muted); }
+    .consent-text strong { color: var(--brand-text); }
+
+    /* ---- Status banner ---- */
+    .status-banner {
+      padding: 12px 16px;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      display: none;
+      line-height: 1.5;
+    }
+    .status-banner.success { background: rgba(0,255,159,0.1); border: 1px solid rgba(0,255,159,0.3); color: var(--brand-lime); display: block; }
+    .status-banner.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ffb4b4; display: block; }
+    .status-banner.info { background: rgba(0,217,255,0.08); border: 1px solid rgba(0,217,255,0.25); color: var(--brand-cyan); display: block; }
+
+    /* ---- Nav buttons ---- */
+    .nav-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+    .btn-back {
+      padding: 12px 22px; border: 1px solid var(--brand-border); border-radius: 9px;
+      background: transparent; color: var(--brand-muted); font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    .btn-back:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+    .btn-next {
+      padding: 12px 26px; border: none; border-radius: 9px;
+      background: linear-gradient(135deg, var(--brand-lime), var(--brand-cyan));
+      color: var(--brand-bg-dark); font-weight: 800; font-size: 14px; cursor: pointer;
+      transition: opacity .2s, transform .2s;
+    }
+    .btn-next:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-next:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ---- Already verified banner ---- */
+    .verified-banner {
+      max-width: 560px;
+      margin: 60px auto;
+      padding: 32px;
+      background: var(--brand-bg-surface);
+      border: 1px solid rgba(0,255,159,0.3);
+      border-radius: 16px;
+      text-align: center;
+    }
+    .verified-banner .icon { font-size: 52px; margin-bottom: 14px; }
+    .verified-banner h2 { color: var(--brand-lime); margin-bottom: 8px; }
+    .verified-banner p { color: var(--brand-muted); line-height: 1.6; margin-bottom: 20px; }
+
+    /* ---- Info cards ---- */
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+    .info-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .info-card .ic-icon { font-size: 26px; margin-bottom: 8px; }
+    .info-card .ic-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; }
+    .info-card .ic-desc { color: var(--brand-muted); font-size: 0.76rem; line-height: 1.5; }
+
+    @media (max-width: 600px) {
+      .form-grid, .upload-grid, .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="/index.html">PorteàPorte</a>
+    <a class="topbar-btn" href="/dashboard-livreur.html">← Dashboard</a>
+  </header>
+
+  <div class="page">
+
+    <!-- Already verified state -->
+    <div id="verifiedState" style="display:none">
+      <div class="verified-banner">
+        <div class="icon">✅</div>
+        <h2>Identité vérifiée</h2>
+        <p>Ta vérification KYC est complète. Tu peux accepter des missions et être payé via la plateforme.</p>
+        <a class="btn-next" href="/browse-missions.html" style="display:inline-block;text-decoration:none;padding:12px 24px">Voir les missions</a>
+      </div>
+    </div>
+
+    <!-- Pending review state -->
+    <div id="pendingState" style="display:none">
+      <div class="verified-banner" style="border-color:rgba(245,158,11,0.3)">
+        <div class="icon">⏳</div>
+        <h2 style="color:#F59E0B">Vérification en cours</h2>
+        <p>Tes documents ont été soumis et sont en cours d'examen par notre équipe. Tu recevras une réponse par email sous 24–48h.</p>
+        <a class="topbar-btn" href="/dashboard-livreur.html">Retour au dashboard</a>
+      </div>
+    </div>
+
+    <!-- KYC form -->
+    <div id="kycForm">
+
+      <div style="margin-bottom:28px">
+        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:8px">Vérification d'identité</h1>
+        <p style="color:var(--brand-muted);line-height:1.6">Pour ta sécurité et celle des expéditeurs, nous vérifions l'identité de chaque livreur. Ce processus est confidentiel et prend environ 3 minutes.</p>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card"><div class="ic-icon">🔒</div><div class="ic-title">100% confidentiel</div><div class="ic-desc">Tes documents sont chiffrés et ne sont jamais partagés.</div></div>
+        <div class="info-card"><div class="ic-icon">⚡</div><div class="ic-title">Réponse 24–48h</div><div class="ic-desc">Notre équipe examine chaque dossier manuellement.</div></div>
+        <div class="info-card"><div class="ic-icon">✅</div><div class="ic-title">Une seule fois</div><div class="ic-desc">Une fois vérifié, ton statut est permanent.</div></div>
+      </div>
+
+      <!-- Steps indicator -->
+      <div class="steps">
+        <div class="step active" id="step1">
+          <div class="step-circle">1</div>
+          <div class="step-label">Infos personnelles</div>
+        </div>
+        <div class="step" id="step2">
+          <div class="step-circle">2</div>
+          <div class="step-label">Pièce d'identité</div>
+        </div>
+        <div class="step" id="step3">
+          <div class="step-circle">3</div>
+          <div class="step-label">Selfie</div>
+        </div>
+        <div class="step" id="step4">
+          <div class="step-circle">4</div>
+          <div class="step-label">Consentements</div>
+        </div>
+      </div>
+
+      <div id="statusBanner" class="status-banner"></div>
+
+      <!-- ===== PANEL 1 : Infos personnelles ===== -->
+      <div class="panel active" id="panel1">
+        <h2 class="panel-title">Informations personnelles</h2>
+        <p class="panel-desc">Ces informations doivent correspondre exactement à ta pièce d'identité officielle.</p>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Prénom</label>
+            <input type="text" id="firstName" placeholder="Jean" autocomplete="given-name">
+          </div>
+          <div class="field">
+            <label>Nom de famille</label>
+            <input type="text" id="lastName" placeholder="Tremblay" autocomplete="family-name">
+          </div>
+          <div class="field">
+            <label>Date de naissance</label>
+            <input type="date" id="dob" max="2006-01-01">
+          </div>
+          <div class="field">
+            <label>Numéro de téléphone</label>
+            <input type="tel" id="phone" placeholder="+1 514 123 4567" autocomplete="tel">
+          </div>
+          <div class="field form-full">
+            <label>Adresse complète</label>
+            <input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address">
+          </div>
+          <div class="field">
+            <label>NAS (4 derniers chiffres)</label>
+            <input type="text" id="sinLast4" maxlength="4" placeholder="1234" pattern="[0-9]{4}">
+            <span class="hint">Optionnel — permet une vérification plus rapide</span>
+          </div>
+          <div class="field">
+            <label>Mode de transport principal</label>
+            <select id="transportMode">
+              <option value="">Choisir…</option>
+              <option value="velo">Vélo</option>
+              <option value="trottinette">Trottinette électrique</option>
+              <option value="voiture">Voiture</option>
+              <option value="camionnette">Camionnette</option>
+              <option value="camion">Camion</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="nav-btns">
+          <button class="btn-next" onclick="goStep(2)">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- ===== PANEL 2 : Pièce d'identité ===== -->
+      <div class="panel" id="panel2">
+        <h2 class="panel-title">Pièce d'identité officielle</h2>
+        <p class="panel-desc">Téléverse une photo claire de ta pièce d'identité. Le document doit être en cours de validité, non expiré, et lisible dans son intégralité.</p>
+
+        <div class="field" style="margin-bottom:16px">
+          <label>Type de document</label>
+          <select id="docType">
+            <option value="permis">Permis de conduire</option>
+            <option value="passeport">Passeport canadien</option>
+            <option value="carte_permanente">Carte de résident permanent</option>
+            <option value="carte_citoyennete">Carte de citoyenneté</option>
+          </select>
+        </div>
+
+        <div class="upload-grid">
+          <div class="upload-zone" id="frontZone" ondragover="ev.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'front')">
+            <input type="file" id="frontFile" accept="image/*,.pdf" onchange="handleFile(this,'front')">
+            <div class="upload-icon">📄</div>
+            <div class="upload-label">Recto</div>
+            <div class="upload-hint">Face principale avec ta photo</div>
+            <div class="upload-filename" id="frontName"></div>
+          </div>
+          <div class="upload-zone" id="backZone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'back')">
+            <input type="file" id="backFile" accept="image/*,.pdf" onchange="handleFile(this,'back')">
+            <div class="upload-icon">📄</div>
+            <div class="upload-label">Verso</div>
+            <div class="upload-hint">Dos du document (si applicable)</div>
+            <div class="upload-filename" id="backName"></div>
+          </div>
+        </div>
+
+        <p style="color:var(--brand-muted);font-size:.78rem;line-height:1.6;margin-bottom:20px">
+          ✓ Format accepté : JPG, PNG, PDF · Max 10 MB · Photo nette, sans reflets, document complet visible
+        </p>
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(1)">← Retour</button>
+          <button class="btn-next" onclick="goStep(3)" id="step2Next">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- ===== PANEL 3 : Selfie ===== -->
+      <div class="panel" id="panel3">
+        <h2 class="panel-title">Photo en temps réel</h2>
+        <p class="panel-desc">Prends un selfie pour confirmer que tu es bien le titulaire du document. Retire lunettes et chapeau, assure-toi d'un bon éclairage.</p>
+
+        <div class="selfie-wrap">
+          <video id="selfieVideo" autoplay muted playsinline></video>
+          <canvas id="selfieCanvas"></canvas>
+          <img id="selfiePreview" style="display:none;width:100%;max-height:260px;object-fit:cover" alt="Selfie capturé">
+        </div>
+
+        <div class="selfie-controls">
+          <button class="btn-next" id="captureBtn" onclick="captureSelfie()" style="flex:1">📸 Prendre la photo</button>
+          <button class="btn-back" id="retakeBtn" onclick="retakeSelfie()" style="display:none">Recommencer</button>
+        </div>
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(2); stopCamera()">← Retour</button>
+          <button class="btn-next" id="step3Next" onclick="goStep(4); stopCamera()" disabled>Continuer →</button>
+        </div>
+      </div>
+
+      <!-- ===== PANEL 4 : Consentements ===== -->
+      <div class="panel" id="panel4">
+        <h2 class="panel-title">Consentements et soumission</h2>
+        <p class="panel-desc">Lis et coche chaque point avant de soumettre ta demande.</p>
+
+        <div class="consents">
+          <label class="consent-row">
+            <input type="checkbox" id="consent1">
+            <span class="consent-text"><strong>Exactitude des informations :</strong> Je certifie que toutes les informations et documents fournis sont exacts, authentiques et m'appartiennent.</span>
+          </label>
+          <label class="consent-row">
+            <input type="checkbox" id="consent2">
+            <span class="consent-text"><strong>Traitement des données :</strong> J'autorise PorteàPorte à traiter mes informations personnelles aux fins de vérification d'identité conformément à la <a href="/confidentialite.html" style="color:var(--brand-cyan)">politique de confidentialité</a> et à la Loi 25.</span>
+          </label>
+          <label class="consent-row">
+            <input type="checkbox" id="consent3">
+            <span class="consent-text"><strong>Conditions d'utilisation :</strong> J'accepte les <a href="/cgu.html" style="color:var(--brand-cyan)">conditions générales d'utilisation</a> de PorteàPorte et m'engage à respecter les règles de la plateforme.</span>
+          </label>
+          <label class="consent-row">
+            <input type="checkbox" id="consent4">
+            <span class="consent-text"><strong>Vérifications supplémentaires :</strong> Je comprends que PorteàPorte peut effectuer des vérifications d'antécédents basiques et me contacter pour des informations complémentaires.</span>
+          </label>
+        </div>
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(3)">← Retour</button>
+          <button class="btn-next" id="submitBtn" onclick="submitKyc()" disabled>Soumettre ma demande ✓</button>
+        </div>
+      </div>
+
+    </div><!-- /kycForm -->
+  </div>
+
+  <script>
+    const db = window.db || window.getSupabaseClient();
+    let session = null;
+    let currentStep = 1;
+    let files = { front: null, back: null, selfie: null };
+    let stream = null;
+
+    /* ============================
+       INIT
+    ============================= */
+    async function init() {
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { window.location.href = '/login.html'; return; }
+      session = data.session;
+
+      const { data: profile } = await db.from('profiles').select('driver_status').eq('id', session.user.id).single();
+      if (profile?.driver_status === 'verified') {
+        document.getElementById('kycForm').style.display = 'none';
+        document.getElementById('verifiedState').style.display = 'block';
+      } else if (profile?.driver_status === 'pending_review') {
+        document.getElementById('kycForm').style.display = 'none';
+        document.getElementById('pendingState').style.display = 'block';
+      }
+
+      /* Watch consent checkboxes */
+      ['consent1','consent2','consent3','consent4'].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateSubmitBtn);
+      });
+    }
+
+    /* ============================
+       STEP NAVIGATION
+    ============================= */
+    function goStep(n) {
+      if (!validateStep(currentStep)) return;
+
+      /* Update step indicators */
+      for (let i = 1; i <= 4; i++) {
+        const s = document.getElementById('step' + i);
+        s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+        const circle = s.querySelector('.step-circle');
+        circle.textContent = i < n ? '✓' : i;
+      }
+
+      document.getElementById('panel' + currentStep).classList.remove('active');
+      currentStep = n;
+      document.getElementById('panel' + n).classList.add('active');
+      clearStatus();
+
+      if (n === 3) startCamera();
+    }
+
+    function validateStep(n) {
+      if (n === 1) {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const dob = document.getElementById('dob').value;
+        const phone = document.getElementById('phone').value.trim();
+        const address = document.getElementById('address').value.trim();
+        if (!firstName || !lastName || !dob || !phone || !address) {
+          showStatus('Remplis tous les champs obligatoires avant de continuer.', 'error');
+          return false;
+        }
+        const age = (Date.now() - new Date(dob)) / (1000*60*60*24*365.25);
+        if (age < 18) { showStatus('Tu dois avoir au moins 18 ans pour devenir livreur.', 'error'); return false; }
+      }
+      if (n === 2) {
+        if (!files.front) { showStatus('Téléverse au minimum le recto de ta pièce d\'identité.', 'error'); return false; }
+      }
+      if (n === 3) {
+        if (!files.selfie) { showStatus('Prends ton selfie avant de continuer.', 'error'); return false; }
+      }
+      return true;
+    }
+
+    /* ============================
+       FILE UPLOAD
+    ============================= */
+    function handleFile(input, side) {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) { showStatus('Fichier trop volumineux (max 10 MB).', 'error'); return; }
+      files[side] = file;
+      document.getElementById(side + 'Name').textContent = '✓ ' + file.name;
+      document.getElementById(side + 'Zone').classList.add('done');
+    }
+
+    function handleDrop(e, side) {
+      e.preventDefault();
+      document.getElementById(side + 'Zone').classList.remove('drag');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      files[side] = file;
+      document.getElementById(side + 'Name').textContent = '✓ ' + file.name;
+      document.getElementById(side + 'Zone').classList.add('done');
+    }
+
+    /* ============================
+       SELFIE / CAMERA
+    ============================= */
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        const video = document.getElementById('selfieVideo');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('selfiePreview').style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'block';
+        document.getElementById('retakeBtn').style.display = 'none';
+        document.getElementById('step3Next').disabled = true;
+      } catch (err) {
+        showStatus('Caméra inaccessible. Tu peux téléverser un selfie manuellement.', 'info');
+        addManualSelfieUpload();
+      }
+    }
+
+    function captureSelfie() {
+      const video = document.getElementById('selfieVideo');
+      const canvas = document.getElementById('selfieCanvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+
+      canvas.toBlob(blob => {
+        files.selfie = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+        const preview = document.getElementById('selfiePreview');
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = 'block';
+        video.style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'none';
+        document.getElementById('retakeBtn').style.display = 'inline-block';
+        document.getElementById('step3Next').disabled = false;
+        stopStream();
+      }, 'image/jpeg', 0.92);
+    }
+
+    function retakeSelfie() {
+      files.selfie = null;
+      document.getElementById('selfiePreview').style.display = 'none';
+      document.getElementById('step3Next').disabled = true;
+      startCamera();
+    }
+
+    function stopCamera() { stopStream(); }
+    function stopStream() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+
+    function addManualSelfieUpload() {
+      const wrap = document.querySelector('.selfie-wrap');
+      wrap.innerHTML = `
+        <div class="upload-zone" style="border-style:dashed;margin:12px;border-radius:10px;padding:32px 16px">
+          <input type="file" accept="image/*" onchange="handleSelfieFile(this)">
+          <div class="upload-icon">🤳</div>
+          <div class="upload-label">Téléverser un selfie</div>
+          <div class="upload-hint">Photo récente de ton visage, fond neutre</div>
+          <div class="upload-filename" id="selfieFileName"></div>
+        </div>`;
+    }
+
+    function handleSelfieFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+      files.selfie = file;
+      document.getElementById('selfieFileName').textContent = '✓ ' + file.name;
+      document.getElementById('step3Next').disabled = false;
+    }
+
+    /* ============================
+       SUBMIT
+    ============================= */
+    function updateSubmitBtn() {
+      const allChecked = ['consent1','consent2','consent3','consent4'].every(id => document.getElementById(id).checked);
+      document.getElementById('submitBtn').disabled = !allChecked;
+    }
+
+    async function submitKyc() {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Soumission en cours…';
+
+      try {
+        const userId = session.user.id;
+
+        /* Upload files to Supabase Storage */
+        const uploadFile = async (file, path) => {
+          if (!file) return null;
+          const { data, error } = await db.storage.from('kyc-documents').upload(path, file, { upsert: true });
+          if (error) throw new Error('Upload échoué: ' + error.message);
+          return data.path;
+        };
+
+        const base = `kyc/${userId}`;
+        const [frontPath, backPath, selfiePath] = await Promise.all([
+          uploadFile(files.front,  `${base}/recto_${Date.now()}`),
+          uploadFile(files.back,   `${base}/verso_${Date.now()}`),
+          uploadFile(files.selfie, `${base}/selfie_${Date.now()}`)
+        ]);
+
+        /* Save KYC record */
+        await db.from('kyc_submissions').upsert({
+          user_id: userId,
+          first_name: document.getElementById('firstName').value.trim(),
+          last_name:  document.getElementById('lastName').value.trim(),
+          dob:        document.getElementById('dob').value,
+          phone:      document.getElementById('phone').value.trim(),
+          address:    document.getElementById('address').value.trim(),
+          doc_type:   document.getElementById('docType').value,
+          transport_mode: document.getElementById('transportMode').value,
+          front_path: frontPath,
+          back_path:  backPath,
+          selfie_path: selfiePath,
+          statut: 'pending_review',
+          soumis_le: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+        /* Update profile driver_status */
+        await db.from('profiles').update({
+          driver_status: 'pending_review',
+          nom: document.getElementById('firstName').value.trim() + ' ' + document.getElementById('lastName').value.trim()
+        }).eq('id', userId);
+
+        /* Show success */
+        document.getElementById('kycForm').style.display = 'none';
+        document.getElementById('pendingState').style.display = 'block';
+
+      } catch (err) {
+        showStatus('Erreur lors de la soumission : ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Soumettre ma demande ✓';
+      }
+    }
+
+    /* ============================
+       UTILS
+    ============================= */
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusBanner');
+      el.textContent = msg;
+      el.className = 'status-banner ' + type;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearStatus() {
+      const el = document.getElementById('statusBanner');
+      el.className = 'status-banner';
+      el.textContent = '';
+    }
+
+    init();
+  </script>
+</body>
+</html>

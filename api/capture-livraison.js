@@ -30,6 +30,50 @@ async function isAdmin(userId, sbUrl, sbKey) {
   return rows[0]?.role === 'admin' && !rows[0]?.suspendu;
 }
 
+async function stripeRequest(method, path, stripeKey, body, idempotencyKey) {
+  const headers = {
+    Authorization: 'Bearer ' + stripeKey,
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Stripe-Version': '2024-04-10',
+  };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+
+  const r = await fetch('https://api.stripe.com' + path, {
+    method,
+    headers,
+    body: body || undefined
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
+}
+
+async function patchSupabase(url, sbKey, patch) {
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      apikey: sbKey,
+      Authorization: `Bearer ${sbKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify(patch)
+  });
+  return r.ok;
+}
+
+async function insertAudit(sbUrl, sbKey, payload) {
+  await fetch(`${sbUrl}/rest/v1/transaction_audit_events`, {
+    method: 'POST',
+    headers: {
+      apikey: sbKey,
+      Authorization: `Bearer ${sbKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
@@ -79,45 +123,96 @@ module.exports = async function handler(req, res) {
   if (!tx?.stripe_payment_intent) return res.status(404).json({ error: 'PaymentIntent introuvable' });
   if (tx.statut === 'succeeded') return res.status(409).json({ error: 'Paiement deja capture' });
 
-  const stripeResp = await fetch(`https://api.stripe.com/v1/payment_intents/${tx.stripe_payment_intent}/capture`, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + STRIPE_KEY,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Stripe-Version': '2024-04-10',
+  const piPath = `/v1/payment_intents/${encodeURIComponent(tx.stripe_payment_intent)}`;
+  const existing = await stripeRequest('GET', piPath, STRIPE_KEY);
+  if (!existing.ok) {
+    return res.status(402).json({ error: existing.data?.error?.message || 'PaymentIntent Stripe introuvable' });
+  }
+
+  const intent = existing.data;
+  if (intent.metadata?.livraison_id && intent.metadata.livraison_id !== livraison_id) {
+    return res.status(409).json({ error: 'PaymentIntent ne correspond pas a cette livraison' });
+  }
+  if (intent.metadata?.expediteur_id && intent.metadata.expediteur_id !== livraison.expediteur_id) {
+    return res.status(409).json({ error: 'PaymentIntent ne correspond pas a cet expediteur' });
+  }
+
+  if (intent.status === 'succeeded') {
+    await patchSupabase(`${SB_URL}/rest/v1/transactions?id=eq.${tx.id}`, SB_KEY, {
+      statut: 'succeeded',
+      metadata: { ...(tx.metadata || {}), captured: true, reconciled_at: new Date().toISOString() }
+    }).catch(() => false);
+    await patchSupabase(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, SB_KEY, { statut: 'payee' }).catch(() => false);
+    return res.status(200).json({
+      success: true,
+      already_captured: true,
+      livraison_id,
+      payment_intent_id: intent.id,
+      status: intent.status,
+      amount_received: intent.amount_received
+    });
+  }
+
+  if (intent.status !== 'requires_capture') {
+    return res.status(409).json({
+      error: 'Paiement Stripe non capturable',
+      stripe_status: intent.status
+    });
+  }
+  if (!intent.amount_capturable || intent.amount_capturable <= 0) {
+    return res.status(409).json({ error: 'Aucun montant capturable disponible' });
+  }
+
+  const capture = await stripeRequest(
+    'POST',
+    `${piPath}/capture`,
+    STRIPE_KEY,
+    undefined,
+    `capture-livraison-${livraison_id}-${tx.stripe_payment_intent}`
+  );
+  const captured = capture.data;
+  if (!capture.ok) return res.status(402).json({ error: captured.error?.message || 'Capture Stripe impossible' });
+
+  const txUpdated = await patchSupabase(`${SB_URL}/rest/v1/transactions?id=eq.${tx.id}`, SB_KEY, {
+    statut: captured.status,
+    metadata: {
+      ...(tx.metadata || {}),
+      captured: true,
+      captured_at: new Date().toISOString(),
+      amount_captured: captured.amount_received
     }
+  }).catch(() => false);
+
+  const livraisonUpdated = await patchSupabase(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, SB_KEY, {
+    statut: 'payee',
+    livre_le: new Date().toISOString()
+  }).catch(() => false);
+
+  await insertAudit(SB_URL, SB_KEY, {
+    transaction_id: tx.id,
+    livraison_id,
+    user_id: livraison.expediteur_id,
+    actor_id: session.id,
+    event_type: 'payment_captured_after_delivery_confirmation',
+    amount_cents: captured.amount_received,
+    currency: captured.currency || 'cad',
+    stripe_payment_intent: captured.id,
+    status: captured.status,
+    evidence: {
+      source: 'api/capture-livraison',
+      livraison_status_before_capture: livraison.statut,
+      manual_capture: true
+    },
+    retention_until: new Date(Date.now() + 7 * 365 * 24 * 60 * 60 * 1000).toISOString()
   });
-  const captured = await stripeResp.json();
-  if (!stripeResp.ok) return res.status(402).json({ error: captured.error?.message || 'Capture Stripe impossible' });
-
-  await fetch(`${SB_URL}/rest/v1/transactions?id=eq.${tx.id}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({ statut: captured.status, metadata: { captured: true, captured_at: new Date().toISOString() } })
-  }).catch(() => {});
-
-  await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({ statut: 'payee', livre_le: new Date().toISOString() })
-  }).catch(() => {});
 
   return res.status(200).json({
     success: true,
     livraison_id,
     payment_intent_id: captured.id,
     status: captured.status,
-    amount_received: captured.amount_received
+    amount_received: captured.amount_received,
+    db_updated: txUpdated && livraisonUpdated
   });
 };
 

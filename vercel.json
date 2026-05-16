@@ -15,6 +15,26 @@
                          "destination":  "/api/platform?endpoint=admin-update-driver-status"
                      },
                      {
+                         "source":  "/api/admin-user-access",
+                         "destination":  "/api/platform?endpoint=admin-user-access"
+                     },
+                     {
+                         "source":  "/api/retirer",
+                         "destination":  "/api/platform?endpoint=retirer"
+                     },
+                     {
+                         "source":  "/api/pause-user",
+                         "destination":  "/api/platform?endpoint=pause-user"
+                     },
+                     {
+                         "source":  "/api/reactiver-user",
+                         "destination":  "/api/platform?endpoint=reactiver-user"
+                     },
+                     {
+                         "source":  "/api/revision-user",
+                         "destination":  "/api/platform?endpoint=revision-user"
+                     },
+                     {
                          "source":  "/api/refund-payment",
                          "destination":  "/api/platform?endpoint=refund-payment"
                      },
@@ -57,9 +77,62 @@
                      {
                          "source":  "/api/request-driver-card",
                          "destination":  "/api/platform?endpoint=request-driver-card"
+                     },
+                     {
+                         "source":  "/api/push-subscribe",
+                         "destination":  "/api/platform?endpoint=push-subscribe"
+                     },
+                     {
+                         "source":  "/api/push-send",
+                         "destination":  "/api/platform?endpoint=push-send"
+                     },
+                     {
+                         "source":  "/api/create-review",
+                         "destination":  "/api/platform?endpoint=create-review"
+                     },
+                     {
+                         "source":  "/api/impact-public",
+                         "destination":  "/api/platform?endpoint=impact-public"
+                     },
+                     {
+                         "source":  "/api/impact-admin",
+                         "destination":  "/api/platform?endpoint=impact-admin"
+                     },
+                     {
+                         "source":  "/api/impact-application",
+                         "destination":  "/api/platform?endpoint=impact-application"
+                     },
+                     {
+                         "source":  "/api/rewards-dashboard",
+                         "destination":  "/api/platform?endpoint=rewards-dashboard"
+                     },
+                     {
+                         "source":  "/api/draw-enter",
+                         "destination":  "/api/platform?endpoint=draw-enter"
+                     },
+                     {
+                         "source":  "/api/admin-rewards",
+                         "destination":  "/api/platform?endpoint=admin-rewards"
                      }
                  ],
     "headers":  [
+                    {
+                        "source":  "/sw.js",
+                        "headers":  [
+                                        {
+                                            "key":   "Content-Type",
+                                            "value": "application/javascript"
+                                        },
+                                        {
+                                            "key":   "Cache-Control",
+                                            "value": "no-cache"
+                                        },
+                                        {
+                                            "key":   "Service-Worker-Allowed",
+                                            "value": "/"
+                                        }
+                                    ]
+                    },
                     {
                         "source":  "/(.*)",
                         "headers":  [

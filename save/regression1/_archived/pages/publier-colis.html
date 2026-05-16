@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publier un colis â PorteÃ Porte</title>
+<meta name="theme-color" content="#05080A">
+<style>
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;line-height:1.6}
+a{text-decoration:none;color:inherit}
+.container{width:min(900px,calc(100% - 32px));margin:0 auto}
+nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(5,8,10,.96);position:sticky;top:0;z-index:10}
+.logo{font-size:22px;font-weight:900;letter-spacing:1px}.logo span{color:var(--lime)}
+.nav a{font-size:13px;color:var(--muted)}
+.hero{padding:70px 0 34px}
+.kicker{color:var(--lime);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px}
+h1{font-size:clamp(40px,7vw,74px);line-height:.95;letter-spacing:-2px}
+.lead{margin-top:20px;color:var(--muted);font-size:18px;max-width:720px}
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:12px;padding:24px;margin:18px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:12px;color:var(--lime);font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--paper);padding:13px;border-radius:6px;font-size:15px;outline:none}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:rgba(184,245,62,.45)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:var(--ink);border:none;border-radius:6px;padding:14px 20px;font-weight:900;cursor:pointer;margin-top:12px}
+.btn-secondary{background:transparent;color:var(--paper);border:1px solid var(--border)}
+.notice{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.18);padding:14px;border-radius:8px;color:var(--paper);font-size:14px;margin-top:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
+.step{background:var(--smoke);border:1px solid var(--border);border-radius:10px;padding:18px}
+.step strong{color:var(--lime)}
+footer{padding:36px 0;color:var(--muted);font-size:13px}
+@media(max-width:700px){.grid,.steps{grid-template-columns:1fr}nav{padding:12px 16px}}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+<nav>
+  <a class="logo" href="index.html">Porte<span>Ã </span>Porte</a>
+  <div class="nav"><a href="index.html">â Accueil</a></div>
+</nav>
+
+<main>
+<section class="hero">
+  <div class="container">
+    <div class="kicker">Publier une demande</div>
+    <h1>Fais transporter ton colis par quelquâun qui passe dÃ©jÃ  par lÃ .</h1>
+    <p class="lead">Ajoute les dÃ©tails de ton objet. Le systÃ¨me pourra ensuite trouver les conducteurs compatibles selon le trajet, la taille, lâhoraire et la confiance.</p>
+
+    <div class="notice" id="message" style="display:none"></div>
+
+    <form class="card" onsubmit="event.preventDefault(); demoSubmit('colis')">
+      <div class="grid">
+        <div>
+          <label>Ville de dÃ©part</label>
+          <input placeholder="Ex: QuÃ©bec" required>
+        </div>
+        <div>
+          <label>Ville dâarrivÃ©e</label>
+          <input placeholder="Ex: MontrÃ©al" required>
+        </div>
+        <div>
+          <label>Type dâobjet</label>
+          <select required>
+            <option value="">Choisir</option>
+            <option>Colis</option>
+            <option>Meuble Marketplace</option>
+            <option>ÃlectromÃ©nager</option>
+            <option>BoÃ®tes</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div>
+          <label>Budget souhaitÃ©</label>
+          <input placeholder="Ex: 45 $" required>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Description</label>
+        <textarea placeholder="Dimensions, poids approximatif, fragilitÃ©, adresse gÃ©nÃ©rale, contraintes..."></textarea>
+      </div>
+
+      <button class="btn" type="submit">ð¦ Publier la demande</button>
+      <a class="btn btn-secondary" href="suivi.html">Voir une dÃ©mo de suivi</a>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer><div class="container">Â© 2026 PorteÃ Porte â plateforme collaborative quÃ©bÃ©coise.</div></footer>
+<script>
+function demoSubmit(type) {
+  const msg = document.getElementById('message');
+  msg.style.display = 'block';
+  msg.innerHTML = type === 'colis'
+    ? 'â Demande enregistrÃ©e en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire Ã  Supabase.'
+    : 'â Trajet enregistrÃ© en mode dÃ©mo. Prochaine Ã©tape : connecter ce formulaire au matching.';
+  window.scrollTo({top: msg.offsetTop - 80, behavior:'smooth'});
+}
+</script>
+</body>
+</html>

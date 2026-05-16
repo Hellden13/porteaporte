@@ -1,0 +1,18 @@
+{
+  "name": "PorteaPorte",
+  "short_name": "PorteaPorte",
+  "description": "Plateforme canadienne de livraison collaborative.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A1628",
+  "theme_color": "#0A1628",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

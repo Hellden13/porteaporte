@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - PorteÃ€Porte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0A0C0F 0%, #0F1117 100%);
+            color: #E8EAED;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1F242C;
+        }
+        h1 { font-size: 2rem; color: #B8F53E; }
+        .btn-back { 
+            padding: 0.75rem 1.5rem; 
+            background: transparent; 
+            border: 1px solid #1F242C; 
+            color: #E8EAED; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-decoration: none; 
+        }
+        .btn-back:hover { border-color: #0BFFCB; color: #0BFFCB; }
+        .profile-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 2fr; 
+            gap: 2rem;
+        }
+        .profile-card { 
+            background: #12151A; 
+            border: 1px solid #1F242C; 
+            border-radius: 12px; 
+            padding: 2rem; 
+            text-align: center;
+        }
+        .avatar { 
+            width: 120px; 
+            height: 120px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #B8F53E 0%, #0BFFCB 100%);
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 48px; 
+            margin: 0 auto 1rem;
+        }
+        .profile-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .profile-email { color: #9BA1A9; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .profile-stats { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 1rem; 
+            margin-top: 1.5rem; 
+            padding-top: 1.5rem; 
+            border-top: 1px solid #1F242C;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #B8F53E; }
+        .stat-label { font-size: 0.8rem; color: #9BA1A9; text-transform: uppercase; margin-top: 0.25rem; }
+        .info-card { 
+            background: #12151A; 
+            border: 1px solid #1F242C; 
+            border-radius: 12px; 
+            padding: 2rem;
+        }
+        .section-title { 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            margin-bottom: 1rem; 
+            color: #B8F53E;
+        }
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0.75rem 0; 
+            border-bottom: 1px solid #1F242C;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #9BA1A9; font-size: 0.9rem; }
+        .info-value { font-weight: 600; }
+        .btn-group { 
+            display: flex; 
+            gap: 1rem; 
+            margin-top: 2rem; 
+            padding-top: 2rem; 
+            border-top: 1px solid #1F242C;
+        }
+        .btn { 
+            flex: 1; 
+            padding: 0.9rem; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            cursor: pointer; 
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #B8F53E 0%, #0BFFCB 100%); 
+            color: #0A0C0F;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .loading { text-align: center; padding: 2rem; color: #9BA1A9; }
+        @media (max-width: 768px) {
+            .profile-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mon Profil</h1>
+            <a href="/dashboard-livreur.html" class="btn-back">â† Retour</a>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            Chargement du profil...
+        </div>
+
+        <div id="profileContainer" style="display: none;">
+            <div class="profile-grid">
+                <div class="profile-card">
+                    <div class="avatar">ðŸ‘¤</div>
+                    <div class="profile-name" id="profileName">Nom</div>
+                    <div class="profile-email" id="profileEmail">email@example.com</div>
+                    <div class="profile-stats">
+                        <div>
+                            <div class="stat-value" id="livraisons">0</div>
+                            <div class="stat-label">Livraisons</div>
+                        </div>
+                        <div>
+                            <div class="stat-value" id="score">0</div>
+                            <div class="stat-label">Score</div>
+                        </div>
+                        <div>
+                            <div class="stat-value" id="xp">0</div>
+                            <div class="stat-label">XP</div>
+                        </div>
+                        <div>
+                            <div class="stat-value" id="coins">0$</div>
+                            <div class="stat-label">Coins</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="section-title">ðŸ“‹ Infos personnelles</div>
+                    <div class="info-row">
+                        <span class="info-label">PrÃ©nom</span>
+                        <span class="info-value" id="infoPrÃ©nom">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nom</span>
+                        <span class="info-value" id="infoNom">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value" id="infoEmail">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ville</span>
+                        <span class="info-value" id="infoVille">-</span>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="logout()">ðŸšª DÃ©connecter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://miqrircrfpzkmvvacgwt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcXJpcmNyZnB6a212dmFjZ3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODk3MzAsImV4cCI6MjA5MjE2NTczMH0.LJ8m2Vo7U0bmLbdoN1BqBuYlJZWUQxnZCwLwAZvVIaM';
+        
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function loadProfile() {
+            try {
+                const { data } = await db.auth.getSession();
+                
+                if (!data || !data.session) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const userId = data.session.user.id;
+                const userEmail = data.session.user.email;
+
+                const { data: profile } = await db
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('profileContainer').style.display = 'grid';
+
+                if (profile) {
+                    document.getElementById('profileName').textContent = `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Utilisateur';
+                    document.getElementById('livraisons').textContent = profile.livraisons || 0;
+                    document.getElementById('score').textContent = (profile.score || 0).toFixed(1);
+                    document.getElementById('xp').textContent = profile.xp || 0;
+                    document.getElementById('coins').textContent = `$${((profile.coins || 0) / 100).toFixed(2)}`;
+                    document.getElementById('infoPrÃ©nom').textContent = profile.prenom || '-';
+                    document.getElementById('infoNom').textContent = profile.nom || '-';
+                    document.getElementById('infoVille').textContent = profile.ville || '-';
+                }
+                
+                document.getElementById('profileEmail').textContent = userEmail;
+                document.getElementById('infoEmail').textContent = userEmail || '-';
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loadingContainer').innerHTML = 'âŒ Erreur: ' + error.message;
+            }
+        }
+
+        async function logout() {
+            if (confirm('DÃ©connecter?')) {
+                await db.auth.signOut();
+                window.location.href = '/index.html';
+            }
+        }
+
+        window.addEventListener('load', loadProfile);
+    </script>
+</body>
+</html>

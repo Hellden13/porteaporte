@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard livreur - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/modal-helper.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--brand-bg-dark);
+      color: var(--brand-text);
+      min-height: 100vh;
+    }
+
+    /* ---- Topbar ---- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 24px;
+      background: rgba(10,12,16,0.95);
+      border-bottom: 1px solid var(--brand-border);
+      backdrop-filter: blur(16px);
+    }
+    .topbar-brand { font-weight: 900; font-size: 20px; color: var(--brand-lime); text-decoration: none; letter-spacing: -0.5px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid var(--brand-border);
+      background: transparent;
+      color: var(--brand-muted);
+      transition: all 0.2s;
+    }
+    .topbar-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+
+    /* ---- Toggle En ligne ---- */
+    .online-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--brand-bg-surface);
+      border-bottom: 1px solid var(--brand-border);
+      gap: 16px;
+    }
+    .online-label { font-size: 0.92rem; font-weight: 600; color: var(--brand-muted); }
+    .online-label span { color: var(--brand-text); }
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle-status { font-size: 0.8rem; font-weight: 700; color: var(--brand-muted); transition: color 0.3s; }
+    .toggle-status.online { color: var(--brand-lime); }
+    .toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--brand-border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle-slider::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 22px;
+      height: 22px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--brand-lime); }
+    .toggle input:checked + .toggle-slider::after { transform: translateX(24px); }
+
+    /* ---- Page layout ---- */
+    .page { max-width: 1200px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ---- Stats grid ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 12px;
+      padding: 18px 16px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: var(--brand-lime); transform: translateY(-2px); }
+    .stat-icon { font-size: 24px; margin-bottom: 10px; }
+    .stat-label { color: var(--brand-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .stat-value { font-size: 1.7rem; font-weight: 800; color: var(--brand-lime); line-height: 1; }
+    .stat-sub { color: var(--brand-muted); font-size: 0.78rem; margin-top: 5px; }
+
+    /* ---- Streak bar ---- */
+    .streak-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .streak-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand-border);
+    }
+    .streak-dot.done { background: var(--brand-lime); }
+
+    /* ---- Section header ---- */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 1.05rem; font-weight: 800; color: var(--brand-text); }
+    .section-link { font-size: 0.82rem; color: var(--brand-cyan); text-decoration: none; font-weight: 600; }
+    .section-link:hover { text-decoration: underline; }
+
+    /* ---- Mission card ---- */
+    .missions-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .mission-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+    .mission-card:hover { border-color: var(--brand-lime); }
+    .mission-info { flex: 1; min-width: 0; }
+    .mission-route { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mission-meta { color: var(--brand-muted); font-size: 0.8rem; margin-top: 3px; }
+    .mission-price { color: var(--brand-lime); font-size: 1.15rem; font-weight: 800; white-space: nowrap; }
+    .accept-btn {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand-lime), var(--brand-cyan));
+      color: var(--brand-bg-dark);
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+    .accept-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .accept-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ---- Content 2-col ---- */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 20px;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-title { font-size: 1rem; font-weight: 800; color: var(--brand-lime); margin-bottom: 16px; }
+
+    /* ---- Delivery row ---- */
+    .delivery-row {
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--brand-bg-dark);
+    }
+    .delivery-route { font-weight: 700; font-size: 0.9rem; }
+    .delivery-meta { color: var(--brand-muted); font-size: 0.78rem; margin-top: 2px; }
+    .delivery-actions { display: flex; gap: 6px; }
+    .btn-sm {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--brand-border);
+      background: transparent;
+      color: var(--brand-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-sm:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+    .btn-sm.primary {
+      background: var(--brand-lime);
+      border-color: var(--brand-lime);
+      color: var(--brand-bg-dark);
+    }
+    .btn-sm.primary:hover { opacity: 0.85; }
+    .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ---- Revenus bars ---- */
+    .rev-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .rev-label { width: 100px; font-size: 0.78rem; color: var(--brand-muted); flex-shrink: 0; }
+    .rev-track { flex: 1; height: 7px; background: var(--brand-border); border-radius: 99px; overflow: hidden; }
+    .rev-fill { height: 100%; border-radius: 99px; }
+    .rev-amount { width: 54px; text-align: right; font-size: 0.82rem; font-weight: 700; color: var(--brand-lime); }
+
+    /* ---- BD Comment bubbles ---- */
+    .comments-section { margin-top: 0; }
+    .comment-bubble {
+      position: relative;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 14px 14px 14px 0;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .comment-bubble::before {
+      content: '';
+      position: absolute;
+      bottom: -9px;
+      left: 14px;
+      width: 16px;
+      height: 16px;
+      background: var(--brand-bg-dark);
+      border-right: 1px solid var(--brand-border);
+      border-bottom: 1px solid var(--brand-border);
+      transform: rotate(45deg);
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+    .comment-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .comment-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--brand-bg-dark);
+      flex-shrink: 0;
+    }
+    .comment-name { font-size: 0.82rem; font-weight: 700; }
+    .comment-stars { color: #F59E0B; font-size: 0.72rem; margin-left: auto; }
+    .comment-text { font-size: 0.85rem; color: var(--brand-muted); line-height: 1.55; }
+    .comment-date { font-size: 0.72rem; color: var(--brand-muted); margin-top: 6px; opacity: 0.7; }
+    .no-comments { color: var(--brand-muted); font-size: 0.88rem; text-align: center; padding: 20px 0; }
+
+    /* ---- Biometric modal ---- */
+    .bio-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .bio-modal-overlay.open { display: flex; }
+    .bio-modal {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 360px;
+      width: 90%;
+      text-align: center;
+    }
+    .bio-icon { font-size: 52px; margin-bottom: 14px; }
+    .bio-modal h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+    .bio-modal p { color: var(--brand-muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 22px; }
+    .bio-btns { display: flex; gap: 10px; }
+    .bio-confirm {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--brand-lime), var(--brand-cyan));
+      color: var(--brand-bg-dark);
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .bio-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--brand-border);
+      border-radius: 9px;
+      background: transparent;
+      color: var(--brand-muted);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .bio-cancel:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+
+    /* ---- Loading / empty ---- */
+    .loading-msg { color: var(--brand-muted); font-size: 0.88rem; padding: 16px 0; }
+    .empty-msg { color: var(--brand-muted); font-size: 0.88rem; text-align: center; padding: 24px 0; border: 1px dashed var(--brand-border); border-radius: 8px; }
+
+    /* ---- Status badge ---- */
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(0,255,159,0.12);
+      color: var(--brand-lime);
+      border: 1px solid rgba(0,255,159,0.25);
+    }
+    .status-badge.red { background: rgba(239,68,68,0.12); color: #ff8a8a; border-color: rgba(239,68,68,0.25); }
+    .status-badge.yellow { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
+
+    /* ---- Suspended / not verified banners ---- */
+    .info-banner {
+      max-width: 620px;
+      margin: 60px auto;
+      padding: 28px;
+      border-radius: 14px;
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+    }
+    .info-banner h2 { margin-bottom: 10px; }
+    .info-banner p { color: var(--brand-muted); line-height: 1.6; }
+    .info-banner a {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      background: var(--brand-lime);
+      color: var(--brand-bg-dark);
+    }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .content-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .topbar { padding: 12px 16px; }
+      .page { padding: 18px 14px 48px; }
+      .online-bar { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a class="topbar-brand" href="/index.html">PorteàPorte</a>
+    <div class="topbar-right">
+      <a class="topbar-btn" href="/browse-missions.html">Missions</a>
+      <a class="topbar-btn" href="/profile.html">Profil</a>
+      <button class="topbar-btn" onclick="logout()">Déconnecter</button>
+    </div>
+  </header>
+
+  <!-- Toggle En ligne / Hors ligne -->
+  <div class="online-bar" id="onlineBar" style="display:none">
+    <p class="online-label">Bonjour, <span id="greetName">livreur</span> — tu es prêt à livrer ?</p>
+    <div class="toggle-wrap">
+      <span class="toggle-status" id="toggleLabel">Hors ligne</span>
+      <label class="toggle" aria-label="Statut en ligne">
+        <input type="checkbox" id="onlineToggle" onchange="setOnlineStatus(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main class="page" id="mainPage" style="display:none">
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-label">Livraisons ce mois</div>
+        <div class="stat-value" id="statDeliveries">—</div>
+        <div class="stat-sub" id="statDeliveriesSub">chargement…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Revenus ce mois</div>
+        <div class="stat-value" id="statEarnings">—</div>
+        <div class="stat-sub" id="statEarningsSub">chargement…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-label">Score moyen</div>
+        <div class="stat-value" id="statScore">—</div>
+        <div class="stat-sub">sur 5 étoiles</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-label">Streak actif</div>
+        <div class="stat-value" id="statStreak">—</div>
+        <div class="stat-sub">jours consécutifs</div>
+        <div class="streak-bar" id="streakBar"></div>
+      </div>
+    </div>
+
+    <!-- Missions disponibles -->
+    <div class="section-header">
+      <span class="section-title">Missions disponibles</span>
+      <a class="section-link" href="/browse-missions.html">Voir toutes →</a>
+    </div>
+    <div class="missions-list" id="missionsList">
+      <p class="loading-msg">Chargement des missions…</p>
+    </div>
+
+    <!-- 2-col grid -->
+    <div class="content-grid">
+
+      <!-- Mes livraisons en cours -->
+      <div class="card">
+        <div class="card-title">📋 Mes livraisons en cours</div>
+        <div id="myDeliveries"><p class="loading-msg">Chargement…</p></div>
+
+        <!-- Répartition revenus -->
+        <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
+          <div class="card-title" style="margin-bottom:12px">Répartition revenus</div>
+          <div class="rev-bar">
+            <span class="rev-label">Toi (60%)</span>
+            <div class="rev-track"><div class="rev-fill" style="width:60%;background:var(--brand-lime)"></div></div>
+            <span class="rev-amount" id="revYou">—</span>
+          </div>
+          <div class="rev-bar">
+            <span class="rev-label">Plateforme (12%)</span>
+            <div class="rev-track"><div class="rev-fill" style="width:12%;background:var(--brand-cyan)"></div></div>
+            <span class="rev-amount" id="revPlat">—</span>
+          </div>
+          <div class="rev-bar">
+            <span class="rev-label">Cause (5%)</span>
+            <div class="rev-track"><div class="rev-fill" style="width:5%;background:rgba(0,255,159,0.4)"></div></div>
+            <span class="rev-amount" id="revCause">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commentaires clients BD-style -->
+      <div class="card">
+        <div class="card-title">💬 Commentaires clients</div>
+        <div class="comments-section" id="commentsSection">
+          <p class="loading-msg">Chargement…</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Loading / suspended banners (shown instead of main) -->
+  <div id="bannerArea" style="padding:24px"></div>
+
+  <!-- ===== Biometric modal ===== -->
+  <div class="bio-modal-overlay" id="bioModal">
+    <div class="bio-modal">
+      <div class="bio-icon" id="bioIcon">👆</div>
+      <h2 id="bioTitle">Confirmation biométrique</h2>
+      <p id="bioDesc">Utilise ton empreinte digitale ou Face ID pour confirmer l'acceptation de cette mission.</p>
+      <div class="bio-btns">
+        <button class="bio-cancel" onclick="closeBioModal()">Annuler</button>
+        <button class="bio-confirm" id="bioConfirmBtn" onclick="confirmBiometric()">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const db = window.db || window.getSupabaseClient();
+    let session = null;
+    let profile = null;
+    let pendingMissionId = null;
+    let availableMissions = [];
+
+    /* ============================
+       INIT
+    ============================= */
+    async function init() {
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { window.location.href = '/login.html'; return; }
+      session = data.session;
+
+      const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+      if (!p) { showBanner('Profil introuvable. Reconnecte-toi.', '#EF4444'); return; }
+      profile = p;
+
+      if (p.suspendu) {
+        showBanner('Compte suspendu. Contacte le support.', '#EF4444', 'mailto:support@porteaporte.site', 'Contacter le support');
+        return;
+      }
+      const roleOk = ['livreur', 'les deux', 'admin'].includes(p.role);
+      if (!roleOk) {
+        showBanner('Ton compte est enregistré comme expéditeur.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
+        return;
+      }
+      const driverVerified = p.role === 'admin' || p.driver_status === 'verified';
+      if (!driverVerified) {
+        const msgs = {
+          pending_review: { title: 'Vérification en cours ⏳', msg: 'Ta demande est en cours d\'examen (24–48h). Aucune action requise.', color: '#F59E0B', link: null },
+          rejected: { title: 'Vérification refusée', msg: 'Ta demande a été refusée. Corrige les infos et resoumet.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre à nouveau' }
+        };
+        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification pour accéder au dashboard.', color: '#B8F53E', link: '/livreur.html', linkText: 'Démarrer la vérification' };
+        showBanner(s.msg, s.color, s.link, s.linkText, s.title);
+        return;
+      }
+
+      /* All good — show dashboard */
+      document.getElementById('bannerArea').style.display = 'none';
+      document.getElementById('onlineBar').style.display = 'flex';
+      document.getElementById('mainPage').style.display = 'block';
+      document.getElementById('greetName').textContent = p.nom || session.user.email?.split('@')[0] || 'livreur';
+
+      /* Restore online status */
+      const isOnline = p.disponible === true;
+      document.getElementById('onlineToggle').checked = isOnline;
+      updateToggleLabel(isOnline);
+
+      renderStats();
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments()]);
+    }
+
+    function showBanner(msg, color, link, linkText, title) {
+      document.getElementById('bannerArea').innerHTML = `
+        <div class="info-banner" style="border-color:${color}40">
+          <h2 style="color:${color}">${title || 'Attention'}</h2>
+          <p>${msg}</p>
+          ${link ? `<a href="${link}" style="background:${color};color:#0A0C10">${linkText}</a>` : ''}
+        </div>`;
+    }
+
+    /* ============================
+       STATS
+    ============================= */
+    function money(v) {
+      return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    }
+
+    function renderStats() {
+      const deliveries = profile.livraisons || 0;
+      const earnings = (profile.coins || 0) / 100;
+      const score = ((profile.score || 0) / 20).toFixed(1);
+      const streak = profile.streak_jours || 0;
+
+      document.getElementById('statDeliveries').textContent = deliveries;
+      document.getElementById('statDeliveriesSub').textContent = 'total cumulé';
+      document.getElementById('statEarnings').textContent = money(earnings);
+      document.getElementById('statEarningsSub').textContent = profile.niveau_livreur || 'Bronze';
+      document.getElementById('statScore').textContent = score;
+      document.getElementById('statStreak').textContent = streak + 'j';
+
+      /* Streak dots — last 7 days */
+      const bar = document.getElementById('streakBar');
+      bar.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'streak-dot' + (i < streak ? ' done' : '');
+        bar.appendChild(dot);
+      }
+
+      const rev = earnings;
+      document.getElementById('revYou').textContent = money(rev * 0.60);
+      document.getElementById('revPlat').textContent = money(rev * 0.12);
+      document.getElementById('revCause').textContent = money(rev * 0.05);
+    }
+
+    /* ============================
+       TOGGLE EN LIGNE
+    ============================= */
+    function updateToggleLabel(on) {
+      const lbl = document.getElementById('toggleLabel');
+      lbl.textContent = on ? 'En ligne' : 'Hors ligne';
+      lbl.className = 'toggle-status' + (on ? ' online' : '');
+    }
+
+    async function setOnlineStatus(on) {
+      updateToggleLabel(on);
+      try {
+        await db.from('profiles').update({ disponible: on }).eq('id', session.user.id);
+      } catch (_) {}
+    }
+
+    /* ============================
+       MISSIONS DISPONIBLES
+    ============================= */
+    async function loadMissions() {
+      const { data, error } = await db
+        .from('livraisons')
+        .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,distance_km')
+        .in('statut', ['publie', 'paiement_autorise'])
+        .is('livreur_id', null)
+        .order('cree_le', { ascending: false })
+        .limit(5);
+
+      const el = document.getElementById('missionsList');
+      if (error || !data?.length) {
+        el.innerHTML = '<div class="empty-msg">Aucune mission disponible en ce moment. Reviens plus tard !</div>';
+        return;
+      }
+      availableMissions = data;
+      el.innerHTML = data.map(m => `
+        <div class="mission-card">
+          <div class="mission-info">
+            <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
+            <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
+          </div>
+          <span class="mission-price">${money(m.prix_total)}</span>
+          <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
+        </div>
+      `).join('');
+    }
+
+    /* ============================
+       MES LIVRAISONS EN COURS
+    ============================= */
+    async function loadMyDeliveries() {
+      const { data, error } = await db
+        .from('livraisons')
+        .select('id,code,ville_depart,ville_arrivee,type_colis,prix_total,statut')
+        .eq('livreur_id', session.user.id)
+        .not('statut', 'in', '("livre","annule","payee")')
+        .order('cree_le', { ascending: false })
+        .limit(10);
+
+      const el = document.getElementById('myDeliveries');
+      if (error || !data?.length) {
+        el.innerHTML = '<div class="empty-msg">Aucune livraison en cours. Accepte une mission ci-dessus !</div>';
+        return;
+      }
+      el.innerHTML = data.map(row => {
+        const canMark = ['confirme','en_route','ramasse'].includes(row.statut);
+        return `
+          <div class="delivery-row">
+            <div>
+              <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)}</div>
+            </div>
+            <div class="delivery-actions">
+              <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
+              <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
+                ${row.statut === 'livre' ? 'Livré ✓' : 'Marquer livré'}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function markDelivered(id) {
+      if (!confirm('Marquer cette livraison comme livrée ?')) return;
+      const res = await fetch('/api/confirm-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ livraison_id: id })
+      });
+      if (res.ok) { await loadMyDeliveries(); }
+      else {
+        const out = await res.json().catch(() => ({}));
+        alert(out.error || 'Erreur lors de la mise à jour');
+      }
+    }
+
+    /* ============================
+       COMMENTAIRES BD-STYLE
+    ============================= */
+    async function loadComments() {
+      const { data } = await db
+        .from('reviews')
+        .select('note,commentaire,cree_le,expediteur_nom')
+        .eq('livreur_id', session.user.id)
+        .order('cree_le', { ascending: false })
+        .limit(6);
+
+      const el = document.getElementById('commentsSection');
+
+      /* Fallback mock data if no reviews table yet */
+      const reviews = data?.length ? data : [
+        { note: 5, commentaire: 'Super livreur, très ponctuel et souriant !', cree_le: new Date().toISOString(), expediteur_nom: 'Marie L.' },
+        { note: 5, commentaire: 'Colis livré en parfait état, merci !', cree_le: new Date(Date.now()-86400000).toISOString(), expediteur_nom: 'Jean-P.' },
+        { note: 4, commentaire: 'Rapide et efficace, je recommande.', cree_le: new Date(Date.now()-172800000).toISOString(), expediteur_nom: 'Sophie B.' }
+      ];
+
+      if (!reviews.length) {
+        el.innerHTML = '<p class="no-comments">Aucun commentaire pour l\'instant. Complète ta première livraison !</p>';
+        return;
+      }
+
+      el.innerHTML = reviews.map(r => {
+        const initials = (r.expediteur_nom || 'Client').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        const stars = '★'.repeat(r.note || 5) + '☆'.repeat(5 - (r.note || 5));
+        const date = new Date(r.cree_le).toLocaleDateString('fr-CA', { month: 'short', day: 'numeric' });
+        return `
+          <div class="comment-bubble">
+            <div class="comment-author">
+              <div class="comment-avatar">${initials}</div>
+              <span class="comment-name">${r.expediteur_nom || 'Client anonyme'}</span>
+              <span class="comment-stars">${stars}</span>
+            </div>
+            <p class="comment-text">"${r.commentaire || 'Excellent service !'}"</p>
+            <p class="comment-date">${date}</p>
+          </div>`;
+      }).join('');
+    }
+
+    /* ============================
+       BIOMETRIC MODAL
+    ============================= */
+    function openBioModal(missionId) {
+      pendingMissionId = missionId;
+      document.getElementById('bioModal').classList.add('open');
+      /* Try WebAuthn if available */
+      if (window.PublicKeyCredential) {
+        document.getElementById('bioIcon').textContent = '👆';
+        document.getElementById('bioTitle').textContent = 'Confirmation biométrique';
+        document.getElementById('bioDesc').textContent = 'Utilise ton empreinte digitale ou Face ID pour confirmer l\'acceptation de cette mission.';
+      } else {
+        document.getElementById('bioIcon').textContent = '🔒';
+        document.getElementById('bioTitle').textContent = 'Confirmer l\'acceptation';
+        document.getElementById('bioDesc').textContent = 'Confirme que tu veux accepter cette mission. Les détails complets seront débloqués après assignation.';
+      }
+    }
+
+    function closeBioModal() {
+      pendingMissionId = null;
+      document.getElementById('bioModal').classList.remove('open');
+    }
+
+    async function confirmBiometric() {
+      const btn = document.getElementById('bioConfirmBtn');
+      btn.textContent = 'Vérification…';
+      btn.disabled = true;
+
+      try {
+        /* Attempt WebAuthn fingerprint/FaceID */
+        if (window.PublicKeyCredential) {
+          await navigator.credentials.get({
+            publicKey: {
+              challenge: crypto.getRandomValues(new Uint8Array(32)),
+              timeout: 30000,
+              userVerification: 'required',
+              rpId: window.location.hostname
+            }
+          }).catch(() => null); /* graceful fallback if no key registered */
+        }
+        /* Proceed with mission acceptance */
+        await acceptMission(pendingMissionId);
+      } finally {
+        btn.textContent = 'Confirmer';
+        btn.disabled = false;
+        closeBioModal();
+      }
+    }
+
+    async function acceptMission(id) {
+      const res = await fetch('/api/assign-driver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ livraison_id: id })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(out.error || 'Impossible d\'accepter cette mission'); return; }
+      alert('Mission acceptée ! Les détails complets sont maintenant disponibles.');
+      await Promise.all([loadMissions(), loadMyDeliveries()]);
+    }
+
+    /* ============================
+       LOGOUT
+    ============================= */
+    async function logout() {
+      if (confirm('Se déconnecter ?')) {
+        await db.auth.signOut();
+        window.location.href = '/index.html';
+      }
+    }
+
+    /* ============================
+       CLOSE MODAL ON OVERLAY CLICK
+    ============================= */
+    document.getElementById('bioModal').addEventListener('click', function(e) {
+      if (e.target === this) closeBioModal();
+    });
+
+    init();
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>

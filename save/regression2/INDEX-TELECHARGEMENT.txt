@@ -1,0 +1,146 @@
+═══════════════════════════════════════════════════════════════════════════════
+📥 PORTEAPORTE - FICHIERS À TÉLÉCHARGER
+═══════════════════════════════════════════════════════════════════════════════
+
+📦 ZIP COMPLET (71 KB):
+  → porteaporte-complet.zip
+  Contient: 33 fichiers (HTML, JS, SQL, BAT, PS1, TXT)
+  À télécharger d'un coup!
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 FICHIERS CRITIQUES (À télécharger en priorité)
+═══════════════════════════════════════════════════════════════════════════════
+
+🔴 URGENT - Déployer MAINTENANT:
+
+1. gps-tracker.html (16 KB)
+   → Copier dans: C:\Users\User\OneDrive\Desktop\Site\
+   → Fonction: Suivi GPS en temps réel
+
+2. payment-CORRIGE.html (12 KB)
+   → Copier dans: C:\Users\User\OneDrive\Desktop\Site\
+   → Remplacer payment.html existant
+   → Fonction: Paiement + distribution PorteCoins
+
+3. SCRIPT-CREDIT-PORTECOINS.sql (2 KB)
+   → Exécuter dans: Supabase SQL Editor
+   → Fonction: Créditer 100 coins
+
+4. DEPLOY.bat (4 KB)
+   → Double-clique pour déployer
+   → Vercel se met à jour automatiquement
+
+═══════════════════════════════════════════════════════════════════════════════
+📚 GUIDES (Lire pour comprendre)
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ 00-RECAP-FINAL-TOUT-FAIT.txt (5 KB)
+   → Résumé complet du projet
+   → What's done, what's left
+   → Instructions rapides
+
+✅ GUIDE-GPS-COMPLET.txt (8 KB)
+   → Comment utiliser le GPS
+   → Configuration Google Maps
+   → Dépannage
+
+✅ GUIDE-STRIPE-COMPLET.txt (14 KB)
+   → Intégration Stripe
+   → Configuration paiement
+   → Webhooks
+
+✅ GUIDE-FINAL-COMPLET-PORTEAPORTE.md (14 KB)
+   → Guide complet du projet
+   → Toutes les étapes
+   → Prochaines actions
+
+✅ 00-DOSSIER-MAITRE-PORTEAPORTE.md (8 KB)
+   → Index du projet
+   → Fichiers + tâches
+   → Checklist
+
+═══════════════════════════════════════════════════════════════════════════════
+🔧 FICHIERS DE CODE
+═══════════════════════════════════════════════════════════════════════════════
+
+🟦 HTML Pages:
+  - gps-tracker.html (GPS)
+  - payment-CORRIGE.html (Paiement)
+  - payment.html (Alternative)
+  - login-FINAL.html (Connexion)
+  - suivi.html (Suivi livraison)
+  - livreur.html (Onboarding)
+  - index.html (Accueil)
+  - Et 5+ autres pages
+
+🔵 JavaScript:
+  - FONCTION-DISTRIBUTION-PORTECOINS.js
+  - api-stripe-webhook.js
+  - create-payment-intent.js
+
+🟢 SQL:
+  - SCRIPT-CREDIT-PORTECOINS.sql
+
+🟡 Batch/PowerShell:
+  - DEPLOY.bat
+  - DEPLOY-ULTIMATE.ps1
+  - COMMANDES-WINDOWS-COMPLETES.bat
+
+═══════════════════════════════════════════════════════════════════════════════
+📥 COMMENT TÉLÉCHARGER
+═══════════════════════════════════════════════════════════════════════════════
+
+OPTION 1: Télécharger le ZIP (Plus rapide)
+  1. Clique sur "porteaporte-complet.zip"
+  2. Dézippe dans un dossier
+  3. Tous les fichiers sont dedans!
+
+OPTION 2: Télécharger fichier par fichier
+  1. Ouvre chaque fichier
+  2. Ctrl+S ou Cmd+S pour télécharger
+  3. Enregistre dans un dossier
+
+OPTION 3: Copier-coller du contenu
+  1. Ouvre le fichier
+  2. Sélectionne tout (Ctrl+A)
+  3. Copie (Ctrl+C)
+  4. Crée un nouveau fichier
+  5. Colle (Ctrl+V)
+  6. Enregistre
+
+═══════════════════════════════════════════════════════════════════════════════
+🚀 APRÈS TÉLÉCHARGEMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Créditer PorteCoins (2 min):
+   - Ouvre SCRIPT-CREDIT-PORTECOINS.sql
+   - Va sur: https://supabase.com/dashboard/project/miqrircrfpzkmvvacgwt
+   - SQL Editor → Copie-colle → Run
+
+2. Copier les fichiers (1 min):
+   - gps-tracker.html → C:\Users\User\OneDrive\Desktop\Site\
+   - payment-CORRIGE.html → C:\Users\User\OneDrive\Desktop\Site\
+
+3. Déployer (2 min):
+   - Lance DEPLOY.bat
+   - Attends la fin
+   - ✅ C'est en production!
+
+4. Tester (5 min):
+   - Va sur https://porteaporte.site/gps-tracker.html
+   - Clique "Démarrer le suivi"
+   - ✅ GPS fonctionne!
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ TOUT DANS LE ZIP!
+═══════════════════════════════════════════════════════════════════════════════
+
+Si tu télécharges "porteaporte-complet.zip", tu as:
+
+✓ Tous les fichiers HTML
+✓ Tous les guides
+✓ Tous les scripts
+✓ Tous les configs
+✓ TOUT ce qu'il te faut! 📦
+
+═══════════════════════════════════════════════════════════════════════════════

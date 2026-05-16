@@ -1,0 +1,652 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord livreur - PorteàPorte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0A0C0F 0%, #0F1117 100%);
+            color: #E8EAED;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1F242C;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #B8F53E;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #B8F53E 0%, #0BFFCB 100%);
+            color: #0A0C0F;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(184, 245, 62, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #1F242C;
+            color: #E8EAED;
+        }
+
+        .btn-secondary:hover {
+            border-color: #0BFFCB;
+            color: #0BFFCB;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: #0BFFCB;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #9BA1A9;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #B8F53E;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            color: #9BA1A9;
+            margin-top: 0.5rem;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #E8EAED;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .action-btn:hover {
+            border-color: #B8F53E;
+            background: rgba(184, 245, 62, 0.05);
+            transform: translateY(-4px);
+        }
+
+        .action-btn-icon {
+            font-size: 32px;
+        }
+
+        .action-btn-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: #12151A;
+            border: 1px solid #1F242C;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #B8F53E;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .earnings-chart {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #1F242C;
+        }
+
+        .earnings-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .earnings-label {
+            width: 80px;
+            font-size: 0.85rem;
+            color: #9BA1A9;
+        }
+
+        .earnings-progress {
+            flex: 1;
+            height: 8px;
+            background: #1F242C;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .earnings-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #B8F53E 0%, #0BFFCB 100%);
+        }
+
+        .earnings-value {
+            width: 60px;
+            text-align: right;
+            font-weight: 600;
+            color: #B8F53E;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #9BA1A9;
+        }
+
+        .security-note {
+            background: rgba(11, 255, 203, 0.08);
+            border: 1px solid rgba(11, 255, 203, 0.22);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #9BA1A9;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .security-note strong {
+            color: #0BFFCB;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tableau de bord</h1>
+            <div class="header-actions">
+                <a href="/profile.html" class="btn btn-secondary">Mon profil</a>
+                <button class="btn btn-secondary" onclick="logout()">Déconnecter</button>
+            </div>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            Chargement du tableau de bord...
+        </div>
+
+        <div id="dashboardContainer" style="display: none;">
+            <div class="security-note">
+                <strong>Sécurité livreur :</strong> Un compte livreur non vérifié peut avoir un accès limité aux livraisons.
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">ð¦</div>
+                    <div class="stat-label">Livraisons ce mois</div>
+                    <div class="stat-value" id="deliveriesMonth">0</div>
+                    <div class="stat-change" id="deliveriesChange">+0 vs mois dernier</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">ð°</div>
+                    <div class="stat-label">Revenus ce mois</div>
+                    <div class="stat-value" id="earningsMonth">$0.00</div>
+                    <div class="stat-change" id="earningsChange">+$0.00 vs mois dernier</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-label">Score moyen</div>
+                    <div class="stat-value" id="scoreAverage">0.0</div>
+                    <div class="stat-change">sur 5 étoiles</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🏅</div>
+                    <div class="stat-label">Niveau</div>
+                    <div class="stat-value" id="userLevel">1</div>
+                    <div class="stat-change" id="xpProgress">0 / 1000 XP</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="actions-grid">
+                <a href="#recentDeliveries" class="action-btn" onclick="document.getElementById('recentDeliveries').scrollIntoView({behavior:'smooth'});return false;">
+                    <div class="action-btn-text">Voir les livraisons</div>
+                </a>
+                <a href="/browse-missions.html" class="action-btn">
+                    <div class="action-btn-text">Chercher une livraison</div>
+                </a>
+                <a href="/profile.html" class="action-btn">
+                    <div class="action-btn-text">Éditer mon profil</div>
+                </a>
+                <a href="/livreur.html" class="action-btn">
+                    <div class="action-btn-text">Conseils & astuces</div>
+                </a>
+            </div>
+
+            <!-- Livraisons disponibles -->
+            <div class="card" style="margin-bottom:2rem">
+                <div class="card-title">🟢 Livraisons disponibles</div>
+                <p style="color:#9BA1A9;font-size:.9rem;line-height:1.6;margin-bottom:1rem">
+                    Livraisons publiées par les expéditeurs, en attente d'un livreur.
+                </p>
+                <div id="availableDeliveries"><p style="color:#9BA1A9;">Chargement...</p></div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Recent Deliveries -->
+                <div class="card">
+                    <div class="card-title">📋 Mes livraisons en cours</div>
+                    <p style="color:#9BA1A9;font-size:.9rem;line-height:1.6;margin-bottom:1rem">
+                        Marquez une livraison comme livrée seulement après remise réelle du colis.
+                    </p>
+                    <div id="driverActionMessage" style="display:none;margin-bottom:16px;padding:12px 14px;border:1px solid #1F2937;border-radius:8px;background:#111318;color:#F0F2F5"></div>
+                    <div id="recentDeliveries">
+                        <p style="color: #9BA1A9;">Aucune livraison en cours.</p>
+                    </div>
+                </div>
+
+                <!-- Earnings Breakdown -->
+                <div class="card">
+                    <div class="card-title">Répartition revenus</div>
+                    <div class="earnings-chart">
+                        <div class="earnings-bar">
+                            <div class="earnings-label">Toi (60%)</div>
+                            <div class="earnings-progress">
+                                <div class="earnings-fill" style="width: 60%;"></div>
+                            </div>
+                            <div class="earnings-value" id="yourCut">$0.00</div>
+                        </div>
+                        <div class="earnings-bar">
+                            <div class="earnings-label">PorteàPorte (12%)</div>
+                            <div class="earnings-progress">
+                                <div class="earnings-fill" style="width: 12%; background: rgba(11, 255, 203, 0.5);"></div>
+                            </div>
+                            <div class="earnings-value" id="ourCut">$0.00</div>
+                        </div>
+                        <div class="earnings-bar">
+                            <div class="earnings-label">Cause (5%)</div>
+                            <div class="earnings-progress">
+                                <div class="earnings-fill" style="width: 5%; background: rgba(184, 245, 62, 0.3);"></div>
+                            </div>
+                            <div class="earnings-value" id="causeCut">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const db = window.db || window.getSupabaseClient();
+        let currentSession = null;
+
+        async function loadDashboard() {
+            try {
+                const { data } = await db.auth.getSession();
+                
+                if (!data || !data.session) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                currentSession = data.session;
+                const userId = data.session.user.id;
+
+                const { data: profile } = await db
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+
+                if (!profile) {
+                    document.getElementById('loadingContainer').innerHTML = 'Profil non trouvé';
+                    return;
+                }
+
+                const emailVerified = profile.email_verified || data.session.user.email_confirmed_at || data.session.user.confirmed_at;
+                const roleOk = ['livreur', 'les deux', 'admin'].includes(profile.role);
+                const driverStatus = profile.driver_status || 'not_started';
+                const driverVerified = profile.role === 'admin' || driverStatus === 'verified';
+
+                if (profile.suspendu) {
+                    document.getElementById('loadingContainer').innerHTML = `
+                        <div style="max-width:620px;margin:40px auto;padding:24px;background:#12151A;border:1px solid #EF4444;border-radius:12px">
+                            <h2 style="color:#EF4444;margin-bottom:12px">Compte suspendu</h2>
+                            <p style="color:#9BA1A9;line-height:1.6">Ton compte livreur a été suspendu. Contacte le support pour plus d'information.</p>
+                            <a href="mailto:support@porteaporte.site" style="display:inline-block;margin-top:18px;padding:12px 18px;background:#EF4444;color:#fff;border-radius:8px;text-decoration:none;font-weight:700">Contacter le support</a>
+                        </div>`;
+                    return;
+                }
+
+                if (!roleOk) {
+                    document.getElementById('loadingContainer').innerHTML = `
+                        <div style="max-width:620px;margin:40px auto;padding:24px;background:#12151A;border:1px solid #1F242C;border-radius:12px">
+                            <h2 style="color:#B8F53E;margin-bottom:12px">Mauvais rôle</h2>
+                            <p style="color:#9BA1A9;line-height:1.6">Ton compte est enregistré comme expéditeur. Pour devenir livreur, mets à jour ton rôle.</p>
+                            <a href="/role-choice.html" style="display:inline-block;margin-top:18px;padding:12px 18px;background:#B8F53E;color:#0A0C0F;border-radius:8px;text-decoration:none;font-weight:700">Changer mon rôle</a>
+                        </div>`;
+                    return;
+                }
+
+                if (!driverVerified) {
+                    const states = {
+                        not_started: {
+                            title: 'Vérification requise',
+                            msg: 'Pour accéder au dashboard livreur et accepter des livraisons, tu dois compléter ta vérification.',
+                            btnText: 'Démarrer la vérification',
+                            btnHref: '/livreur.html',
+                            color: '#B8F53E'
+                        },
+                        pending_review: {
+                            title: 'Vérification en cours d\'examen ⏳',
+                            msg: 'Ta demande a été reçue et est en cours d\'examen par notre équipe. Tu seras notifié par email dès qu\'elle sera traitée (généralement sous 24–48h). Aucune action requise de ta part.',
+                            btnText: null,
+                            color: '#F59E0B'
+                        },
+                        rejected: {
+                            title: 'Vérification refusée',
+                            msg: 'Ta demande de vérification a été refusée. Corrige les informations et soumet à nouveau.',
+                            btnText: 'Soumettre à nouveau',
+                            btnHref: '/livreur.html',
+                            color: '#EF4444'
+                        }
+                    };
+                    const s = states[driverStatus] || states['not_started'];
+                    document.getElementById('loadingContainer').innerHTML = `
+                        <div style="max-width:620px;margin:40px auto;padding:24px;background:#12151A;border:1px solid ${s.color}40;border-radius:12px;text-align:left">
+                            <h2 style="color:${s.color};margin-bottom:12px">${s.title}</h2>
+                            <p style="color:#9BA1A9;line-height:1.6">${s.msg}</p>
+                            ${s.btnText ? `<a href="${s.btnHref}" style="display:inline-block;margin-top:18px;padding:12px 18px;background:${s.color};color:#0A0C0F;border-radius:8px;text-decoration:none;font-weight:700">${s.btnText}</a>` : ''}
+                        </div>`;
+                    return;
+                }
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('dashboardContainer').style.display = 'block';
+
+                // Update stats
+                document.getElementById('deliveriesMonth').textContent = profile.livraisons || 0;
+                const monthlyEarnings = (profile.coins || 0) / 100;
+                document.getElementById('earningsMonth').textContent = `$${monthlyEarnings.toFixed(2)}`;
+                document.getElementById('scoreAverage').textContent = ((profile.score || 0) / 20).toFixed(1);
+                document.getElementById('userLevel').textContent = profile.niveau_livreur || 'Bronze';
+
+                // XP Progress
+                const xpCurrent = profile.xp || 0;
+                const xpMax = 1000;
+                document.getElementById('xpProgress').textContent = `${xpCurrent} / ${xpMax} XP`;
+
+                // Earnings breakdown
+                const yourCut = monthlyEarnings * 0.6;
+                const ourCut = monthlyEarnings * 0.12;
+                const causeCut = monthlyEarnings * 0.05;
+
+                document.getElementById('yourCut').textContent = `$${yourCut.toFixed(2)}`;
+                document.getElementById('ourCut').textContent = `$${ourCut.toFixed(2)}`;
+                document.getElementById('causeCut').textContent = `$${causeCut.toFixed(2)}`;
+                await loadAvailableDeliveries();
+                await loadDriverDeliveries(userId);
+
+            } catch (error) {
+                document.getElementById('loadingContainer').innerHTML = 'â Erreur: ' + error.message;
+            }
+        }
+
+        function money(value) {
+            const n = Number(value || 0);
+            return n.toFixed(2) + ' $';
+        }
+
+        function canMarkDelivered(status) {
+            return ['confirme', 'en_route', 'ramasse'].includes(status);
+        }
+
+        function renderDriverDeliveries(rows) {
+            const target = document.getElementById('recentDeliveries');
+            if (!rows || rows.length === 0) {
+                target.innerHTML = '<p style="color:#9BA1A9;">Aucune livraison assignee pour le moment. Cherchez-en une pour commencer!</p>';
+                return;
+            }
+
+            target.innerHTML = rows.map((row) => {
+                const status = row.statut || 'confirme';
+                const deliveredDisabled = canMarkDelivered(status) ? '' : 'disabled';
+                const deliveredText = status === 'livre' || status === 'payee' ? 'Livree' : 'Marquer livre';
+                return `
+                    <div style="border:1px solid #1F242C;border-radius:10px;padding:14px;margin-bottom:12px;background:#0F1117">
+                        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+                            <div>
+                                <div style="font-weight:700;color:#E8EAED">${row.type_colis || 'Colis'} - ${row.code || row.id.slice(0,8)}</div>
+                                <div style="color:#9BA1A9;font-size:.9rem;margin-top:4px">${row.ville_depart || 'Depart'} -> ${row.ville_arrivee || 'Arrivee'}</div>
+                                <div style="color:#9BA1A9;font-size:.85rem;margin-top:4px">Statut: ${status} - Gain escrow: ${money(row.prix_total)}</div>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <a class="btn btn-secondary" href="/suivi-livraison.html?id=${encodeURIComponent(row.id)}">Suivi</a>
+                                <button class="btn btn-primary" ${deliveredDisabled} onclick="markDelivered('${row.id}')">${deliveredText}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadAvailableDeliveries() {
+            const { data, error } = await db
+                .from('livraisons')
+                .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,cree_le')
+                .in('statut', ['publie', 'paiement_autorise'])
+                .is('livreur_id', null)
+                .order('cree_le', { ascending: false })
+                .limit(10);
+
+            const target = document.getElementById('availableDeliveries');
+            if (error) {
+                target.innerHTML = '<p style="color:#ff6b6b;font-size:.875rem">Erreur: ' + error.message + '</p>';
+                return;
+            }
+            if (!data || data.length === 0) {
+                target.innerHTML = '<p style="color:#9BA1A9;">Aucune livraison disponible pour le moment. Reviens plus tard!</p>';
+                return;
+            }
+            target.innerHTML = data.map(row => `
+                <div style="border:1px solid #1F242C;border-radius:10px;padding:14px;margin-bottom:10px;background:#0F1117;transition:border-color .2s" onmouseover="this.style.borderColor='#B8F53E'" onmouseout="this.style.borderColor='#1F242C'">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+                        <div>
+                            <div style="font-weight:700;color:#E8EAED">${row.type_colis || 'Colis'}${row.poids_kg ? ' — ' + row.poids_kg + ' kg' : ''}</div>
+                            <div style="color:#9BA1A9;font-size:.875rem;margin-top:4px">📍 ${row.ville_depart || '?'} → ${row.ville_arrivee || '?'}</div>
+                            <div style="color:#B8F53E;font-weight:700;margin-top:6px;font-size:1.1rem">${row.prix_total ? '$' + Number(row.prix_total).toFixed(2) : '—'}</div>
+                        </div>
+                        <a href="/browse-missions.html" class="btn btn-primary" style="white-space:nowrap;font-size:.85rem;padding:.5rem 1rem">Accepter</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadDriverDeliveries(userId) {
+            const { data, error } = await db
+                .from('livraisons')
+                .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,cree_le')
+                .eq('livreur_id', userId)
+                .order('cree_le', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                console.error('ERREUR livraisons livreur:', error.message);
+                document.getElementById('recentDeliveries').innerHTML = '<p style="color:#ff6b6b;">Erreur chargement livraisons: ' + error.message + '</p>';
+                return;
+            }
+
+            renderDriverDeliveries(data || []);
+        }
+
+        async function markDelivered(livraisonId) {
+            if (!currentSession) {
+                showDriverMessage('Session expiree. Reconnecte-toi.', 'error');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (!confirm('Marquer cette livraison comme livree? L expediteur pourra ensuite liberer le paiement Stripe.')) return;
+
+            const res = await fetch('/api/confirm-delivery', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + currentSession.access_token
+                },
+                body: JSON.stringify({ livraison_id: livraisonId })
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showDriverMessage(result.error || 'Impossible de marquer la livraison comme livree.', 'error');
+                return;
+            }
+
+            showDriverMessage('Livraison marquee livree. L expediteur peut maintenant confirmer la reception et liberer Stripe.', 'success');
+            await loadDriverDeliveries(currentSession.user.id);
+        }
+
+        function showDriverMessage(message, type) {
+            const target = document.getElementById('driverActionMessage');
+            if (!target) return;
+            target.textContent = message;
+            target.style.display = 'block';
+            target.style.borderColor = type === 'error' ? '#EF4444' : '#00FF9F';
+            target.style.color = type === 'error' ? '#ffb4b4' : '#00FF9F';
+        }
+
+        async function logout() {
+            if (confirm('Es-tu sûr de vouloir te déconnecter?')) {
+                await db.auth.signOut();
+                localStorage.removeItem('auth_token');
+                window.location.href = '/index.html';
+            }
+        }
+
+        window.addEventListener('load', loadDashboard);
+    </script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    body { padding: 0; }
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: #0D1017;
+      border-right: 1px solid #1E2A38;
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #B8F53E;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid #1E2A38;
+      margin-bottom: 16px;
+    }
+    .sidebar-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #5A6A7A;
+      padding: 8px 20px 4px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: #A8B0BA;
+      text-decoration: none;
+      font-size: .875rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: #F4F7FA;
+      background: rgba(184,245,62,.06);
+      border-left-color: #B8F53E;
+    }
+    .nav-link .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid #1E2A38;
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid #263241;
+      color: #A8B0BA;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .875rem;
+      transition: all .2s;
+    }
+    .logout-btn:hover { border-color: #EF4444; color: #EF4444; }
+    .main { padding: 32px; overflow-y: auto; }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: #F4F7FA; margin: 0; }
+    .page-sub { font-size: .85rem; color: #5A6A7A; margin-top: 4px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #11151C;
+      border: 1px solid #1E2A38;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-card-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #5A6A7A;
+      margin-bottom: 10px;
+    }
+    .stat-card-value { font-size: 2rem; font-weight: 800; color: #B8F53E; line-height: 1; }
+    .stat-card-sub { font-size: .8rem; color: #5A6A7A; margin-top: 6px; }
+    .section { margin-bottom: 32px; }
+    .section-title {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #B8F53E;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 14px;
+    }
+    .table-card {
+      background: #11151C;
+      border: 1px solid #1E2A38;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #0D1017;
+      color: #5A6A7A;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      font-size: .875rem;
+      color: #F4F7FA;
+      border-top: 1px solid #1E2A38;
+    }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .badge-admin     { background: rgba(184,245,62,.15);  color: #B8F53E; }
+    .badge-livreur   { background: rgba(0,217,255,.12);   color: #00D9FF; }
+    .badge-expediteur{ background: rgba(46,123,255,.15);  color: #2E7BFF; }
+    .badge-les-deux  { background: rgba(245,158,11,.15);  color: #F59E0B; }
+    .badge-verified  { background: rgba(16,185,129,.15);  color: #10B981; }
+    .badge-pending   { background: rgba(245,158,11,.15);  color: #F59E0B; }
+    .badge-rejected  { background: rgba(239,68,68,.15);   color: #EF4444; }
+    .badge-livre     { background: rgba(16,185,129,.15);  color: #10B981; }
+    .badge-en-route  { background: rgba(0,217,255,.12);   color: #00D9FF; }
+    .badge-attente   { background: rgba(245,158,11,.15);  color: #F59E0B; }
+    .action-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #263241;
+      background: transparent;
+      color: #A8B0BA;
+      font-size: .75rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .action-btn:hover { border-color: #B8F53E; color: #B8F53E; }
+    .action-btn.danger:hover { border-color: #EF4444; color: #EF4444; }
+    .empty-msg { text-align: center; color: #5A6A7A; padding: 32px; }
+    @media (max-width: 900px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">⚡ PorteàPorte</div>
+    <div class="sidebar-label">Navigation</div>
+    <a href="#section-stats"     class="nav-link active"><span class="icon">📊</span> Tableau de bord</a>
+    <a href="#section-users"     class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
+    <a href="#section-livreurs"  class="nav-link"><span class="icon">🚚</span> Livreurs</a>
+    <a href="#section-livraisons"class="nav-link"><span class="icon">📦</span> Livraisons</a>
+    <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
+    <a href="/dashboard-expediteur.html" class="nav-link"><span class="icon">↗</span> Dashboard expéditeur</a>
+    <a href="/dashboard-livreur.html"    class="nav-link"><span class="icon">↗</span> Dashboard livreur</a>
+    <div class="sidebar-bottom">
+      <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
+      <button class="logout-btn" onclick="AUTH_API.logout()">Se déconnecter</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard Administrateur</h1>
+        <div class="page-sub" id="admin-welcome">Chargement...</div>
+      </div>
+    </div>
+
+    <div id="section-stats" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Utilisateurs</div>
+        <div class="stat-card-value" id="stat-users">—</div>
+        <div class="stat-card-sub">comptes actifs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Livreurs vérifiés</div>
+        <div class="stat-card-value" id="stat-livreurs">—</div>
+        <div class="stat-card-sub">en service</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Livraisons totales</div>
+        <div class="stat-card-value" id="stat-livraisons">—</div>
+        <div class="stat-card-sub">toutes statuts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">En attente vérif.</div>
+        <div class="stat-card-value" id="stat-pending-verif">—</div>
+        <div class="stat-card-sub">livreurs à valider</div>
+      </div>
+    </div>
+
+    <div id="section-users" class="section">
+      <div class="section-title">Tous les utilisateurs</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th><th>Email</th><th>Rôle</th><th>Statut livreur</th><th>XP</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-body">
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="section-livreurs" class="section">
+      <div class="section-title">Livreurs en attente de vérification</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th><th>Email</th><th>Véhicule</th><th>Ville</th><th>Statut</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="livreurs-body">
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="section-livraisons" class="section">
+      <div class="section-title">Livraisons récentes</div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>De → À</th><th>Statut</th><th>Prix</th><th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="livraisons-body">
+            <tr><td colspan="5" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function roleBadge(role) {
+    const map = { admin:'badge-admin', livreur:'badge-livreur', expediteur:'badge-expediteur', 'les deux':'badge-les-deux' };
+    return `<span class="badge ${map[role]||'badge-attente'}">${role||'—'}</span>`;
+  }
+
+  function driverBadge(s) {
+    const map = {
+      verified:       ['badge-verified', 'Vérifié'],
+      pending_review: ['badge-pending',  'En attente'],
+      rejected:       ['badge-rejected', 'Refusé'],
+      not_started:    ['badge-attente',  'Non démarré'],
+      suspended:      ['badge-rejected', 'Suspendu']
+    };
+    const [cls, label] = map[s] || ['badge-attente', s||'—'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function livBadge(s) {
+    const map = {
+      livre:      ['badge-livre',     'Livré'],
+      en_route:   ['badge-en-route',  'En route'],
+      confirme:   ['badge-en-route',  'Confirmé'],
+      ramasse:    ['badge-en-route',  'Ramassé'],
+      payee:      ['badge-verified',  'Payé'],
+      en_attente: ['badge-attente',   'En attente'],
+      publie:     ['badge-attente',   'Publié'],
+      annule:     ['badge-rejected',  'Annulé'],
+      litige:     ['badge-rejected',  'Litige']
+    };
+    const [cls, label] = map[s] || ['badge-attente', s||'—'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  async function setDriverStatus(userId, newStatus) {
+    const db = window.db;
+    const patch = { driver_status: newStatus };
+    if (newStatus === 'verified') patch.verification_status = 'verified';
+    if (newStatus === 'rejected') patch.verification_status = 'rejected';
+    const { error } = await db.from('profiles').update(patch).eq('id', userId);
+    if (error) { alert('Erreur: ' + error.message); return; }
+    loadData();
+  }
+
+  async function loadData() {
+    const db = window.db;
+    if (!db) return;
+
+    const { data: profiles } = await db.from('profiles').select('*').order('prenom');
+    const { data: livraisons } = await db.from('livraisons')
+      .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,created_at')
+      .order('cree_le', { ascending: false })
+      .limit(30);
+
+    if (profiles) {
+      document.getElementById('stat-users').textContent = profiles.length;
+      document.getElementById('stat-livreurs').textContent = profiles.filter(p => p.driver_status === 'verified').length;
+      document.getElementById('stat-pending-verif').textContent = profiles.filter(p => p.driver_status === 'pending_review').length;
+
+      document.getElementById('users-body').innerHTML = profiles.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun utilisateur</td></tr>'
+        : profiles.map(p => `
+          <tr>
+            <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
+            <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
+            <td>${roleBadge(p.role)}</td>
+            <td>${driverBadge(p.driver_status)}</td>
+            <td style="color:#B8F53E">${p.xp||0} XP</td>
+            <td>${p.driver_status === 'pending_review' ? `
+              <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
+              <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">✗ Refuser</button>
+            ` : '—'}</td>
+          </tr>`).join('');
+
+      const pending = profiles.filter(p => p.driver_status === 'pending_review');
+      document.getElementById('livreurs-body').innerHTML = pending.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun livreur en attente</td></tr>'
+        : pending.map(p => `
+          <tr>
+            <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
+            <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
+            <td>${p.vehicule||'—'}</td>
+            <td>${p.ville||'—'}</td>
+            <td>${driverBadge(p.driver_status)}</td>
+            <td>
+              <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
+              <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">✗ Refuser</button>
+            </td>
+          </tr>`).join('');
+    }
+
+    if (livraisons) {
+      document.getElementById('stat-livraisons').textContent = livraisons.length;
+      document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucune livraison</td></tr>'
+        : livraisons.map(l => {
+            const date = l.cree_le || l.created_at;
+            return `
+            <tr>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${l.code||'—'}</td>
+              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}</td>
+              <td>${livBadge(l.statut)}</td>
+              <td style="color:#B8F53E;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
+              <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
+            </tr>`;
+          }).join('');
+    }
+  }
+
+  async function init() {
+    if (!await AUTH_API.requireAuth('admin')) return;
+    const user = AUTH_API.getUser();
+    document.getElementById('admin-email').textContent = user.email || '';
+    document.getElementById('admin-welcome').textContent = 'Connecté en tant que ' + ([user.prenom, user.nom].filter(Boolean).join(' ') || user.email);
+    await loadData();
+  }
+
+  init();
+</script>
+</body>
+</html>

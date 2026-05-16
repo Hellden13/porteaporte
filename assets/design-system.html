@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design System - PorteàPorte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* === PALETTE PRINCIPALE === */
+            --color-bg-dark: var(--brand-bg-dark);          /* Noir profond (fonds) */
+            --color-bg-surface: var(--brand-bg-surface);       /* Surface sombre (cartes) */
+            --color-bg-surface-light: var(--brand-bg-surface-light); /* Surface légèrement plus claire */
+
+            /* === ACCENTS === */
+            --color-cyan-primary: var(--brand-cyan);     /* Cyan électrique (CTA principal) */
+            --color-cyan-dark: var(--brand-cyan-dark);        /* Cyan foncé (hover) */
+            --color-lime-accent: var(--brand-lime);      /* Vert lime subtil (accents) */
+            --color-blue-nuit: var(--brand-blue-nuit);        /* Bleu nuit (secondaire) */
+
+            /* === TEXTE === */
+            --color-text-primary: var(--brand-text);     /* Blanc froid (texte principal) */
+            --color-text-secondary: var(--brand-muted);   /* Gris doux (texte secondaire) */
+            --color-text-tertiary: var(--brand-muted-dark);    /* Gris foncé (labels) */
+
+            /* === BORDERS & DIVIDERS === */
+            --color-border: var(--brand-border);           /* Bordures subtiles */
+            --color-border-light: var(--brand-border-light);     /* Bordures plus visibles */
+
+            /* === FEEDBACK === */
+            --color-success: var(--brand-success);          /* Vert succès */
+            --color-warning: var(--brand-warning);          /* Ambre warning */
+            --color-error: var(--brand-danger);            /* Rouge erreur */
+            --color-info: var(--brand-info);             /* Bleu info */
+
+            /* === SPACING === */
+            --spacing-xs: 0.25rem;   /* 4px */
+            --spacing-sm: 0.5rem;    /* 8px */
+            --spacing-md: 1rem;      /* 16px */
+            --spacing-lg: 1.5rem;    /* 24px */
+            --spacing-xl: 2rem;      /* 32px */
+            --spacing-2xl: 3rem;     /* 48px */
+            --spacing-3xl: 4rem;     /* 64px */
+
+            /* === BORDER RADIUS === */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+
+            /* === SHADOWS === */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.6);
+
+            /* === TRANSITIONS === */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* === BACKDROP === */
+            --backdrop: rgba(10, 12, 16, 0.7);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--color-bg-dark) 0%, #0D0F15 100%);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: var(--spacing-xl);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-md);
+            background: linear-gradient(135deg, var(--color-cyan-primary), var(--color-lime-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section { margin-bottom: var(--spacing-3xl); }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xl);
+            color: var(--color-text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--color-cyan-primary), var(--color-lime-accent));
+            border-radius: var(--radius-full);
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .color-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .color-sample {
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: var(--spacing-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(240, 242, 245, 0.6);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .color-info { padding: var(--spacing-md); }
+        .color-name { font-weight: 600; margin-bottom: var(--spacing-sm); }
+        .color-code { font-size: 0.85rem; color: var(--color-text-secondary); font-family: 'Courier New', monospace; }
+
+        .typography-grid { display: flex; flex-direction: column; gap: var(--spacing-xl); }
+
+        .typography-sample {
+            padding: var(--spacing-lg);
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+        }
+
+        .typography-sample h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--color-text-tertiary);
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .component-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .component-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--color-text-tertiary);
+            font-weight: 600;
+        }
+
+        .component-preview {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-cyan-primary), var(--color-lime-accent));
+            color: var(--color-bg-dark);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.6);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1.5px solid var(--color-cyan-primary);
+            color: var(--color-cyan-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-primary);
+            border: none;
+        }
+
+        .btn-ghost:hover { color: var(--color-cyan-primary); }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 3px solid var(--color-cyan-primary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--color-lime-accent);
+            overflow-x: auto;
+            margin-top: var(--spacing-md);
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--color-cyan-primary), transparent);
+            margin: var(--spacing-2xl) 0;
+        }
+
+        .spacing-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .spacing-box {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            text-align: center;
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .footer {
+            margin-top: var(--spacing-3xl);
+            padding-top: var(--spacing-2xl);
+            border-top: 1px solid var(--color-border);
+            text-align: center;
+            color: var(--color-text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            body { padding: var(--spacing-lg); }
+            h1 { font-size: 2rem; }
+            .section-title { font-size: 1.3rem; }
+            .palette-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        }
+    </style>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Design System</h1>
+            <p class="subtitle">PorteàPorte - Premium, Modern, Credible</p>
+        </header>
+
+        <section class="section">
+            <h2 class="section-title">Palette de Couleurs</h2>
+            <div class="palette-grid">
+                <div class="color-card"><div class="color-sample" style="background:#0A0C10;">--color-bg-dark</div><div class="color-info"><div class="color-name">Noir Profond</div><div class="color-code">#0A0C10</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#111318;">--color-bg-surface</div><div class="color-info"><div class="color-name">Surface Sombre</div><div class="color-code">#111318</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#00D9FF;">--color-cyan</div><div class="color-info"><div class="color-name">Cyan Électrique</div><div class="color-code">#00D9FF</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#00FF9F;">--color-lime</div><div class="color-info"><div class="color-name">Vert Lime</div><div class="color-code">#00FF9F</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#0051BA;">--color-blue-nuit</div><div class="color-info"><div class="color-name">Bleu Nuit</div><div class="color-code">#0051BA</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#F0F2F5;"><span style="color:#0A0C10;">--color-text-primary</span></div><div class="color-info"><div class="color-name">Blanc Froid</div><div class="color-code">#F0F2F5</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#10B981;">--color-success</div><div class="color-info"><div class="color-name">Vert Succès</div><div class="color-code">#10B981</div></div></div>
+                <div class="color-card"><div class="color-sample" style="background:#EF4444;">--color-error</div><div class="color-info"><div class="color-name">Rouge Erreur</div><div class="color-code">#EF4444</div></div></div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="section">
+            <h2 class="section-title">Typographie</h2>
+            <div class="typography-grid">
+                <div class="typography-sample"><h2>Heading 1 - Display</h2><h1 style="margin:0;font-size:3rem;font-weight:900;">Un design premium pour une plateforme premium</h1></div>
+                <div class="typography-sample"><h2>Heading 2 - Section Title</h2><h2 style="margin:0;font-size:1.8rem;font-weight:700;">Plateforme collaborative du Québec</h2></div>
+                <div class="typography-sample"><h2>Body - Normal</h2><p style="margin:0;font-size:1rem;color:var(--color-text-primary);">Texte principal pour les descriptions et le contenu normal.</p></div>
+                <div class="typography-sample"><h2>Body - Small</h2><p style="margin:0;font-size:0.875rem;color:var(--color-text-secondary);">Texte petit pour les labels, hints, et contextes secondaires.</p></div>
+                <div class="typography-sample"><h2>Caption - Extra Small</h2><p style="margin:0;font-size:0.75rem;font-weight:500;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-tertiary);">TEXTE TRÈS PETIT POUR LES LABELS</p></div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="section">
+            <h2 class="section-title">Composants Boutons</h2>
+            <div class="components-grid">
+                <div class="component-card"><div class="component-title">Primary Button</div><div class="component-preview"><button class="btn btn-primary">Accepter le colis</button></div></div>
+                <div class="component-card"><div class="component-title">Secondary Button</div><div class="component-preview"><button class="btn btn-secondary">Refuser</button></div></div>
+                <div class="component-card"><div class="component-title">Ghost Button</div><div class="component-preview"><button class="btn btn-ghost">Annuler</button></div></div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="section">
+            <h2 class="section-title">Système d'Espacement</h2>
+            <div class="spacing-demo">
+                <div class="spacing-box"><strong>--spacing-xs</strong><br>0.25rem (4px)</div>
+                <div class="spacing-box"><strong>--spacing-sm</strong><br>0.5rem (8px)</div>
+                <div class="spacing-box"><strong>--spacing-md</strong><br>1rem (16px)</div>
+                <div class="spacing-box"><strong>--spacing-lg</strong><br>1.5rem (24px)</div>
+                <div class="spacing-box"><strong>--spacing-xl</strong><br>2rem (32px)</div>
+                <div class="spacing-box"><strong>--spacing-2xl</strong><br>3rem (48px)</div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="section">
+            <h2 class="section-title">Effets & Ombres</h2>
+            <div class="components-grid">
+                <div class="component-card" style="box-shadow:var(--shadow-sm);"><div class="component-title">Shadow Small</div><p style="color:var(--color-text-secondary);font-size:0.85rem;">0 1px 2px rgba(0,0,0,0.5)</p></div>
+                <div class="component-card" style="box-shadow:var(--shadow-md);"><div class="component-title">Shadow Medium</div><p style="color:var(--color-text-secondary);font-size:0.85rem;">0 4px 12px rgba(0,0,0,0.4)</p></div>
+                <div class="component-card" style="box-shadow:var(--shadow-lg);"><div class="component-title">Shadow Large</div><p style="color:var(--color-text-secondary);font-size:0.85rem;">0 12px 32px rgba(0,0,0,0.5)</p></div>
+                <div class="component-card" style="box-shadow:var(--shadow-xl);"><div class="component-title">Shadow XLarge</div><p style="color:var(--color-text-secondary);font-size:0.85rem;">0 20px 48px rgba(0,0,0,0.6)</p></div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>✨ Design System Version 1.0 - PorteàPorte 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

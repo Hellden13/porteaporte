@@ -3,173 +3,802 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PorteaPorte - Livraison Collaborative</title>
-  <link rel="stylesheet" href="design-system.css">
-  
+  <title>PorteaPorte - Livraison collaborative locale</title>
+  <meta name="description" content="PorteaPorte connecte expediteurs et livreurs locaux pour des livraisons plus simples, suivies et humaines.">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
   <style>
-    .hero {
-      min-height: 100vh;
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
       display: flex;
       align-items: center;
-      justify-content: center;
-      text-align: center;
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-      padding: var(--spacing-lg);
+      justify-content: space-between;
+      gap: 24px;
+      padding: 16px clamp(18px, 4vw, 48px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
-    
-    .hero h1 {
-      font-size: clamp(28px, 8vw, 56px);
-      margin-bottom: var(--spacing-md);
-      color: var(--accent);
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--brand-text);
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand-mark img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .main-nav a {
+      color: var(--brand-muted);
+      font-weight: 650;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .main-nav a:hover,
+    .main-nav a:focus-visible {
+      color: var(--brand-text);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero {
+      min-height: calc(100vh - 74px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+      align-items: center;
+      gap: clamp(32px, 6vw, 76px);
+      padding: clamp(42px, 8vw, 88px) clamp(18px, 4vw, 48px) 48px;
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--brand-lime);
+      font-size: 0.78rem;
       font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
-    
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--brand-lime);
+      border-radius: 999px;
+    }
+
+    .hero h1 {
+      margin: 0 0 20px;
+      color: var(--brand-text);
+      font-size: clamp(2.45rem, 7vw, 5.35rem);
+      line-height: 0.98;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .hero h1 span {
+      color: var(--brand-cyan);
+    }
+
     .hero p {
-      font-size: clamp(16px, 4vw, 24px);
-      margin-bottom: var(--spacing-xl);
-      color: var(--text-primary);
-      max-width: 600px;
+      max-width: 610px;
+      margin: 0 0 30px;
+      color: var(--brand-muted);
+      font-size: clamp(1rem, 2.4vw, 1.22rem);
+      line-height: 1.75;
     }
-    
+
     .cta-buttons {
       display: flex;
-      gap: var(--spacing-md);
       flex-wrap: wrap;
-      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
     }
-    
-    .btn-secondary {
-      background: transparent;
-      border: 2px solid var(--accent);
-      color: var(--accent);
+
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 570px;
     }
-    
-    .btn-secondary:hover {
-      background: var(--accent);
-      color: var(--bg-primary);
+
+    .trust-item {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
     }
-    
-    header {
-      position: fixed;
-      top: 0;
+
+    .trust-item strong {
+      display: block;
+      color: var(--brand-text);
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+
+    .trust-item span {
+      color: var(--brand-muted);
+      font-size: 0.84rem;
+    }
+
+    .hero-panel {
+      position: relative;
+      min-height: 520px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      background: var(--brand-bg-dark);
+    }
+
+    .hero-panel img.hero-photo {
+      position: absolute;
+      inset: 0;
       width: 100%;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: var(--spacing-md) var(--spacing-lg);
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    .hero-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 12, 16, 0.05) 0%,
+        rgba(10, 12, 16, 0.0) 40%,
+        rgba(10, 12, 16, 0.7) 75%,
+        rgba(10, 12, 16, 0.92) 100%
+      );
+      pointer-events: none;
+    }
+
+    .route-map {
+      position: absolute;
+      inset: 0;
+      opacity: 0.78;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .route-line {
+      position: absolute;
+      left: 14%;
+      right: 13%;
+      top: 43%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime));
+      transform: rotate(-18deg);
+      transform-origin: center;
+      box-shadow: 0 0 24px rgba(0, 217, 255, 0.34);
+    }
+
+    .route-point {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--brand-bg-dark);
+      border-radius: 50%;
+      background: var(--brand-lime);
+      box-shadow: 0 0 0 6px rgba(0, 255, 159, 0.16);
+    }
+
+    .route-point.start { left: 15%; top: 52%; }
+    .route-point.end { right: 16%; top: 30%; background: var(--brand-cyan); box-shadow: 0 0 0 6px rgba(0, 217, 255, 0.16); }
+
+    .delivery-card {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 28px;
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(10, 12, 16, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .delivery-card header {
+      position: static;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0;
+      border: 0;
+      background: transparent !important;
+    }
+
+    .delivery-card h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: 1rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(0, 255, 159, 0.12);
+      color: var(--brand-lime);
+      border: 1px solid rgba(0, 255, 159, 0.3);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .delivery-grid div {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .delivery-grid span {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .delivery-grid strong {
+      color: var(--brand-text);
+      font-size: 0.92rem;
+    }
+
+    .features-section {
+      padding: 58px clamp(18px, 4vw, 48px) 76px;
+      background: var(--brand-bg-dark);
+    }
+
+    .section-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .section-heading {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      z-index: 1000;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 24px;
     }
-    
-    .logo {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--accent);
+
+    .section-heading h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      line-height: 1.08;
     }
-    
-    nav a {
-      color: var(--text-primary);
-      text-decoration: none;
-      margin: 0 var(--spacing-md);
-      transition: color 0.2s;
+
+    .section-heading p {
+      max-width: 420px;
+      color: var(--brand-muted);
+      margin: 0;
     }
-    
-    nav a:hover {
-      color: var(--accent);
-    }
-    
+
     .features {
-      padding: var(--spacing-xl);
-      background: var(--bg-primary);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--spacing-lg);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
-    
+
     .feature-card {
-      background: var(--bg-secondary);
-      padding: var(--spacing-lg);
+      min-height: 224px;
+      padding: 22px;
+    }
+
+    .feature-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 18px;
       border-radius: 8px;
-      border: 1px solid var(--border);
+      background: rgba(0, 217, 255, 0.1);
+      color: var(--brand-cyan);
+      font-weight: 900;
     }
-    
+
     .feature-card h3 {
-      color: var(--accent);
-      margin-bottom: var(--spacing-md);
+      margin: 0 0 10px;
+      color: var(--brand-text);
+      font-size: 1.18rem;
     }
-    
+
+    .feature-card p {
+      margin: 0;
+      color: var(--brand-muted);
+      line-height: 1.7;
+    }
+
     footer {
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border);
-      padding: var(--spacing-lg);
-      text-align: center;
-      color: var(--text-primary);
+      padding: 24px clamp(18px, 4vw, 48px);
+      border-top: 1px solid var(--brand-border);
+      color: var(--brand-muted);
+      background: var(--brand-bg-surface);
     }
-    
-    @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        gap: var(--spacing-md);
+
+    .footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== COMPARATEUR DE PRIX ===== */
+    .pricer-section {
+      padding: 64px clamp(18px, 4vw, 48px) 72px;
+    }
+
+    .pricer-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 14px;
+      padding: 28px;
+      max-width: 900px;
+    }
+
+    .pricer-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .pricer-field label {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .pricer-field input,
+    .pricer-field select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+      color: var(--brand-text);
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .pricer-field input:focus,
+    .pricer-field select:focus { border-color: var(--brand-cyan); }
+
+    .pricer-pap {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .pricer-pap-label {
+      color: var(--brand-lime);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .pricer-pap-price {
+      color: var(--brand-lime);
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .pricer-vs {
+      color: var(--brand-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--brand-border);
+    }
+
+    .pricer-competitors { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+
+    .comp-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+    }
+
+    .comp-name { color: var(--brand-muted); font-size: 0.88rem; font-weight: 600; width: 90px; flex-shrink: 0; }
+    .comp-price { color: var(--brand-text); font-weight: 700; font-size: 0.95rem; width: 80px; }
+    .comp-save { color: var(--brand-cyan); font-size: 0.8rem; font-weight: 700; margin-left: auto; }
+
+    .pricer-cta { margin-top: 4px; }
+
+    /* ===== MINI-CARTE TEASER ===== */
+    .map-teaser-section {
+      padding: 0 clamp(18px, 4vw, 48px) 72px;
+    }
+
+    .map-teaser-wrap {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--brand-border);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+
+    #miniMap {
+      height: 360px;
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .map-teaser-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(10,12,16,0) 20%, rgba(10,12,16,0.92) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 32px;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .map-teaser-overlay p {
+      color: var(--brand-muted);
+      font-size: 0.95rem;
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 34px;
       }
-      
-      nav {
+
+      .hero-panel {
+        min-height: 430px;
+      }
+
+      .section-heading,
+      .footer-inner {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .site-header {
+        position: relative;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .main-nav {
         display: none;
       }
-      
-      .cta-buttons {
-        flex-direction: column;
-      }
-      
-      button {
+
+      .header-actions,
+      .header-actions button,
+      .header-actions a,
+      .cta-buttons button,
+      .cta-buttons a {
         width: 100%;
+      }
+
+      .trust-row,
+      .delivery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-panel {
+        min-height: 500px;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">PorteaPorte</div>
-    <nav>
+  <header class="site-header">
+    <a class="brand-mark" href="index.html" aria-label="Accueil PorteaPorte">
+      <img src="logo.svg" alt="">
+      <span>PorteaPorte</span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
       <a href="#features">Comment ca marche</a>
-      <a href="#livreurs">Pour livreurs</a>
-      <a href="#expediteurs">Pour expediteurs</a>
+      <a href="browse-missions.html">Missions</a>
+      <a href="assurance.html">Assurance</a>
+      <a href="transparence.html">Transparence</a>
       <a href="login.html">Connexion</a>
     </nav>
+    <div class="header-actions">
+      <a class="btn btn-ghost" href="login.html">Connexion</a>
+      <a class="btn" href="role-choice.html">Commencer</a>
+    </div>
   </header>
 
-  <section class="hero">
-    <div>
-      <h1>Quelqu'un passe deja dans ta direction</h1>
-      <p>La plateforme quebecoise qui connecte les livreurs avec les expediteurs. Plus simple, plus rapide, plus humain.</p>
-      <div class="cta-buttons">
-        <button onclick="window.location='/role-choice.html'">Commencer</button>
-        <button class="btn-secondary" onclick="window.location='#features'">En savoir plus</button>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow">Livraison collaborative au Quebec</div>
+        <h1 id="hero-title">Quelqu'un passe deja <span>dans ta direction.</span></h1>
+        <p>PorteaPorte connecte les expediteurs avec des livreurs locaux pour envoyer des colis autrement : prix clair, suivi en temps reel et service plus humain.</p>
+        <div class="cta-buttons">
+          <a class="btn" href="role-choice.html">Choisir mon role</a>
+          <a class="btn btn-secondary" href="browse-missions.html">Voir les missions</a>
+        </div>
+        <div class="trust-row" aria-label="Points forts">
+          <div class="trust-item">
+            <strong>Suivi GPS</strong>
+            <span>Statut visible a chaque etape</span>
+          </div>
+          <div class="trust-item">
+            <strong>Paiement securise</strong>
+            <span>Parcours clair pour tous</span>
+          </div>
+          <div class="trust-item">
+            <strong>Local</strong>
+            <span>Des trajets deja prevus</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <section class="features" id="features">
-    <div class="feature-card">
-      <h3>Pour les livreurs</h3>
-      <p>Acceptez des livraisons a votre convenance et gagnez des revenus supplementaires.</p>
-    </div>
-    <div class="feature-card">
-      <h3>Pour les expediteurs</h3>
-      <p>Envoyez vos colis de facon economique et ecologique avec nos livreurs de confiance.</p>
-    </div>
-    <div class="feature-card">
-      <h3>Securise et fiable</h3>
-      <p>Authentification WebAuthn, paiements Stripe, et suivi GPS en temps reel.</p>
-    </div>
-  </section>
+      <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
+        <img class="hero-photo" src="/assets/hero-livraison.png" alt="Livreur PorteaPorte remettant un colis a une famille" loading="eager">
+        <article class="delivery-card" style="z-index:2;">
+          <header>
+            <h2>Mission Montreal -> Laval</h2>
+            <span class="status-pill">En cours</span>
+          </header>
+          <div class="delivery-grid">
+            <div>
+              <span>Distance</span>
+              <strong>18 km</strong>
+            </div>
+            <div>
+              <span>Gain livreur</span>
+              <strong>24,50 $</strong>
+            </div>
+            <div>
+              <span>Arrivee</span>
+              <strong>14:35</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="features-section" id="features">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Un parcours simple, de la demande a la livraison.</h2>
+          <p>Le design met maintenant l'accent sur les actions importantes, la lisibilite mobile et la confiance.</p>
+        </div>
+        <div class="features">
+          <article class="feature-card">
+            <div class="feature-kicker">1</div>
+            <h3>Publier une livraison</h3>
+            <p>L'expediteur precise le trajet, le colis et les details utiles. La mission devient claire et rapide a comparer.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">2</div>
+            <h3>Accepter un trajet</h3>
+            <p>Le livreur choisit les missions qui correspondent a ses deplacements et voit le gain avant de s'engager.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">3</div>
+            <h3>Suivre et confirmer</h3>
+            <p>Les statuts, le paiement et le suivi restent visibles pour reduire les frictions jusqu'a la confirmation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+    <!-- ===== BANNIÈRE COVOITURAGE ===== -->
+    <section style="padding: 0 clamp(18px,4vw,48px) 72px;">
+      <div style="max-width:1120px;margin:0 auto;">
+        <a href="role-choice.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+          <img src="/assets/banniere-covoiturage.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits" style="width:100%;height:auto;display:block;">
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== COMPARATEUR DE PRIX ===== -->
+    <section class="pricer-section">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Combien tu économises vraiment ?</h2>
+          <p>Compare le prix PorteàPorte avec les grands transporteurs.</p>
+        </div>
+
+        <div class="pricer-card">
+          <div class="pricer-inputs">
+            <div class="pricer-field">
+              <label>Poids du colis (kg)</label>
+              <input type="number" id="pWeight" value="2" min="0.1" max="50" step="0.5" oninput="calcPrice()">
+            </div>
+            <div class="pricer-field">
+              <label>Distance (km)</label>
+              <input type="number" id="pDist" value="30" min="1" max="500" step="5" oninput="calcPrice()">
+            </div>
+            <div class="pricer-field">
+              <label>Type</label>
+              <select id="pType" onchange="calcPrice()">
+                <option value="standard">Standard</option>
+                <option value="urgent">Urgent</option>
+                <option value="fragile">Fragile</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pricer-results" id="pricerResults">
+            <!-- filled by JS -->
+          </div>
+
+          <div class="pricer-cta">
+            <a class="btn" href="role-choice.html">Envoyer au prix PorteàPorte</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MINI-CARTE TEASER ===== -->
+    <section class="map-teaser-section">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Des missions partout au Québec.</h2>
+          <p>Vois les trajets actifs en temps réel et trouve un livreur près de toi.</p>
+        </div>
+        <div class="map-teaser-wrap">
+          <div id="miniMap"></div>
+          <div class="map-teaser-overlay">
+            <p>Rejoins le réseau pour voir toutes les missions disponibles.</p>
+            <a class="btn" href="map.html">Explorer la carte complète</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    /* ---- Price comparator ---- */
+    const RATES = {
+      standard: { base: 4.5,  perKm: 0.18, perKg: 0.9  },
+      urgent:   { base: 7.0,  perKm: 0.22, perKg: 1.2  },
+      fragile:  { base: 6.0,  perKm: 0.20, perKg: 1.1  }
+    };
+    const COMPETITORS = [
+      { name: 'UPS',      multiplier: 3.2 },
+      { name: 'FedEx',    multiplier: 3.5 },
+      { name: 'Purolator',multiplier: 2.9 },
+      { name: 'Postes CA',multiplier: 2.4 }
+    ];
+
+    function calcPrice() {
+      const w = Math.max(0.1, parseFloat(document.getElementById('pWeight').value) || 2);
+      const d = Math.max(1,   parseFloat(document.getElementById('pDist').value)   || 30);
+      const t = document.getElementById('pType').value;
+      const r = RATES[t];
+      const pap = r.base + d * r.perKm + w * r.perKg;
+
+      const rows = COMPETITORS.map(c => {
+        const price = pap * c.multiplier;
+        const save  = price - pap;
+        const pct   = Math.round(save / price * 100);
+        return { name: c.name, price, save, pct };
+      });
+
+      const fmt = v => v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+
+      document.getElementById('pricerResults').innerHTML = `
+        <div class="pricer-pap">
+          <span class="pricer-pap-label">PorteàPorte</span>
+          <span class="pricer-pap-price">${fmt(pap)}</span>
+        </div>
+        <div class="pricer-vs">vs les grands transporteurs</div>
+        <div class="pricer-competitors">
+          ${rows.map(c => `
+            <div class="comp-row">
+              <span class="comp-name">${c.name}</span>
+              <span class="comp-price">${fmt(c.price)}</span>
+              <span class="comp-save">Tu économises ${fmt(c.save)} (${c.pct}%)</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    calcPrice();
+
+    /* ---- Mini map ---- */
+    const miniMap = L.map('miniMap', { zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false })
+      .setView([46.8, -71.5], 7);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 18
+    }).addTo(miniMap);
+
+    /* Mock missions dots */
+    const mockDots = [
+      [45.5017,-73.5673],[45.4215,-75.6972],[46.8139,-71.2080],[45.6066,-73.7124],
+      [46.3557,-72.5477],[45.3387,-71.9235],[48.4275,-71.0659],[46.0468,-72.8498],
+      [45.4047,-73.9551],[46.7212,-72.2524]
+    ];
+    mockDots.forEach(([lat,lng]) => {
+      L.circleMarker([lat,lng], {
+        radius: 6,
+        fillColor: '#00FF9F',
+        color: '#0A0C10',
+        weight: 2,
+        fillOpacity: 0.85
+      }).addTo(miniMap);
+    });
+  </script>
 
   <footer>
-    <p>&copy; 2026 PorteaPorte. <a href="cgu.html" style="color:var(--accent);text-decoration:none;">CGU</a> | <a href="confidentialite.html" style="color:var(--accent);text-decoration:none;">Confidentialite</a></p>
+    <div class="footer-inner">
+      <span>&copy; 2026 PorteaPorte</span>
+      <span><a href="cgu.html">CGU</a> · <a href="confidentialite.html">Confidentialite</a></span>
+    </div>
   </footer>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
-
-
-
-

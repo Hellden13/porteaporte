@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/modal-helper.js"></script>
+  <style>
+    body{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .auth-card{width:100%;max-width:520px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px}
+    .logo{text-align:center;font-size:1.8rem;font-weight:900;margin-bottom:8px}
+    .subtitle{text-align:center;color:var(--brand-muted);margin-bottom:24px}
+    .form-group{display:grid;gap:8px;margin-bottom:16px}
+    label{font-weight:700}
+    .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .role-option{border:1px solid var(--brand-border);background:var(--brand-bg-dark);color:var(--brand-text);border-radius:8px;padding:12px;text-align:center;cursor:pointer}
+    .role-option input{display:none}
+    .role-option:has(input:checked){border-color:var(--brand-cyan);background:rgba(0,217,255,.1)}
+    .auth-btn{width:100%;margin-top:8px}
+    .links{text-align:center;margin-top:16px;color:var(--brand-muted)}
+  </style>
+</head>
+<body>
+  <main class="auth-card">
+    <div class="logo">PorteàPorte</div>
+    <p class="subtitle">Créer un compte pour publier ou livrer des colis.</p>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="prenom">Prénom</label>
+        <input id="prenom" name="prenom" autocomplete="given-name" required>
+      </div>
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input id="nom" name="nom" autocomplete="family-name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required>
+      </div>
+
+      <div class="form-group">
+        <label>Rôle</label>
+        <div class="role-grid">
+          <label class="role-option"><input type="radio" name="role" value="expediteur" checked>Expéditeur</label>
+          <label class="role-option"><input type="radio" name="role" value="livreur">Livreur</label>
+          <label class="role-option"><input type="radio" name="role" value="les deux">Les deux</label>
+        </div>
+      </div>
+
+      <button class="auth-btn" type="submit" id="signupBtn">Créer mon compte</button>
+    </form>
+
+    <div class="links">Déjà inscrit? <a href="login.html">Se connecter</a></div>
+  </main>
+
+  <script>
+    const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+    const form = document.getElementById('signupForm');
+    const btn = document.getElementById('signupBtn');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Création...';
+
+      const role = new FormData(form).get('role');
+      const prenom = form.prenom.value.trim();
+      const nom = form.nom.value.trim();
+      const email = form.email.value.trim();
+
+      const { data, error } = await db.auth.signUp({
+        email,
+        password: form.password.value,
+        options: {
+          emailRedirectTo: window.location.origin + '/role-choice.html',
+          data: { prenom, nom, role }
+        }
+      });
+
+      if (error) {
+        showError(error.message || 'Inscription impossible.');
+        btn.disabled = false;
+        btn.textContent = 'Créer mon compte';
+        return;
+      }
+
+      if (data.session) {
+        await db.from('profiles').upsert({
+          id: data.user.id,
+          email,
+          prenom,
+          nom,
+          role,
+          email_verified: Boolean(data.user.email_confirmed_at || data.user.confirmed_at),
+          verification_status: 'pending',
+          driver_status: 'not_started',
+          mis_a_jour_le: new Date().toISOString()
+        }, { onConflict: 'id' }).catch(() => {});
+        window.location.href = role === 'expediteur' ? 'dashboard-expediteur.html' : 'livreur.html';
+        return;
+      }
+
+      showSuccess('Compte créé. Vérifie ton email pour confirmer ton inscription avant de te connecter.');
+      btn.textContent = 'Email de confirmation envoyé';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S'inscrire comme Livreur · PorteàPorte</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0A0C0F;--surface:#12151A;--border:#1F242C;--text:#E8EAED;--text-dim:#9BA1A9;--accent:#B8F53E;--accent-dark:#8BC230}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.container{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;max-width:500px;width:90%;margin:20px}
+h1{font-size:28px;margin-bottom:8px;color:var(--accent)}
+.subtitle{color:var(--text-dim);margin-bottom:32px;font-size:14px}
+.form-group{margin-bottom:20px}
+label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px}
+input,select,textarea{width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:14px;margin-bottom:8px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row .form-group{margin-bottom:0}
+.btn{background:var(--accent);color:var(--bg);border:none;padding:14px;border-radius:6px;cursor:pointer;font-weight:700;text-transform:uppercase;width:100%;margin-top:24px}
+.btn:hover{background:var(--accent-dark)}
+.error{color:#FF4D4D;font-size:12px;margin-top:4px}
+.success{color:var(--accent);font-size:12px;margin-top:4px}
+.back{display:inline-block;margin-bottom:24px;color:var(--accent);text-decoration:none;font-size:14px}
+</style>
+<link rel="stylesheet" href="/assets/brand-uniform.css">
+</head>
+<body>
+<div class="container">
+<a href="/" class="back">← Retour à l'accueil</a>
+<h1>Deviens Livreur 🚚</h1>
+<p class="subtitle">Gagne de l'argent en livrant entre tes trajets</p>
+<form id="signup-form">
+<div class="form-row">
+<div class="form-group">
+<label>Prénom</label>
+<input type="text" id="prenom" placeholder="Jean" required>
+<div class="error" id="err-prenom"></div>
+</div>
+<div class="form-group">
+<label>Nom</label>
+<input type="text" id="nom" placeholder="Dupont" required>
+<div class="error" id="err-nom"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Email</label>
+<input type="email" id="email" placeholder="toi@example.com" required autocomplete="off">
+<div class="error" id="err-email"></div>
+</div>
+<div class="form-group">
+<label>Mot de passe</label>
+<input type="password" id="password" placeholder="Minimum 8 caractères" required autocomplete="off">
+<div class="error" id="err-password"></div>
+</div>
+<div class="form-group">
+<label>Confirmez le mot de passe</label>
+<input type="password" id="password-confirm" placeholder="Confirmez" required autocomplete="off">
+<div class="error" id="err-password-confirm"></div>
+</div>
+<div class="form-group">
+<label>Téléphone</label>
+<input type="tel" id="telephone" placeholder="+1 (514) 555-0000">
+<div class="error" id="err-telephone"></div>
+</div>
+<div class="form-group">
+<label>Ville</label>
+<input type="text" id="ville" placeholder="Montréal" required>
+<div class="error" id="err-ville"></div>
+</div>
+<div class="form-group">
+<label>Province</label>
+<select id="province" required>
+<option value="">Sélectionnez une province</option>
+<option value="QC">Québec</option>
+<option value="ON">Ontario</option>
+<option value="BC">Colombie-Britannique</option>
+<option value="AB">Alberta</option>
+<option value="MB">Manitoba</option>
+<option value="SK">Saskatchewan</option>
+<option value="NS">Nouvelle-Écosse</option>
+<option value="NB">Nouveau-Brunswick</option>
+<option value="NL">Terre-Neuve</option>
+<option value="PE">Île-du-Prince-Édouard</option>
+</select>
+<div class="error" id="err-province"></div>
+</div>
+<div class="form-group">
+<label>Comment as-tu entendu parler de nous?</label>
+<textarea id="source" placeholder="Amis, réseaux sociaux, etc."></textarea>
+</div>
+<button type="submit" class="btn">S'INSCRIRE COMME LIVREUR</button>
+<div class="success" id="success-msg"></div>
+<div class="error" id="error-msg"></div>
+</form>
+</div>
+<script src="js/supabase-config.js"></script>
+<script>
+var db=window.getSupabaseClient();
+document.getElementById('signup-form').onsubmit=async function(e){
+e.preventDefault();
+var prenom=document.getElementById('prenom').value.trim();
+var nom=document.getElementById('nom').value.trim();
+var email=document.getElementById('email').value.trim();
+var password=document.getElementById('password').value;
+var passwordConfirm=document.getElementById('password-confirm').value;
+var telephone=document.getElementById('telephone').value.trim();
+var ville=document.getElementById('ville').value.trim();
+var province=document.getElementById('province').value;
+document.querySelectorAll('.error').forEach(e=>e.textContent='');
+document.getElementById('error-msg').textContent='';
+var hasError=false;
+if(password!==passwordConfirm){document.getElementById('err-password-confirm').textContent='Les mots de passe ne correspondent pas';hasError=true}
+if(password.length<8){document.getElementById('err-password').textContent='Minimum 8 caractères';hasError=true}
+if(!email.includes('@')){document.getElementById('err-email').textContent='Email invalide';hasError=true}
+if(hasError)return;
+try{
+var r=await db.auth.signUp({
+email:email,
+password:password,
+options:{
+emailRedirectTo:window.location.origin+'/login.html?confirmed=1',
+data:{prenom:prenom,nom:nom,role:'livreur'}
+}
+});
+if(r.error){document.getElementById('error-msg').textContent='Erreur: '+r.error.message;return}
+if(!r.data.user || !r.data.session){
+try{
+var mailRes=await fetch('/api/notifier',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'auth_confirmation',data:{email:email}})});
+var mailOut=await mailRes.json().catch(()=>({}));
+if(!mailRes.ok){
+var details=mailOut.sendgrid_status?' SendGrid '+mailOut.sendgrid_status+': ':' ';
+document.getElementById('error-msg').textContent='Compte cree, mais courriel non envoye.'+details+(mailOut.error||'Verifie la configuration courriel.');
+return;
+}
+document.getElementById('success-msg').innerHTML='Inscription creee. Un courriel de confirmation a ete envoye par PorteaPorte. Verifie aussi tes indesirables.';
+}catch(err){
+document.getElementById('error-msg').textContent='Compte cree, mais service courriel inaccessible: '+(err.message||err);
+}
+return;
+}
+var p=await db.from('profiles').upsert({
+id:r.data.user.id,
+prenom:prenom,
+nom:nom,
+email:email,
+role:'livreur',
+telephone:telephone,
+ville:ville,
+coins:0,
+xp:0,
+niveau:'bronze',
+email_verified:Boolean(r.data.user.email_confirmed_at||r.data.user.confirmed_at),
+verification_status:'pending',
+driver_status:'not_started',
+mis_a_jour_le:new Date().toISOString()
+});
+if(p.error && /column .* does not exist/i.test(p.error.message||'')){
+p=await db.from('profiles').upsert({
+id:r.data.user.id,
+prenom:prenom,
+nom:nom,
+email:email,
+role:'livreur',
+telephone:telephone,
+ville:ville,
+coins:0,
+xp:0,
+niveau:'bronze',
+mis_a_jour_le:new Date().toISOString()
+});
+}
+if(p.error){document.getElementById('error-msg').textContent='Erreur DB: '+p.error.message;return}
+document.getElementById('success-msg').textContent='Inscription reussie. Verifie ton email puis complete la verification livreur.';
+setTimeout(()=>{window.location.href='/livreur.html'},2000);
+}catch(err){
+document.getElementById('error-msg').textContent='Erreur: '+err.message;
+}
+};
+</script>
+</body>
+</html>
+

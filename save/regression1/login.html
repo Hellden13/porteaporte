@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/modal-helper.js"></script>
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      background: #11151C;
+      border: 1px solid #263241;
+      border-radius: 14px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .login-card h1 {
+      color: #B8F53E;
+      margin: 0 0 28px;
+      font-size: 26px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -.5px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      color: #F4F7FA;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: .9rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #090B0F;
+      color: #F4F7FA;
+      border: 1px solid #263241;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .form-group input:focus { border-color: #00D9FF; }
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #B8F53E 0%, #00D9FF 100%);
+      color: #090B0F;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 4px;
+    }
+    .login-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #A8B0BA;
+      font-size: .9rem;
+    }
+    .signup-link a { color: #00D9FF; text-decoration: none; font-weight: 600; }
+    .signup-link a:hover { text-decoration: underline; }
+    .back-link { text-align: center; margin-bottom: 20px; }
+    .back-link a { color: #A8B0BA; text-decoration: none; font-size: .9rem; }
+    .back-link a:hover { color: #F4F7FA; }
+    .loading { display: none; text-align: center; color: #00D9FF; margin-top: 12px; font-size: .9rem; }
+    @media (max-width: 480px) {
+      .login-card { padding: 28px 20px; }
+      .login-card h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="back-link">
+        <a href="index.html">← Retour</a>
+      </div>
+      
+      <h1>Connexion</h1>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required placeholder="votre@email.com">
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" required placeholder="••••••••">
+        </div>
+        
+        <button type="submit" class="login-btn" id="loginBtn">Se connecter</button>
+        <div class="loading" id="loading">Connexion en cours...</div>
+      </form>
+      
+      <div class="signup-link">
+        Pas encore inscrit? <a href="signup.html">S'inscrire</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const db = window.db || window.getSupabaseClient();
+    
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      document.getElementById('loginBtn').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+      
+      try {
+        const { data, error } = await db.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (error) throw error;
+
+        // Fetch role from profiles to redirect to the correct dashboard
+        const userId = data.user.id;
+        const { data: profile } = await db.from('profiles').select('role').eq('id', userId).single();
+        const role = profile?.role || 'expediteur';
+
+        let destination = '/dashboard-expediteur.html';
+        if (role === 'livreur') destination = '/dashboard-livreur.html';
+        else if (role === 'les deux') destination = '/role-choice.html';
+        else if (role === 'admin') destination = '/admin/dashboard-admin.html';
+
+        window.showSuccess('Connexion reussie!');
+        setTimeout(() => {
+          window.location = destination;
+        }, 1500);
+        
+      } catch (error) {
+        window.showError('Erreur: ' + error.message);
+        document.getElementById('loginBtn').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

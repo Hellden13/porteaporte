@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="apple-mobile-web-app-title" content="PorteÃ Porte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#05080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="description" content="PorteÃ Porte â Plateforme de partage de trajets entre particuliers au QuÃ©bec. Mettez en relation conducteurs et passagers pour partager les frais de dÃ©placement ð. LÃ©vis, MontrÃ©al, QuÃ©bec. Moins cher que le taxi, plus convivial que l'autobus ð">
+<meta property="og:title" content="PorteÃ Porte Covoiturage ð">
+<meta property="og:description" content="Du point A au point B avec quelqu'un qui passe. SÃ©curisÃ©, certifiÃ©, moins cher.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorteÃ Porte â Covoiturage entre particuliers ð</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#05080A;--paper:#F5F0E8;--lime:#B8F53E;--teal:#0BFFCB;--smoke:#141918;--s2:#1C2220;--muted:#8A9490;--border:rgba(255,255,255,0.07);--gold:#F5C842;--orange:#FF8C00;--purple:#A78BFA;--blue:#60A5FA}
+html{scroll-behavior:smooth}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;overflow-x:hidden}
+
+nav{padding:16px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(5,8,10,.96);backdrop-filter:blur(14px)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--paper);text-decoration:none}
+.logo span{color:var(--lime)}
+.nav-badge{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);color:var(--blue);font-size:10px;font-weight:600;padding:3px 10px;border-radius:50px;letter-spacing:1px}
+.back{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}.back:hover{color:var(--lime)}
+
+/* HERO */
+.hero{min-height:90vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:80px 40px}
+.hero-bg{position:absolute;inset:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(.6) brightness(.6)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,rgba(5,8,10,.92) 40%,rgba(5,8,10,.3) 100%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(96,165,250,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.03) 1px,transparent 1px);background-size:60px 60px}
+.hero-content{position:relative;z-index:1;max-width:640px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);padding:6px 16px;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:20px;border-radius:2px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,8vw,110px);letter-spacing:-2px;line-height:.92;margin-bottom:18px}
+.hero h1 .a{color:var(--blue)}
+.hero p{font-size:17px;color:rgba(245,240,232,.65);max-width:480px;line-height:1.65;font-weight:300;margin-bottom:32px}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
+.btn-blue{background:var(--blue);color:var(--ink);border:none;padding:14px 28px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;border-radius:2px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-blue:hover{background:#93C5FD;transform:translateY(-2px)}
+.btn-s{background:transparent;color:var(--paper);border:1px solid rgba(245,240,232,.2);padding:14px 28px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;border-radius:2px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-s:hover{border-color:var(--paper)}
+
+/* STATS */
+.stats-bar{background:var(--blue);padding:14px 40px;display:flex;gap:0;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center;padding:0 32px;border-right:1px solid rgba(5,8,10,.15)}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--ink);letter-spacing:-1px;line-height:1}
+.stat-l{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(5,8,10,.5);margin-top:2px}
+
+/* SECTIONS */
+.sec{padding:80px 40px;max-width:1100px;margin:0 auto}
+.slbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;font-weight:500}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5.5vw,72px);letter-spacing:-1px;line-height:1;margin-bottom:12px}
+.ssub{font-size:15px;color:var(--muted);max-width:500px;line-height:1.7;font-weight:300;margin-bottom:40px}
+
+/* CARDS */
+.card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:22px}
+.card2{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+/* FORMULAIRE */
+.form-hero{background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.15);border-radius:8px;padding:32px;max-width:680px;margin:0 auto}
+.form-title{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--blue);letter-spacing:-1px;margin-bottom:6px}
+.form-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.fi{background:var(--s2);border:1px solid var(--border);padding:11px 14px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px;width:100%}
+.fi:focus{border-color:rgba(96,165,250,.4)}
+.fi::placeholder{color:rgba(245,240,232,.2)}
+select.fi option{background:#141918}
+.submit{width:100%;background:var(--blue);color:var(--ink);border:none;padding:14px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border-radius:2px;transition:all .2s;margin-top:8px}
+.submit:hover{background:#93C5FD;transform:translateY(-1px)}
+.form-success{display:none;text-align:center;padding:24px}
+.form-success.show{display:block}
+
+/* TRAJETS POPULAIRES */
+.trajet-card{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:20px;transition:all .3s;cursor:pointer}
+.trajet-card:hover{border-color:rgba(96,165,250,.3);transform:translateY(-4px)}
+.trajet-from{font-size:12px;color:var(--muted);margin-bottom:4px}
+.trajet-route{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:-.5px;line-height:1;margin-bottom:6px}
+.trajet-route .arrow{color:var(--blue)}
+.trajet-details{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tag{display:inline-flex;gap:4px;align-items:center;padding:3px 8px;border-radius:50px;font-size:10px;font-weight:500}
+.tb{background:rgba(96,165,250,.08);color:var(--blue);border:1px solid rgba(96,165,250,.15)}
+.tg{background:rgba(184,245,62,.08);color:var(--lime);border:1px solid rgba(184,245,62,.15)}
+.to{background:rgba(255,140,0,.08);color:var(--orange);border:1px solid rgba(255,140,0,.15)}
+.trajet-prix{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--blue);letter-spacing:-1px}
+.trajet-prix-sub{font-size:10px;color:var(--muted)}
+
+/* DIFFÃRENCES vs UBER */
+.vs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.vs-header{background:var(--s2);padding:14px;text-align:center;font-size:12px;font-weight:600}
+.vs-row{display:contents}
+.vs-cell{padding:12px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.vs-cell.feature{color:var(--paper);font-weight:500}
+.vs-cell.win{color:var(--lime)}
+.vs-cell.lose{color:rgba(245,77,77,.7)}
+.vs-cell.neutral{color:var(--orange)}
+
+/* POURQUOI */
+.why-card{padding:28px;border:1px solid transparent;transition:all .3s}
+.why-card:hover{border-color:rgba(96,165,250,.2);transform:translateY(-4px)}
+.why-icon{font-size:36px;margin-bottom:14px}
+.why-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.5px;margin-bottom:8px}
+.why-desc{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* AVIS */
+.avis-track{display:flex;gap:14px;overflow:hidden;position:relative}
+.avis-track::before,.avis-track::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
+.avis-track::before{left:0;background:linear-gradient(to right,var(--ink),transparent)}
+.avis-track::after{right:0;background:linear-gradient(to left,var(--ink),transparent)}
+.avis{background:var(--smoke);border:1px solid rgba(245,240,232,.07);padding:20px;min-width:280px;flex-shrink:0;border-radius:2px}
+.stars{color:var(--blue);font-size:12px;letter-spacing:2px;margin-bottom:8px}
+.avis-text{font-size:12px;color:rgba(245,240,232,.75);line-height:1.65;margin-bottom:10px}
+.avis-author{font-size:11px;color:var(--muted)}
+
+/* IMPORTANT NOTICE */
+.notice{background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);border-radius:6px;padding:24px;margin:40px 0}
+.notice-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);margin-bottom:10px}
+.notice-text{font-size:13px;color:rgba(245,240,232,.7);line-height:1.7}
+
+/* CTA */
+.cta{text-align:center;padding:80px 40px;position:relative;overflow:hidden}
+.cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(96,165,250,.07),transparent 70%)}
+
+footer{border-top:1px solid var(--border);padding:28px 40px;background:var(--smoke);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:11px;color:rgba(245,240,232,.25)}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s,transform .8s}
+.reveal.vis{opacity:1;transform:none}
+
+@media(max-width:768px){
+  nav{padding:12px 16px}
+  .hero{padding:60px 16px}
+  .sec{padding:56px 16px}
+  .form-grid,.g2,.g3{grid-template-columns:1fr}
+  .vs-grid{grid-template-columns:1fr;border-radius:4px}
+  .stats-bar{gap:12px;padding:14px 16px}
+  .stat{border-right:none;padding:4px 16px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Porte<span>Ã </span>Porte</a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="nav-badge">ð COVOITURAGE BÃTA</span>
+    <a href="compte.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">ð¤ Mon compte</a>
+    <a href="index.html" class="back">â Retour</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1920&q=80&auto=format&fit=crop" alt="Route quÃ©bÃ©coise au coucher de soleil">
+  </div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">ð Plateforme de mise en relation â Covoiturage entre particuliers</div>
+    <h1>Partage de trajet.<br><span class="a">Entre voisins</span> qui passent.</h1>
+    <p>PorteÃ Porte est une <strong>plateforme numÃ©rique de mise en relation</strong> entre particuliers. Les conducteurs partagent leurs frais de dÃ©placement pour des trajets qu'ils effectuent dÃ©jÃ . Ce n'est pas un service de taxi â c'est du covoiturage authentique entre QuÃ©bÃ©cois.</p>
+    <div class="hero-ctas">
+      <a href="#chercher" class="btn-blue">ð Trouver un trajet â</a>
+      <a href="#offrir" class="btn-s">ð Offrir un trajet</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-n">0$</div><div class="stat-l">Frais de plateforme</div></div>
+  <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Conducteurs certifiÃ©s</div></div>
+  <div class="stat"><div class="stat-n">24/7</div><div class="stat-l">Disponible</div></div>
+  <div class="stat"><div class="stat-n">2M$</div><div class="stat-l">Assurance passagers</div></div>
+</div>
+
+<!-- POURQUOI -->
+<section class="sec">
+  <div class="reveal">
+    <div class="slbl">La diffÃ©rence PorteÃ Porte</div>
+    <h2 class="stitle">Une plateforme numÃ©rique. Pas un transporteur.</h2>
+    <p class="ssub">PorteÃ Porte est une plateforme numÃ©rique qui met en relation des particuliers souhaitant partager leurs frais de dÃ©placement. PorteÃ Porte n'est pas un transporteur, ne possÃ¨de aucun vÃ©hicule et n'emploie aucun conducteur. Chaque trajet est un accord direct entre deux particuliers.</p>
+  </div>
+  <div class="g3 reveal">
+    <div class="why-card">
+      <div class="why-icon">ðªª</div>
+      <div class="why-title">Conducteurs certifiÃ©s</div>
+      <div class="why-desc">MÃªme processus KYC que nos livreurs â permis vÃ©rifiÃ©, selfie biomÃ©trique, antÃ©cÃ©dents. Pas de conducteur anonyme.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">ð°</div>
+      <div class="why-title">Partage de frais transparent</div>
+      <div class="why-desc">Le conducteur propose un montant qui couvre ses frais rÃ©els (essence, usure). PorteÃ Porte facilite l'Ã©change â les fonds sont sÃ©curisÃ©s jusqu'Ã  destination.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">ð</div>
+      <div class="why-title">100% canadien et local</div>
+      <div class="why-desc">L'argent reste au QuÃ©bec. Le conducteur est ton voisin qui fait dÃ©jÃ  ce trajet. ZÃ©ro commission versÃ©e Ã  une corporation Ã©trangÃ¨re.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">ð±</div>
+      <div class="why-title">Ãco-responsable</div>
+      <div class="why-desc">Un siÃ¨ge vide dans une voiture qui part de toute faÃ§on â zÃ©ro Ã©mission supplÃ©mentaire. +15% bonus pour les vÃ©hicules Ã©lectriques.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">ðª</div>
+      <div class="why-title">Gagne des PorteCoins</div>
+      <div class="why-desc">Ã chaque trajet â que tu sois passager ou conducteur â tu accumules des PorteCoins Ã©changeables contre de vraies rÃ©compenses.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">â¤ï¸</div>
+      <div class="why-title">Impact social inclus</div>
+      <div class="why-desc">5% de chaque trajet va Ã  Moisson MontrÃ©al, Habitat HumanitÃ© ou Fondation Suzuki. Chaque kilomÃ¨tre compte.</div>
+    </div>
+  </div>
+</section>
+
+<!-- VS CONCURRENT -->
+<section class="sec" style="padding-top:0">
+  <div class="reveal">
+    <div class="slbl">Comparaison honnÃªte</div>
+    <h2 class="stitle">PorteÃ Porte vs les autres.</h2>
+  </div>
+  <div class="vs-grid reveal">
+    <div class="vs-header" style="background:var(--smoke)">CritÃ¨re</div>
+    <div class="vs-header" style="background:rgba(96,165,250,.1);color:var(--blue)">PorteÃ Porte ð</div>
+    <div class="vs-header">Uber / Lyft</div>
+
+    <div class="vs-cell feature">Prix</div>
+    <div class="vs-cell win">â60% vs taxi Â· Prix fixe</div>
+    <div class="vs-cell lose">Surge pricing Â· ImprÃ©visible</div>
+
+    <div class="vs-cell feature">Conducteurs</div>
+    <div class="vs-cell win">KYC biomÃ©trique obligatoire</div>
+    <div class="vs-cell neutral">VÃ©rification standard</div>
+
+    <div class="vs-cell feature">Argent local</div>
+    <div class="vs-cell win">100% au QuÃ©bec ð</div>
+    <div class="vs-cell lose">Corporation amÃ©ricaine</div>
+
+    <div class="vs-cell feature">Commission</div>
+    <div class="vs-cell win">12% seulement</div>
+    <div class="vs-cell lose">25-35% Ã  Uber</div>
+
+    <div class="vs-cell feature">Paiement sÃ©curisÃ©</div>
+    <div class="vs-cell win">Escrow Stripe</div>
+    <div class="vs-cell neutral">Paiement direct</div>
+
+    <div class="vs-cell feature">RÃ©compenses</div>
+    <div class="vs-cell win">PorteCoins Ã  chaque trajet</div>
+    <div class="vs-cell lose">Aucune</div>
+
+    <div class="vs-cell feature">Impact social</div>
+    <div class="vs-cell win">5% aux organismes ð</div>
+    <div class="vs-cell lose">Aucun</div>
+  </div>
+</section>
+
+<!-- TRAJETS POPULAIRES -->
+<section class="sec" style="padding-top:0">
+  <div class="reveal">
+    <div class="slbl">Sur tes routes</div>
+    <h2 class="stitle">Trajets populaires au QuÃ©bec.</h2>
+    <p class="ssub">Ces trajets sont effectuÃ©s des centaines de fois par semaine par des QuÃ©bÃ©cois. Rejoins la prochaine voiture qui passe.</p>
+  </div>
+  <div class="g3 reveal">
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">MontrÃ©al <span class="arrow">â</span> QuÃ©bec</div>
+      <div class="trajet-details">
+        <span class="tag tb">~2h45</span>
+        <span class="tag tg">Quotidien</span>
+        <span class="tag to">A-20</span>
+      </div>
+      <div class="trajet-prix">15-25 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">QuÃ©bec <span class="arrow">â</span> LÃ©vis</div>
+      <div class="trajet-details">
+        <span class="tag tb">~15 min</span>
+        <span class="tag tg">TrÃ¨s frÃ©quent</span>
+      </div>
+      <div class="trajet-prix">5-10 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">MontrÃ©al <span class="arrow">â</span> Sherbrooke</div>
+      <div class="trajet-details">
+        <span class="tag tb">~1h30</span>
+        <span class="tag tg">Quotidien</span>
+        <span class="tag to">A-10</span>
+      </div>
+      <div class="trajet-prix">12-20 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">QuÃ©bec <span class="arrow">â</span> MontrÃ©al</div>
+      <div class="trajet-details">
+        <span class="tag tb">~2h45</span>
+        <span class="tag tg">Quotidien</span>
+      </div>
+      <div class="trajet-prix">15-25 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">Laval <span class="arrow">â</span> QuÃ©bec</div>
+      <div class="trajet-details">
+        <span class="tag tb">~2h</span>
+        <span class="tag tg">FrÃ©quent</span>
+      </div>
+      <div class="trajet-prix">18-28 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+    <div class="trajet-card" onclick="document.getElementById('chercher').scrollIntoView({behavior:'smooth'})">
+      <div class="trajet-from">Au dÃ©part de</div>
+      <div class="trajet-route">QuÃ©bec <span class="arrow">â</span> Rimouski</div>
+      <div class="trajet-details">
+        <span class="tag tb">~3h</span>
+        <span class="tag to">Fins de semaine</span>
+      </div>
+      <div class="trajet-prix">20-35 $</div>
+      <div class="trajet-prix-sub">par personne Â· aller simple</div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULAIRE PASSAGER -->
+<section class="sec" style="padding-top:0" id="chercher">
+  <div class="reveal">
+    <div class="slbl">Je cherche un trajet</div>
+    <h2 class="stitle">Trouver ma place.</h2>
+  </div>
+  <div class="form-hero reveal">
+    <div class="form-title">ð Chercher un trajet</div>
+    <div class="form-sub">Entre tes informations â on te trouve le meilleur conducteur certifiÃ© sur ce trajet.</div>
+    <form id="form-passager" onsubmit="soumettrePassager(event)">
+      <div class="form-grid">
+        <div class="fg"><label class="fl">Ville de dÃ©part *</label><input class="fi" type="text" id="p-depart" placeholder="MontrÃ©al, QuÃ©bec..." required></div>
+        <div class="fg"><label class="fl">Ville d'arrivÃ©e *</label><input class="fi" type="text" id="p-arrivee" placeholder="QuÃ©bec, LÃ©vis..." required></div>
+        <div class="fg"><label class="fl">Date souhaitÃ©e *</label><input class="fi" type="date" id="p-date" required></div>
+        <div class="fg"><label class="fl">Nombre de passagers</label>
+          <select class="fi" id="p-nb">
+            <option>1 passager</option><option>2 passagers</option><option>3 passagers</option><option>4 passagers</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="fg"><label class="fl">PrÃ©nom et nom *</label><input class="fi" type="text" id="p-nom" placeholder="Marie-Claire Tremblay" required></div>
+        <div class="fg"><label class="fl">Courriel *</label><input class="fi" type="email" id="p-email" placeholder="ton@courriel.ca" required></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px"><label class="fl">Besoins spÃ©ciaux (optionnel)</label><input class="fi" type="text" id="p-notes" placeholder="SiÃ¨ge bÃ©bÃ©, espace pour bagages, animaux..."></div>
+      <button class="submit" type="submit">ð Chercher mon trajet â</button>
+    </form>
+    <div class="form-success" id="success-passager">
+      <div style="font-size:44px;margin-bottom:12px">ð</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--blue);letter-spacing:-1px;margin-bottom:8px">Demande envoyÃ©e !</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">On cherche le meilleur conducteur certifiÃ© pour ton trajet. Tu recevras une notification par courriel dÃ¨s qu'un conducteur accepte â gÃ©nÃ©ralement dans les 2 heures.</div>
+      <div style="font-size:12px;color:rgba(96,165,250,.8)">ðª +15 PorteCoins crÃ©ditÃ©s pour ta demande !</div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULAIRE CONDUCTEUR -->
+<section class="sec" style="padding-top:0;background:var(--smoke);max-width:100%;padding:60px 40px" id="offrir">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal">
+      <div class="slbl">Je propose un trajet</div>
+      <h2 class="stitle">Rentabiliser mes trajets.</h2>
+      <p class="ssub">Tu fais dÃ©jÃ  le trajet â autant avoir de la compagnie et couvrir tes frais d'essence. Jusqu'Ã  50 $ de plus par trajet.</p>
+    </div>
+    <div class="form-hero reveal" style="background:rgba(184,245,62,.04);border-color:rgba(184,245,62,.15)">
+      <div class="form-title" style="color:var(--lime)">ð Offrir un trajet</div>
+      <div class="form-sub">Tu dois Ãªtre conducteur certifiÃ© PorteÃ Porte. Si pas encore inscrit, on te redirige vers l'inscription livreur.</div>
+      <form id="form-conducteur" onsubmit="soumettreConducteur(event)">
+        <div class="form-grid">
+          <div class="fg"><label class="fl">Ville de dÃ©part *</label><input class="fi" type="text" id="c-depart" placeholder="MontrÃ©al..." required></div>
+          <div class="fg"><label class="fl">Ville d'arrivÃ©e *</label><input class="fi" type="text" id="c-arrivee" placeholder="QuÃ©bec..." required></div>
+          <div class="fg"><label class="fl">Date du trajet *</label><input class="fi" type="date" id="c-date" required></div>
+          <div class="fg"><label class="fl">Heure de dÃ©part *</label><input class="fi" type="time" id="c-heure" required></div>
+        </div>
+        <div class="form-grid">
+          <div class="fg"><label class="fl">Places disponibles *</label>
+            <select class="fi" id="c-places">
+              <option>1 place</option><option>2 places</option><option>3 places</option><option>4 places</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Prix par personne ($) *</label><input class="fi" type="number" id="c-prix" placeholder="20" min="5" max="500" required></div>
+          <div class="fg"><label class="fl">Ton prÃ©nom et nom *</label><input class="fi" type="text" id="c-nom" placeholder="Marc-Antoine Lefebvre" required></div>
+          <div class="fg"><label class="fl">Ton courriel *</label><input class="fi" type="email" id="c-email" placeholder="ton@courriel.ca" required></div>
+        </div>
+        <div class="fg" style="margin-bottom:10px"><label class="fl">Informations supplÃ©mentaires</label><input class="fi" type="text" id="c-notes" placeholder="Coffre spacieux, animaux acceptÃ©s, arrÃªts possibles..."></div>
+        <div style="background:rgba(184,245,62,.04);border:1px solid rgba(184,245,62,.1);border-radius:4px;padding:12px;margin-bottom:10px;font-size:12px;color:rgba(245,240,232,.7);line-height:1.7">
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+            <input type="checkbox" id="c-engage" required style="margin-top:3px;flex-shrink:0">
+            <span>Je confirme que ce trajet est un <strong style="color:var(--paper)">partage de mes frais rÃ©els de dÃ©placement</strong>. J'effectue ce trajet indÃ©pendamment et le covoiturage n'est pas mon activitÃ© principale. J'accepte les <a href="legal.html" style="color:var(--lime)">conditions d'utilisation</a>.</span>
+          </label>
+        </div>
+        <button class="submit" type="submit" style="background:var(--lime);color:var(--ink)">ð Publier mon trajet â</button>
+      </form>
+      <div class="form-success" id="success-conducteur">
+        <div style="font-size:44px;margin-bottom:12px">â</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime);letter-spacing:-1px;margin-bottom:8px">Trajet publiÃ© !</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Ton trajet est visible aux passagers sur cet itinÃ©raire. Tu seras notifiÃ© par courriel dÃ¨s qu'un passager rÃ©serve une place.</div>
+        <div style="font-size:12px;color:var(--lime)">ðª +20 PorteCoins pour chaque passager acceptÃ© !</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOTICE LÃGALE -->
+<section class="sec">
+  <div class="notice reveal">
+    <div class="notice-title">âï¸ Note lÃ©gale importante â Covoiturage vs Taxi</div>
+    <div class="notice-text">
+      Au QuÃ©bec, le transport rÃ©munÃ©rÃ© de personnes est rÃ©glementÃ© par la <strong>Loi concernant les services de transport par taxi (LSTT)</strong> et la <strong>Commission des transports du QuÃ©bec (CTQ)</strong>. PorteÃ Porte opÃ¨re en mode <strong>covoiturage entre particuliers</strong> â les conducteurs partagent leurs frais de dÃ©placement, non comme chauffeurs professionnels.<br><br>
+      Pour Ãªtre en conformitÃ©, les conducteurs PorteÃ Porte : (1) effectuent des trajets qu'ils feraient de toute faÃ§on, (2) ne dÃ©passent pas les frais rÃ©els de dÃ©placement, (3) ne font pas du transport de personnes leur activitÃ© principale. PorteÃ Porte s'engage Ã  respecter toutes les lois provinciales applicables et Ã  obtenir les permis requis si la rÃ©glementation Ã©volue. <strong>Consulter un avocat spÃ©cialisÃ© en transport avant le lancement officiel de cette fonctionnalitÃ©.</strong>
+    </div>
+  </div>
+</section>
+
+<!-- AVIS -->
+<section class="sec" style="padding-top:0">
+  <div class="slbl reveal">Ce qu'ils en disent</div>
+  <h2 class="stitle reveal">Ils ont essayÃ©. Ils adorent.</h2>
+  <div class="avis-track reveal">
+    <div class="avis"><div class="stars">âââââ</div><div class="avis-text">MontrÃ©alâQuÃ©bec pour 18 $. Le taxi aurait coÃ»tÃ© 95 $. Le conducteur Ã©tait super sympathique, on a jasÃ© tout le long. J'utilise maintenant PorteÃ Porte chaque semaine.</div><div class="avis-author">Sophie B. Â· MontrÃ©al</div></div>
+    <div class="avis"><div class="stars">âââââ</div><div class="avis-text">Je fais le trajet LÃ©vis-Sherbrooke deux fois par semaine pour le travail. En offrant 3 places, je couvre complÃ¨tement mon essence et je rencontre des gens intÃ©ressants.</div><div class="avis-author">Kevin M. Â· LÃ©vis</div></div>
+    <div class="avis"><div class="stars">âââââ</div><div class="avis-text">Comme Ã©tudiante, je ne peux pas me payer un taxi rÃ©guliÃ¨rement. PorteÃ Porte me permet de rentrer Ã  Rimouski les weekends pour 22 $ au lieu de 180 $.</div><div class="avis-author">AmÃ©lie T. Â· Rimouski</div></div>
+    <div class="avis"><div class="stars">âââââ</div><div class="avis-text">J'ai passÃ© le KYC en 5 minutes. Maintenant j'offre 2 places sur mes trajets d'affaires et je gÃ©nÃ¨re 200-300 $ de plus par mois. Brillant.</div><div class="avis-author">Jean-FranÃ§ois B. Â· Conducteur certifiÃ©</div></div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta">
+  <div style="position:relative;z-index:1">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,96px);letter-spacing:-2px;line-height:.92;margin-bottom:16px">
+      Ton prochain trajet,<br><span style="color:var(--blue)">quelqu'un qui passe.</span>
+    </div>
+    <div style="font-size:16px;color:var(--muted);max-width:480px;margin:0 auto 32px;line-height:1.65;font-weight:300">Rejoins la liste d'attente pour le covoiturage PorteÃ Porte. 50 PorteCoins offerts dÃ¨s l'ouverture.</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="#chercher" class="btn-blue">ð Chercher un trajet â</a>
+      <a href="livreur.html" class="btn-s">ð Devenir conducteur certifiÃ©</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-copy">Â© 2026 PorteÃ Porte Â· Covoiturage entre particuliers Â· LÃ©vis, QuÃ©bec ð Â·  Â·  Â· <a href="contact.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">âï¸ Contact</a><a href="faq.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">â FAQ</a><a href="suivi-livraison.html" style="color:rgba(245,240,232,.4);text-decoration:none;font-size:11px">ð¦ Suivi colis</a></div>
+  <div style="display:flex;gap:16px">
+    <a href="index.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">Accueil</a>
+    <a href="legal.html" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">CGU</a>
+    <a href="mailto:bonjour@porteaporte.site" style="font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--muted)'">Contact</a>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(els => {
+  els.forEach(e => { if(e.isIntersecting){ e.target.classList.add('vis'); obs.unobserve(e.target); }});
+}, {threshold:.08,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// DÃ©finir date min = aujourd'hui
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('p-date').min = today;
+document.getElementById('c-date').min = today;
+
+async function notifier(type, data) {
+  try {
+    await fetch('/api/notifier', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ type, data })
+    });
+  } catch(e) {}
+}
+
+function soumettrePassager(e) {
+  e.preventDefault();
+  const data = {
+    depart: document.getElementById('p-depart').value,
+    arrivee: document.getElementById('p-arrivee').value,
+    date: document.getElementById('p-date').value,
+    nb: document.getElementById('p-nb').value,
+    nom: document.getElementById('p-nom').value,
+    email: document.getElementById('p-email').value,
+    notes: document.getElementById('p-notes').value,
+    type: 'passager_covoiturage'
+  };
+  notifier('liste_attente', { prenom: data.nom.split(' ')[0], nom: data.nom.split(' ').slice(1).join(' '), email: data.email, ville: data.depart, role: `Passager covoiturage ${data.depart}â${data.arrivee}`, parrain: '' });
+  document.getElementById('form-passager').style.display = 'none';
+  document.getElementById('success-passager').classList.add('show');
+}
+
+function soumettreConducteur(e) {
+  e.preventDefault();
+  const data = {
+    depart: document.getElementById('c-depart').value,
+    arrivee: document.getElementById('c-arrivee').value,
+    nom: document.getElementById('c-nom').value,
+    email: document.getElementById('c-email').value,
+    type: 'conducteur_covoiturage'
+  };
+  notifier('liste_attente', { prenom: data.nom.split(' ')[0], nom: data.nom.split(' ').slice(1).join(' '), email: data.email, ville: data.depart, role: `Conducteur covoiturage ${data.depart}â${data.arrivee}`, parrain: '' });
+  document.getElementById('form-conducteur').style.display = 'none';
+  document.getElementById('success-conducteur').classList.add('show');
+}
+</script>
+
+<script>
+// Service Worker PWA â PorteÃ Porte
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW PorteÃ Porte actif'))
+      .catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

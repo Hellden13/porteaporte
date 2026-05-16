@@ -1,0 +1,508 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PorteaPorte - Livraison collaborative locale</title>
+  <meta name="description" content="PorteaPorte connecte expediteurs et livreurs locaux pour des livraisons plus simples, suivies et humaines.">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 16px clamp(18px, 4vw, 48px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--brand-text);
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand-mark img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .main-nav a {
+      color: var(--brand-muted);
+      font-weight: 650;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .main-nav a:hover,
+    .main-nav a:focus-visible {
+      color: var(--brand-text);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero {
+      min-height: calc(100vh - 74px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+      align-items: center;
+      gap: clamp(32px, 6vw, 76px);
+      padding: clamp(42px, 8vw, 88px) clamp(18px, 4vw, 48px) 48px;
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--brand-lime);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--brand-lime);
+      border-radius: 999px;
+    }
+
+    .hero h1 {
+      margin: 0 0 20px;
+      color: var(--brand-text);
+      font-size: clamp(2.45rem, 7vw, 5.35rem);
+      line-height: 0.98;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .hero h1 span {
+      color: var(--brand-cyan);
+    }
+
+    .hero p {
+      max-width: 610px;
+      margin: 0 0 30px;
+      color: var(--brand-muted);
+      font-size: clamp(1rem, 2.4vw, 1.22rem);
+      line-height: 1.75;
+    }
+
+    .cta-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 570px;
+    }
+
+    .trust-item {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+    }
+
+    .trust-item strong {
+      display: block;
+      color: var(--brand-text);
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+
+    .trust-item span {
+      color: var(--brand-muted);
+      font-size: 0.84rem;
+    }
+
+    .hero-panel {
+      position: relative;
+      min-height: 520px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(17, 19, 24, 0.88), rgba(10, 12, 16, 0.98)),
+        linear-gradient(135deg, rgba(0, 217, 255, 0.16), rgba(0, 255, 159, 0.08));
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+      overflow: hidden;
+    }
+
+    .route-map {
+      position: absolute;
+      inset: 0;
+      opacity: 0.78;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .route-line {
+      position: absolute;
+      left: 14%;
+      right: 13%;
+      top: 43%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime));
+      transform: rotate(-18deg);
+      transform-origin: center;
+      box-shadow: 0 0 24px rgba(0, 217, 255, 0.34);
+    }
+
+    .route-point {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--brand-bg-dark);
+      border-radius: 50%;
+      background: var(--brand-lime);
+      box-shadow: 0 0 0 6px rgba(0, 255, 159, 0.16);
+    }
+
+    .route-point.start { left: 15%; top: 52%; }
+    .route-point.end { right: 16%; top: 30%; background: var(--brand-cyan); box-shadow: 0 0 0 6px rgba(0, 217, 255, 0.16); }
+
+    .delivery-card {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 28px;
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(10, 12, 16, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .delivery-card header {
+      position: static;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0;
+      border: 0;
+      background: transparent !important;
+    }
+
+    .delivery-card h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: 1rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(0, 255, 159, 0.12);
+      color: var(--brand-lime);
+      border: 1px solid rgba(0, 255, 159, 0.3);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .delivery-grid div {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .delivery-grid span {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .delivery-grid strong {
+      color: var(--brand-text);
+      font-size: 0.92rem;
+    }
+
+    .features-section {
+      padding: 58px clamp(18px, 4vw, 48px) 76px;
+      background: var(--brand-bg-dark);
+    }
+
+    .section-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      line-height: 1.08;
+    }
+
+    .section-heading p {
+      max-width: 420px;
+      color: var(--brand-muted);
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      min-height: 224px;
+      padding: 22px;
+    }
+
+    .feature-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      background: rgba(0, 217, 255, 0.1);
+      color: var(--brand-cyan);
+      font-weight: 900;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      color: var(--brand-text);
+      font-size: 1.18rem;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--brand-muted);
+      line-height: 1.7;
+    }
+
+    footer {
+      padding: 24px clamp(18px, 4vw, 48px);
+      border-top: 1px solid var(--brand-border);
+      color: var(--brand-muted);
+      background: var(--brand-bg-surface);
+    }
+
+    .footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 34px;
+      }
+
+      .hero-panel {
+        min-height: 430px;
+      }
+
+      .section-heading,
+      .footer-inner {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .site-header {
+        position: relative;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .main-nav {
+        display: none;
+      }
+
+      .header-actions,
+      .header-actions button,
+      .header-actions a,
+      .cta-buttons button,
+      .cta-buttons a {
+        width: 100%;
+      }
+
+      .trust-row,
+      .delivery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-panel {
+        min-height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="index.html" aria-label="Accueil PorteaPorte">
+      <img src="logo.svg" alt="">
+      <span>PorteaPorte</span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a href="#features">Comment ca marche</a>
+      <a href="browse-missions.html">Missions</a>
+      <a href="assurance.html">Assurance</a>
+      <a href="login.html">Connexion</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-ghost" href="login.html">Connexion</a>
+      <a class="btn" href="role-choice.html">Commencer</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow">Livraison collaborative au Quebec</div>
+        <h1 id="hero-title">Quelqu'un passe deja <span>dans ta direction.</span></h1>
+        <p>PorteaPorte connecte les expediteurs avec des livreurs locaux pour envoyer des colis autrement : prix clair, suivi en temps reel et service plus humain.</p>
+        <div class="cta-buttons">
+          <a class="btn" href="role-choice.html">Choisir mon role</a>
+          <a class="btn btn-secondary" href="browse-missions.html">Voir les missions</a>
+        </div>
+        <div class="trust-row" aria-label="Points forts">
+          <div class="trust-item">
+            <strong>Suivi GPS</strong>
+            <span>Statut visible a chaque etape</span>
+          </div>
+          <div class="trust-item">
+            <strong>Paiement securise</strong>
+            <span>Parcours clair pour tous</span>
+          </div>
+          <div class="trust-item">
+            <strong>Local</strong>
+            <span>Des trajets deja prevus</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
+        <div class="route-map"></div>
+        <div class="route-line"></div>
+        <div class="route-point start"></div>
+        <div class="route-point end"></div>
+        <article class="delivery-card">
+          <header>
+            <h2>Mission Montreal -> Laval</h2>
+            <span class="status-pill">En cours</span>
+          </header>
+          <div class="delivery-grid">
+            <div>
+              <span>Distance</span>
+              <strong>18 km</strong>
+            </div>
+            <div>
+              <span>Gain livreur</span>
+              <strong>24,50 $</strong>
+            </div>
+            <div>
+              <span>Arrivee</span>
+              <strong>14:35</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="features-section" id="features">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Un parcours simple, de la demande a la livraison.</h2>
+          <p>Le design met maintenant l'accent sur les actions importantes, la lisibilite mobile et la confiance.</p>
+        </div>
+        <div class="features">
+          <article class="feature-card">
+            <div class="feature-kicker">1</div>
+            <h3>Publier une livraison</h3>
+            <p>L'expediteur precise le trajet, le colis et les details utiles. La mission devient claire et rapide a comparer.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">2</div>
+            <h3>Accepter un trajet</h3>
+            <p>Le livreur choisit les missions qui correspondent a ses deplacements et voit le gain avant de s'engager.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">3</div>
+            <h3>Suivre et confirmer</h3>
+            <p>Les statuts, le paiement et le suivi restent visibles pour reduire les frictions jusqu'a la confirmation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>&copy; 2026 PorteaPorte</span>
+      <span><a href="cgu.html">CGU</a> · <a href="confidentialite.html">Confidentialite</a></span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,188 @@
+================================================================
+  PORTEAPORTE — RÉSUMÉ DES FONCTIONNALITÉS
+  État : regression2 (2026-05-15)
+================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RÔLES UTILISATEURS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  3 rôles distincts :
+    - expediteur  → envoie des colis
+    - livreur     → accepte et livre des colis
+    - admin       → gère la plateforme
+
+  Accès : login.html → role-choice.html → inscription
+  Connexion admin : denismorneaubtc@gmail.com / 69PorteAPorte69$
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EXPÉDITEUR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Page principale : /dashboard-expediteur.html
+
+  Fonctionnalités :
+    - Créer une nouvelle livraison (ville départ, ville arrivée,
+      type de colis, poids, prix)
+    - Voir la liste de ses expéditions passées et en cours
+    - Suivre une livraison via le bouton "Suivi"
+      → ouvre /gps-tracker.html?id=<livraison_id>
+    - Voir son profil : XP, score de confiance, solde, total dépensé
+    - Paiement via Stripe (pré-autorisation au moment de la commande)
+
+  Statuts d'une livraison (dans l'ordre) :
+    en_attente → publie → paiement_autorise → confirme
+    → en_route → ramasse → livre → payee
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  LIVREUR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Page principale : /dashboard-livreur.html
+
+  Fonctionnalités :
+    - Voir les livraisons disponibles (statut publie ou
+      paiement_autorise, sans livreur assigné)
+    - Accepter une mission disponible
+    - Voir ses livraisons en cours
+    - Accéder au GPS via /gps-tracker.html?livraison_id=<id>
+    - Accéder aux missions filtrées via /browse-missions.html
+
+  Filtrage par mode de transport (dans browse-missions.html) :
+    - À pied   → même ville, max 5 km, max 5 kg
+    - Vélo     → même ville, max 20 km, max 15 kg
+    - Scooter  → même ville, max 20 km, max 15 kg
+    - Motorisé → toutes distances, pas de limite de poids
+
+  Mode de transport détecté depuis le profil Supabase :
+    champs : mode_livraison, transport_mode, vehicule, trajet_principal
+    mots-clés : "velo/bicyc/bike" → vélo | "moto/auto/voiture" → motorisé
+
+  Vérification livreur :
+    - Le livreur doit avoir driver_status = "verified" dans Supabase
+    - L'admin bypass automatiquement cette vérification
+    - Email doit être confirmé (sauf admin)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ADMINISTRATEUR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Page principale : /admin/dashboard-admin.html
+
+  Fonctionnalités :
+    - Voir tous les utilisateurs (expediteurs, livreurs, admins)
+    - Approuver ou rejeter les livreurs en attente de vérification
+      (driver_status : pending → verified / rejected)
+    - Voir les 30 dernières livraisons
+    - Statistiques globales : total users, livreurs actifs,
+      livraisons totales, montant total
+    - Accès complet à toutes les missions (bypass filtres transport)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  GPS & SUIVI EN TEMPS RÉEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Pages : /gps-tracker.html  et  /suivi-livraison.html
+
+  Fonctionnement :
+    - Carte OpenStreetMap (Leaflet.js) — gratuit, sans clé API
+    - Centre par défaut : Québec/Lévis (46.77, -71.28)
+    - Livreur démarre le suivi → position envoyée toutes les ~3 sec
+    - Position sauvegardée dans la table Supabase : delivery_locations
+    - Expéditeur peut voir la position en temps réel via Supabase Realtime
+    - Sans livraison_id dans l'URL → GPS fonctionne visuellement
+      mais ne sauvegarde pas dans la base
+
+  URL avec livraison liée :
+    /gps-tracker.html?livraison_id=<id>   (ou ?id=<id>)
+
+  API backend : /api/gps-update
+    → vérifie que le livreur est bien assigné à cette livraison
+    → insère dans delivery_locations
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  API BACKEND (/api/platform.js)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Endpoints disponibles (via POST avec Bearer token) :
+    create-livraison          → créer une livraison
+    available-livraisons      → liste des missions disponibles
+    assign-driver             → assigner un livreur
+    gps-update                → mise à jour position GPS
+    tracking                  → lire la position d'une livraison
+    confirm-delivery          → confirmer une livraison livrée
+    notifications             → lire les notifications
+    submit-driver-verification → soumettre vérification livreur
+    admin-update-driver-status → approuver/rejeter un livreur (admin)
+    refund-payment            → rembourser via Stripe
+
+  Variables d'environnement requises sur Vercel :
+    SUPABASE_URL              ✓ configurée
+    SUPABASE_SERVICE_KEY      ✓ configurée
+    SUPABASE_ANON_KEY         ✓ configurée
+    STRIPE_SECRET_KEY         ✓ configurée
+    STRIPE_PUBLIC_KEY         ✓ configurée
+    STRIPE_WEBHOOK_SECRET     ✓ configurée
+    SENDGRID_API_KEY          ✓ configurée
+    GOOGLE_MAPS_API_KEY       ✗ NON configurée (remplacé par Leaflet)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BASE DE DONNÉES SUPABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Tables principales :
+    profiles          → utilisateurs (role, driver_status, xp, score...)
+    livraisons        → colis (statut, prix, villes, livreur_id...)
+    delivery_locations → positions GPS en temps réel
+    notifications     → alertes utilisateurs
+
+  Colonne de date des livraisons : cree_le  (PAS created_at)
+
+  Statuts driver_status :
+    pending   → en attente d'approbation admin
+    verified  → approuvé, peut voir les missions
+    rejected  → refusé
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PAGES PRINCIPALES DU SITE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  /index.html                   → page d'accueil
+  /login.html                   → connexion
+  /role-choice.html             → choix du rôle à l'inscription
+  /dashboard-expediteur.html    → espace expéditeur
+  /dashboard-livreur.html       → espace livreur
+  /admin/dashboard-admin.html   → espace administrateur
+  /browse-missions.html         → missions disponibles (livreur)
+  /gps-tracker.html             → suivi GPS en direct
+  /suivi-livraison.html         → suivi d'une livraison (expéditeur)
+  /paiement.html                → paiement Stripe
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PROBLÈMES CONNUS / LIMITES ACTUELLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - Le mode client de gps-tracker.html (suivi par code)
+    n'est pas encore implémenté (affiche un message seulement)
+
+  - Le filtrage par mode de transport ne fonctionne que si
+    le profil livreur a ses champs vehicule/mode_livraison remplis
+
+  - Les emojis dans live-gps.js sont corrompus (cosmétique,
+    n'affecte pas le fonctionnement)
+
+  - GOOGLE_MAPS_API_KEY non configurée → carte remplacée par
+    Leaflet/OpenStreetMap (gratuit, fonctionnel)
+
+================================================================
+  FIN DU DOCUMENT
+================================================================

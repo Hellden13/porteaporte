@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Transparence mensuelle des dons PorteaPorte">
+  <title>Transparence - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body{padding:0}
+    .hero{padding:56px 0 28px;border-bottom:1px solid var(--brand-bg-surface-light);background:linear-gradient(180deg,rgba(184,245,62,.06),transparent)}
+    .hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1;margin:0 0 12px;color:var(--brand-text)}
+    .hero p{max-width:760px;color:var(--brand-muted);font-size:1rem;line-height:1.7;margin:0}
+    .impact-grid{display:grid;gap:16px;grid-template-columns:1fr;margin:28px 0}
+    @media(min-width:820px){.impact-grid{grid-template-columns:repeat(3,1fr)}}
+    .metric,.org-card,.panel{background:var(--brand-bg-surface);border:1px solid var(--brand-bg-surface-light);border-radius:12px;padding:20px}
+    .metric-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-muted);margin-bottom:8px}
+    .metric-value{font-size:2rem;font-weight:900;color:var(--brand-lime);line-height:1}
+    .metric-sub{font-size:.82rem;color:var(--brand-muted);margin-top:8px;line-height:1.5}
+    .section-title{font-size:.95rem;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-lime);font-weight:800;margin:26px 0 14px}
+    .orgs{display:grid;gap:14px}
+    @media(min-width:820px){.orgs{grid-template-columns:repeat(3,1fr)}}
+    .org-name{font-size:1.05rem;font-weight:900;color:var(--brand-text);margin-bottom:6px}
+    .org-desc{color:var(--brand-muted);font-size:.88rem;line-height:1.55;min-height:44px}
+    .bar{height:9px;border-radius:99px;background:var(--brand-bg-dark);overflow:hidden;margin:16px 0 10px;border:1px solid var(--brand-bg-surface-light)}
+    .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--brand-lime),var(--brand-cyan))}
+    .split{display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--brand-muted);font-size:.86rem}
+    .amount{font-size:1.4rem;font-weight:900;color:var(--brand-lime)}
+    .note{font-size:.84rem;color:var(--brand-muted);line-height:1.65}
+    .status{display:inline-flex;padding:5px 10px;border:1px solid rgba(184,245,62,.35);border-radius:999px;color:var(--brand-lime);font-size:.78rem;font-weight:800;margin-bottom:14px}
+    .empty{color:var(--brand-muted);padding:22px;text-align:center}
+    .request-grid{display:grid;gap:12px;grid-template-columns:1fr}
+    @media(min-width:760px){.request-grid{grid-template-columns:repeat(2,1fr)}.request-grid .full{grid-column:span 2}}
+    .field{display:grid;gap:6px}
+    .field label{font-size:.78rem;color:var(--brand-muted);font-weight:800}
+    .field input,.field textarea{width:100%;border:1px solid var(--brand-bg-surface-light);border-radius:8px;background:var(--brand-bg-dark);color:var(--brand-text);padding:11px 12px;font:inherit}
+    .field textarea{min-height:92px;resize:vertical}
+    .form-message{font-size:.88rem;margin-top:12px;color:var(--brand-muted)}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a class="navbar-brand" href="/">PorteaPorte</a>
+      <div class="navbar-links">
+        <a href="/">Accueil</a>
+        <a href="/faq.html">FAQ</a>
+        <a href="/login.html">Connexion</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <span class="status">Transparence en direct</span>
+      <h1>Chaque mois, on montre où va l'argent.</h1>
+      <p>Les dons PorteaPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont estimés en direct à partir des livraisons complétées, puis confirmés à la clôture du mois.</p>
+    </div>
+  </header>
+
+  <main class="container" style="padding-bottom:48px">
+    <div class="impact-grid">
+      <div class="metric">
+        <div class="metric-label">Mois affiché</div>
+        <div class="metric-value" id="impact-month">—</div>
+        <div class="metric-sub" id="impact-generated">Chargement...</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Fonds dons estimé</div>
+        <div class="metric-value" id="impact-pool">—</div>
+        <div class="metric-sub">Basé sur la portion solidaire des revenus plateforme.</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Livraisons comptées</div>
+        <div class="metric-value" id="impact-deliveries">—</div>
+        <div class="metric-sub" id="impact-rate">—</div>
+      </div>
+    </div>
+
+    <div class="section-title">Organismes sélectionnés</div>
+    <div id="impact-orgs" class="orgs">
+      <div class="panel empty">Chargement des organismes...</div>
+    </div>
+
+    <div class="section-title">Méthode de calcul</div>
+    <div class="panel note" id="impact-note">
+      Les montants sont calculés automatiquement à partir des livraisons payées. Les versements réels doivent être rapprochés et confirmés par l'administration.
+    </div>
+
+    <div class="section-title">Faire une demande d'aide</div>
+    <section class="panel">
+      <p class="note" style="margin-top:0">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
+      <form id="impact-application-form" class="request-grid">
+        <div class="field">
+          <label for="app-org">Nom de l'organisme</label>
+          <input id="app-org" required maxlength="160" placeholder="Ex. Club, école, organisme local">
+        </div>
+        <div class="field">
+          <label for="app-contact">Personne contact</label>
+          <input id="app-contact" required maxlength="120" placeholder="Nom complet">
+        </div>
+        <div class="field">
+          <label for="app-email">Courriel</label>
+          <input id="app-email" required type="email" maxlength="180" placeholder="contact@organisme.ca">
+        </div>
+        <div class="field">
+          <label for="app-phone">Téléphone</label>
+          <input id="app-phone" maxlength="60" placeholder="Optionnel">
+        </div>
+        <div class="field full">
+          <label for="app-url">Site web</label>
+          <input id="app-url" maxlength="250" placeholder="https://...">
+        </div>
+        <div class="field full">
+          <label for="app-mission">Mission et impact</label>
+          <textarea id="app-mission" required maxlength="1200" placeholder="Expliquez qui vous aidez, dans quelle région, et pourquoi PorteaPorte devrait vous soutenir."></textarea>
+        </div>
+        <div class="field full">
+          <label for="app-support">Type d'aide souhaitée</label>
+          <textarea id="app-support" maxlength="800" placeholder="Ex. dons mensuels, campagne ponctuelle, visibilité, transport solidaire..."></textarea>
+        </div>
+        <div class="full" style="display:flex;justify-content:flex-end">
+          <button id="impact-application-submit" class="btn" type="submit">Envoyer la demande</button>
+        </div>
+      </form>
+      <div id="impact-application-message" class="form-message"></div>
+    </section>
+  </main>
+
+  <script>
+    function money(cents){return (Number(cents||0)/100).toLocaleString('fr-CA',{style:'currency',currency:'CAD'});}
+    function monthLabel(value){
+      if(!value)return '—';
+      const d=new Date(value+'T00:00:00Z');
+      return d.toLocaleDateString('fr-CA',{month:'long',year:'numeric',timeZone:'UTC'});
+    }
+    async function loadImpact(){
+      try{
+        const res=await fetch('/api/impact-public');
+        const out=await res.json();
+        if(!res.ok)throw new Error(out.error||'Chargement impossible');
+        const impact=out.impact;
+        document.getElementById('impact-month').textContent=monthLabel(impact.month);
+        document.getElementById('impact-generated').textContent='Mise à jour '+new Date(impact.generated_at).toLocaleString('fr-CA');
+        document.getElementById('impact-pool').textContent=money(impact.totals.donation_pool_cents);
+        document.getElementById('impact-deliveries').textContent=impact.totals.deliveries_count||0;
+        document.getElementById('impact-rate').textContent=`${impact.totals.donation_rate_percent}% de la commission plateforme`;
+        document.getElementById('impact-note').textContent=impact.note;
+        const orgs=impact.allocations||[];
+        document.getElementById('impact-orgs').innerHTML=orgs.length?orgs.map(org=>`
+          <article class="org-card">
+            <div class="org-name">${org.name}</div>
+            <div class="org-desc">${org.description||'Organisme soutenu par PorteaPorte.'}</div>
+            <div class="bar"><span style="width:${Math.max(0,Math.min(100,org.allocation_percent))}%"></span></div>
+            <div class="split"><span>${org.allocation_percent}% du fonds</span><span class="amount">${money(org.amount_cents)}</span></div>
+            ${org.website_url?`<a href="${org.website_url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;color:var(--brand-cyan);font-weight:800;text-decoration:none">Voir l'organisme</a>`:''}
+          </article>
+        `).join(''):'<div class="panel empty">Aucun organisme actif pour le moment.</div>';
+      }catch(err){
+        document.getElementById('impact-orgs').innerHTML='<div class="panel empty">Impossible de charger la transparence pour le moment.</div>';
+      }
+    }
+    document.getElementById('impact-application-form').addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const btn=document.getElementById('impact-application-submit');
+      const msg=document.getElementById('impact-application-message');
+      btn.disabled=true;
+      btn.textContent='Envoi...';
+      msg.textContent='';
+      try{
+        const res=await fetch('/api/impact-application',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            organisation_name:document.getElementById('app-org').value.trim(),
+            contact_name:document.getElementById('app-contact').value.trim(),
+            email:document.getElementById('app-email').value.trim(),
+            phone:document.getElementById('app-phone').value.trim(),
+            website_url:document.getElementById('app-url').value.trim(),
+            mission:document.getElementById('app-mission').value.trim(),
+            requested_support:document.getElementById('app-support').value.trim()
+          })
+        });
+        const out=await res.json().catch(()=>({}));
+        if(!res.ok)throw new Error(out.error||'Demande impossible');
+        event.target.reset();
+        msg.style.color='var(--brand-lime)';
+        msg.textContent='Demande reçue. Elle sera analysée par l’administration.';
+      }catch(err){
+        msg.style.color='#ff8a8a';
+        msg.textContent=err.message;
+      }finally{
+        btn.disabled=false;
+        btn.textContent='Envoyer la demande';
+      }
+    });
+    loadImpact();
+  </script>
+</body>
+</html>
