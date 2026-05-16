@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Règles du covoiturage · PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      background: rgba(10,12,16,0.85); border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+    .page-inner { max-width: 800px; margin: 0 auto; padding: 56px clamp(18px,4vw,48px) 80px; }
+
+    .hero-legal {
+      background: rgba(184,245,62,0.07); border: 2px solid var(--brand-lime);
+      border-radius: 16px; padding: 28px 32px; margin-bottom: 48px; text-align: center;
+    }
+    .hero-legal h1 { margin: 0 0 12px; font-size: clamp(1.4rem,3vw,2rem); color: var(--brand-text); }
+    .hero-legal .statement {
+      font-size: 1.05rem; color: var(--brand-lime); font-weight: 700;
+      line-height: 1.6; margin: 0;
+    }
+
+    .section { margin-bottom: 40px; }
+    .section h2 {
+      font-size: 1.15rem; color: var(--brand-lime);
+      border-bottom: 1px solid var(--brand-border); padding-bottom: 10px;
+      margin: 0 0 18px; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem;
+    }
+    .rule-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .rule-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 10px; padding: 14px 16px; font-size: 0.92rem; line-height: 1.6;
+      color: var(--brand-muted);
+    }
+    .rule-list li .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .rule-list li strong { color: var(--brand-text); }
+
+    .forbidden-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .forbidden-list li {
+      display: flex; gap: 12px; align-items: center;
+      background: rgba(229,62,62,0.06); border: 1px solid rgba(229,62,62,0.2);
+      border-radius: 8px; padding: 12px 16px; font-size: 0.9rem; color: var(--brand-muted);
+    }
+    .forbidden-list li .icon { color: var(--brand-danger,#e53e3e); font-size: 1.1rem; }
+
+    .cta-box {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 28px; text-align: center; margin-top: 48px;
+    }
+    .cta-box h3 { margin: 0 0 10px; color: var(--brand-text); }
+    .cta-box p  { margin: 0 0 20px; color: var(--brand-muted); }
+    .cta-box .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
+    <a class="btn btn-ghost" href="/covoiturage.html">← Covoiturage</a>
+  </header>
+
+  <main class="page-inner">
+
+    <div class="hero-legal">
+      <h1>Règles du covoiturage PorteàPorte</h1>
+      <p class="statement">
+        "Le covoiturage PorteàPorte repose sur le partage des frais d'un trajet existant.<br>
+        Il ne s'agit pas d'un service de taxi ou de transport commercial."
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>📌 Principe fondamental</h2>
+      <ul class="rule-list">
+        <li><span class="icon">🚗</span><div>Le conducteur effectue un trajet qu'il <strong>aurait de toute façon réalisé</strong>. Il invite des passagers à partager les frais réels.</div></li>
+        <li><span class="icon">💰</span><div>Le prix est basé uniquement sur les <strong>coûts réels estimés</strong> : carburant, usure du véhicule. Le conducteur <strong>ne peut pas réaliser de profit</strong>.</div></li>
+        <li><span class="icon">📏</span><div>Le prix maximum recommandé est de <strong>0,50 $/km</strong> par place. Au-delà, une alerte est affichée.</div></li>
+        <li><span class="icon">⚖️</span><div>La répartition des frais est <strong>proportionnelle à la distance</strong> réellement parcourue par chaque passager.</div></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>👤 Responsabilités du conducteur</h2>
+      <ul class="rule-list">
+        <li><span class="icon">📋</span><div>Posséder un <strong>permis de conduire valide</strong> et une assurance automobile en vigueur au Québec.</div></li>
+        <li><span class="icon">✅</span><div>Publier uniquement des trajets <strong>réels qu'il effectue</strong> — pas des courses inventées pour générer des revenus.</div></li>
+        <li><span class="icon">🕐</span><div>Respecter les horaires publiés ou prévenir les passagers en cas de changement avec un préavis raisonnable.</div></li>
+        <li><span class="icon">🚭</span><div>Respecter les préférences indiquées (non-fumeur, animaux, etc.) déclarées lors de la publication du trajet.</div></li>
+        <li><span class="icon">🔒</span><div>Ne pas partager les informations personnelles des passagers à des tiers.</div></li>
+        <li><span class="icon">📞</span><div>Être joignable via la messagerie PorteàPorte jusqu'à l'heure de départ.</div></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🧳 Responsabilités du passager</h2>
+      <ul class="rule-list">
+        <li><span class="icon">⏰</span><div>Être présent au point de départ à l'heure convenue. En cas de retard, <strong>prévenir via la messagerie</strong>.</div></li>
+        <li><span class="icon">✔️</span><div>Fournir des informations exactes lors de la réservation (point d'embarquement, bagages, animal, etc.).</div></li>
+        <li><span class="icon">🤝</span><div>Respecter les règles personnelles du conducteur publiées sur la fiche du trajet.</div></li>
+        <li><span class="icon">💬</span><div>Communiquer via la <strong>messagerie PorteàPorte uniquement</strong> avant confirmation — ne jamais demander le numéro de téléphone direct au préalable.</div></li>
+        <li><span class="icon">🔔</span><div>Annuler via la plateforme si vous ne pouvez plus participer — cela libère la place pour quelqu'un d'autre.</div></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🛡️ Sécurité et confiance</h2>
+      <ul class="rule-list">
+        <li><span class="icon">📍</span><div>Les <strong>adresses exactes</strong> d'embarquement/débarquement ne sont partagées qu'après confirmation mutuelle de la réservation.</div></li>
+        <li><span class="icon">⭐</span><div>Conducteurs et passagers s'évaluent mutuellement après chaque trajet. Les profils insuffisants peuvent être suspendus.</div></li>
+        <li><span class="icon">🚨</span><div>Tout comportement inapproprié, dangereux ou frauduleux doit être signalé via le bouton "Signaler" — notre équipe intervient sous 24h.</div></li>
+        <li><span class="icon">📢</span><div>Vous pouvez partager votre trajet en cours avec un proche via la fonction de suivi GPS PorteàPorte.</div></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🚫 Ce qui est interdit</h2>
+      <ul class="forbidden-list">
+        <li><span class="icon">✗</span><div>Présenter le covoiturage comme un <strong>service de taxi ou de transport commercial</strong></div></li>
+        <li><span class="icon">✗</span><div>Fixer un prix <strong>supérieur aux frais réels</strong> dans le but de réaliser un profit</div></li>
+        <li><span class="icon">✗</span><div>Transporter des <strong>substances illégales</strong>, armes, matières dangereuses</div></li>
+        <li><span class="icon">✗</span><div>Transporter des animaux <strong>non déclarés</strong> lors de la réservation si le conducteur ne les accepte pas</div></li>
+        <li><span class="icon">✗</span><div>Harcèlement, discrimination ou comportement irrespectueux envers conducteur ou passager</div></li>
+        <li><span class="icon">✗</span><div>Créer de faux profils ou <strong>fausses réservations</strong></div></li>
+        <li><span class="icon">✗</span><div>Contourner la plateforme pour effectuer des paiements en dehors du système PorteàPorte</div></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>⚖️ Cadre légal — Québec</h2>
+      <ul class="rule-list">
+        <li><span class="icon">📜</span><div>Le covoiturage entre particuliers avec partage des frais est <strong>légal au Québec</strong> lorsqu'il ne constitue pas un service de transport rémunéré au sens de la <em>Loi concernant les services de transport par taxi</em>.</div></li>
+        <li><span class="icon">🏛️</span><div>Le conducteur <strong>n'est pas un chauffeur professionnel</strong> et ne requiert pas de permis de taxi ou de VTC dans le cadre d'un simple partage de frais.</div></li>
+        <li><span class="icon">🛡️</span><div>PorteàPorte est une <strong>plateforme de mise en relation</strong> uniquement. Elle ne fournit pas de service de transport et n'est pas responsable des incidents survenant pendant le trajet.</div></li>
+        <li><span class="icon">📄</span><div>Consultez les <a href="/cgu.html" style="color:var(--brand-lime)">Conditions générales d'utilisation</a> pour l'ensemble des droits et responsabilités.</div></li>
+      </ul>
+    </div>
+
+    <div class="cta-box">
+      <h3>Prêt à covoiturer ?</h3>
+      <p>Des milliers de trajets partagés au Québec. Rejoignez la communauté PorteàPorte.</p>
+      <div class="btns">
+        <a class="btn" href="/covoiturage-publier.html">Publier un trajet</a>
+        <a class="btn btn-secondary" href="/covoiturage.html">Trouver une place</a>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>

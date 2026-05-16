@@ -1,6 +1,644 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Covoiturage colis - PorteaPorte</title><link rel="stylesheet" href="/assets/brand-uniform.css"><style>body{min-height:100vh;display:grid;place-items:center;padding:24px}.box{max-width:680px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px;text-align:center}.btn{display:inline-flex;width:auto;text-decoration:none;margin:8px}</style></head>
-<body><main class="box"><h1>Covoiturage colis</h1><p>Cette section sera reliee au matching de trajets. Pour la beta, utilise les missions et le dashboard livreur.</p><a class="btn" href="/browse-missions.html">Voir les missions</a><a class="btn secondary" href="/index.html">Accueil</a></main></body>
-</html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Covoiturage · PorteàPorte</title>
+  <meta name="description" content="Partagez les frais d'un trajet existant. Mise en relation entre conducteurs et passagers au Québec.">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    /* ── HERO ── */
+    .cov-hero {
+      position: relative;
+      width: 100%;
+      max-height: 520px;
+      overflow: hidden;
+    }
+    .cov-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      max-height: 520px;
+    }
+    .cov-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(10,12,16,0) 40%, rgba(10,12,16,0.95) 100%);
+      pointer-events: none;
+    }
 
+    /* ── BANNIÈRE LÉGALE ── */
+    .legal-banner {
+      background: rgba(184,245,62,0.08);
+      border-top: 2px solid var(--brand-lime);
+      border-bottom: 1px solid rgba(184,245,62,0.2);
+      padding: 14px clamp(18px,4vw,48px);
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--brand-lime);
+      line-height: 1.5;
+    }
+    .legal-banner strong { font-weight: 800; }
+
+    /* ── LAYOUT PRINCIPAL ── */
+    .page-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 clamp(18px,4vw,48px);
+    }
+
+    /* ── SEARCH CARD ── */
+    .search-section {
+      padding: 48px 0 0;
+    }
+    .search-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .search-card h2 {
+      margin: 0 0 24px;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      color: var(--brand-text);
+    }
+    .search-card h2 span { color: var(--brand-lime); }
+    .search-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 160px 120px;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 860px) {
+      .search-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 540px) {
+      .search-grid { grid-template-columns: 1fr; }
+    }
+    .field label {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+      color: var(--brand-text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .field input:focus, .field select:focus { border-color: var(--brand-lime); }
+    .field input::placeholder { color: var(--brand-muted); font-weight: 400; }
+
+    /* ── FILTRES AVANCÉS ── */
+    .filters-toggle {
+      margin-top: 12px;
+      background: none;
+      border: none;
+      color: var(--brand-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 4px 0;
+      text-decoration: underline;
+    }
+    .filters-toggle:hover { color: var(--brand-lime); }
+    .filters-extra {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--brand-border);
+      display: none;
+    }
+    .filters-extra.open { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--brand-muted);
+      transition: border-color 0.2s, color 0.2s;
+      user-select: none;
+    }
+    .checkbox-option input { accent-color: var(--brand-lime); }
+    .checkbox-option:has(input:checked) {
+      border-color: var(--brand-lime);
+      color: var(--brand-text);
+    }
+
+    /* ── RÉSULTATS ── */
+    .results-section { padding: 32px 0; }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .results-header h3 { margin: 0; color: var(--brand-text); font-size: 1.1rem; }
+    .results-count { color: var(--brand-muted); font-size: 0.88rem; }
+    #results-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .ride-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+    .ride-card:hover { border-color: var(--brand-lime); }
+    .ride-route {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--brand-text);
+    }
+    .ride-route .arrow { color: var(--brand-lime); }
+    .ride-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--brand-muted);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--brand-border);
+      font-size: 0.78rem;
+    }
+    .badge.green  { background: rgba(184,245,62,0.08); border-color: rgba(184,245,62,0.3); color: var(--brand-lime); }
+    .badge.blue   { background: rgba(0,217,255,0.08); border-color: rgba(0,217,255,0.3); color: var(--brand-cyan); }
+    .ride-price {
+      text-align: right;
+    }
+    .ride-price-amount {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--brand-lime);
+      line-height: 1;
+    }
+    .ride-price-label { font-size: 0.75rem; color: var(--brand-muted); margin-top: 2px; }
+    .ride-price .btn { margin-top: 10px; white-space: nowrap; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--brand-muted);
+    }
+    .empty-state p { margin: 8px 0 0; font-size: 0.95rem; }
+
+    /* ── CTA 2 ACTIONS ── */
+    .cta-section {
+      padding: 56px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 640px) { .cta-section { grid-template-columns: 1fr; } }
+    .cta-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 16px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .cta-card.primary { border-color: var(--brand-lime); }
+    .cta-icon { font-size: 2rem; }
+    .cta-card h3 { margin: 0; font-size: 1.3rem; color: var(--brand-text); }
+    .cta-card p  { margin: 0; color: var(--brand-muted); line-height: 1.65; font-size: 0.95rem; }
+    .cta-card .btn { align-self: flex-start; margin-top: 8px; }
+
+    /* ── COMMENT ÇA MARCHE ── */
+    .how-section { padding: 0 0 64px; }
+    .how-section h2 {
+      margin: 0 0 28px;
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      color: var(--brand-text);
+    }
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 860px) { .how-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 480px) { .how-grid { grid-template-columns: 1fr; } }
+    .how-step {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .how-step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(184,245,62,0.12);
+      color: var(--brand-lime);
+      font-weight: 900;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    .how-step h4 { margin: 0 0 6px; color: var(--brand-text); font-size: 1rem; }
+    .how-step p  { margin: 0; color: var(--brand-muted); font-size: 0.88rem; line-height: 1.6; }
+
+    /* ── SÉCURITÉ ── */
+    .trust-section {
+      padding: 0 0 64px;
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 12px;
+    }
+    @media (max-width: 640px) { .trust-section { grid-template-columns: 1fr; } }
+    .trust-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .trust-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .trust-card h4 { margin: 0 0 4px; font-size: 0.95rem; color: var(--brand-text); }
+    .trust-card p  { margin: 0; font-size: 0.82rem; color: var(--brand-muted); line-height: 1.5; }
+
+    /* ── FOOTER LEGAL ── */
+    .legal-footer {
+      border-top: 1px solid var(--brand-border);
+      padding: 24px 0 48px;
+      color: var(--brand-muted);
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+    .legal-footer a { color: var(--brand-lime); text-decoration: none; }
+
+    /* ── NAVBAR ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10,12,16,0.85);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark {
+      display: inline-flex; align-items: center; gap: 10px;
+      color: var(--brand-text); font-weight: 900; text-decoration: none;
+    }
+    .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a { color: var(--brand-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+    .nav-links a:hover { color: var(--brand-lime); }
+    .nav-links a.active { color: var(--brand-lime); }
+    @media (max-width: 640px) { .nav-links { display: none; } }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid var(--brand-border);
+      border-top-color: var(--brand-lime);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html">
+      <img src="/logo.svg" alt="">
+      <span>PorteàPorte</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/index.html">Accueil</a>
+      <a href="/browse-missions.html">Missions</a>
+      <a href="/covoiturage.html" class="active">Covoiturage</a>
+      <a href="/login.html">Connexion</a>
+    </nav>
+    <div style="display:flex;gap:10px;">
+      <a class="btn btn-ghost" href="/login.html">Connexion</a>
+      <a class="btn" href="/covoiturage-publier.html">Publier un trajet</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="cov-hero">
+    <img src="/assets/banniere-covoiturage.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits">
+  </div>
+
+  <!-- BANNIÈRE LÉGALE -->
+  <div class="legal-banner">
+    <strong>ℹ️ Le covoiturage PorteàPorte repose sur le partage des frais d'un trajet existant.</strong>
+    Il ne s'agit pas d'un service de taxi ou de transport commercial.
+    <a href="/covoiturage/regles.html" style="color:var(--brand-lime);margin-left:8px;font-weight:700;">En savoir plus →</a>
+  </div>
+
+  <main>
+    <div class="page-inner">
+
+      <!-- RECHERCHE -->
+      <section class="search-section">
+        <div class="search-card">
+          <h2>Trouver un trajet <span>près de vous</span></h2>
+          <div class="search-grid">
+            <div class="field">
+              <label>Départ</label>
+              <input type="text" id="s-from" placeholder="Ex : Québec" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Destination</label>
+              <input type="text" id="s-to" placeholder="Ex : Montréal" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="s-date">
+            </div>
+            <div class="field">
+              <label>Places</label>
+              <select id="s-seats">
+                <option value="1">1 place</option>
+                <option value="2">2 places</option>
+                <option value="3">3 places</option>
+                <option value="4">4 places</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="filters-toggle" onclick="toggleFilters(this)">+ Filtres avancés</button>
+          <div class="filters-extra" id="filters-extra">
+            <label class="checkbox-option"><input type="checkbox" id="f-pets"> 🐾 Animaux acceptés</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-luggage"> 🧳 Gros bagages</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-stops"> 📍 Arrêts intermédiaires</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-nonsmoker"> 🚭 Non-fumeur</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-accessible"> ♿ Accessible</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-childseat"> 🪑 Siège enfant dispo</label>
+          </div>
+
+          <div style="margin-top:18px;">
+            <button class="btn" onclick="searchRides()" id="search-btn">🔍 Rechercher</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RÉSULTATS -->
+      <section class="results-section" id="results-section" style="display:none;">
+        <div class="results-header">
+          <h3>Trajets disponibles</h3>
+          <span class="results-count" id="results-count"></span>
+        </div>
+        <div id="results-list"></div>
+      </section>
+
+      <!-- 2 CTAs -->
+      <section class="cta-section">
+        <div class="cta-card primary">
+          <div class="cta-icon">🚗</div>
+          <h3>Vous faites déjà la route ?</h3>
+          <p>Publiez votre trajet, partagez les frais d'essence et de déplacement avec des passagers qui vont dans la même direction.</p>
+          <p style="font-size:0.82rem;color:var(--brand-lime);">Trajet de 250 km → économisez jusqu'à 60 $</p>
+          <a class="btn" href="/covoiturage-publier.html">Publier mon trajet</a>
+        </div>
+        <div class="cta-card">
+          <div class="cta-icon">🪑</div>
+          <h3>Vous cherchez un trajet abordable ?</h3>
+          <p>Trouvez un conducteur qui fait déjà la même route. Payez uniquement votre portion du trajet, de façon transparente.</p>
+          <p style="font-size:0.82rem;color:var(--brand-cyan);">Prix estimé calculé selon votre portion réelle</p>
+          <a class="btn btn-secondary" href="#" onclick="document.getElementById('s-from').focus();return false;">Trouver une place</a>
+        </div>
+      </section>
+
+      <!-- COMMENT ÇA MARCHE -->
+      <section class="how-section" id="features">
+        <h2>Comment ça marche</h2>
+        <div class="how-grid">
+          <div class="how-step">
+            <div class="how-step-num">1</div>
+            <h4>Publiez votre trajet</h4>
+            <p>Le conducteur indique son départ, sa destination, ses disponibilités et les options de son véhicule.</p>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">2</div>
+            <h4>Des passagers réservent</h4>
+            <p>Les passagers trouvent le trajet, voient le prix estimé selon leur portion et réservent leur place.</p>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">3</div>
+            <h4>Partez ensemble</h4>
+            <p>Chacun connaît son rôle. Le conducteur n'est pas un taxi — c'est un voisin qui partage sa route.</p>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">4</div>
+            <h4>Tout le monde y gagne</h4>
+            <p>Le conducteur réduit ses frais. Le passager voyage à moindre coût. La planète respire un peu.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SÉCURITÉ -->
+      <section class="trust-section">
+        <div class="trust-card">
+          <div class="trust-icon">✅</div>
+          <div>
+            <h4>Profils vérifiés</h4>
+            <p>Les conducteurs vérifiés affichent un badge. Email et identité validés avant de publier.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">💰</div>
+          <div>
+            <h4>Prix transparent</h4>
+            <p>Le détail du calcul est toujours visible : distance, portion, suppléments, frais plateforme.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">💬</div>
+          <div>
+            <h4>Chat intégré</h4>
+            <p>Communiquez via la messagerie PorteàPorte. Votre numéro n'est jamais exposé publiquement.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">🛡️</div>
+          <div>
+            <h4>Adresses protégées</h4>
+            <p>L'adresse exacte n'est partagée qu'après confirmation de la réservation des deux côtés.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">⭐</div>
+          <div>
+            <h4>Système de notes</h4>
+            <p>Conducteurs et passagers s'évaluent mutuellement après chaque trajet complété.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">🚨</div>
+          <div>
+            <h4>Signalement rapide</h4>
+            <p>Un bouton signaler est disponible sur chaque trajet. Notre équipe examine sous 24h.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOTER LÉGAL -->
+      <div class="legal-footer">
+        <strong style="color:var(--brand-text);">Avertissement légal</strong><br>
+        Le covoiturage PorteàPorte repose exclusivement sur le <strong>partage des frais</strong> d'un trajet que le conducteur effectue déjà.
+        Le conducteur ne vend pas une course professionnelle et ne doit pas réaliser de profit sur le transport de personnes.
+        Le prix affiché est basé sur une estimation des coûts réels (carburant + usure véhicule) répartis équitablement entre les passagers.
+        Chaque conducteur est responsable de son permis, de son assurance et du respect du Code de la sécurité routière du Québec.
+        <br><br>
+        <a href="/covoiturage/regles.html">Règles complètes du covoiturage</a> ·
+        <a href="/cgu.html">Conditions générales</a> ·
+        <a href="/confidentialite.html">Confidentialité</a>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    // Date min = aujourd'hui
+    document.getElementById('s-date').min = new Date().toISOString().split('T')[0];
+
+    function toggleFilters(btn) {
+      const el = document.getElementById('filters-extra');
+      const open = el.classList.toggle('open');
+      btn.textContent = open ? '− Masquer les filtres' : '+ Filtres avancés';
+    }
+
+    function fmt(v) {
+      return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function searchRides() {
+      const btn = document.getElementById('search-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Recherche...';
+
+      const params = new URLSearchParams({
+        start_city: document.getElementById('s-from').value.trim(),
+        end_city:   document.getElementById('s-to').value.trim(),
+        date:       document.getElementById('s-date').value,
+        seats:      document.getElementById('s-seats').value,
+        endpoint:   'ride-search',
+      });
+
+      try {
+        const res  = await fetch('/api/ride-search?' + params);
+        const data = await res.json();
+        renderResults(data.rides || []);
+      } catch (e) {
+        renderResults([]);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Rechercher';
+      }
+    }
+
+    function renderResults(rides) {
+      const section = document.getElementById('results-section');
+      const list    = document.getElementById('results-list');
+      const count   = document.getElementById('results-count');
+
+      section.style.display = 'block';
+      count.textContent = rides.length + ' trajet' + (rides.length !== 1 ? 's' : '') + ' trouvé' + (rides.length !== 1 ? 's' : '');
+
+      if (!rides.length) {
+        list.innerHTML = '<div class="empty-state"><div style="font-size:2.5rem">🗺️</div><p>Aucun trajet trouvé pour ces critères.<br>Essayez d\'autres dates ou villes.</p><a class="btn" href="/covoiturage-publier.html" style="margin-top:16px;display:inline-flex;">Publier le premier trajet</a></div>';
+        return;
+      }
+
+      list.innerHTML = rides.map(r => {
+        const badges = [];
+        if (r.accepts_pets)          badges.push('<span class="badge">🐾 Animaux</span>');
+        if (r.accepts_large_luggage) badges.push('<span class="badge">🧳 Gros bagages</span>');
+        if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts</span>');
+        if (r.non_smoker)            badges.push('<span class="badge">🚭 Non-fumeur</span>');
+        if (r.driver && r.driver.verified) badges.push('<span class="badge green">✅ Vérifié</span>');
+        if (r.accessible)            badges.push('<span class="badge blue">♿ Accessible</span>');
+
+        const seats = r.available_seats;
+        const seatsLabel = seats === 1 ? '1 place restante' : seats + ' places restantes';
+
+        return `
+          <div class="ride-card">
+            <div>
+              <div class="ride-route">
+                <span>${r.start_city}${r.start_sector ? ' · ' + r.start_sector : ''}</span>
+                <span class="arrow">→</span>
+                <span>${r.end_city}${r.end_sector ? ' · ' + r.end_sector : ''}</span>
+              </div>
+              <div class="ride-meta">
+                <span>🗓 ${formatDate(r.departure_time)}</span>
+                <span>🚗 ${r.vehicle_type || 'Véhicule'}</span>
+                <span>🪑 ${seatsLabel}</span>
+                ${r.total_distance_km ? '<span>📏 ' + r.total_distance_km + ' km</span>' : ''}
+                ${badges.join('')}
+              </div>
+              ${r.driver ? '<div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);">Conducteur : <strong style="color:var(--brand-text)">' + r.driver.prenom + '</strong></div>' : ''}
+            </div>
+            <div class="ride-price">
+              <div class="ride-price-amount">${fmt(r.estimated_price)}</div>
+              <div class="ride-price-label">par personne</div>
+              <div style="font-size:0.75rem;color:var(--brand-muted);margin-top:2px;">dont ${fmt(r.platform_fee)} frais plateforme</div>
+              <a class="btn" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;">Voir le trajet</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Recherche auto si params dans URL
+    window.addEventListener('DOMContentLoaded', function () {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('from')) document.getElementById('s-from').value = p.get('from');
+      if (p.get('to'))   document.getElementById('s-to').value   = p.get('to');
+      if (p.get('date')) document.getElementById('s-date').value = p.get('date');
+      if (p.get('from') || p.get('to')) searchRides();
+    });
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publier un trajet · Covoiturage PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      background: rgba(10,12,16,0.85); border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+    .page-inner { max-width: 760px; margin: 0 auto; padding: 48px clamp(18px,4vw,48px) 80px; }
+    .page-title { margin: 0 0 8px; font-size: clamp(1.6rem,4vw,2.4rem); color: var(--brand-text); }
+    .page-subtitle { color: var(--brand-muted); margin: 0 0 36px; font-size: 1rem; line-height: 1.6; }
+
+    .legal-note {
+      background: rgba(184,245,62,0.07); border: 1px solid rgba(184,245,62,0.25);
+      border-radius: 8px; padding: 14px 18px; font-size: 0.85rem;
+      color: var(--brand-lime); margin-bottom: 32px; line-height: 1.55;
+    }
+
+    /* STEPS */
+    .steps-nav {
+      display: flex; gap: 0; margin-bottom: 36px;
+      border: 1px solid var(--brand-border); border-radius: 10px; overflow: hidden;
+    }
+    .step-tab {
+      flex: 1; padding: 12px 8px; text-align: center; font-size: 0.8rem;
+      font-weight: 700; color: var(--brand-muted); background: var(--brand-bg-surface);
+      border: none; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .step-tab.active { background: var(--brand-lime); color: var(--brand-bg-dark); }
+    .step-tab.done   { color: var(--brand-lime); }
+
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* FORM */
+    .form-section { margin-bottom: 28px; }
+    .form-section h3 {
+      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--brand-lime); margin: 0 0 16px;
+      border-bottom: 1px solid var(--brand-border); padding-bottom: 8px;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-grid.cols1 { grid-template-columns: 1fr; }
+    @media (max-width: 560px) { .form-grid, .form-grid.cols3 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-muted); }
+    .field input, .field select, .field textarea {
+      padding: 11px 14px; background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border); border-radius: 8px;
+      color: var(--brand-text); font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s; font-family: inherit;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-lime); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field .hint { font-size: 0.75rem; color: var(--brand-muted); margin-top: 2px; }
+
+    /* TOGGLE OPTIONS */
+    .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; }
+    .toggle-option {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: var(--brand-muted);
+      transition: all 0.2s; user-select: none;
+    }
+    .toggle-option input { accent-color: var(--brand-lime); width: 16px; height: 16px; }
+    .toggle-option:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
+
+    /* PRIX PREVIEW */
+    .price-preview {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-lime);
+      border-radius: 12px; padding: 20px 24px; margin-top: 8px;
+    }
+    .price-preview h4 { margin: 0 0 14px; color: var(--brand-text); font-size: 1rem; }
+    .price-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 5px 0; }
+    .price-row.total { border-top: 1px solid var(--brand-border); margin-top: 6px; padding-top: 10px; font-weight: 800; font-size: 1rem; color: var(--brand-lime); }
+    .price-row span:first-child { color: var(--brand-muted); }
+    .price-row span:last-child  { color: var(--brand-text); }
+    .price-row.total span { color: var(--brand-lime); }
+    .over-limit-warning { color: #FFB800; font-size: 0.8rem; margin-top: 8px; }
+
+    /* NAV BTNS */
+    .step-actions { display: flex; gap: 12px; margin-top: 28px; justify-content: space-between; }
+    .step-actions .right { display: flex; gap: 12px; }
+
+    .error-msg { color: var(--brand-danger,#e53e3e); font-size: 0.85rem; margin-top: 8px; display: none; }
+    .success-box {
+      background: rgba(144,238,144,0.1); border: 1px solid #90EE90;
+      border-radius: 12px; padding: 28px; text-align: center; display: none;
+    }
+    .success-box h3 { color: #90EE90; margin: 0 0 10px; }
+    .success-box p  { color: var(--brand-muted); margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
+    <a class="btn btn-ghost" href="/covoiturage.html">← Retour</a>
+  </header>
+
+  <main class="page-inner">
+    <h1 class="page-title">Publier un trajet</h1>
+    <p class="page-subtitle">Partagez les frais d'un trajet que vous effectuez déjà. Simple, transparent et équitable.</p>
+
+    <div class="legal-note">
+      🛡️ <strong>Rappel :</strong> Le covoiturage PorteàPorte est basé sur le <strong>partage des frais réels</strong>.
+      Le prix maximum recommandé est de <strong>0,50 $/km</strong>. Vous ne pouvez pas réaliser de profit sur le transport de personnes.
+    </div>
+
+    <!-- STEPS NAV -->
+    <div class="steps-nav">
+      <button class="step-tab active" id="tab-1" onclick="goStep(1)">1. Trajet</button>
+      <button class="step-tab"        id="tab-2" onclick="goStep(2)">2. Véhicule</button>
+      <button class="step-tab"        id="tab-3" onclick="goStep(3)">3. Options</button>
+      <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. Prix</button>
+    </div>
+
+    <!-- STEP 1 : TRAJET -->
+    <div class="step-panel active" id="step-1">
+      <div class="form-section">
+        <h3>Point de départ</h3>
+        <div class="form-grid">
+          <div class="field"><label>Ville de départ *</label><input type="text" id="start_city" placeholder="Ex : Québec"></div>
+          <div class="field"><label>Secteur / Quartier</label><input type="text" id="start_sector" placeholder="Ex : Saint-Roch"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Destination</h3>
+        <div class="form-grid">
+          <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal"></div>
+          <div class="field"><label>Secteur / Quartier</label><input type="text" id="end_sector" placeholder="Ex : Plateau"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Horaire</h3>
+        <div class="form-grid cols3">
+          <div class="field"><label>Date et heure de départ *</label><input type="datetime-local" id="departure_time"></div>
+          <div class="field"><label>Flexibilité horaire</label>
+            <select id="flexibility_minutes">
+              <option value="0">Heure fixe</option>
+              <option value="15">± 15 min</option>
+              <option value="30">± 30 min</option>
+              <option value="60">± 1 heure</option>
+            </select>
+          </div>
+          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1"></div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
+        </div>
+        <div id="return-section" style="display:none;margin-top:14px;">
+          <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
+        </div>
+      </div>
+      <div class="step-actions">
+        <span></span>
+        <div class="right">
+          <button class="btn" onclick="nextStep(1)">Suivant →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 : VÉHICULE -->
+    <div class="step-panel" id="step-2">
+      <div class="form-section">
+        <h3>Votre véhicule</h3>
+        <div class="form-grid">
+          <div class="field"><label>Type de véhicule</label>
+            <select id="vehicle_type">
+              <option value="berline">Berline</option>
+              <option value="suv">VUS / SUV</option>
+              <option value="minivan">Minivan</option>
+              <option value="camion">Camion / Pickup</option>
+              <option value="electrique">Électrique</option>
+              <option value="hybride">Hybride</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="field"><label>Taille du coffre</label>
+            <select id="trunk_size">
+              <option value="petit">Petit (sac à dos seulement)</option>
+              <option value="moyen" selected>Moyen (1-2 valises)</option>
+              <option value="grand">Grand (plusieurs valises)</option>
+            </select>
+          </div>
+          <div class="field"><label>Nombre de places *</label>
+            <select id="available_seats">
+              <option value="1">1 place</option>
+              <option value="2" selected>2 places</option>
+              <option value="3">3 places</option>
+              <option value="4">4 places</option>
+              <option value="5">5 places</option>
+              <option value="6">6 places</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(2)">Suivant →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 : OPTIONS -->
+    <div class="step-panel" id="step-3">
+      <div class="form-section">
+        <h3>Ce que vous acceptez</h3>
+        <div class="options-grid">
+          <label class="toggle-option"><input type="checkbox" id="accepts_pets"> 🐾 Animaux de compagnie</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_large_luggage"> 🧳 Gros bagages</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_extra_stops"> 📍 Arrêts intermédiaires</label>
+          <label class="toggle-option"><input type="checkbox" id="child_seat_available"> 🪑 Siège enfant disponible</label>
+          <label class="toggle-option"><input type="checkbox" id="accessible"> ♿ Accessibilité réduite</label>
+          <label class="toggle-option"><input type="checkbox" id="non_smoker" checked> 🚭 Non-fumeur</label>
+          <label class="toggle-option"><input type="checkbox" id="women_only"> 👩 Femmes seulement</label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Règles personnelles</h3>
+        <div class="field">
+          <textarea id="personal_rules" placeholder="Ex : Musique douce acceptée. Pas de nourriture dans le véhicule. Présentez-vous 5 min à l'avance."></textarea>
+          <span class="hint">Facultatif — max 500 caractères</span>
+        </div>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(3)">Suivant →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 4 : PRIX -->
+    <div class="step-panel" id="step-4">
+      <div class="form-section">
+        <h3>Partage des frais</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label>Coût estimé par km ($/km)</label>
+            <input type="number" id="cost_per_km" value="0.35" min="0.10" max="0.50" step="0.01" oninput="updatePricePreview()">
+            <span class="hint">Recommandé : 0,25 $ à 0,45 $/km · Maximum légal suggéré : 0,50 $/km</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="price-preview" id="price-preview">
+        <h4>📊 Aperçu du partage (estimé)</h4>
+        <div id="price-rows"></div>
+      </div>
+
+      <div class="form-section" style="margin-top:24px;">
+        <p style="font-size:0.82rem;color:var(--brand-muted);line-height:1.65;">
+          En publiant ce trajet, vous confirmez qu'il s'agit d'un vrai trajet que vous effectuez déjà,
+          et que le prix demandé reflète uniquement le partage des frais réels.
+          Vous êtes responsable de votre permis de conduire valide et de votre assurance automobile.
+        </p>
+      </div>
+
+      <div class="error-msg" id="err-msg">⚠️ Veuillez corriger les erreurs avant de publier.</div>
+      <div class="success-box" id="success-box">
+        <h3>✅ Trajet publié avec succès !</h3>
+        <p>Votre trajet est maintenant visible par les passagers.</p>
+        <a class="btn" href="/covoiturage.html">Voir les trajets</a>
+      </div>
+
+      <div class="step-actions" id="publish-actions">
+        <button class="btn btn-ghost" onclick="goStep(3)">← Retour</button>
+        <div class="right"><button class="btn" id="publish-btn" onclick="publishRide()">🚗 Publier mon trajet</button></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    let currentStep = 1;
+
+    // Auth guard
+    (async function() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; }
+    })();
+
+    // Date min
+    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('departure_time').min = now.toISOString().slice(0,16);
+
+    function goStep(n) {
+      document.getElementById('step-' + currentStep).classList.remove('active');
+      document.getElementById('tab-'  + currentStep).classList.remove('active');
+      document.getElementById('tab-'  + currentStep).classList.add('done');
+      currentStep = n;
+      document.getElementById('step-' + n).classList.add('active');
+      document.getElementById('tab-'  + n).classList.add('active');
+      document.getElementById('tab-'  + n).classList.remove('done');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (n === 4) updatePricePreview();
+    }
+
+    function nextStep(from) {
+      if (from === 1) {
+        if (!document.getElementById('start_city').value.trim()) { alert('Ville de départ requise'); return; }
+        if (!document.getElementById('end_city').value.trim())   { alert('Ville d\'arrivée requise'); return; }
+        if (!document.getElementById('departure_time').value)    { alert('Date de départ requise'); return; }
+        // Auto-estimer la distance si vide
+        const dist = document.getElementById('total_distance_km');
+        if (!dist.value) {
+          const pairs = {
+            'quebec-montreal':265,'montreal-quebec':265,'quebec-levis':8,'levis-quebec':8,
+            'montreal-laval':18,'laval-montreal':18,'montreal-sherbrooke':145,'sherbrooke-montreal':145,
+            'quebec-troisrivieres':130,'troisrivieres-quebec':130,'montreal-troisrivieres':140,'troisrivieres-montreal':140
+          };
+          const key = norm(document.getElementById('start_city').value) + '-' + norm(document.getElementById('end_city').value);
+          if (pairs[key]) dist.value = pairs[key];
+        }
+      }
+      goStep(from + 1);
+    }
+
+    function norm(v) { return v.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+    function toggleReturn() {
+      document.getElementById('return-section').style.display =
+        document.getElementById('is_return_trip').checked ? 'block' : 'none';
+    }
+
+    function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+
+    function updatePricePreview() {
+      const dist  = Number(document.getElementById('total_distance_km').value) || 0;
+      const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.35, 0.50);
+      const seats = Number(document.getElementById('available_seats').value) || 2;
+
+      if (!dist) { document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>'; return; }
+
+      const totalCost = dist * cpk;
+      const perPax    = totalCost / seats;
+      const platFee   = perPax * 0.10;
+      const paxPays   = perPax + platFee;
+      const maxPax    = dist * 0.50 / seats;
+      const overLimit = paxPays > maxPax * 1.05;
+
+      document.getElementById('price-rows').innerHTML = `
+        <div class="price-row"><span>Distance estimée</span><span>${dist} km</span></div>
+        <div class="price-row"><span>Coût total estimé (${cpk} $/km)</span><span>${fmt(totalCost)}</span></div>
+        <div class="price-row"><span>Répartition (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)} / personne</span></div>
+        <div class="price-row"><span>Frais plateforme (10%)</span><span>${fmt(platFee)}</span></div>
+        <div class="price-row total"><span>Chaque passager paie</span><span>${fmt(paxPays)}</span></div>
+        <div class="price-row"><span>Vous recevez par passager</span><span style="color:var(--brand-cyan)">${fmt(perPax)}</span></div>
+        ${overLimit ? '<div class="over-limit-warning">⚠️ Le prix dépasse le seuil recommandé de 0,50 $/km. Considérez de réduire le coût/km.</div>' : ''}
+      `;
+    }
+
+    async function publishRide() {
+      const btn = document.getElementById('publish-btn');
+      btn.disabled = true; btn.textContent = 'Publication...';
+
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) { btn.disabled = false; btn.textContent = '🚗 Publier mon trajet'; return; }
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { window.location.href = '/login.html'; return; }
+
+      const body = {
+        endpoint: 'ride-create',
+        start_city:     document.getElementById('start_city').value.trim(),
+        start_sector:   document.getElementById('start_sector').value.trim(),
+        end_city:       document.getElementById('end_city').value.trim(),
+        end_sector:     document.getElementById('end_sector').value.trim(),
+        departure_time: document.getElementById('departure_time').value,
+        flexibility_minutes: document.getElementById('flexibility_minutes').value,
+        total_distance_km: document.getElementById('total_distance_km').value || null,
+        is_return_trip: document.getElementById('is_return_trip').checked,
+        return_departure_time: document.getElementById('return_departure_time').value || null,
+        vehicle_type:   document.getElementById('vehicle_type').value,
+        trunk_size:     document.getElementById('trunk_size').value,
+        available_seats: document.getElementById('available_seats').value,
+        accepts_pets:   document.getElementById('accepts_pets').checked,
+        accepts_large_luggage: document.getElementById('accepts_large_luggage').checked,
+        accepts_extra_stops:   document.getElementById('accepts_extra_stops').checked,
+        child_seat_available:  document.getElementById('child_seat_available').checked,
+        accessible:     document.getElementById('accessible').checked,
+        non_smoker:     document.getElementById('non_smoker').checked,
+        women_only:     document.getElementById('women_only').checked,
+        personal_rules: document.getElementById('personal_rules').value.trim() || null,
+        cost_per_km:    document.getElementById('cost_per_km').value,
+      };
+
+      try {
+        const res  = await fetch('/api/ride-create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('publish-actions').style.display = 'none';
+          document.getElementById('success-box').style.display = 'block';
+        } else {
+          document.getElementById('err-msg').style.display = 'block';
+          document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || 'Erreur lors de la publication.');
+          btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+        }
+      } catch(e) {
+        document.getElementById('err-msg').style.display = 'block';
+        btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+      }
+    }
+  </script>
+</body>
+</html>
