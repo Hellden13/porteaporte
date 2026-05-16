@@ -1612,6 +1612,15 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
     if (endpoint === 'cov-progress')  return await covProgress(req, res, ctx, body);
+    // ── Systèmes de croissance v2 ──────────────────────────────
+    if (endpoint === 'growth-dashboard')   return await growthDashboard(req, res, ctx);
+    if (endpoint === 'referral-get')       return await referralGet(req, res, ctx);
+    if (endpoint === 'referral-use')       return await referralUse(req, res, ctx, body);
+    if (endpoint === 'badges-list')        return await badgesList(req, res, ctx);
+    if (endpoint === 'badges-grant')       return await badgesGrant(req, res, ctx, body);
+    if (endpoint === 'xp-history')         return await xpHistory(req, res, ctx);
+    if (endpoint === 'points-history')     return await pointsHistory(req, res, ctx);
+    if (endpoint === 'admin-growth')       return await adminGrowth(req, res, ctx, body);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -2397,4 +2406,371 @@ function missionQualifies(slug, event, { distance_km = 0, passenger_count = 0 })
     case 'premier_avis':       return event === 'review_left';
     default: return false;
   }
+}
+
+/* ================================================================
+   SYSTÈMES DE CROISSANCE v2
+   Points Impact · Badges · Parrainage · XP unifié
+   Toutes les attributions passent par le serveur (service_role)
+   Le frontend ne peut jamais s'attribuer des points lui-même.
+   ================================================================ */
+
+/* ── Helpers internes ──────────────────────────────────────────── */
+
+async function sbRpc(ctx, fnName, params) {
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/rpc/${fnName}`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(params)
+  });
+  return { ok: r.ok, data: r.ok ? await r.json().catch(() => null) : null };
+}
+
+async function getPointsBalance(ctx, userId) {
+  const r = await fetch(
+    `${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&user_id=eq.${userId}&limit=2000`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const txs = r.ok ? await r.json() : [];
+  return txs.reduce((s, t) => s + Number(t.amount || 0), 0);
+}
+
+async function getUserXP(ctx, userId) {
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${userId}&select=xp&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = r.ok ? await r.json() : [];
+  return Number(rows[0]?.xp || 0);
+}
+
+function computeLevel(xp) {
+  const levels = [
+    { level: 1, name: 'Nouveau',           min_xp: 0,    next_xp: 200,  icon: '🟢', benefit: 'Accès aux missions de base.' },
+    { level: 2, name: 'Fiable',            min_xp: 200,  next_xp: 500,  icon: '🔵', benefit: 'Meilleure visibilité sur les missions.' },
+    { level: 3, name: 'Habitué',           min_xp: 500,  next_xp: 1000, icon: '🟩', benefit: 'Missions prioritaires et badges avancés.' },
+    { level: 4, name: 'Ambassadeur',       min_xp: 1000, next_xp: 2000, icon: '🟡', benefit: 'Missions exclusives, support prioritaire.' },
+    { level: 5, name: 'Capitaine régional',min_xp: 2000, next_xp: null, icon: '⭐', benefit: 'Priorité trajets groupés, reconnaissance publique.' }
+  ];
+  const current = [...levels].reverse().find(l => xp >= l.min_xp) || levels[0];
+  const next = levels.find(l => l.level === current.level + 1) || null;
+  const progress = next
+    ? Math.min(100, Math.round(((xp - current.min_xp) / (next.min_xp - current.min_xp)) * 100))
+    : 100;
+  return { current, next, xp, progress };
+}
+
+async function generateReferralCode(userId) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 7; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+/* ── GROWTH DASHBOARD ──────────────────────────────────────────── */
+async function growthDashboard(req, res, ctx) {
+  const uid = ctx.session.id;
+
+  const [ptBalance, userXp, badgesRes, refCodeRes, refRes, missionsRes, drawsRes, txRes] = await Promise.all([
+    getPointsBalance(ctx, uid),
+    getUserXP(ctx, uid),
+    fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=granted_at,badge_id,badges(slug,name,icon,category,description)&user_id=eq.${uid}&order=granted_at.desc`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/referral_codes?select=code,total_uses,total_rewarded&user_id=eq.${uid}&limit=1`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/referrals?select=*&referrer_id=eq.${uid}&order=created_at.desc&limit=20`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&status=eq.active&order=created_at.desc&limit=20`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&status=eq.active&order=draw_date.asc&limit=5`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount,reason,created_at&user_id=eq.${uid}&order=created_at.desc&limit=15`, { headers: sbHeaders(ctx.sbKey) })
+  ]);
+
+  const badges     = badgesRes.ok     ? await badgesRes.json()  : [];
+  const refCodes   = refCodeRes.ok    ? await refCodeRes.json() : [];
+  const referrals  = refRes.ok        ? await refRes.json()     : [];
+  const missions   = missionsRes.ok   ? await missionsRes.json(): defaultRewardMissions();
+  const draws      = drawsRes.ok      ? await drawsRes.json()   : [];
+  const recentTx   = txRes.ok         ? await txRes.json()      : [];
+
+  // Récupérer mes participations aux tirages actifs
+  let entries = [];
+  const drawIds = draws.map(d => d.id);
+  if (drawIds.length) {
+    const eRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?select=draw_id,entries&user_id=eq.${uid}&draw_id=in.(${drawIds.join(',')})`, { headers: sbHeaders(ctx.sbKey) });
+    entries = eRes.ok ? await eRes.json() : [];
+  }
+
+  // Prochain badge à débloquer (simple heuristique)
+  const allBadgesRes = await fetch(`${ctx.sbUrl}/rest/v1/badges?select=slug,name,icon,description,category&active=eq.true&order=xp_reward.asc`, { headers: sbHeaders(ctx.sbKey) });
+  const allBadges = allBadgesRes.ok ? await allBadgesRes.json() : [];
+  const earnedSlugs = new Set(badges.map(b => b.badges?.slug).filter(Boolean));
+  const nextBadges  = allBadges.filter(b => !earnedSlugs.has(b.slug)).slice(0, 3);
+
+  return res.status(200).json({
+    success: true,
+    points_balance: ptBalance,
+    points_label: 'Points Impact',
+    xp: userXp,
+    level: computeLevel(userXp),
+    badges_earned: badges,
+    badges_next: nextBadges,
+    badges_count: badges.length,
+    referral_code: refCodes[0] || null,
+    referrals,
+    missions,
+    draws,
+    entries,
+    recent_transactions: recentTx,
+    legal_notice: 'Les Points Impact n\'ont aucune valeur monétaire et ne peuvent être échangés contre de l\'argent. Les tirages sont soumis aux règlements officiels. Aucun achat requis lorsque requis par la loi.',
+    rename_notice: 'PorteCoins est maintenant appelé Points Impact.'
+  });
+}
+
+/* ── REFERRAL GET ──────────────────────────────────────────────── */
+async function referralGet(req, res, ctx) {
+  const uid = ctx.session.id;
+
+  // Chercher le code existant
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?select=*&user_id=eq.${uid}&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const existing = r.ok ? await r.json() : [];
+  if (existing.length) return res.status(200).json({ success: true, referral: existing[0] });
+
+  // Générer un nouveau code unique
+  let code, tries = 0;
+  while (tries < 5) {
+    const candidate = await generateReferralCode(uid);
+    const check = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${candidate}&select=id&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+    const rows = check.ok ? await check.json() : [1];
+    if (!rows.length) { code = candidate; break; }
+    tries++;
+  }
+  if (!code) return res.status(500).json({ error: 'Impossible de générer un code unique' });
+
+  const ins = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ user_id: uid, code })
+  });
+  const created = ins.ok ? await ins.json().catch(() => ({})) : {};
+  const ref = Array.isArray(created) ? created[0] : created;
+  return res.status(200).json({ success: true, referral: { user_id: uid, code, total_uses: 0, total_rewarded: 0, ...ref } });
+}
+
+/* ── REFERRAL USE ──────────────────────────────────────────────── */
+async function referralUse(req, res, ctx, body) {
+  const uid  = ctx.session.id;
+  const code = String(body.code || '').toUpperCase().trim();
+  if (!code) return res.status(400).json({ error: 'Code de parrainage requis' });
+
+  // Anti-fraude : déjà parrainé ?
+  const alreadyRes = await fetch(`${ctx.sbUrl}/rest/v1/referrals?referee_id=eq.${uid}&select=id&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+  const already = alreadyRes.ok ? await alreadyRes.json() : [];
+  if (already.length) return res.status(409).json({ error: 'Tu as déjà utilisé un code de parrainage' });
+
+  // Trouver le propriétaire du code
+  const codeRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${code}&select=user_id,code,total_uses&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+  const codes = codeRes.ok ? await codeRes.json() : [];
+  if (!codes.length) return res.status(404).json({ error: 'Code invalide ou expiré' });
+  const { user_id: referrerId } = codes[0];
+
+  // Anti-fraude : on ne peut pas se parrainer soi-même
+  if (referrerId === uid) return res.status(409).json({ error: 'Tu ne peux pas utiliser ton propre code' });
+
+  // Créer la relation de parrainage (statut pending — récompense après action réelle)
+  const insRes = await fetch(`${ctx.sbUrl}/rest/v1/referrals`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ referrer_id: referrerId, referee_id: uid, code, status: 'pending' })
+  });
+  if (!insRes.ok) {
+    const err = await insRes.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Enregistrement parrainage impossible', details: err });
+  }
+
+  // Incrémenter total_uses
+  await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${code}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+    body: JSON.stringify({ total_uses: (codes[0].total_uses || 0) + 1 })
+  }).catch(() => {});
+
+  return res.status(200).json({
+    success: true,
+    message: 'Code accepté ! La récompense sera attribuée après ta première livraison ou ton premier trajet covoiturage.',
+    referrer_rewarded_on: 'first_completed_action'
+  });
+}
+
+/* ── BADGES LIST ───────────────────────────────────────────────── */
+async function badgesList(req, res, ctx) {
+  const uid = ctx.session.id;
+
+  const [earnedRes, allRes] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=granted_at,badge_id,badges(*)&user_id=eq.${uid}&order=granted_at.desc`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/badges?select=*&active=eq.true&order=category.asc,xp_reward.asc`, { headers: sbHeaders(ctx.sbKey) })
+  ]);
+
+  const earned = earnedRes.ok ? await earnedRes.json() : [];
+  const all    = allRes.ok    ? await allRes.json()    : [];
+  const earnedIds = new Set(earned.map(e => e.badge_id));
+  const categorized = {};
+  for (const b of all) {
+    const cat = b.category || 'general';
+    if (!categorized[cat]) categorized[cat] = [];
+    categorized[cat].push({ ...b, earned: earnedIds.has(b.id), earned_at: earned.find(e => e.badge_id === b.id)?.granted_at || null });
+  }
+
+  return res.status(200).json({ success: true, badges_earned_count: earned.length, badges_total: all.length, categorized, earned });
+}
+
+/* ── BADGES GRANT (admin seulement) ───────────────────────────── */
+async function badgesGrant(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const { user_id, badge_slug } = body;
+  if (!user_id || !badge_slug) return res.status(400).json({ error: 'user_id et badge_slug requis' });
+
+  const result = await sbRpc(ctx, 'grant_badge', { p_user_id: user_id, p_badge_slug: badge_slug, p_granted_by: ctx.session.id });
+  if (!result.ok) return res.status(400).json({ error: 'Échec attribution badge' });
+  return res.status(200).json({ success: true, new_badge: result.data, badge_slug });
+}
+
+/* ── XP HISTORY ────────────────────────────────────────────────── */
+async function xpHistory(req, res, ctx) {
+  const uid = ctx.session.id;
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/xp_transactions?select=amount,reason,ref_type,created_at&user_id=eq.${uid}&order=created_at.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const txs  = r.ok ? await r.json() : [];
+  const xp   = await getUserXP(ctx, uid);
+  return res.status(200).json({ success: true, xp_total: xp, level: computeLevel(xp), history: txs });
+}
+
+/* ── POINTS HISTORY ────────────────────────────────────────────── */
+async function pointsHistory(req, res, ctx) {
+  const uid = ctx.session.id;
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount,reason,created_at,metadata&user_id=eq.${uid}&order=created_at.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const txs     = r.ok ? await r.json() : [];
+  const balance = txs.reduce((s, t) => s + Number(t.amount || 0), 0);
+  return res.status(200).json({
+    success: true,
+    points_balance: balance,
+    points_label: 'Points Impact',
+    history: txs,
+    legal: 'Les Points Impact n\'ont aucune valeur monétaire.'
+  });
+}
+
+/* ── ADMIN GROWTH ──────────────────────────────────────────────── */
+async function adminGrowth(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const mode = body.mode || 'stats';
+
+  if (mode === 'stats') {
+    const [badgesRes, refRes, xpRes, txRes, auditRes] = await Promise.all([
+      fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=badge_id&limit=2000`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/referrals?select=status&limit=2000`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/xp_transactions?select=amount&limit=5000`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&limit=5000`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs?select=action,created_at&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) })
+    ]);
+    const badges   = badgesRes.ok ? await badgesRes.json() : [];
+    const refs     = refRes.ok    ? await refRes.json()    : [];
+    const xpTxs    = xpRes.ok     ? await xpRes.json()     : [];
+    const ptTxs    = txRes.ok     ? await txRes.json()     : [];
+    const audit    = auditRes.ok  ? await auditRes.json()  : [];
+    return res.status(200).json({
+      success: true,
+      stats: {
+        badges_granted_total: badges.length,
+        referrals_total: refs.length,
+        referrals_rewarded: refs.filter(r => r.status === 'rewarded').length,
+        xp_issued_total: xpTxs.reduce((s, t) => s + Number(t.amount || 0), 0),
+        points_issued_net: ptTxs.reduce((s, t) => s + Number(t.amount || 0), 0)
+      },
+      recent_audit: audit
+    });
+  }
+
+  if (mode === 'grant_badge') {
+    return badgesGrant(req, res, ctx, body);
+  }
+
+  if (mode === 'grant_points') {
+    const { user_id, amount, reason } = body;
+    if (!user_id || !amount || !reason) return res.status(400).json({ error: 'user_id, amount, reason requis' });
+    const safeAmount = Math.min(Math.max(-9999, Math.round(Number(amount))), 9999);
+    const ins = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ user_id, amount: safeAmount, reason, metadata: { admin_id: ctx.session.id } })
+    });
+    await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ user_id, action: 'admin_points_grant', points_delta: safeAmount, admin_id: ctx.session.id, note: reason })
+    }).catch(() => {});
+    return ins.ok
+      ? res.status(200).json({ success: true, amount: safeAmount })
+      : res.status(400).json({ error: 'Impossible d\'attribuer les points' });
+  }
+
+  if (mode === 'cancel_reward') {
+    const { audit_log_id, note } = body;
+    if (!audit_log_id) return res.status(400).json({ error: 'audit_log_id requis' });
+    const upd = await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs?id=eq.${audit_log_id}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ cancelled: true, note: note || 'Annulé par admin' })
+    });
+    return upd.ok
+      ? res.status(200).json({ success: true })
+      : res.status(400).json({ error: 'Annulation impossible' });
+  }
+
+  return res.status(400).json({ error: 'Mode admin-growth inconnu: ' + mode });
+}
+
+/* ── RÉCOMPENSE PARRAINAGE (déclenchée après livraison/trajet) ── */
+async function rewardReferralIfPending(ctx, refereeId, actionType) {
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/referrals?referee_id=eq.${refereeId}&status=eq.pending&select=*&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const refs = r.ok ? await r.json() : [];
+  if (!refs.length) return;
+  const ref = refs[0];
+
+  const POINTS_REWARD = 100;
+  const XP_REWARD     = 50;
+
+  // Accorder au parrain
+  await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions`, {
+      method: 'POST', headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({ user_id: ref.referrer_id, amount: POINTS_REWARD, reason: 'referral_reward', metadata: { referee_id: refereeId, action: actionType } })
+    }),
+    sbRpc(ctx, 'grant_xp', { p_user_id: ref.referrer_id, p_amount: XP_REWARD, p_reason: 'referral_reward', p_ref_type: 'referral', p_ref_id: ref.id })
+  ]);
+
+  // Badge parrain actif si premier filleul récompensé
+  const codeRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?user_id=eq.${ref.referrer_id}&select=total_rewarded&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+  const codes = codeRes.ok ? await codeRes.json() : [];
+  const rewarded = (codes[0]?.total_rewarded || 0) + 1;
+  await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?user_id=eq.${ref.referrer_id}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+    body: JSON.stringify({ total_rewarded: rewarded })
+  }).catch(() => {});
+  if (rewarded === 1) {
+    await sbRpc(ctx, 'grant_badge', { p_user_id: ref.referrer_id, p_badge_slug: 'parrain_actif', p_granted_by: 'system' }).catch(() => {});
+  }
+
+  // Marquer le parrainage comme récompensé
+  await fetch(`${ctx.sbUrl}/rest/v1/referrals?id=eq.${ref.id}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+    body: JSON.stringify({ status: 'rewarded', action_type: actionType, rewarded_at: new Date().toISOString(), points_granted: POINTS_REWARD, xp_granted: XP_REWARD })
+  }).catch(() => {});
+
+  await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs`, {
+    method: 'POST', headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ user_id: ref.referrer_id, action: 'referral_reward', points_delta: POINTS_REWARD, xp_delta: XP_REWARD, ref_type: 'referral', ref_id: ref.id })
+  }).catch(() => {});
 }

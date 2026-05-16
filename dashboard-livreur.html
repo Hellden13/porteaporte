@@ -474,24 +474,29 @@
     </div>
 
     <div class="section-header">
-      <span class="section-title">Missions bonus & PorteCoins</span>
-      <span class="section-link">Vos PorteCoins débloquent des chances, pas de la spéculation.</span>
+      <span class="section-title">Points Impact &amp; Missions</span>
+      <a class="section-link" href="/programme-points.html">Comment gagner des points →</a>
     </div>
     <div class="rewards-grid">
       <div class="reward-card">
-        <div class="reward-title">Des missions qui récompensent les bons gestes.</div>
-        <div class="reward-muted">Prendre le minimum. Redonner le maximum. Chaque trajet peut aider quelqu'un.</div>
+        <div class="reward-title">Missions bonus</div>
+        <div class="reward-muted">Chaque mission complétée rapporte des XP et des Points Impact. Prendre le minimum. Redonner le maximum.</div>
         <div id="bonusMissionsList"><p class="loading-msg">Chargement des missions bonus...</p></div>
       </div>
       <div class="reward-card">
-        <div class="reward-title">PorteCoins</div>
+        <div class="reward-title">Points Impact</div>
         <div class="coins-balance" id="porteCoinsBalance">—</div>
-        <div class="reward-muted">Les PorteCoins n'ont aucune valeur monétaire et ne sont pas retirables. Ils servent aux tirages, badges et avantages plateforme.</div>
-        <div class="reward-title" style="margin-top:18px">Progression livreur</div>
+        <div class="reward-muted">Les Points Impact n'ont aucune valeur monétaire. Ils servent aux tirages, badges et avantages plateforme.</div>
+        <div class="reward-title" style="margin-top:18px">Progression &amp; niveau</div>
         <div id="driverLevelBox" class="reward-muted">Chargement...</div>
-        <div class="reward-title" style="margin-top:18px">Tirages mensuels</div>
+        <div class="reward-title" style="margin-top:18px">Mes badges</div>
+        <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Chargement...</p></div>
+        <div class="reward-title" style="margin-top:4px">Tirages mensuels</div>
         <div id="drawsList"><p class="loading-msg">Chargement...</p></div>
-        <div class="legal-note">Les tirages sont soumis aux règlements officiels. Aucun achat requis lorsque requis par la loi. Les PorteCoins n'ont aucune valeur monétaire.</div>
+        <div class="legal-note">
+          Les tirages sont soumis aux <a href="/reglements-concours.html" style="color:var(--brand-lime)">règlements officiels</a>.
+          Aucun achat requis lorsque requis par la loi. Les Points Impact n'ont aucune valeur monétaire.
+        </div>
       </div>
     </div>
 
@@ -769,14 +774,21 @@
 
     async function loadRewards() {
       try {
-        const res = await fetch('/api/rewards-dashboard', {
-          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        // Appel au nouveau endpoint unifié growth-dashboard
+        const res = await fetch('/api/growth-dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({})
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Chargement impossible');
-        document.getElementById('porteCoinsBalance').textContent = `${out.porte_coins_balance || 0} PC`;
+
+        // Points Impact (anciennement PorteCoins)
+        document.getElementById('porteCoinsBalance').textContent = `${out.points_balance || 0} pts`;
+
         renderBonusMissions(out);
         renderDriverLevel(out.level);
+        renderBadges(out.badges_earned || []);
         renderDraws(out);
       } catch (err) {
         document.getElementById('bonusMissionsList').innerHTML = `<div class="empty-msg">${err.message}</div>`;
@@ -795,7 +807,7 @@
         return `<div class="bonus-mission">
           <div style="display:flex;justify-content:space-between;gap:10px">
             <strong>${m.title || 'Mission'}</strong>
-            <span style="color:var(--brand-lime);font-weight:900">+${m.reward_coins || 0} PC</span>
+            <span style="color:var(--brand-lime);font-weight:900">+${m.reward_coins || 0} pts</span>
           </div>
           <div class="reward-muted">${m.description || ''}</div>
           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -804,14 +816,33 @@
       }).join('') : '<div class="empty-msg">Aucune mission bonus active.</div>';
     }
 
+    function renderBadges(badges) {
+      const row = document.getElementById('badgesRow');
+      if (!badges.length) {
+        row.innerHTML = '<span style="color:var(--brand-muted);font-size:0.82rem">Aucun badge encore. Complète des missions pour en débloquer !</span>';
+        return;
+      }
+      row.innerHTML = badges.slice(0, 10).map(b => {
+        const icon = b.badges?.icon || '🏅';
+        const name = b.badges?.name || 'Badge';
+        const desc = b.badges?.description || '';
+        return `<span title="${name} — ${desc}" style="font-size:1.6rem;cursor:help" aria-label="${name}">${icon}</span>`;
+      }).join('') + (badges.length > 10 ? `<span style="color:var(--brand-muted);font-size:0.8rem;align-self:center">+${badges.length - 10} autres</span>` : '')
+        + `<a href="/programme-points.html" style="font-size:0.78rem;color:var(--brand-lime);align-self:center;margin-left:6px">Voir tous →</a>`;
+    }
+
     function renderDriverLevel(level) {
       if (!level?.current) return;
+      const cur  = level.current;
       const next = level.next;
+      const pct  = level.progress || 0;
       document.getElementById('driverLevelBox').innerHTML = `
-        <strong>Niveau ${level.current.level} — ${level.current.name}</strong><br>
-        ${level.current.benefit}<br>
-        <span style="color:var(--brand-muted)">Livraisons: ${level.deliveries || 0} · Score: ${level.score || 0}/5</span>
-        ${next ? `<div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, Math.round((level.deliveries || 0) / next.min_deliveries * 100))}%"></div></div><span style="color:var(--brand-muted)">Prochain niveau: ${next.name}</span>` : '<br><span style="color:var(--brand-lime)">Niveau maximal atteint.</span>'}
+        <strong>${cur.icon || ''} Niveau ${cur.level} — ${cur.name}</strong><br>
+        <span style="color:var(--brand-muted);font-size:0.82rem">${cur.benefit}</span><br>
+        <span style="color:var(--brand-muted);font-size:0.82rem">XP total : ${level.xp || 0}</span>
+        <div class="progress-track" style="margin:8px 0 4px"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <span style="color:var(--brand-muted);font-size:0.78rem">${pct}% vers ${next ? next.name : 'niveau max'}</span>
+        ${!next ? '<br><span style="color:var(--brand-lime);font-size:0.82rem">🏆 Niveau maximum atteint !</span>' : ''}
       `;
     }
 
@@ -822,7 +853,7 @@
         <div class="draw-card">
           <div>
             <strong>${d.title || 'Tirage mensuel'}</strong>
-            <div class="reward-muted">${d.description || '10 PorteCoins = 1 participation'}<br>Vos participations: ${entries[d.id] || 0}</div>
+            <div class="reward-muted">${d.description || '10 Points Impact = 1 participation'}<br>Vos participations : ${entries[d.id] || 0}</div>
           </div>
           <div class="draw-actions">
             <input id="draw-entries-${d.id}" type="number" min="1" max="50" value="1" aria-label="Nombre de participations">

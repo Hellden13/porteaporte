@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Points Impact · Programme de fidélité · PorteÀPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.88);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; }
+    .hero {
+      background: linear-gradient(135deg, rgba(184,245,62,0.07), rgba(0,217,255,0.05));
+      border-bottom: 1px solid var(--brand-border);
+      padding: clamp(48px,8vw,96px) clamp(18px,4vw,48px);
+      text-align: center;
+    }
+    .hero-badge { display: inline-block; background: rgba(184,245,62,0.15); border: 1px solid rgba(184,245,62,0.35); color: var(--brand-lime); border-radius: 999px; padding: 6px 18px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(2rem,5vw,3.2rem); margin: 0 0 16px; }
+    .hero p { font-size: 1.05rem; color: var(--brand-muted); max-width: 640px; margin: 0 auto 32px; line-height: 1.65; }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .legal-pill {
+      display: inline-block; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      color: #EF4444; border-radius: 6px; padding: 4px 12px; font-size: 0.75rem; font-weight: 700;
+      margin-top: 20px;
+    }
+    .page-wrap { max-width: 1040px; margin: 0 auto; padding: 64px clamp(18px,4vw,48px) 100px; }
+    .section-title {
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--brand-lime); margin: 0 0 24px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--brand-border); }
+
+    /* TABLEAU POINTS */
+    .points-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 48px; }
+    .points-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 20px 22px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .points-card .icon { font-size: 1.8rem; flex-shrink: 0; }
+    .points-card .label { font-weight: 700; color: var(--brand-text); margin-bottom: 4px; }
+    .points-card .pts { color: var(--brand-lime); font-weight: 800; font-size: 1rem; }
+    .points-card .desc { color: var(--brand-muted); font-size: 0.8rem; margin-top: 2px; }
+
+    /* NIVEAUX */
+    .levels-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px; }
+    .level-row {
+      display: flex; align-items: center; gap: 18px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 18px 22px;
+    }
+    .level-row.active { border-color: var(--brand-lime); background: rgba(184,245,62,0.05); }
+    .level-num { font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); width: 40px; flex-shrink: 0; text-align: center; }
+    .level-info { flex: 1; }
+    .level-name { font-weight: 800; color: var(--brand-text); font-size: 1rem; }
+    .level-req { color: var(--brand-muted); font-size: 0.82rem; margin-top: 2px; }
+    .level-benefit { color: #00D9FF; font-size: 0.82rem; margin-top: 4px; }
+    .level-xp { font-size: 0.82rem; color: var(--brand-lime); font-weight: 700; white-space: nowrap; }
+
+    /* BADGES */
+    .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 48px; }
+    .badge-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 10px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .badge-card .badge-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .badge-card .badge-name { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; }
+    .badge-card .badge-cat { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-lime); margin-bottom: 4px; }
+    .badge-card .badge-desc { font-size: 0.78rem; color: var(--brand-muted); }
+
+    /* UTILISATIONS */
+    .uses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 48px; }
+    .use-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 10px; padding: 18px 20px;
+    }
+    .use-card .use-title { font-weight: 700; color: var(--brand-text); margin-bottom: 6px; }
+    .use-card .use-desc { font-size: 0.84rem; color: var(--brand-muted); line-height: 1.55; }
+
+    /* MON TABLEAU */
+    #my-dashboard { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 16px; padding: 28px 32px; margin-bottom: 48px; }
+    .dash-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; }
+    .dash-stat { flex: 1; min-width: 130px; }
+    .dash-stat .val { font-size: 2rem; font-weight: 900; color: var(--brand-lime); }
+    .dash-stat .lbl { font-size: 0.8rem; color: var(--brand-muted); margin-top: 2px; }
+    .xp-bar-wrap { margin-top: 12px; }
+    .xp-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--brand-muted); margin-bottom: 6px; }
+    .xp-bar { height: 8px; background: var(--brand-border); border-radius: 4px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--brand-lime), #00D9FF); border-radius: 4px; transition: width 0.6s ease; }
+    .login-prompt { text-align: center; padding: 32px; color: var(--brand-muted); }
+
+    @media (max-width: 600px) {
+      .level-row { flex-wrap: wrap; }
+      .cta-row { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
+    <nav style="display:flex;gap:12px">
+      <a class="btn btn-ghost" href="/parrainage.html">Parrainage</a>
+      <a class="btn btn-primary" href="/login.html">Mon compte</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">Programme de fidélité</div>
+    <h1>Points Impact</h1>
+    <p>Chaque action réelle sur PorteÀPorte te rapproche d'avantages concrets — missions exclusives, badges, niveaux et participations aux tirages communautaires.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/login.html">Voir mes points</a>
+      <a class="btn btn-ghost" href="/reglements-concours.html">Règlements officiels</a>
+    </div>
+    <div class="legal-pill">⚠️ Les Points Impact n'ont aucune valeur monétaire</div>
+  </section>
+
+  <main class="page-wrap">
+
+    <!-- MON TABLEAU DE BORD -->
+    <div class="section-title">Mon tableau de bord</div>
+    <div id="my-dashboard">
+      <div class="login-prompt">
+        <p>Connecte-toi pour voir tes Points Impact, ton niveau et tes badges.</p>
+        <a class="btn btn-primary" href="/login.html" style="margin-top:12px;display:inline-block">Se connecter</a>
+      </div>
+    </div>
+
+    <!-- COMMENT GAGNER -->
+    <div class="section-title">Comment gagner des Points Impact</div>
+    <div class="points-grid">
+      <div class="points-card"><span class="icon">📦</span><div><div class="label">Première livraison</div><div class="pts">+30 XP · +20 pts</div><div class="desc">Complète ta première mission de livraison.</div></div></div>
+      <div class="points-card"><span class="icon">🚗</span><div><div class="label">Premier covoiturage</div><div class="pts">+50 XP · +20 pts</div><div class="desc">Effectue ton premier trajet partagé.</div></div></div>
+      <div class="points-card"><span class="icon">⭐</span><div><div class="label">Avis 5 étoiles reçu</div><div class="pts">+15 XP</div><div class="desc">Maintenir un service irréprochable.</div></div></div>
+      <div class="points-card"><span class="icon">🎯</span><div><div class="label">Mission complétée</div><div class="pts">+50 à +300 XP</div><div class="desc">Chaque mission mensuelle complétée.</div></div></div>
+      <div class="points-card"><span class="icon">🤝</span><div><div class="label">Parrainage réussi</div><div class="pts">+100 pts · +50 XP</div><div class="desc">Un ami complète sa première action réelle.</div></div></div>
+      <div class="points-card"><span class="icon">🏅</span><div><div class="label">Badge débloqué</div><div class="pts">+0 à +150 pts bonus</div><div class="desc">Chaque badge débloqué peut offrir des points.</div></div></div>
+      <div class="points-card"><span class="icon">✅</span><div><div class="label">Profil vérifié</div><div class="pts">+50 XP · +25 pts</div><div class="desc">Compléter ta vérification d'identité.</div></div></div>
+      <div class="points-card"><span class="icon">❤️</span><div><div class="label">Trajet solidaire</div><div class="pts">+180 XP · +50 pts</div><div class="desc">Aider un aîné ou une personne vulnérable.</div></div></div>
+    </div>
+
+    <!-- À QUOI ÇA SERT -->
+    <div class="section-title">À quoi servent les Points Impact</div>
+    <div class="uses-grid">
+      <div class="use-card"><div class="use-title">🎫 Participations aux tirages</div><div class="use-desc">10 Points Impact = 1 participation supplémentaire au tirage mensuel communautaire.</div></div>
+      <div class="use-card"><div class="use-title">📈 Progresser en niveau</div><div class="use-desc">L'XP accumulé détermine ton niveau (1 à 5). Les niveaux élevés donnent accès à des missions exclusives.</div></div>
+      <div class="use-card"><div class="use-title">🏆 Débloquer des badges</div><div class="use-desc">Les badges renforcent ta réputation et ta crédibilité sur la plateforme.</div></div>
+      <div class="use-card"><div class="use-title">🔓 Missions spéciales</div><div class="use-desc">Certaines missions à forte valeur sont réservées aux membres de niveau 3 et plus.</div></div>
+      <div class="use-card"><div class="use-title">👁️ Meilleure visibilité</div><div class="use-desc">Les livreurs de niveau 2+ apparaissent en priorité dans les résultats de recherche.</div></div>
+      <div class="use-card"><div class="use-title">📞 Support prioritaire</div><div class="use-desc">Les membres de niveau 4+ bénéficient d'un traitement prioritaire en cas de litige.</div></div>
+    </div>
+
+    <!-- NIVEAUX -->
+    <div class="section-title">Les 5 niveaux</div>
+    <div class="levels-grid">
+      <div class="level-row"><div class="level-num">🟢</div><div class="level-info"><div class="level-name">Niveau 1 — Nouveau</div><div class="level-req">0 XP requis · Accès dès l'inscription</div><div class="level-benefit">Accès aux missions de base et livraisons locales.</div></div><div class="level-xp">0–199 XP</div></div>
+      <div class="level-row"><div class="level-num">🔵</div><div class="level-info"><div class="level-name">Niveau 2 — Fiable</div><div class="level-req">200 XP requis</div><div class="level-benefit">Meilleure visibilité dans les résultats. Missions régionales disponibles.</div></div><div class="level-xp">200–499 XP</div></div>
+      <div class="level-row"><div class="level-num">🟩</div><div class="level-info"><div class="level-name">Niveau 3 — Habitué</div><div class="level-req">500 XP requis</div><div class="level-benefit">Missions prioritaires. Accès aux gros colis. Badges avancés débloqués.</div></div><div class="level-xp">500–999 XP</div></div>
+      <div class="level-row"><div class="level-num">🟡</div><div class="level-info"><div class="level-name">Niveau 4 — Ambassadeur</div><div class="level-req">1 000 XP requis</div><div class="level-benefit">Missions exclusives. Support prioritaire. Priorité trajets groupés.</div></div><div class="level-xp">1 000–1 999 XP</div></div>
+      <div class="level-row"><div class="level-num">⭐</div><div class="level-info"><div class="level-name">Niveau 5 — Capitaine régional</div><div class="level-req">2 000 XP requis</div><div class="level-benefit">Reconnaissance publique. Accès anticipé aux nouvelles fonctionnalités. Priorité absolue.</div></div><div class="level-xp">2 000+ XP</div></div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="section-title">Badges disponibles</div>
+    <div class="badges-grid" id="badges-grid">
+      <!-- Chargés dynamiquement ou affichés en statique -->
+      <div class="badge-card"><span class="badge-icon">✅</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Profil vérifié</div><div class="badge-desc">Identité confirmée — tu es digne de confiance.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">📦</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Premier trajet utile</div><div class="badge-desc">Tu as complété ta première livraison.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">⭐</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Livreur fiable</div><div class="badge-desc">10 livraisons avec bonne note.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">⏱️</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Zéro retard</div><div class="badge-desc">5 livraisons consécutives sans retard.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🌟</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Service 5 étoiles</div><div class="badge-desc">Note moyenne ≥ 4.8 sur 10 livraisons.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🌱</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Nouveau covoitureur</div><div class="badge-desc">Profil covoiturage créé.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🚗</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Premier trajet partagé</div><div class="badge-desc">Ton premier covoiturage effectué.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🎯</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Auto pleine</div><div class="badge-desc">Trajet avec tous les sièges occupés.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🌿</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Éco-route</div><div class="badge-desc">50km+ avec 2 passagers ou plus.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">❤️</span><div><div class="badge-cat">Communauté</div><div class="badge-name">Trajet solidaire</div><div class="badge-desc">Aide un aîné ou une personne vulnérable.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🤝</span><div><div class="badge-cat">Communauté</div><div class="badge-name">Parrain actif</div><div class="badge-desc">Tu as parrainé un ami qui a complété une action.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🏆</span><div><div class="badge-cat">Fidélité</div><div class="badge-name">Partenaire confiance</div><div class="badge-desc">Niveau Ambassadeur ou plus, note ≥ 4.8.</div></div></div>
+    </div>
+
+    <!-- AVIS LÉGAL -->
+    <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:18px 22px;font-size:0.85rem;line-height:1.65;color:var(--brand-muted);">
+      <strong style="color:#EF4444;display:block;margin-bottom:6px;">⚠️ Avis légal</strong>
+      Les <strong style="color:var(--brand-text)">Points Impact</strong> sont des unités virtuelles sans valeur monétaire. Ils ne peuvent pas être achetés, vendus, transférés ou encaissés. Ils servent uniquement à améliorer le statut sur la plateforme et accéder à des avantages non garantis. PorteÀPorte se réserve le droit de modifier ou terminer ce programme à tout moment. Voir les <a href="/reglements-concours.html" style="color:var(--brand-lime)">règlements officiels des concours</a>.
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <script>
+    (async function loadMyDashboard() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) return;
+
+      const token = session.access_token;
+      const r = await fetch('/api/growth-dashboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({})
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+
+      const box = document.getElementById('my-dashboard');
+      const lvl = d.level?.current || {};
+      const next = d.level?.next;
+      const progress = d.level?.progress || 0;
+
+      box.innerHTML = `
+        <div class="dash-row">
+          <div class="dash-stat"><div class="val">${d.points_balance || 0}</div><div class="lbl">Points Impact</div></div>
+          <div class="dash-stat"><div class="val">${d.xp || 0}</div><div class="lbl">XP total</div></div>
+          <div class="dash-stat"><div class="val">${d.badges_count || 0}</div><div class="lbl">Badges</div></div>
+          <div class="dash-stat"><div class="val">${lvl.icon || ''} ${lvl.name || 'Nouveau'}</div><div class="lbl">Niveau actuel</div></div>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-label">
+            <span>${lvl.icon || ''} ${lvl.name || 'Nouveau'} (${lvl.min_xp || 0} XP)</span>
+            <span>${next ? next.icon + ' ' + next.name + ' (' + next.min_xp + ' XP)' : 'Niveau maximum !'}</span>
+          </div>
+          <div class="xp-bar"><div class="xp-bar-fill" style="width:${progress}%"></div></div>
+          <div style="font-size:0.78rem;color:var(--brand-muted);margin-top:6px;">${progress}% vers le prochain niveau${next ? ' (' + (next.min_xp - d.xp) + ' XP restants)' : ''}</div>
+        </div>
+        ${d.badges_earned && d.badges_earned.length ? `
+        <div style="margin-top:20px;border-top:1px solid var(--brand-border);padding-top:16px;">
+          <div style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--brand-lime);margin-bottom:10px;">Mes badges</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${d.badges_earned.slice(0,8).map(b => `<span title="${b.badges?.description || ''}" style="font-size:1.4rem;cursor:help">${b.badges?.icon || '🏅'}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        <div style="margin-top:16px;text-align:right;">
+          <a href="/dashboard-livreur.html" class="btn btn-ghost" style="font-size:0.82rem">Tableau de bord complet →</a>
+        </div>
+      `;
+    })();
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>
