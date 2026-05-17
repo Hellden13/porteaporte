@@ -1642,6 +1642,19 @@ module.exports = async function handler(req, res) {
       return await pushSend(req, res, ctx, body);
     }
 
+    const callerSecret = (req.headers['x-internal-secret'] || '').trim();
+    const internalSecretClean = (process.env.INTERNAL_API_SECRET || '').replace(/\r?\n/g, '').trim();
+    if (endpoint === 'admin-growth' && internalSecretClean && callerSecret === internalSecretClean) {
+      const ctx = {
+        sbUrl, sbKey,
+        stripeKey: process.env.STRIPE_SECRET_KEY,
+        session: { id: 'internal-batch', email: 'batch@porteaporte.site' },
+        profile: { role: 'admin', suspendu: false },
+        internal: true
+      };
+      return await adminGrowth(req, res, ctx, body);
+    }
+
     const session = await getSession(req, sbUrl, sbKey);
     if (!session) return res.status(401).json({ error: 'Session requise' });
     const profile = await getProfile(session.id, sbUrl, sbKey);
