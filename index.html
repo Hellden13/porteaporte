@@ -506,6 +506,14 @@
       line-height: 1.6;
     }
 
+    .triptych { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+    .triptych a { display: block; overflow: hidden; position: relative; text-decoration: none; aspect-ratio: 1/2; }
+    .triptych img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
+    .triptych a:hover img { transform: scale(1.04); }
+    .triptych-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px; background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; }
+    .triptych-kicker { font-size: .75rem; font-weight: 700; color: #B8F53E; letter-spacing: .08em; text-transform: uppercase; }
+    .triptych-label  { font-size: 1rem; font-weight: 800; margin-top: 2px; }
+
     @media (max-width: 920px) {
       .hero {
         grid-template-columns: 1fr;
@@ -527,6 +535,10 @@
       }
     }
 
+    @media (max-width: 720px) {
+      .triptych { grid-template-columns: 1fr; }
+      .triptych a { aspect-ratio: 16/9; }
+    }
     @media (max-width: 720px) {
       .site-header {
         position: relative;
@@ -607,7 +619,7 @@
       </div>
 
       <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
-        <img class="hero-photo" src="/assets/hero-quebec.png" alt="Livreur PorteaPorte à vélo remettant un colis devant le Château Frontenac" loading="eager">
+        <img class="hero-photo" src="/assets/hero-left.jpg" alt="Livreur PorteàPorte remettant un colis à une cliente" loading="eager">
         <article class="delivery-card" style="z-index:2;">
           <header>
             <h2>Mission Montreal -> Laval</h2>
@@ -685,12 +697,36 @@
         </div>
       </div>
     </section>
-    <!-- ===== BANNIÈRE COVOITURAGE ===== -->
-    <section style="padding: 0 clamp(18px,4vw,48px) 72px;">
+    <!-- ===== TRIPTYCH MARKETING ===== -->
+    <section style="padding:0 clamp(18px,4vw,48px) 72px;">
       <div style="max-width:1120px;margin:0 auto;">
-        <a href="/covoiturage-info.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
-          <img src="/assets/banniere-covoiturage.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits" style="width:100%;height:auto;display:block;">
-        </a>
+        <div class="triptych">
+
+          <a href="/livreur.html">
+            <img src="/assets/hero-left.jpg" alt="Livraison collaborative — livreur remettant un colis" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Livraison</div>
+              <div class="triptych-label">Sécuritaire · Suivi en temps réel</div>
+            </div>
+          </a>
+
+          <a href="/covoiturage.html">
+            <img src="/assets/hero-center.jpg" alt="Application covoiturage PorteàPorte sur mobile" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Covoiturage</div>
+              <div class="triptych-label">Partagez vos trajets · Économisez</div>
+            </div>
+          </a>
+
+          <a href="/programme-points.html">
+            <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et PorteCoins" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Récompenses</div>
+              <div class="triptych-label">Badges · PorteCoins · Tirages</div>
+            </div>
+          </a>
+
+        </div>
       </div>
     </section>
 
