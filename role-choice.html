@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -365,9 +365,11 @@
                     return;
                 }
 
+                const { data: sessionData } = await db.auth.getSession();
+                const session = sessionData?.session;
                 const { data: { user }, error: userError } = await db.auth.getUser();
                 
-                if (userError || !user) {
+                if (userError || !user || !session?.access_token) {
                     console.error('Erreur auth:', userError);
                     window.location.href = 'login.html';
                     return;
@@ -377,37 +379,19 @@
                 const normalizedRole = role === 'both' ? 'les deux' : role;
                 localStorage.setItem('userRole', normalizedRole);
 
-                // Create or update user profile in Supabase
-                const profilePayload = {
-                    id: user.id,
-                    email: user.email || '',
-                    role: normalizedRole,
-                    email_verified: Boolean(user.email_confirmed_at || user.confirmed_at),
-                    verification_status: 'pending',
-                    driver_status: role === 'expediteur' ? 'not_started' : 'not_started',
-                    mis_a_jour_le: new Date().toISOString()
-                };
+                const response = await fetch('/api/set-role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({ role: normalizedRole })
+                });
+                const result = await response.json().catch(() => ({}));
 
-                let { error } = await db
-                    .from('profiles')
-                    .upsert(profilePayload, { onConflict: 'id' });
-
-                if (error && /column .* does not exist/i.test(error.message || '')) {
-                    const fallbackPayload = {
-                        id: user.id,
-                        email: user.email || '',
-                        role: normalizedRole,
-                        mis_a_jour_le: new Date().toISOString()
-                    };
-                    const fallback = await db
-                        .from('profiles')
-                        .upsert(fallbackPayload, { onConflict: 'id' });
-                    error = fallback.error;
-                }
-
-                if (error) {
-                    console.error('Erreur:', error);
-                    showError('❌ Erreur lors de la mise à jour du profil');
+                if (!response.ok) {
+                    console.error('Erreur:', result);
+                    showError('❌ Erreur lors de la mise à jour du profil: ' + (result.error || 'profil impossible'));
                     return;
                 }
 
@@ -446,6 +430,7 @@
             }
         });
     </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
 

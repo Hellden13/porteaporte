@@ -34,7 +34,13 @@
     .public-row strong{display:block;color:var(--brand-text);margin-bottom:4px}
     .public-row span{color:var(--brand-muted);font-size:.84rem;line-height:1.45}
     .public-tag{color:var(--brand-lime);font-weight:900;white-space:nowrap}
+    .request-panel{margin-top:18px;border-color:rgba(0,217,255,.28);background:linear-gradient(180deg,rgba(0,217,255,.055),rgba(255,255,255,.025))}
+    .request-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--brand-bg-surface-light)}
+    .request-head h2{margin:0 0 8px;color:var(--brand-text);font-size:1.35rem}
+    .request-head p{margin:0;max-width:720px}
+    .request-badge{display:inline-flex;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,217,255,.35);color:var(--brand-cyan);font-size:.76rem;font-weight:900;white-space:nowrap}
     .request-grid{display:grid;gap:12px;grid-template-columns:1fr}
+    @media(max-width:720px){.public-row,.request-head{flex-direction:column}.public-tag{white-space:normal}}
     @media(min-width:760px){.request-grid{grid-template-columns:repeat(2,1fr)}.request-grid .full{grid-column:span 2}}
     .field{display:grid;gap:6px}
     .field label{font-size:.78rem;color:var(--brand-muted);font-weight:800}
@@ -102,9 +108,15 @@
       <div class="panel empty">Chargement des gagnants...</div>
     </div>
 
-    <div class="section-title">Faire une demande d'aide</div>
-    <section class="panel">
-      <p class="note" style="margin-top:0">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
+    <section class="panel request-panel">
+      <div class="request-head">
+        <div>
+          <div class="section-title" style="margin-top:0">Faire une demande d'aide</div>
+          <h2>Organismes, écoles et initiatives locales</h2>
+          <p class="note">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
+        </div>
+        <span class="request-badge">Demande distincte</span>
+      </div>
       <form id="impact-application-form" class="request-grid">
         <div class="field">
           <label for="app-org">Nom de l'organisme</label>
@@ -233,5 +245,6 @@
     });
     loadImpact();
   </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>

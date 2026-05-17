@@ -93,6 +93,9 @@
       }
       const user = data.session.user;
       const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+      if (profile && !['livreur', 'les deux', 'admin'].includes(profile.role)) {
+        showError('Ton compte est encore seulement expéditeur. En envoyant ce formulaire, on ajoute aussi le rôle livreur à ton profil.');
+      }
       if (profile) {
         document.getElementById('prenom').value = profile.prenom || '';
         document.getElementById('nom').value = profile.nom || '';
@@ -107,6 +110,20 @@
       const { data } = await db.auth.getSession();
       if (!data || !data.session) {
         window.location.href = '/login.html';
+        return;
+      }
+
+      const roleRes = await fetch('/api/set-role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + data.session.access_token
+        },
+        body: JSON.stringify({ role: 'livreur' })
+      });
+      if (!roleRes.ok) {
+        const roleResult = await roleRes.json().catch(() => ({}));
+        showError(roleResult.error || 'Impossible d’ajouter le rôle livreur pour le moment.');
         return;
       }
 
@@ -141,5 +158,6 @@
 
     init();
   </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
