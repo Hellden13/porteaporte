@@ -1036,7 +1036,7 @@ async function impactPublic(req, res, ctx) {
     fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
       headers: sbHeaders(ctx.sbKey)
     }).catch(() => null),
-    fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=id,draw_id,user_email,user_role,prize_title,created_at&published=eq.true&order=created_at.desc&limit=12`, {
+    fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=id,draw_id,user_email,user_role,prize_title,created_at&order=created_at.desc&limit=12`, {
       headers: sbHeaders(ctx.sbKey)
     }).catch(() => null)
   ]);
@@ -1408,7 +1408,14 @@ async function runMonthlyDraw(ctx, drawId) {
     headers: sbHeaders(ctx.sbKey)
   });
   const existing = existingRes.ok ? await existingRes.json() : [];
-  if (existing.length) return { ok: true, winner: existing[0], candidates_count: 0, already_exists: true };
+  if (existing.length) {
+    await fetch(`${ctx.sbUrl}/rest/v1/draw_winners?id=eq.${encodeURIComponent(existing[0].id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+      body: JSON.stringify({ published: true })
+    }).catch(() => {});
+    return { ok: true, winner: { ...existing[0], published: true }, candidates_count: 0, already_exists: true };
+  }
 
   const entriesRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?draw_id=eq.${encodeURIComponent(drawId)}&select=user_id,entries`, {
     headers: sbHeaders(ctx.sbKey)
@@ -2728,7 +2735,10 @@ async function pointsHistory(req, res, ctx) {
 
 /* ── ADMIN GROWTH ──────────────────────────────────────────────── */
 async function adminGrowth(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const internalSecret = (process.env.INTERNAL_API_SECRET || '').trim().replace(/\r?\n/g, '');
+  const callerSecret = (req.headers['x-internal-secret'] || '').trim();
+  const isInternal = internalSecret && callerSecret === internalSecret;
+  if (!isInternal && !roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
   const mode = body.mode || 'stats';
 
   if (mode === 'stats') {
