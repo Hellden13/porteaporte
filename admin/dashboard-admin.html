@@ -292,8 +292,14 @@
     <a href="#section-covoiturage"   class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
     <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
-    <a href="/dashboard-expediteur.html" class="nav-link"><span class="icon">↗</span> Dashboard expéditeur</a>
-    <a href="/dashboard-livreur.html"    class="nav-link"><span class="icon">↗</span> Dashboard livreur</a>
+    <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
+    <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
+    <a href="/dashboard-livreur.html"     class="nav-link"><span class="icon">🚚</span> Espace livreur</a>
+    <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">🚗</span> Espace covoiturage</a>
+    <a href="/covoiturage-publier.html"   class="nav-link"><span class="icon">➕</span> Publier un trajet</a>
+    <a href="/compte.html"               class="nav-link"><span class="icon">👤</span> Mon profil</a>
+    <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
+    <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
     <a href="/transparence.html" class="nav-link"><span class="icon">↗</span> Page transparence</a>
     <div class="sidebar-bottom">
       <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
@@ -341,7 +347,7 @@
     </div>
 
     <div id="section-users" class="section">
-      <div class="section-title">Tous les utilisateurs</div>
+      <div class="section-title">Utilisateurs actifs</div>
       <div class="table-card">
         <table>
           <thead>
@@ -353,6 +359,30 @@
             <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Archives -->
+      <div style="margin-top:24px">
+        <button onclick="toggleArchives()" style="background:transparent;border:1px solid var(--brand-border);color:var(--brand-muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem">
+          📁 Voir les comptes archivés (<span id="archives-count">0</span>)
+        </button>
+        <div id="archives-section" style="display:none;margin-top:12px">
+          <div style="color:var(--brand-muted);font-size:.8rem;margin-bottom:8px">
+            Ces comptes sont retirés de la plateforme mais conservés à des fins légales et de litiges.
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nom</th><th>Email</th><th>Rôle</th><th>Raison</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="archives-body">
+                <tr><td colspan="5" class="empty-msg">Aucun compte archivé</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -398,7 +428,7 @@
           <div class="stat-card-sub">livraisons payées</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Commission (15%)</div>
+          <div class="stat-card-label">Commission (<span id="rev-commission-pct">—</span>%)</div>
           <div class="stat-card-value" id="rev-commission">—</div>
           <div class="stat-card-sub">revenu plateforme</div>
         </div>
@@ -467,9 +497,13 @@
               <option value="draft">Brouillon / gros tirage plus tard</option>
               <option value="cancelled">Pas de tirage ce mois-ci</option>
             </select>
+            <label for="reward-draw-badge">Badge requis (tirage exclusif)</label>
+            <select id="reward-draw-badge">
+              <option value="">Ouvert à tous</option>
+            </select>
             <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0">
               <input id="reward-draw-all-users" type="checkbox" checked style="width:auto">
-              Inclure tous les utilisateurs admissibles si personne ne participe
+              Inclure tous les détenteurs du badge si personne ne participe
             </label>
             <button class="action-btn" type="submit">Créer tirage</button>
           </form>
@@ -483,8 +517,8 @@
       </div>
       <div class="table-card" style="margin-top:16px">
         <table>
-          <thead><tr><th>Tirage</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="reward-draws-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+          <thead><tr><th>Tirage</th><th>Date</th><th>Admissibles</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="reward-draws-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
         </table>
       </div>
       <div class="table-card" style="margin-top:16px">
@@ -642,13 +676,49 @@
       <div class="impact-admin-grid">
         <div class="form-card">
           <form id="impact-settings-form" class="form-grid">
-            <label for="impact-donation-rate">Pourcentage du fonds dons</label>
-            <input id="impact-donation-rate" type="number" min="0" max="100" step="0.1" value="5">
-            <label for="impact-commission-rate">Commission plateforme utilisée</label>
-            <input id="impact-commission-rate" type="number" min="0" max="100" step="0.1" value="12">
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin-bottom:8px">— Répartition livraisons (total doit = 100%) —</div>
+            <div id="livraison-total-bar" style="background:rgba(184,245,62,.08);border:1px solid var(--brand-border);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:.8rem;color:var(--brand-muted)">Total alloué</span>
+                <span id="livraison-total-pct" style="font-weight:800;font-size:1rem">—%</span>
+              </div>
+              <div style="background:var(--brand-bg-dark);border-radius:4px;height:8px;overflow:hidden">
+                <div id="livraison-total-bar-fill" style="height:100%;background:var(--brand-lime);width:0%;transition:width .3s"></div>
+              </div>
+              <div id="livraison-total-msg" style="font-size:.75rem;margin-top:4px;color:var(--brand-muted)">Reste: —%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+              <label for="pct-livreur">🚚 Livreur</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-livreur" type="number" min="0" max="100" step="0.1" value="60" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-plateforme">⚡ Plateforme</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-plateforme" type="number" min="0" max="100" step="0.1" value="12" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-don">❤️ Dons organismes</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-don" type="number" min="0" max="100" step="0.1" value="5" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-tirage">🎟 Fond tirage</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-tirage" type="number" min="0" max="100" step="0.1" value="3" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-developpeur">💻 Développeur</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-developpeur" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-securite">🛡 Fond de sécurité</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-securite" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <label for="pct-assurance">🔒 Assurance</label>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-assurance" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+            </div>
+            <button type="button" onclick="autoBalancePct()" style="margin-top:4px;background:rgba(184,245,62,.08);border:1px solid var(--brand-lime);color:var(--brand-lime);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
+
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Covoiturage —</div>
+            <label for="impact-ride-pct">Commission plateforme covoiturage (%)</label>
+            <input id="impact-ride-pct" type="number" min="0" max="100" step="0.1" value="10">
+            <label for="impact-ride-luggage">Frais bagages ($)</label>
+            <input id="impact-ride-luggage" type="number" min="0" step="0.5" value="5">
+            <label for="impact-ride-pet">Frais animal ($)</label>
+            <input id="impact-ride-pet" type="number" min="0" step="0.5" value="8">
+            <label for="impact-ride-stop">Frais arrêt supplémentaire ($)</label>
+            <input id="impact-ride-stop" type="number" min="0" step="0.5" value="3">
+
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Affichage public —</div>
             <label for="impact-public-note">Note publique</label>
-            <textarea id="impact-public-note" maxlength="400">Montants estimes en direct, confirmes mensuellement.</textarea>
-            <button class="action-btn" type="submit">Enregistrer les paramètres</button>
+            <textarea id="impact-public-note" maxlength="400">Montants estimés en direct, confirmés mensuellement.</textarea>
+            <button class="action-btn" type="submit">Enregistrer tous les paramètres</button>
           </form>
         </div>
         <div class="form-card">
@@ -661,7 +731,11 @@
             <label for="impact-org-url">Site web</label>
             <input id="impact-org-url" placeholder="https://...">
             <label for="impact-org-percent">Pourcentage de répartition</label>
-            <input id="impact-org-percent" type="number" min="0" max="100" step="0.1" value="0">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="impact-org-percent" type="number" min="0" max="100" step="0.1" value="0" style="flex:1" oninput="updateOrgTotal()">
+              <button type="button" onclick="assignReste()" style="white-space:nowrap;padding:6px 10px;background:rgba(184,245,62,.1);border:1px solid var(--brand-lime);color:var(--brand-lime);border-radius:6px;cursor:pointer;font-size:.8rem">Assigner le reste</button>
+            </div>
+            <div id="org-total-indicator" style="font-size:.78rem;color:var(--brand-muted)">Total actif : calcul...</div>
             <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input id="impact-org-active" type="checkbox" checked style="width:auto"> Organisme actif</label>
             <button class="action-btn" type="submit">Ajouter / mettre à jour</button>
           </form>
@@ -789,6 +863,11 @@
     return window.location.protocol === 'file:' ? `https://porteaporte.site${path}` : path;
   }
 
+  function toggleArchives() {
+    const sec = document.getElementById('archives-section');
+    sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+  }
+
   async function setDriverStatus(userId, newStatus) {
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
@@ -885,19 +964,24 @@
   async function loadRevenus(db) {
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const { data } = await db.from('livraisons')
-      .select('id,code,ville_depart,ville_arrivee,prix_total,cree_le,created_at')
+      .select('id,code,ville_depart,ville_arrivee,prix_total,created_at')
       .eq('statut', 'payee')
-      .gte('cree_le', monthStart)
-      .order('cree_le', { ascending: false });
+      .gte('created_at', monthStart)
+      .order('created_at', { ascending: false });
 
     const rows = data || [];
     const total      = rows.reduce((s, r) => s + Number(r.prix_total || 0), 0);
-    const commission = total * 0.15;
-    const livreurs   = total * 0.60;
+    const s = window.__platformSettings || {};
+    const pctPlateforme = Number(s.pct_plateforme) || 12;
+    const pctLivreur    = Number(s.pct_livreur)    || 60;
+    const commission = total * pctPlateforme / 100;
+    const livreurs   = total * pctLivreur    / 100;
 
     document.getElementById('rev-total').textContent      = $m(total);
     document.getElementById('rev-commission').textContent = $m(commission);
     document.getElementById('rev-livreurs').textContent   = $m(livreurs);
+    const pctEl = document.getElementById('rev-commission-pct');
+    if (pctEl) pctEl.textContent = pctPlateforme;
     document.getElementById('rev-count').textContent      = rows.length;
 
     document.getElementById('rev-body').innerHTML = rows.length === 0
@@ -918,9 +1002,9 @@
 
   async function loadLitiges(db) {
     const { data } = await db.from('livraisons')
-      .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,created_at')
+      .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
       .in('statut', ['litige', 'rembourse'])
-      .order('cree_le', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(50);
 
     const rows = data || [];
@@ -1025,30 +1109,44 @@
     const [{ data: profiles }, { data: livraisons }] = await Promise.all([
       db.from('profiles').select('*').order('prenom'),
       db.from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,created_at')
-        .order('cree_le', { ascending: false })
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
+        .order('created_at', { ascending: false })
         .limit(30)
     ]);
-    loadRevenus(db);
     loadLitiges(db);
     loadCovoiturage();
 
     if (profiles) {
       const currentAdminId = AUTH_API.getUser()?.id;
-      document.getElementById('stat-users').textContent = profiles.length;
+      const actifs = profiles.filter(p => !p.suspendu);
+      const archives = profiles.filter(p => p.suspendu);
+
+      document.getElementById('stat-users').textContent = actifs.length;
       document.getElementById('stat-livreurs').textContent = profiles.filter(p => p.driver_status === 'verified').length;
       document.getElementById('stat-pending-verif').textContent = profiles.filter(p => p.driver_status === 'pending_review').length;
+      document.getElementById('archives-count').textContent = archives.length;
 
-      document.getElementById('users-body').innerHTML = profiles.length === 0
-        ? '<tr><td colspan="6" class="empty-msg">Aucun utilisateur</td></tr>'
-        : profiles.map(p => `
+      document.getElementById('users-body').innerHTML = actifs.length === 0
+        ? '<tr><td colspan="6" class="empty-msg">Aucun utilisateur actif</td></tr>'
+        : actifs.map(p => `
           <tr>
             <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
             <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
             <td>${roleBadge(p.role)}</td>
-            <td>${p.suspendu ? driverBadge('suspended') : driverBadge(p.driver_status)}</td>
+            <td>${driverBadge(p.driver_status)}</td>
             <td style="color:#B8F53E">${p.xp||0} XP</td>
             <td>${userActions(p, currentAdminId)}</td>
+          </tr>`).join('');
+
+      document.getElementById('archives-body').innerHTML = archives.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucun compte archivé</td></tr>'
+        : archives.map(p => `
+          <tr style="opacity:.7">
+            <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
+            <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
+            <td>${roleBadge(p.role)}</td>
+            <td style="color:#5A6A7A;font-size:.8rem">${p.raison_suspension||'—'}</td>
+            <td><button class="action-btn" onclick="setUserAccess('${p.id}','reactiver','${p.role||''}')">Réactiver</button></td>
           </tr>`).join('');
 
       const pending = profiles.filter(p => p.driver_status === 'pending_review');
@@ -1110,9 +1208,20 @@
       const out = await impactRequest(null, 'GET');
       const impact = out.impact;
       const settings = impact.settings || {};
-      document.getElementById('impact-donation-rate').value = settings.donation_rate_percent ?? 5;
-      document.getElementById('impact-commission-rate').value = settings.platform_commission_percent ?? 12;
-      document.getElementById('impact-public-note').value = settings.public_note || 'Montants estimes en direct, confirmes mensuellement.';
+      document.getElementById('pct-livreur').value     = settings.pct_livreur     ?? 60;
+      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ?? 12;
+      document.getElementById('pct-don').value         = settings.pct_don         ?? 5;
+      document.getElementById('pct-tirage').value      = settings.pct_tirage      ?? 3;
+      document.getElementById('pct-developpeur').value = settings.pct_developpeur ?? 0;
+      document.getElementById('pct-securite').value    = settings.pct_securite    ?? 0;
+      document.getElementById('pct-assurance').value   = settings.pct_assurance   ?? 0;
+      document.getElementById('impact-ride-pct').value     = settings.ride_platform_pct ?? 10;
+      document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
+      document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
+      document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
+      document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
+      window.__platformSettings = settings;
+      updateLivraisonTotal();
       document.getElementById('impact-admin-pool').textContent = money(impact.totals?.donation_pool_cents);
       document.getElementById('impact-admin-deliveries').textContent = impact.totals?.deliveries_count || 0;
       document.getElementById('impact-admin-allocation').textContent = (impact.totals?.allocation_total_percent || 0) + '%';
@@ -1170,8 +1279,21 @@
     return out;
   }
 
+  async function loadBadgeSelector() {
+    try {
+      const db = window.db;
+      const { data: badges } = await db.from('badges').select('slug,name,icon').eq('active', true).order('name');
+      const sel = document.getElementById('reward-draw-badge');
+      if (!sel || !badges) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Ouvert à tous</option>' +
+        badges.map(b => `<option value="${b.slug}"${current === b.slug ? ' selected' : ''}>${b.icon || ''} ${b.name}</option>`).join('');
+    } catch (_) {}
+  }
+
   async function loadRewardsAdmin() {
     try {
+      loadBadgeSelector();
       const out = await rewardsRequest(null, 'GET');
       document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ?? 0;
       document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ?? 0;
@@ -1188,14 +1310,18 @@
         <tr>
           <td><strong>${d.title || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${d.description || ''}</span></td>
           <td>${d.draw_date || '—'}</td>
+          <td style="font-size:.8rem">${d.eligibility_badge_slug ? `🏅 ${d.eligibility_badge_slug}` : '<span style="color:#5A6A7A">Tous</span>'}</td>
           <td>${d.status || 'active'}</td>
-          <td><div class="action-cell">
+          <td><div class="action-cell" style="flex-wrap:wrap;gap:4px">
             <button class="action-btn" onclick="setDrawStatus('${d.id}','active')">Activer</button>
-            <button class="action-btn" onclick="setDrawStatus('${d.id}','cancelled')" style="margin-left:4px">Pas ce mois</button>
-            <button class="action-btn danger" onclick="runDrawNow('${d.id}')" style="margin-left:4px">Tirer gagnant</button>
+            <button class="action-btn" onclick="setDrawStatus('${d.id}','cancelled')">Désactiver</button>
+            <button class="action-btn" onclick="editDraw(${JSON.stringify(d).replace(/"/g,'&quot;')})">Modifier</button>
+            <button class="action-btn" onclick="duplicateDraw('${d.id}')">Dupliquer</button>
+            <button class="action-btn danger" onclick="runDrawNow('${d.id}')">Tirer gagnant</button>
+            <button class="action-btn danger" onclick="deleteDraw('${d.id}','${(d.title||'').replace(/'/g,'')}')">Supprimer</button>
           </div></td>
         </tr>
-      `).join('') : '<tr><td colspan="4" class="empty-msg">Aucun tirage</td></tr>';
+      `).join('') : '<tr><td colspan="5" class="empty-msg">Aucun tirage</td></tr>';
       document.getElementById('reward-winners-body').innerHTML = (out.winners || []).length ? out.winners.map(w => `
         <tr>
           <td><strong>${w.user_email || w.user_id || 'Gagnant enregistre'}</strong></td>
@@ -1216,6 +1342,34 @@
       await rewardsRequest({ mode: 'update_draw_status', id, status });
       await loadRewardsAdmin();
     } catch (err) { alert(err.message); }
+  }
+
+  async function deleteDraw(id, title) {
+    if (!confirm(`Supprimer le tirage "${title}" et toutes ses participations ? Cette action est irréversible.`)) return;
+    try {
+      await rewardsRequest({ mode: 'delete_draw', id });
+      await loadRewardsAdmin();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function duplicateDraw(id) {
+    try {
+      await rewardsRequest({ mode: 'duplicate_draw', id });
+      await loadRewardsAdmin();
+      alert('Tirage dupliqué en brouillon — modifie la date avant de l\'activer.');
+    } catch (err) { alert(err.message); }
+  }
+
+  function editDraw(d) {
+    const title = prompt('Titre du tirage :', d.title || '');
+    if (title === null) return;
+    const date = prompt('Date du tirage (AAAA-MM-JJ) :', d.draw_date || '');
+    if (date === null) return;
+    const description = prompt('Lots / description :', d.description || '');
+    if (description === null) return;
+    rewardsRequest({ mode: 'update_draw', id: d.id, title, draw_date: date, description })
+      .then(() => loadRewardsAdmin())
+      .catch(err => alert(err.message));
   }
 
   async function runDrawNow(id) {
@@ -1255,12 +1409,80 @@
         description: document.getElementById('reward-draw-description').value.trim(),
         draw_date: document.getElementById('reward-draw-date').value,
         status: document.getElementById('reward-draw-status').value,
-        auto_include_all_users: document.getElementById('reward-draw-all-users').checked
+        auto_include_all_users: document.getElementById('reward-draw-all-users').checked,
+        eligibility_badge_slug: document.getElementById('reward-draw-badge').value || null
       });
       event.target.reset();
       await loadRewardsAdmin();
     } catch (err) { alert(err.message); }
   });
+
+  const PCT_IDS = ['pct-livreur','pct-plateforme','pct-don','pct-tirage','pct-developpeur','pct-securite','pct-assurance'];
+
+  function updateLivraisonTotal() {
+    const total = PCT_IDS.reduce((s, id) => s + (Number(document.getElementById(id)?.value) || 0), 0);
+    const rounded = Math.round(total * 10) / 10;
+    const el = document.getElementById('livraison-total-pct');
+    const bar = document.getElementById('livraison-total-bar-fill');
+    const msg = document.getElementById('livraison-total-msg');
+    if (!el) return;
+    el.textContent = rounded + '%';
+    el.style.color = Math.abs(rounded - 100) < 0.1 ? 'var(--brand-lime)' : rounded > 100 ? '#FF5555' : 'var(--brand-muted)';
+    if (bar) bar.style.width = Math.min(100, rounded) + '%';
+    if (bar) bar.style.background = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-lime)';
+    if (msg) msg.textContent = rounded > 100 ? `⚠ Dépasse de ${Math.round((rounded-100)*10)/10}%` : rounded < 100 ? `Reste à allouer : ${Math.round((100-rounded)*10)/10}%` : '✓ 100% alloué';
+    if (msg) msg.style.color = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-muted)';
+  }
+
+  function autoBalancePct() {
+    const vals = PCT_IDS.map(id => ({ id, v: Math.max(0, Number(document.getElementById(id)?.value) || 0) }));
+    const total = vals.reduce((s, x) => s + x.v, 0);
+    if (total === 0) return;
+    const factor = 100 / total;
+    let allocated = 0;
+    vals.forEach((x, i) => {
+      if (i < vals.length - 1) {
+        const adjusted = Math.round(x.v * factor * 10) / 10;
+        document.getElementById(x.id).value = adjusted;
+        allocated += adjusted;
+      } else {
+        document.getElementById(x.id).value = Math.round((100 - allocated) * 10) / 10;
+      }
+    });
+    updateLivraisonTotal();
+  }
+
+  function updateOrgTotal() {
+    const orgs = window.__impactOrgs || [];
+    const editingId = document.getElementById('impact-org-id').value;
+    const inputVal = Number(document.getElementById('impact-org-percent').value || 0);
+    const othersTotal = orgs
+      .filter(o => o.active !== false && o.id !== editingId)
+      .reduce((s, o) => s + Number(o.allocation_percent || 0), 0);
+    const total = othersTotal + inputVal;
+    const el = document.getElementById('org-total-indicator');
+    if (!el) return;
+    const remaining = Math.max(0, 100 - othersTotal);
+    if (total > 100.01) {
+      el.style.color = '#FF5555';
+      el.textContent = `Total actif : ${Math.round(total * 10) / 10}% ⚠ dépasse 100% (sera normalisé)`;
+    } else {
+      el.style.color = 'var(--brand-muted)';
+      el.textContent = `Total actif : ${Math.round(total * 10) / 10}% — Reste disponible : ${Math.round((100 - total) * 10) / 10}%`;
+    }
+    return remaining;
+  }
+
+  function assignReste() {
+    const orgs = window.__impactOrgs || [];
+    const editingId = document.getElementById('impact-org-id').value;
+    const othersTotal = orgs
+      .filter(o => o.active !== false && o.id !== editingId)
+      .reduce((s, o) => s + Number(o.allocation_percent || 0), 0);
+    const reste = Math.max(0, Math.round((100 - othersTotal) * 10) / 10);
+    document.getElementById('impact-org-percent').value = reste;
+    updateOrgTotal();
+  }
 
   function editImpactOrg(id) {
     const org = (window.__impactOrgs || []).find(o => o.id === id);
@@ -1271,6 +1493,8 @@
     document.getElementById('impact-org-url').value = org.website_url || '';
     document.getElementById('impact-org-percent').value = org.allocation_percent || 0;
     document.getElementById('impact-org-active').checked = org.active !== false;
+    updateOrgTotal();
+    document.getElementById('impact-org-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async function deleteImpactOrg(id) {
@@ -1298,8 +1522,17 @@
     try {
       await impactRequest({
         mode: 'settings',
-        donation_rate_percent: Number(document.getElementById('impact-donation-rate').value || 0),
-        platform_commission_percent: Number(document.getElementById('impact-commission-rate').value || 0),
+        pct_livreur:     Number(document.getElementById('pct-livreur').value || 0),
+        pct_plateforme:  Number(document.getElementById('pct-plateforme').value || 0),
+        pct_don:         Number(document.getElementById('pct-don').value || 0),
+        pct_tirage:      Number(document.getElementById('pct-tirage').value || 0),
+        pct_developpeur: Number(document.getElementById('pct-developpeur').value || 0),
+        pct_securite:    Number(document.getElementById('pct-securite').value || 0),
+        pct_assurance:   Number(document.getElementById('pct-assurance').value || 0),
+        ride_platform_pct:  Number(document.getElementById('impact-ride-pct').value || 0),
+        ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
+        ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
+        ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),
         public_note: document.getElementById('impact-public-note').value.trim()
       });
       await loadImpact();
@@ -1563,7 +1796,8 @@
   }
 
   // Fermer modal en cliquant dehors
-  document.getElementById('campaign-modal').addEventListener('click', function(e) {
+  const _modal = document.getElementById('campaign-modal');
+  if (_modal) _modal.addEventListener('click', function(e) {
     if (e.target === this) closeCampaignModal();
   });
 
@@ -1576,6 +1810,7 @@
     await loadData();
     await loadRewardsAdmin();
     await loadImpact();
+    loadRevenus(db);
     await loadGamification();
   }
 

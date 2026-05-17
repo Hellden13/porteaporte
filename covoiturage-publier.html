@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -413,6 +413,7 @@
         }
       } catch(e) {
         document.getElementById('err-msg').style.display = 'block';
+        document.getElementById('err-msg').textContent = '⚠️ ' + (e.message || 'Erreur réseau. Réessayez.');
         btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
       }
     }

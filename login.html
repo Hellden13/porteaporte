@@ -254,6 +254,7 @@
           </div>
           <button type="submit" class="submit-btn" id="emailBtn">Se connecter</button>
         </form>
+        <button type="button" class="ghost-btn" style="margin-top:10px" onclick="sendPasswordReset()">Mot de passe oublié ?</button>
         <div class="status-msg" id="emailStatus"></div>
         <div class="oauth-separator">ou</div>
         <a class="ghost-btn" href="/signup.html">Pas encore inscrit ? Créer un compte</a>
@@ -364,15 +365,56 @@
       el.style.display = 'block';
     }
 
+    /* ---- Admin portal choice overlay ---- */
+    function showAdminPortalChoice() {
+      const overlay = document.getElementById('admin-portal-overlay');
+      if (overlay) { overlay.style.display = 'flex'; return; }
+      const el = document.createElement('div');
+      el.id = 'admin-portal-overlay';
+      el.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,30,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:9999;padding:24px;';
+      el.innerHTML = `
+        <div style="font-size:1.5rem;font-weight:900;color:#B8F53E">PorteàPorte Admin</div>
+        <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Tu es connecté en tant qu'administrateur.<br>Où veux-tu aller ?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
+          <a href="/admin/dashboard-admin.html" style="background:#B8F53E;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">⚡ Dashboard Admin</a>
+          <a href="/dashboard-expediteur.html"  style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">📦 Expéditeur</a>
+          <a href="/dashboard-livreur.html"     style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚚 Livreur</a>
+          <a href="/dashboard-covoiturage.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚗 Covoiturage</a>
+        </div>
+        <button onclick="db.auth.signOut().then(()=>window.location.reload())" style="background:transparent;border:1px solid #1E2A3A;color:#8A9BB0;padding:10px 24px;border-radius:8px;font-size:.85rem;cursor:pointer">Se déconnecter</button>
+      `;
+      document.body.appendChild(el);
+    }
+
     /* ---- After login: redirect based on role ---- */
     async function afterLogin(session) {
       const userId = session.user.id;
-      const { data: profile } = await db.from('profiles').select('role').eq('id', userId).single();
+      const { data: profile, error } = await db
+        .from('profiles')
+        .select('role,driver_status,verification_status,suspendu')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error || !profile) {
+        showStatus('emailStatus', 'Compte connecté. Choisis ton rôle pour terminer le profil.', 'info');
+        setTimeout(() => { window.location.href = '/role-choice.html'; }, 800);
+        return;
+      }
+      if (profile.suspendu || profile.verification_status === 'suspended' || profile.driver_status === 'suspended') {
+        showStatus('emailStatus', 'Compte suspendu. Contacte le support PorteàPorte.', 'error');
+        return;
+      }
+
       const role = profile?.role || 'expediteur';
+      const driverStatus = profile?.driver_status || 'not_started';
+
+      if (role === 'admin') {
+        showAdminPortalChoice();
+        return;
+      }
+
       let dest = '/dashboard-expediteur.html';
-      if (role === 'livreur') dest = '/dashboard-livreur.html';
+      if (role === 'livreur') dest = driverStatus === 'verified' ? '/dashboard-livreur.html' : '/livreur.html';
       else if (role === 'les deux') dest = '/role-choice.html';
-      else if (role === 'admin') dest = '/admin/dashboard-admin.html';
       showStatus('emailStatus', 'Connexion réussie ! Redirection...', 'success');
       setTimeout(() => { window.location.href = dest; }, 1000);
     }
@@ -391,9 +433,26 @@
         if (error) throw error;
         await afterLogin(data.session);
       } catch (err) {
-        showStatus('emailStatus', err.message || 'Erreur de connexion', 'error');
+        showStatus('emailStatus', err.message || 'Erreur de connexion. Vérifie ton courriel, ton mot de passe et la confirmation du compte.', 'error');
         btn.disabled = false;
         btn.textContent = 'Se connecter';
+      }
+    }
+
+    async function sendPasswordReset() {
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showStatus('emailStatus', 'Entre ton courriel, puis clique sur “Mot de passe oublié”.', 'error');
+        return;
+      }
+      try {
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/login.html'
+        });
+        if (error) throw error;
+        showStatus('emailStatus', 'Lien de réinitialisation envoyé. Vérifie aussi les courriels indésirables.', 'success');
+      } catch (err) {
+        showStatus('emailStatus', err.message || 'Envoi du lien impossible.', 'error');
       }
     }
 

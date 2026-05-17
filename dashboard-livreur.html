@@ -406,6 +406,7 @@
     <div class="topbar-right">
       <a class="topbar-btn" href="/browse-missions.html">Missions</a>
       <a class="topbar-btn" href="/profile.html">Profil</a>
+      <a class="topbar-btn" id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;border-color:var(--brand-lime);font-weight:800">⚡ Admin</a>
       <button class="topbar-btn" onclick="logout()">Déconnecter</button>
     </div>
   </header>
@@ -600,18 +601,19 @@
         showBanner('Compte suspendu. Contacte le support.', '#EF4444', 'mailto:support@porteaporte.site', 'Contacter le support');
         return;
       }
+      if (p.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
       const roleOk = ['livreur', 'les deux', 'admin'].includes(p.role);
       if (!roleOk) {
-        showBanner('Ton compte est enregistré comme expéditeur.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
+        showBanner('Ton compte est enregistré comme expéditeur. Ajoute le rôle livreur pour commencer la vérification.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
         return;
       }
       const driverVerified = p.role === 'admin' || p.driver_status === 'verified';
       if (!driverVerified) {
         const msgs = {
-          pending_review: { title: 'Vérification en cours ⏳', msg: 'Ta demande est en cours d\'examen (24–48h). Aucune action requise.', color: '#F59E0B', link: null },
-          rejected: { title: 'Vérification refusée', msg: 'Ta demande a été refusée. Corrige les infos et resoumet.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre à nouveau' }
+          pending_review: { title: 'Vérification en cours', msg: 'Ta demande est en révision. Tu peux ouvrir ton dossier, mettre tes informations à jour ou revenir au profil. Les vraies missions restent bloquées jusqu’à l’approbation admin.', color: '#F59E0B', link: '/livreur.html', linkText: 'Voir ma vérification' },
+          rejected: { title: 'Vérification refusée', msg: 'Ta demande a été refusée. Corrige les informations et soumets de nouveau.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre à nouveau' }
         };
-        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification pour accéder au dashboard.', color: '#B8F53E', link: '/livreur.html', linkText: 'Démarrer la vérification' };
+        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification livreur avant d’accéder aux missions.', color: '#B8F53E', link: '/livreur.html', linkText: 'Démarrer la vérification' };
         showBanner(s.msg, s.color, s.link, s.linkText, s.title);
         return;
       }
@@ -637,6 +639,7 @@
           <h2 style="color:${color}">${title || 'Attention'}</h2>
           <p>${msg}</p>
           ${link ? `<a href="${link}" style="background:${color};color:#0A0C10">${linkText}</a>` : ''}
+          <a href="/profile.html" style="background:transparent;color:var(--brand-text);border:1px solid var(--brand-border);margin-left:8px">Mon profil</a>
         </div>`;
     }
 
@@ -1046,6 +1049,86 @@
     document.getElementById('bioModal').addEventListener('click', function(e) {
       if (e.target === this) closeBioModal();
     });
+
+    // Overrides securises: les missions passent par l'API serveur, jamais par une lecture client directe.
+    loadMissions = async function() {
+      const el = document.getElementById('missionsList');
+      try {
+        const res = await fetch('/api/available-livraisons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({})
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Chargement des missions impossible');
+        const data = (out.livraisons || []).slice(0, 5);
+        if (!data.length) {
+          el.innerHTML = '<div class="empty-msg">Aucune mission compatible en ce moment. Reviens plus tard !</div>';
+          return;
+        }
+        availableMissions = data;
+        el.innerHTML = data.map(m => {
+          const exp = m.expediteur_profile;
+          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
+          const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
+          return `
+          <div class="mission-card">
+            <div class="mission-info">
+              <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
+              <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
+              ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
+            </div>
+            <span class="mission-price">${money(m.prix_total)}</span>
+            <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
+          </div>`;
+        }).join('');
+      } catch (error) {
+        el.innerHTML = `<div class="empty-msg">${error.message}</div>`;
+      }
+    };
+
+    loadMyDeliveries = async function() {
+      const el = document.getElementById('myDeliveries');
+      try {
+        const res = await fetch('/api/my-driver-livraisons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({})
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Chargement des livraisons impossible');
+        const data = (out.livraisons || [])
+          .filter(row => !['livre', 'annule', 'annulee', 'payee', 'paid', 'succeeded'].includes(row.statut))
+          .slice(0, 10);
+        if (!data.length) {
+          el.innerHTML = '<div class="empty-msg">Aucune livraison en cours. Accepte une mission ci-dessus !</div>';
+          return;
+        }
+        el.innerHTML = data.map(row => {
+          const canMark = ['confirme','en_route','ramasse'].includes(row.statut);
+          const exp = row.expediteur_profile;
+          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
+          const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          return `
+            <div class="delivery-row">
+              <div>
+                <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+                <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)}</div>
+                ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}📦 ${expName}</div>` : ''}
+              </div>
+              <div class="delivery-actions">
+                <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
+                <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
+                  ${row.statut === 'livre' ? 'Livré ✓' : 'Marquer livré'}
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (error) {
+        el.innerHTML = `<div class="empty-msg">${error.message}</div>`;
+      }
+    };
 
     init();
   </script>

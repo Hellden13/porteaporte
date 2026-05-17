@@ -2,12 +2,21 @@
     "cleanUrls":  false,
     "trailingSlash":  false,
     "redirects": [
-        { "source": "/(.*\\.sql)",  "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.bat)",  "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.ps1)",  "destination": "/404.html", "permanent": false },
-        { "source": "/BACKEND-(.*\\.md)", "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.bat)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.ps1)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.txt)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.backup)", "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.env)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.log)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.key)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.pem)",    "destination": "/404.html", "permanent": false },
+        { "source": "/backups/(.*)",  "destination": "/404.html", "permanent": false },
+        { "source": "/BACKEND-(.*\\.md)",  "destination": "/404.html", "permanent": false },
         { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },
-        { "source": "/test-login.html", "destination": "/404.html", "permanent": false }
+        { "source": "/admin/admin-legacy.html", "destination": "/404.html", "permanent": false },
+        { "source": "/admin-dashboard.html",    "destination": "/404.html", "permanent": false },
+        { "source": "/test-login.html",         "destination": "/404.html", "permanent": false }
     ],
     "rewrites":  [
                      {
@@ -63,6 +72,10 @@
                          "destination":  "/api/platform?endpoint=create-livraison"
                      },
                      {
+                         "source":  "/api/set-role",
+                         "destination":  "/api/platform?endpoint=set-role"
+                     },
+                     {
                          "source":  "/api/assign-driver",
                          "destination":  "/api/platform?endpoint=assign-driver"
                      },
@@ -75,11 +88,19 @@
                          "destination":  "/api/platform?endpoint=my-livraisons"
                      },
                      {
+                         "source":  "/api/my-driver-livraisons",
+                         "destination":  "/api/platform?endpoint=my-driver-livraisons"
+                     },
+                     {
                          "source":  "/api/notifications",
                          "destination":  "/api/platform?endpoint=notifications"
                      },
                      {
                          "source":  "/livreur-hero.png",
+                         "destination":  "/logo.svg"
+                     },
+                     {
+                         "source":  "/favicon.ico",
                          "destination":  "/logo.svg"
                      },
                      {

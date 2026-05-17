@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const client = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
   let currentUser = null;
 
@@ -60,7 +60,7 @@
 
     if (error || !data.session) {
       console.error('ERREUR auth: connexion requise', error?.message || '');
-      window.location.href = 'login.html';
+      window.location.href = '/login.html';
       return false;
     }
 
@@ -69,7 +69,7 @@
 
     if (!profile) {
       console.error('ERREUR auth: profil introuvable');
-      window.location.href = 'role-choice.html';
+      window.location.href = '/role-choice.html';
       return false;
     }
 
@@ -88,7 +88,7 @@
 
     if (role && !roleMatches(currentUser.role, role)) {
       console.error('ERREUR auth: role requis', role);
-      window.location.href = 'role-choice.html';
+      window.location.href = role === 'admin' ? '/admin/login.html' : '/role-choice.html';
       return false;
     }
 
@@ -135,5 +135,4 @@
     logout
   };
 })();
-
 

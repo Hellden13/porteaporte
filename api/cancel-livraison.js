@@ -1,4 +1,4 @@
-﻿// api/cancel-livraison.js - WITH AUDIT LOGGING
+// api/cancel-livraison.js - WITH AUDIT LOGGING
 const { log } = require('./logger');
 
 const CORS = {
@@ -33,14 +33,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
-  const SB_URL = process.env.SUPABASE_URL;
-  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-
-  if (!STRIPE_KEY) {
-    log('ERROR', 'stripe_key_missing', null, {});
-    return res.status(503).json({ error: 'Stripe non configuré' });
-  }
+  const stripBom = s => (s || '').replace(/^﻿/, '').trim();
+  const STRIPE_KEY = stripBom(process.env.STRIPE_SECRET_KEY);
+  const SB_URL = stripBom(process.env.SUPABASE_URL);
+  const SB_KEY = stripBom(process.env.SUPABASE_SERVICE_KEY);
 
   if (!SB_URL || !SB_KEY) {
     log('ERROR', 'supabase_config_missing', null, { hasSBUrl: !!SB_URL, hasSBKey: !!SB_KEY });
@@ -87,29 +83,35 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: 'Livraison non trouvée' });
     }
 
-    // Vérifier droits
+    // Vérifier droits (admin peut annuler n'importe quelle livraison)
     const isExpeditor = livraison.expediteur_id === session.id;
     const isDriver = livraison.livreur_id === session.id;
 
-    if (!isExpeditor && !isDriver) {
-      log('WARN', 'cancel_livraison_unauthorized_user', session.id, {
-        livraison_id,
-        role: isExpeditor ? 'expediteur' : isDriver ? 'livreur' : 'unknown',
-      });
+    // Vérifier si l'utilisateur est admin
+    const profileRes = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${session.id}&select=role`, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+    });
+    const profileRows = profileRes.ok ? await profileRes.json() : [];
+    const isAdmin = profileRows[0]?.role === 'admin';
+
+    if (!isExpeditor && !isDriver && !isAdmin) {
+      log('WARN', 'cancel_livraison_unauthorized_user', session.id, { livraison_id });
       return res.status(403).json({ error: 'Non autorisé' });
     }
 
-    // Vérifier statut
-    if (!['pending', 'accepted', 'in_transit'].includes(livraison.statut)) {
-      log('WARN', 'cancel_livraison_invalid_status', session.id, {
-        livraison_id,
-        currentStatus: livraison.statut,
-      });
+    // Vérifier statut — statuts français et anglais supportés
+    const cancellableStatuts = ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'pending', 'accepted', 'in_transit'];
+    if (!cancellableStatuts.includes(livraison.statut)) {
+      log('WARN', 'cancel_livraison_invalid_status', session.id, { livraison_id, currentStatus: livraison.statut });
       return res.status(400).json({ error: `Impossible d'annuler une livraison avec le statut: ${livraison.statut}` });
     }
 
     // Rembourser via Stripe si nécessaire
     if (livraison.stripe_payment_intent) {
+      if (!STRIPE_KEY) {
+        log('ERROR', 'stripe_key_missing', session.id, { livraison_id });
+        return res.status(503).json({ error: 'Remboursement impossible : Stripe non configuré' });
+      }
       const stripe = require('stripe')(STRIPE_KEY);
       try {
         const refund = await stripe.refunds.create({
@@ -142,8 +144,7 @@ module.exports = async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          statut: 'cancelled',
-          mis_a_jour_le: new Date().toISOString(),
+          statut: 'annule',
         }),
       }
     );

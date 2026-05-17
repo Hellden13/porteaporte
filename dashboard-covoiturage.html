@@ -122,6 +122,7 @@
   <a href="/" class="nav-logo">PorteÀPorte</a>
   <div class="nav-links">
     <a href="/covoiturage.html">Trouver un trajet</a>
+    <a id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--green);color:#0A0F1E;padding:7px 14px;border-radius:8px;font-weight:800;font-size:.85rem">⚡ Admin</a>
     <a href="/covoiturage-publier.html" class="btn-green">+ Publier</a>
   </div>
 </nav>
@@ -189,6 +190,8 @@ async function init() {
 
   userProfile = profileRes.data || {};
   dashData    = dashRes.ok ? await dashRes.json() : {};
+
+  if (userProfile.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
 
   document.getElementById('initial-loading').remove();
   renderSection('overview');

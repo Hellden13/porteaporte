@@ -1,4 +1,4 @@
-﻿const CORS = {
+const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -49,6 +49,20 @@ async function getProfile(userId, sbUrl, sbKey) {
 
 function roleIn(profile, roles) {
   return profile && !profile.suspendu && roles.includes(profile.role);
+}
+
+function mergeUserRole(currentRole, requestedRole) {
+  const current = normalizeText(currentRole);
+  const requested = normalizeText(requestedRole === 'both' ? 'les deux' : requestedRole);
+  if (requested === 'les deux') return 'les deux';
+  if (current === 'admin') return 'admin';
+  if ((current === 'expediteur' && requested === 'livreur') || (current === 'livreur' && requested === 'expediteur')) {
+    return 'les deux';
+  }
+  if (current === 'les deux') return 'les deux';
+  if (requested === 'livreur') return 'livreur';
+  if (requested === 'expediteur') return 'expediteur';
+  return currentRole || 'expediteur';
 }
 
 function isEmailVerified(session, profile) {
@@ -296,6 +310,61 @@ async function createLivraison(req, res, ctx, body) {
   return res.status(200).json({ success: true, livraison });
 }
 
+async function setUserRole(req, res, ctx, body) {
+  const requested = body.role || body.requested_role;
+  const requestedNormalized = requested === 'both' ? 'les deux' : requested;
+  if (!['livreur', 'expediteur', 'les deux', 'both'].includes(String(requested || '').trim())) {
+    return res.status(400).json({ error: 'Role invalide' });
+  }
+
+  const nextRole = mergeUserRole(ctx.profile?.role, requestedNormalized);
+  const patch = {
+    email: ctx.session.email || ctx.profile?.email || '',
+    role: nextRole,
+    email_verified: isEmailVerified(ctx.session, ctx.profile),
+    verification_status: ctx.profile?.verification_status || 'pending',
+    driver_status: ctx.profile?.driver_status || 'not_started',
+    mis_a_jour_le: new Date().toISOString()
+  };
+
+  const profileUrl = ctx.profile
+    ? `${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(ctx.session.id)}`
+    : `${ctx.sbUrl}/rest/v1/profiles?on_conflict=id`;
+  let r = await fetch(profileUrl, {
+    method: ctx.profile ? 'PATCH' : 'POST',
+    headers: ctx.profile ? sbHeaders(ctx.sbKey) : { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(ctx.profile ? patch : { id: ctx.session.id, ...patch })
+  });
+  let data = await r.json().catch(() => ({}));
+
+  if (!r.ok && /column .* does not exist/i.test(JSON.stringify(data))) {
+    const fallbackPayload = {
+      email: patch.email,
+      role: nextRole,
+      mis_a_jour_le: patch.mis_a_jour_le
+    };
+    if (!ctx.profile) fallbackPayload.id = ctx.session.id;
+    r = await fetch(profileUrl, {
+      method: ctx.profile ? 'PATCH' : 'POST',
+      headers: ctx.profile ? sbHeaders(ctx.sbKey) : { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(fallbackPayload)
+    });
+    data = await r.json().catch(() => ({}));
+  }
+
+  if (!r.ok) {
+    return res.status(400).json({ error: 'Mise a jour role impossible', details: data });
+  }
+
+  const profile = Array.isArray(data) ? data[0] : data;
+  return res.status(200).json({
+    success: true,
+    role: profile?.role || nextRole,
+    driver_status: profile?.driver_status || patch.driver_status,
+    profile
+  });
+}
+
 async function assignDriver(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
   const livreurId = body.livreur_id || body.livreurId || ctx.session.id;
@@ -426,7 +495,7 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,adresse_depart,ville_arrivee,adresse_arrivee,type_colis,poids_kg,prix_total,statut,description,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -435,6 +504,15 @@ async function availableLivraisons(req, res, ctx) {
     .map((row) => ({ row, eligibility: deliveryEligibility(ctx.profile, row) }))
     .filter((item) => item.eligibility.allowed);
 
+  // Enrichir avec les profils expéditeurs
+  const expIds = [...new Set(filtered.map(({ row }) => row.expediteur_id).filter(Boolean))];
+  let expProfiles = {};
+  if (expIds.length > 0) {
+    const ids = expIds.map(id => `"${id}"`).join(',');
+    const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance`, { headers: sbHeaders(ctx.sbKey) });
+    if (pr.ok) { (await pr.json()).forEach(p => { expProfiles[p.id] = p; }); }
+  }
+
   return res.status(200).json({
     success: true,
     transport_mode: driverTransportMode(ctx.profile),
@@ -442,14 +520,18 @@ async function availableLivraisons(req, res, ctx) {
       id: row.id,
       code: row.code,
       ville_depart: row.ville_depart,
+      adresse_depart: row.adresse_depart,
       ville_arrivee: row.ville_arrivee,
+      adresse_arrivee: row.adresse_arrivee,
       type_colis: row.type_colis,
       poids_kg: row.poids_kg,
       prix_total: row.prix_total,
       statut: row.statut,
+      description: row.description,
       distance_km: eligibility.routeKm,
       compatibilite: eligibility.reason,
-      cree_le: row.cree_le || row.created_at
+      cree_le: row.cree_le || row.created_at,
+      expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
     }))
   });
 }
@@ -494,7 +576,73 @@ async function myLivraisons(req, res, ctx, body) {
     }))
     .sort((a, b) => new Date(b.cree_le || b.created_at || 0) - new Date(a.cree_le || a.created_at || 0));
 
-  return res.status(200).json({ success: true, livraisons });
+  // Enrichir avec les profils des livreurs assignés
+  const livreurIds = [...new Set(livraisons.map(l => l.livreur_id).filter(Boolean))];
+  let livreurProfiles = {};
+  if (livreurIds.length > 0) {
+    const ids = livreurIds.map(id => `"${id}"`).join(',');
+    const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance,telephone`, { headers: sbHeaders(ctx.sbKey) });
+    if (pr.ok) {
+      const prows = await pr.json();
+      prows.forEach(p => { livreurProfiles[p.id] = p; });
+    }
+  }
+  const enriched = livraisons.map(l => ({
+    ...l,
+    livreur_profile: l.livreur_id ? (livreurProfiles[l.livreur_id] || null) : null
+  }));
+
+  return res.status(200).json({ success: true, livraisons: enriched });
+}
+
+async function myDriverLivraisons(req, res, ctx) {
+  const admin = roleIn(ctx.profile, ['admin']);
+  if (!admin && !isVerifiedDriver(ctx.session, ctx.profile)) {
+    return res.status(403).json({ error: 'Livreur verifie requis' });
+  }
+
+  const baseUrl = `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=eq.${encodeURIComponent(ctx.session.id)}&select=*&limit=100`;
+  let r = await fetch(`${baseUrl}&order=cree_le.desc`, { headers: sbHeaders(ctx.sbKey) });
+  let rows = r.ok ? await r.json() : [];
+
+  if (!r.ok) {
+    r = await fetch(`${baseUrl}&order=created_at.desc`, { headers: sbHeaders(ctx.sbKey) });
+    rows = r.ok ? await r.json() : [];
+  }
+  if (!r.ok) {
+    r = await fetch(baseUrl, { headers: sbHeaders(ctx.sbKey) });
+    rows = r.ok ? await r.json() : [];
+  }
+  if (!r.ok) {
+    return res.status(400).json({ error: 'Lecture livraisons livreur impossible', details: rows });
+  }
+
+  const livraisons = rows
+    .map((row) => ({
+      ...row,
+      type_colis: row.type_colis || row.type || row.categorie || 'Colis',
+      poids_kg: row.poids_kg ?? row.poids ?? null,
+      prix_total: row.prix_total ?? row.prix ?? row.montant ?? 0,
+      statut: row.statut || row.status || 'confirme',
+      cree_le: row.cree_le || row.created_at || row.date_creation || null,
+      created_at: row.created_at || row.cree_le || row.date_creation || null
+    }))
+    .sort((a, b) => new Date(b.cree_le || b.created_at || 0) - new Date(a.cree_le || a.created_at || 0));
+
+  // Enrichir avec les profils des expéditeurs
+  const expIds = [...new Set(livraisons.map(l => l.expediteur_id).filter(Boolean))];
+  let expProfiles = {};
+  if (expIds.length > 0) {
+    const ids = expIds.map(id => `"${id}"`).join(',');
+    const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance`, { headers: sbHeaders(ctx.sbKey) });
+    if (pr.ok) { (await pr.json()).forEach(p => { expProfiles[p.id] = p; }); }
+  }
+  const enriched = livraisons.map(l => ({
+    ...l,
+    expediteur_profile: l.expediteur_id ? (expProfiles[l.expediteur_id] || null) : null
+  }));
+
+  return res.status(200).json({ success: true, livraisons: enriched });
 }
 
 async function tracking(req, res, ctx, body) {
@@ -1002,8 +1150,9 @@ async function fetchImpactState(sbUrl, sbKey) {
   const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
   const settings = settingsRows[0] || {
     id: 'default',
-    donation_rate_percent: 5,
-    platform_commission_percent: 12,
+    pct_livreur: 60, pct_plateforme: 12, pct_don: 5,
+    pct_tirage: 3, pct_developpeur: 0, pct_securite: 0, pct_assurance: 0,
+    ride_platform_pct: 10, ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
     public_note: 'Montants estimes en direct, confirmes mensuellement.'
   };
 
@@ -1035,10 +1184,17 @@ async function fetchImpactState(sbUrl, sbKey) {
     const amount = toNumber(row.prix_total ?? row.prix_final ?? row.prix, 0);
     return sum + Math.round(amount * 100);
   }, 0);
-  const commissionRate = Math.max(0, toNumber(settings.platform_commission_percent, 12));
-  const donationRate = Math.max(0, toNumber(settings.donation_rate_percent, 5));
-  const commissionCents = Math.round(revenueCents * commissionRate / 100);
-  const donationPoolCents = Math.round(commissionCents * donationRate / 100);
+
+  const slices = {
+    livreur:     Math.max(0, toNumber(settings.pct_livreur, 60)),
+    plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 12)),
+    don:         Math.max(0, toNumber(settings.pct_don, 5)),
+    tirage:      Math.max(0, toNumber(settings.pct_tirage, 3)),
+    developpeur: Math.max(0, toNumber(settings.pct_developpeur, 0)),
+    securite:    Math.max(0, toNumber(settings.pct_securite, 0)),
+    assurance:   Math.max(0, toNumber(settings.pct_assurance, 0)),
+  };
+  const donationPoolCents = Math.round(revenueCents * slices.don / 100);
   const allocationTotal = activeOrgs.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
 
   const allocations = activeOrgs.map((org) => {
@@ -1062,10 +1218,9 @@ async function fetchImpactState(sbUrl, sbKey) {
     totals: {
       deliveries_count: livraisons.length,
       revenue_cents: revenueCents,
-      commission_cents: commissionCents,
       donation_pool_cents: donationPoolCents,
-      donation_rate_percent: donationRate,
-      platform_commission_percent: commissionRate,
+      slices,
+      slice_cents: Object.fromEntries(Object.entries(slices).map(([k, pct]) => [k, Math.round(revenueCents * pct / 100)])),
       allocation_total_percent: Math.round(allocationTotal * 100) / 100,
       status: 'estimated'
     },
@@ -1153,12 +1308,20 @@ async function impactAdmin(req, res, ctx, body) {
   }
 
   if (body.mode === 'settings') {
-    const donationRate = Math.max(0, Math.min(100, toNumber(body.donation_rate_percent, 5)));
-    const commissionRate = Math.max(0, Math.min(100, toNumber(body.platform_commission_percent, 12)));
+    const pct = (v, def) => Math.max(0, Math.min(100, toNumber(v, def)));
     const payload = {
       id: 'default',
-      donation_rate_percent: donationRate,
-      platform_commission_percent: commissionRate,
+      pct_livreur:     pct(body.pct_livreur, 60),
+      pct_plateforme:  pct(body.pct_plateforme, 12),
+      pct_don:         pct(body.pct_don, 5),
+      pct_tirage:      pct(body.pct_tirage, 3),
+      pct_developpeur: pct(body.pct_developpeur, 0),
+      pct_securite:    pct(body.pct_securite, 0),
+      pct_assurance:   pct(body.pct_assurance, 0),
+      ride_platform_pct:  pct(body.ride_platform_pct, 10),
+      ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
+      ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
+      ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
       public_note: String(body.public_note || '').slice(0, 400),
       updated_by: ctx.session.id,
       updated_at: new Date().toISOString()
@@ -1193,13 +1356,11 @@ async function impactAdmin(req, res, ctx, body) {
       .concat({ id: body.id || 'new', ...payload });
     const active = simulated.filter((org) => org.active !== false);
     const activeTotal = active.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
-    if (active.length > 3) {
-      return res.status(409).json({ error: 'Maximum 3 organismes actifs a la fois' });
-    }
-    if (activeTotal > 100.01) {
-      return res.status(409).json({ error: 'La repartition active ne peut pas depasser 100%' });
-    }
+    // Avertissement seulement — ne bloque pas, permet ajustements un par un
+    payload.allocation_warning = activeTotal > 100.01 ? `Total actif = ${Math.round(activeTotal)}% (sera normalisé au calcul)` : null;
 
+    const warning = payload.allocation_warning;
+    delete payload.allocation_warning;
     const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_organisations${body.id ? '?on_conflict=id' : ''}`, {
       method: 'POST',
       headers: body.id ? { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates' } : sbHeaders(ctx.sbKey),
@@ -1207,7 +1368,7 @@ async function impactAdmin(req, res, ctx, body) {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(400).json({ error: 'Sauvegarde organisme impossible', details: data });
-    return res.status(200).json({ success: true, organisation: Array.isArray(data) ? data[0] : data });
+    return res.status(200).json({ success: true, organisation: Array.isArray(data) ? data[0] : data, warning });
   }
 
   if (body.mode === 'delete_org') {
@@ -1468,6 +1629,22 @@ async function runMonthlyDraw(ctx, drawId) {
   entries.forEach((entry) => grouped.set(entry.user_id, (grouped.get(entry.user_id) || 0) + Number(entry.entries || 0)));
   let candidates = [...grouped.entries()].map(([user_id, entries_weight]) => ({ user_id, entries_weight }));
 
+  // Si filtre badge actif, r\u00e9cup\u00e9rer les d\u00e9tenteurs du badge
+  let badgeHolderIds = null;
+  if (draw.eligibility_badge_slug) {
+    const badgeRes = await fetch(`${ctx.sbUrl}/rest/v1/badges?slug=eq.${encodeURIComponent(draw.eligibility_badge_slug)}&select=id&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+    const badgeRows = badgeRes.ok ? await badgeRes.json() : [];
+    if (badgeRows.length) {
+      const ubRes = await fetch(`${ctx.sbUrl}/rest/v1/user_badges?badge_id=eq.${encodeURIComponent(badgeRows[0].id)}&select=user_id&limit=5000`, { headers: sbHeaders(ctx.sbKey) });
+      const ubRows = ubRes.ok ? await ubRes.json() : [];
+      badgeHolderIds = new Set(ubRows.map(r => r.user_id));
+    }
+  }
+
+  if (badgeHolderIds !== null) {
+    candidates = candidates.filter(c => badgeHolderIds.has(c.user_id));
+  }
+
   if (!candidates.length && draw.auto_include_all_users !== false) {
     let profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,email,role,suspendu&limit=2000`, {
       headers: sbHeaders(ctx.sbKey)
@@ -1485,7 +1662,10 @@ async function runMonthlyDraw(ctx, drawId) {
     }
     candidates = profiles.filter((profile) => {
       const role = normalizeText(profile.role).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return profile.id && profile.suspendu !== true && role !== 'admin';
+      if (profile.id && profile.suspendu !== true && role !== 'admin') {
+        return badgeHolderIds === null || badgeHolderIds.has(profile.id);
+      }
+      return false;
     }).map((profile) => ({
       user_id: profile.id,
       entries_weight: 1,
@@ -1493,7 +1673,7 @@ async function runMonthlyDraw(ctx, drawId) {
       user_role: profile.role
     }));
   }
-  if (!candidates.length) return { ok: false, status: 409, error: 'Aucun participant admissible' };
+  if (!candidates.length) return { ok: false, status: 409, error: draw.eligibility_badge_slug ? `Aucun d\u00e9tenteur du badge "${draw.eligibility_badge_slug}" admissible` : 'Aucun participant admissible' };
 
   const winner = pickWeightedWinner(candidates);
   const profileRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(winner.user_id)}&select=id,email,role&limit=1`, {
@@ -1599,16 +1779,17 @@ async function adminRewards(req, res, ctx, body) {
       description: String(body.description || '').trim().slice(0, 800),
       draw_date: body.draw_date,
       status: body.status || 'active',
-      rules_url: body.rules_url || '/reglements-tirage.html',
+      rules_url: body.rules_url || '/reglements-concours.html',
       auto_include_all_users: body.auto_include_all_users !== false,
-      admin_note: String(body.admin_note || '').trim().slice(0, 500)
+      admin_note: String(body.admin_note || '').trim().slice(0, 500),
+      eligibility_badge_slug: body.eligibility_badge_slug || null
     };
     if (!payload.title || !payload.draw_date) return res.status(400).json({ error: 'Titre et date requis' });
     const insert = await insertWithSchemaFallback(
       `${ctx.sbUrl}/rest/v1/monthly_draws`,
       sbHeaders(ctx.sbKey),
       payload,
-      ['auto_include_all_users', 'admin_note']
+      ['auto_include_all_users', 'admin_note', 'eligibility_badge_slug']
     );
     if (!insert.ok) return res.status(400).json({ error: 'Creation tirage impossible', details: insert.data });
     return res.status(200).json({ success: true, draw: Array.isArray(insert.data) ? insert.data[0] : insert.data });
@@ -1643,6 +1824,46 @@ async function adminRewards(req, res, ctx, body) {
     const result = await runMonthlyDraw(ctx, id);
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error, details: result.details });
     return res.status(200).json({ success: true, winner: result.winner, candidates_count: result.candidates_count, already_exists: Boolean(result.already_exists) });
+  }
+
+  if (body.mode === 'delete_draw') {
+    const id = body.id;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+    // Supprimer les entrées liées d'abord
+    await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?draw_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders(ctx.sbKey, 'return=minimal') }).catch(() => {});
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders(ctx.sbKey, 'return=minimal') });
+    if (!r.ok) return res.status(400).json({ error: 'Suppression tirage impossible' });
+    return res.status(200).json({ success: true });
+  }
+
+  if (body.mode === 'update_draw') {
+    const id = body.id;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+    const patch = {};
+    if (body.title !== undefined)                  patch.title = String(body.title).trim().slice(0, 140);
+    if (body.description !== undefined)            patch.description = String(body.description).trim().slice(0, 800);
+    if (body.draw_date !== undefined)              patch.draw_date = body.draw_date;
+    if (body.eligibility_badge_slug !== undefined) patch.eligibility_badge_slug = body.eligibility_badge_slug || null;
+    if (body.admin_note !== undefined)             patch.admin_note = String(body.admin_note).trim().slice(0, 500);
+    patch.updated_at = new Date().toISOString();
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Modification tirage impossible', details: data });
+    return res.status(200).json({ success: true });
+  }
+
+  if (body.mode === 'duplicate_draw') {
+    const id = body.id;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+    const srcRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}&select=*&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+    const srcRows = srcRes.ok ? await srcRes.json() : [];
+    if (!srcRows.length) return res.status(404).json({ error: 'Tirage introuvable' });
+    const src = srcRows[0];
+    const copy = { title: src.title + ' (copie)', description: src.description, draw_date: src.draw_date, status: 'draft', rules_url: src.rules_url, auto_include_all_users: src.auto_include_all_users, eligibility_badge_slug: src.eligibility_badge_slug || null };
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws`, { method: 'POST', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(copy) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Duplication tirage impossible', details: data });
+    return res.status(200).json({ success: true, draw: Array.isArray(data) ? data[0] : data });
   }
 
   return res.status(400).json({ error: 'Mode rewards inconnu' });
@@ -1688,6 +1909,12 @@ module.exports = async function handler(req, res) {
     const session = await getSession(req, sbUrl, sbKey);
     if (!session) return res.status(401).json({ error: 'Session requise' });
     const profile = await getProfile(session.id, sbUrl, sbKey);
+    if (endpoint === 'set-role') {
+      if (profile && (profile.suspendu || profile.verification_status === 'suspended')) {
+        return res.status(403).json({ error: 'Profil suspendu' });
+      }
+      return await setUserRole(req, res, { sbUrl, sbKey, stripeKey: process.env.STRIPE_SECRET_KEY, session, profile }, body);
+    }
     if (!profile || profile.suspendu || profile.verification_status === 'suspended') {
       return res.status(403).json({ error: 'Profil invalide ou suspendu' });
     }
@@ -1700,6 +1927,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
     if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
+    if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
     if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);
@@ -1860,6 +2088,14 @@ const RIDE_FEE_LUGGAGE   = 5.00;
 const RIDE_FEE_PET       = 8.00;
 const RIDE_FEE_STOP      = 3.00;
 
+async function getRideSettings(ctx) {
+  try {
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_pct,ride_fee_luggage,ride_fee_pet,ride_fee_stop&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+    const rows = r.ok ? await r.json() : [];
+    return rows[0] || {};
+  } catch (_) { return {}; }
+}
+
 function groupBonusPct(confirmedPassengers) {
   const n = Number(confirmedPassengers) || 0;
   if (n >= 4) return 0.15;
@@ -1868,7 +2104,13 @@ function groupBonusPct(confirmedPassengers) {
   return 0;
 }
 
-function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats, confirmedPassengers }) {
+function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats, confirmedPassengers, rideSettings }) {
+  const s = rideSettings || {};
+  const platformPct  = Math.max(0, toNumber(s.ride_platform_pct, RIDE_PLATFORM_PCT * 100)) / 100;
+  const feeLuggage   = Math.max(0, toNumber(s.ride_fee_luggage, RIDE_FEE_LUGGAGE));
+  const feePet       = Math.max(0, toNumber(s.ride_fee_pet, RIDE_FEE_PET));
+  const feeStop      = Math.max(0, toNumber(s.ride_fee_stop, RIDE_FEE_STOP));
+
   const cpk = Number(costPerKm) || RIDE_COST_PER_KM;
   const totalKm = Number(totalDistanceKm) || 0;
   const paxKm   = Number(passengerDistanceKm) || totalKm;
@@ -1882,13 +2124,13 @@ function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLug
   const bonus    = groupBonusPct(confirmedPassengers);
   const paxBase  = Math.round(paxBaseRaw * (1 - bonus) * 100) / 100;
 
-  const luggageFee = hasLuggage ? RIDE_FEE_LUGGAGE : 0;
-  const petFee     = hasPet     ? RIDE_FEE_PET     : 0;
-  const stopFee    = (Number(extraStops) || 0) * RIDE_FEE_STOP;
+  const luggageFee = hasLuggage ? feeLuggage : 0;
+  const petFee     = hasPet     ? feePet     : 0;
+  const stopFee    = (Number(extraStops) || 0) * feeStop;
   const detourFee  = (Number(detourKm)  || 0) * cpk;
 
   const subtotal      = paxBase + luggageFee + petFee + stopFee + detourFee;
-  const platformFee   = Math.round(subtotal * RIDE_PLATFORM_PCT * 100) / 100;
+  const platformFee   = Math.round(subtotal * platformPct * 100) / 100;
   const totalPassenger = Math.round((subtotal + platformFee) * 100) / 100;
   const driverAmount  = Math.round(subtotal * 100) / 100;
 
@@ -2002,12 +2244,14 @@ async function rideSearch(req, res, ctx, body) {
   const rides = r.ok ? await r.json() : [];
 
   // Enrichir avec prix estimé et info chauffeur limitée (sans données privées)
+  const rideSettings = await getRideSettings(ctx);
   const enriched = await Promise.all(rides.map(async (ride) => {
     const price = calcRidePrice({
       totalDistanceKm: ride.total_distance_km,
       passengerDistanceKm: ride.total_distance_km,
       costPerKm: ride.cost_per_km,
       seats,
+      rideSettings,
     });
 
     // Profil chauffeur — données publiques seulement
@@ -2066,6 +2310,7 @@ async function rideDetail(req, res, ctx, body) {
 
   // Calcul prix avec options passager depuis body
   const paxKm = Number(body.passenger_distance_km) || ride.total_distance_km;
+  const rideSettingsDetail = await getRideSettings(ctx);
   const price = calcRidePrice({
     totalDistanceKm: ride.total_distance_km,
     passengerDistanceKm: paxKm,
@@ -2075,6 +2320,7 @@ async function rideDetail(req, res, ctx, body) {
     extraStops:  body.extra_stops_count,
     detourKm:    body.requested_detour_km,
     seats:       body.seats_reserved || 1,
+    rideSettings: rideSettingsDetail,
   });
 
   // Masquer coordonnées exactes si non confirmé
@@ -2126,6 +2372,7 @@ async function rideBook(req, res, ctx, body) {
   if (seats > ride.available_seats) return res.status(400).json({ error: `Seulement ${ride.available_seats} place(s) disponible(s)` });
 
   const paxKm = Number(passenger_distance_km) || ride.total_distance_km;
+  const rideSettingsBook = await getRideSettings(ctx);
   const price = calcRidePrice({
     totalDistanceKm: ride.total_distance_km,
     passengerDistanceKm: paxKm,
@@ -2135,6 +2382,7 @@ async function rideBook(req, res, ctx, body) {
     extraStops:  extra_stops_count,
     detourKm:    requested_detour_km,
     seats,
+    rideSettings: rideSettingsBook,
   });
 
   const booking = {

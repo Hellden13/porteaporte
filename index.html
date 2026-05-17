@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +6,8 @@
   <title>PorteaPorte - Livraison collaborative locale</title>
   <meta name="description" content="PorteaPorte connecte expediteurs et livreurs locaux pour des livraisons plus simples, suivies et humaines.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
   <style>
     .site-header {
       position: sticky;
@@ -569,10 +571,12 @@
       <a href="assurance.html">Assurance</a>
       <a href="transparence.html">Transparence</a>
       <a href="login.html">Connexion</a>
+      <a id="admin-nav-link" href="/admin/dashboard-admin.html" style="display:none;color:var(--brand-lime);font-weight:800">⚡ Admin</a>
     </nav>
     <div class="header-actions">
       <a class="btn btn-ghost" href="login.html">Connexion</a>
       <a class="btn" href="role-choice.html">Commencer</a>
+      <a id="admin-nav-link-mobile" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800" class="btn">⚡ Admin</a>
     </div>
   </header>
 
@@ -858,5 +862,21 @@
     </div>
   </footer>
   <script src="/js/support-widget.js"></script>
+  <script>
+    (async function() {
+      try {
+        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+        if (!db) return;
+        const { data } = await db.auth.getSession();
+        if (!data?.session) return;
+        const { data: profile } = await db.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
+        if (profile?.role !== 'admin') return;
+        const l1 = document.getElementById('admin-nav-link');
+        const l2 = document.getElementById('admin-nav-link-mobile');
+        if (l1) l1.style.display = '';
+        if (l2) l2.style.display = '';
+      } catch (_) {}
+    })();
+  </script>
 </body>
 </html>

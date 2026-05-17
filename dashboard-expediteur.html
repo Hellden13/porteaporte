@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -441,6 +441,7 @@
                 <div class="navbar-brand">PorteàPorte</div>
                 <div id="auth-user-info" class="flex items-center gap-md">
                     <span id="auth-user-name" class="text-sm font-semibold"></span>
+                    <a id="admin-back-btn" href="/admin/dashboard-admin.html" class="btn btn-sm" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800;border:none;padding:7px 14px;border-radius:8px;text-decoration:none">⚡ Admin</a>
                     <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
                 </div>
             </div>
@@ -626,6 +627,7 @@
 
             const user = AUTH_API.getUser();
             document.getElementById('auth-user-name').textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || user.email || '';
+            if (user.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
 
             // Accueil personnalisé
             const prenom = user.prenom || user.email?.split('@')[0] || '';
@@ -741,29 +743,37 @@
         }
 
         async function loadMissions() {
-            const db = window.db;
-            if (!db) return;
+            const user = AUTH_API.getUser();
+            const token = user?.session?.access_token;
+            if (!token) return;
 
-            const { data, error } = await db
-                .from('livraisons')
-                .select('id,code,description,type_colis,ville_depart,ville_arrivee,adresse_depart,adresse_arrivee,poids_kg,prix_total,statut,livreur_id,created_at,cree_le')
-                .eq('expediteur_id', AUTH_API.getUser().id)
-                .order('cree_le', { ascending: false });
+            try {
+                const res = await fetch('/api/my-livraisons', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({})
+                });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(result.error || result.details?.message || 'Lecture livraisons impossible');
+                }
 
-            if (error) {
+                cachedLivraisons = result.livraisons || [];
+                updateStats(cachedLivraisons);
+                displayMissions(cachedLivraisons);
+            } catch (error) {
                 console.error('ERREUR livraisons expediteur:', error.message);
                 document.getElementById('missions-container').innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-title">Erreur chargement</div>
                         <div class="empty-state-text">${error.message}</div>
+                        <button class="btn btn-primary" type="button" onclick="loadMissions()">Réessayer</button>
                     </div>
                 `;
-                return;
             }
-
-            cachedLivraisons = data || [];
-            updateStats(cachedLivraisons);
-            displayMissions(cachedLivraisons);
         }
 
         function statusLabel(status) {
@@ -771,6 +781,10 @@
                 en_attente: 'Brouillon',
                 publie: 'Publiee',
                 paiement_autorise: 'Escrow autorise',
+                requires_capture: 'Escrow autorise',
+                processing: 'Paiement en traitement',
+                succeeded: 'Paiement recu',
+                paid: 'Payee',
                 confirme: 'Livreur assigne',
                 en_route: 'En route',
                 ramasse: 'Ramassee',
@@ -785,8 +799,8 @@
         }
 
         function statusClass(status) {
-            if (['payee', 'livre'].includes(status)) return 'completed';
-            if (['paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(status)) return 'active';
+            if (['payee', 'paid', 'succeeded', 'livre'].includes(status)) return 'completed';
+            if (['paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(status)) return 'active';
             return 'pending';
         }
 
@@ -801,8 +815,8 @@
         }
 
         function updateStats(livraisons) {
-            const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(l.statut)).length;
-            const completed = livraisons.filter(l => ['livre', 'payee'].includes(l.statut)).length;
+            const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(l.statut)).length;
+            const completed = livraisons.filter(l => ['livre', 'payee', 'paid', 'succeeded'].includes(l.statut)).length;
             const spent = livraisons.reduce((sum, l) => sum + Number(l.prix_total || 0), 0);
 
             document.getElementById('stat-total').textContent = livraisons.length;
@@ -841,7 +855,7 @@
                 buttons.push(`<button class="btn btn-ghost" type="button" onclick="toggleReview('${mission.id}')">Laisser un avis</button>`);
             }
 
-            if (['en_attente', 'publie', 'paiement_autorise', 'confirme'].includes(mission.statut)) {
+            if (['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse', 'pending', 'accepted', 'in_transit'].includes(mission.statut)) {
                 buttons.push(`<button class="btn btn-ghost" type="button" onclick="cancelLivraison('${mission.id}')">Annuler</button>`);
             }
 
@@ -967,8 +981,8 @@
             const container = document.getElementById('missions-container');
             const filtered = missions.filter(m => {
                 if (currentTab === 'all') return true;
-                if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'confirme', 'en_route', 'ramasse'].includes(m.statut);
-                if (currentTab === 'completed') return ['livre', 'payee'].includes(m.statut);
+                if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(m.statut);
+                if (currentTab === 'completed') return ['livre', 'payee', 'paid', 'succeeded'].includes(m.statut);
                 if (currentTab === 'disputes') return ['litige', 'rembourse'].includes(m.statut);
                 return false;
             });
@@ -998,7 +1012,17 @@
                     </div>
                     <div class="mission-footer">
                         <div class="mission-price">${money(mission.prix_total)}</div>
-                        ${mission.livreur_id ? `<div class="mission-driver">Livreur assigne</div>` : `<div class="mission-driver">En attente de livreur</div>`}
+                        ${mission.livreur_id && mission.livreur_profile
+                          ? `<div class="mission-driver" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+                              ${mission.livreur_profile.photo_url ? `<img src="${mission.livreur_profile.photo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--brand-bg-surface-light);display:flex;align-items:center;justify-content:center;font-size:14px">🚚</div>`}
+                              <div>
+                                <div style="font-size:.82rem;font-weight:700;color:var(--brand-text)">${[mission.livreur_profile.prenom, mission.livreur_profile.nom].filter(Boolean).join(' ') || 'Livreur'}</div>
+                                ${mission.livreur_profile.score_confiance ? `<div style="font-size:.75rem;color:var(--brand-muted)">${(mission.livreur_profile.score_confiance / 20).toFixed(1)}★</div>` : ''}
+                              </div>
+                            </div>`
+                          : mission.livreur_id
+                          ? `<div class="mission-driver">🚚 Livreur assigné</div>`
+                          : `<div class="mission-driver">En attente de livreur</div>`}
                     </div>
                     <div class="mission-actions">${actionButtons(mission)}</div>
                     ${reviewBox(mission)}
