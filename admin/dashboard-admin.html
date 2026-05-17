@@ -146,6 +146,7 @@
       border-radius: 12px;
       overflow-x: auto;
       overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
     }
     table { width: 100%; min-width: 720px; border-collapse: collapse; }
     th {
@@ -164,7 +165,17 @@
       color: var(--brand-text);
       border-top: 1px solid var(--brand-bg-surface-light);
     }
+    td:has(.action-btn),
+    td:has(.action-cell) {
+      position: sticky;
+      right: 0;
+      z-index: 2;
+      background: var(--brand-bg-surface);
+      box-shadow: -10px 0 18px rgba(0,0,0,.28);
+    }
     tr:hover td { background: rgba(255,255,255,.02); }
+    tr:hover td:has(.action-btn),
+    tr:hover td:has(.action-cell) { background: #141922; }
     .badge {
       display: inline-block;
       padding: 2px 10px;
@@ -182,18 +193,56 @@
     .badge-livre     { background: rgba(16,185,129,.15);  color: var(--brand-success); }
     .badge-en-route  { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
     .badge-attente   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
-    .action-btn {
-      padding: 4px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--brand-border);
-      background: transparent;
-      color: var(--brand-muted);
-      font-size: .75rem;
+    .admin-layout .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px !important;
+      padding: 8px 13px !important;
+      margin: 2px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(184,245,62,.85) !important;
+      background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
+      color: #071009 !important;
+      font-size: .78rem !important;
+      line-height: 1.15;
+      font-weight: 900 !important;
+      white-space: nowrap;
       cursor: pointer;
       transition: all .15s;
+      box-shadow: 0 6px 18px rgba(0,217,255,.18), 0 0 0 1px rgba(184,245,62,.18) !important;
     }
-    .action-btn:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
-    .action-btn.danger:hover { border-color: var(--brand-danger); color: var(--brand-danger); }
+    .admin-layout .action-btn:hover {
+      border-color: #ffffff !important;
+      color: #020403 !important;
+      background: linear-gradient(135deg, #58e9ff, #d8ff6f) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(0,217,255,.24), 0 0 0 2px rgba(184,245,62,.16) !important;
+    }
+    .admin-layout .action-btn:focus-visible {
+      outline: 2px solid var(--brand-cyan);
+      outline-offset: 2px;
+    }
+    .admin-layout .action-btn.danger {
+      border-color: rgba(255,155,155,.95) !important;
+      background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+      color: #ffffff !important;
+      box-shadow: 0 6px 18px rgba(239,68,68,.2), 0 0 0 1px rgba(239,68,68,.16) !important;
+    }
+    .admin-layout .action-btn.danger:hover {
+      border-color: #ffffff !important;
+      color: #fff !important;
+      background: linear-gradient(135deg, #ff6b6b, #dc2626) !important;
+      box-shadow: 0 10px 24px rgba(239,68,68,.26), 0 0 0 2px rgba(239,68,68,.16) !important;
+    }
+    .action-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 230px;
+      align-items: center;
+    }
+    td:last-child .action-btn + .action-btn { margin-left: 0 !important; }
     .empty-msg { text-align: center; color: var(--brand-muted-dark); padding: 32px; }
     .impact-admin-grid{display:grid;grid-template-columns:1fr;gap:16px}
     @media(min-width:1100px){.impact-admin-grid{grid-template-columns:360px 1fr}}
@@ -219,6 +268,9 @@
       .stat-card { padding: 16px; }
       .stats-grid { grid-template-columns: 1fr; }
       th, td { padding: 10px 12px; }
+      table { min-width: 680px; }
+      .action-cell { min-width: 190px; }
+      .admin-layout .action-btn { min-height: 38px !important; padding: 8px 11px !important; font-size: .78rem !important; }
     }
   </style>
 </head>
@@ -234,9 +286,10 @@
     <a href="#section-livraisons"class="nav-link"><span class="icon">📦</span> Livraisons</a>
     <a href="#section-revenus"   class="nav-link"><span class="icon">💰</span> Revenus</a>
     <a href="#section-litiges"   class="nav-link"><span class="icon">⚠️</span> Litiges</a>
-    <a href="#section-rewards"   class="nav-link"><span class="icon">★</span> Missions & tirages</a>
-    <a href="#section-impact"      class="nav-link"><span class="icon">♥</span> Transparence</a>
-    <a href="#section-covoiturage" class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
+    <a href="#section-rewards"       class="nav-link"><span class="icon">★</span> Missions & tirages</a>
+    <a href="#section-gamification"  class="nav-link"><span class="icon">🎮</span> Gamification</a>
+    <a href="#section-impact"        class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <a href="#section-covoiturage"   class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
     <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
     <a href="/dashboard-expediteur.html" class="nav-link"><span class="icon">↗</span> Dashboard expéditeur</a>
@@ -439,6 +492,143 @@
           <thead><tr><th>Gagnant</th><th>Lot</th><th>Role</th><th>Date</th></tr></thead>
           <tbody id="reward-winners-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ GAMIFICATION ═══ -->
+    <div id="section-gamification" class="section">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <span>🎮 Gamification — Contrôle des campagnes</span>
+        <button class="btn-action btn-approve" onclick="openCampaignModal(null)" style="font-size:.82rem;padding:8px 16px">+ Nouvelle campagne</button>
+      </div>
+
+      <!-- Stats rapides -->
+      <div class="stats-grid" style="margin-bottom:20px" id="gami-stats">
+        <div class="stat-card"><div class="stat-card-label">Badges actifs</div><div class="stat-card-value" id="gs-active">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Campagnes en cours</div><div class="stat-card-value" id="gs-campaigns">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Bénéfices actifs</div><div class="stat-card-value" id="gs-benefits">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Total badges accordés</div><div class="stat-card-value" id="gs-total">—</div></div>
+      </div>
+
+      <!-- Templates rapides -->
+      <div style="background:rgba(184,245,62,.05);border:1px solid rgba(184,245,62,.15);border-radius:10px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:.8rem;color:var(--brand-lime);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">⚡ Lancer une campagne saisonnière rapide</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-action" style="background:rgba(0,200,83,.12);border:1px solid rgba(0,200,83,.3);color:#00c853" onclick="quickCampaign('launch')">🚀 Lancement (100 premiers)</button>
+          <button class="btn-action" style="background:rgba(220,20,60,.1);border:1px solid rgba(220,20,60,.3);color:#ff6b6b" onclick="quickCampaign('halloween')">🎃 Halloween (octobre)</button>
+          <button class="btn-action" style="background:rgba(0,150,255,.1);border:1px solid rgba(0,150,255,.3);color:#4fc3f7" onclick="quickCampaign('noel')">🎄 Noël (décembre)</button>
+          <button class="btn-action" style="background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.3);color:#ffb300" onclick="quickCampaign('anniversaire')">🎂 Anniversaire plateforme</button>
+        </div>
+      </div>
+
+      <!-- Table des campagnes -->
+      <div class="table-card">
+        <div style="overflow-x:auto">
+          <table id="gami-table">
+            <thead>
+              <tr>
+                <th>Badge</th>
+                <th>Campagne</th>
+                <th>Statut</th>
+                <th>Fenêtre d'octroi</th>
+                <th>Bénéfice actif</th>
+                <th>Destinataires</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="gami-tbody"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL CAMPAGNE ──────────────────────────────────────── -->
+    <div id="campaign-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+      <div style="background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:28px;max-width:620px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;position:relative">
+        <button onclick="closeCampaignModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--brand-muted);font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
+        <h3 id="modal-title" style="margin:0 0 20px;font-size:1.1rem">Nouvelle campagne</h3>
+        <form id="campaign-form" onsubmit="saveCampaign(event)">
+          <input type="hidden" id="cf-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Slug (unique) *</label>
+              <input id="cf-slug" class="form-input" placeholder="ex: noel_2026" required style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Icône</label>
+              <input id="cf-icon" class="form-input" placeholder="🎄" value="🏅" style="width:100%">
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Nom du badge *</label>
+            <input id="cf-name" class="form-input" placeholder="Ex: Pionnier Noël 2026" required style="width:100%">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Description</label>
+            <input id="cf-desc" class="form-input" placeholder="Accordé aux membres actifs en décembre 2026" style="width:100%">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Nom de campagne</label>
+              <input id="cf-campaign" class="form-input" placeholder="Noël 2026" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Rôle cible</label>
+              <select id="cf-role" class="form-input" style="width:100%">
+                <option value="">Tous</option>
+                <option value="expediteur">Expéditeur</option>
+                <option value="livreur">Livreur</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Max destinataires</label>
+              <input id="cf-max" class="form-input" type="number" min="1" placeholder="Illimité" style="width:100%">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Début octroi</label>
+              <input id="cf-from" class="form-input" type="datetime-local" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Fin octroi</label>
+              <input id="cf-until" class="form-input" type="datetime-local" style="width:100%">
+            </div>
+          </div>
+          <div style="background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.15);border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">🔄 Bénéfice saisonnier (se réactive automatiquement)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+              <div>
+                <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Bénéfice actif à partir de</label>
+                <input id="cf-bfrom" class="form-input" type="datetime-local" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Bénéfice actif jusqu'à</label>
+                <input id="cf-buntil" class="form-input" type="datetime-local" style="width:100%">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:6px">Mois de réactivation annuelle (laisser vide = ponctuel)</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap" id="month-checkboxes">
+                <!-- injecté par JS -->
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Points Impact récompense</label>
+              <input id="cf-pts" class="form-input" type="number" value="0" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">XP récompense</label>
+              <input id="cf-xp" class="form-input" type="number" value="0" style="width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button type="button" onclick="closeCampaignModal()" class="btn-action" style="background:none;border:1px solid var(--brand-border);color:var(--brand-muted)">Annuler</button>
+            <button type="submit" class="btn-action btn-approve" id="cf-submit">Créer la campagne</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -685,7 +875,7 @@
         <button class="action-btn" onclick="setUserAccess('${p.id}','pause','${p.role || ''}')" style="margin-left:4px">Pause</button>
         <button class="action-btn danger" onclick="setUserAccess('${p.id}','retirer','${p.role || ''}')" style="margin-left:4px">Retirer</button>
       `;
-    return `${driverActions}${accessAction}`;
+    return `<div class="action-cell">${driverActions}${accessAction}</div>`;
   }
 
   function $m(v) {
@@ -745,7 +935,7 @@
             <td><span style="background:${isLitige ? '#7C2020' : '#1A3A1A'};color:${isLitige ? '#FF6B6B' : '#6BFF6B'};padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700">${isLitige ? '⚠️ Litige' : '✅ Remboursé'}</span></td>
             <td style="color:#B8F53E;font-weight:700">${$m(r.prix_total)}</td>
             <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
-            <td>${isLitige ? `<button class="action-btn danger" onclick="rembourserLivraison('${r.id}')">Rembourser</button>` : '—'}</td>
+            <td>${isLitige ? `<div class="action-cell"><button class="action-btn danger" onclick="rembourserLivraison('${r.id}')">Rembourser</button></div>` : '—'}</td>
           </tr>`;
         }).join('');
   }
@@ -871,10 +1061,10 @@
             <td>${p.vehicule||'—'}</td>
             <td>${p.ville||'—'}</td>
             <td>${driverBadge(p.driver_status)}</td>
-            <td>
+            <td><div class="action-cell">
               <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
               <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">✗ Refuser</button>
-            </td>
+            </div></td>
           </tr>`).join('');
     }
 
@@ -937,10 +1127,10 @@
           <td style="color:#B8F53E;font-weight:800">${Number(org.allocation_percent || 0)}%</td>
           <td>${money(alloc.amount_cents || 0)}</td>
           <td>${org.active === false ? 'Non' : 'Oui'}</td>
-          <td>
+          <td><div class="action-cell">
             <button class="action-btn" onclick="editImpactOrg('${org.id}')">Modifier</button>
             <button class="action-btn danger" onclick="deleteImpactOrg('${org.id}')" style="margin-left:4px">Retirer</button>
-          </td>
+          </div></td>
         </tr>`;
       }).join('') : '<tr><td colspan="5" class="empty-msg">Aucun organisme configure</td></tr>';
       window.__impactOrgs = orgs;
@@ -950,11 +1140,11 @@
           <td>${app.contact_name || '—'}<br><span style="color:#5A6A7A;font-size:.78rem">${app.email || ''}</span></td>
           <td style="max-width:320px;color:#A8B0BA;font-size:.82rem">${(app.mission || '').slice(0, 180)}${(app.mission || '').length > 180 ? '...' : ''}</td>
           <td>${app.status || 'pending'}</td>
-          <td>
+          <td><div class="action-cell">
             <button class="action-btn" onclick="updateImpactApplication('${app.id}','approved')">Accepter</button>
             <button class="action-btn" onclick="updateImpactApplication('${app.id}','contacted')" style="margin-left:4px">Contacter</button>
             <button class="action-btn danger" onclick="updateImpactApplication('${app.id}','rejected')" style="margin-left:4px">Refuser</button>
-          </td>
+          </div></td>
         </tr>
       `).join('') : '<tr><td colspan="5" class="empty-msg">Aucune demande reçue</td></tr>';
     } catch (err) {
@@ -999,11 +1189,11 @@
           <td><strong>${d.title || '—'}</strong><br><span style="color:#5A6A7A;font-size:.78rem">${d.description || ''}</span></td>
           <td>${d.draw_date || '—'}</td>
           <td>${d.status || 'active'}</td>
-          <td>
+          <td><div class="action-cell">
             <button class="action-btn" onclick="setDrawStatus('${d.id}','active')">Activer</button>
             <button class="action-btn" onclick="setDrawStatus('${d.id}','cancelled')" style="margin-left:4px">Pas ce mois</button>
             <button class="action-btn danger" onclick="runDrawNow('${d.id}')" style="margin-left:4px">Tirer gagnant</button>
-          </td>
+          </div></td>
         </tr>
       `).join('') : '<tr><td colspan="4" class="empty-msg">Aucun tirage</td></tr>';
       document.getElementById('reward-winners-body').innerHTML = (out.winners || []).length ? out.winners.map(w => `
@@ -1139,6 +1329,245 @@
     }
   });
 
+  // ── GAMIFICATION ────────────────────────────────────────────────
+  const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+  function buildMonthCheckboxes() {
+    const wrap = document.getElementById('month-checkboxes');
+    if (!wrap) return;
+    wrap.innerHTML = MONTHS_FR.map((m, i) => `
+      <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid var(--brand-border);border-radius:6px;padding:4px 10px">
+        <input type="checkbox" class="month-cb" value="${i+1}" style="accent-color:var(--brand-lime)"> ${m}
+      </label>`).join('');
+  }
+
+  function statusPill(s) {
+    const map = {
+      active:    ['#00e676','rgba(0,230,118,.12)','Actif'],
+      scheduled: ['#ffb300','rgba(255,179,0,.12)','Programmé'],
+      expired:   ['#5A6A7A','rgba(90,106,122,.12)','Expiré'],
+      paused:    ['#ff5252','rgba(255,82,82,.12)','Pausé'],
+      full:      ['#7c4dff','rgba(124,77,255,.12)','Complet'],
+    };
+    const [col, bg, label] = map[s] || ['#5A6A7A','rgba(90,106,122,.12)', s];
+    return `<span style="color:${col};background:${bg};border:1px solid ${col}33;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:700;white-space:nowrap">${label}</span>`;
+  }
+
+  function benefitPill(active) {
+    return active
+      ? `<span style="color:#4fc3f7;font-size:.8rem">✓ Actif</span>`
+      : `<span style="color:#5A6A7A;font-size:.8rem">— Inactif</span>`;
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('fr-CA', { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  async function loadGamification() {
+    const session = AUTH_API.getUser()?.session;
+    const token = session?.access_token;
+    if (!token) return;
+    try {
+      const r = await fetch('/api/badge-campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({})
+      });
+      const out = await r.json();
+      if (!out.success) return;
+      const campaigns = out.campaigns || [];
+
+      // Stats
+      document.getElementById('gs-active').textContent    = campaigns.filter(b => b.campaign_status === 'active').length;
+      document.getElementById('gs-campaigns').textContent = campaigns.filter(b => b.campaign_name).length;
+      document.getElementById('gs-benefits').textContent  = campaigns.filter(b => b.benefit_active_now).length;
+      document.getElementById('gs-total').textContent     = campaigns.reduce((s,b) => s + (b.recipients_count||0), 0);
+
+      // Table
+      const tbody = document.getElementById('gami-tbody');
+      if (!campaigns.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Aucune campagne. Créez-en une ci-dessus.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = campaigns.map(b => {
+        const window = b.active_from || b.active_until
+          ? `${fmtDate(b.active_from)} → ${fmtDate(b.active_until)}`
+          : '<span style="color:var(--brand-muted)">Illimitée</span>';
+        const recipients = b.max_recipients
+          ? `${b.recipients_count} / ${b.max_recipients}`
+          : `${b.recipients_count}`;
+        const seasonal = b.seasonal_months?.length
+          ? `<div style="font-size:.72rem;color:var(--brand-muted)">${b.seasonal_months.map(m=>MONTHS_FR[m-1]).join(', ')}</div>` : '';
+        return `<tr>
+          <td><span style="font-size:1.2rem">${b.icon||'🏅'}</span> <strong>${b.name}</strong>
+            <div style="font-size:.75rem;color:var(--brand-muted)">${b.slug}</div></td>
+          <td>${b.campaign_name ? `<span style="color:var(--brand-cyan)">${b.campaign_name}</span>` : '<span style="color:var(--brand-muted)">—</span>'}
+            ${b.role_filter ? `<div style="font-size:.72rem;color:var(--brand-muted)">${b.role_filter}</div>` : ''}</td>
+          <td>${statusPill(b.campaign_status||'active')}</td>
+          <td style="font-size:.82rem">${window}</td>
+          <td>${benefitPill(b.benefit_active_now)}${seasonal}</td>
+          <td style="font-size:.85rem;font-weight:600">${recipients}
+            ${b.max_recipients ? `<div style="width:80px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px"><div style="width:${Math.min(100,Math.round((b.recipients_count/b.max_recipients)*100))}%;height:100%;background:var(--brand-lime);border-radius:2px"></div></div>` : ''}</td>
+          <td class="action-cell">
+            <button class="btn-action btn-approve" onclick="editCampaign(${JSON.stringify(b).replace(/"/g,'&quot;')})" style="font-size:.75rem;padding:5px 10px">✏️ Éditer</button>
+            ${b.campaign_status === 'active' || b.campaign_status === 'scheduled'
+              ? `<button class="btn-action btn-suspend" onclick="toggleCampaign('${b.id}','pause')" style="font-size:.75rem;padding:5px 10px">⏸ Pause</button>`
+              : `<button class="btn-action btn-approve" onclick="toggleCampaign('${b.id}','activate')" style="font-size:.75rem;padding:5px 10px">▶ Activer</button>`}
+            <button class="btn-action" onclick="batchGrantCampaign('${b.id}','${b.slug}')" style="font-size:.75rem;padding:5px 10px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.2);color:var(--brand-cyan)">🚀 Batch</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch(e) { console.error('loadGamification', e); }
+  }
+
+  function openCampaignModal(data) {
+    buildMonthCheckboxes();
+    document.getElementById('cf-id').value      = data?.id || '';
+    document.getElementById('cf-slug').value    = data?.slug || '';
+    document.getElementById('cf-icon').value    = data?.icon || '🏅';
+    document.getElementById('cf-name').value    = data?.name || '';
+    document.getElementById('cf-desc').value    = data?.description || '';
+    document.getElementById('cf-campaign').value= data?.campaign_name || '';
+    document.getElementById('cf-role').value    = data?.role_filter || '';
+    document.getElementById('cf-max').value     = data?.max_recipients || '';
+    document.getElementById('cf-from').value    = data?.active_from  ? data.active_from.slice(0,16)  : '';
+    document.getElementById('cf-until').value   = data?.active_until ? data.active_until.slice(0,16) : '';
+    document.getElementById('cf-bfrom').value   = data?.benefit_from  ? data.benefit_from.slice(0,16)  : '';
+    document.getElementById('cf-buntil').value  = data?.benefit_until ? data.benefit_until.slice(0,16) : '';
+    document.getElementById('cf-pts').value     = data?.points_reward || 0;
+    document.getElementById('cf-xp').value      = data?.xp_reward || 0;
+    document.getElementById('cf-submit').textContent = data?.id ? 'Enregistrer' : 'Créer la campagne';
+    document.getElementById('modal-title').textContent = data?.id ? `Éditer : ${data.name}` : 'Nouvelle campagne';
+    if (data?.seasonal_months) {
+      document.querySelectorAll('.month-cb').forEach(cb => {
+        cb.checked = data.seasonal_months.includes(Number(cb.value));
+      });
+    }
+    const modal = document.getElementById('campaign-modal');
+    modal.style.display = 'flex';
+  }
+
+  function closeCampaignModal() {
+    document.getElementById('campaign-modal').style.display = 'none';
+  }
+
+  function editCampaign(data) { openCampaignModal(data); }
+
+  async function saveCampaign(event) {
+    event.preventDefault();
+    const session = AUTH_API.getUser()?.session;
+    const token = session?.access_token;
+    const seasonal = [...document.querySelectorAll('.month-cb:checked')].map(cb => Number(cb.value));
+    const payload = {
+      id:              document.getElementById('cf-id').value || undefined,
+      slug:            document.getElementById('cf-slug').value.trim(),
+      icon:            document.getElementById('cf-icon').value.trim(),
+      name:            document.getElementById('cf-name').value.trim(),
+      description:     document.getElementById('cf-desc').value.trim(),
+      campaign_name:   document.getElementById('cf-campaign').value.trim(),
+      role_filter:     document.getElementById('cf-role').value || null,
+      max_recipients:  document.getElementById('cf-max').value ? Number(document.getElementById('cf-max').value) : null,
+      active_from:     document.getElementById('cf-from').value  ? new Date(document.getElementById('cf-from').value).toISOString()  : null,
+      active_until:    document.getElementById('cf-until').value ? new Date(document.getElementById('cf-until').value).toISOString() : null,
+      benefit_from:    document.getElementById('cf-bfrom').value  ? new Date(document.getElementById('cf-bfrom').value).toISOString()  : null,
+      benefit_until:   document.getElementById('cf-buntil').value ? new Date(document.getElementById('cf-buntil').value).toISOString() : null,
+      seasonal_months: seasonal.length ? seasonal : null,
+      points_reward:   Number(document.getElementById('cf-pts').value) || 0,
+      xp_reward:       Number(document.getElementById('cf-xp').value) || 0,
+      category:        'general', active: true
+    };
+    const btn = document.getElementById('cf-submit');
+    btn.disabled = true; btn.textContent = 'Enregistrement...';
+    try {
+      const r = await fetch('/api/badge-campaign-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.json();
+      if (!out.success) throw new Error(out.error || 'Erreur');
+      closeCampaignModal();
+      await loadGamification();
+    } catch(e) { alert('Erreur : ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = payload.id ? 'Enregistrer' : 'Créer la campagne'; }
+  }
+
+  async function toggleCampaign(id, action) {
+    const session = AUTH_API.getUser()?.session;
+    const token = session?.access_token;
+    await fetch('/api/badge-campaign-toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id, action })
+    });
+    await loadGamification();
+  }
+
+  async function batchGrantCampaign(badgeId, slug) {
+    if (!confirm(`Accorder le badge "${slug}" à tous les membres éligibles maintenant ?`)) return;
+    const session = AUTH_API.getUser()?.session;
+    const token = session?.access_token;
+    const r = await fetch('/api/admin-growth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ mode: 'batch_grant_badge', badge_slug: slug })
+    });
+    const out = await r.json();
+    alert(`Résultat : ${out.granted} accordés, ${out.skipped} déjà possédés, ${out.errors} erreurs.`);
+    await loadGamification();
+  }
+
+  function quickCampaign(type) {
+    const now = new Date();
+    const templates = {
+      launch: {
+        slug: 'fondateur_expediteur', icon: '🚀', name: 'Fondateur expéditeur',
+        description: 'Parmi les 100 premiers expéditeurs au lancement.',
+        campaign_name: 'Lancement', role_filter: 'expediteur', max_recipients: 100,
+        active_from: now.toISOString(), active_until: null,
+        points_reward: 200, xp_reward: 500
+      },
+      halloween: {
+        slug: 'citrouille_solidaire_' + now.getFullYear(), icon: '🎃',
+        name: 'Citrouille solidaire ' + now.getFullYear(),
+        description: 'Badge Halloween pour les membres actifs en octobre.',
+        campaign_name: 'Halloween ' + now.getFullYear(),
+        seasonal_months: [10],
+        active_from: new Date(now.getFullYear(), 9, 1).toISOString(),
+        active_until: new Date(now.getFullYear(), 9, 31, 23, 59).toISOString(),
+        benefit_from: new Date(now.getFullYear(), 9, 1).toISOString(),
+        benefit_until: new Date(now.getFullYear(), 9, 31, 23, 59).toISOString(),
+        points_reward: 30, xp_reward: 100
+      },
+      noel: {
+        slug: 'esprit_noel_' + now.getFullYear(), icon: '🎄',
+        name: 'Esprit de Noël ' + now.getFullYear(),
+        description: 'Badge spécial Noël. Son bénéfice revient chaque décembre.',
+        campaign_name: 'Noël ' + now.getFullYear(),
+        seasonal_months: [12],
+        active_from: new Date(now.getFullYear(), 11, 1).toISOString(),
+        active_until: new Date(now.getFullYear(), 11, 31, 23, 59).toISOString(),
+        benefit_from: new Date(now.getFullYear(), 11, 1).toISOString(),
+        benefit_until: new Date(now.getFullYear(), 11, 31, 23, 59).toISOString(),
+        points_reward: 50, xp_reward: 150
+      },
+      anniversaire: {
+        slug: 'anniversaire_' + now.getFullYear(), icon: '🎂',
+        name: 'Anniversaire PorteÀPorte ' + now.getFullYear(),
+        description: 'Membre présent lors de l\'anniversaire de la plateforme.',
+        campaign_name: 'Anniversaire', points_reward: 100, xp_reward: 200
+      }
+    };
+    openCampaignModal(templates[type] || {});
+  }
+
+  // Fermer modal en cliquant dehors
+  document.getElementById('campaign-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeCampaignModal();
+  });
+
+  // ── INIT ─────────────────────────────────────────────────────────
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
     const user = AUTH_API.getUser();
@@ -1147,6 +1576,7 @@
     await loadData();
     await loadRewardsAdmin();
     await loadImpact();
+    await loadGamification();
   }
 
   init();

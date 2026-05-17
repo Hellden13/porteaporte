@@ -454,6 +454,49 @@ async function availableLivraisons(req, res, ctx) {
   });
 }
 
+async function myLivraisons(req, res, ctx, body) {
+  const admin = roleIn(ctx.profile, ['admin']);
+  const requestedUserId = body.user_id || body.expediteur_id || null;
+  const expediteurId = admin && requestedUserId ? requestedUserId : ctx.session.id;
+
+  if (!admin && !roleIn(ctx.profile, ['expediteur', 'les deux'])) {
+    return res.status(403).json({ error: 'Role expediteur requis' });
+  }
+
+  const baseUrl = `${ctx.sbUrl}/rest/v1/livraisons?expediteur_id=eq.${encodeURIComponent(expediteurId)}&select=*&limit=200`;
+  let r = await fetch(`${baseUrl}&order=cree_le.desc`, { headers: sbHeaders(ctx.sbKey) });
+  let rows = r.ok ? await r.json() : [];
+
+  if (!r.ok) {
+    r = await fetch(`${baseUrl}&order=created_at.desc`, { headers: sbHeaders(ctx.sbKey) });
+    rows = r.ok ? await r.json() : [];
+  }
+
+  if (!r.ok) {
+    r = await fetch(baseUrl, { headers: sbHeaders(ctx.sbKey) });
+    rows = r.ok ? await r.json() : [];
+  }
+
+  if (!r.ok) {
+    return res.status(400).json({ error: 'Lecture livraisons expediteur impossible', details: rows });
+  }
+
+  const livraisons = rows
+    .map((row) => ({
+      ...row,
+      type_colis: row.type_colis || row.type || row.categorie || 'Colis',
+      poids_kg: row.poids_kg ?? row.poids ?? null,
+      prix_total: row.prix_total ?? row.prix ?? row.montant ?? 0,
+      statut: row.statut || row.status || 'en_attente',
+      livreur_id: row.livreur_id || row.driver_id || null,
+      cree_le: row.cree_le || row.created_at || row.date_creation || null,
+      created_at: row.created_at || row.cree_le || row.date_creation || null
+    }))
+    .sort((a, b) => new Date(b.cree_le || b.created_at || 0) - new Date(a.cree_le || a.created_at || 0));
+
+  return res.status(200).json({ success: true, livraisons });
+}
+
 async function tracking(req, res, ctx, body) {
   const url = new URL(req.url || '/', 'https://porteaporte.site');
   const code = body.code || url.searchParams.get('code') || url.searchParams.get('id');
@@ -1656,6 +1699,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
     if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
+    if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
     if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);
@@ -1693,7 +1737,11 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badges-grant')       return await badgesGrant(req, res, ctx, body);
     if (endpoint === 'xp-history')         return await xpHistory(req, res, ctx);
     if (endpoint === 'points-history')     return await pointsHistory(req, res, ctx);
-    if (endpoint === 'admin-growth')       return await adminGrowth(req, res, ctx, body);
+    if (endpoint === 'admin-growth')         return await adminGrowth(req, res, ctx, body);
+    if (endpoint === 'badge-campaigns')      return await badgeCampaigns(req, res, ctx);
+    if (endpoint === 'badge-campaign-save')  return await badgeCampaignSave(req, res, ctx, body);
+    if (endpoint === 'badge-campaign-toggle')return await badgeCampaignToggle(req, res, ctx, body);
+    if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -2822,6 +2870,122 @@ async function adminGrowth(req, res, ctx, body) {
   }
 
   return res.status(400).json({ error: 'Mode admin-growth inconnu: ' + mode });
+}
+
+/* ── BADGE CAMPAIGNS ───────────────────────────────────────────── */
+async function badgeCampaigns(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const r = await fetch(
+    `${ctx.sbUrl}/rest/v1/badge_campaign_status?order=created_at.desc`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  if (!r.ok) {
+    // Si la vue n'existe pas encore (SQL pas encore exécuté), fallback sur la table
+    const fallback = await fetch(`${ctx.sbUrl}/rest/v1/badges?order=category.asc,name.asc`, { headers: sbHeaders(ctx.sbKey) });
+    const data = fallback.ok ? await fallback.json() : [];
+    return res.status(200).json({ success: true, campaigns: data, fallback: true });
+  }
+  const data = await r.json();
+  return res.status(200).json({ success: true, campaigns: data });
+}
+
+async function badgeCampaignSave(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const {
+    id, slug, name, description, icon, category,
+    points_reward, xp_reward,
+    campaign_name, role_filter, auto_trigger,
+    active_from, active_until,
+    benefit_from, benefit_until,
+    seasonal_months, max_recipients,
+    active
+  } = body;
+
+  if (!slug || !name) return res.status(400).json({ error: 'slug et name requis' });
+
+  const payload = {
+    slug, name,
+    description: description || null,
+    icon: icon || '🏅',
+    category: category || 'general',
+    points_reward: Number(points_reward) || 0,
+    xp_reward: Number(xp_reward) || 0,
+    campaign_name: campaign_name || null,
+    role_filter: role_filter || null,
+    auto_trigger: auto_trigger || 'manual',
+    active_from:  active_from  || null,
+    active_until: active_until || null,
+    benefit_from: benefit_from || null,
+    benefit_until: benefit_until || null,
+    seasonal_months: Array.isArray(seasonal_months) && seasonal_months.length ? seasonal_months : null,
+    max_recipients: max_recipients ? Number(max_recipients) : null,
+    active: active !== false,
+    paused: false,
+    condition_type: 'manual',
+    condition_value: 1
+  };
+
+  let r;
+  if (id) {
+    r = await fetch(`${ctx.sbUrl}/rest/v1/badges?id=eq.${id}`, {
+      method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=representation'),
+      body: JSON.stringify(payload)
+    });
+  } else {
+    r = await fetch(`${ctx.sbUrl}/rest/v1/badges`, {
+      method: 'POST', headers: sbHeaders(ctx.sbKey, 'return=representation'),
+      body: JSON.stringify(payload)
+    });
+  }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.status(400).json({ error: 'Sauvegarde impossible', details: data });
+  return res.status(200).json({ success: true, badge: Array.isArray(data) ? data[0] : data });
+}
+
+async function badgeCampaignToggle(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const { id, action } = body; // action: 'pause'|'resume'|'activate'|'deactivate'
+  if (!id || !action) return res.status(400).json({ error: 'id et action requis' });
+
+  let patch = {};
+  if (action === 'pause')      patch = { paused: true };
+  if (action === 'resume')     patch = { paused: false };
+  if (action === 'activate')   patch = { active: true, paused: false };
+  if (action === 'deactivate') patch = { active: false };
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/badges?id=eq.${id}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+    body: JSON.stringify(patch)
+  });
+  return r.ok
+    ? res.status(200).json({ success: true, action })
+    : res.status(400).json({ error: 'Mise à jour impossible' });
+}
+
+async function badgeBenefitStatus(req, res, ctx, body) {
+  // Vérifie si les bénéfices d'un badge sont actifs maintenant (accessible sans admin)
+  const { badge_slug } = body;
+  if (!badge_slug) return res.status(400).json({ error: 'badge_slug requis' });
+  const r = await fetch(
+    `${ctx.sbUrl}/rest/v1/badges?slug=eq.${encodeURIComponent(badge_slug)}&select=slug,seasonal_months,benefit_from,benefit_until,active,paused`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const rows = r.ok ? await r.json() : [];
+  const b = rows[0];
+  if (!b) return res.status(404).json({ error: 'Badge introuvable' });
+
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  let benefitActive = false;
+  if (b.seasonal_months && b.seasonal_months.includes(month)) benefitActive = true;
+  if (b.benefit_from && !b.benefit_until) benefitActive = now >= new Date(b.benefit_from);
+  if (b.benefit_from && b.benefit_until)  benefitActive = now >= new Date(b.benefit_from) && now <= new Date(b.benefit_until);
+  if (!b.seasonal_months && !b.benefit_from) benefitActive = true;
+
+  return res.status(200).json({
+    success: true, slug: b.slug,
+    benefit_active: benefitActive && b.active && !b.paused
+  });
 }
 
 /* ── RÉCOMPENSE PARRAINAGE (déclenchée après livraison/trajet) ── */

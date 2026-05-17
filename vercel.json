@@ -71,6 +71,10 @@
                          "destination":  "/api/platform?endpoint=available-livraisons"
                      },
                      {
+                         "source":  "/api/my-livraisons",
+                         "destination":  "/api/platform?endpoint=my-livraisons"
+                     },
+                     {
                          "source":  "/api/notifications",
                          "destination":  "/api/platform?endpoint=notifications"
                      },
@@ -205,6 +209,22 @@
                      {
                          "source":  "/api/admin-growth",
                          "destination":  "/api/platform?endpoint=admin-growth"
+                     },
+                     {
+                         "source":  "/api/badge-campaigns",
+                         "destination":  "/api/platform?endpoint=badge-campaigns"
+                     },
+                     {
+                         "source":  "/api/badge-campaign-save",
+                         "destination":  "/api/platform?endpoint=badge-campaign-save"
+                     },
+                     {
+                         "source":  "/api/badge-campaign-toggle",
+                         "destination":  "/api/platform?endpoint=badge-campaign-toggle"
+                     },
+                     {
+                         "source":  "/api/badge-benefit-status",
+                         "destination":  "/api/platform?endpoint=badge-benefit-status"
                      }
                  ],
     "headers":  [
