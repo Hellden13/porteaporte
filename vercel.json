@@ -301,6 +301,15 @@
                                     ]
                     },
                     {
+                        "source":  "/(.*)\\.html",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-cache, must-revalidate"
+                                        }
+                                    ]
+                    },
+                    {
                         "source":  "/js/(.*)",
                         "headers":  [
                                         {
