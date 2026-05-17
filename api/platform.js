@@ -68,7 +68,7 @@ function isVerifiedDriver(session, profile) {
 
 function endpointFromReq(req, body) {
   const url = new URL(req.url || '/', 'https://porteaporte.site');
-  return body.endpoint || body.action || url.searchParams.get('endpoint') || url.pathname.split('/').pop();
+  return body.endpoint || url.searchParams.get('endpoint') || url.pathname.split('/').pop() || body.action;
 }
 
 function toNumber(value, fallback = null) {
@@ -371,6 +371,10 @@ async function confirmDelivery(req, res, ctx, body) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Confirmation livraison impossible', details: data });
+
+  // Déclenche la récompense parrainage si le livreur a été parrainé (fire-and-forget)
+  rewardReferralIfPending(ctx, livraison.livreur_id, 'first_delivery').catch(() => {});
+
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 async function gpsUpdate(req, res, ctx, body) {
@@ -1028,6 +1032,23 @@ async function fetchImpactState(sbUrl, sbKey) {
 
 async function impactPublic(req, res, ctx) {
   const state = await fetchImpactState(ctx.sbUrl, ctx.sbKey);
+  const [drawsRes, winnersRes] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
+      headers: sbHeaders(ctx.sbKey)
+    }).catch(() => null),
+    fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=id,draw_id,user_email,user_role,prize_title,created_at&published=eq.true&order=created_at.desc&limit=12`, {
+      headers: sbHeaders(ctx.sbKey)
+    }).catch(() => null)
+  ]);
+  const draws = drawsRes?.ok ? await drawsRes.json() : [];
+  const winnersRaw = winnersRes?.ok ? await winnersRes.json() : [];
+  const winners = winnersRaw.map((winner) => {
+    const email = String(winner.user_email || '');
+    const maskedEmail = email.includes('@')
+      ? `${email.slice(0, 2)}***@${email.split('@')[1]}`
+      : '';
+    return { ...winner, user_email: maskedEmail };
+  });
   const publicState = {
     month: state.month,
     generated_at: state.generated_at,
@@ -1035,7 +1056,7 @@ async function impactPublic(req, res, ctx) {
     totals: state.totals,
     allocations: state.allocations
   };
-  return res.status(200).json({ success: true, impact: publicState });
+  return res.status(200).json({ success: true, impact: publicState, draws, winners });
 }
 
 async function impactApplicationPublic(req, res, ctx, body) {
@@ -1383,11 +1404,11 @@ async function runMonthlyDraw(ctx, drawId) {
   if (draw.status === 'completed') return { ok: false, status: 409, error: 'Tirage deja complete' };
   if (draw.status === 'cancelled') return { ok: false, status: 409, error: 'Tirage annule' };
 
-  const existingRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_winners?draw_id=eq.${encodeURIComponent(drawId)}&select=id,user_id&limit=1`, {
+  const existingRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_winners?draw_id=eq.${encodeURIComponent(drawId)}&select=id,draw_id,user_id,user_email,user_role,prize_title,published,created_at&limit=1`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const existing = existingRes.ok ? await existingRes.json() : [];
-  if (existing.length) return { ok: false, status: 409, error: 'Un gagnant existe deja pour ce tirage' };
+  if (existing.length) return { ok: true, winner: existing[0], candidates_count: 0, already_exists: true };
 
   const entriesRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?draw_id=eq.${encodeURIComponent(drawId)}&select=user_id,entries`, {
     headers: sbHeaders(ctx.sbKey)
@@ -1398,11 +1419,24 @@ async function runMonthlyDraw(ctx, drawId) {
   let candidates = [...grouped.entries()].map(([user_id, entries_weight]) => ({ user_id, entries_weight }));
 
   if (!candidates.length && draw.auto_include_all_users !== false) {
-    const profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,email,role&suspendu=eq.false&role=in.(livreur,expediteur,les%20deux)&limit=2000`, {
+    let profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,email,role,suspendu&limit=2000`, {
       headers: sbHeaders(ctx.sbKey)
     });
-    const profiles = profilesRes.ok ? await profilesRes.json() : [];
-    candidates = profiles.map((profile) => ({
+    let profiles = profilesRes.ok ? await profilesRes.json() : [];
+    if (!profilesRes.ok) {
+      profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,email,role&limit=2000`, {
+        headers: sbHeaders(ctx.sbKey)
+      });
+      profiles = profilesRes.ok ? await profilesRes.json() : [];
+    }
+    if (!profilesRes.ok) {
+      const details = await profilesRes.json().catch(() => ({}));
+      return { ok: false, status: 400, error: 'Lecture participants impossible', details };
+    }
+    candidates = profiles.filter((profile) => {
+      const role = normalizeText(profile.role).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return profile.id && profile.suspendu !== true && role !== 'admin';
+    }).map((profile) => ({
       user_id: profile.id,
       entries_weight: 1,
       user_email: profile.email,
@@ -1418,28 +1452,49 @@ async function runMonthlyDraw(ctx, drawId) {
   const profiles = profileRes.ok ? await profileRes.json() : [];
   const profile = profiles[0] || {};
 
-  const winnerRes = await insertWithSchemaFallback(
+  const winnerPayload = {
+    draw_id: drawId,
+    user_id: winner.user_id,
+    prize_title: draw.title || 'Tirage PorteaPorte',
+    published: true,
+    entries_weight: winner.entries_weight || 1,
+    user_email: profile.email || winner.user_email || '',
+    user_role: profile.role || winner.user_role || '',
+    selected_by: ctx.session.id
+  };
+
+  let winnerRes = await insertWithSchemaFallback(
     `${ctx.sbUrl}/rest/v1/draw_winners`,
     sbHeaders(ctx.sbKey),
-    {
-      draw_id: drawId,
-      user_id: winner.user_id,
-      prize_title: draw.title || 'Tirage PorteaPorte',
-      published: false,
-      entries_weight: winner.entries_weight || 1,
-      user_email: profile.email || winner.user_email || '',
-      user_role: profile.role || winner.user_role || '',
-      selected_by: ctx.session.id
-    },
+    winnerPayload,
     ['entries_weight', 'user_email', 'user_role', 'selected_by']
   );
+
+  if (!winnerRes.ok) {
+    const retryPayload = { ...winnerPayload };
+    delete retryPayload.selected_by;
+    delete retryPayload.user_id;
+    winnerRes = await insertWithSchemaFallback(
+      `${ctx.sbUrl}/rest/v1/draw_winners`,
+      sbHeaders(ctx.sbKey),
+      retryPayload,
+      ['entries_weight', 'user_email', 'user_role']
+    );
+  }
   if (!winnerRes.ok) return { ok: false, status: 400, error: 'Enregistrement gagnant impossible', details: winnerRes.data };
 
-  await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
+  let drawPatchRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey, 'return=minimal'),
     body: JSON.stringify({ status: 'completed', winner_selected_at: new Date().toISOString() })
-  }).catch(() => {});
+  }).catch(() => null);
+  if (drawPatchRes && !drawPatchRes.ok) {
+    await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+      body: JSON.stringify({ status: 'completed' })
+    }).catch(() => {});
+  }
 
   return { ok: true, winner: Array.isArray(winnerRes.data) ? winnerRes.data[0] : winnerRes.data, candidates_count: candidates.length };
 }
@@ -1447,18 +1502,21 @@ async function runMonthlyDraw(ctx, drawId) {
 async function adminRewards(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
   if (req.method === 'GET' || body.mode === 'list') {
-    const [missionsRes, drawsRes, txRes] = await Promise.all([
+    const [missionsRes, drawsRes, winnersRes, txRes] = await Promise.all([
       fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
       fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&order=draw_date.desc&limit=50`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=*&order=created_at.desc&limit=50`, { headers: sbHeaders(ctx.sbKey) }).catch(() => null),
       fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&limit=1000`, { headers: sbHeaders(ctx.sbKey) })
     ]);
     const missions = missionsRes.ok ? await missionsRes.json() : [];
     const draws = drawsRes.ok ? await drawsRes.json() : [];
+    const winners = winnersRes?.ok ? await winnersRes.json() : [];
     const txs = txRes.ok ? await txRes.json() : [];
     return res.status(200).json({
       success: true,
       missions,
       draws,
+      winners,
       stats: {
         coins_issued_net: txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0),
         transactions_count: txs.length,
@@ -1511,12 +1569,20 @@ async function adminRewards(req, res, ctx, body) {
     const status = String(body.status || '').trim();
     const allowed = new Set(['draft', 'active', 'closed', 'completed', 'cancelled']);
     if (!id || !allowed.has(status)) return res.status(400).json({ error: 'id et statut valide requis' });
-    const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, {
+    let r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: sbHeaders(ctx.sbKey),
       body: JSON.stringify({ status, updated_at: new Date().toISOString() })
     });
-    const data = await r.json().catch(() => ({}));
+    let data = await r.json().catch(() => ({}));
+    if (!r.ok && missingColumn(data) === 'updated_at') {
+      r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify({ status })
+      });
+      data = await r.json().catch(() => ({}));
+    }
     if (!r.ok) return res.status(400).json({ error: 'Mise a jour tirage impossible', details: data });
     return res.status(200).json({ success: true, draw: Array.isArray(data) ? data[0] : data });
   }
@@ -1526,7 +1592,7 @@ async function adminRewards(req, res, ctx, body) {
     if (!id) return res.status(400).json({ error: 'draw_id requis' });
     const result = await runMonthlyDraw(ctx, id);
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error, details: result.details });
-    return res.status(200).json({ success: true, winner: result.winner, candidates_count: result.candidates_count });
+    return res.status(200).json({ success: true, winner: result.winner, candidates_count: result.candidates_count, already_exists: Boolean(result.already_exists) });
   }
 
   return res.status(400).json({ error: 'Mode rewards inconnu' });
@@ -2725,6 +2791,27 @@ async function adminGrowth(req, res, ctx, body) {
     return upd.ok
       ? res.status(200).json({ success: true })
       : res.status(400).json({ error: 'Annulation impossible' });
+  }
+
+  if (mode === 'batch_grant_badge') {
+    const { badge_slug, dry_run } = body;
+    if (!badge_slug) return res.status(400).json({ error: 'badge_slug requis' });
+    // Récupère tous les profils actifs (max 5000)
+    const profRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/profiles?select=id&limit=5000`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    if (!profRes.ok) return res.status(500).json({ error: 'Impossible de lire les profils' });
+    const profiles = await profRes.json();
+    if (dry_run) return res.status(200).json({ dry_run: true, total_profiles: profiles.length, badge_slug });
+
+    let granted = 0, skipped = 0, errors = 0;
+    for (const p of profiles) {
+      const r = await sbRpc(ctx, 'grant_badge', { p_user_id: p.id, p_badge_slug: badge_slug, p_granted_by: ctx.session.id });
+      if (!r.ok) { errors++; continue; }
+      if (r.data === true) granted++; else skipped++;
+    }
+    return res.status(200).json({ success: true, badge_slug, total: profiles.length, granted, skipped, errors });
   }
 
   return res.status(400).json({ error: 'Mode admin-growth inconnu: ' + mode });

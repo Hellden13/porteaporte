@@ -11,6 +11,14 @@
     ],
     "rewrites":  [
                      {
+                         "source":  "/admin",
+                         "destination":  "/admin/dashboard-admin.html"
+                     },
+                     {
+                         "source":  "/admin/dashboard-admin",
+                         "destination":  "/admin/dashboard-admin.html"
+                     },
+                     {
                          "source":  "/api/capture-payment",
                          "destination":  "/api/capture-livraison"
                      },

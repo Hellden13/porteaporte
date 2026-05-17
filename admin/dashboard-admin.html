@@ -434,6 +434,12 @@
           <tbody id="reward-draws-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
         </table>
       </div>
+      <div class="table-card" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Gagnant</th><th>Lot</th><th>Role</th><th>Date</th></tr></thead>
+          <tbody id="reward-winners-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="section-impact" class="section">
@@ -967,7 +973,10 @@
       body: method === 'GET' ? undefined : JSON.stringify(payload || {})
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(out.error || 'Erreur rewards');
+    if (!res.ok) {
+      const details = out.details?.message || out.details?.hint || out.details?.details || '';
+      throw new Error((out.error || 'Erreur rewards') + (details ? ` - ${details}` : ''));
+    }
     return out;
   }
 
@@ -997,9 +1006,18 @@
           </td>
         </tr>
       `).join('') : '<tr><td colspan="4" class="empty-msg">Aucun tirage</td></tr>';
+      document.getElementById('reward-winners-body').innerHTML = (out.winners || []).length ? out.winners.map(w => `
+        <tr>
+          <td><strong>${w.user_email || w.user_id || 'Gagnant enregistre'}</strong></td>
+          <td>${w.prize_title || 'Tirage PorteaPorte'}</td>
+          <td>${w.user_role || 'utilisateur'}</td>
+          <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('fr-CA') : '—'}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="empty-msg">Aucun gagnant publie</td></tr>';
     } catch (err) {
       document.getElementById('reward-missions-body').innerHTML = `<tr><td colspan="4" class="empty-msg">${err.message}</td></tr>`;
       document.getElementById('reward-draws-body').innerHTML = `<tr><td colspan="4" class="empty-msg">${err.message}</td></tr>`;
+      document.getElementById('reward-winners-body').innerHTML = `<tr><td colspan="4" class="empty-msg">${err.message}</td></tr>`;
     }
   }
 
@@ -1015,7 +1033,9 @@
     if (typed !== 'TIRAGE') return;
     try {
       const out = await rewardsRequest({ mode: 'run_draw', id });
-      alert(`Gagnant choisi. Participants admissibles: ${out.candidates_count || 0}`);
+      const winner = out.winner || {};
+      const label = winner.user_email || winner.user_id || 'gagnant enregistre';
+      alert(`${out.already_exists ? 'Gagnant deja choisi' : 'Gagnant choisi'}: ${label}. Participants admissibles: ${out.candidates_count || 0}`);
       await loadRewardsAdmin();
     } catch (err) { alert(err.message); }
   }

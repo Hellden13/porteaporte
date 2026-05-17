@@ -564,6 +564,8 @@
     <nav class="main-nav" aria-label="Navigation principale">
       <a href="#features">Comment ca marche</a>
       <a href="browse-missions.html">Missions</a>
+      <a href="programme-points.html">Points Impact</a>
+      <a href="parrainage.html">Parrainage</a>
       <a href="assurance.html">Assurance</a>
       <a href="transparence.html">Transparence</a>
       <a href="login.html">Connexion</a>
@@ -625,6 +627,35 @@
       </div>
     </section>
 
+    <section class="features-section" aria-labelledby="impact-title">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2 id="impact-title">Transparence, gagnants et impact.</h2>
+          <p>Une seule page publique pour voir les concours, les derniers gagnants et l'argent estime pour la communaute.</p>
+        </div>
+        <div class="features">
+          <article class="feature-card">
+            <div class="feature-kicker">Impact</div>
+            <h3 id="home-impact-pool">Chargement...</h3>
+            <p id="home-impact-text">Montants communautaires mis a jour en direct.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">Tirages</div>
+            <h3 id="home-draw-title">Concours PorteaPorte</h3>
+            <p id="home-draw-text">Les tirages actifs et les gros tirages futurs sont affiches publiquement.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">Gagnants</div>
+            <h3 id="home-winner-title">Aucun gagnant publie</h3>
+            <p id="home-winner-text">Les gagnants publics apparaissent ici apres validation.</p>
+          </article>
+        </div>
+        <div style="margin-top:18px">
+          <a class="btn btn-secondary" href="transparence.html">Voir la transparence complete</a>
+        </div>
+      </div>
+    </section>
+
     <section class="features-section" id="features">
       <div class="section-inner">
         <div class="section-heading">
@@ -653,15 +684,8 @@
     <!-- ===== BANNIÈRE COVOITURAGE ===== -->
     <section style="padding: 0 clamp(18px,4vw,48px) 72px;">
       <div style="max-width:1120px;margin:0 auto;">
-        <a href="/covoiturage-info.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;position:relative;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+        <a href="/covoiturage-info.html" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--brand-border);box-shadow:0 16px 48px rgba(0,0,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
           <img src="/assets/banniere-covoiturage.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits" style="width:100%;height:auto;display:block;">
-          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.72));padding:28px 32px 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-            <div>
-              <div style="color:#B8F53E;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Nouveau — Covoiturage communautaire</div>
-              <div style="color:#fff;font-size:clamp(1rem,2.5vw,1.35rem);font-weight:700;line-height:1.3">Partagez vos frais de route.<br>Aidez quelqu'un en même temps.</div>
-            </div>
-            <span style="background:#B8F53E;color:#0A0F1E;font-size:.82rem;font-weight:800;padding:10px 22px;border-radius:8px;white-space:nowrap;flex-shrink:0">Découvrir →</span>
-          </div>
         </a>
       </div>
     </section>
@@ -775,6 +799,33 @@
 
     calcPrice();
 
+    async function loadHomeImpact() {
+      try {
+        const res = await fetch('/api/impact-public');
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error || 'Impact indisponible');
+        const money = cents => (Number(cents || 0) / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+        const impact = out.impact || {};
+        const totals = impact.totals || {};
+        document.getElementById('home-impact-pool').textContent = money(totals.donation_pool_cents);
+        document.getElementById('home-impact-text').textContent = `${totals.deliveries_count || 0} livraisons comptees ce mois-ci.`;
+        const draw = (out.draws || [])[0];
+        if (draw) {
+          document.getElementById('home-draw-title').textContent = draw.title || 'Tirage PorteaPorte';
+          document.getElementById('home-draw-text').textContent = `${draw.status || 'actif'} · ${draw.draw_date || ''}`;
+        }
+        const winner = (out.winners || [])[0];
+        if (winner) {
+          document.getElementById('home-winner-title').textContent = winner.user_email || 'Gagnant PorteaPorte';
+          document.getElementById('home-winner-text').textContent = winner.prize_title || 'Tirage PorteaPorte';
+        }
+      } catch (err) {
+        document.getElementById('home-impact-pool').textContent = 'Transparence';
+        document.getElementById('home-impact-text').textContent = 'Consulte la page publique pour les mises a jour.';
+      }
+    }
+    loadHomeImpact();
+
     /* ---- Mini map ---- */
     const miniMap = L.map('miniMap', { zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false })
       .setView([46.8, -71.5], 7);
@@ -803,7 +854,7 @@
   <footer>
     <div class="footer-inner">
       <span>&copy; 2026 PorteaPorte</span>
-      <span><a href="cgu.html">CGU</a> · <a href="confidentialite.html">Confidentialite</a></span>
+      <span><a href="programme-points.html">Points Impact</a> · <a href="parrainage.html">Parrainage</a> · <a href="cgu.html">CGU</a> · <a href="confidentialite.html">Confidentialite</a></span>
     </div>
   </footer>
   <script src="/js/support-widget.js"></script>

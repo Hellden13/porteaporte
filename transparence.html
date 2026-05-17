@@ -29,6 +29,11 @@
     .note{font-size:.84rem;color:var(--brand-muted);line-height:1.65}
     .status{display:inline-flex;padding:5px 10px;border:1px solid rgba(184,245,62,.35);border-radius:999px;color:var(--brand-lime);font-size:.78rem;font-weight:800;margin-bottom:14px}
     .empty{color:var(--brand-muted);padding:22px;text-align:center}
+    .public-list{display:grid;gap:12px}
+    .public-row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border:1px solid var(--brand-bg-surface-light);background:rgba(255,255,255,.025);border-radius:10px;padding:14px}
+    .public-row strong{display:block;color:var(--brand-text);margin-bottom:4px}
+    .public-row span{color:var(--brand-muted);font-size:.84rem;line-height:1.45}
+    .public-tag{color:var(--brand-lime);font-weight:900;white-space:nowrap}
     .request-grid{display:grid;gap:12px;grid-template-columns:1fr}
     @media(min-width:760px){.request-grid{grid-template-columns:repeat(2,1fr)}.request-grid .full{grid-column:span 2}}
     .field{display:grid;gap:6px}
@@ -85,6 +90,16 @@
     <div class="section-title">Méthode de calcul</div>
     <div class="panel note" id="impact-note">
       Les montants sont calculés automatiquement à partir des livraisons payées. Les versements réels doivent être rapprochés et confirmés par l'administration.
+    </div>
+
+    <div class="section-title">Concours et tirages</div>
+    <div id="public-draws" class="public-list">
+      <div class="panel empty">Chargement des tirages...</div>
+    </div>
+
+    <div class="section-title">Derniers gagnants</div>
+    <div id="public-winners" class="public-list">
+      <div class="panel empty">Chargement des gagnants...</div>
     </div>
 
     <div class="section-title">Faire une demande d'aide</div>
@@ -156,8 +171,30 @@
             ${org.website_url?`<a href="${org.website_url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;color:var(--brand-cyan);font-weight:800;text-decoration:none">Voir l'organisme</a>`:''}
           </article>
         `).join(''):'<div class="panel empty">Aucun organisme actif pour le moment.</div>';
+        const draws=out.draws||[];
+        document.getElementById('public-draws').innerHTML=draws.length?draws.map(draw=>`
+          <article class="public-row">
+            <div>
+              <strong>${draw.title||'Tirage PorteaPorte'}</strong>
+              <span>${draw.description||'Concours communautaire PorteaPorte.'}</span>
+            </div>
+            <div class="public-tag">${draw.status||'actif'} · ${draw.draw_date||''}</div>
+          </article>
+        `).join(''):'<div class="panel empty">Aucun tirage affiche pour le moment.</div>';
+        const winners=out.winners||[];
+        document.getElementById('public-winners').innerHTML=winners.length?winners.map(winner=>`
+          <article class="public-row">
+            <div>
+              <strong>${winner.user_email||'Gagnant PorteaPorte'}</strong>
+              <span>${winner.prize_title||'Tirage PorteaPorte'} · ${winner.user_role||'utilisateur'}</span>
+            </div>
+            <div class="public-tag">${winner.created_at?new Date(winner.created_at).toLocaleDateString('fr-CA'):''}</div>
+          </article>
+        `).join(''):'<div class="panel empty">Aucun gagnant publie pour le moment.</div>';
       }catch(err){
         document.getElementById('impact-orgs').innerHTML='<div class="panel empty">Impossible de charger la transparence pour le moment.</div>';
+        document.getElementById('public-draws').innerHTML='<div class="panel empty">Impossible de charger les tirages.</div>';
+        document.getElementById('public-winners').innerHTML='<div class="panel empty">Impossible de charger les gagnants.</div>';
       }
     }
     document.getElementById('impact-application-form').addEventListener('submit',async(event)=>{
