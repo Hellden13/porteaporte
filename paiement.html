@@ -351,14 +351,12 @@ function updatePrix(){
   }
   prixLivraison=Math.round(Math.max((dist*0.15+poids*1.5+15)*mult,25));
 
-  const comm=Math.round(prixLivraison*0.12*100)/100;
+  const comm=Math.max(2.00,Math.round(prixLivraison*0.15*100)/100);
   const sousTotal=prixLivraison+ass+comm;
   const tps=Math.round(sousTotal*0.05*100)/100;
   const tvq=Math.round(sousTotal*0.09975*100)/100;
   const total=Math.round((sousTotal+tps+tvq)*100)/100;
-  const partLivreur=Math.round(prixLivraison*0.88*100)/100;
-  const dons=Math.round(comm*0.05*100)/100;
-  const tirage=Math.round(comm*0.02*100)/100;
+  const partLivreur=Math.round((prixLivraison-comm)*100)/100;
 
   const fmt=n=>n.toFixed(2)+' $';
   document.getElementById('sum-trajet').textContent=(dep&&arr)?dep+' â†’ '+arr:'?';
@@ -370,8 +368,6 @@ function updatePrix(){
   document.getElementById('sum-total').textContent=fmt(total);
   document.getElementById('dist-livreur').textContent=fmt(partLivreur);
   document.getElementById('dist-comm').textContent=fmt(comm);
-  document.getElementById('dist-dons').textContent=fmt(dons);
-  document.getElementById('dist-tirage').textContent=fmt(tirage);
   document.getElementById('sum-type').textContent=document.getElementById('type-colis').options[document.getElementById('type-colis').selectedIndex].text;
 }
 if (!hasExistingLivraisonParam()) {
@@ -462,10 +458,8 @@ function applyExistingLivraison(livraison) {
 
   prixLivraison = Number(livraison.prix_total || 0);
   const total = prixLivraison;
-  const comm = Math.round(total * 0.12 * 100) / 100;
-  const partLivreur = Math.round(total * 0.88 * 100) / 100;
-  const dons = Math.round(comm * 0.05 * 100) / 100;
-  const tirage = Math.round(comm * 0.02 * 100) / 100;
+  const comm = Math.max(2.00, Math.round(total * 0.15 * 100) / 100);
+  const partLivreur = Math.round((total - comm) * 100) / 100;
   const fmt = n => Number(n || 0).toFixed(2) + ' $';
 
   document.getElementById('sum-trajet').textContent = (livraison.ville_depart || '-') + ' -> ' + (livraison.ville_arrivee || '-');
@@ -478,8 +472,6 @@ function applyExistingLivraison(livraison) {
   document.getElementById('sum-total').textContent = fmt(total);
   document.getElementById('dist-livreur').textContent = fmt(partLivreur);
   document.getElementById('dist-comm').textContent = fmt(comm);
-  document.getElementById('dist-dons').textContent = fmt(dons);
-  document.getElementById('dist-tirage').textContent = fmt(tirage);
   lockMissionFields();
 }
 
