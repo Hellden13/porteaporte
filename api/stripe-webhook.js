@@ -1,4 +1,4 @@
-﻿// api/stripe-webhook.js - WITH AUDIT LOGS
+// api/stripe-webhook.js - WITH AUDIT LOGS
 const { log } = require('./logger');
 
 const getRawBody = (req) => {
@@ -12,13 +12,28 @@ const getRawBody = (req) => {
 
 function verifyStripeSignature(rawBody, signature, secret) {
   const crypto = require('crypto');
-  const hash = crypto
+  const parts = String(signature || '').split(',').reduce((acc, part) => {
+    const [key, value] = part.split('=');
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(value);
+    return acc;
+  }, {});
+  const timestamp = parts.t?.[0];
+  const signatures = parts.v1 || [];
+  if (!timestamp || !signatures.length) return false;
+
+  const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
+  if (!Number.isFinite(age) || age > 300) return false;
+
+  const expected = crypto
     .createHmac('sha256', secret)
-    .update(rawBody)
+    .update(`${timestamp}.${rawBody.toString('utf8')}`)
     .digest('hex');
-  return `t=${Date.now()},v1=${hash}`.split(',').some(part => {
-    const [version, sig] = part.split('=');
-    return version === 'v1' && crypto.timingSafeEqual(sig, hash);
+
+  return signatures.some((sig) => {
+    const a = Buffer.from(sig, 'hex');
+    const b = Buffer.from(expected, 'hex');
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
   });
 }
 

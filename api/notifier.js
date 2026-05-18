@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // PORTEÃPORTE â Vercel Function : Notifications courriel
 // Fichier : api/notifier.js
 // Service : SendGrid (gratuit jusqu'Ã  100 courriels/jour)

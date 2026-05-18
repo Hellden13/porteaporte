@@ -1,4 +1,4 @@
-﻿// api/stripe.js - WITH AUDIT LOGGING
+// api/stripe.js - WITH AUDIT LOGGING
 const { log } = require('./logger');
 
 async function stripeRequest(method, path, body) {
@@ -37,6 +37,14 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
+
+  log('WARN', 'legacy_stripe_endpoint_blocked', null, {
+    ip: req.headers['x-forwarded-for'],
+    action: req.body?.action || null,
+  });
+  return res.status(410).json({
+    error: 'Endpoint Stripe legacy desactive. Utilise /api/paiement-livraison pour les paiements escrow securises.'
+  });
 
   const { action, montant_cents, description, email, user_id } = req.body;
 

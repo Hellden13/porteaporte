@@ -1,4 +1,4 @@
-﻿// api/logger.js
+// api/logger.js
 // Logs structurés pour audit + monitoring
 
 function log(level, action, userId, details = {}) {

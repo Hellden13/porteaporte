@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const SUPABASE_URL = 'https://miqrircrfpzkmvvacgwt.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcXJpcmNyZnB6a212dmFjZ3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODk3MzAsImV4cCI6MjA5MjE2NTczMH0.LJ8m2Vo7U0bmLbdoN1BqBuYlJZWUQxnZCwLwAZvVIaM';
 

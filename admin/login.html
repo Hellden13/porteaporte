@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion admin - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .card{width:100%;max-width:460px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:30px;box-shadow:0 18px 60px rgba(0,0,0,.38)}
+    .brand{display:inline-flex;margin-bottom:18px;color:var(--brand-lime);font-weight:900;text-decoration:none}
+    h1{font-size:28px;margin-bottom:8px}
+    p{color:var(--brand-muted);line-height:1.55;margin-bottom:18px}
+    label{display:block;margin:14px 0 6px;font-size:.86rem;color:var(--brand-muted);font-weight:700}
+    input{width:100%;padding:13px 14px;border-radius:9px;border:1px solid var(--brand-border);background:var(--brand-bg-dark);color:var(--brand-text)}
+    .btn{width:100%;margin-top:18px;border:0;border-radius:9px;padding:13px 16px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:#061009}
+    .btn.secondary{background:transparent;color:var(--brand-text);border:1px solid var(--brand-border)}
+    .status{display:none;margin-top:14px;padding:12px;border-radius:9px;border:1px solid var(--brand-border);color:var(--brand-muted);font-size:.9rem}
+    .status.error{display:block;border-color:#ef4444;color:#ffb4b4;background:rgba(239,68,68,.08)}
+    .status.success{display:block;border-color:var(--brand-lime);color:var(--brand-lime);background:rgba(184,245,62,.08)}
+    .links{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .links a{color:var(--brand-cyan);font-size:.9rem;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <a class="brand" href="/index.html">PorteàPorte</a>
+    <h1>Connexion admin</h1>
+    <p>Accès réservé aux administrateurs. Un compte livreur ou expéditeur ne sera jamais redirigé vers le dashboard admin.</p>
+
+    <form id="adminForm">
+      <label for="email">Courriel admin</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button class="btn" id="loginBtn" type="submit">Se connecter comme admin</button>
+    </form>
+
+    <button class="btn secondary" type="button" onclick="logout()">Déconnecter la session actuelle</button>
+    <div id="status" class="status"></div>
+    <div class="links">
+      <a href="/login.html">Connexion utilisateur</a>
+      <a href="/index.html">Retour accueil</a>
+    </div>
+  </main>
+
+  <script>
+    const db = window.getSupabaseClient();
+    const statusEl = document.getElementById('status');
+
+    function status(message, type = 'error') {
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + type;
+    }
+
+    async function checkAdminAndRedirect(session) {
+      const { data: profile, error } = await db
+        .from('profiles')
+        .select('role,suspendu,verification_status')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (error || !profile) {
+        status('Profil admin introuvable. Vérifie le compte utilisé.');
+        return false;
+      }
+      if (profile.suspendu || profile.verification_status === 'suspended') {
+        status('Compte suspendu. Accès admin bloqué.');
+        return false;
+      }
+      if (profile.role !== 'admin') {
+        status('Cette session n’est pas admin. Déconnecte-la, puis connecte-toi avec le compte admin.');
+        return false;
+      }
+
+      status('Connexion admin validée. Redirection...', 'success');
+      setTimeout(() => { window.location.href = '/admin/dashboard-admin.html'; }, 500);
+      return true;
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      status('Session déconnectée. Tu peux connecter le compte admin.', 'success');
+    }
+
+    document.getElementById('adminForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Vérification...';
+      try {
+        const { data, error } = await db.auth.signInWithPassword({
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value
+        });
+        if (error) throw error;
+        await checkAdminAndRedirect(data.session);
+      } catch (err) {
+        status(err.message || 'Connexion admin impossible.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Se connecter comme admin';
+      }
+    });
+
+    db.auth.getSession().then(({ data }) => {
+      if (data?.session) checkAdminAndRedirect(data.session);
+    });
+  </script>
+</body>
+</html>

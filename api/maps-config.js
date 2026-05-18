@@ -1,4 +1,4 @@
-﻿// ClÃ© Maps lue depuis GOOGLE_MAPS_API_KEY (Vercel) â ne pas committer la clÃ© dans HTML.
+// ClÃ© Maps lue depuis GOOGLE_MAPS_API_KEY (Vercel) â ne pas committer la clÃ© dans HTML.
 module.exports = async function handler(req, res) {
   const ALLOW = process.env.ALLOWED_ORIGIN || 'https://porteaporte.site';
   res.setHeader('Access-Control-Allow-Origin', ALLOW);

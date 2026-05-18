@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   function b64urlToBuffer(value) {
     value = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
     while (value.length % 4) value += '=';

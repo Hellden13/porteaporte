@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const client = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
 
   if (!client) {

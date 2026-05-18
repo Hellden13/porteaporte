@@ -1,4 +1,4 @@
-﻿// api/paiement-livraison.js - PaymentIntent Stripe escrow pour une livraison.
+// api/paiement-livraison.js - PaymentIntent Stripe escrow pour une livraison.
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',

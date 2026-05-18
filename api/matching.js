@@ -1,4 +1,4 @@
-﻿// api/matching.js - Matching et publication livraison, schema Supabase production.
+// api/matching.js - Matching et publication livraison, schema Supabase production.
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',

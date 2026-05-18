@@ -1,4 +1,4 @@
-﻿// api/turnstile-verify.js - WITH AUDIT LOGGING
+// api/turnstile-verify.js - WITH AUDIT LOGGING
 const { log } = require('./logger');
 
 module.exports = async function handler(req, res) {
