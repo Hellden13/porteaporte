@@ -836,6 +836,22 @@
       lbl.className = 'toggle-status' + (on ? ' online' : '');
     }
 
+    function showToast(msg, ok = true) {
+      let t = document.getElementById('pap-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'pap-toast';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);padding:.6rem 1.2rem;border-radius:8px;font-size:.9rem;font-weight:600;z-index:9999;transition:opacity .4s;white-space:nowrap';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.background = ok ? '#5cb85c' : '#c0392b';
+      t.style.color = '#fff';
+      t.style.opacity = '1';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+    }
+
     async function setOnlineStatus(on) {
       updateToggleLabel(on);
       try {
@@ -843,9 +859,24 @@
       } catch (_) {}
       // Abonnement push : activer quand En ligne, désactiver quand Hors ligne
       if (on) {
-        window.PapPush?.registerPush(session.user.id);
+        if (!('Notification' in window)) {
+          showToast('Notifications non supportées sur ce navigateur', false); return;
+        }
+        if (Notification.permission === 'denied') {
+          showToast('Notifications bloquées — autorise-les dans les réglages du navigateur', false); return;
+        }
+        if (!window.PapPush) {
+          showToast('Module push non chargé', false); return;
+        }
+        const sub = await window.PapPush.registerPush(session.user.id);
+        if (sub) {
+          showToast('Notifications activées ✓');
+        } else {
+          showToast('Permission refusée ou erreur push', false);
+        }
       } else {
         window.PapPush?.unregisterPush(session.user.id);
+        showToast('Notifications désactivées');
       }
     }
 
