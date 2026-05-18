@@ -2419,11 +2419,11 @@ async function pushSubscribe(req, res, ctx, body) {
     method: 'POST',
     headers: { ...sbHeaders(ctx.sbKey), 'Prefer': 'resolution=merge-duplicates' },
     body: JSON.stringify({
-      user_id:  userId,
-      endpoint: subscription.endpoint,
-      p256dh:   subscription.keys?.p256dh,
-      auth:     subscription.keys?.auth,
-      cree_le:  new Date().toISOString()
+      user_id:    userId,
+      endpoint:   subscription.endpoint,
+      p256dh:     subscription.keys?.p256dh,
+      auth:       subscription.keys?.auth,
+      created_at: new Date().toISOString()
     })
   });
   return res.status(r.ok ? 200 : 500).json({ ok: r.ok });

@@ -11,13 +11,21 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function registerPush(userId) {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  if (!('serviceWorker' in navigator)) {
+    console.warn('[push] serviceWorker non supporté');
+    return null;
+  }
+  if (!('PushManager' in window)) {
+    console.warn('[push] PushManager non supporté (navigateur incompatible)');
+    return null;
+  }
 
   try {
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
 
     const permission = await Notification.requestPermission();
+    console.log('[push] Permission :', permission);
     if (permission !== 'granted') return null;
 
     let sub = await reg.pushManager.getSubscription();
@@ -27,14 +35,16 @@ async function registerPush(userId) {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
+    console.log('[push] Abonnement :', sub.endpoint.slice(0, 60) + '…');
 
     // Enregistrer l'abonnement côté serveur
     const token = (await window.getSupabaseClient().auth.getSession())?.data?.session?.access_token;
-    await fetch('/api/push-subscribe', {
+    const r = await fetch('/api/push-subscribe', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body:    JSON.stringify({ userId, subscription: sub.toJSON() })
     });
+    if (!r.ok) console.warn('[push] Erreur API push-subscribe :', r.status, await r.text());
 
     return sub;
   } catch (err) {
