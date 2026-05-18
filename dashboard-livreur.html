@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard livreur - PorteÃ Porte</title>
+  <title>Dashboard livreur - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -403,18 +403,18 @@
 
   <!-- Topbar -->
   <header class="topbar">
-    <a class="topbar-brand" href="/index.html">PorteÃ Porte</a>
+    <a class="topbar-brand" href="/index.html">PorteàPorte</a>
     <div class="topbar-right">
       <a class="topbar-btn" href="/browse-missions.html">Missions</a>
       <a class="topbar-btn" href="/profile.html">Profil</a>
-      <a class="topbar-btn" id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;border-color:var(--brand-lime);font-weight:800">âš¡ Admin</a>
-      <button class="topbar-btn" onclick="logout()">DÃ©connecter</button>
+      <a class="topbar-btn" id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;border-color:var(--brand-lime);font-weight:800">⚡ Admin</a>
+      <button class="topbar-btn" onclick="logout()">Déconnecter</button>
     </div>
   </header>
 
   <!-- Toggle En ligne / Hors ligne -->
   <div class="online-bar" id="onlineBar" style="display:none">
-    <p class="online-label">Bonjour, <span id="greetName">livreur</span> â€” tu es prÃªt Ã  livrer ?</p>
+    <p class="online-label">Bonjour, <span id="greetName">livreur</span> — tu es prêt à livrer ?</p>
     <div class="toggle-wrap">
       <span class="toggle-status" id="toggleLabel">Hors ligne</span>
       <label class="toggle" aria-label="Statut en ligne">
@@ -429,10 +429,10 @@
 
     <!-- Eco bonus banner -->
     <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <span style="font-size:24px" id="ecoIcon">ðŸŒ±</span>
+      <span style="font-size:24px" id="ecoIcon">🌱</span>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:800;color:var(--brand-lime)" id="ecoBannerTitle">Bonus Ã©cologique actif</div>
-        <div style="color:var(--brand-muted);font-size:.82rem;margin-top:2px" id="ecoBannerDesc">Tu reÃ§ois un bonus sur chaque livraison.</div>
+        <div style="font-weight:800;color:var(--brand-lime)" id="ecoBannerTitle">Bonus écologique actif</div>
+        <div style="color:var(--brand-muted);font-size:.82rem;margin-top:2px" id="ecoBannerDesc">Tu reçois un bonus sur chaque livraison.</div>
       </div>
       <a href="/kyc.html" style="font-size:.78rem;color:var(--brand-cyan);text-decoration:none;font-weight:700" id="ecoKycLink"></a>
     </div>
@@ -440,28 +440,28 @@
     <!-- Stats -->
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card">
-        <div class="stat-icon">ðŸ“¦</div>
+        <div class="stat-icon">📦</div>
         <div class="stat-label">Livraisons ce mois</div>
-        <div class="stat-value" id="statDeliveries">â€”</div>
-        <div class="stat-sub" id="statDeliveriesSub">chargementâ€¦</div>
+        <div class="stat-value" id="statDeliveries">—</div>
+        <div class="stat-sub" id="statDeliveriesSub">chargement…</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">ðŸ’°</div>
+        <div class="stat-icon">💰</div>
         <div class="stat-label">Revenus ce mois</div>
-        <div class="stat-value" id="statEarnings">â€”</div>
-        <div class="stat-sub" id="statEarningsSub">chargementâ€¦</div>
+        <div class="stat-value" id="statEarnings">—</div>
+        <div class="stat-sub" id="statEarningsSub">chargement…</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">â­</div>
+        <div class="stat-icon">⭐</div>
         <div class="stat-label">Score moyen</div>
-        <div class="stat-value" id="statScore">â€”</div>
-        <div class="stat-sub">sur 5 Ã©toiles</div>
+        <div class="stat-value" id="statScore">—</div>
+        <div class="stat-sub">sur 5 étoiles</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">ðŸ”¥</div>
+        <div class="stat-icon">🔥</div>
         <div class="stat-label">Streak actif</div>
-        <div class="stat-value" id="statStreak">â€”</div>
-        <div class="stat-sub">jours consÃ©cutifs</div>
+        <div class="stat-value" id="statStreak">—</div>
+        <div class="stat-sub">jours consécutifs</div>
         <div class="streak-bar" id="streakBar"></div>
       </div>
     </div>
@@ -469,26 +469,26 @@
     <!-- Missions disponibles -->
     <div class="section-header">
       <span class="section-title">Missions disponibles</span>
-      <a class="section-link" href="/browse-missions.html">Voir toutes â†’</a>
+      <a class="section-link" href="/browse-missions.html">Voir toutes →</a>
     </div>
     <div class="missions-list" id="missionsList">
-      <p class="loading-msg">Chargement des missionsâ€¦</p>
+      <p class="loading-msg">Chargement des missions…</p>
     </div>
 
     <div class="section-header">
       <span class="section-title">Points Impact &amp; Missions</span>
-      <a class="section-link" href="/programme-points.html">Comment gagner des points â†’</a>
+      <a class="section-link" href="/programme-points.html">Comment gagner des points →</a>
     </div>
     <div class="rewards-grid">
       <div class="reward-card">
         <div class="reward-title">Missions bonus</div>
-        <div class="reward-muted">Chaque mission complÃ©tÃ©e rapporte des XP et des Points Impact. Prendre le minimum. Redonner le maximum.</div>
+        <div class="reward-muted">Chaque mission complétée rapporte des XP et des Points Impact. Prendre le minimum. Redonner le maximum.</div>
         <div id="bonusMissionsList"><p class="loading-msg">Chargement des missions bonus...</p></div>
       </div>
       <div class="reward-card">
         <div class="reward-title">Points Impact</div>
-        <div class="coins-balance" id="porteCoinsBalance">â€”</div>
-        <div class="reward-muted">Les Points Impact n'ont aucune valeur monÃ©taire. Ils servent aux tirages, badges et avantages plateforme.</div>
+        <div class="coins-balance" id="porteCoinsBalance">—</div>
+        <div class="reward-muted">Les Points Impact n'ont aucune valeur monétaire. Ils servent aux tirages, badges et avantages plateforme.</div>
         <div class="reward-title" style="margin-top:18px">Progression &amp; niveau</div>
         <div id="driverLevelBox" class="reward-muted">Chargement...</div>
         <div class="reward-title" style="margin-top:18px">Mes badges</div>
@@ -511,59 +511,59 @@
 
       <!-- Mes livraisons en cours -->
       <div class="card">
-        <div class="card-title">ðŸ“‹ Mes livraisons en cours</div>
-        <div id="myDeliveries"><p class="loading-msg">Chargementâ€¦</p></div>
+        <div class="card-title">📋 Mes livraisons en cours</div>
+        <div id="myDeliveries"><p class="loading-msg">Chargement…</p></div>
 
-        <!-- RÃ©partition revenus -->
+        <!-- Répartition revenus -->
         <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
-          <div class="card-title" style="margin-bottom:12px">RÃ©partition revenus</div>
+          <div class="card-title" style="margin-bottom:12px">Répartition revenus</div>
           <div class="rev-bar">
             <span class="rev-label" id="revYouLabel">Toi (60%)</span>
             <div class="rev-track"><div class="rev-fill" id="revYouBar" style="width:60%;background:var(--brand-lime)"></div></div>
-            <span class="rev-amount" id="revYou">â€”</span>
+            <span class="rev-amount" id="revYou">—</span>
           </div>
-          <!-- Eco bonus row â€” shown only if eco_bonus > 0 -->
+          <!-- Eco bonus row — shown only if eco_bonus > 0 -->
           <div class="rev-bar" id="revEcoRow" style="display:none">
-            <span class="rev-label" id="revEcoLabel" style="color:var(--brand-lime)">Ã‰co (+0%)</span>
+            <span class="rev-label" id="revEcoLabel" style="color:var(--brand-lime)">Éco (+0%)</span>
             <div class="rev-track"><div class="rev-fill" id="revEcoBar" style="width:0%;background:linear-gradient(90deg,#00FF9F,#57ffbc)"></div></div>
-            <span class="rev-amount" id="revEco" style="color:var(--brand-lime)">â€”</span>
+            <span class="rev-amount" id="revEco" style="color:var(--brand-lime)">—</span>
           </div>
           <div class="rev-bar">
             <span class="rev-label">Plateforme (12%)</span>
             <div class="rev-track"><div class="rev-fill" style="width:12%;background:var(--brand-cyan)"></div></div>
-            <span class="rev-amount" id="revPlat">â€”</span>
+            <span class="rev-amount" id="revPlat">—</span>
           </div>
           <div class="rev-bar">
             <span class="rev-label">Cause (5%)</span>
             <div class="rev-track"><div class="rev-fill" style="width:5%;background:rgba(0,255,159,0.4)"></div></div>
-            <span class="rev-amount" id="revCause">â€”</span>
+            <span class="rev-amount" id="revCause">—</span>
           </div>
           <div id="revTotalRow" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--brand-border);display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:.82rem;font-weight:800;color:var(--brand-text)">Total pour toi</span>
-            <span style="font-weight:900;color:var(--brand-lime);font-size:1rem" id="revTotal">â€”</span>
+            <span style="font-weight:900;color:var(--brand-lime);font-size:1rem" id="revTotal">—</span>
           </div>
         </div>
       </div>
 
       <!-- Commentaires clients BD-style -->
       <div class="card">
-        <div class="card-title">ðŸ’¬ Commentaires clients</div>
+        <div class="card-title">💬 Commentaires clients</div>
         <div class="comments-section" id="commentsSection">
-          <p class="loading-msg">Chargementâ€¦</p>
+          <p class="loading-msg">Chargement…</p>
         </div>
       </div>
     </div>
 
-    <!-- â”€â”€ Section Paiements & Retraits â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <!-- ── Section Paiements & Retraits ────────────────────── -->
     <div class="section-header" style="margin-top:24px">
-      <span class="section-title">ðŸ’³ Paiements &amp; Retraits</span>
+      <span class="section-title">💳 Paiements &amp; Retraits</span>
     </div>
 
     <!-- Card statut compte Stripe -->
     <div class="card" id="stripeCard" style="margin-bottom:16px">
       <div class="card-title" style="margin-bottom:14px">Compte de paiement</div>
       <div id="stripeStatusArea">
-        <p class="loading-msg">Chargementâ€¦</p>
+        <p class="loading-msg">Chargement…</p>
       </div>
     </div>
 
@@ -573,33 +573,33 @@
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px">
         <div class="stat-card" style="text-align:center;padding:14px 10px">
           <div class="stat-label">Disponible</div>
-          <div class="stat-value" id="balAvailable">â€”</div>
-          <div class="stat-sub">Ã  retirer maintenant</div>
+          <div class="stat-value" id="balAvailable">—</div>
+          <div class="stat-sub">à retirer maintenant</div>
         </div>
         <div class="stat-card" style="text-align:center;padding:14px 10px">
           <div class="stat-label">En attente</div>
-          <div class="stat-value" id="balPending">â€”</div>
-          <div class="stat-sub">libÃ©rÃ© sous 48 h</div>
+          <div class="stat-value" id="balPending">—</div>
+          <div class="stat-sub">libéré sous 48 h</div>
         </div>
         <div class="stat-card" style="text-align:center;padding:14px 10px">
-          <div class="stat-label">Total gagnÃ©</div>
-          <div class="stat-value" id="balTotal">â€”</div>
-          <div class="stat-sub">depuis le dÃ©but</div>
+          <div class="stat-label">Total gagné</div>
+          <div class="stat-value" id="balTotal">—</div>
+          <div class="stat-sub">depuis le début</div>
         </div>
         <div class="stat-card" style="text-align:center;padding:14px 10px">
-          <div class="stat-label">DÃ©jÃ  transfÃ©rÃ©</div>
-          <div class="stat-value" id="balTransferred">â€”</div>
-          <div class="stat-sub">virements reÃ§us</div>
+          <div class="stat-label">Déjà transféré</div>
+          <div class="stat-value" id="balTransferred">—</div>
+          <div class="stat-sub">virements reçus</div>
         </div>
       </div>
 
       <button id="btnPayout" onclick="requestPayout()"
         style="width:100%;background:linear-gradient(135deg,#00ff9f,#00cc7a);color:#0A0C10;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer;margin-bottom:12px">
-        ðŸ’¸ Virer mes gains maintenant
+        💸 Virer mes gains maintenant
       </button>
       <button onclick="openStripeDashboard()"
         style="width:100%;background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer">
-        Voir mon tableau de bord Stripe â†’
+        Voir mon tableau de bord Stripe →
       </button>
 
       <div style="margin-top:18px">
@@ -616,8 +616,8 @@
   <!-- ===== Biometric modal ===== -->
   <div class="bio-modal-overlay" id="bioModal">
     <div class="bio-modal">
-      <div class="bio-icon" id="bioIcon">ðŸ‘†</div>
-      <h2 id="bioTitle">Confirmation biomÃ©trique</h2>
+      <div class="bio-icon" id="bioIcon">👆</div>
+      <h2 id="bioTitle">Confirmation biométrique</h2>
       <p id="bioDesc">Utilise ton empreinte digitale ou Face ID pour confirmer l'acceptation de cette mission.</p>
       <div class="bio-btns">
         <button class="bio-cancel" onclick="closeBioModal()">Annuler</button>
@@ -638,7 +638,7 @@
     }
 
     function showSuccess(message) {
-      showBanner(message, '#B8F53E', null, null, 'SuccÃ¨s');
+      showBanner(message, '#B8F53E', null, null, 'Succès');
       setTimeout(() => {
         const banner = document.getElementById('bannerArea');
         if (banner) banner.innerHTML = '';
@@ -664,21 +664,21 @@
       if (p.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
       const roleOk = ['livreur', 'les deux', 'admin'].includes(p.role);
       if (!roleOk) {
-        showBanner('Ton compte est enregistrÃ© comme expÃ©diteur. Ajoute le rÃ´le livreur pour commencer la vÃ©rification.', '#B8F53E', '/role-choice.html', 'Changer mon rÃ´le');
+        showBanner('Ton compte est enregistré comme expéditeur. Ajoute le rôle livreur pour commencer la vérification.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
         return;
       }
       const driverVerified = p.role === 'admin' || p.driver_status === 'verified';
       if (!driverVerified) {
         const msgs = {
-          pending_review: { title: 'VÃ©rification en cours', msg: 'Ta demande est en rÃ©vision. Tu peux ouvrir ton dossier, mettre tes informations Ã  jour ou revenir au profil. Les vraies missions restent bloquÃ©es jusquâ€™Ã  lâ€™approbation admin.', color: '#F59E0B', link: '/livreur.html', linkText: 'Voir ma vÃ©rification' },
-          rejected: { title: 'VÃ©rification refusÃ©e', msg: 'Ta demande a Ã©tÃ© refusÃ©e. Corrige les informations et soumets de nouveau.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre Ã  nouveau' }
+          pending_review: { title: 'Vérification en cours', msg: 'Ta demande est en révision. Tu peux ouvrir ton dossier, mettre tes informations à jour ou revenir au profil. Les vraies missions restent bloquées jusqu’à l’approbation admin.', color: '#F59E0B', link: '/livreur.html', linkText: 'Voir ma vérification' },
+          rejected: { title: 'Vérification refusée', msg: 'Ta demande a été refusée. Corrige les informations et soumets de nouveau.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre à nouveau' }
         };
-        const s = msgs[p.driver_status] || { title: 'VÃ©rification requise', msg: 'ComplÃ¨te ta vÃ©rification livreur avant dâ€™accÃ©der aux missions.', color: '#B8F53E', link: '/livreur.html', linkText: 'DÃ©marrer la vÃ©rification' };
+        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification livreur avant d’accéder aux missions.', color: '#B8F53E', link: '/livreur.html', linkText: 'Démarrer la vérification' };
         showBanner(s.msg, s.color, s.link, s.linkText, s.title);
         return;
       }
 
-      /* All good â€” show dashboard */
+      /* All good — show dashboard */
       document.getElementById('bannerArea').style.display = 'none';
       document.getElementById('onlineBar').style.display = 'flex';
       document.getElementById('mainPage').style.display = 'block';
@@ -730,8 +730,8 @@
       return labels[status] || status || 'En cours';
     }
 
-    const ECO_ICONS = { pieds:'ðŸš¶', velo:'ðŸš´', trottinette:'ðŸ›´', skateboard:'ðŸ›¹', voiture_electrique:'ðŸ”‹ðŸš—', moto_electrique:'ðŸ”‹ðŸï¸', camion_electrique:'ðŸ”‹ðŸš›', voiture:'ðŸš—', moto:'ðŸï¸', camion:'ðŸš›' };
-    const ECO_LABELS = { pieds:'Ã€ pied', velo:'VÃ©lo', trottinette:'Trottinette', skateboard:'Skateboard', voiture_electrique:'Voiture Ã©lec.', moto_electrique:'Moto Ã©lec.', camion_electrique:'Camion Ã©lec.', voiture:'Voiture', moto:'Moto', camion:'Camion' };
+    const ECO_ICONS = { pieds:'🚶', velo:'🚴', trottinette:'🛴', skateboard:'🛹', voiture_electrique:'🔋🚗', moto_electrique:'🔋🏍️', camion_electrique:'🔋🚛', voiture:'🚗', moto:'🏍️', camion:'🚛' };
+    const ECO_LABELS = { pieds:'À pied', velo:'Vélo', trottinette:'Trottinette', skateboard:'Skateboard', voiture_electrique:'Voiture élec.', moto_electrique:'Moto élec.', camion_electrique:'Camion élec.', voiture:'Voiture', moto:'Moto', camion:'Camion' };
 
     function renderStats() {
       const deliveries = profile.livraisons || 0;
@@ -745,25 +745,25 @@
       const banner = document.getElementById('ecoBanner');
       if (ecoBonus > 0 && mode) {
         banner.style.display = 'flex';
-        document.getElementById('ecoIcon').textContent = ECO_ICONS[mode] || 'ðŸŒ±';
-        document.getElementById('ecoBannerTitle').textContent = `Bonus Ã©cologique +${ecoBonus}% actif Â· ${ECO_LABELS[mode] || mode}`;
-        document.getElementById('ecoBannerDesc').textContent = `Sur chaque livraison, tu reÃ§ois 60% + ${ecoBonus}% de bonus Ã©co, soit ${60 + ecoBonus}% du prix total.`;
+        document.getElementById('ecoIcon').textContent = ECO_ICONS[mode] || '🌱';
+        document.getElementById('ecoBannerTitle').textContent = `Bonus écologique +${ecoBonus}% actif · ${ECO_LABELS[mode] || mode}`;
+        document.getElementById('ecoBannerDesc').textContent = `Sur chaque livraison, tu reçois 60% + ${ecoBonus}% de bonus éco, soit ${60 + ecoBonus}% du prix total.`;
         document.getElementById('ecoKycLink').style.display = 'none';
       } else if (!mode || profile.driver_status !== 'verified') {
         banner.style.display = 'flex';
         banner.style.background = 'rgba(168,172,177,.06)';
         banner.style.borderColor = 'var(--brand-border)';
-        document.getElementById('ecoIcon').textContent = 'ðŸŒ±';
-        document.getElementById('ecoBannerTitle').textContent = 'Aucun bonus Ã©cologique';
+        document.getElementById('ecoIcon').textContent = '🌱';
+        document.getElementById('ecoBannerTitle').textContent = 'Aucun bonus écologique';
         document.getElementById('ecoBannerTitle').style.color = 'var(--brand-muted)';
-        document.getElementById('ecoBannerDesc').textContent = 'Livre Ã  vÃ©lo, trottinette ou en vÃ©hicule Ã©lectrique pour gagner un bonus de 5% Ã  20% sur chaque livraison.';
-        document.getElementById('ecoKycLink').textContent = 'Mettre Ã  jour mon profil â†’';
+        document.getElementById('ecoBannerDesc').textContent = 'Livre à vélo, trottinette ou en véhicule électrique pour gagner un bonus de 5% à 20% sur chaque livraison.';
+        document.getElementById('ecoKycLink').textContent = 'Mettre à jour mon profil →';
         document.getElementById('ecoKycLink').style.display = 'block';
       }
 
       /* --- Stats cards --- */
       document.getElementById('statDeliveries').textContent = deliveries;
-      document.getElementById('statDeliveriesSub').textContent = 'total cumulÃ©';
+      document.getElementById('statDeliveriesSub').textContent = 'total cumulé';
       document.getElementById('statEarnings').textContent = money(earnings);
       document.getElementById('statEarningsSub').textContent = (ECO_ICONS[mode] || '') + ' ' + (ECO_LABELS[mode] || profile.niveau_livreur || 'Bronze');
       document.getElementById('statScore').textContent = score;
@@ -792,7 +792,7 @@
 
       if (ecoBonus > 0) {
         document.getElementById('revEcoRow').style.display   = 'flex';
-        document.getElementById('revEcoLabel').textContent   = `Ã‰co (+${ecoBonus}%)`;
+        document.getElementById('revEcoLabel').textContent   = `Éco (+${ecoBonus}%)`;
         document.getElementById('revEcoBar').style.width     = ecoBonus + '%';
         document.getElementById('revEco').textContent        = money(eco);
         document.getElementById('revTotalRow').style.display = 'flex';
@@ -817,7 +817,7 @@
       try {
         await db.from('profiles').update({ disponible: on }).eq('id', session.user.id);
       } catch (_) {}
-      // Abonnement push : activer quand En ligne, dÃ©sactiver quand Hors ligne
+      // Abonnement push : activer quand En ligne, désactiver quand Hors ligne
       if (on) {
         window.PapPush?.registerPush(session.user.id);
       } else {
@@ -846,8 +846,8 @@
       el.innerHTML = data.map(m => `
         <div class="mission-card">
           <div class="mission-info">
-            <div class="mission-route">${m.ville_depart || '?'} â†’ ${m.ville_arrivee || '?'}</div>
-            <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' Â· ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' Â· ' + m.distance_km + ' km' : ''}</div>
+            <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
+            <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
           </div>
           <span class="mission-price">${money(m.prix_total)}</span>
           <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
@@ -857,7 +857,7 @@
 
     async function loadRewards() {
       try {
-        // Appel au nouveau endpoint unifiÃ© growth-dashboard
+        // Appel au nouveau endpoint unifié growth-dashboard
         const res = await fetch('/api/growth-dashboard', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -894,7 +894,7 @@
           </div>
           <div class="reward-muted">${m.description || ''}</div>
           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-          <div class="reward-muted" style="margin-top:6px">${current}/${target} Â· ${m.status || 'active'}</div>
+          <div class="reward-muted" style="margin-top:6px">${current}/${target} · ${m.status || 'active'}</div>
         </div>`;
       }).join('') : '<div class="empty-msg">Aucune mission bonus active.</div>';
     }
@@ -902,16 +902,16 @@
     function renderBadges(badges) {
       const row = document.getElementById('badgesRow');
       if (!badges.length) {
-        row.innerHTML = '<span style="color:var(--brand-muted);font-size:0.82rem">Aucun badge encore. ComplÃ¨te des missions pour en dÃ©bloquer !</span>';
+        row.innerHTML = '<span style="color:var(--brand-muted);font-size:0.82rem">Aucun badge encore. Complète des missions pour en débloquer !</span>';
         return;
       }
       row.innerHTML = badges.slice(0, 10).map(b => {
-        const icon = b.badges?.icon || 'ðŸ…';
+        const icon = b.badges?.icon || '🏅';
         const name = b.badges?.name || 'Badge';
         const desc = b.badges?.description || '';
-        return `<span title="${name} â€” ${desc}" style="font-size:1.6rem;cursor:help" aria-label="${name}">${icon}</span>`;
+        return `<span title="${name} — ${desc}" style="font-size:1.6rem;cursor:help" aria-label="${name}">${icon}</span>`;
       }).join('') + (badges.length > 10 ? `<span style="color:var(--brand-muted);font-size:0.8rem;align-self:center">+${badges.length - 10} autres</span>` : '')
-        + `<a href="/programme-points.html" style="font-size:0.78rem;color:var(--brand-lime);align-self:center;margin-left:6px">Voir tous â†’</a>`;
+        + `<a href="/programme-points.html" style="font-size:0.78rem;color:var(--brand-lime);align-self:center;margin-left:6px">Voir tous →</a>`;
     }
 
     function renderDriverLevel(level) {
@@ -920,12 +920,12 @@
       const next = level.next;
       const pct  = level.progress || 0;
       document.getElementById('driverLevelBox').innerHTML = `
-        <strong>${cur.icon || ''} Niveau ${cur.level} â€” ${cur.name}</strong><br>
+        <strong>${cur.icon || ''} Niveau ${cur.level} — ${cur.name}</strong><br>
         <span style="color:var(--brand-muted);font-size:0.82rem">${cur.benefit}</span><br>
         <span style="color:var(--brand-muted);font-size:0.82rem">XP total : ${level.xp || 0}</span>
         <div class="progress-track" style="margin:8px 0 4px"><div class="progress-fill" style="width:${pct}%"></div></div>
         <span style="color:var(--brand-muted);font-size:0.78rem">${pct}% vers ${next ? next.name : 'niveau max'}</span>
-        ${!next ? '<br><span style="color:var(--brand-lime);font-size:0.82rem">ðŸ† Niveau maximum atteint !</span>' : ''}
+        ${!next ? '<br><span style="color:var(--brand-lime);font-size:0.82rem">🏆 Niveau maximum atteint !</span>' : ''}
       `;
     }
 
@@ -956,7 +956,7 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) { showError(out.error || 'Participation impossible'); return; }
-      showSuccess('Participation enregistrÃ©e.');
+      showSuccess('Participation enregistrée.');
       await loadRewards();
     }
 
@@ -983,8 +983,8 @@
         return `
           <div class="delivery-row">
             <div>
-              <div class="delivery-route">${row.type_colis || 'Colis'} Â· ${row.code || row.id.slice(0,8)}</div>
-              <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)} Â· ${deliveryStatusLabel(row.statut)}</div>
+              <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
             </div>
             <div class="delivery-actions">
               <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
@@ -998,7 +998,7 @@
     }
 
     async function markDelivered(id) {
-      if (!confirm('Marquer cette livraison comme livrÃ©e ?')) return;
+      if (!confirm('Marquer cette livraison comme livrée ?')) return;
       const res = await fetch('/api/confirm-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -1007,7 +1007,7 @@
       if (res.ok) { await loadMyDeliveries(); }
       else {
         const out = await res.json().catch(() => ({}));
-        alert(out.error || 'Erreur lors de la mise Ã  jour');
+        alert(out.error || 'Erreur lors de la mise à jour');
       }
     }
 
@@ -1026,14 +1026,14 @@
 
       /* Fallback mock data si aucun avis encore */
       const MOCK = [
-        { rating: 5, comment: 'Super livreur, trÃ¨s ponctuel et souriant !', reviewer_id: null, _nom: 'Marie L.' },
-        { rating: 5, comment: 'Colis livrÃ© en parfait Ã©tat, merci !',        reviewer_id: null, _nom: 'Jean-P.'  },
+        { rating: 5, comment: 'Super livreur, très ponctuel et souriant !', reviewer_id: null, _nom: 'Marie L.' },
+        { rating: 5, comment: 'Colis livré en parfait état, merci !',        reviewer_id: null, _nom: 'Jean-P.'  },
         { rating: 4, comment: 'Rapide et efficace, je recommande.',           reviewer_id: null, _nom: 'Sophie B.' }
       ];
       const reviews = data?.length ? data : MOCK;
 
       if (!reviews.length) {
-        el.innerHTML = '<p class="no-comments">Aucun commentaire pour l\'instant. ComplÃ¨te ta premiÃ¨re livraison !</p>';
+        el.innerHTML = '<p class="no-comments">Aucun commentaire pour l\'instant. Complète ta première livraison !</p>';
         return;
       }
 
@@ -1041,7 +1041,7 @@
         const nom      = r._nom || 'Client';
         const initials = nom.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         const note     = r.rating || 5;
-        const stars    = 'â˜…'.repeat(note) + 'â˜†'.repeat(5 - note);
+        const stars    = '★'.repeat(note) + '☆'.repeat(5 - note);
         return `
           <div class="comment-bubble">
             <div class="comment-author">
@@ -1062,13 +1062,13 @@
       document.getElementById('bioModal').classList.add('open');
       /* Try WebAuthn if available */
       if (window.PublicKeyCredential) {
-        document.getElementById('bioIcon').textContent = 'ðŸ‘†';
-        document.getElementById('bioTitle').textContent = 'Confirmation biomÃ©trique';
+        document.getElementById('bioIcon').textContent = '👆';
+        document.getElementById('bioTitle').textContent = 'Confirmation biométrique';
         document.getElementById('bioDesc').textContent = 'Utilise ton empreinte digitale ou Face ID pour confirmer l\'acceptation de cette mission.';
       } else {
-        document.getElementById('bioIcon').textContent = 'ðŸ”’';
+        document.getElementById('bioIcon').textContent = '🔒';
         document.getElementById('bioTitle').textContent = 'Confirmer l\'acceptation';
-        document.getElementById('bioDesc').textContent = 'Confirme que tu veux accepter cette mission. Les dÃ©tails complets seront dÃ©bloquÃ©s aprÃ¨s assignation.';
+        document.getElementById('bioDesc').textContent = 'Confirme que tu veux accepter cette mission. Les détails complets seront débloqués après assignation.';
       }
     }
 
@@ -1079,7 +1079,7 @@
 
     async function confirmBiometric() {
       const btn = document.getElementById('bioConfirmBtn');
-      btn.textContent = 'VÃ©rificationâ€¦';
+      btn.textContent = 'Vérification…';
       btn.disabled = true;
 
       try {
@@ -1111,7 +1111,7 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) { alert(out.error || 'Impossible d\'accepter cette mission'); return; }
-      alert('Mission acceptÃ©e ! Les dÃ©tails complets sont maintenant disponibles.');
+      alert('Mission acceptée ! Les détails complets sont maintenant disponibles.');
       await Promise.all([loadMissions(), loadMyDeliveries()]);
     }
 
@@ -1119,7 +1119,7 @@
        LOGOUT
     ============================= */
     async function logout() {
-      if (confirm('Se dÃ©connecter ?')) {
+      if (confirm('Se déconnecter ?')) {
         await db.auth.signOut();
         window.location.href = '/index.html';
       }
@@ -1151,14 +1151,14 @@
         availableMissions = data;
         el.innerHTML = data.map(m => {
           const exp = m.expediteur_profile;
-          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'ExpÃ©diteur' : null;
+          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
           const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
-          const expRating = exp && exp.score_confiance ? ` Â· ${(exp.score_confiance/20).toFixed(1)}â˜…` : '';
+          const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
           return `
           <div class="mission-card">
             <div class="mission-info">
-              <div class="mission-route">${m.ville_depart || '?'} â†’ ${m.ville_arrivee || '?'}</div>
-              <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' Â· ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' Â· ' + m.distance_km + ' km' : ''}</div>
+              <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
+              <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
               ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
             </div>
             <span class="mission-price">${money(m.prix_total)}</span>
@@ -1196,8 +1196,8 @@
           return `
             <div class="delivery-row">
               <div>
-                <div class="delivery-route">${row.type_colis || 'Colis'} Â· ${row.code || row.id.slice(0,8)}</div>
-                <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)} Â· ${deliveryStatusLabel(row.statut)}</div>
+                <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+                <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
                 ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}</div>` : ''}
               </div>
               <div class="delivery-actions">
@@ -1217,7 +1217,7 @@
     init();
   </script>
 
-  <!-- â”€â”€ Stripe Connect JS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Stripe Connect JS ─────────────────────────────────── -->
   <script>
   (function() {
     const API = '/api/platform';
@@ -1230,7 +1230,7 @@
       const map = {
         active:      { label: 'Actif',            color: '#00ff9f', bg: 'rgba(0,255,159,.12)' },
         onboarding:  { label: 'En configuration', color: '#f5a623', bg: 'rgba(245,166,35,.12)' },
-        pending:     { label: 'Non configurÃ©',    color: '#8A9BB0', bg: 'rgba(138,155,176,.12)' },
+        pending:     { label: 'Non configuré',    color: '#8A9BB0', bg: 'rgba(138,155,176,.12)' },
         restricted:  { label: 'Restreint',        color: '#ff4d4d', bg: 'rgba(255,77,77,.12)'  },
       };
       const s = map[status] || map.pending;
@@ -1261,7 +1261,7 @@
               Configure ton compte pour recevoir tes gains directement sur ton compte bancaire.
             </p>
             <button onclick="startOnboarding()" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%">
-              âš¡ Configurer mes paiements Stripe
+              ⚡ Configurer mes paiements Stripe
             </button>`;
           return;
         }
@@ -1275,11 +1275,11 @@
           ${!isActive ? `
           <p style="font-size:.82rem;color:var(--brand-muted);margin-bottom:12px">
             ${acct.status === 'onboarding'
-              ? 'Tu n\'as pas terminÃ© la configuration Stripe. Clique pour continuer.'
+              ? 'Tu n\'as pas terminé la configuration Stripe. Clique pour continuer.'
               : 'Lance la configuration pour recevoir des virements bancaires.'}
           </p>
           <button onclick="startOnboarding()" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%">
-            ${acct.status === 'onboarding' ? 'âš™ï¸ Continuer la configuration' : 'âš¡ Configurer mes paiements'}
+            ${acct.status === 'onboarding' ? '⚙️ Continuer la configuration' : '⚡ Configurer mes paiements'}
           </button>` : ''}`;
 
         if (isActive) {
@@ -1296,7 +1296,7 @@
           if (!pays.length) {
             hist.innerHTML = '<p style="color:var(--brand-muted);font-size:.82rem">Aucun virement pour l\'instant.</p>';
           } else {
-            const statusMap = { paid:'âœ… PayÃ©', processing:'â³ En cours', failed:'âŒ Ã‰chouÃ©', pending:'ðŸ• En attente' };
+            const statusMap = { paid:'✅ Payé', processing:'⏳ En cours', failed:'❌ Échoué', pending:'🕐 En attente' };
             hist.innerHTML = pays.map(p => `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--brand-border);font-size:.83rem">
                 <div>
@@ -1314,14 +1314,14 @@
 
     window.startOnboarding = async function() {
       const btn = event.currentTarget || document.querySelector('[onclick="startOnboarding()"]');
-      if (btn) { btn.disabled = true; btn.textContent = 'Chargementâ€¦'; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Chargement…'; }
       try {
         const data = await apiCall('stripe-connect-onboard', 'POST', {});
         if (data.onboarding_url) {
           window.location.href = data.onboarding_url;
         } else {
           alert(data.error || 'Erreur Stripe');
-          if (btn) { btn.disabled = false; btn.textContent = 'âš¡ Configurer mes paiements'; }
+          if (btn) { btn.disabled = false; btn.textContent = '⚡ Configurer mes paiements'; }
         }
       } catch (e) {
         alert('Erreur : ' + e.message);
@@ -1332,20 +1332,20 @@
     window.requestPayout = async function() {
       const btn = document.getElementById('btnPayout');
       btn.disabled = true;
-      btn.textContent = 'Traitementâ€¦';
+      btn.textContent = 'Traitement…';
       try {
         const data = await apiCall('stripe-connect-payout', 'POST', {});
         if (data.success) {
-          alert(`âœ… ${data.message}`);
+          alert(`✅ ${data.message}`);
           await loadStripeStatus();
         } else {
-          alert('âŒ ' + (data.error || 'Erreur virement'));
+          alert('❌ ' + (data.error || 'Erreur virement'));
         }
       } catch (e) {
         alert('Erreur : ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'ðŸ’¸ Virer mes gains maintenant';
+        btn.textContent = '💸 Virer mes gains maintenant';
       }
     };
 
@@ -1359,14 +1359,14 @@
       }
     };
 
-    // Stocker db globalement pour que apiCall y accÃ¨de, puis charger
+    // Stocker db globalement pour que apiCall y accède, puis charger
     const origInit = window.init;
     window._stripeLoaded = false;
     function tryLoadStripe() {
       if (window._db && !window._stripeLoaded) {
         window._stripeLoaded = true;
         loadStripeStatus();
-        // GÃ©rer retour aprÃ¨s onboarding Stripe
+        // Gérer retour après onboarding Stripe
         const params = new URLSearchParams(location.search);
         if (params.get('stripe') === 'success') {
           setTimeout(() => loadStripeStatus(), 1500);
@@ -1375,7 +1375,7 @@
       }
     }
 
-    // RÃ©cupÃ©rer le client Supabase (crÃ©Ã© par supabase-config.js)
+    // Récupérer le client Supabase (créé par supabase-config.js)
     const observer = setInterval(() => {
       if (window.getSupabaseClient) {
         window._db = window.getSupabaseClient();
