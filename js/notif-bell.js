@@ -296,7 +296,7 @@
       .eq('user_id', _userId)
       .order('created_at', { ascending: false })
       .limit(20);
-    if (error) return [];
+    if (error) { console.error('[notif] Erreur Supabase:', JSON.stringify(error)); return []; }
     return data || [];
   }
 
