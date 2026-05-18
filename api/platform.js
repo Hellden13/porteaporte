@@ -14,6 +14,64 @@ function sbHeaders(key, prefer = 'return=representation') {
   };
 }
 
+function parseDataUrl(dataUrl) {
+  const match = String(dataUrl || '').match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
+  if (!match) return null;
+  const mimeType = match[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].toLowerCase();
+  const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+  return {
+    mimeType,
+    ext,
+    buffer: Buffer.from(match[2], 'base64')
+  };
+}
+
+async function uploadProofPhoto(sbUrl, sbKey, livraisonId, dataUrl) {
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed || !parsed.buffer.length) return null;
+  if (parsed.buffer.length > 900000) {
+    const err = new Error('Photo trop lourde. Reprends une photo plus legere.');
+    err.status = 413;
+    throw err;
+  }
+  const objectPath = `${encodeURIComponent(livraisonId)}/${Date.now()}-${Math.random().toString(36).slice(2)}.${parsed.ext}`;
+  const upload = await fetch(`${sbUrl}/storage/v1/object/delivery-proofs/${objectPath}`, {
+    method: 'POST',
+    headers: {
+      apikey: sbKey,
+      Authorization: `Bearer ${sbKey}`,
+      'Content-Type': parsed.mimeType,
+      'x-upsert': 'false'
+    },
+    body: parsed.buffer
+  }).catch(() => null);
+  if (!upload?.ok) return null;
+  return {
+    bucket: 'delivery-proofs',
+    path: objectPath,
+    mimeType: parsed.mimeType,
+    size: parsed.buffer.length
+  };
+}
+
+async function signStorageUrl(sbUrl, sbKey, bucket, path) {
+  if (!bucket || !path) return null;
+  const r = await fetch(`${sbUrl}/storage/v1/object/sign/${bucket}/${path}`, {
+    method: 'POST',
+    headers: {
+      apikey: sbKey,
+      Authorization: `Bearer ${sbKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ expiresIn: 60 * 10 })
+  }).catch(() => null);
+  if (!r?.ok) return null;
+  const data = await r.json().catch(() => ({}));
+  if (!data.signedURL && !data.signedUrl) return null;
+  const signed = data.signedURL || data.signedUrl;
+  return signed.startsWith('http') ? signed : `${sbUrl}/storage/v1${signed}`;
+}
+
 async function getSession(req, sbUrl, sbKey) {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
@@ -493,7 +551,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
   if (!photoDataUrl || !photoDataUrl.startsWith('data:image/')) {
     return res.status(400).json({ error: 'Photo de preuve requise' });
   }
-  if (photoDataUrl.length > 950000) {
+  if (photoDataUrl.length > 1250000) {
     return res.status(413).json({ error: 'Photo trop lourde. Reprends une photo plus legere.' });
   }
   if (latitude === null || longitude === null || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
@@ -513,13 +571,24 @@ async function submitDeliveryProof(req, res, ctx, body) {
     return res.status(409).json({ error: 'Statut livraison incompatible avec depot preuve' });
   }
 
+  let storedPhoto = null;
+  try {
+    storedPhoto = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, livraisonId, photoDataUrl);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message || 'Photo de preuve invalide' });
+  }
+
   const proofPayload = {
     livraison_id: livraisonId,
     livreur_id: ctx.session.id,
     proof_type: 'dropoff_without_recipient',
     dropoff_type: dropoffType,
     note,
-    photo_data_url: photoDataUrl,
+    photo_data_url: storedPhoto ? 'stored_in_supabase_storage' : photoDataUrl,
+    photo_storage_bucket: storedPhoto?.bucket || null,
+    photo_storage_path: storedPhoto?.path || null,
+    photo_mime_type: storedPhoto?.mimeType || null,
+    photo_size_bytes: storedPhoto?.size || null,
     latitude,
     longitude,
     accuracy_m: accuracyM,
@@ -808,7 +877,7 @@ async function adminDashboard(req, res, ctx) {
   if (livraisonIds.length) {
     const ids = livraisonIds.map((id) => `"${id}"`).join(',');
     const proofRes = await fetch(
-      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${ids})&select=id,livraison_id,proof_type,dropoff_type,status,created_at&order=created_at.desc`,
+      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${ids})&select=id,livraison_id,proof_type,dropoff_type,status,created_at,photo_storage_path&order=created_at.desc`,
       { headers: sbHeaders(ctx.sbKey) }
     ).catch(() => null);
     if (proofRes?.ok) {
@@ -853,6 +922,12 @@ async function adminDeliveryProof(req, res, ctx, body) {
   if (!proofRes.ok) return res.status(400).json({ error: 'Lecture preuve impossible', details: proofs });
   const proof = proofs[0];
   if (!proof) return res.status(404).json({ error: 'Preuve introuvable' });
+  proof.photo_signed_url = await signStorageUrl(
+    ctx.sbUrl,
+    ctx.sbKey,
+    proof.photo_storage_bucket || 'delivery-proofs',
+    proof.photo_storage_path
+  );
 
   const livRes = await fetch(
     `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(proof.livraison_id)}&select=id,code,ville_depart,ville_arrivee,statut,prix_total,livreur_id,expediteur_id,created_at,cree_le&limit=1`,
@@ -892,7 +967,7 @@ async function adminDisputes(req, res, ctx) {
   if (ids.length) {
     const inIds = ids.map((id) => `"${id}"`).join(',');
     const proofRes = await fetch(
-      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${inIds})&select=id,livraison_id,proof_type,dropoff_type,note,latitude,longitude,accuracy_m,status,created_at&order=created_at.desc`,
+      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${inIds})&select=id,livraison_id,proof_type,dropoff_type,note,latitude,longitude,accuracy_m,status,created_at,photo_storage_path&order=created_at.desc`,
       { headers: sbHeaders(ctx.sbKey) }
     ).catch(() => null);
     if (proofRes?.ok) {
@@ -2267,6 +2342,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-rewards') return await adminRewards(req, res, ctx, body);
     if (endpoint === 'push-subscribe') return await pushSubscribe(req, res, ctx, body);
     if (endpoint === 'push-send') return await pushSend(req, res, ctx, body);
+    if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx);
     if (endpoint === 'ride-create')          return await rideCreate(req, res, ctx, body);
     if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
     if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
@@ -2490,6 +2566,45 @@ function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLug
     platformFee, driverAmount, totalPassenger,
     overLimit, maxAllowed,
   };
+}
+
+async function rideDriverProfile(req, res, ctx) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+
+  const [rideRes, profileRes] = await Promise.all([
+    fetch(
+      `${ctx.sbUrl}/rest/v1/rides?driver_id=eq.${ctx.session.id}&select=vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_type,trunk_size,smoking_policy,music_policy,chat_policy,ac_available,perfume_free,personal_rules&order=created_at.desc&limit=1`,
+      { headers: sbHeaders(ctx.sbKey) }
+    ),
+    fetch(
+      `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=bio,prenom,nom&limit=1`,
+      { headers: sbHeaders(ctx.sbKey) }
+    ),
+  ]);
+
+  const rides    = rideRes.ok    ? await rideRes.json().catch(() => [])    : [];
+  const profiles = profileRes.ok ? await profileRes.json().catch(() => []) : [];
+
+  const lastRide  = rides[0]    || {};
+  const profile   = profiles[0] || {};
+
+  return res.status(200).json({
+    success: true,
+    profile: {
+      vehicle_make:   lastRide.vehicle_make   || null,
+      vehicle_model:  lastRide.vehicle_model  || null,
+      vehicle_year:   lastRide.vehicle_year   || null,
+      vehicle_color:  lastRide.vehicle_color  || null,
+      vehicle_type:   lastRide.vehicle_type   || null,
+      trunk_size:     lastRide.trunk_size     || null,
+      smoking_policy: lastRide.smoking_policy || null,
+      music_policy:   lastRide.music_policy   || null,
+      chat_policy:    lastRide.chat_policy    || null,
+      ac_available:   lastRide.ac_available   ?? false,
+      perfume_free:   lastRide.perfume_free   ?? false,
+      bio:            lastRide.personal_rules || profile.bio || null,
+    },
+  });
 }
 
 async function rideCreate(req, res, ctx, body) {
