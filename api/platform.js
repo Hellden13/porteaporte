@@ -596,12 +596,29 @@ async function submitDeliveryProof(req, res, ctx, body) {
     created_at: new Date().toISOString()
   };
 
-  const proofRes = await fetch(`${ctx.sbUrl}/rest/v1/delivery_proofs`, {
+  let proofRes = await fetch(`${ctx.sbUrl}/rest/v1/delivery_proofs`, {
     method: 'POST',
     headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
     body: JSON.stringify(proofPayload)
   });
-  const proofData = await proofRes.json().catch(() => ({}));
+  let proofData = await proofRes.json().catch(() => ({}));
+
+  // Compatibilite: si la migration Storage n'est pas encore executee,
+  // on garde l'ancien stockage base64 pour ne jamais bloquer une preuve de livraison.
+  const schemaMiss = JSON.stringify(proofData).includes('photo_storage_') || JSON.stringify(proofData).includes('schema cache');
+  if (!proofRes.ok && schemaMiss) {
+    const legacyPayload = { ...proofPayload, photo_data_url: photoDataUrl };
+    delete legacyPayload.photo_storage_bucket;
+    delete legacyPayload.photo_storage_path;
+    delete legacyPayload.photo_mime_type;
+    delete legacyPayload.photo_size_bytes;
+    proofRes = await fetch(`${ctx.sbUrl}/rest/v1/delivery_proofs`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(legacyPayload)
+    });
+    proofData = await proofRes.json().catch(() => ({}));
+  }
   if (!proofRes.ok) return res.status(400).json({ error: 'Enregistrement preuve impossible', details: proofData });
 
   const patchCandidates = [
@@ -1541,9 +1558,9 @@ async function fetchImpactState(sbUrl, sbKey) {
   const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
   const settings = settingsRows[0] || {
     id: 'default',
-    pct_livreur: 60, pct_plateforme: 12, pct_don: 5,
-    pct_tirage: 3, pct_developpeur: 0, pct_securite: 0, pct_assurance: 0,
-    ride_platform_pct: 10, ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
+    pct_livreur: 85, pct_plateforme: 15, pct_don: 0,
+    pct_tirage: 0, pct_developpeur: 0, pct_securite: 0, pct_assurance: 0,
+    ride_platform_fee: 1.50, ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
     public_note: 'Montants estimes en direct, confirmes mensuellement.'
   };
 
@@ -1577,10 +1594,10 @@ async function fetchImpactState(sbUrl, sbKey) {
   }, 0);
 
   const slices = {
-    livreur:     Math.max(0, toNumber(settings.pct_livreur, 60)),
-    plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 12)),
-    don:         Math.max(0, toNumber(settings.pct_don, 5)),
-    tirage:      Math.max(0, toNumber(settings.pct_tirage, 3)),
+    livreur:     Math.max(0, toNumber(settings.pct_livreur, 85)),
+    plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 15)),
+    don:         Math.max(0, toNumber(settings.pct_don, 0)),
+    tirage:      Math.max(0, toNumber(settings.pct_tirage, 0)),
     developpeur: Math.max(0, toNumber(settings.pct_developpeur, 0)),
     securite:    Math.max(0, toNumber(settings.pct_securite, 0)),
     assurance:   Math.max(0, toNumber(settings.pct_assurance, 0)),
@@ -1703,9 +1720,9 @@ async function impactAdmin(req, res, ctx, body) {
     const payload = {
       id: 'default',
       pct_livreur:     pct(body.pct_livreur, 60),
-      pct_plateforme:  pct(body.pct_plateforme, 12),
-      pct_don:         pct(body.pct_don, 5),
-      pct_tirage:      pct(body.pct_tirage, 3),
+      pct_plateforme:  pct(body.pct_plateforme, 15),
+      pct_don:         pct(body.pct_don, 0),
+      pct_tirage:      pct(body.pct_tirage, 0),
       pct_developpeur: pct(body.pct_developpeur, 0),
       pct_securite:    pct(body.pct_securite, 0),
       pct_assurance:   pct(body.pct_assurance, 0),
@@ -2487,7 +2504,8 @@ async function pushSend(req, res, ctx, body) {
 // ═══════════════════════════════════════════════════════════════
 
 const RIDE_COST_PER_KM       = 0.35;
-const RIDE_PLATFORM_PCT      = 0.10;
+const RIDE_PLATFORM_FEE      = 1.50; // frais fixe par siège réservé (non %)
+const RIDE_PLATFORM_FEE_MIN  = 1.00; // plancher absolu
 const RIDE_MAX_COST_PER_KM   = 0.50;
 const RIDE_FEE_LUGGAGE       = 5.00;
 const RIDE_FEE_PET           = 8.00;
@@ -2522,10 +2540,10 @@ function groupBonusPct(confirmedPassengers) {
 
 function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats, confirmedPassengers, rideSettings }) {
   const s = rideSettings || {};
-  const platformPct  = Math.max(0, toNumber(s.ride_platform_pct, RIDE_PLATFORM_PCT * 100)) / 100;
   const feeLuggage   = Math.max(0, toNumber(s.ride_fee_luggage, RIDE_FEE_LUGGAGE));
   const feePet       = Math.max(0, toNumber(s.ride_fee_pet, RIDE_FEE_PET));
   const feeStop      = Math.max(0, toNumber(s.ride_fee_stop, RIDE_FEE_STOP));
+  const platformFeePerSeat = Math.max(RIDE_PLATFORM_FEE_MIN, toNumber(s.ride_platform_fee, RIDE_PLATFORM_FEE));
 
   const cpk = Number(costPerKm) || RIDE_COST_PER_KM;
   const totalKm = Number(totalDistanceKm) || 0;
@@ -2545,10 +2563,10 @@ function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLug
   const stopFee    = (Number(extraStops) || 0) * feeStop;
   const detourFee  = (Number(detourKm)  || 0) * cpk;
 
-  // Les frais de bagage vont entièrement au chauffeur — exclus de la base de commission
+  // Frais fixe par siège ($1.50/siège) — indépendant de la distance
   const commissionBase = paxBase + petFee + stopFee + detourFee;
-  const platformFee    = Math.round(commissionBase * platformPct * 100) / 100;
-  // Le chauffeur reçoit sa part de base + les frais de bagage complets
+  const platformFee    = Math.round(platformFeePerSeat * nSeats * 100) / 100;
+  // Le chauffeur reçoit la base + bagages complets (plateforme prend seulement le frais fixe)
   const driverAmount   = Math.round((commissionBase + luggageFee) * 100) / 100;
   const totalPassenger = Math.round((commissionBase + platformFee + luggageFee) * 100) / 100;
 
@@ -3001,7 +3019,7 @@ async function rideBook(req, res, ctx, body) {
       pax_share_pct:  price.paxSharePct,
       pax_base:       price.paxBase,
       extras_detail:  { luggage: price.luggageFee, pet: price.petFee, stops: price.stopFee, detour: price.detourFee },
-      platform_pct:   RIDE_PLATFORM_PCT * 100,
+      platform_fee_per_seat: RIDE_PLATFORM_FEE,
       driver_receives: price.driverAmount,
       passenger_pays:  price.totalPassenger,
     }),
@@ -3243,7 +3261,7 @@ async function ridePackageBook(req, res, ctx, body) {
 
   const settings     = await getRideSettings(ctx);
   const packageFee   = calcPackageFee(kg, settings);
-  const platformFee  = Math.round(packageFee * RIDE_PLATFORM_PCT * 100) / 100;
+  const platformFee  = Math.round(RIDE_PLATFORM_FEE * 100) / 100;
   const totalPays    = Math.round((packageFee + platformFee) * 100) / 100;
   const driverAmount = packageFee;
 

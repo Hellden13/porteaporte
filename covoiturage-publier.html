@@ -633,7 +633,7 @@
       const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.35, 0.50);
       const seats = Number(document.getElementById('available_seats').value) || 2;
       const lugFee = 5.00; // RIDE_FEE_LUGGAGE
-      const platPct = 0.10;
+      const platFeeFixed = 1.50;  // frais fixe par siège réservé
 
       if (!dist) {
         document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimÃ©e Ã  l\'Ã©tape 1 pour voir le calcul.</p>';
@@ -642,7 +642,7 @@
 
       const totalCost = dist * cpk;
       const perPax    = totalCost / seats;
-      const platFee   = perPax * platPct;
+      const platFee   = platFeeFixed;
       const paxPays   = perPax + platFee;
       const maxPax    = dist * 0.50 / seats;
       const overLimit = paxPays > maxPax * 1.05;
