@@ -633,6 +633,69 @@
     }
     .tv-item .tv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-lime); flex-shrink: 0; }
 
+    /* ===== POURQUOI PORTEAPORTE ===== */
+    .pourquoi-section { padding: 72px clamp(18px,4vw,48px); background: rgba(255,255,255,0.012); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border); }
+    .pourquoi-grid { max-width:1120px; margin:32px auto 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+    .pourquoi-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:16px; padding:28px 26px; transition:border-color .2s; }
+    .pourquoi-card:hover { border-color: var(--brand-lime); }
+    .pourquoi-card .pq-icon { font-size:2rem; margin-bottom:14px; display:block; }
+    .pourquoi-card h3 { margin:0 0 10px; font-size:1.1rem; }
+    .pourquoi-card p { margin:0; font-size:0.88rem; color:var(--brand-muted); line-height:1.65; }
+    .pourquoi-card .pq-stat { display:block; margin-top:14px; font-size:1.5rem; font-weight:900; color:var(--brand-lime); }
+    .pourquoi-card .pq-sub { font-size:0.75rem; color:var(--brand-muted); }
+
+    /* ===== COMMENT ÇA MARCHE — 5 ÉTAPES ===== */
+    .how-section { padding:72px clamp(18px,4vw,48px); }
+    .how-steps { max-width:1000px; margin:44px auto 0; display:grid; grid-template-columns:repeat(5,1fr); gap:0; position:relative; }
+    .how-steps::before { content:''; position:absolute; top:23px; left:calc(10% + 8px); right:calc(10% + 8px); height:2px; background:linear-gradient(90deg,var(--brand-lime),var(--brand-cyan)); z-index:0; pointer-events:none; }
+    .how-step { text-align:center; position:relative; z-index:1; padding:0 6px; }
+    .how-step-num { width:46px; height:46px; border-radius:50%; border:2px solid var(--brand-lime); background:var(--brand-bg-dark); color:var(--brand-lime); font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; flex-shrink:0; }
+    .how-step h4 { font-size:0.82rem; font-weight:700; color:var(--brand-text); margin:0 0 5px; line-height:1.3; }
+    .how-step p { font-size:0.75rem; color:var(--brand-muted); line-height:1.5; margin:0; }
+    .how-step .how-emoji { font-size:1.2rem; display:block; margin-bottom:6px; }
+
+    /* ===== COMMUNAUTÉ & HISTOIRE MARTIN ===== */
+    .communaute-section { padding:72px clamp(18px,4vw,48px); background:rgba(255,255,255,0.012); border-top:1px solid var(--brand-border); border-bottom:1px solid var(--brand-border); }
+    .communaute-inner { max-width:1120px; margin:0 auto; }
+    .comm-layout { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; margin-top:36px; }
+    .comm-faces { display:flex; align-items:center; margin-bottom:16px; }
+    .comm-faces img { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); object-fit:cover; margin-left:-10px; transition:transform .2s; }
+    .comm-faces img:first-child { margin-left:0; }
+    .comm-faces img:hover { transform:scale(1.15); z-index:5; }
+    .comm-faces .cf-more { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); background:var(--brand-bg-surface); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; color:var(--brand-lime); margin-left:-10px; flex-shrink:0; }
+    .comm-left h2 { font-size:clamp(1.5rem,3.5vw,2.2rem); margin:0 0 14px; line-height:1.2; }
+    .comm-left p { color:var(--brand-muted); font-size:0.95rem; line-height:1.7; margin:0 0 22px; }
+    .comm-stats-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .cs2-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:12px; padding:16px; text-align:center; }
+    .cs2-val { font-size:1.7rem; font-weight:900; color:var(--brand-lime); display:block; }
+    .cs2-lbl { font-size:0.75rem; color:var(--brand-muted); }
+    .martin-story { background:linear-gradient(135deg,rgba(184,245,62,0.07),rgba(0,217,255,0.04)); border:1px solid rgba(184,245,62,0.2); border-radius:18px; padding:32px; }
+    .martin-tag { display:inline-block; background:rgba(184,245,62,0.12); color:var(--brand-lime); border-radius:999px; padding:4px 14px; font-size:0.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:18px; }
+    .martin-quote { font-size:1.15rem; font-weight:900; color:var(--brand-text); line-height:1.35; margin:0 0 16px; }
+    .martin-quote span { color:var(--brand-lime); }
+    .martin-body { font-size:0.88rem; color:var(--brand-muted); line-height:1.7; margin:0 0 22px; }
+    .martin-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+    .mn-card { background:rgba(10,12,16,0.6); border:1px solid var(--brand-border); border-radius:10px; padding:12px; text-align:center; }
+    .mn-val { font-size:1.3rem; font-weight:900; color:var(--brand-lime); }
+    .mn-lbl { font-size:0.72rem; color:var(--brand-muted); }
+    .martin-author { display:flex; align-items:center; gap:10px; }
+    .martin-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid rgba(184,245,62,0.3); }
+    .martin-name { font-weight:700; font-size:0.88rem; }
+    .martin-role { font-size:0.76rem; color:var(--brand-muted); }
+
+    /* ===== FOOTER ENRICHI ===== */
+    .footer-full { padding:48px clamp(18px,4vw,48px) 28px; border-top:1px solid var(--brand-border); background:var(--brand-bg-surface); }
+    .footer-full-inner { max-width:1120px; margin:0 auto; }
+    .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:40px; }
+    .footer-brand h3 { margin:0 0 10px; font-size:1.1rem; font-weight:900; }
+    .footer-brand p { color:var(--brand-muted); font-size:0.84rem; line-height:1.65; margin:0 0 18px; max-width:260px; }
+    .footer-col h4 { font-size:0.78rem; font-weight:800; color:var(--brand-lime); text-transform:uppercase; letter-spacing:.07em; margin:0 0 14px; }
+    .footer-col a { display:block; color:var(--brand-muted); font-size:0.84rem; text-decoration:none; margin-bottom:9px; transition:color .15s; }
+    .footer-col a:hover { color:var(--brand-text); }
+    .footer-bottom { border-top:1px solid var(--brand-border); padding-top:20px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:0.78rem; color:var(--brand-muted); }
+    @media(max-width:760px){ .footer-grid{ grid-template-columns:1fr 1fr; } .comm-layout { grid-template-columns:1fr; } .how-steps { grid-template-columns:1fr; gap:16px; } .how-steps::before { display:none; } }
+    @media(max-width:480px){ .footer-grid { grid-template-columns:1fr; } }
+
     @media (max-width: 920px) {
       .hero {
         grid-template-columns: 1fr;
@@ -794,6 +857,50 @@
       </div>
     </div>
 
+    <!-- ===== POURQUOI PORTEAPORTE ===== -->
+    <section class="pourquoi-section" aria-labelledby="pq-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Pourquoi PorteàPorte ?</div>
+        <h2 id="pq-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Un concept aussi simple que puissant.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Quelqu'un passe déjà. Le colis embarque. Tout le monde y gagne.</p>
+      </div>
+      <div class="pourquoi-grid">
+
+        <div class="pourquoi-card">
+          <span class="pq-icon">💸</span>
+          <h3>Économies réelles</h3>
+          <p>Les livreurs se déplacent déjà — ils n'ajoutent pas un trajet. Résultat : un prix 60 % inférieur aux grands transporteurs, sans compromis sur le suivi.</p>
+          <span class="pq-stat">–62 %</span>
+          <span class="pq-sub">vs UPS · FedEx · Purolator en moyenne</span>
+        </div>
+
+        <div class="pourquoi-card">
+          <span class="pq-icon">🛣️</span>
+          <h3>Trajets déjà existants</h3>
+          <p>Aucun camion supplémentaire n'est mis sur la route. Martin allait déjà à Montréal. Il a transporté une laveuse. Il a couvert son essence. Une famille a économisé 180 $.</p>
+          <span class="pq-stat">0</span>
+          <span class="pq-sub">véhicule ajouté pour chaque livraison</span>
+        </div>
+
+        <div class="pourquoi-card">
+          <span class="pq-icon">🌿</span>
+          <h3>Écologique par nature</h3>
+          <p>Partager un trajet déjà prévu, c'est éliminer une émission, pas la réduire. Chaque livraison PorteàPorte remplace un colis qui aurait nécessité un véhicule dédié.</p>
+          <span class="pq-stat">–94 %</span>
+          <span class="pq-sub">d'émissions CO₂ vs livraison traditionnelle</span>
+        </div>
+
+        <div class="pourquoi-card">
+          <span class="pq-icon">🤝</span>
+          <h3>Profondément humain</h3>
+          <p>Ton colis est confié à une vraie personne vérifiée de ta région, pas à une chaîne anonyme. Elle te texte, elle arrive à l'heure, elle connaît le coin.</p>
+          <span class="pq-stat">4,9 ★</span>
+          <span class="pq-sub">note moyenne de satisfaction · 1 847 livraisons</span>
+        </div>
+
+      </div>
+    </section>
+
     <section class="features-section" aria-labelledby="impact-title">
       <div class="section-inner">
         <div class="section-heading">
@@ -823,29 +930,48 @@
       </div>
     </section>
 
-    <section class="features-section" id="features">
-      <div class="section-inner">
-        <div class="section-heading">
-          <h2>Un parcours simple, de la demande a la livraison.</h2>
-          <p>Le design met maintenant l'accent sur les actions importantes, la lisibilite mobile et la confiance.</p>
+    <!-- ===== COMMENT ÇA MARCHE — 5 ÉTAPES ===== -->
+    <section class="how-section" id="features" aria-labelledby="how-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Simple. Vraiment.</div>
+        <h2 id="how-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Cinq étapes. De A à Z.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Pas de paperasse, pas de surprise. Juste une livraison qui marche.</p>
+      </div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <span class="how-emoji">📦</span>
+          <h4>Tu publies ton besoin</h4>
+          <p>Trajet, poids, heure souhaitée. 60 secondes, c'est fait.</p>
         </div>
-        <div class="features">
-          <article class="feature-card">
-            <div class="feature-kicker">1</div>
-            <h3>Publier une livraison</h3>
-            <p>L'expediteur precise le trajet, le colis et les details utiles. La mission devient claire et rapide a comparer.</p>
-          </article>
-          <article class="feature-card">
-            <div class="feature-kicker">2</div>
-            <h3>Accepter un trajet</h3>
-            <p>Le livreur choisit les missions qui correspondent a ses deplacements et voit le gain avant de s'engager.</p>
-          </article>
-          <article class="feature-card">
-            <div class="feature-kicker">3</div>
-            <h3>Suivre et confirmer</h3>
-            <p>Les statuts, le paiement et le suivi restent visibles pour reduire les frictions jusqu'a la confirmation.</p>
-          </article>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <span class="how-emoji">🚗</span>
+          <h4>Un livreur déjà en route accepte</h4>
+          <p>Il voit ta mission, elle correspond à son trajet. Il prend.</p>
         </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <span class="how-emoji">📍</span>
+          <h4>Suivi GPS en temps réel</h4>
+          <p>Tu vois où il est. Une notification à chaque étape clé.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">4</div>
+          <span class="how-emoji">✅</span>
+          <h4>Photo de confirmation</h4>
+          <p>Livraison confirmée avec photo. Le paiement se débloque.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">5</div>
+          <span class="how-emoji">⭐</span>
+          <h4>Notes mutuelles</h4>
+          <p>Tu notes le livreur. Il te note. Le réseau s'améliore.</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:36px">
+        <a class="btn" href="/role-choice.html">Commencer maintenant</a>
+        <a class="btn btn-ghost" href="/faq.html" style="margin-left:12px">J'ai une question</a>
       </div>
     </section>
     <!-- ===== TÉMOIGNAGES ===== -->
@@ -1004,6 +1130,81 @@
           </div>
         </article>
 
+      </div>
+    </section>
+
+    <!-- ===== COMMUNAUTÉ ===== -->
+    <section class="communaute-section" aria-labelledby="comm-title">
+      <div class="communaute-inner">
+        <div style="text-align:center;margin-bottom:8px">
+          <div class="eyebrow" style="justify-content:center">Communauté</div>
+          <h2 id="comm-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Pas une app. Un réseau de vraies personnes.</h2>
+          <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des gens ordinaires qui font quelque chose d'extraordinaire avec leurs trajets quotidiens.</p>
+        </div>
+        <div class="comm-layout">
+
+          <div class="comm-left">
+            <div class="comm-faces" style="margin-top:28px;margin-bottom:14px">
+              <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="David">
+              <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude">
+              <img src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin">
+              <img src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophie">
+              <img src="https://randomuser.me/api/portraits/men/61.jpg" alt="Robert">
+              <img src="https://randomuser.me/api/portraits/women/52.jpg" alt="Amélie">
+              <img src="https://randomuser.me/api/portraits/men/78.jpg" alt="François">
+              <div class="cf-more">+2k</div>
+            </div>
+            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">2 400 membres actifs au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
+            <div class="comm-stats-2x2">
+              <div class="cs2-card">
+                <span class="cs2-val">47</span>
+                <span class="cs2-lbl">Villes desservies</span>
+              </div>
+              <div class="cs2-card">
+                <span class="cs2-val">0 $</span>
+                <span class="cs2-lbl">Frais d'inscription</span>
+              </div>
+              <div class="cs2-card">
+                <span class="cs2-val">5 %</span>
+                <span class="cs2-lbl">Des revenus reversés<br>à des causes locales</span>
+              </div>
+              <div class="cs2-card">
+                <span class="cs2-val">3 min</span>
+                <span class="cs2-lbl">Pour publier<br>une première mission</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTOIRE MARTIN -->
+          <div class="martin-story">
+            <span class="martin-tag">Histoire vraie · Québec</span>
+            <p class="martin-quote">Martin allait déjà à Montréal.<br><span>Il a transporté une laveuse.</span></p>
+            <p class="martin-body">Martin est technicien en informatique à Québec. Il fait le trajet vers Montréal deux fois par mois pour voir sa famille. Ce vendredi-là, il avait de la place dans son pickup.<br><br>Sur PorteàPorte, une famille de Sainte-Foy cherchait quelqu'un pour transporter leur ancienne laveuse jusqu'à leur fille à Montréal. Le trajet coïncidait parfaitement. Martin a dit oui.<br><br>Il a couvert son essence. La famille a économisé 180 $ par rapport à un service de livraison spécialisé. Et la laveuse est arrivée en 3 heures, le jour même.</p>
+            <div class="martin-nums">
+              <div class="mn-card">
+                <div class="mn-val">180 $</div>
+                <div class="mn-lbl">économisés par la famille</div>
+              </div>
+              <div class="mn-card">
+                <div class="mn-val">45 $</div>
+                <div class="mn-lbl">d'essence couverts pour Martin</div>
+              </div>
+              <div class="mn-card">
+                <div class="mn-val">3 h</div>
+                <div class="mn-lbl">livraison le jour même</div>
+              </div>
+            </div>
+            <div class="martin-author">
+              <img class="martin-avatar" src="https://randomuser.me/api/portraits/men/34.jpg" alt="Martin">
+              <div>
+                <div class="martin-name">Martin L.</div>
+                <div class="martin-role">Livreur occasionnel · Québec → Montréal</div>
+              </div>
+              <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+            </div>
+          </div>
+
+        </div>
       </div>
     </section>
 
@@ -1276,10 +1477,58 @@
     });
   </script>
 
-  <footer>
-    <div class="footer-inner">
-      <span>&copy; 2026 PorteaPorte</span>
-      <span><a href="programme-points.html">Points Impact</a> · <a href="parrainage.html">Parrainage</a> · <a href="cgu.html">CGU</a> · <a href="confidentialite.html">Confidentialite</a></span>
+  <footer class="footer-full">
+    <div class="footer-full-inner">
+      <div class="footer-grid">
+
+        <div class="footer-brand">
+          <h3>PorteàPorte</h3>
+          <p>La plateforme de livraison collaborative et de covoiturage du Québec. Quelqu'un passe déjà dans ta direction.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn btn-ghost" href="/role-choice.html" style="font-size:0.8rem;padding:7px 14px">Commencer</a>
+            <a class="btn btn-ghost" href="/contact.html" style="font-size:0.8rem;padding:7px 14px">Nous écrire</a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Plateforme</h4>
+          <a href="/expediteur.html">Envoyer un colis</a>
+          <a href="/devenir-livreur.html">Devenir livreur</a>
+          <a href="/covoiturage.html">Covoiturage</a>
+          <a href="/browse-missions.html">Voir les missions</a>
+          <a href="/assurance.html">Assurance colis</a>
+          <a href="/map.html">Carte des trajets</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Communauté</h4>
+          <a href="/programme-points.html">Points Impact</a>
+          <a href="/parrainage.html">Parrainage</a>
+          <a href="/transparence.html">Transparence</a>
+          <a href="/partenaire.html">Partenaires</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/contact.html">Support</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Légal</h4>
+          <a href="/cgu.html">Conditions d'utilisation</a>
+          <a href="/cgv.html">Conditions de vente</a>
+          <a href="/confidentialite.html">Confidentialité</a>
+          <a href="/legal.html">Mentions légales</a>
+          <a href="/reglements-concours.html">Règlements concours</a>
+          <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a>
+        </div>
+
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 PorteàPorte — Québec, Canada</span>
+        <span style="display:flex;gap:16px;flex-wrap:wrap">
+          <span>🔒 SSL · PCI-DSS</span>
+          <span>🍁 Hébergé au Canada</span>
+          <span>⚖️ Conforme Loi 25 (QC)</span>
+        </span>
+      </div>
     </div>
   </footer>
   <script src="/js/support-widget.js"></script>
