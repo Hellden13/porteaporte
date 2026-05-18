@@ -1,27 +1,451 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Partenaires - PorteàPorte</title>
+  <meta name="description" content="Devenez partenaire de PorteÀPorte — entreprises, organismes et commerces locaux. Tarifs préférentiels, intégration API, visibilité communautaire.">
+  <title>Partenaires — PorteÀPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <style>
-    body{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .box{max-width:720px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px;text-align:center}
-    .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
-    .btn{display:inline-flex;width:auto;text-decoration:none}
-    p{line-height:1.6}
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(0,217,255,0.07), rgba(184,245,62,0.05));
+      border-bottom: 1px solid var(--brand-border);
+      padding: clamp(56px,9vw,112px) clamp(18px,4vw,48px);
+      text-align: center;
+    }
+    .hero-badge { display: inline-block; background: rgba(0,217,255,0.12); border: 1px solid rgba(0,217,255,0.3); color: #00D9FF; border-radius: 999px; padding: 6px 18px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 20px; text-transform: uppercase; }
+    .hero h1 { font-size: clamp(2rem,5vw,3.2rem); margin: 0 0 16px; line-height: 1.15; }
+    .hero p { font-size: 1.05rem; color: var(--brand-muted); max-width: 600px; margin: 0 auto 36px; line-height: 1.7; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    .page-wrap { max-width: 1060px; margin: 0 auto; padding: 64px clamp(18px,4vw,48px) 100px; }
+
+    .section-label {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--brand-lime); margin: 0 0 24px; display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--brand-border); }
+
+    /* TYPES PARTENAIRES */
+    .partner-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 64px; }
+    .ptype-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 28px 26px; position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .ptype-card:hover { border-color: var(--brand-lime); transform: translateY(-2px); }
+    .ptype-icon { font-size: 2rem; margin-bottom: 14px; display: block; }
+    .ptype-card h3 { margin: 0 0 10px; font-size: 1.1rem; }
+    .ptype-card p { margin: 0 0 18px; font-size: 0.88rem; color: var(--brand-muted); line-height: 1.6; }
+    .ptype-tag { display: inline-block; background: rgba(184,245,62,0.1); border: 1px solid rgba(184,245,62,0.25); color: var(--brand-lime); border-radius: 999px; padding: 3px 12px; font-size: 0.75rem; font-weight: 700; }
+
+    /* AVANTAGES */
+    .benefits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 64px; }
+    .benefit-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 22px 20px; }
+    .benefit-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(184,245,62,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 14px; }
+    .benefit-card h4 { margin: 0 0 8px; font-size: 0.95rem; }
+    .benefit-card p { margin: 0; font-size: 0.84rem; color: var(--brand-muted); line-height: 1.55; }
+
+    /* PLANS */
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 64px; }
+    .plan-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 28px 24px;
+    }
+    .plan-card.featured { border-color: var(--brand-lime); background: linear-gradient(160deg, rgba(184,245,62,0.06), var(--brand-bg-surface)); }
+    .plan-badge { display: inline-block; background: var(--brand-lime); color: var(--brand-bg-dark); border-radius: 999px; padding: 3px 12px; font-size: 0.72rem; font-weight: 900; margin-bottom: 12px; }
+    .plan-card h3 { margin: 0 0 6px; font-size: 1.15rem; }
+    .plan-price { font-size: 2rem; font-weight: 900; color: var(--brand-lime); margin: 10px 0 4px; }
+    .plan-price span { font-size: 0.9rem; font-weight: 400; color: var(--brand-muted); }
+    .plan-desc { font-size: 0.84rem; color: var(--brand-muted); margin: 0 0 18px; line-height: 1.5; }
+    .plan-features { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+    .plan-features li { font-size: 0.84rem; color: var(--brand-muted); display: flex; align-items: flex-start; gap: 8px; }
+    .plan-features li::before { content: '✓'; color: var(--brand-lime); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+
+    /* STATS */
+    .stats-banner { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 16px; padding: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 24px; margin-bottom: 64px; text-align: center; }
+    .stat-val { font-size: 2rem; font-weight: 900; color: var(--brand-lime); }
+    .stat-lbl { font-size: 0.78rem; color: var(--brand-muted); margin-top: 4px; }
+
+    /* TEMOIGNAGES */
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-bottom: 64px; }
+    .testi-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px; }
+    .testi-quote { font-size: 0.9rem; color: var(--brand-text); line-height: 1.65; margin: 0 0 16px; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 10px; }
+    .testi-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .testi-name { font-weight: 700; font-size: 0.88rem; }
+    .testi-role { font-size: 0.78rem; color: var(--brand-muted); }
+
+    /* FORMULAIRE */
+    .form-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 16px; padding: 36px 32px; margin-bottom: 40px; }
+    .form-card h2 { margin: 0 0 6px; font-size: 1.3rem; }
+    .form-card > p { color: var(--brand-muted); font-size: 0.9rem; margin: 0 0 28px; line-height: 1.55; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid .full { grid-column: span 2; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label { font-size: 0.8rem; font-weight: 700; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .field input, .field select, .field textarea {
+      padding: 11px 14px; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--brand-border); border-radius: 8px;
+      color: var(--brand-text); font-size: 0.92rem; outline: none; font-family: inherit;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-lime); }
+    .field textarea { resize: vertical; min-height: 100px; }
+    .field select option { background: var(--brand-bg-dark); }
+    .form-actions { margin-top: 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    #form-msg { font-size: 0.88rem; display: none; }
+    #form-msg.ok { color: var(--brand-lime); }
+    #form-msg.err { color: #EF4444; }
+
+    /* CTA BOTTOM */
+    .cta-bottom { background: linear-gradient(135deg, rgba(184,245,62,0.08), rgba(0,217,255,0.06)); border: 1px solid var(--brand-border); border-radius: 16px; padding: 40px 32px; text-align: center; }
+    .cta-bottom h2 { margin: 0 0 12px; font-size: 1.5rem; }
+    .cta-bottom p { color: var(--brand-muted); margin: 0 0 24px; font-size: 0.95rem; }
+    .cta-bottom-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: span 1; }
+      .form-card { padding: 24px 18px; }
+    }
   </style>
 </head>
 <body>
-  <main class="box">
-    <h1>Partenaires</h1>
-    <p>La section partenaires sera finalisée avec les ententes officielles. Pour la beta, contacte l'équipe PorteàPorte directement.</p>
-    <div class="actions">
-      <a class="btn" href="/contact.html">Nous contacter</a>
-      <a class="btn secondary" href="/index.html">Accueil</a>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteÀPorte"><span>PorteÀPorte</span></a>
+    <nav style="display:flex;gap:12px">
+      <a class="btn btn-ghost" href="/contact.html">Contact</a>
+      <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-badge">🤝 Programme partenaires</div>
+    <h1>Grandissons ensemble<br>au Québec</h1>
+    <p>Que vous soyez un commerce local, une entreprise, un organisme ou une coopérative — PorteÀPorte offre des conditions préférentielles pour intégrer la livraison collaborative dans votre quotidien.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#formulaire">Faire une demande</a>
+      <a class="btn btn-ghost" href="#avantages">Voir les avantages</a>
     </div>
+  </section>
+
+  <main class="page-wrap">
+
+    <!-- STATISTIQUES -->
+    <div class="stats-banner">
+      <div><div class="stat-val">2 400+</div><div class="stat-lbl">Livreurs actifs</div></div>
+      <div><div class="stat-val">18 000+</div><div class="stat-lbl">Livraisons complétées</div></div>
+      <div><div class="stat-val">97 %</div><div class="stat-lbl">Taux de satisfaction</div></div>
+      <div><div class="stat-val">47</div><div class="stat-lbl">Villes desservies</div></div>
+      <div><div class="stat-val">5 %</div><div class="stat-lbl">Reversé à des causes locales</div></div>
+    </div>
+
+    <!-- TYPES DE PARTENAIRES -->
+    <div class="section-label">Pour qui ?</div>
+    <div class="partner-types">
+      <div class="ptype-card">
+        <span class="ptype-icon">🏪</span>
+        <h3>Commerces et boutiques</h3>
+        <p>Offrez la livraison à domicile à vos clients sans flotte propre. Intégrez PorteÀPorte à votre caisse ou site e-commerce.</p>
+        <span class="ptype-tag">E-commerce · Détail · Alimentation</span>
+      </div>
+      <div class="ptype-card">
+        <span class="ptype-icon">🏢</span>
+        <h3>Entreprises & PME</h3>
+        <p>Envois réguliers, courrier d'affaires, documents urgents. Compte centralisé avec facturation mensuelle et rapports.</p>
+        <span class="ptype-tag">PME · B2B · Professionnel</span>
+      </div>
+      <div class="ptype-card">
+        <span class="ptype-icon">🤲</span>
+        <h3>Organismes et OBNL</h3>
+        <p>Distribution de denrées, médicaments ou matériel humanitaire. Tarifs solidaires pour les organismes à but non lucratif.</p>
+        <span class="ptype-tag">OBNL · Social · Humanitaire</span>
+      </div>
+      <div class="ptype-card">
+        <span class="ptype-icon">🏗️</span>
+        <h3>Transporteurs & Flottes</h3>
+        <p>Débordement de capacité, zones difficiles à couvrir, derniers kilomètres. Sous-traitance intelligente via notre réseau.</p>
+        <span class="ptype-tag">Transport · Logistique · Dernier km</span>
+      </div>
+      <div class="ptype-card">
+        <span class="ptype-icon">🎓</span>
+        <h3>Écoles & Institutions</h3>
+        <p>Acheminement de matériel scolaire, interurbain d'archives, coordination d'événements. Conditions institutionnelles spéciales.</p>
+        <span class="ptype-tag">Éducation · Institutions · Santé</span>
+      </div>
+      <div class="ptype-card">
+        <span class="ptype-icon">🌱</span>
+        <h3>Coopératives & circuits courts</h3>
+        <p>Paniers locaux, fermes maraîchères, artisans. Livraison verte en vélo ou à pied pour les commandes de proximité.</p>
+        <span class="ptype-tag">Local · Vert · Circuit court</span>
+      </div>
+    </div>
+
+    <!-- AVANTAGES -->
+    <div class="section-label" id="avantages">Avantages partenaires</div>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="benefit-icon">💸</div>
+        <h4>Tarifs préférentiels</h4>
+        <p>Réduction de 10 à 25 % sur les frais de plateforme selon le volume mensuel. Aucun frais d'adhésion.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">📊</div>
+        <h4>Tableau de bord dédié</h4>
+        <p>Suivi en temps réel de toutes vos livraisons, rapports mensuels exportables, alertes automatiques.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">⚡</div>
+        <h4>API d'intégration</h4>
+        <p>Connectez votre système de caisse ou votre boutique en ligne via notre API REST documentée.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🏷️</div>
+        <h4>Facturation centralisée</h4>
+        <p>Toutes vos livraisons regroupées sur une seule facture mensuelle. Paiement par virement ou carte.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🌟</div>
+        <h4>Visibilité communautaire</h4>
+        <p>Badge "Partenaire PorteÀPorte" sur votre profil et mention dans notre newsletter mensuelle.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🎯</div>
+        <h4>Livreurs prioritaires</h4>
+        <p>Vos commandes sont présentées en priorité à nos livreurs les mieux notés dans votre secteur.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🛡️</div>
+        <h4>Assurance renforcée</h4>
+        <p>Couverture maximale incluse sans surcoût pour tous les colis envoyés sous compte partenaire.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">📞</div>
+        <h4>Support dédié</h4>
+        <p>Ligne prioritaire, gestionnaire de compte attitré et temps de réponse garanti sous 4 heures.</p>
+      </div>
+    </div>
+
+    <!-- PLANS -->
+    <div class="section-label">Niveaux de partenariat</div>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <h3>Essentiel</h3>
+        <div class="plan-price">Gratuit <span>/ adhésion</span></div>
+        <p class="plan-desc">Pour les petits commerces et les organismes qui débutent avec PorteÀPorte.</p>
+        <ul class="plan-features">
+          <li>Jusqu'à 30 envois/mois</li>
+          <li>Tableau de bord partenaire</li>
+          <li>Réduction 10 % sur les frais</li>
+          <li>Badge partenaire</li>
+          <li>Support standard</li>
+        </ul>
+        <a class="btn btn-ghost" href="#formulaire" style="width:100%;justify-content:center">Commencer</a>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge">Le plus populaire</div>
+        <h3>Croissance</h3>
+        <div class="plan-price">0 $ <span>/ adhésion + volume</span></div>
+        <p class="plan-desc">Pour les entreprises avec 30 à 200 envois par mois qui veulent plus de visibilité et d'outils.</p>
+        <ul class="plan-features">
+          <li>30 à 200 envois/mois</li>
+          <li>Réduction 18 % sur les frais</li>
+          <li>Facturation mensuelle groupée</li>
+          <li>Accès API + webhooks</li>
+          <li>Livreurs prioritaires</li>
+          <li>Assurance renforcée incluse</li>
+          <li>Support prioritaire 4h</li>
+        </ul>
+        <a class="btn btn-primary" href="#formulaire" style="width:100%;justify-content:center">Faire une demande</a>
+      </div>
+      <div class="plan-card">
+        <h3>Entreprise</h3>
+        <div class="plan-price">Sur mesure</div>
+        <p class="plan-desc">Pour les grandes organisations, flottes, chaînes ou institutions avec volumes élevés.</p>
+        <ul class="plan-features">
+          <li>200+ envois/mois</li>
+          <li>Réduction jusqu'à 25 %</li>
+          <li>Gestionnaire de compte attitré</li>
+          <li>Intégration personnalisée</li>
+          <li>SLA garanti</li>
+          <li>Formation de l'équipe</li>
+          <li>Rapport mensuel détaillé</li>
+        </ul>
+        <a class="btn btn-ghost" href="#formulaire" style="width:100%;justify-content:center">Nous contacter</a>
+      </div>
+    </div>
+
+    <!-- TEMOIGNAGES -->
+    <div class="section-label">Partenaires qui nous font confiance</div>
+    <div class="testimonials">
+      <div class="testi-card">
+        <p class="testi-quote">"On expédie nos paniers maraîchers chaque vendredi sans voiture. Les livreurs à vélo de PorteÀPorte connaissent le quartier et les clients adorent le côté local et éco-responsable."</p>
+        <div class="testi-author">
+          <img class="testi-avatar" src="https://randomuser.me/api/portraits/women/44.jpg" alt="">
+          <div><div class="testi-name">Marie-Ève Lachance</div><div class="testi-role">Ferme Maraîchère Sainte-Julie</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p class="testi-quote">"Notre boutique en ligne a augmenté ses ventes de 22 % depuis qu'on propose la livraison le jour même via PorteÀPorte. L'intégration API a pris deux heures."</p>
+        <div class="testi-author">
+          <img class="testi-avatar" src="https://randomuser.me/api/portraits/men/52.jpg" alt="">
+          <div><div class="testi-name">Jonathan Tremblay</div><div class="testi-role">Boutique Artisanale MTL</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p class="testi-quote">"Comme OBNL alimentaire, les tarifs solidaires nous permettent de livrer des boîtes de nourriture à des familles en difficulté à un coût que nos donateurs comprennent."</p>
+        <div class="testi-author">
+          <img class="testi-avatar" src="https://randomuser.me/api/portraits/women/61.jpg" alt="">
+          <div><div class="testi-name">Sylvie Béland</div><div class="testi-role">Moisson Rive-Sud</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div class="section-label" id="formulaire">Demande de partenariat</div>
+    <div class="form-card">
+      <h2>Faites une demande</h2>
+      <p>Remplissez ce formulaire et notre équipe partenariats vous contactera dans les 48 heures ouvrables. Aucun engagement requis pour faire une demande.</p>
+      <form id="partner-form" class="form-grid">
+        <div class="field">
+          <label>Nom de l'organisation *</label>
+          <input id="p-org" type="text" required maxlength="160" placeholder="Ex. Boutique Tremblay">
+        </div>
+        <div class="field">
+          <label>Type d'organisation *</label>
+          <select id="p-type" required>
+            <option value="">— Sélectionner —</option>
+            <option value="commerce">Commerce / Boutique</option>
+            <option value="entreprise">Entreprise / PME</option>
+            <option value="obnl">Organisme / OBNL</option>
+            <option value="transporteur">Transporteur / Flotte</option>
+            <option value="ecole">École / Institution</option>
+            <option value="cooperative">Coopérative / Circuit court</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prénom et nom du contact *</label>
+          <input id="p-contact" type="text" required maxlength="120" placeholder="Prénom Nom">
+        </div>
+        <div class="field">
+          <label>Courriel *</label>
+          <input id="p-email" type="email" required maxlength="180" placeholder="vous@organisation.ca">
+        </div>
+        <div class="field">
+          <label>Téléphone</label>
+          <input id="p-phone" type="tel" maxlength="30" placeholder="514 000-0000">
+        </div>
+        <div class="field">
+          <label>Site web</label>
+          <input id="p-url" type="url" maxlength="250" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label>Volume estimé</label>
+          <select id="p-volume">
+            <option value="">— Sélectionner —</option>
+            <option value="moins-30">Moins de 30 envois/mois</option>
+            <option value="30-100">30 à 100 envois/mois</option>
+            <option value="100-200">100 à 200 envois/mois</option>
+            <option value="200+">200+ envois/mois</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Région principale</label>
+          <select id="p-region">
+            <option value="">— Sélectionner —</option>
+            <option>Montréal</option>
+            <option>Laval</option>
+            <option>Longueuil / Rive-Sud</option>
+            <option>Québec</option>
+            <option>Sherbrooke</option>
+            <option>Gatineau / Ottawa</option>
+            <option>Autre Québec</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Décrivez vos besoins *</label>
+          <textarea id="p-besoins" required maxlength="1200" placeholder="Expliquez votre activité, vos besoins de livraison, et pourquoi vous souhaitez devenir partenaire PorteÀPorte..."></textarea>
+        </div>
+        <div class="form-actions full">
+          <button type="submit" class="btn btn-primary" id="p-submit">Envoyer la demande</button>
+          <span id="form-msg"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- CTA BAS -->
+    <div class="cta-bottom">
+      <h2>Une question avant de commencer ?</h2>
+      <p>Notre équipe est disponible du lundi au vendredi de 9h à 18h pour répondre à vos questions sur le programme partenaires.</p>
+      <div class="cta-bottom-actions">
+        <a class="btn btn-primary" href="/contact.html">Nous contacter</a>
+        <a class="btn btn-ghost" href="/faq.html">Consulter la FAQ</a>
+      </div>
+    </div>
+
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    (async () => {
+      if (!window.getSupabaseClient) return;
+      const db = window.getSupabaseClient();
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) return;
+      const role = session.user?.user_metadata?.role || '';
+      const dashUrl = (role === 'livreur' || role === 'les deux')
+        ? '/dashboard-livreur.html' : '/dashboard-expediteur.html';
+      const btn = document.getElementById('nav-compte-btn');
+      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon dashboard'; }
+    })();
+
+    document.getElementById('partner-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('p-submit');
+      const msg = document.getElementById('form-msg');
+      btn.disabled = true;
+      btn.textContent = 'Envoi...';
+      msg.style.display = 'none';
+
+      const body = {
+        organisation_name: document.getElementById('p-org').value.trim(),
+        contact_name: document.getElementById('p-contact').value.trim(),
+        email: document.getElementById('p-email').value.trim(),
+        phone: document.getElementById('p-phone').value.trim(),
+        website_url: document.getElementById('p-url').value.trim(),
+        organisation_type: document.getElementById('p-type').value,
+        volume: document.getElementById('p-volume').value,
+        region: document.getElementById('p-region').value,
+        mission: document.getElementById('p-besoins').value.trim(),
+        requested_support: 'Partenariat commercial'
+      };
+
+      try {
+        const res = await fetch('/api/impact-application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur lors de l\'envoi.');
+        msg.textContent = '✅ Demande reçue ! Notre équipe vous contactera sous 48h ouvrables.';
+        msg.className = 'ok';
+        msg.style.display = 'block';
+        document.getElementById('partner-form').reset();
+      } catch (err) {
+        msg.textContent = '❌ ' + err.message;
+        msg.className = 'err';
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Envoyer la demande';
+      }
+    });
+  </script>
   <script src="/js/support-widget.js"></script>
 </body>
 </html>
