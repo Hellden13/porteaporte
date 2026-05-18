@@ -114,7 +114,7 @@
     <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
     <nav style="display:flex;gap:12px">
       <a class="btn btn-ghost" href="/programme-points.html">Points Impact</a>
-      <a class="btn btn-primary" href="/login.html">Mon compte</a>
+      <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
     </nav>
   </header>
 
@@ -244,6 +244,13 @@
       if (!session) return;
 
       _token = session.access_token;
+
+      const role = session.user?.user_metadata?.role || '';
+      const dashUrl = (role === 'livreur' || role === 'les deux')
+        ? '/dashboard-livreur.html' : '/dashboard-expediteur.html';
+      const navBtn = document.getElementById('nav-compte-btn');
+      if (navBtn) { navBtn.href = dashUrl; navBtn.textContent = 'Mon dashboard'; }
+
       document.getElementById('login-prompt').style.display = 'none';
       document.getElementById('parrain-section').style.display = 'block';
 

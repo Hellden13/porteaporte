@@ -50,16 +50,13 @@
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container navbar-content">
-      <a class="navbar-brand" href="/">PorteaPorte</a>
-      <div class="navbar-links">
-        <a href="/">Accueil</a>
-        <a href="/faq.html">FAQ</a>
-        <a href="/login.html">Connexion</a>
-      </div>
-    </div>
-  </nav>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteÀPorte"><span>PorteÀPorte</span></a>
+    <nav style="display:flex;gap:12px">
+      <a class="btn btn-ghost" href="/programme-points.html">Points Impact</a>
+      <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
+    </nav>
+  </header>
 
   <header class="hero">
     <div class="container">
@@ -244,7 +241,20 @@
       }
     });
     loadImpact();
+
+    (async () => {
+      if (!window.getSupabaseClient) return;
+      const db = window.getSupabaseClient();
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) return;
+      const role = session.user?.user_metadata?.role || '';
+      const dashUrl = (role === 'livreur' || role === 'les deux')
+        ? '/dashboard-livreur.html' : '/dashboard-expediteur.html';
+      const btn = document.getElementById('nav-compte-btn');
+      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon dashboard'; }
+    })();
   </script>
+  <script src="/js/supabase-config.js"></script>
   <script src="/js/support-widget.js"></script>
 </body>
 </html>
