@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Mon covoiturage — PorteÀPorte</title>
   <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
   <style>
     :root {
       --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
@@ -159,7 +162,6 @@
   <div class="mob-tab" onclick="showSection('badges')"><span class="ico">🏆</span>Badges</div>
 </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
 <script src="/js/auth-api.js"></script>
 <script>
 let dashData  = null;
