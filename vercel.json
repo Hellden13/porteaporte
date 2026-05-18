@@ -246,6 +246,26 @@
                      {
                          "source":  "/api/badge-benefit-status",
                          "destination":  "/api/platform?endpoint=badge-benefit-status"
+                     },
+                     {
+                         "source":  "/api/stripe-connect-onboard",
+                         "destination":  "/api/platform?endpoint=stripe-connect-onboard"
+                     },
+                     {
+                         "source":  "/api/stripe-connect-status",
+                         "destination":  "/api/platform?endpoint=stripe-connect-status"
+                     },
+                     {
+                         "source":  "/api/stripe-connect-dashboard",
+                         "destination":  "/api/platform?endpoint=stripe-connect-dashboard"
+                     },
+                     {
+                         "source":  "/api/stripe-connect-payout",
+                         "destination":  "/api/platform?endpoint=stripe-connect-payout"
+                     },
+                     {
+                         "source":  "/api/livreur-earnings",
+                         "destination":  "/api/platform?endpoint=livreur-earnings"
                      }
                  ],
     "headers":  [

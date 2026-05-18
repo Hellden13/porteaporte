@@ -108,7 +108,7 @@
     <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
     <nav style="display:flex;gap:12px">
       <a class="btn btn-ghost" href="/parrainage.html">Parrainage</a>
-      <a class="btn btn-primary" href="/login.html">Mon compte</a>
+      <a class="btn btn-primary" id="nav-compte-btn" href="/connexion.html">Mon compte</a>
     </nav>
   </header>
 
@@ -124,7 +124,7 @@
     <h1>Points Impact</h1>
     <p>Chaque action réelle sur PorteÀPorte te rapproche d'avantages concrets — missions exclusives, badges, niveaux et participations aux tirages communautaires.</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="/login.html">Voir mes points</a>
+      <a class="btn btn-primary" id="hero-cta-btn" href="/connexion.html">Voir mes points</a>
       <a class="btn btn-ghost" href="/reglements-concours.html">Règlements officiels</a>
     </div>
     <div class="legal-pill">⚠️ Les Points Impact n'ont aucune valeur monétaire</div>
@@ -204,6 +204,24 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
   <script>
+    (async function initNav() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) return;
+
+      // Utilisateur connecté — déterminer son dashboard selon son rôle
+      const role = session.user?.user_metadata?.role || '';
+      const dashUrl = (role === 'livreur' || role === 'les deux')
+        ? '/dashboard-livreur.html'
+        : '/dashboard-expediteur.html';
+
+      const navBtn  = document.getElementById('nav-compte-btn');
+      const heroBtn = document.getElementById('hero-cta-btn');
+      if (navBtn)  { navBtn.href  = dashUrl; navBtn.textContent  = 'Mon dashboard'; }
+      if (heroBtn) { heroBtn.href = dashUrl; heroBtn.textContent = 'Voir mes points'; }
+    })();
+
     (async function loadMyDashboard() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) return;

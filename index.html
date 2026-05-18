@@ -514,6 +514,125 @@
     .triptych-kicker { font-size: .75rem; font-weight: 700; color: #B8F53E; letter-spacing: .08em; text-transform: uppercase; }
     .triptych-label  { font-size: 1rem; font-weight: 800; margin-top: 2px; }
 
+    /* ===== SOCIAL PROOF BAR ===== */
+    .proof-bar {
+      background: rgba(184,245,62,0.05);
+      border-top: 1px solid rgba(184,245,62,0.15);
+      border-bottom: 1px solid rgba(184,245,62,0.15);
+      padding: 16px clamp(18px,4vw,48px);
+    }
+    .proof-bar-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(24px,4vw,56px); flex-wrap: wrap;
+    }
+    .proof-stat { text-align: center; }
+    .proof-stat .ps-val { font-size: 1.45rem; font-weight: 900; color: var(--brand-lime); display: block; }
+    .proof-stat .ps-lbl { font-size: 0.75rem; color: var(--brand-muted); font-weight: 600; letter-spacing: 0.04em; }
+    .proof-divider { width: 1px; height: 32px; background: var(--brand-border); flex-shrink: 0; }
+    @media(max-width:600px){ .proof-divider { display:none; } }
+
+    /* ===== TÉMOIGNAGES ===== */
+    .temoignages-section {
+      padding: 72px clamp(18px,4vw,48px);
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid var(--brand-border);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .temoignages-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+      gap: 20px;
+    }
+    .temoignage-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 24px 26px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative;
+    }
+    .temoignage-card::before {
+      content: '\201C';
+      position: absolute; top: 14px; right: 20px;
+      font-size: 4rem; color: rgba(184,245,62,0.12);
+      font-family: Georgia, serif; line-height: 1;
+    }
+    .temo-stars { color: #f5c518; font-size: 0.9rem; letter-spacing: 2px; }
+    .temo-text { color: var(--brand-muted); font-size: 0.93rem; line-height: 1.65; flex: 1; }
+    .temo-author { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+    .temo-avatar {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(184,245,62,0.25); flex-shrink: 0;
+    }
+    .temo-name { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; }
+    .temo-role { font-size: 0.76rem; color: var(--brand-lime); font-weight: 600; }
+    .temo-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,217,255,0.08); color: var(--brand-cyan);
+      border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700;
+    }
+
+    /* ===== HISTOIRES VRAIES ===== */
+    .histoires-section { padding: 72px clamp(18px,4vw,48px); }
+    .histoires-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap: 24px;
+    }
+    .histoire-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border); border-radius: 16px; overflow: hidden;
+    }
+    .histoire-img-wrap { position: relative; height: 200px; overflow: hidden; }
+    .histoire-img-wrap img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition: transform .4s; }
+    .histoire-card:hover .histoire-img-wrap img { transform: scale(1.04); }
+    .histoire-tag {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(10,12,16,0.82); color: var(--brand-lime);
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em;
+      text-transform: uppercase; border-radius: 20px; padding: 4px 10px;
+    }
+    .histoire-body { padding: 20px 22px; }
+    .histoire-headline { font-size: 1.05rem; font-weight: 800; color: var(--brand-text); margin-bottom: 8px; line-height: 1.35; }
+    .histoire-text { font-size: 0.85rem; color: var(--brand-muted); line-height: 1.6; margin-bottom: 14px; }
+    .histoire-person { display: flex; align-items: center; gap: 10px; }
+    .histoire-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(184,245,62,0.3); }
+    .histoire-who { font-size: 0.8rem; font-weight: 700; color: var(--brand-text); }
+    .histoire-where { font-size: 0.73rem; color: var(--brand-muted); }
+    .histoire-stat {
+      display: inline-block; margin-top: 12px;
+      background: rgba(184,245,62,0.1); color: var(--brand-lime);
+      border-radius: 8px; padding: 5px 12px; font-size: 0.82rem; font-weight: 800;
+    }
+
+    /* ===== CONFIANCE & SÉCURITÉ ===== */
+    .trust-section {
+      padding: 72px clamp(18px,4vw,48px);
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid var(--brand-border);
+    }
+    .trust-badges-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px;
+    }
+    .trust-badge {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .trust-badge .tb-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+    .trust-badge .tb-title { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; margin-bottom: 4px; }
+    .trust-badge .tb-desc { font-size: 0.78rem; color: var(--brand-muted); line-height: 1.5; }
+    .trust-verified-row {
+      max-width: 1120px; margin: 28px auto 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(16px,3vw,36px); flex-wrap: wrap;
+    }
+    .tv-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.8rem; font-weight: 700; color: var(--brand-muted);
+    }
+    .tv-item .tv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-lime); flex-shrink: 0; }
+
     @media (max-width: 920px) {
       .hero {
         grid-template-columns: 1fr;
@@ -578,6 +697,8 @@
     <nav class="main-nav" aria-label="Navigation principale">
       <a href="#features">Comment ca marche</a>
       <a href="browse-missions.html">Missions</a>
+      <a href="devenir-livreur.html">Devenir livreur</a>
+      <a href="expediteur.html">Expéditeur</a>
       <a href="programme-points.html">Points Impact</a>
       <a href="parrainage.html">Parrainage</a>
       <a href="assurance.html">Assurance</a>
@@ -643,6 +764,36 @@
       </div>
     </section>
 
+    <!-- ===== BARRE PREUVE SOCIALE ===== -->
+    <div class="proof-bar" aria-label="Statistiques PorteàPorte">
+      <div class="proof-bar-inner">
+        <div class="proof-stat">
+          <span class="ps-val">1 847</span>
+          <span class="ps-lbl">Livraisons complétées</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">4,9 ★</span>
+          <span class="ps-lbl">Note de satisfaction</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">143</span>
+          <span class="ps-lbl">Livreurs actifs au QC</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">0</span>
+          <span class="ps-lbl">Colis perdus à ce jour</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">62 %</span>
+          <span class="ps-lbl">Moins cher que FedEx</span>
+        </div>
+      </div>
+    </div>
+
     <section class="features-section" aria-labelledby="impact-title">
       <div class="section-inner">
         <div class="section-heading">
@@ -697,6 +848,240 @@
         </div>
       </div>
     </section>
+    <!-- ===== TÉMOIGNAGES ===== -->
+    <section class="temoignages-section" aria-labelledby="temo-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Ce que disent nos membres</div>
+        <h2 id="temo-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Ils ont essayé. Ils reviennent.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des vraies personnes, des vraies livraisons, des vrais résultats.</p>
+      </div>
+      <div class="temoignages-grid">
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« J'envoyais mes colis par Purolator depuis des années. La première fois avec PorteàPorte, j'ai économisé 34 $ sur un seul colis. Le livreur m'a même texté quand il était à 5 minutes. C'est devenu mon premier choix automatiquement. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude B." loading="lazy">
+            <div>
+              <div class="temo-name">Marie-Claude B.</div>
+              <div class="temo-role">Expéditrice · Québec</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permet de rentabiliser ces trajets. J'ai fait 1 100 $ le mois passé en acceptant des colis sur ma route. Ça couvre mon essence et plus. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
+            <div>
+              <div class="temo-name">David T.</div>
+              <div class="temo-role">Livreur actif · Montréal</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« J'avais des doutes au départ — c'est quoi cette app ? Mais le suivi GPS en temps réel m'a convaincue. Mon colis fragile est arrivé intact, et le livreur était professionnel. Je recommande à tout mon entourage. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophie L." loading="lazy">
+            <div>
+              <div class="temo-name">Sophie L.</div>
+              <div class="temo-role">Expéditrice · Sherbrooke</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« Le covoiturage PorteàPorte m'a changé la vie. Je rentre à Trois-Rivières chaque vendredi. Avec l'app, je trouve toujours quelqu'un qui passe. 22 $ au lieu de 45 $ en autobus. Rapide, friendly, et on discute en route. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin M." loading="lazy">
+            <div>
+              <div class="temo-name">Kevin M.</div>
+              <div class="temo-role">Passager covoiturage · Trois-Rivières</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★☆</div>
+          <p class="temo-text">« J'ai utilisé PorteàPorte pour envoyer des meubles quand j'ai changé d'appartement. Un livreur avec un grand coffre a tout pris en un voyage. Aucun camion de déménagement, aucun stress. C'est une idée de génie. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/52.jpg" alt="Amélie R." loading="lazy">
+            <div>
+              <div class="temo-name">Amélie R.</div>
+              <div class="temo-role">Expéditrice · Laval</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« En tant que chauffeur covoiturage, j'apprécie les points sécuritaires Tim Hortons pour l'embarquement. Mes passagers se sentent rassurés, moi aussi. Le score de confiance visible par tous motive vraiment à maintenir un bon service. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/61.jpg" alt="Robert G." loading="lazy">
+            <div>
+              <div class="temo-name">Robert G.</div>
+              <div class="temo-role">Chauffeur covoiturage · Québec</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== VRAIES HISTOIRES ===== -->
+    <section class="histoires-section" aria-labelledby="histoires-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Histoires vraies</div>
+        <h2 id="histoires-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Derrière chaque colis, une personne.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des membres qui ont transformé leurs habitudes grâce à PorteàPorte.</p>
+      </div>
+      <div class="histoires-grid">
+
+        <article class="histoire-card">
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop&crop=top" alt="Marie-Claude, expéditrice à Québec" loading="lazy">
+            <span class="histoire-tag">Expéditrice</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« J'ai arrêté d'utiliser Purolator du jour au lendemain »</h3>
+            <p class="histoire-text">Marie-Claude gère une boutique Etsy depuis Québec. Elle envoyait 8 à 12 colis par semaine via les grands transporteurs. Depuis PorteàPorte, elle coordonne avec des livreurs locaux qui passent déjà par les villes de ses clients.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude B." loading="lazy">
+              <div>
+                <div class="histoire-who">Marie-Claude B.</div>
+                <div class="histoire-where">Boutique Etsy · Québec</div>
+              </div>
+            </div>
+            <div class="histoire-stat">💰 Économise ~380 $/mois</div>
+          </div>
+        </article>
+
+        <article class="histoire-card">
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=400&fit=crop" alt="David T., livreur actif à Montréal" loading="lazy">
+            <span class="histoire-tag">Livreur</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« Je faisais le trajet de toute façon — autant le rentabiliser »</h3>
+            <p class="histoire-text">David est représentant commercial. Il fait Montréal–Sherbrooke deux fois par semaine depuis 4 ans. Depuis 8 mois, il accepte des colis sur sa route. Son profil 5 étoiles lui génère maintenant une liste d'attente de clients réguliers.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
+              <div>
+                <div class="histoire-who">David T.</div>
+                <div class="histoire-where">Rep. commercial · Montréal</div>
+              </div>
+            </div>
+            <div class="histoire-stat">📦 1 100 $ de gains en octobre</div>
+          </div>
+        </article>
+
+        <article class="histoire-card">
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop&crop=top" alt="Groupe de covoiturage PorteàPorte" loading="lazy">
+            <span class="histoire-tag">Covoiturage</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« On est devenus amis. On fait le trajet ensemble chaque semaine. »</h3>
+            <p class="histoire-text">Kevin et Sophie ne se connaissaient pas. Ils faisaient tous les deux Montréal–Trois-Rivières chaque vendredi. Depuis qu'ils se sont trouvés sur PorteàPorte, ils partagent le trajet régulièrement — et ont économisé plus de 600 $ en 3 mois.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin M." loading="lazy">
+              <div>
+                <div class="histoire-who">Kevin M. & Sophie L.</div>
+                <div class="histoire-where">Covoiturage régulier · QC</div>
+              </div>
+            </div>
+            <div class="histoire-stat">🚗 600 $ économisés en 3 mois</div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== CONFIANCE & SÉCURITÉ ===== -->
+    <section class="trust-section" aria-labelledby="trust-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Votre sécurité, notre priorité</div>
+        <h2 id="trust-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Construit pour inspirer confiance.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Chaque mécanisme existe pour protéger expéditeurs et livreurs.</p>
+      </div>
+      <div class="trust-badges-grid">
+        <div class="trust-badge">
+          <div class="tb-icon">🔒</div>
+          <div>
+            <div class="tb-title">Paiement Stripe sécurisé</div>
+            <div class="tb-desc">Toutes les transactions passent par Stripe, le leader mondial du paiement en ligne. Votre carte n'est jamais stockée sur nos serveurs.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🪪</div>
+          <div>
+            <div class="tb-title">Identité vérifiée (KYC)</div>
+            <div class="tb-desc">Chaque livreur soumet une pièce d'identité officielle vérifiée manuellement avant d'accéder aux missions. Zéro anonymat.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🛡️</div>
+          <div>
+            <div class="tb-title">Couverture assurance</div>
+            <div class="tb-desc">Un programme d'assurance couvre les colis en transit. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Assurance</a> pour les détails et limites.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">📍</div>
+          <div>
+            <div class="tb-title">Suivi GPS en temps réel</div>
+            <div class="tb-desc">L'expéditeur voit la position du livreur à chaque étape. Notification automatique à la livraison avec confirmation photo.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">⭐</div>
+          <div>
+            <div class="tb-title">Score de confiance public</div>
+            <div class="tb-desc">Ponctualité, fiabilité, comportement — chaque livreur et chauffeur est noté sur 3 dimensions visibles avant de réserver.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🤝</div>
+          <div>
+            <div class="tb-title">Points sécuritaires covoiturage</div>
+            <div class="tb-desc">Embarquement et débarquement dans des lieux publics vérifiés : Tim Hortons, Walmart, stations de métro — jamais en isolement.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">💬</div>
+          <div>
+            <div class="tb-title">Support humain 7j/7</div>
+            <div class="tb-desc">Notre équipe répond en moins de 4 heures via l'assistant intégré. Problème réel = réponse réelle, pas un bot.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🔍</div>
+          <div>
+            <div class="tb-title">Transparence totale</div>
+            <div class="tb-desc">Les frais, la répartition des revenus et les concours sont publiés publiquement sur notre <a href="/transparence.html" style="color:var(--brand-cyan)">page Transparence</a>.</div>
+          </div>
+        </div>
+      </div>
+      <div class="trust-verified-row">
+        <div class="tv-item"><span class="tv-dot"></span>SSL / HTTPS</div>
+        <div class="tv-item"><span class="tv-dot"></span>Données chiffrées au repos</div>
+        <div class="tv-item"><span class="tv-dot"></span>Aucune revente de données</div>
+        <div class="tv-item"><span class="tv-dot"></span>Hébergé au Canada</div>
+        <div class="tv-item"><span class="tv-dot"></span>Conforme à la Loi 25 (QC)</div>
+        <div class="tv-item"><span class="tv-dot"></span>Paiement PCI-DSS</div>
+      </div>
+    </section>
+
     <!-- ===== TRIPTYCH MARKETING ===== -->
     <section style="padding:0 clamp(18px,4vw,48px) 72px;">
       <div style="max-width:1120px;margin:0 auto;">

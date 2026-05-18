@@ -1,170 +1,128 @@
-// api/stripe-webhook.js - WITH AUDIT LOGS
-const { log } = require('./logger');
+﻿/**
+ * api/stripe-webhook.js
+ * Vercel serverless — webhook Stripe (events Connect)
+ * Variables requises : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+ *                      SUPABASE_URL, SUPABASE_SERVICE_KEY
+ */
 
-const getRawBody = (req) => {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
-    req.on('end', () => resolve(Buffer.from(data)));
-    req.on('error', reject);
-  });
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
 };
 
-function verifyStripeSignature(rawBody, signature, secret) {
-  const crypto = require('crypto');
-  const parts = String(signature || '').split(',').reduce((acc, part) => {
-    const [key, value] = part.split('=');
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(value);
-    return acc;
-  }, {});
-  const timestamp = parts.t?.[0];
-  const signatures = parts.v1 || [];
-  if (!timestamp || !signatures.length) return false;
-
-  const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
-  if (!Number.isFinite(age) || age > 300) return false;
-
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${rawBody.toString('utf8')}`)
-    .digest('hex');
-
-  return signatures.some((sig) => {
-    const a = Buffer.from(sig, 'hex');
-    const b = Buffer.from(expected, 'hex');
-    return a.length === b.length && crypto.timingSafeEqual(a, b);
-  });
+function sbH(key) {
+  return { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
 }
 
-async function tryClaimStripeEvent(sbUrl, sbKey, eventId, eventType) {
-  if (!eventId) return true;
-  const r = await fetch(`${sbUrl}/rest/v1/stripe_webhook_events`, {
-    method: 'POST',
-    headers: {
-      apikey: sbKey,
-      Authorization: `Bearer ${sbKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
-    body: JSON.stringify({ id: eventId, event_type: eventType || '' }),
-  });
-  if (r.ok) return true;
-  if (r.status === 409) return false;
-  return true;
+async function sbPatch(url, key, table, filter, body) {
+  return fetch(`${url}/rest/v1/${table}?${filter}`, { method: 'PATCH', headers: sbH(key), body: JSON.stringify(body) });
+}
+async function sbPost(url, key, table, body) {
+  return fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: sbH(key), body: JSON.stringify(body) });
+}
+async function sbGet(url, key, path) {
+  const r = await fetch(`${url}/rest/v1/${path}`, { headers: sbH(key) });
+  return r.ok ? r.json() : [];
+}
+
+/* Verification signature Stripe (HMAC-SHA256) */
+async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  const parts = sigHeader.split(',');
+  const ts    = parts.find(p => p.startsWith('t=')).slice(2);
+  const v1    = parts.find(p => p.startsWith('v1=')).slice(3);
+
+  const enc     = new TextEncoder();
+  const keyData = enc.encode(secret);
+  const msgData = enc.encode(`${ts}.${rawBody}`);
+
+  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig       = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
+  const computed  = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (computed !== v1) throw new Error('Signature invalide');
+
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(ts)) > 300) throw new Error('Webhook expire');
 }
 
 module.exports = async function handler(req, res) {
-  const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-  const SB_URL = process.env.SUPABASE_URL;
-  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST')    return res.status(405).json({ error: 'Methode non autorisee' });
 
-  if (!WEBHOOK_SECRET || !SB_URL || !SB_KEY) {
-    log('ERROR', 'stripe_webhook_config_missing', null, {
-      hasSecret: !!WEBHOOK_SECRET,
-      hasSBUrl: !!SB_URL,
-      hasSBKey: !!SB_KEY,
-    });
-    return res.status(503).json({ error: 'Configuration manquante' });
-  }
+  const sbUrl    = process.env.SUPABASE_URL;
+  const sbKey    = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!whSecret) return res.status(503).json({ error: 'STRIPE_WEBHOOK_SECRET non configure' });
+
+  /* Lire le body brut */
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const rawBody  = Buffer.concat(chunks).toString('utf8');
+  const sigHeader = req.headers['stripe-signature'];
 
   try {
-    const signature = req.headers['stripe-signature'];
-    if (!signature) {
-      log('WARN', 'stripe_webhook_no_signature', null, {
-        remoteIp: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+    await verifyStripeSignature(rawBody, sigHeader, whSecret);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); }
+  catch { return res.status(400).json({ error: 'JSON invalide' }); }
+
+  const type = event.type;
+  const obj  = event.data?.object;
+
+  /* ── account.updated ───────────────────────────────────── */
+  if (type === 'account.updated') {
+    const acctId = obj.id;
+    const status =
+      obj.charges_enabled && obj.payouts_enabled ? 'active'
+      : obj.details_submitted ? 'onboarding'
+      : 'pending';
+
+    await sbPatch(sbUrl, sbKey, 'stripe_connect_accounts',
+      `stripe_account_id=eq.${acctId}`,
+      {
+        status,
+        charges_enabled:   obj.charges_enabled   || false,
+        payouts_enabled:   obj.payouts_enabled    || false,
+        details_submitted: obj.details_submitted  || false,
       });
-      return res.status(400).json({ error: 'Signature manquante' });
-    }
 
-    const rawBody = await getRawBody(req);
-
-    // Vérifier signature
-    if (!verifyStripeSignature(rawBody, signature, WEBHOOK_SECRET)) {
-      log('WARN', 'stripe_webhook_invalid_signature', null, {
-        remoteIp: req.headers['x-forwarded-for'],
-      });
-      return res.status(400).json({ error: 'Signature invalide' });
-    }
-
-    let event;
-    try {
-      event = JSON.parse(rawBody.toString());
-    } catch (e) {
-      log('ERROR', 'stripe_webhook_json_parse_failed', null, {
-        error: e.message,
-      });
-      return res.status(400).json({ error: 'JSON invalide' });
-    }
-
-    // Log reçu avec idempotence check
-    log('INFO', 'stripe_webhook_received', null, {
-      eventType: event.type,
-      eventId: event.id,
-    });
-
-    // Vérifier idempotence
-    if (event.id) {
-      const firstTime = await tryClaimStripeEvent(SB_URL, SB_KEY, event.id, event.type);
-      if (!firstTime) {
-        log('INFO', 'stripe_webhook_duplicate', null, {
-          eventId: event.id,
-          eventType: event.type,
-        });
-        return res.json({ received: true, duplicate: true });
+    /* Notification in-app si compte activé */
+    if (status === 'active') {
+      const rows = await sbGet(sbUrl, sbKey, `stripe_connect_accounts?stripe_account_id=eq.${acctId}&select=user_id`);
+      if (rows.length) {
+        await sbPost(sbUrl, sbKey, 'notifications', {
+          user_id: rows[0].user_id,
+          type: 'system',
+          title: 'Paiements activés !',
+          message: 'Ton compte Stripe est maintenant actif. Tu peux recevoir des virements.',
+        }).catch(() => {});
       }
     }
-
-    // Traiter les events
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        log('AUDIT', 'payment_succeeded', null, {
-          eventId: event.id,
-          amount: event.data.object.amount,
-          currency: event.data.object.currency,
-          customerId: event.data.object.customer,
-        });
-        // TODO: Update DB livraison status
-        break;
-
-      case 'payment_intent.payment_failed':
-        log('AUDIT', 'payment_failed', null, {
-          eventId: event.id,
-          amount: event.data.object.amount,
-          failureReason: event.data.object.last_payment_error?.message,
-        });
-        // TODO: Notify user
-        break;
-
-      case 'charge.refunded':
-        log('AUDIT', 'payment_refunded', null, {
-          eventId: event.id,
-          chargeId: event.data.object.id,
-          refundedAmount: event.data.object.amount_refunded,
-        });
-        // TODO: Update DB livraison status
-        break;
-
-      default:
-        log('INFO', 'stripe_webhook_unhandled_event', null, {
-          eventType: event.type,
-          eventId: event.id,
-        });
-    }
-
-    log('AUDIT', 'stripe_webhook_processed', null, {
-      eventType: event.type,
-      eventId: event.id,
-      status: 'success',
-    });
-
-    return res.json({ received: true });
-
-  } catch (error) {
-    log('ERROR', 'stripe_webhook_failed', null, {
-      error: error.message,
-      stack: error.stack,
-    });
-    return res.status(500).json({ error: error.message });
   }
+
+  /* ── transfer.paid ─────────────────────────────────────── */
+  if (type === 'transfer.paid') {
+    await sbPatch(sbUrl, sbKey, 'payout_requests',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'paid', processed_at: new Date().toISOString() });
+  }
+
+  /* ── transfer.failed ───────────────────────────────────── */
+  if (type === 'transfer.failed') {
+    await sbPatch(sbUrl, sbKey, 'payout_requests',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'failed', failure_reason: obj.failure_message || 'Echec virement', processed_at: new Date().toISOString() });
+
+    /* Remettre les gains en available */
+    await sbPatch(sbUrl, sbKey, 'livreur_earnings',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'available', stripe_transfer_id: null });
+  }
+
+  return res.status(200).json({ received: true, type });
 };

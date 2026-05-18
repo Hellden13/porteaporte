@@ -1,28 +1,581 @@
-<!DOCTYPE html>
-<html lang="fr">
+﻿<!DOCTYPE html>
+<html lang="fr-CA">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expéditeur - PorteàPorte</title>
+  <title>Envoyer un colis — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <style>
-    body{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .box{max-width:760px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px;text-align:center}
-    .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
-    .btn{display:inline-flex;width:auto;text-decoration:none}
-    p{line-height:1.6}
+    :root {
+      --brand-bg-dark: #0A0C10;
+      --brand-bg-surface: #111520;
+      --brand-border: #1E2535;
+      --brand-lime: #B8F53E;
+      --brand-cyan: #00D9FF;
+      --brand-text: #E8EDF5;
+      --brand-muted: #8A9BB0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--brand-bg-dark); color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,12,16,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--brand-border);
+      padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--brand-lime); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--brand-muted); font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--brand-text); }
+    .nav-cta { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* HERO */
+    .hero {
+      position: relative; min-height: 92vh;
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url('https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=1600&h=900&fit=crop') center/cover no-repeat;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(10,12,16,0.93) 45%, rgba(10,12,16,0.55) 100%);
+    }
+    .hero-content {
+      position: relative; max-width: 700px; padding: 3rem 3rem 3rem 4rem;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(184,245,62,0.12); border: 1px solid rgba(184,245,62,0.3);
+      border-radius: 999px; padding: 0.35rem 1rem;
+      font-size: 0.8rem; font-weight: 600; color: var(--brand-lime);
+      margin-bottom: 1.5rem; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 900; line-height: 1.12;
+      letter-spacing: -1.5px; margin-bottom: 1.2rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--brand-lime); }
+    .hero p { font-size: 1.15rem; color: var(--brand-muted); max-width: 520px; margin-bottom: 2rem; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
+    .trust-row {
+      display: flex; gap: 2rem; flex-wrap: wrap;
+      padding: 1.25rem 1.75rem;
+      background: rgba(17,21,32,0.7); border: 1px solid var(--brand-border);
+      border-radius: 14px; backdrop-filter: blur(8px);
+    }
+    .trust-item { display: flex; align-items: center; gap: 0.6rem; }
+    .trust-item .icon { font-size: 1.3rem; }
+    .trust-item strong { font-size: 1rem; font-weight: 700; color: var(--brand-lime); }
+    .trust-item span { font-size: 0.82rem; color: var(--brand-muted); }
+
+    /* SECTIONS */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--brand-lime); margin-bottom: 0.75rem;
+    }
+    .section-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 1rem; }
+    .section-sub { color: var(--brand-muted); font-size: 1.05rem; max-width: 580px; margin-bottom: 3rem; }
+
+    /* STEPS */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .step-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 2rem 1.75rem; position: relative; overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .step-card:hover { border-color: var(--brand-lime); transform: translateY(-4px); }
+    .step-num {
+      font-size: 3.5rem; font-weight: 900; line-height: 1;
+      color: rgba(184,245,62,0.08); position: absolute; top: 1rem; right: 1.25rem;
+    }
+    .step-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step-card p { font-size: 0.88rem; color: var(--brand-muted); }
+
+    /* WHY GRID */
+    .why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .why-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 1.75rem; display: flex; gap: 1rem; align-items: flex-start;
+      transition: border-color 0.2s;
+    }
+    .why-card:hover { border-color: var(--brand-cyan); }
+    .why-icon {
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+      background: rgba(0,217,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .why-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .why-card p { font-size: 0.85rem; color: var(--brand-muted); }
+
+    /* TARIFS */
+    #tarifs { background: var(--brand-bg-surface); }
+    .tarif-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; border-radius: 16px; overflow: hidden; }
+    .tarif-table th {
+      background: rgba(30,37,53,0.8); padding: 1rem 1.25rem;
+      text-align: left; font-weight: 700; font-size: 0.82rem;
+      text-transform: uppercase; letter-spacing: 0.07em; color: var(--brand-muted);
+    }
+    .tarif-table th:first-child { border-radius: 12px 0 0 0; }
+    .tarif-table th:last-child { border-radius: 0 12px 0 0; }
+    .tarif-table td { padding: 1rem 1.25rem; border-top: 1px solid var(--brand-border); vertical-align: middle; }
+    .tarif-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .tarif-table .highlight { color: var(--brand-lime); font-weight: 800; font-size: 1.05rem; }
+    .tarif-table .competitor { color: var(--brand-muted); }
+    .savings-badge {
+      display: inline-block; background: rgba(184,245,62,0.15); color: var(--brand-lime);
+      border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.75rem; font-weight: 700;
+    }
+
+    /* TÉMOIGNAGES */
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.5rem; }
+    .testi-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 18px; padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;
+    }
+    .testi-stars { color: #FFD700; font-size: 1rem; }
+    .testi-text { font-size: 0.95rem; color: var(--brand-text); line-height: 1.7; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 0.9rem; margin-top: auto; }
+    .testi-author img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-border); }
+    .testi-author strong { display: block; font-size: 0.92rem; font-weight: 700; }
+    .testi-author span { font-size: 0.8rem; color: var(--brand-muted); }
+
+    /* ASSURANCE */
+    .assurance-section { background: linear-gradient(135deg, rgba(0,217,255,0.04) 0%, transparent 60%); }
+    .assurance-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .assurance-card {
+      border-radius: 16px; padding: 1.5rem; border: 1px solid var(--brand-border);
+      background: var(--brand-bg-surface); transition: transform 0.2s;
+    }
+    .assurance-card:hover { transform: translateY(-3px); }
+    .assurance-card.recommended { border-color: var(--brand-cyan); position: relative; }
+    .rec-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--brand-cyan); color: #000; font-size: 0.72rem; font-weight: 800;
+      padding: 0.2rem 0.9rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+    }
+    .assurance-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .assurance-card .price { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); line-height: 1; margin: 0.5rem 0; }
+    .assurance-card .price span { font-size: 0.85rem; font-weight: 400; color: var(--brand-muted); }
+    .assurance-card .coverage { font-size: 0.82rem; color: var(--brand-muted); margin-bottom: 1rem; }
+    .assurance-card ul { list-style: none; font-size: 0.83rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .assurance-card li::before { content: '✓ '; color: var(--brand-lime); font-weight: 700; }
+
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 780px; }
+    .faq-item {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .faq-q {
+      padding: 1.25rem 1.5rem; cursor: pointer; font-weight: 600; font-size: 0.97rem;
+      display: flex; justify-content: space-between; align-items: center;
+      user-select: none; transition: color 0.2s;
+    }
+    .faq-q:hover { color: var(--brand-lime); }
+    .faq-q .arrow { font-size: 1.1rem; transition: transform 0.25s; }
+    .faq-a { padding: 0 1.5rem 1.25rem; font-size: 0.9rem; color: var(--brand-muted); line-height: 1.7; display: none; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .arrow { transform: rotate(180deg); }
+
+    /* CTA FINAL */
+    .cta-final {
+      text-align: center; padding: 6rem 2rem;
+      background: linear-gradient(180deg, var(--brand-bg-dark) 0%, rgba(184,245,62,0.04) 100%);
+    }
+    .cta-final h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 1rem; }
+    .cta-final p { color: var(--brand-muted); font-size: 1.05rem; margin-bottom: 2.5rem; }
+
+    /* FOOTER */
+    footer {
+      background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border);
+      padding: 2rem; text-align: center;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .footer-links a { font-size: 0.85rem; color: var(--brand-muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--brand-text); }
+    .footer-copy { font-size: 0.78rem; color: var(--brand-muted); }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--brand-lime); color: #0A0C10; }
+    .btn-primary:hover { background: #cffe5a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(184,245,62,0.25); }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--brand-border); color: var(--brand-text); }
+    .btn-ghost:hover { border-color: var(--brand-text); }
+    .btn-secondary { background: rgba(255,255,255,0.07); border: 1px solid var(--brand-border); color: var(--brand-text); }
   </style>
 </head>
 <body>
-  <main class="box">
-    <h1>Espace expéditeur</h1>
-    <p>Crée une livraison, autorise le paiement escrow Stripe et suis ton colis jusqu'à la confirmation de réception.</p>
-    <div class="actions">
-      <a class="btn" href="/create-mission.html">Créer une livraison</a>
-      <a class="btn secondary" href="/dashboard-expediteur.html">Mon dashboard</a>
-      <a class="btn secondary" href="/assurance.html">Protection livraison</a>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Porte<span>à</span>Porte</div>
+  <ul class="nav-links">
+    <li><a href="/index.html">Accueil</a></li>
+    <li><a href="#comment-ca-marche">Comment ça marche</a></li>
+    <li><a href="#tarifs">Tarifs</a></li>
+    <li><a href="/assurance.html">Assurance</a></li>
+    <li><a href="/connexion.html">Connexion</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="/create-mission.html" class="btn btn-primary">Envoyer un colis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">✦ Livraison collaborative au Québec</div>
+    <h1>Envoyez <em>moins cher</em>.<br>Suivez en temps réel.</h1>
+    <p>Des livreurs qui passent déjà par là prennent en charge ton colis. Tu économises jusqu'à 60 % versus les grands transporteurs — sans compromis sur le suivi.</p>
+    <div class="hero-actions">
+      <a href="/create-mission.html" class="btn btn-primary">📦 Envoyer un colis</a>
+      <a href="#tarifs" class="btn btn-ghost">Voir les tarifs</a>
     </div>
-  </main>
-  <script src="/js/support-widget.js"></script>
+    <div class="trust-row">
+      <div class="trust-item">
+        <div class="icon">⭐</div>
+        <div><strong>4,9★</strong><br><span>satisfaction client</span></div>
+      </div>
+      <div class="trust-item">
+        <div class="icon">📦</div>
+        <div><strong>1 847</strong><br><span>livraisons complétées</span></div>
+      </div>
+      <div class="trust-item">
+        <div class="icon">🛡️</div>
+        <div><strong>0 colis</strong><br><span>perdus à ce jour</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENT ÇA MARCHE -->
+<section id="comment-ca-marche">
+  <div class="container">
+    <div class="section-label">Processus</div>
+    <h2 class="section-title">Livrer en 4 étapes simples</h2>
+    <p class="section-sub">De la création de ta mission à la confirmation de livraison — tout se passe dans l'application.</p>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">📝</div>
+        <h3>Décris ton colis</h3>
+        <p>Dimensions, poids, fragile ou pas, adresse de départ et de destination. 2 minutes et c'est parti.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">🤝</div>
+        <h3>Un livreur accepte</h3>
+        <p>Un livreur vérifié qui passe sur ton trajet voit ta mission et l'accepte. Tu reçois une notification immédiatement.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">📍</div>
+        <h3>Suivi GPS en direct</h3>
+        <p>Suis le trajet de ton colis sur la carte en temps réel. Tu sais exactement où il est à tout moment.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-icon">✅</div>
+        <h3>Confirmation de livraison</h3>
+        <p>Le destinataire confirme la réception. Une photo est prise. Tu reçois la confirmation instantanément.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- POURQUOI -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Avantages</div>
+    <h2 class="section-title">Pourquoi choisir PorteàPorte ?</h2>
+    <p class="section-sub">On a repensé la livraison du début à la fin pour que ce soit simple, fiable et honnête.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">💰</div>
+        <div>
+          <h3>Prix transparent</h3>
+          <p>Tu vois le prix exact avant de confirmer. Pas de frais cachés, pas de surprises à la facturation.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🪪</div>
+        <div>
+          <h3>Livreur vérifié KYC</h3>
+          <p>Chaque livreur a passé notre vérification d'identité complète. Tu sais à qui tu confies ton colis.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">📡</div>
+        <div>
+          <h3>Suivi GPS temps réel</h3>
+          <p>Localisation mise à jour en continu. Partage le lien de suivi avec ton destinataire en un clic.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">💳</div>
+        <div>
+          <h3>Paiement Stripe sécurisé</h3>
+          <p>Tes informations de paiement sont protégées par la technologie Stripe. Remboursement garanti si livraison échoue.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🛡️</div>
+        <div>
+          <h3>Assurance optionnelle</h3>
+          <p>Couvre ton colis jusqu'à 1 000 $ pour quelques dollars. 4 niveaux de protection disponibles.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🧑‍💼</div>
+        <div>
+          <h3>Service humain 7j/7</h3>
+          <p>Une vraie équipe disponible tous les jours pour t'aider en cas de question ou de problème.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TARIFS -->
+<section id="tarifs">
+  <div class="container">
+    <div class="section-label">Comparaison de prix</div>
+    <h2 class="section-title">Les vrais chiffres, sans filtres</h2>
+    <p class="section-sub">On est jusqu'à 65 % moins cher que les grands transporteurs. Voici pourquoi.</p>
+    <div style="overflow-x: auto; border-radius: 16px; border: 1px solid var(--brand-border);">
+      <table class="tarif-table">
+        <thead>
+          <tr>
+            <th>Envoi</th>
+            <th style="color: var(--brand-lime);">PorteàPorte</th>
+            <th>UPS</th>
+            <th>FedEx</th>
+            <th>Purolator</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Colis 1 kg — 20 km</strong><br>
+              <span style="font-size:0.8rem; color: var(--brand-muted);">Envoi local, même ville</span>
+            </td>
+            <td class="highlight">5,00 $ <span class="savings-badge">—63 %</span></td>
+            <td class="competitor">13,50 $</td>
+            <td class="competitor">14,20 $</td>
+            <td class="competitor">12,80 $</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Colis 5 kg — 80 km</strong><br>
+              <span style="font-size:0.8rem; color: var(--brand-muted);">Interrégional (ex : Montréal–Laval)</span>
+            </td>
+            <td class="highlight">14,00 $ <span class="savings-badge">—57 %</span></td>
+            <td class="competitor">31,90 $</td>
+            <td class="competitor">34,50 $</td>
+            <td class="competitor">29,70 $</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Colis 10 kg — 200 km</strong><br>
+              <span style="font-size:0.8rem; color: var(--brand-muted);">Longue distance (ex : Montréal–Québec)</span>
+            </td>
+            <td class="highlight">28,00 $ <span class="savings-badge">—61 %</span></td>
+            <td class="competitor">71,40 $</td>
+            <td class="competitor">78,20 $</td>
+            <td class="competitor">67,90 $</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:1.25rem; font-size:0.8rem; color: var(--brand-muted);">* Prix PorteàPorte basés sur la moyenne des livraisons complétées sur notre plateforme. Prix concurrents basés sur les tarifs standard sans rabais entreprise au 1er mai 2026.</p>
+  </div>
+</section>
+
+<!-- TÉMOIGNAGES -->
+<section>
+  <div class="container">
+    <div class="section-label">Ils nous font confiance</div>
+    <h2 class="section-title">Ce qu'en disent nos utilisateurs</h2>
+    <p class="section-sub">Des vraies personnes, de vraies livraisons, de vrais résultats.</p>
+    <div class="testimonials">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« J'ai envoyé un chandail tricoté à ma mère à Rimouski pour son anniversaire. Le livreur était tellement attentionné — il a même pris une photo avant de remettre le paquet. Mon colis est arrivé en parfaite condition pour 12 $. Chez Purolator, ç'aurait été 34 $. Je reviens jamais en arrière! »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude Bouchard">
+          <div>
+            <strong>Marie-Claude Bouchard</strong>
+            <span>Québec, QC — Expéditrice régulière</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« Je vends des vêtements vintage sur Instagram et j'expédie entre 8 et 15 colis par semaine. PorteàPorte m'a sauvé la mise — mes clients reçoivent le suivi en temps réel, ils sont contents, et moi j'économise genre 200 $ par mois en frais de livraison. C'est game-changing pour les petits vendeurs. »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/men/34.jpg" alt="Thomas Gagnon">
+          <div>
+            <strong>Thomas Gagnon</strong>
+            <span>Montréal, QC — Vendeur en ligne</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« J'étais sceptique au départ — confier mon colis à quelqu'un que je connais pas? Mais la vérification KYC m'a rassurée, le suivi GPS aussi. Résultat : livraison en 3h à Granby, 9 $, livreur super professionnel. PorteàPorte, c'est une belle découverte québécoise dont je suis fière de faire la promotion. »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Isabelle Tremblay">
+          <div>
+            <strong>Isabelle Tremblay</strong>
+            <span>Sherbrooke, QC — Cliente depuis 6 mois</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ASSURANCE -->
+<section class="assurance-section" style="border-top: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Protection</div>
+    <h2 class="section-title">Ton colis, protégé à ton niveau</h2>
+    <p class="section-sub">Choisis la couverture qui correspond à la valeur de ton envoi. Aucune obligation — mais on recommande au moins le niveau Base.</p>
+    <div class="assurance-levels">
+      <div class="assurance-card">
+        <h3>Aucune</h3>
+        <div class="price">0 $<span>/envoi</span></div>
+        <div class="coverage">Aucune couverture</div>
+        <ul>
+          <li>Livraison standard</li>
+          <li>Suivi GPS inclus</li>
+          <li>Signalement en cas de litige</li>
+        </ul>
+      </div>
+      <div class="assurance-card">
+        <h3>Base</h3>
+        <div class="price">1 $<span>/envoi</span></div>
+        <div class="coverage">Couverture jusqu'à 50 $</div>
+        <ul>
+          <li>Dommages en transit</li>
+          <li>Perte totale du colis</li>
+          <li>Remboursement Stripe</li>
+        </ul>
+      </div>
+      <div class="assurance-card recommended">
+        <div class="rec-badge">Recommandé</div>
+        <h3 style="color: var(--brand-cyan);">Standard</h3>
+        <div class="price" style="color: var(--brand-cyan);">2,99 $<span>/envoi</span></div>
+        <div class="coverage">Couverture jusqu'à 250 $</div>
+        <ul>
+          <li>Dommages en transit</li>
+          <li>Perte totale ou partielle</li>
+          <li>Colis non livré</li>
+          <li>Évaluation prioritaire</li>
+        </ul>
+      </div>
+      <div class="assurance-card">
+        <h3>Plus</h3>
+        <div class="price">5,99 $<span>/envoi</span></div>
+        <div class="coverage">Couverture jusqu'à 1 000 $</div>
+        <ul>
+          <li>Couverture maximale</li>
+          <li>Objets fragiles ou électroniques</li>
+          <li>Évaluation prioritaire 24h</li>
+          <li>Agent dédié si litige</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top: 2rem;">
+      <a href="/assurance.html" class="btn btn-ghost">En savoir plus sur l'assurance →</a>
+    </p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Questions fréquentes</h2>
+    <p class="section-sub">On a répondu aux questions que tu te poses sûrement déjà.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">Comment le livreur est-il vérifié ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Chaque livreur doit compléter notre processus KYC (Know Your Customer) : pièce d'identité officielle, selfie de vérification, et dans certains cas, vérification du casier judiciaire. Le badge ✓ Vérifié n'est accordé qu'après approbation complète par notre équipe. Tu peux voir le score de réputation du livreur avant qu'il prenne en charge ton colis.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Que se passe-t-il si mon colis est endommagé ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Si tu as souscrit à une assurance, tu peux déposer une réclamation depuis l'application dans les 48h suivant la livraison. Joins des photos du dommage et la preuve de valeur. Notre équipe évalue la demande en 3 à 5 jours ouvrables. Si approuvée, le remboursement est effectué directement via Stripe. Sans assurance, on cherchera quand même à trouver une solution à l'amiable avec le livreur.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puis-je suivre ma livraison en temps réel ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Oui, absolument. Dès que le livreur prend en charge ton colis, le suivi GPS s'active automatiquement. Tu peux partager le lien de suivi avec ton destinataire — aucun compte requis pour le visualiser. Les notifications push te tiennent informé à chaque étape clé (ramassage, en route, livraison).</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Quels colis sont acceptés ? <span class="arrow">▼</span></div>
+        <div class="faq-a">On accepte la grande majorité des colis : vêtements, électronique, livres, objets décoratifs, alimentation non périssable, documents, et plus encore. Sont interdits : matières dangereuses, produits illicites, armes, denrées périssables non emballées, et tout article dont le transport nécessite un permis spécial. En cas de doute, contacte notre équipe.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Comment est calculé le prix ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Le prix est calculé selon la distance entre le point de départ et la destination, le poids et les dimensions du colis, et le type de livraison (locale, interrégionale, longue distance). L'algorithme prend aussi en compte l'offre disponible de livreurs sur le trajet. Le prix affiché avant confirmation est final — jamais de surprise à la facturation.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Quand le livreur est-il payé ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Le montant est préautorisé sur ta carte au moment de la création de la mission, mais le débit réel n'a lieu que lorsque la livraison est confirmée. Le livreur reçoit son paiement via Stripe dans les 24 à 48h suivant la confirmation de livraison. Ce système protège à la fois l'expéditeur et le livreur.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <div class="container">
+    <h2>Prêt à envoyer votre premier colis ?</h2>
+    <p>Créez votre mission en 2 minutes. Aucun abonnement requis — payez uniquement quand vous envoyez.</p>
+    <a href="/create-mission.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
+      📦 Créer une livraison gratuitement
+    </a>
+    <p style="margin-top: 1.25rem; font-size: 0.85rem; color: var(--brand-muted);">
+      Déjà un compte ? <a href="/connexion.html" style="color: var(--brand-cyan); text-decoration: underline;">Connexion</a>
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="/index.html">Accueil</a>
+    <a href="/cgu.html">Conditions d'utilisation</a>
+    <a href="/confidentialite.html">Confidentialité</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/assurance.html">Assurance</a>
+  </div>
+  <div class="footer-copy">© 2026 PorteàPorte inc. — Livraison collaborative au Québec 🍁</div>
+</footer>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+</script>
+<script src="/js/support-widget.js"></script>
 </body>
 </html>

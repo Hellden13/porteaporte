@@ -1,27 +1,479 @@
-<!doctype html>
-<html lang="fr">
+﻿<!DOCTYPE html>
+<html lang="fr-CA">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Protection livraison - PorteaPorte</title>
+  <title>Assurance colis — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
-  <style>*{box-sizing:border-box;margin:0;padding:0}.page{max-width:980px;margin:0 auto;padding:34px 18px 60px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{padding:20px}.price{font-size:28px;font-weight:900;color:var(--brand-lime);margin:8px 0}.topbar{padding:18px 24px}.brand{text-decoration:none;font-size:22px}.btn{display:inline-flex;width:auto;text-decoration:none;margin-top:18px}</style>
+  <style>
+    :root {
+      --brand-bg-dark: #0A0C10;
+      --brand-bg-surface: #111520;
+      --brand-border: #1E2535;
+      --brand-lime: #B8F53E;
+      --brand-cyan: #00D9FF;
+      --brand-text: #E8EDF5;
+      --brand-muted: #8A9BB0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--brand-bg-dark); color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,12,16,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--brand-border);
+      padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--brand-lime); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--brand-muted); font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--brand-text); }
+    .nav-cta { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--brand-lime); color: #0A0C10; }
+    .btn-primary:hover { background: #cffe5a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(184,245,62,0.25); }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--brand-border); color: var(--brand-text); }
+    .btn-ghost:hover { border-color: var(--brand-text); }
+    .btn-secondary { background: rgba(255,255,255,0.07); border: 1px solid var(--brand-border); color: var(--brand-text); }
+
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-lime); margin-bottom: 0.75rem; }
+    .section-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 1rem; }
+    .section-sub { color: var(--brand-muted); font-size: 1.05rem; max-width: 580px; margin-bottom: 3rem; }
+
+    /* HERO */
+    .hero {
+      position: relative; padding: 7rem 2rem 5rem;
+      background: linear-gradient(135deg, #0A0C10 0%, #0d1220 50%, #0A0C10 100%);
+      overflow: hidden; text-align: center;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&h=700&fit=crop') center/cover no-repeat;
+      opacity: 0.07;
+    }
+    .hero-inner { position: relative; max-width: 720px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.25);
+      border-radius: 999px; padding: 0.4rem 1.25rem;
+      font-size: 0.82rem; font-weight: 600; color: var(--brand-cyan);
+      margin-bottom: 1.75rem; letter-spacing: 0.04em;
+    }
+    .hero h1 { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--brand-cyan); }
+    .hero p { font-size: 1.15rem; color: var(--brand-muted); margin-bottom: 2.5rem; }
+    .hero-shield {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      background: rgba(17,21,32,0.9); border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 1rem 2rem; font-size: 0.9rem;
+      backdrop-filter: blur(8px);
+    }
+    .hero-shield .shield-icon { font-size: 2rem; }
+
+    /* NIVEAUX D'ASSURANCE */
+    .levels-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1.5rem; margin-top: 2.5rem;
+    }
+    .level-card {
+      border-radius: 20px; padding: 2rem 1.75rem;
+      border: 1px solid var(--brand-border);
+      background: var(--brand-bg-surface);
+      position: relative; transition: transform 0.25s, box-shadow 0.25s;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .level-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .level-card.none { opacity: 0.7; }
+    .level-card.base { border-color: rgba(184,245,62,0.2); }
+    .level-card.standard { border-color: var(--brand-cyan); box-shadow: 0 0 0 1px rgba(0,217,255,0.15); }
+    .level-card.plus { border-color: rgba(255,165,0,0.3); }
+    .level-rec {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--brand-cyan); color: #000; font-size: 0.72rem; font-weight: 800;
+      padding: 0.25rem 1rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+    }
+    .level-name { font-size: 1.15rem; font-weight: 800; }
+    .level-name.cyan { color: var(--brand-cyan); }
+    .level-name.lime { color: var(--brand-lime); }
+    .level-name.orange { color: #FFA500; }
+    .level-price { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .level-price.cyan { color: var(--brand-cyan); }
+    .level-price.lime { color: var(--brand-lime); }
+    .level-price.orange { color: #FFA500; }
+    .level-price span { font-size: 0.85rem; font-weight: 400; color: var(--brand-muted); }
+    .level-max { font-size: 0.82rem; color: var(--brand-muted); padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.04); border-radius: 8px; display: inline-block; }
+    .level-list { list-style: none; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.5rem; }
+    .level-list li { display: flex; gap: 0.5rem; align-items: flex-start; }
+    .level-list li .icon-ok { color: var(--brand-lime); font-weight: 700; flex-shrink: 0; }
+    .level-list li .icon-no { color: #666; flex-shrink: 0; }
+    .level-list li .text-muted { color: var(--brand-muted); }
+
+    /* COUVERT / PAS COUVERT */
+    .coverage-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+      margin-top: 2.5rem;
+    }
+    @media (max-width: 640px) { .coverage-grid { grid-template-columns: 1fr; } }
+    .coverage-box {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 2rem;
+    }
+    .coverage-box.yes { border-top: 3px solid var(--brand-lime); }
+    .coverage-box.no { border-top: 3px solid #FF4D4D; }
+    .coverage-box h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; }
+    .coverage-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .coverage-box li { font-size: 0.9rem; color: var(--brand-muted); display: flex; gap: 0.6rem; align-items: flex-start; }
+    .coverage-box li .ok { color: var(--brand-lime); font-weight: 700; flex-shrink: 0; }
+    .coverage-box li .no { color: #FF4D4D; font-weight: 700; flex-shrink: 0; }
+
+    /* ÉTAPES RÉCLAMATION */
+    .claim-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .claim-step {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 1.75rem; position: relative; overflow: hidden;
+    }
+    .claim-step-num {
+      font-size: 4rem; font-weight: 900; color: rgba(0,217,255,0.06);
+      position: absolute; top: 0.5rem; right: 1rem; line-height: 1;
+    }
+    .claim-step-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+    .claim-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--brand-cyan); }
+    .claim-step p { font-size: 0.86rem; color: var(--brand-muted); line-height: 1.65; }
+
+    /* SCÉNARIOS */
+    .scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+    .scenario-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 18px; padding: 2rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .scenario-card.success { border-left: 3px solid var(--brand-lime); }
+    .scenario-card.partial { border-left: 3px solid var(--brand-cyan); }
+    .scenario-card.denied { border-left: 3px solid #FF4D4D; }
+    .scenario-tag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 0.25rem 0.75rem; border-radius: 999px;
+    }
+    .scenario-tag.success { background: rgba(184,245,62,0.1); color: var(--brand-lime); }
+    .scenario-tag.partial { background: rgba(0,217,255,0.1); color: var(--brand-cyan); }
+    .scenario-tag.denied { background: rgba(255,77,77,0.1); color: #FF4D4D; }
+    .scenario-card h3 { font-size: 1rem; font-weight: 700; }
+    .scenario-card p { font-size: 0.88rem; color: var(--brand-muted); line-height: 1.65; }
+    .scenario-result {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: rgba(255,255,255,0.03); border-radius: 10px; padding: 0.75rem 1rem;
+      font-size: 0.88rem; font-weight: 600;
+    }
+
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 780px; }
+    .faq-item { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; overflow: hidden; }
+    .faq-q { padding: 1.25rem 1.5rem; cursor: pointer; font-weight: 600; font-size: 0.97rem; display: flex; justify-content: space-between; align-items: center; user-select: none; transition: color 0.2s; }
+    .faq-q:hover { color: var(--brand-cyan); }
+    .faq-q .arrow { font-size: 1.1rem; transition: transform 0.25s; }
+    .faq-a { padding: 0 1.5rem 1.25rem; font-size: 0.9rem; color: var(--brand-muted); line-height: 1.7; display: none; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .arrow { transform: rotate(180deg); }
+
+    /* CTA */
+    .cta-section {
+      text-align: center; padding: 6rem 2rem;
+      background: linear-gradient(135deg, rgba(0,217,255,0.05) 0%, transparent 60%);
+    }
+    .cta-section h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 1rem; }
+    .cta-section p { color: var(--brand-muted); font-size: 1rem; margin-bottom: 2.5rem; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+    footer { background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); padding: 2rem; text-align: center; }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .footer-links a { font-size: 0.85rem; color: var(--brand-muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--brand-text); }
+    .footer-copy { font-size: 0.78rem; color: var(--brand-muted); }
+  </style>
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/index.html">PorteàPorte</a></header>
-  <main class="page">
-    <h1>Protection livraison</h1>
-    <p>La protection est optionnelle. Sans protection payee, aucune couverture contractuelle ne s'applique.</p>
-    <section class="grid" style="margin-top:18px">
-      <article class="card"><h2>Aucune</h2><div class="price">0 $</div><p>Aucune couverture contractuelle.</p></article>
-      <article class="card"><h2>Base</h2><div class="price">1 $</div><p>Couverture maximale 50 $, limitee a la valeur declaree.</p></article>
-      <article class="card"><h2>Standard</h2><div class="price">2,99 $</div><p>Couverture maximale 250 $, avec preuves requises.</p></article>
-      <article class="card"><h2>Plus</h2><div class="price">5,99 $</div><p>Couverture maximale 1 000 $, limitee a la valeur declaree.</p></article>
-    </section>
-    <p style="margin-top:18px">Les litiges peuvent utiliser photos, GPS, messages et historique de livraison.</p>
-    <a class="btn" href="/cgu.html">Voir les conditions</a>
-  </main>
-  <script src="/js/support-widget.js"></script>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Porte<span>à</span>Porte</div>
+  <ul class="nav-links">
+    <li><a href="/index.html">Accueil</a></li>
+    <li><a href="/expediteur.html">Expédier</a></li>
+    <li><a href="/devenir-livreur.html">Devenir livreur</a></li>
+    <li><a href="/connexion.html">Connexion</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="/create-mission.html" class="btn btn-primary">Envoyer un colis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">🛡️ Couverture optionnelle — Choisissez votre niveau</div>
+    <h1>Ton colis est entre<br>de <em>bonnes mains</em>.</h1>
+    <p>Notre réseau de livreurs vérifiés prend soin de chaque envoi. Et pour une tranquillité d'esprit totale, une assurance optionnelle est disponible à chaque livraison — dès 1 $.</p>
+    <div class="hero-shield">
+      <div class="shield-icon">🛡️</div>
+      <div>
+        <strong style="display:block; font-size:0.95rem;">Protection disponible de 0 $ à 5,99 $ par envoi</strong>
+        <span style="font-size:0.82rem; color: var(--brand-muted);">Couverture de 0 $ à 1 000 $ de valeur déclarée</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LES 4 NIVEAUX -->
+<section>
+  <div class="container">
+    <div class="section-label">Niveaux de protection</div>
+    <h2 class="section-title">Choisis la couverture qui te convient</h2>
+    <p class="section-sub">Chaque envoi est unique. Adapte ta protection selon la valeur et la nature de ton colis.</p>
+    <div class="levels-grid">
+
+      <!-- Aucune -->
+      <div class="level-card none">
+        <div class="level-name" style="color: var(--brand-muted);">Aucune</div>
+        <div class="level-price" style="color: var(--brand-muted);">0 $<span>/envoi</span></div>
+        <div class="level-max">Pas de couverture</div>
+        <ul class="level-list">
+          <li><span class="icon-ok">✓</span><span>Livraison standard incluse</span></li>
+          <li><span class="icon-ok">✓</span><span>Suivi GPS inclus</span></li>
+          <li><span class="icon-no">✗</span><span class="text-muted">Aucun remboursement en cas de dommage</span></li>
+          <li><span class="icon-no">✗</span><span class="text-muted">Aucune couverture perte</span></li>
+        </ul>
+        <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">Idéal pour les envois à faible valeur ou les documents.</p>
+      </div>
+
+      <!-- Base -->
+      <div class="level-card base">
+        <div class="level-name lime">Base</div>
+        <div class="level-price lime">1 $<span>/envoi</span></div>
+        <div class="level-max">Couverture max : 50 $</div>
+        <ul class="level-list">
+          <li><span class="icon-ok">✓</span><span>Dommages en transit</span></li>
+          <li><span class="icon-ok">✓</span><span>Perte totale du colis</span></li>
+          <li><span class="icon-ok">✓</span><span>Remboursement via Stripe</span></li>
+          <li><span class="icon-no">✗</span><span class="text-muted">Objets de valeur élevée</span></li>
+          <li><span class="icon-no">✗</span><span class="text-muted">Perte partielle</span></li>
+        </ul>
+        <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">Pour les vêtements, livres, petits objets du quotidien.</p>
+      </div>
+
+      <!-- Standard -->
+      <div class="level-card standard">
+        <div class="level-rec">Recommandé</div>
+        <div class="level-name cyan">Standard</div>
+        <div class="level-price cyan">2,99 $<span>/envoi</span></div>
+        <div class="level-max" style="background: rgba(0,217,255,0.06); color: var(--brand-cyan);">Couverture max : 250 $</div>
+        <ul class="level-list">
+          <li><span class="icon-ok">✓</span><span>Dommages en transit</span></li>
+          <li><span class="icon-ok">✓</span><span>Perte totale <em>et</em> partielle</span></li>
+          <li><span class="icon-ok">✓</span><span>Colis non livré</span></li>
+          <li><span class="icon-ok">✓</span><span>Évaluation réclamation prioritaire</span></li>
+          <li><span class="icon-ok">✓</span><span>Remboursement complet si approuvé</span></li>
+        </ul>
+        <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">La meilleure valeur pour la plupart des envois.</p>
+      </div>
+
+      <!-- Plus -->
+      <div class="level-card plus">
+        <div class="level-name orange">Plus</div>
+        <div class="level-price orange">5,99 $<span>/envoi</span></div>
+        <div class="level-max" style="background: rgba(255,165,0,0.06); color: #FFA500;">Couverture max : 1 000 $</div>
+        <ul class="level-list">
+          <li><span class="icon-ok">✓</span><span>Couverture maximale tous risques</span></li>
+          <li><span class="icon-ok">✓</span><span>Objets fragiles et électroniques</span></li>
+          <li><span class="icon-ok">✓</span><span>Évaluation en 24h ouvrables</span></li>
+          <li><span class="icon-ok">✓</span><span>Agent dédié en cas de litige</span></li>
+          <li><span class="icon-ok">✓</span><span>Rapport de sinistre complet</span></li>
+        </ul>
+        <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">Pour bijoux, équipements photo, objets de collection.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COUVERT / PAS COUVERT -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Détails de la couverture</div>
+    <h2 class="section-title">Ce qui est couvert — et ce qui ne l'est pas</h2>
+    <p class="section-sub">La transparence, c'est notre valeur fondamentale. Voici exactement ce que l'assurance PorteàPorte couvre.</p>
+    <div class="coverage-grid">
+      <div class="coverage-box yes">
+        <h3><span>✅</span> Ce qui est couvert</h3>
+        <ul>
+          <li><span class="ok">✓</span>Dommages physiques survenus pendant le transport (chocs, écrasement, mouillure)</li>
+          <li><span class="ok">✓</span>Perte totale du colis (non livré, disparu sans trace)</li>
+          <li><span class="ok">✓</span>Perte partielle du contenu si l'emballage a été ouvert ou endommagé</li>
+          <li><span class="ok">✓</span>Colis livré à la mauvaise adresse par erreur du livreur</li>
+          <li><span class="ok">✓</span>Vol confirmé pendant la prise en charge par le livreur</li>
+          <li><span class="ok">✓</span>Dommages liés à des conditions climatiques extrêmes hors du contrôle du livreur</li>
+          <li><span class="ok">✓</span>Défaillance lors du dépôt en boîte aux lettres (avec preuve photo)</li>
+        </ul>
+      </div>
+      <div class="coverage-box no">
+        <h3><span>❌</span> Ce qui n'est PAS couvert</h3>
+        <ul>
+          <li><span class="no">✗</span>Valeur non déclarée ou sous-déclarée au moment de la mission</li>
+          <li><span class="no">✗</span>Colis interdits par nos conditions d'utilisation (matières dangereuses, denrées périssables non emballées...)</li>
+          <li><span class="no">✗</span>Emballage inadéquat ayant causé le dommage (objet fragile sans protection)</li>
+          <li><span class="no">✗</span>Retard de livraison seul (sans dommage ou perte)</li>
+          <li><span class="no">✗</span>Dommages préexistants non signalés avant l'envoi</li>
+          <li><span class="no">✗</span>Réclamations déposées plus de 48h après la livraison</li>
+          <li><span class="no">✗</span>Perte due à une adresse erronée fournie par l'expéditeur</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENT DÉPOSER UNE RÉCLAMATION -->
+<section>
+  <div class="container">
+    <div class="section-label">Processus de réclamation</div>
+    <h2 class="section-title">Comment déposer une réclamation</h2>
+    <p class="section-sub">Si quelque chose se passe mal, voici comment obtenir ton remboursement rapidement et sans tracas.</p>
+    <div class="claim-steps">
+      <div class="claim-step">
+        <div class="claim-step-num">01</div>
+        <div class="claim-step-icon">📱</div>
+        <h3>Signale dans les 48h</h3>
+        <p>Ouvre l'application et accède à ta livraison. Clique sur "Signaler un problème" dans les 48h suivant la confirmation de livraison. Décris ce qui s'est passé.</p>
+      </div>
+      <div class="claim-step">
+        <div class="claim-step-num">02</div>
+        <div class="claim-step-icon">📷</div>
+        <h3>Fournis photos et preuves</h3>
+        <p>Photos du dommage, de l'emballage, et de la valeur du bien (facture, reçu, estimation). Plus tu en fournis, plus l'évaluation est rapide.</p>
+      </div>
+      <div class="claim-step">
+        <div class="claim-step-num">03</div>
+        <div class="claim-step-icon">🔍</div>
+        <h3>Notre équipe évalue</h3>
+        <p>Un agent humain examine ton dossier en 3 à 5 jours ouvrables (24h pour le niveau Plus). Tu reçois une décision motivée par courriel.</p>
+      </div>
+      <div class="claim-step">
+        <div class="claim-step-num">04</div>
+        <div class="claim-step-icon">💳</div>
+        <h3>Remboursement via Stripe</h3>
+        <p>Si la réclamation est approuvée, le montant est remboursé directement sur ta méthode de paiement Stripe dans les 2 à 5 jours ouvrables.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCÉNARIOS RÉELS -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Cas concrets</div>
+    <h2 class="section-title">Scénarios réels — ce qui s'est passé</h2>
+    <p class="section-sub">Des exemples tirés de vraies réclamations pour comprendre comment l'assurance fonctionne en pratique.</p>
+    <div class="scenarios">
+      <div class="scenario-card success">
+        <div class="scenario-tag success">✓ Remboursé</div>
+        <h3>Marc — Lampe vintage brisée</h3>
+        <p>Marc a envoyé une lampe de designer des années 70, valeur 220 $, avec l'assurance Standard (2,99 $). Pendant le transport, une collision a brisé l'abat-jour. Marc a signalé le problème avec des photos dans les 24h. Notre équipe a approuvé la réclamation en 4 jours ouvrables.</p>
+        <div class="scenario-result">
+          <span>💰</span>
+          <span>Remboursé <strong style="color: var(--brand-lime);">180 $</strong> — valeur évaluée par notre équipe après preuve fournie.</span>
+        </div>
+      </div>
+      <div class="scenario-card partial">
+        <div class="scenario-tag partial">✓ Remboursé</div>
+        <h3>Julie — Colis introuvable</h3>
+        <p>Julie a envoyé un manteau d'hiver, valeur estimée 85 $, avec l'assurance Base (1 $). Le colis n'a jamais été livré — aucune trace GPS après le ramassage. Après vérification de nos logs et confirmation que le livreur n'avait aucune trace de livraison, la réclamation a été approuvée.</p>
+        <div class="scenario-result">
+          <span>💰</span>
+          <span>Remboursée <strong style="color: var(--brand-cyan);">50 $</strong> — plafond de l'assurance Base atteint.</span>
+        </div>
+      </div>
+      <div class="scenario-card denied">
+        <div class="scenario-tag denied">✗ Refusé</div>
+        <h3>Robert — Emballage inadéquat</h3>
+        <p>Robert a envoyé un miroir sans emballage rigide ni protection en mousse, juste enveloppé dans du papier d'emballage cadeau. Le miroir est arrivé brisé. Après analyse des photos du livreur au moment du ramassage, il est clairement apparu que l'emballage était insuffisant pour un objet aussi fragile.</p>
+        <div class="scenario-result">
+          <span>❌</span>
+          <span>Réclamation <strong style="color: #FF4D4D;">refusée</strong> — dommage attribuable à un emballage inadéquat (clause d'exclusion). Robert a été informé avec preuve photo à l'appui.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ ASSURANCE -->
+<section>
+  <div class="container">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Questions sur l'assurance</h2>
+    <p class="section-sub">Tout ce que tu dois savoir avant de choisir ton niveau de protection.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">Puis-je ajouter une assurance après avoir créé ma mission ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Non. L'assurance doit être choisie au moment de la création de la mission, avant que le livreur prenne en charge le colis. Une fois la mission acceptée et le colis récupéré, il n'est plus possible de modifier le niveau de protection. Pense-y au moment de confirmer ton envoi.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Comment est évaluée la valeur de mon colis ? <span class="arrow">▼</span></div>
+        <div class="faq-a">La valeur déclarée est celle que tu as indiquée lors de la création de la mission. En cas de réclamation, tu devras fournir une preuve de cette valeur : facture d'achat, reçu, capture d'écran du prix en ligne, ou estimation d'un professionnel pour les objets d'art ou antiquités. La valeur remboursée ne peut jamais dépasser la valeur déclarée ni le plafond de ton niveau d'assurance.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Quelle est la différence entre le niveau Standard et Plus ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Le niveau Standard couvre jusqu'à 250 $ avec une évaluation en 3 à 5 jours ouvrables et couvre tous les cas courants (dommage, perte totale, perte partielle, non-livraison). Le niveau Plus couvre jusqu'à 1 000 $, inclut une évaluation prioritaire en 24h ouvrables, un agent dédié pour tout litige complexe, et une couverture étendue aux objets électroniques et fragiles de grande valeur.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">L'assurance est-elle remboursée si je cancel ma mission ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Si tu annules ta mission avant que le livreur ait pris en charge le colis, le montant de l'assurance est remboursé intégralement avec le reste de la mission. Si l'annulation survient après la prise en charge, les conditions d'annulation standards s'appliquent — l'assurance peut être partiellement ou totalement retenue selon le stade de la livraison.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Combien de temps ai-je pour déposer une réclamation ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Tu as 48 heures suivant la confirmation de livraison pour signaler un problème et initier une réclamation. Après ce délai, les réclamations ne sont plus acceptées car il devient difficile d'établir les responsabilités. Dès que tu constates un dommage ou une anomalie, signale-le immédiatement dans l'application.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" style="border-top: 1px solid var(--brand-border);">
+  <div class="container">
+    <h2>Commence avec la protection Standard</h2>
+    <p>Pour seulement 2,99 $ par envoi, couvre ton colis jusqu'à 250 $. La meilleure valeur pour la tranquillité d'esprit totale.</p>
+    <a href="/create-mission.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
+      🛡️ Créer une livraison avec assurance
+    </a>
+    <p style="margin-top: 1.25rem; font-size: 0.85rem; color: var(--brand-muted);">
+      Questions ? <a href="/contact.html" style="color: var(--brand-cyan); text-decoration: underline;">Contacte notre équipe</a> — on répond 7j/7.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="/index.html">Accueil</a>
+    <a href="/expediteur.html">Expédier un colis</a>
+    <a href="/cgu.html">Conditions d'utilisation</a>
+    <a href="/confidentialite.html">Confidentialité</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+  <div class="footer-copy">© 2026 PorteàPorte inc. — Livraison collaborative au Québec 🍁</div>
+</footer>
+
+<script>
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+</script>
+<script src="/js/support-widget.js"></script>
 </body>
 </html>
-

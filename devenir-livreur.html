@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devenir livreur — PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    :root {
+      --brand-bg-dark: #0A0C10;
+      --brand-bg-surface: #111520;
+      --brand-border: #1E2535;
+      --brand-lime: #B8F53E;
+      --brand-cyan: #00D9FF;
+      --brand-text: #E8EDF5;
+      --brand-muted: #8A9BB0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--brand-bg-dark); color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,12,16,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--brand-border);
+      padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--brand-lime); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--brand-muted); font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--brand-text); }
+    .nav-cta { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--brand-lime); color: #0A0C10; }
+    .btn-primary:hover { background: #cffe5a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(184,245,62,0.25); }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--brand-border); color: var(--brand-text); }
+    .btn-ghost:hover { border-color: var(--brand-text); }
+    .btn-secondary { background: rgba(255,255,255,0.07); border: 1px solid var(--brand-border); color: var(--brand-text); }
+
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-lime); margin-bottom: 0.75rem; }
+    .section-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 1rem; }
+    .section-sub { color: var(--brand-muted); font-size: 1.05rem; max-width: 580px; margin-bottom: 3rem; }
+
+    /* HERO */
+    .hero {
+      position: relative; min-height: 95vh;
+      display: flex; align-items: center; overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1600&h=900&fit=crop') center/cover no-repeat;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(110deg, rgba(10,12,16,0.95) 40%, rgba(10,12,16,0.5) 100%);
+    }
+    .hero-content { position: relative; max-width: 680px; padding: 3rem 3rem 3rem 4rem; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(184,245,62,0.12); border: 1px solid rgba(184,245,62,0.3);
+      border-radius: 999px; padding: 0.35rem 1rem;
+      font-size: 0.8rem; font-weight: 600; color: var(--brand-lime);
+      margin-bottom: 1.5rem; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .hero h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 900; line-height: 1.08; letter-spacing: -2px; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--brand-lime); }
+    .hero p { font-size: 1.1rem; color: var(--brand-muted); max-width: 520px; margin-bottom: 2.25rem; line-height: 1.75; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
+    .hero-stats {
+      display: flex; gap: 2.5rem; flex-wrap: wrap;
+      padding: 1.25rem 1.75rem;
+      background: rgba(17,21,32,0.75); border: 1px solid var(--brand-border);
+      border-radius: 14px; backdrop-filter: blur(8px);
+    }
+    .hero-stat strong { display: block; font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); line-height: 1; }
+    .hero-stat span { font-size: 0.8rem; color: var(--brand-muted); }
+
+    /* CALCULATEUR */
+    .calc-section { background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border); }
+    .calc-wrapper {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;
+    }
+    @media (max-width: 768px) { .calc-wrapper { grid-template-columns: 1fr; } }
+    .calc-form { display: flex; flex-direction: column; gap: 1.25rem; }
+    .calc-field { display: flex; flex-direction: column; gap: 0.5rem; }
+    .calc-field label { font-size: 0.85rem; font-weight: 600; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .calc-field select, .calc-field input[type=range] {
+      background: var(--brand-bg-dark); border: 1px solid var(--brand-border);
+      border-radius: 10px; padding: 0.75rem 1rem; color: var(--brand-text);
+      font-size: 0.95rem; outline: none; transition: border-color 0.2s; width: 100%;
+    }
+    .calc-field select:focus { border-color: var(--brand-lime); }
+    .calc-field input[type=range] { padding: 0.35rem 0; accent-color: var(--brand-lime); cursor: pointer; }
+    .range-val { font-size: 0.9rem; color: var(--brand-lime); font-weight: 700; }
+    .calc-result {
+      background: var(--brand-bg-dark); border: 1px solid var(--brand-border);
+      border-radius: 20px; padding: 2.5rem; text-align: center;
+      position: sticky; top: 80px;
+    }
+    .calc-result .result-label { font-size: 0.82rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+    .calc-result .result-amount { font-size: 4rem; font-weight: 900; color: var(--brand-lime); line-height: 1; margin-bottom: 0.35rem; }
+    .calc-result .result-period { font-size: 0.9rem; color: var(--brand-muted); margin-bottom: 2rem; }
+    .calc-result .result-breakdown { display: flex; flex-direction: column; gap: 0.6rem; text-align: left; }
+    .breakdown-line { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--brand-border); }
+    .breakdown-line:last-child { border: none; font-weight: 700; color: var(--brand-text); }
+    .breakdown-line span:last-child { color: var(--brand-lime); font-weight: 700; }
+    .calc-examples { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .calc-example {
+      background: rgba(184,245,62,0.04); border: 1px solid rgba(184,245,62,0.12);
+      border-radius: 12px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .calc-example .desc { font-size: 0.88rem; color: var(--brand-muted); }
+    .calc-example .amount { font-size: 1.05rem; font-weight: 800; color: var(--brand-lime); }
+
+    /* ÉTAPES */
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .step-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 2rem 1.75rem; position: relative; overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .step-card:hover { border-color: var(--brand-lime); transform: translateY(-4px); }
+    .step-num { font-size: 3.5rem; font-weight: 900; line-height: 1; color: rgba(184,245,62,0.07); position: absolute; top: 1rem; right: 1.25rem; }
+    .step-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step-card p { font-size: 0.88rem; color: var(--brand-muted); }
+
+    /* GAINS */
+    .gains-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(275px, 1fr)); gap: 1.25rem; }
+    .gain-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 1.75rem; display: flex; gap: 1rem; align-items: flex-start;
+      transition: border-color 0.2s;
+    }
+    .gain-card:hover { border-color: var(--brand-lime); }
+    .gain-icon {
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+      background: rgba(184,245,62,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .gain-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .gain-card p { font-size: 0.85rem; color: var(--brand-muted); }
+
+    /* TÉMOIGNAGES */
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.5rem; }
+    .testi-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 18px; padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;
+    }
+    .testi-stars { color: #FFD700; font-size: 1rem; }
+    .testi-text { font-size: 0.95rem; color: var(--brand-text); line-height: 1.7; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 0.9rem; margin-top: auto; }
+    .testi-author img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-border); }
+    .testi-author strong { display: block; font-size: 0.92rem; font-weight: 700; }
+    .testi-author span { font-size: 0.8rem; color: var(--brand-muted); }
+    .testi-earnings { display: inline-block; background: rgba(184,245,62,0.1); color: var(--brand-lime); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; }
+
+    /* PRÉREQUIS */
+    .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    @media (max-width: 640px) { .req-grid { grid-template-columns: 1fr; } }
+    .req-box {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 18px; padding: 2rem;
+    }
+    .req-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.6rem; }
+    .req-box .subtitle { font-size: 0.85rem; color: var(--brand-muted); margin-bottom: 1.5rem; }
+    .req-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+    .req-box li { display: flex; gap: 0.6rem; font-size: 0.9rem; align-items: flex-start; }
+    .req-box li .ok { color: var(--brand-lime); font-weight: 700; flex-shrink: 0; }
+    .req-note {
+      margin-top: 1.5rem; padding: 0.85rem 1.1rem;
+      background: rgba(184,245,62,0.05); border: 1px solid rgba(184,245,62,0.15);
+      border-radius: 10px; font-size: 0.83rem; color: var(--brand-muted);
+    }
+
+    /* SÉCURITÉ */
+    .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; }
+    .sec-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 1.5rem; text-align: center; transition: border-color 0.2s;
+    }
+    .sec-card:hover { border-color: var(--brand-cyan); }
+    .sec-icon { font-size: 2.2rem; margin-bottom: 0.75rem; }
+    .sec-card h3 { font-size: 0.97rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .sec-card p { font-size: 0.83rem; color: var(--brand-muted); }
+
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 780px; }
+    .faq-item { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; overflow: hidden; }
+    .faq-q { padding: 1.25rem 1.5rem; cursor: pointer; font-weight: 600; font-size: 0.97rem; display: flex; justify-content: space-between; align-items: center; user-select: none; transition: color 0.2s; }
+    .faq-q:hover { color: var(--brand-lime); }
+    .faq-q .arrow { font-size: 1.1rem; transition: transform 0.25s; }
+    .faq-a { padding: 0 1.5rem 1.25rem; font-size: 0.9rem; color: var(--brand-muted); line-height: 1.7; display: none; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .arrow { transform: rotate(180deg); }
+
+    /* CTA FINAL */
+    .cta-final {
+      text-align: center; padding: 7rem 2rem;
+      background: linear-gradient(180deg, var(--brand-bg-dark) 0%, rgba(184,245,62,0.05) 50%, var(--brand-bg-dark) 100%);
+      position: relative; overflow: hidden;
+    }
+    .cta-final::before {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(184,245,62,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-final h2 { position: relative; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; letter-spacing: -1.2px; margin-bottom: 1rem; }
+    .cta-final p { position: relative; color: var(--brand-muted); font-size: 1.05rem; margin-bottom: 2.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .cta-btns { position: relative; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    footer { background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); padding: 2rem; text-align: center; }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .footer-links a { font-size: 0.85rem; color: var(--brand-muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--brand-text); }
+    .footer-copy { font-size: 0.78rem; color: var(--brand-muted); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Porte<span>à</span>Porte</div>
+  <ul class="nav-links">
+    <li><a href="/index.html">Accueil</a></li>
+    <li><a href="/expediteur.html">Expédier</a></li>
+    <li><a href="#gains">Mes gains</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="/connexion.html">Connexion</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="/livreur.html" class="btn btn-primary">Commencer la vérification</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🚗 Rejoins 600+ livreurs actifs au Québec</div>
+    <h1>Tes trajets valent<br>de <em>l'argent</em>.</h1>
+    <p>Que tu fasses Montréal–Québec chaque semaine ou des livraisons locales à vélo — PorteàPorte te connecte à des colis sur ta route. Pas de boss, pas d'horaire fixe, des gains transparents.</p>
+    <div class="hero-actions">
+      <a href="/livreur.html" class="btn btn-primary">🚀 Commencer gratuitement</a>
+      <a href="#gains" class="btn btn-ghost">Voir mes gains estimés</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>890 $</strong><span>gain moyen/mois</span></div>
+      <div class="hero-stat"><strong>10 min</strong><span>pour s'inscrire</span></div>
+      <div class="hero-stat"><strong>600+</strong><span>livreurs actifs</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CALCULATEUR -->
+<section class="calc-section" id="gains">
+  <div class="container">
+    <div class="section-label">Calculateur de revenus</div>
+    <h2 class="section-title">Combien peux-tu gagner ?</h2>
+    <p class="section-sub">Ajuste les curseurs selon ta situation et vois ton revenu estimé en temps réel.</p>
+    <div class="calc-wrapper">
+      <div>
+        <div class="calc-form">
+          <div class="calc-field">
+            <label>Type de véhicule</label>
+            <select id="vehicleType" onchange="calcUpdate()">
+              <option value="car">Voiture / Camionnette</option>
+              <option value="bike">Vélo / Trottinette électrique</option>
+              <option value="walk">À pied</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Nombre de trajets par semaine : <span class="range-val" id="tripsVal">3</span></label>
+            <input type="range" id="trips" min="1" max="14" value="3" oninput="calcUpdate(); document.getElementById('tripsVal').textContent = this.value">
+          </div>
+          <div class="calc-field">
+            <label>Distance moyenne par trajet : <span class="range-val" id="distVal">45 km</span></label>
+            <input type="range" id="dist" min="5" max="300" step="5" value="45" oninput="calcUpdate(); document.getElementById('distVal').textContent = this.value + ' km'">
+          </div>
+        </div>
+        <div class="calc-examples">
+          <div class="section-label" style="margin-top: 2rem; margin-bottom: 0.75rem;">Exemples pré-calculés</div>
+          <div class="calc-example">
+            <span class="desc">2 trajets Montréal–Laval/semaine (voiture)</span>
+            <span class="amount">~320 $/mois</span>
+          </div>
+          <div class="calc-example">
+            <span class="desc">5 livraisons locales/semaine à vélo</span>
+            <span class="amount">~180 $/mois</span>
+          </div>
+          <div class="calc-example">
+            <span class="desc">3 trajets Montréal–Québec/semaine (voiture)</span>
+            <span class="amount">~1 200 $/mois</span>
+          </div>
+          <div class="calc-example">
+            <span class="desc">Livreur temps partiel, 2 soirs/semaine</span>
+            <span class="amount">~260 $/mois</span>
+          </div>
+        </div>
+      </div>
+      <div class="calc-result">
+        <div class="result-label">Revenu estimé</div>
+        <div class="result-amount" id="resultAmount">511 $</div>
+        <div class="result-period">par mois</div>
+        <div class="result-breakdown">
+          <div class="breakdown-line"><span>Gains par trajet (estimé)</span><span id="perTrip">39,60 $</span></div>
+          <div class="breakdown-line"><span>Trajets par semaine</span><span id="tripsWeek">3</span></div>
+          <div class="breakdown-line"><span>Semaines par mois</span><span>4,3</span></div>
+          <div class="breakdown-line"><span>Total mensuel estimé</span><span id="totalMonth">511 $</span></div>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--brand-muted); margin-top: 1.25rem; line-height: 1.5;">
+          * Estimation basée sur nos tarifs moyens. Les gains réels varient selon la disponibilité des missions, la saison et la région.
+        </p>
+        <a href="/livreur.html" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; justify-content: center;">
+          Commencer — c'est gratuit
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENT ÇA MARCHE -->
+<section>
+  <div class="container">
+    <div class="section-label">Processus</div>
+    <h2 class="section-title">Commence à livrer en 4 étapes</h2>
+    <p class="section-sub">De l'inscription à ton premier virement — simple, rapide et 100 % en ligne.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">🪪</div>
+        <h3>Vérification d'identité</h3>
+        <p>10 minutes depuis ton téléphone. Photo de ta pièce d'identité + selfie de confirmation. Vérification sécurisée par notre partenaire KYC.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">⚡</div>
+        <h3>Active ton profil livreur</h3>
+        <p>Choisis ton type de véhicule, ta zone de couverture, et tes disponibilités. Ton profil est actif dès approbation — généralement en moins de 24h.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">📍</div>
+        <h3>Choisis tes missions</h3>
+        <p>Vois les colis disponibles sur ta route — avant même d'accepter. Prix affiché, distance, nature du colis. Tu décides, tu n'es jamais obligé.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-icon">💸</div>
+        <h3>Reçois tes gains</h3>
+        <p>Virement automatique via Stripe dans les 24 à 48h suivant chaque livraison confirmée. Aucun délai, aucune paperasse.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CE QUE TU GAGNES -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Avantages livreur</div>
+    <h2 class="section-title">Ce que tu gagnes en rejoignant PorteàPorte</h2>
+    <p class="section-sub">On a conçu la plateforme pour que les livreurs soient traités équitablement et sans surprise.</p>
+    <div class="gains-grid">
+      <div class="gain-card">
+        <div class="gain-icon">💰</div>
+        <div>
+          <h3>Tarif transparent</h3>
+          <p>Tu vois le montant exact que tu gagnes avant d'accepter une mission. Jamais de calcul opaque.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">💳</div>
+        <div>
+          <h3>Paiement Stripe garanti</h3>
+          <p>Tes gains sont sécurisés par Stripe dès que l'expéditeur confirme la mission. Virement en 24–48h.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">⭐</div>
+        <div>
+          <h3>Score de confiance visible</h3>
+          <p>Chaque livraison réussie améliore ton score. Un score élevé t'ouvre l'accès à des missions premium mieux rémunérées.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🏅</div>
+        <div>
+          <h3>Badges et récompenses</h3>
+          <p>Débloque des badges (Livreur Express, Longue Distance, 0 incident) qui augmentent ta visibilité auprès des expéditeurs.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🗺️</div>
+        <div>
+          <h3>Missions sur ta route</h3>
+          <p>L'algorithme t'affiche uniquement les colis qui correspondent à tes trajets habituels. Tu ne fais pas de détour pour rien.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🧑‍💼</div>
+        <div>
+          <h3>Support 7j/7</h3>
+          <p>Un problème avec une mission ? Notre équipe est disponible tous les jours pour te soutenir et résoudre les litiges rapidement.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TÉMOIGNAGES -->
+<section>
+  <div class="container">
+    <div class="section-label">Ils livrent déjà</div>
+    <h2 class="section-title">Ce que disent nos livreurs</h2>
+    <p class="section-sub">Des revenus réels, des vraies personnes, de vrais trajets au Québec.</p>
+    <div class="testimonials">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« Je fais Montréal–Laval–Montréal trois fois par semaine pour le travail. Depuis que j'utilise PorteàPorte, je rentre jamais à vide. Je prends 2 ou 3 colis sur la route du retour, et ça me fait un revenu net d'environ 1 100 $ par mois sans changer mon horaire d'une miette. C'est du pur génie. »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/men/52.jpg" alt="David T.">
+          <div>
+            <strong>David T.</strong>
+            <span>Montréal, QC</span>
+            <div class="testi-earnings">~1 100 $/mois</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« Je fais ça à vélo le weekend dans le Vieux-Québec et Saint-Roch. Je me fais un peu de sport, je découvre des coins de la ville, et je rentre avec 100 à 120 $ dans les poches pour une journée de 4h. C'est ben mieux que de traîner dans un café à rien faire. Vraiment une belle initiative québécoise. »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/men/29.jpg" alt="François B.">
+          <div>
+            <strong>François B.</strong>
+            <span>Québec, QC</span>
+            <div class="testi-earnings">~480 $/mois</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">« Je suis maman et je travaille à temps partiel. PorteàPorte s'adapte parfaitement à mon horaire — je choisis mes missions selon ma disponibilité ce jour-là. Certaines semaines je fais 200 $, d'autres 60 $, selon ce que j'ai le temps de faire. Le support est toujours là quand j'en ai besoin. Je recommande sans hésiter. »</p>
+        <div class="testi-author">
+          <img src="https://randomuser.me/api/portraits/women/55.jpg" alt="Nadia K.">
+          <div>
+            <strong>Nadia K.</strong>
+            <span>Laval, QC</span>
+            <div class="testi-earnings">~720 $/mois</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRÉREQUIS -->
+<section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">Conditions d'admissibilité</div>
+    <h2 class="section-title">Ce qu'il te faut pour commencer</h2>
+    <p class="section-sub">Les exigences sont minimes — mais non négociables. On veut que tout le monde soit protégé.</p>
+    <div class="req-grid">
+      <div class="req-box" style="border-top: 3px solid var(--brand-lime);">
+        <h3>🚗 Pour livrer en voiture</h3>
+        <div class="subtitle">Livraisons locales, interrégionales et longue distance</div>
+        <ul>
+          <li><span class="ok">✓</span>Permis de conduire valide (classe 5 minimum)</li>
+          <li><span class="ok">✓</span>Assurance automobile valide au Québec</li>
+          <li><span class="ok">✓</span>Avoir 18 ans ou plus</li>
+          <li><span class="ok">✓</span>Identité vérifiée via notre processus KYC</li>
+          <li><span class="ok">✓</span>Bon dossier de conduite (sans suspensions récentes)</li>
+          <li><span class="ok">✓</span>Téléphone avec accès GPS et données mobiles</li>
+        </ul>
+        <div class="req-note">🔍 Vérification du permis et de l'assurance requise à l'inscription. Fait en ligne en 10 minutes.</div>
+      </div>
+      <div class="req-box" style="border-top: 3px solid var(--brand-cyan);">
+        <h3>🚲 Pour livrer à vélo ou à pied</h3>
+        <div class="subtitle">Livraisons locales et hyperlocales — aucune voiture requise</div>
+        <ul>
+          <li><span class="ok">✓</span>Avoir 18 ans ou plus</li>
+          <li><span class="ok">✓</span>Identité vérifiée via notre processus KYC</li>
+          <li><span class="ok">✓</span>Bonne condition physique (colis jusqu'à 20 kg)</li>
+          <li><span class="ok">✓</span>Téléphone avec accès GPS et données mobiles</li>
+          <li><span class="ok">✓</span>Capacité à soulever et transporter des charges</li>
+          <li><span class="ok">✓</span>Zone de livraison définie dans ton profil</li>
+        </ul>
+        <div class="req-note" style="background: rgba(0,217,255,0.04); border-color: rgba(0,217,255,0.15);">🚲 Pas de voiture ? Pas de problème. Beaucoup de nos livreurs les plus actifs livrent exclusivement à vélo.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SÉCURITÉ -->
+<section>
+  <div class="container">
+    <div class="section-label">Ta sécurité</div>
+    <h2 class="section-title">On te protège à chaque mission</h2>
+    <p class="section-sub">Livrer via PorteàPorte, c'est livrer en toute confiance. Voici comment on te garde en sécurité.</p>
+    <div class="security-grid">
+      <div class="sec-card">
+        <div class="sec-icon">💳</div>
+        <h3>Paiement Stripe garanti</h3>
+        <p>Ton gain est préautorisé avant que tu prennes le colis. Tu ne livres jamais sans la garantie d'être payé.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon">🪪</div>
+        <h3>Expéditeurs vérifiés</h3>
+        <p>Les expéditeurs ont aussi un profil vérifié. Tu sais à qui appartient le colis que tu transports.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon">🛡️</div>
+        <h3>Support en cas de litige</h3>
+        <p>Si un expéditeur conteste à tort une livraison, notre équipe examine les preuves (GPS, photos) et te défend.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon">📋</div>
+        <h3>Assurance plateforme</h3>
+        <p>En cas d'incident grave lors d'une livraison, une assurance de responsabilité plateforme peut s'appliquer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
+  <div class="container">
+    <div class="section-label">FAQ livreurs</div>
+    <h2 class="section-title">Questions fréquentes</h2>
+    <p class="section-sub">Tout ce que tu veux savoir avant de te lancer.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">Combien puis-je gagner concrètement ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Le revenu moyen de nos livreurs actifs est de 890 $/mois. Nos livreurs les plus actifs (trajets longue distance en voiture, 4+ missions par semaine) gagnent régulièrement entre 1 500 $ et 2 200 $ par mois. Les livreurs à vélo gagnent en général entre 250 $ et 600 $/mois selon leur disponibilité. Tout dépend de ta fréquence et de tes trajets.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Quand suis-je payé ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Dès que le destinataire confirme la livraison (ou après le délai de confirmation automatique de 2h), ton gain est libéré. Le virement est effectué via Stripe sur ton compte bancaire dans les 24 à 48h ouvrables. Tu peux suivre tous tes paiements depuis l'application dans la section "Mes gains".</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Que faire si le client n'est pas là à la livraison ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Si le destinataire est absent, tu as trois options : attendre 15 minutes (recommandé), laisser le colis dans un endroit sécurisé avec photo à l'appui, ou retourner le colis à l'expéditeur si les instructions le spécifient. Dans tous les cas, tu es payé pour le trajet effectué. Le protocole exact est indiqué dans chaque mission.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puis-je refuser une mission ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Absolument. Tu vois le détail complet de chaque mission — destination, type de colis, gain, distance — avant d'accepter. Tu n'acceptes que ce qui te convient. Une fois acceptée, on t'encourage à compléter la mission pour maintenir ton score de fiabilité, mais des exceptions sont possibles avec notification à l'expéditeur.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Y a-t-il un minimum d'heures ou de livraisons ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Aucun. PorteàPorte est totalement flexible — c'est toi qui gères ton horaire et ta fréquence. Tu peux faire une livraison par mois ou dix par semaine. Aucun contrat, aucun engagement, aucune pénalité si tu prends une pause.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Comment fonctionne le processus KYC ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Le KYC (Know Your Customer) est une vérification d'identité standard : tu fournis une photo de ta pièce d'identité officielle (permis, passeport, carte d'identité) et un selfie en temps réel pour confirmer que c'est bien toi. Ce processus se fait entièrement depuis l'application en environ 10 minutes. Tes données sont chiffrées et jamais revendues.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <div class="container">
+    <h2>Commence à gagner de l'argent dès aujourd'hui</h2>
+    <p>Inscription gratuite en 10 minutes. Tes premiers gains pourraient arriver dans les prochains jours.</p>
+    <div class="cta-btns">
+      <a href="/livreur.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
+        🚀 Devenir livreur PorteàPorte
+      </a>
+      <a href="#gains" class="btn btn-ghost">Calculer mes gains</a>
+    </div>
+    <p style="margin-top: 1.5rem; font-size: 0.82rem; color: var(--brand-muted);">
+      Des questions ? <a href="/contact.html" style="color: var(--brand-cyan); text-decoration: underline;">Parle à notre équipe</a> — on répond tous les jours.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="/index.html">Accueil</a>
+    <a href="/expediteur.html">Expédier un colis</a>
+    <a href="/assurance.html">Assurance</a>
+    <a href="/cgu.html">Conditions d'utilisation</a>
+    <a href="/confidentialite.html">Confidentialité</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+  <div class="footer-copy">© 2026 PorteàPorte inc. — Livraison collaborative au Québec 🍁</div>
+</footer>
+
+<script>
+  function calcUpdate() {
+    const vehicle = document.getElementById('vehicleType').value;
+    const trips = parseInt(document.getElementById('trips').value);
+    const dist = parseInt(document.getElementById('dist').value);
+    let rate, base;
+    if (vehicle === 'car') { rate = 0.18; base = 4.50; }
+    else if (vehicle === 'bike') { rate = 0.09; base = 2.50; }
+    else { rate = 0.05; base = 2.00; }
+    const perTrip = dist * rate + base;
+    const monthly = perTrip * trips * 4.3;
+    document.getElementById('perTrip').textContent = perTrip.toFixed(2) + ' $';
+    document.getElementById('tripsWeek').textContent = trips;
+    document.getElementById('resultAmount').textContent = Math.round(monthly) + ' $';
+    document.getElementById('totalMonth').textContent = Math.round(monthly) + ' $';
+  }
+  calcUpdate();
+
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+</script>
+<script src="/js/support-widget.js"></script>
+</body>
+</html>

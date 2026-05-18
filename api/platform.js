@@ -495,7 +495,7 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,adresse_depart,ville_arrivee,adresse_arrivee,type_colis,poids_kg,prix_total,statut,description,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,statut,description,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -520,9 +520,9 @@ async function availableLivraisons(req, res, ctx) {
       id: row.id,
       code: row.code,
       ville_depart: row.ville_depart,
-      adresse_depart: row.adresse_depart,
+      adresse_depart: null,
       ville_arrivee: row.ville_arrivee,
-      adresse_arrivee: row.adresse_arrivee,
+      adresse_arrivee: null,
       type_colis: row.type_colis,
       poids_kg: row.poids_kg,
       prix_total: row.prix_total,
@@ -531,7 +531,7 @@ async function availableLivraisons(req, res, ctx) {
       distance_km: eligibility.routeKm,
       compatibilite: eligibility.reason,
       cree_le: row.cree_le || row.created_at,
-      expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
+      expediteur_profile: null
     }))
   });
 }
@@ -643,6 +643,59 @@ async function myDriverLivraisons(req, res, ctx) {
   }));
 
   return res.status(200).json({ success: true, livraisons: enriched });
+}
+
+async function adminDashboard(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+
+  const profilesRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=*&order=prenom.asc&limit=1000`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const profiles = profilesRes.ok ? await profilesRes.json() : [];
+
+  let livraisonsRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,created_at,cree_le,livreur_id,expediteur_id&order=created_at.desc&limit=100`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  let livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
+
+  if (!livraisonsRes.ok) {
+    livraisonsRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,livreur_id,expediteur_id&order=cree_le.desc&limit=100`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
+  }
+
+  if (!livraisonsRes.ok) {
+    livraisonsRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/livraisons?select=*&limit=100`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
+  }
+
+  if (!profilesRes.ok) {
+    return res.status(400).json({ error: 'Lecture profils admin impossible', details: profiles });
+  }
+  if (!livraisonsRes.ok) {
+    return res.status(400).json({ error: 'Lecture livraisons admin impossible', details: livraisons });
+  }
+
+  const normalizedLivraisons = livraisons.map((row) => ({
+    ...row,
+    statut: row.statut || row.status || 'inconnu',
+    prix_total: row.prix_total ?? row.prix ?? row.montant ?? 0,
+    created_at: row.created_at || row.cree_le || row.date_creation || null,
+  }));
+
+  return res.status(200).json({
+    success: true,
+    profiles,
+    livraisons: normalizedLivraisons
+  });
 }
 
 async function tracking(req, res, ctx, body) {
@@ -1928,6 +1981,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
+    if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
     if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
     if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);
@@ -1946,14 +2000,17 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-rewards') return await adminRewards(req, res, ctx, body);
     if (endpoint === 'push-subscribe') return await pushSubscribe(req, res, ctx, body);
     if (endpoint === 'push-send') return await pushSend(req, res, ctx, body);
-    if (endpoint === 'ride-create')   return await rideCreate(req, res, ctx, body);
-    if (endpoint === 'ride-search')   return await rideSearch(req, res, ctx, body);
-    if (endpoint === 'ride-detail')   return await rideDetail(req, res, ctx, body);
-    if (endpoint === 'ride-book')     return await rideBook(req, res, ctx, body);
-    if (endpoint === 'ride-cancel')   return await rideCancel(req, res, ctx, body);
-    if (endpoint === 'ride-my-rides') return await rideMyRides(req, res, ctx, body);
-    if (endpoint === 'ride-admin')    return await rideAdmin(req, res, ctx, body);
-    if (endpoint === 'ride-report')   return await rideReport(req, res, ctx, body);
+    if (endpoint === 'ride-create')          return await rideCreate(req, res, ctx, body);
+    if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
+    if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
+    if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
+    if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
+    if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
+    if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
+    if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
+    if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx, body);
+    if (endpoint === 'ride-package-book')    return await ridePackageBook(req, res, ctx, body);
+    if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
     if (endpoint === 'cov-progress')  return await covProgress(req, res, ctx, body);
@@ -1970,6 +2027,11 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badge-campaign-save')  return await badgeCampaignSave(req, res, ctx, body);
     if (endpoint === 'badge-campaign-toggle')return await badgeCampaignToggle(req, res, ctx, body);
     if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
+    if (endpoint === 'stripe-connect-onboard')   return await stripeConnectOnboard(req, res, ctx, body);
+    if (endpoint === 'stripe-connect-status')    return await stripeConnectStatus(req, res, ctx);
+    if (endpoint === 'stripe-connect-dashboard') return await stripeConnectDashboard(req, res, ctx);
+    if (endpoint === 'stripe-connect-payout')    return await stripeConnectPayout(req, res, ctx, body);
+    if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -2081,19 +2143,30 @@ async function pushSend(req, res, ctx, body) {
 // COVOITURAGE
 // ═══════════════════════════════════════════════════════════════
 
-const RIDE_COST_PER_KM   = 0.35;
-const RIDE_PLATFORM_PCT  = 0.10;
-const RIDE_MAX_COST_PER_KM = 0.50;
-const RIDE_FEE_LUGGAGE   = 5.00;
-const RIDE_FEE_PET       = 8.00;
-const RIDE_FEE_STOP      = 3.00;
+const RIDE_COST_PER_KM       = 0.35;
+const RIDE_PLATFORM_PCT      = 0.10;
+const RIDE_MAX_COST_PER_KM   = 0.50;
+const RIDE_FEE_LUGGAGE       = 5.00;
+const RIDE_FEE_PET           = 8.00;
+const RIDE_FEE_STOP          = 3.00;
+const RIDE_FEE_PACKAGE_BASE  = 8.00;   // frais fixes colis
+const RIDE_FEE_PACKAGE_PER_KG = 1.50; // par kg supplémentaire au-delà de 5 kg
 
 async function getRideSettings(ctx) {
   try {
-    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_pct,ride_fee_luggage,ride_fee_pet,ride_fee_stop&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_pct,ride_fee_luggage,ride_fee_pet,ride_fee_stop,ride_fee_package_base,ride_fee_package_per_kg&limit=1`, { headers: sbHeaders(ctx.sbKey) });
     const rows = r.ok ? await r.json() : [];
     return rows[0] || {};
   } catch (_) { return {}; }
+}
+
+function calcPackageFee(weightKg, rideSettings) {
+  const s = rideSettings || {};
+  const base  = Math.max(0, toNumber(s.ride_fee_package_base,   RIDE_FEE_PACKAGE_BASE));
+  const perKg = Math.max(0, toNumber(s.ride_fee_package_per_kg, RIDE_FEE_PACKAGE_PER_KG));
+  const kg    = Math.max(0, Number(weightKg) || 0);
+  const extra = Math.max(0, kg - 5) * perKg;
+  return Math.round((base + extra) * 100) / 100;
 }
 
 function groupBonusPct(confirmedPassengers) {
@@ -2129,10 +2202,12 @@ function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLug
   const stopFee    = (Number(extraStops) || 0) * feeStop;
   const detourFee  = (Number(detourKm)  || 0) * cpk;
 
-  const subtotal      = paxBase + luggageFee + petFee + stopFee + detourFee;
-  const platformFee   = Math.round(subtotal * platformPct * 100) / 100;
-  const totalPassenger = Math.round((subtotal + platformFee) * 100) / 100;
-  const driverAmount  = Math.round(subtotal * 100) / 100;
+  // Les frais de bagage vont entièrement au chauffeur — exclus de la base de commission
+  const commissionBase = paxBase + petFee + stopFee + detourFee;
+  const platformFee    = Math.round(commissionBase * platformPct * 100) / 100;
+  // Le chauffeur reçoit sa part de base + les frais de bagage complets
+  const driverAmount   = Math.round((commissionBase + luggageFee) * 100) / 100;
+  const totalPassenger = Math.round((commissionBase + platformFee + luggageFee) * 100) / 100;
 
   const maxAllowed = Math.round(paxKm * RIDE_MAX_COST_PER_KM * 100) / 100;
   const overLimit  = totalPassenger > maxAllowed + platformFee;
@@ -2163,6 +2238,10 @@ async function rideCreate(req, res, ctx, body) {
     start_sector, end_sector,
     start_lat, start_lng, end_lat, end_lng,
     total_distance_km, cost_per_km, personal_rules,
+    // Profil véhicule / ambiance
+    smoking_policy, music_policy, chat_policy, ac_available,
+    // Points d'arrêt intermédiaires
+    stop_points,
   } = body;
 
   if (!start_city || !end_city || !departure_time || !available_seats) {
@@ -2171,6 +2250,22 @@ async function rideCreate(req, res, ctx, body) {
 
   const distKm = Number(total_distance_km) || estimateRouteKm(start_city, end_city) || 100;
   const cpk    = Math.min(Number(cost_per_km) || RIDE_COST_PER_KM, RIDE_MAX_COST_PER_KM);
+
+  // Valider et nettoyer les points d'arrêt
+  const cleanStops = Array.isArray(stop_points)
+    ? stop_points.slice(0, 10).map((s, i) => ({
+        order:      i + 1,
+        city:       String(s.city || '').trim().slice(0, 100),
+        sector:     s.sector ? String(s.sector).trim().slice(0, 100) : null,
+        lat:        s.lat ? Number(s.lat) : null,
+        lng:        s.lng ? Number(s.lng) : null,
+        detour_km:  s.detour_km ? Number(s.detour_km) : 0,
+      })).filter(s => s.city)
+    : [];
+
+  const smokingVal = ['non_fumeur','fumeur','exterieur'].includes(smoking_policy)
+    ? smoking_policy
+    : (non_smoker === false ? 'fumeur' : 'non_fumeur');
 
   const payload = {
     driver_id: ctx.session.id,
@@ -2194,13 +2289,21 @@ async function rideCreate(req, res, ctx, body) {
     accepts_pets: Boolean(accepts_pets),
     accepts_large_luggage: Boolean(accepts_large_luggage),
     accepts_extra_stops: Boolean(accepts_extra_stops),
-    non_smoker: accepts_pets === undefined ? true : Boolean(non_smoker),
+    accepts_packages: Boolean(body.accepts_packages),
+    package_max_kg: body.package_max_kg ? Math.min(Number(body.package_max_kg), 50) : 10,
+    package_max_dim_cm: body.package_max_dim_cm ? Math.min(Number(body.package_max_dim_cm), 200) : 60,
+    non_smoker: smokingVal === 'non_fumeur',
+    smoking_policy: smokingVal,
+    music_policy: ['silence','selon_humeur','musique'].includes(music_policy) ? music_policy : 'selon_humeur',
+    chat_policy: ['silencieux','selon_humeur','bavard'].includes(chat_policy) ? chat_policy : 'selon_humeur',
+    ac_available: Boolean(ac_available),
     women_only: Boolean(women_only),
     child_seat_available: Boolean(child_seat_available),
     accessible: Boolean(accessible),
     personal_rules: personal_rules ? String(personal_rules).slice(0, 500) : null,
     cost_per_km: cpk,
     total_distance_km: distKm,
+    stop_points: cleanStops,
     status: 'publie',
   };
 
@@ -2213,15 +2316,39 @@ async function rideCreate(req, res, ctx, body) {
   if (!r.ok) return res.status(400).json({ error: 'Création trajet impossible', details: data });
 
   const ride = Array.isArray(data) ? data[0] : data;
+
+  // Mettre à jour le profil chauffeur avec les préférences de ce trajet (upsert)
+  await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({
+      user_id:        ctx.session.id,
+      smoking_policy: smokingVal,
+      music_policy:   payload.music_policy,
+      chat_policy:    payload.chat_policy,
+      ac_available:   payload.ac_available,
+    }),
+  }).catch(() => {});
+
   return res.status(200).json({ success: true, ride });
 }
 
 async function rideSearch(req, res, ctx, body) {
   const url = new URL(req.url || '/', 'https://porteaporte.site');
-  const start = body.start_city || url.searchParams.get('start_city') || '';
-  const end   = body.end_city   || url.searchParams.get('end_city')   || '';
-  const date  = body.date       || url.searchParams.get('date')       || '';
-  const seats = Number(body.seats || url.searchParams.get('seats') || 1);
+  const p = (k) => body[k] || url.searchParams.get(k) || '';
+  const start  = p('start_city');
+  const end    = p('end_city');
+  const date   = p('date');
+  const seats  = Number(p('seats') || 1);
+  // Filtres passager
+  const smokingFilter   = p('smoking_policy');    // 'non_fumeur' | 'fumeur' | ''
+  const trunkFilter     = p('trunk_size');         // 'petit' | 'moyen' | 'grand' | ''
+  const petsFilter      = p('accepts_pets');       // 'true' | ''
+  const luggageFilter   = p('accepts_large_luggage'); // 'true' | ''
+  const acFilter        = p('ac_available');        // 'true' | ''
+  const musicFilter     = p('music_policy');        // silence | selon_humeur | musique | ''
+  const chatFilter      = p('chat_policy');         // silencieux | selon_humeur | bavard | ''
+  const womenFilter     = p('women_only');          // 'true' | ''
 
   let filter = `status=eq.publie&available_seats=gte.${seats}`;
   if (start) filter += `&start_city=ilike.*${encodeURIComponent(start)}*`;
@@ -2234,18 +2361,42 @@ async function rideSearch(req, res, ctx, body) {
       filter += `&departure_time=gte.${from.toISOString()}&departure_time=lte.${to.toISOString()}`;
     }
   }
+  if (smokingFilter)          filter += `&smoking_policy=eq.${smokingFilter}`;
+  if (trunkFilter)            filter += `&trunk_size=eq.${trunkFilter}`;
+  if (petsFilter === 'true')  filter += `&accepts_pets=eq.true`;
+  if (luggageFilter === 'true') filter += `&accepts_large_luggage=eq.true`;
+  if (acFilter === 'true')    filter += `&ac_available=eq.true`;
+  if (musicFilter)            filter += `&music_policy=eq.${musicFilter}`;
+  if (chatFilter)             filter += `&chat_policy=eq.${chatFilter}`;
+  if (womenFilter === 'true') filter += `&women_only=eq.true`;
   filter += '&order=departure_time.asc&limit=50';
 
-  const select = 'id,start_city,start_sector,end_city,end_sector,departure_time,available_seats,vehicle_type,trunk_size,accepts_pets,accepts_large_luggage,accepts_extra_stops,non_smoker,women_only,accessible,cost_per_km,total_distance_km,status,driver_id';
+  const packagesFilter = p('accepts_packages');
+  if (packagesFilter === 'true') filter += `&accepts_packages=eq.true`;
+
+  const select = 'id,start_city,start_sector,end_city,end_sector,departure_time,available_seats,vehicle_type,trunk_size,accepts_pets,accepts_large_luggage,accepts_extra_stops,accepts_packages,package_max_kg,smoking_policy,music_policy,chat_policy,ac_available,women_only,accessible,cost_per_km,total_distance_km,status,driver_id,stop_points';
 
   const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?${filter}&select=${select}`, {
     headers: sbHeaders(ctx.sbKey),
   });
   const rides = r.ok ? await r.json() : [];
 
-  // Enrichir avec prix estimé et info chauffeur limitée (sans données privées)
+  if (!rides.length) return res.status(200).json({ rides: [] });
+
+  // Récupérer profils chauffeurs + ride_driver_profiles en batch
+  const driverIds = [...new Set(rides.map(r => r.driver_id))];
+  const [profilesRes, driverProfilesRes] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${driverIds.join(',')})&select=id,prenom,driver_status,score_confiance`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=in.(${driverIds.join(',')})&select=user_id,vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_photos,bio`, { headers: sbHeaders(ctx.sbKey) }),
+  ]);
+
+  const profiles      = profilesRes.ok ? await profilesRes.json() : [];
+  const driverProfiles = driverProfilesRes.ok ? await driverProfilesRes.json() : [];
+  const profileMap     = Object.fromEntries(profiles.map(p => [p.id, p]));
+  const driverProfileMap = Object.fromEntries(driverProfiles.map(p => [p.user_id, p]));
+
   const rideSettings = await getRideSettings(ctx);
-  const enriched = await Promise.all(rides.map(async (ride) => {
+  const enriched = rides.map((ride) => {
     const price = calcRidePrice({
       totalDistanceKm: ride.total_distance_km,
       passengerDistanceKm: ride.total_distance_km,
@@ -2253,27 +2404,38 @@ async function rideSearch(req, res, ctx, body) {
       seats,
       rideSettings,
     });
-
-    // Profil chauffeur — données publiques seulement
-    const pRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ride.driver_id}&select=prenom,driver_status,verification_status`, {
-      headers: sbHeaders(ctx.sbKey),
-    });
-    const pRows = pRes.ok ? await pRes.json() : [];
-    const driver = pRows[0] || {};
+    const profile      = profileMap[ride.driver_id] || {};
+    const driverProfile = driverProfileMap[ride.driver_id] || {};
 
     return {
       ...ride,
       start_lat: undefined, start_lng: undefined,
       end_lat: undefined,   end_lng: undefined,
       driver: {
-        prenom: driver.prenom || 'Chauffeur',
-        verified: driver.driver_status === 'verified',
+        prenom:       profile.prenom || 'Chauffeur',
+        verified:     profile.driver_status === 'verified',
+        score:        profile.score_confiance || 0,
+        vehicle_make:  driverProfile.vehicle_make || null,
+        vehicle_model: driverProfile.vehicle_model || null,
+        vehicle_year:  driverProfile.vehicle_year || null,
+        vehicle_color: driverProfile.vehicle_color || null,
+        vehicle_photo: (driverProfile.vehicle_photos || [])[0] || null,
+        bio:           driverProfile.bio || null,
       },
-      estimated_price: price.totalPassenger,
-      driver_amount:   price.driverAmount,
-      platform_fee:    price.platformFee,
+      estimated_price:   price.totalPassenger,
+      driver_amount:     price.driverAmount,
+      platform_fee:      price.platformFee,
+      luggage_fee_info:  RIDE_FEE_LUGGAGE,
+      // Rabais groupe — afficher la prochaine étape de réduction
+      group_discount: (() => {
+        const cur = groupBonusPct(0);
+        const next = groupBonusPct(1);
+        const diff = next - cur;
+        if (diff > 0) return { next_pct: Math.round(diff * 100), seats_needed: 1 };
+        return null;
+      })(),
     };
-  }));
+  });
 
   return res.status(200).json({ rides: enriched });
 }
@@ -2295,18 +2457,23 @@ async function rideDetail(req, res, ctx, body) {
     return res.status(403).json({ error: 'Trajet non disponible' });
   }
 
-  // Arrêts
+  // Arrêts (table ride_stops legacy + colonne stop_points JSONB)
   const stopsRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_stops?ride_id=eq.${rideId}&order=stop_order.asc`, {
     headers: sbHeaders(ctx.sbKey),
   });
-  const stops = stopsRes.ok ? await stopsRes.json() : [];
+  const legacyStops = stopsRes.ok ? await stopsRes.json() : [];
+  const stops = legacyStops.length ? legacyStops : (ride.stop_points || []);
 
-  // Chauffeur — données publiques
-  const pRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ride.driver_id}&select=prenom,driver_status,created_at`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const pRows = pRes.ok ? await pRes.json() : [];
-  const driver = pRows[0] || {};
+  // Chauffeur — profil public
+  const [pRes, dpRes, reviewsRes] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ride.driver_id}&select=prenom,driver_status,created_at,score_confiance,photo_url`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=eq.${ride.driver_id}&select=*`, { headers: sbHeaders(ctx.sbKey) }),
+    fetch(`${ctx.sbUrl}/rest/v1/reviews?driver_id=eq.${ride.driver_id}&select=note,created_at&order=created_at.desc&limit=5`, { headers: sbHeaders(ctx.sbKey) }),
+  ]);
+
+  const driver      = (pRes.ok ? await pRes.json() : [])[0] || {};
+  const driverProfile = (dpRes.ok ? await dpRes.json() : [])[0] || {};
+  const reviews     = reviewsRes.ok ? await reviewsRes.json() : [];
 
   // Calcul prix avec options passager depuis body
   const paxKm = Number(body.passenger_distance_km) || ride.total_distance_km;
@@ -2335,11 +2502,30 @@ async function rideDetail(req, res, ctx, body) {
     ride: safeRide,
     stops,
     driver: {
-      prenom:   driver.prenom || 'Chauffeur',
-      verified: driver.driver_status === 'verified',
-      member_since: driver.created_at ? new Date(driver.created_at).getFullYear() : null,
+      prenom:        driver.prenom || 'Chauffeur',
+      photo_url:     driver.photo_url || null,
+      verified:      driver.driver_status === 'verified',
+      score:         driver.score_confiance || 0,
+      member_since:  driver.created_at ? new Date(driver.created_at).getFullYear() : null,
+      // Profil véhicule
+      vehicle_make:   driverProfile.vehicle_make || null,
+      vehicle_model:  driverProfile.vehicle_model || null,
+      vehicle_year:   driverProfile.vehicle_year || null,
+      vehicle_color:  driverProfile.vehicle_color || null,
+      vehicle_photos: driverProfile.vehicle_photos || [],
+      // Ambiance / préférences
+      smoking_policy: ride.smoking_policy || driverProfile.smoking_policy || 'non_fumeur',
+      music_policy:   ride.music_policy   || driverProfile.music_policy   || 'selon_humeur',
+      chat_policy:    ride.chat_policy    || driverProfile.chat_policy    || 'selon_humeur',
+      ac_available:   ride.ac_available   ?? driverProfile.ac_available   ?? false,
+      perfume_free:   driverProfile.perfume_free || false,
+      bio:            driverProfile.bio || null,
+      recent_reviews: reviews,
     },
-    price_breakdown: price,
+    price_breakdown: {
+      ...price,
+      luggage_note: 'Les frais de bagage vont intégralement au chauffeur',
+    },
   });
 }
 
@@ -2585,6 +2771,162 @@ async function rideReport(req, res, ctx, body) {
 
   if (!r.ok) return res.status(400).json({ error: 'Signalement impossible' });
   return res.status(200).json({ success: true, message: 'Signalement reçu. Notre équipe va examiner.' });
+}
+
+async function rideDriverProfile(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+
+  const uid = ctx.session.id;
+
+  // GET — lire son propre profil
+  if (req.method === 'GET') {
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=eq.${uid}`, {
+      headers: sbHeaders(ctx.sbKey),
+    });
+    const rows = r.ok ? await r.json() : [];
+    return res.status(200).json({ profile: rows[0] || null });
+  }
+
+  // POST — créer ou mettre à jour
+  const {
+    vehicle_make, vehicle_model, vehicle_year, vehicle_color,
+    vehicle_photos, smoking_policy, music_policy, chat_policy,
+    ac_available, perfume_free, bio,
+  } = body;
+
+  const smokingVal = ['non_fumeur','fumeur','exterieur'].includes(smoking_policy) ? smoking_policy : undefined;
+  const musicVal   = ['silence','selon_humeur','musique'].includes(music_policy) ? music_policy : undefined;
+  const chatVal    = ['silencieux','selon_humeur','bavard'].includes(chat_policy) ? chat_policy : undefined;
+
+  const photos = Array.isArray(vehicle_photos)
+    ? vehicle_photos.slice(0, 6).filter(u => typeof u === 'string' && u.startsWith('http'))
+    : undefined;
+
+  const payload = { user_id: uid };
+  if (vehicle_make  !== undefined) payload.vehicle_make  = String(vehicle_make).slice(0, 60);
+  if (vehicle_model !== undefined) payload.vehicle_model = String(vehicle_model).slice(0, 60);
+  if (vehicle_year  !== undefined) payload.vehicle_year  = Number(vehicle_year) || null;
+  if (vehicle_color !== undefined) payload.vehicle_color = String(vehicle_color).slice(0, 40);
+  if (photos        !== undefined) payload.vehicle_photos = photos;
+  if (smokingVal    !== undefined) payload.smoking_policy = smokingVal;
+  if (musicVal      !== undefined) payload.music_policy   = musicVal;
+  if (chatVal       !== undefined) payload.chat_policy    = chatVal;
+  if (ac_available  !== undefined) payload.ac_available   = Boolean(ac_available);
+  if (perfume_free  !== undefined) payload.perfume_free   = Boolean(perfume_free);
+  if (bio           !== undefined) payload.bio            = String(bio).slice(0, 400);
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(payload),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.status(400).json({ error: 'Sauvegarde impossible', details: data });
+
+  const saved = Array.isArray(data) ? data[0] : data;
+  return res.status(200).json({ success: true, profile: saved });
+}
+
+/* ── RÉSERVATION COLIS ──────────────────────────────────────── */
+async function ridePackageBook(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+
+  const { ride_id, pickup_city, dropoff_city, package_weight_kg,
+          package_description, pickup_point_id, dropoff_point_id,
+          pickup_sector, dropoff_sector } = body;
+
+  if (!ride_id || !pickup_city || !dropoff_city) {
+    return res.status(400).json({ error: 'ride_id, pickup_city, dropoff_city requis' });
+  }
+  if (!package_weight_kg || Number(package_weight_kg) <= 0) {
+    return res.status(400).json({ error: 'package_weight_kg requis' });
+  }
+
+  // Vérifier le trajet
+  const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}&select=id,driver_id,status,accepts_packages,package_max_kg,package_max_dim_cm,total_distance_km,cost_per_km`, {
+    headers: sbHeaders(ctx.sbKey),
+  });
+  const rRows = rRes.ok ? await rRes.json() : [];
+  if (!rRows.length) return res.status(404).json({ error: 'Trajet introuvable' });
+
+  const ride = rRows[0];
+  if (ride.status !== 'publie') return res.status(400).json({ error: 'Trajet non disponible' });
+  if (!ride.accepts_packages)  return res.status(400).json({ error: 'Ce chauffeur n\'accepte pas de colis' });
+  if (ride.driver_id === ctx.session.id) return res.status(400).json({ error: 'Vous ne pouvez pas réserver votre propre trajet' });
+
+  const kg = Number(package_weight_kg);
+  if (kg > (ride.package_max_kg || 10)) {
+    return res.status(400).json({ error: `Poids maximum accepté : ${ride.package_max_kg} kg` });
+  }
+
+  const settings     = await getRideSettings(ctx);
+  const packageFee   = calcPackageFee(kg, settings);
+  const platformFee  = Math.round(packageFee * RIDE_PLATFORM_PCT * 100) / 100;
+  const totalPays    = Math.round((packageFee + platformFee) * 100) / 100;
+  const driverAmount = packageFee;
+
+  const booking = {
+    ride_id,
+    passenger_id:        ctx.session.id,
+    booking_type:        'package',
+    pickup_city:         String(pickup_city).trim(),
+    pickup_sector:       pickup_sector ? String(pickup_sector).trim() : null,
+    dropoff_city:        String(dropoff_city).trim(),
+    dropoff_sector:      dropoff_sector ? String(dropoff_sector).trim() : null,
+    pickup_point_id:     pickup_point_id || null,
+    dropoff_point_id:    dropoff_point_id || null,
+    seats_reserved:      0,
+    package_weight_kg:   kg,
+    package_description: package_description ? String(package_description).slice(0, 300) : null,
+    package_fee:         packageFee,
+    platform_fee:        platformFee,
+    driver_amount:       driverAmount,
+    total_passenger:     totalPays,
+    base_share:          0,
+    luggage_fee:         0,
+    pet_fee:             0,
+    stop_fee:            0,
+    detour_fee:          0,
+    status:              'en_attente',
+  };
+
+  const bRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(booking),
+  });
+  const bData = await bRes.json().catch(() => ({}));
+  if (!bRes.ok) return res.status(400).json({ error: 'Réservation colis impossible', details: bData });
+
+  const saved = Array.isArray(bData) ? bData[0] : bData;
+  return res.status(200).json({
+    success: true,
+    booking: saved,
+    price_breakdown: {
+      package_fee:   packageFee,
+      platform_fee:  platformFee,
+      total_pays:    totalPays,
+      driver_receives: driverAmount,
+      note: `Frais de base ${RIDE_FEE_PACKAGE_BASE}$ + ${Math.max(0, kg - 5).toFixed(1)} kg sup. × ${RIDE_FEE_PACKAGE_PER_KG}$/kg`,
+    },
+  });
+}
+
+/* ── POINTS SÉCURITAIRES ────────────────────────────────────── */
+async function safeMeetingPoints(req, res, ctx, body) {
+  const url    = new URL(req.url || '/', 'https://porteaporte.site');
+  const city   = body.city || url.searchParams.get('city') || '';
+  const type   = body.type || url.searchParams.get('type') || '';
+
+  let filter = 'active=eq.true&order=verified.desc,name.asc&limit=50';
+  if (city) filter += `&city=ilike.*${encodeURIComponent(city)}*`;
+  if (type) filter += `&type=eq.${type}`;
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/safe_meeting_points?${filter}&select=id,name,type,address,city,lat,lng,verified`, {
+    headers: sbHeaders(ctx.sbKey),
+  });
+  const points = r.ok ? await r.json() : [];
+  return res.status(200).json({ points });
 }
 
 /* ── COV DASHBOARD ─────────────────────────────────────────── */
@@ -3279,4 +3621,292 @@ async function rewardReferralIfPending(ctx, refereeId, actionType) {
     method: 'POST', headers: sbHeaders(ctx.sbKey),
     body: JSON.stringify({ user_id: ref.referrer_id, action: 'referral_reward', points_delta: POINTS_REWARD, xp_delta: XP_REWARD, ref_type: 'referral', ref_id: ref.id })
   }).catch(() => {});
+}
+
+/* ============================================================
+   STRIPE CONNECT EXPRESS — paiements livreurs
+============================================================ */
+
+async function stripeConnectRequest(method, path, body, secretKey, connectedAccountId) {
+  const headers = {
+    Authorization: `Bearer ${secretKey}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Stripe-Version': '2024-04-10',
+  };
+  if (connectedAccountId) headers['Stripe-Account'] = connectedAccountId;
+  const options = { method, headers };
+  if (body && method !== 'GET') options.body = new URLSearchParams(body).toString();
+  const r    = await fetch(`https://api.stripe.com${path}`, options);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error?.message || `Stripe ${r.status}`);
+  return data;
+}
+
+/* ── Créer compte + lien d'onboarding ────────────────────── */
+async function stripeConnectOnboard(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role livreur requis' });
+  }
+  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
+
+  const uid   = ctx.session.id;
+  const sbUrl = ctx.sbUrl;
+  const sbKey = ctx.sbKey;
+
+  // Vérifier si un compte existe déjà
+  const existing = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
+    headers: sbHeaders(sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  let stripeAccountId = existing[0]?.stripe_account_id;
+
+  if (!stripeAccountId) {
+    // Récupérer email du profil
+    const profileRows = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${uid}&select=email,prenom,nom`, {
+      headers: sbHeaders(sbKey)
+    }).then(r => r.ok ? r.json() : []);
+    const email = profileRows[0]?.email || ctx.session.email || '';
+
+    // Créer le compte Express
+    const account = await stripeConnectRequest('POST', '/v1/accounts', {
+      type: 'express',
+      country: 'CA',
+      email,
+      'capabilities[transfers][requested]': 'true',
+      'settings[payouts][schedule][interval]': 'weekly',
+      'settings[payouts][schedule][weekly_anchor]': 'friday',
+    }, ctx.stripeKey);
+
+    stripeAccountId = account.id;
+
+    // Sauvegarder en base
+    await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts`, {
+      method: 'POST',
+      headers: sbHeaders(sbKey),
+      body: JSON.stringify({
+        user_id: uid,
+        stripe_account_id: stripeAccountId,
+        status: 'pending',
+        country: 'CA',
+      })
+    });
+  }
+
+  // Créer le lien d'onboarding (toujours régénérer — expire après utilisation)
+  const baseUrl = process.env.BASE_URL || 'https://porteaporte.site';
+  const accountLink = await stripeConnectRequest('POST', '/v1/account_links', {
+    account:     stripeAccountId,
+    refresh_url: `${baseUrl}/dashboard-livreur.html?stripe=refresh`,
+    return_url:  `${baseUrl}/dashboard-livreur.html?stripe=success`,
+    type: 'account_onboarding',
+  }, ctx.stripeKey);
+
+  return res.status(200).json({
+    success: true,
+    onboarding_url: accountLink.url,
+    stripe_account_id: stripeAccountId,
+  });
+}
+
+/* ── Statut du compte + solde disponible ─────────────────── */
+async function stripeConnectStatus(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role livreur requis' });
+  }
+
+  const uid   = ctx.session.id;
+  const sbUrl = ctx.sbUrl;
+  const sbKey = ctx.sbKey;
+
+  // Récupérer compte en base
+  const rows = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
+    headers: sbHeaders(sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  const account = rows[0] || null;
+
+  // Récupérer le solde depuis v_livreur_balance
+  const balRows = await fetch(`${sbUrl}/rest/v1/v_livreur_balance?user_id=eq.${uid}`, {
+    headers: sbHeaders(sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  const balance = balRows[0] || { balance_available: 0, balance_pending: 0, total_earned: 0, total_transferred: 0 };
+
+  // Historique des 10 derniers virements
+  const payouts = await fetch(`${sbUrl}/rest/v1/payout_requests?user_id=eq.${uid}&order=requested_at.desc&limit=10&select=*`, {
+    headers: sbHeaders(sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  // Si le compte existe, rafraîchir le statut depuis Stripe
+  if (account?.stripe_account_id && ctx.stripeKey) {
+    try {
+      const stripeAcct = await stripeConnectRequest('GET', `/v1/accounts/${account.stripe_account_id}`, null, ctx.stripeKey);
+      const newStatus = stripeAcct.charges_enabled && stripeAcct.payouts_enabled ? 'active'
+                      : stripeAcct.details_submitted ? 'onboarding'
+                      : 'pending';
+      if (newStatus !== account.status) {
+        await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}`, {
+          method: 'PATCH',
+          headers: sbHeaders(sbKey, 'return=minimal'),
+          body: JSON.stringify({
+            status:            newStatus,
+            charges_enabled:   stripeAcct.charges_enabled,
+            payouts_enabled:   stripeAcct.payouts_enabled,
+            details_submitted: stripeAcct.details_submitted,
+          })
+        });
+        account.status          = newStatus;
+        account.charges_enabled = stripeAcct.charges_enabled;
+        account.payouts_enabled = stripeAcct.payouts_enabled;
+      }
+    } catch (_) { /* Silencieux si Stripe inaccessible */ }
+  }
+
+  return res.status(200).json({
+    success: true,
+    account: account || null,
+    balance: {
+      available:    parseFloat(balance.balance_available || 0),
+      pending:      parseFloat(balance.balance_pending   || 0),
+      total_earned: parseFloat(balance.total_earned      || 0),
+      transferred:  parseFloat(balance.total_transferred || 0),
+    },
+    recent_payouts: payouts,
+  });
+}
+
+/* ── Lien vers le dashboard Express Stripe ───────────────── */
+async function stripeConnectDashboard(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role livreur requis' });
+  }
+  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
+
+  const uid  = ctx.session.id;
+  const rows = await fetch(`${ctx.sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=stripe_account_id,status`, {
+    headers: sbHeaders(ctx.sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  if (!rows.length || !rows[0].stripe_account_id) {
+    return res.status(404).json({ error: 'Compte Stripe non configure' });
+  }
+  if (rows[0].status !== 'active') {
+    return res.status(400).json({ error: 'Compte non encore actif' });
+  }
+
+  const link = await stripeConnectRequest('POST', `/v1/accounts/${rows[0].stripe_account_id}/login_links`, {}, ctx.stripeKey);
+  return res.status(200).json({ success: true, url: link.url });
+}
+
+/* ── Déclencher un virement vers le livreur ─────────────── */
+async function stripeConnectPayout(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role livreur requis' });
+  }
+  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
+
+  const uid   = ctx.session.id;
+  const sbUrl = ctx.sbUrl;
+  const sbKey = ctx.sbKey;
+
+  // Vérifier compte actif
+  const acctRows = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
+    headers: sbHeaders(sbKey)
+  }).then(r => r.ok ? r.json() : []);
+
+  const account = acctRows[0];
+  if (!account?.stripe_account_id)  return res.status(400).json({ error: 'Configure ton compte de paiement d\'abord' });
+  if (!account.payouts_enabled)     return res.status(400).json({ error: 'Ton compte Stripe n\'est pas encore actif' });
+
+  // Récupérer les gains disponibles
+  const earningRows = await fetch(
+    `${sbUrl}/rest/v1/livreur_earnings?user_id=eq.${uid}&status=eq.available&available_after=lte.${new Date().toISOString()}&select=*`,
+    { headers: sbHeaders(sbKey) }
+  ).then(r => r.ok ? r.json() : []);
+
+  const totalNet = earningRows.reduce((s, e) => s + parseFloat(e.net_amount || 0), 0);
+  const MINIMUM  = 10; // $ minimum de retrait
+
+  if (totalNet < MINIMUM) {
+    return res.status(400).json({
+      error: `Solde insuffisant. Minimum ${MINIMUM} $ requis (disponible: ${totalNet.toFixed(2)} $)`
+    });
+  }
+
+  const amountCents = Math.floor(totalNet * 100);
+  const earningIds  = earningRows.map(e => e.id);
+
+  // Créer le virement Stripe
+  let transfer;
+  try {
+    transfer = await stripeConnectRequest('POST', '/v1/transfers', {
+      amount:      amountCents,
+      currency:    'cad',
+      destination: account.stripe_account_id,
+      description: `Gains PorteaPorte — ${new Date().toLocaleDateString('fr-CA')}`,
+    }, ctx.stripeKey);
+  } catch (e) {
+    return res.status(502).json({ error: 'Erreur Stripe : ' + e.message });
+  }
+
+  // Marquer les gains comme transférés
+  await Promise.all(earningIds.map(id =>
+    fetch(`${sbUrl}/rest/v1/livreur_earnings?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: sbHeaders(sbKey, 'return=minimal'),
+      body: JSON.stringify({ status: 'transferred', stripe_transfer_id: transfer.id })
+    })
+  ));
+
+  // Enregistrer la demande de virement
+  const payoutRow = {
+    user_id:            uid,
+    amount_cents:       amountCents,
+    currency:           'cad',
+    status:             'processing',
+    stripe_transfer_id: transfer.id,
+    requested_at:       new Date().toISOString(),
+  };
+  await fetch(`${sbUrl}/rest/v1/payout_requests`, {
+    method: 'POST',
+    headers: sbHeaders(sbKey),
+    body: JSON.stringify(payoutRow)
+  });
+
+  // Notification in-app
+  await fetch(`${sbUrl}/rest/v1/notifications`, {
+    method: 'POST',
+    headers: sbHeaders(sbKey),
+    body: JSON.stringify({
+      user_id: uid,
+      type: 'system',
+      title: 'Virement en cours',
+      message: `${(amountCents / 100).toFixed(2)} $ ont ete envoyes a ton compte bancaire. Arrive sous 2 jours ouvrables.`,
+    })
+  }).catch(() => {});
+
+  return res.status(200).json({
+    success: true,
+    amount:      amountCents / 100,
+    currency:    'cad',
+    transfer_id: transfer.id,
+    message:     `Virement de ${(amountCents / 100).toFixed(2)} $ initie avec succes.`,
+  });
+}
+
+/* ── Historique des gains ────────────────────────────────── */
+async function livreurEarnings(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
+    return res.status(403).json({ error: 'Role livreur requis' });
+  }
+
+  const uid   = ctx.session.id;
+  const limit = 50;
+
+  const rows = await fetch(
+    `${ctx.sbUrl}/rest/v1/livreur_earnings?user_id=eq.${uid}&order=created_at.desc&limit=${limit}&select=*`,
+    { headers: sbHeaders(ctx.sbKey) }
+  ).then(r => r.ok ? r.json() : []);
+
+  return res.status(200).json({ success: true, earnings: rows, total: rows.length });
 }
