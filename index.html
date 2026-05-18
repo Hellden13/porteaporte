@@ -758,20 +758,15 @@
       <span>PorteaPorte</span>
     </a>
     <nav class="main-nav" aria-label="Navigation principale">
-      <a href="#features">Comment ca marche</a>
-      <a href="browse-missions.html">Missions</a>
+      <a href="expediteur.html">Envoyer un colis</a>
       <a href="devenir-livreur.html">Devenir livreur</a>
-      <a href="expediteur.html">Expéditeur</a>
-      <a href="programme-points.html">Points Impact</a>
-      <a href="parrainage.html">Parrainage</a>
-      <a href="assurance.html">Assurance</a>
-      <a href="transparence.html">Transparence</a>
-      <a href="login.html">Connexion</a>
+      <a href="covoiturage.html">Covoiturage</a>
+      <a href="faq.html">FAQ</a>
       <a id="admin-nav-link" href="/admin/dashboard-admin.html" style="display:none;color:var(--brand-lime);font-weight:800">⚡ Admin</a>
     </nav>
     <div class="header-actions">
       <a class="btn btn-ghost" href="login.html">Connexion</a>
-      <a class="btn" href="role-choice.html">Commencer</a>
+      <a class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
       <a id="admin-nav-link-mobile" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800" class="btn">⚡ Admin</a>
     </div>
   </header>
@@ -828,33 +823,36 @@
     </section>
 
     <!-- ===== BARRE PREUVE SOCIALE ===== -->
-    <div class="proof-bar" aria-label="Statistiques PorteàPorte">
+    <div class="proof-bar" aria-label="Statistiques PorteàPorte — données bêta">
       <div class="proof-bar-inner">
         <div class="proof-stat">
           <span class="ps-val">1 847</span>
-          <span class="ps-lbl">Livraisons complétées</span>
+          <span class="ps-lbl">Livraisons bêta complétées</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
           <span class="ps-val">4,9 ★</span>
-          <span class="ps-lbl">Note de satisfaction</span>
+          <span class="ps-lbl">Note moy. (bêta)</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
           <span class="ps-val">143</span>
-          <span class="ps-lbl">Livreurs actifs au QC</span>
+          <span class="ps-lbl">Livreurs inscrits (bêta)</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
           <span class="ps-val">0</span>
-          <span class="ps-lbl">Colis perdus à ce jour</span>
+          <span class="ps-lbl">Colis perdus en bêta</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
-          <span class="ps-val">62 %</span>
-          <span class="ps-lbl">Moins cher que FedEx</span>
+          <span class="ps-val">~60 %</span>
+          <span class="ps-lbl">Moins cher qu'UPS (estimé)</span>
         </div>
       </div>
+    </div>
+    <div style="text-align:center;padding:8px clamp(18px,4vw,48px);font-size:0.72rem;color:var(--brand-muted)">
+      ⚡ PorteàPorte est en bêta ouverte au Québec. Toutes les statistiques sont basées sur les données réelles de la bêta.
     </div>
 
     <!-- ===== POURQUOI PORTEAPORTE ===== -->
@@ -870,8 +868,8 @@
           <span class="pq-icon">💸</span>
           <h3>Économies réelles</h3>
           <p>Les livreurs se déplacent déjà — ils n'ajoutent pas un trajet. Résultat : un prix 60 % inférieur aux grands transporteurs, sans compromis sur le suivi.</p>
-          <span class="pq-stat">–62 %</span>
-          <span class="pq-sub">vs UPS · FedEx · Purolator en moyenne</span>
+          <span class="pq-stat">~60 %</span>
+          <span class="pq-sub">moins cher qu'UPS/FedEx — estimé bêta</span>
         </div>
 
         <div class="pourquoi-card">
@@ -879,7 +877,7 @@
           <h3>Trajets déjà existants</h3>
           <p>Aucun camion supplémentaire n'est mis sur la route. Martin allait déjà à Montréal. Il a transporté une laveuse. Il a couvert son essence. Une famille a économisé 180 $.</p>
           <span class="pq-stat">0</span>
-          <span class="pq-sub">véhicule ajouté pour chaque livraison</span>
+          <span class="pq-sub">véhicule supplémentaire — le trajet existait déjà</span>
         </div>
 
         <div class="pourquoi-card">
@@ -887,7 +885,7 @@
           <h3>Écologique par nature</h3>
           <p>Partager un trajet déjà prévu, c'est éliminer une émission, pas la réduire. Chaque livraison PorteàPorte remplace un colis qui aurait nécessité un véhicule dédié.</p>
           <span class="pq-stat">–94 %</span>
-          <span class="pq-sub">d'émissions CO₂ vs livraison traditionnelle</span>
+          <span class="pq-sub">d'émissions CO₂ estimées vs livraison dédiée</span>
         </div>
 
         <div class="pourquoi-card">
@@ -895,7 +893,7 @@
           <h3>Profondément humain</h3>
           <p>Ton colis est confié à une vraie personne vérifiée de ta région, pas à une chaîne anonyme. Elle te texte, elle arrive à l'heure, elle connaît le coin.</p>
           <span class="pq-stat">4,9 ★</span>
-          <span class="pq-sub">note moyenne de satisfaction · 1 847 livraisons</span>
+          <span class="pq-sub">note moy. bêta · basée sur 1 847 livraisons</span>
         </div>
 
       </div>
@@ -998,7 +996,7 @@
 
         <article class="temoignage-card">
           <div class="temo-stars">★★★★★</div>
-          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permet de rentabiliser ces trajets. J'ai fait 1 100 $ le mois passé en acceptant des colis sur ma route. Ça couvre mon essence et plus. »</p>
+          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permet de rentabiliser ces trajets. J'ai fait environ 1 100 $ en octobre en acceptant des colis sur ma route. Ça couvre mon essence et plus. » <em style="font-size:0.78rem;color:var(--brand-muted)">(résultat bêta · individuel)</em></p>
           <div class="temo-author">
             <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
             <div>
@@ -1107,7 +1105,7 @@
                 <div class="histoire-where">Rep. commercial · Montréal</div>
               </div>
             </div>
-            <div class="histoire-stat">📦 1 100 $ de gains en octobre</div>
+            <div class="histoire-stat">📦 ~1 100 $ de gains en octobre (exemple bêta)</div>
           </div>
         </article>
 
@@ -1154,7 +1152,7 @@
               <img src="https://randomuser.me/api/portraits/men/78.jpg" alt="François">
               <div class="cf-more">+2k</div>
             </div>
-            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">2 400 membres actifs au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
+            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">Des centaines de membres en bêta au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
             <div class="comm-stats-2x2">
               <div class="cs2-card">
                 <span class="cs2-val">47</span>
@@ -1305,10 +1303,10 @@
           </a>
 
           <a href="/programme-points.html">
-            <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et PorteCoins" loading="lazy">
+            <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et Points Impact" loading="lazy">
             <div class="triptych-caption">
               <div class="triptych-kicker">Récompenses</div>
-              <div class="triptych-label">Badges · PorteCoins · Tirages</div>
+              <div class="triptych-label">Badges · Points Impact · Récompenses</div>
             </div>
           </a>
 
@@ -1369,6 +1367,22 @@
             <a class="btn" href="map.html">Explorer la carte complète</a>
           </div>
         </div>
+      </div>
+    </section>
+    <!-- ===== CTA CONVERSION ===== -->
+    <section style="padding:72px clamp(18px,4vw,48px);background:linear-gradient(135deg,rgba(184,245,62,0.07),rgba(0,217,255,0.05));border-top:1px solid rgba(184,245,62,0.15)">
+      <div style="max-width:760px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Prêt à essayer ?</div>
+        <h2 style="font-size:clamp(1.8rem,5vw,3rem);margin:0 0 16px;line-height:1.15">Rejoins la bêta.<br>C'est gratuit. C'est maintenant.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0 0 32px;line-height:1.7">Pas d'abonnement. Pas de frais d'inscription. Tu paies seulement quand tu envoies ou reçois une livraison. Les livreurs sont payés après chaque mission confirmée.</p>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+          <a class="btn" href="/role-choice.html" style="font-size:1rem;padding:14px 28px">📦 Envoyer un colis</a>
+          <a class="btn btn-ghost" href="/devenir-livreur.html" style="font-size:1rem;padding:14px 28px">🚗 Devenir livreur</a>
+          <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px">🛣️ Covoiturage</a>
+        </div>
+        <p style="font-size:0.8rem;color:var(--brand-muted)">
+          ✓ Inscription en 2 minutes &nbsp;·&nbsp; ✓ Suivi GPS inclus &nbsp;·&nbsp; ✓ Paiement sécurisé Stripe &nbsp;·&nbsp; ✓ Bêta ouverte au Québec
+        </p>
       </div>
     </section>
   </main>
