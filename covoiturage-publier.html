@@ -25,6 +25,11 @@
       border-radius: 8px; padding: 14px 18px; font-size: 0.85rem;
       color: var(--brand-lime); margin-bottom: 32px; line-height: 1.55;
     }
+    .info-note {
+      background: rgba(99,210,255,0.07); border: 1px solid rgba(99,210,255,0.25);
+      border-radius: 8px; padding: 12px 16px; font-size: 0.83rem;
+      color: var(--brand-cyan); margin-bottom: 20px; line-height: 1.55;
+    }
 
     /* STEPS */
     .steps-nav {
@@ -32,7 +37,7 @@
       border: 1px solid var(--brand-border); border-radius: 10px; overflow: hidden;
     }
     .step-tab {
-      flex: 1; padding: 12px 8px; text-align: center; font-size: 0.8rem;
+      flex: 1; padding: 12px 8px; text-align: center; font-size: 0.78rem;
       font-weight: 700; color: var(--brand-muted); background: var(--brand-bg-surface);
       border: none; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.04em;
     }
@@ -77,6 +82,33 @@
     .toggle-option input { accent-color: var(--brand-lime); width: 16px; height: 16px; }
     .toggle-option:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
 
+    /* RADIO CARD */
+    .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; }
+    .radio-card {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 14px 10px; background: var(--brand-bg-surface);
+      border: 2px solid var(--brand-border); border-radius: 10px;
+      cursor: pointer; font-size: 0.85rem; color: var(--brand-muted);
+      transition: all 0.2s; text-align: center; user-select: none;
+    }
+    .radio-card input[type=radio] { display: none; }
+    .radio-card .icon { font-size: 1.5rem; line-height: 1; }
+    .radio-card:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
+
+    /* POINTS D'ARRÊT */
+    .stop-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .stop-item {
+      display: grid; grid-template-columns: auto 1fr 1fr 80px auto; gap: 8px; align-items: center;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 8px; padding: 10px 12px;
+    }
+    @media (max-width: 560px) { .stop-item { grid-template-columns: auto 1fr; } }
+    .stop-order { font-size: 0.75rem; font-weight: 800; color: var(--brand-muted); min-width: 20px; }
+    .stop-item input { padding: 7px 10px; background: transparent; border: 1px solid var(--brand-border); border-radius: 6px; color: var(--brand-text); font-size: 0.85rem; }
+    .stop-remove { background: none; border: none; color: var(--brand-muted); cursor: pointer; font-size: 1rem; padding: 4px; }
+    .stop-remove:hover { color: #ef4444; }
+    #add-stop-btn { font-size: 0.82rem; }
+
     /* PRIX PREVIEW */
     .price-preview {
       background: var(--brand-bg-surface); border: 1px solid var(--brand-lime);
@@ -88,6 +120,7 @@
     .price-row span:first-child { color: var(--brand-muted); }
     .price-row span:last-child  { color: var(--brand-text); }
     .price-row.total span { color: var(--brand-lime); }
+    .price-row.driver-gets span { color: var(--brand-cyan); }
     .over-limit-warning { color: #FFB800; font-size: 0.8rem; margin-top: 8px; }
 
     /* NAV BTNS */
@@ -122,8 +155,9 @@
     <div class="steps-nav">
       <button class="step-tab active" id="tab-1" onclick="goStep(1)">1. Trajet</button>
       <button class="step-tab"        id="tab-2" onclick="goStep(2)">2. Véhicule</button>
-      <button class="step-tab"        id="tab-3" onclick="goStep(3)">3. Options</button>
-      <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. Prix</button>
+      <button class="step-tab"        id="tab-3" onclick="goStep(3)">3. Ambiance</button>
+      <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. Arrêts</button>
+      <button class="step-tab"        id="tab-5" onclick="goStep(5)">5. Prix</button>
     </div>
 
     <!-- STEP 1 : TRAJET -->
@@ -154,7 +188,7 @@
               <option value="60">± 1 heure</option>
             </select>
           </div>
-          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1"></div>
+          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1" oninput="updatePricePreview()"></div>
         </div>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
@@ -174,8 +208,17 @@
     <!-- STEP 2 : VÉHICULE -->
     <div class="step-panel" id="step-2">
       <div class="form-section">
-        <h3>Votre véhicule</h3>
-        <div class="form-grid">
+        <h3>Informations sur votre véhicule</h3>
+        <div class="info-note">
+          ℹ️ Ces informations aident les passagers à vous choisir. Une belle photo de votre voiture propre augmente vos réservations.
+        </div>
+        <div class="form-grid cols3">
+          <div class="field"><label>Marque</label><input type="text" id="vehicle_make" placeholder="Ex : Toyota"></div>
+          <div class="field"><label>Modèle</label><input type="text" id="vehicle_model" placeholder="Ex : Camry"></div>
+          <div class="field"><label>Année</label><input type="number" id="vehicle_year" placeholder="Ex : 2021" min="2000" max="2030"></div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="field"><label>Couleur</label><input type="text" id="vehicle_color" placeholder="Ex : Gris argent"></div>
           <div class="field"><label>Type de véhicule</label>
             <select id="vehicle_type">
               <option value="berline">Berline</option>
@@ -187,13 +230,8 @@
               <option value="autre">Autre</option>
             </select>
           </div>
-          <div class="field"><label>Taille du coffre</label>
-            <select id="trunk_size">
-              <option value="petit">Petit (sac à dos seulement)</option>
-              <option value="moyen" selected>Moyen (1-2 valises)</option>
-              <option value="grand">Grand (plusieurs valises)</option>
-            </select>
-          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
           <div class="field"><label>Nombre de places *</label>
             <select id="available_seats">
               <option value="1">1 place</option>
@@ -204,6 +242,32 @@
               <option value="6">6 places</option>
             </select>
           </div>
+          <div class="field"><label>Espace de rangement (coffre)</label>
+            <select id="trunk_size">
+              <option value="petit">Petit — sac à dos seulement</option>
+              <option value="moyen" selected>Moyen — 1 à 2 valises</option>
+              <option value="grand">Grand — plusieurs valises</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Options véhicule</h3>
+        <div class="options-grid">
+          <label class="toggle-option"><input type="checkbox" id="ac_available"> ❄️ Climatisation</label>
+          <label class="toggle-option"><input type="checkbox" id="child_seat_available"> 🪑 Siège enfant</label>
+          <label class="toggle-option"><input type="checkbox" id="accessible"> ♿ Accessibilité réduite</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_large_luggage"> 🧳 Gros bagages acceptés</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_pets"> 🐾 Animaux de compagnie</label>
+          <label class="toggle-option"><input type="checkbox" id="women_only"> 👩 Femmes seulement</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_packages" onchange="togglePackageFields()"> 📦 J'accepte des colis</label>
+        </div>
+      </div>
+      <div id="package-fields" style="display:none;margin-top:16px;">
+        <div class="info-note">📦 En acceptant des colis, vous pouvez recevoir des frais supplémentaires (8 $ de base + 1,50 $/kg au-delà de 5 kg). Ces frais vous reviennent intégralement.</div>
+        <div class="form-grid">
+          <div class="field"><label>Poids maximum accepté (kg)</label><input type="number" id="package_max_kg" value="10" min="1" max="50" step="1"></div>
+          <div class="field"><label>Dimension max (cm, plus grand côté)</label><input type="number" id="package_max_dim_cm" value="60" min="10" max="200" step="5"></div>
         </div>
       </div>
       <div class="step-actions">
@@ -212,35 +276,155 @@
       </div>
     </div>
 
-    <!-- STEP 3 : OPTIONS -->
+    <!-- STEP 3 : AMBIANCE -->
     <div class="step-panel" id="step-3">
+      <div class="info-note">
+        💡 Ces critères aident les passagers à trouver un chauffeur compatible avec leurs préférences. Soyez honnête — ça réduit les mauvaises surprises !
+      </div>
+
       <div class="form-section">
-        <h3>Ce que vous acceptez</h3>
-        <div class="options-grid">
-          <label class="toggle-option"><input type="checkbox" id="accepts_pets"> 🐾 Animaux de compagnie</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_large_luggage"> 🧳 Gros bagages</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_extra_stops"> 📍 Arrêts intermédiaires</label>
-          <label class="toggle-option"><input type="checkbox" id="child_seat_available"> 🪑 Siège enfant disponible</label>
-          <label class="toggle-option"><input type="checkbox" id="accessible"> ♿ Accessibilité réduite</label>
-          <label class="toggle-option"><input type="checkbox" id="non_smoker" checked> 🚭 Non-fumeur</label>
-          <label class="toggle-option"><input type="checkbox" id="women_only"> 👩 Femmes seulement</label>
+        <h3>🚬 Politique fumeur</h3>
+        <div class="radio-grid">
+          <label class="radio-card">
+            <input type="radio" name="smoking_policy" value="non_fumeur" checked>
+            <span class="icon">🚭</span>
+            Non-fumeur
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="smoking_policy" value="exterieur">
+            <span class="icon">🌬️</span>
+            À l'extérieur seulement
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="smoking_policy" value="fumeur">
+            <span class="icon">🚬</span>
+            Fumeur accepté
+          </label>
         </div>
       </div>
+
       <div class="form-section">
-        <h3>Règles personnelles</h3>
+        <h3>🎵 Musique dans le véhicule</h3>
+        <div class="radio-grid">
+          <label class="radio-card">
+            <input type="radio" name="music_policy" value="silence">
+            <span class="icon">🔇</span>
+            Silence
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="music_policy" value="selon_humeur" checked>
+            <span class="icon">🎶</span>
+            Selon l'humeur
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="music_policy" value="musique">
+            <span class="icon">🔊</span>
+            Toujours de la musique
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>💬 Conversation</h3>
+        <div class="radio-grid">
+          <label class="radio-card">
+            <input type="radio" name="chat_policy" value="silencieux">
+            <span class="icon">🤫</span>
+            Silencieux
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="chat_policy" value="selon_humeur" checked>
+            <span class="icon">🙂</span>
+            Selon l'humeur
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="chat_policy" value="bavard">
+            <span class="icon">😄</span>
+            J'adore jaser
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Autres préférences</h3>
+        <div class="options-grid">
+          <label class="toggle-option"><input type="checkbox" id="perfume_free"> 🌿 Sans parfum / allergies</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_extra_stops"> 📍 Arrêts intermédiaires</label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Bio / Règles personnelles</h3>
         <div class="field">
-          <textarea id="personal_rules" placeholder="Ex : Musique douce acceptée. Pas de nourriture dans le véhicule. Présentez-vous 5 min à l'avance."></textarea>
+          <textarea id="personal_rules" placeholder="Ex : Je roule à la vitesse permise, bonne musique, on peut jaser ou pas. Je suis ponctuel — merci d'être là 5 min à l'avance."></textarea>
           <span class="hint">Facultatif — max 500 caractères</span>
         </div>
       </div>
+
       <div class="step-actions">
         <button class="btn btn-ghost" onclick="goStep(2)">← Retour</button>
         <div class="right"><button class="btn" onclick="nextStep(3)">Suivant →</button></div>
       </div>
     </div>
 
-    <!-- STEP 4 : PRIX -->
+    <!-- STEP 4 : POINTS D'ARRÊT + SÉCURITAIRES -->
     <div class="step-panel" id="step-4">
+      <div class="info-note">
+        📍 Définissez vos arrêts intermédiaires. Choisissez des <strong>points sécuritaires</strong> connus (Tim Hortons, Walmart, métro…) — ça rassure les passagers et augmente vos réservations.
+      </div>
+
+      <div class="form-section">
+        <h3>Point de départ sécuritaire</h3>
+        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">Optionnel — lieu public connu pour que les passagers vous retrouvent facilement.</p>
+        <div class="form-grid">
+          <div class="field">
+            <label>Ville de départ</label>
+            <input type="text" id="meeting-city-start" placeholder="Ex : Québec" oninput="loadMeetingPoints('start')">
+          </div>
+          <div class="field">
+            <label>Point sécuritaire</label>
+            <select id="meeting-point-start">
+              <option value="">Choisir un endroit…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Arrêts intermédiaires</h3>
+        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">
+          Exemple : Québec → <strong>Drummondville</strong> → Montréal. Les passagers qui descendent à Drummondville voient cet arrêt et peuvent réserver.
+        </p>
+        <div id="stop-list" class="stop-list">
+          <p id="stop-empty-hint" style="font-size:0.82rem;color:var(--brand-muted);margin:0;padding:6px 0;">Aucun arrêt intermédiaire — cliquez le bouton pour en ajouter un.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="add-stop-btn" onclick="addStop()" type="button">+ Ajouter un arrêt</button>
+      </div>
+
+      <div class="form-section">
+        <h3>Point d'arrivée sécuritaire</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label>Ville d'arrivée</label>
+            <input type="text" id="meeting-city-end" placeholder="Ex : Montréal" oninput="loadMeetingPoints('end')">
+          </div>
+          <div class="field">
+            <label>Point sécuritaire</label>
+            <select id="meeting-point-end">
+              <option value="">Choisir un endroit…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn btn-ghost" onclick="goStep(3)">← Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(4)">Suivant →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 5 : PRIX -->
+    <div class="step-panel" id="step-5">
       <div class="form-section">
         <h3>Partage des frais</h3>
         <div class="form-grid">
@@ -273,7 +457,7 @@
       </div>
 
       <div class="step-actions" id="publish-actions">
-        <button class="btn btn-ghost" onclick="goStep(3)">← Retour</button>
+        <button class="btn btn-ghost" onclick="goStep(4)">← Retour</button>
         <div class="right"><button class="btn" id="publish-btn" onclick="publishRide()">🚗 Publier mon trajet</button></div>
       </div>
     </div>
@@ -283,14 +467,46 @@
   <script src="/js/supabase-config.js"></script>
   <script>
     let currentStep = 1;
+    let stopCount = 0;
 
-    // Auth guard
+    // Auth guard + pré-remplir depuis profil chauffeur existant
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
       const { data: { session } } = await db.auth.getSession();
-      if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; }
+      if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
+
+      // Pré-remplir depuis le profil chauffeur sauvegardé
+      try {
+        const res = await fetch('/api/platform?endpoint=ride-driver-profile', {
+          headers: { Authorization: 'Bearer ' + session.access_token }
+        });
+        if (res.ok) {
+          const { profile } = await res.json();
+          if (profile) prefillFromProfile(profile);
+        }
+      } catch(_) {}
     })();
+
+    function prefillFromProfile(p) {
+      if (p.vehicle_make)  setVal('vehicle_make', p.vehicle_make);
+      if (p.vehicle_model) setVal('vehicle_model', p.vehicle_model);
+      if (p.vehicle_year)  setVal('vehicle_year', p.vehicle_year);
+      if (p.vehicle_color) setVal('vehicle_color', p.vehicle_color);
+      if (p.smoking_policy) setRadio('smoking_policy', p.smoking_policy);
+      if (p.music_policy)   setRadio('music_policy', p.music_policy);
+      if (p.chat_policy)    setRadio('chat_policy', p.chat_policy);
+      if (p.ac_available)   setCheck('ac_available', p.ac_available);
+      if (p.perfume_free)   setCheck('perfume_free', p.perfume_free);
+      if (p.bio) setVal('personal_rules', p.bio);
+    }
+
+    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+    function setCheck(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; }
+    function setRadio(name, v) {
+      const el = document.querySelector(`input[name="${name}"][value="${v}"]`);
+      if (el) el.checked = true;
+    }
 
     // Date min
     const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -305,7 +521,7 @@
       document.getElementById('tab-'  + n).classList.add('active');
       document.getElementById('tab-'  + n).classList.remove('done');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (n === 4) updatePricePreview();
+      if (n === 5) updatePricePreview();
     }
 
     function nextStep(from) {
@@ -313,7 +529,6 @@
         if (!document.getElementById('start_city').value.trim()) { alert('Ville de départ requise'); return; }
         if (!document.getElementById('end_city').value.trim())   { alert('Ville d\'arrivée requise'); return; }
         if (!document.getElementById('departure_time').value)    { alert('Date de départ requise'); return; }
-        // Auto-estimer la distance si vide
         const dist = document.getElementById('total_distance_km');
         if (!dist.value) {
           const pairs = {
@@ -335,18 +550,98 @@
         document.getElementById('is_return_trip').checked ? 'block' : 'none';
     }
 
+    // ── Colis ────────────────────────────────────────────────────
+    function togglePackageFields() {
+      document.getElementById('package-fields').style.display =
+        document.getElementById('accepts_packages').checked ? 'block' : 'none';
+    }
+
+    // ── Points sécuritaires ───────────────────────────────────────
+    const meetingPointsCache = {};
+    async function loadMeetingPoints(side) {
+      const cityEl = document.getElementById('meeting-city-' + side);
+      const selEl  = document.getElementById('meeting-point-' + side);
+      const city   = cityEl.value.trim();
+      if (!city || city.length < 3) return;
+
+      if (!meetingPointsCache[city]) {
+        try {
+          const res = await fetch('/api/platform?endpoint=safe-meeting-points&city=' + encodeURIComponent(city));
+          const data = await res.json();
+          meetingPointsCache[city] = data.points || [];
+        } catch(_) { meetingPointsCache[city] = []; }
+      }
+
+      const points = meetingPointsCache[city];
+      selEl.innerHTML = '<option value="">Aucun (point libre)</option>' +
+        points.map(p => `<option value="${p.id}">${p.name}${p.address ? ' — ' + p.address : ''}${p.verified ? ' ✅' : ''}</option>`).join('');
+    }
+
+    // ── Points d'arrêt ──────────────────────────────────────────
+    function addStop() {
+      stopCount++;
+      const list = document.getElementById('stop-list');
+      document.getElementById('stop-empty-hint').style.display = 'none';
+      const div = document.createElement('div');
+      div.className = 'stop-item';
+      div.id = 'stop-' + stopCount;
+      div.dataset.order = stopCount;
+      div.innerHTML = `
+        <span class="stop-order">${stopCount}</span>
+        <input type="text" placeholder="Ville *" data-field="city" oninput="renumberStops()">
+        <input type="text" placeholder="Secteur (optionnel)" data-field="sector">
+        <input type="number" placeholder="Détour km" data-field="detour_km" min="0" step="1" style="width:80px">
+        <button class="stop-remove" onclick="removeStop('stop-${stopCount}')" title="Supprimer">✕</button>
+      `;
+      list.appendChild(div);
+      const actual = list.querySelectorAll('.stop-item').length;
+      if (actual >= 10) document.getElementById('add-stop-btn').style.display = 'none';
+    }
+
+    function removeStop(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      renumberStops();
+      const list = document.getElementById('stop-list');
+      const actual = list.querySelectorAll('.stop-item').length;
+      if (actual === 0) document.getElementById('stop-empty-hint').style.display = '';
+      if (actual < 10) document.getElementById('add-stop-btn').style.display = '';
+    }
+
+    function renumberStops() {
+      document.querySelectorAll('#stop-list .stop-item').forEach((el, i) => {
+        el.querySelector('.stop-order').textContent = i + 1;
+        el.dataset.order = i + 1;
+      });
+    }
+
+    function getStopPoints() {
+      return Array.from(document.querySelectorAll('#stop-list .stop-item')).map((el, i) => ({
+        order: i + 1,
+        city:  el.querySelector('[data-field=city]').value.trim(),
+        sector: el.querySelector('[data-field=sector]').value.trim() || null,
+        detour_km: Number(el.querySelector('[data-field=detour_km]').value) || 0,
+      })).filter(s => s.city);
+    }
+
+    // ── Prix preview ─────────────────────────────────────────────
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
 
     function updatePricePreview() {
       const dist  = Number(document.getElementById('total_distance_km').value) || 0;
       const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.35, 0.50);
       const seats = Number(document.getElementById('available_seats').value) || 2;
+      const lugFee = 5.00; // RIDE_FEE_LUGGAGE
+      const platPct = 0.10;
 
-      if (!dist) { document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>'; return; }
+      if (!dist) {
+        document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>';
+        return;
+      }
 
       const totalCost = dist * cpk;
       const perPax    = totalCost / seats;
-      const platFee   = perPax * 0.10;
+      const platFee   = perPax * platPct;
       const paxPays   = perPax + platFee;
       const maxPax    = dist * 0.50 / seats;
       const overLimit = paxPays > maxPax * 1.05;
@@ -354,14 +649,16 @@
       document.getElementById('price-rows').innerHTML = `
         <div class="price-row"><span>Distance estimée</span><span>${dist} km</span></div>
         <div class="price-row"><span>Coût total estimé (${cpk} $/km)</span><span>${fmt(totalCost)}</span></div>
-        <div class="price-row"><span>Répartition (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)} / personne</span></div>
-        <div class="price-row"><span>Frais plateforme (10%)</span><span>${fmt(platFee)}</span></div>
+        <div class="price-row"><span>Répartition par passager (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)}</span></div>
+        <div class="price-row"><span>Frais de service (10% — plateforme)</span><span>${fmt(platFee)}</span></div>
         <div class="price-row total"><span>Chaque passager paie</span><span>${fmt(paxPays)}</span></div>
-        <div class="price-row"><span>Vous recevez par passager</span><span style="color:var(--brand-cyan)">${fmt(perPax)}</span></div>
+        <div class="price-row driver-gets"><span>Vous recevez par passager</span><span>${fmt(perPax)}</span></div>
+        <div class="price-row driver-gets"><span>+ Frais bagage si applicable (100% pour vous)</span><span>${fmt(lugFee)}</span></div>
         ${overLimit ? '<div class="over-limit-warning">⚠️ Le prix dépasse le seuil recommandé de 0,50 $/km. Considérez de réduire le coût/km.</div>' : ''}
       `;
     }
 
+    // ── Publier ──────────────────────────────────────────────────
     async function publishRide() {
       const btn = document.getElementById('publish-btn');
       btn.disabled = true; btn.textContent = 'Publication...';
@@ -370,6 +667,10 @@
       if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
       const { data: { session } } = await db.auth.getSession();
       if (!session) { window.location.href = '/login.html'; return; }
+
+      const smoking = document.querySelector('input[name=smoking_policy]:checked')?.value || 'non_fumeur';
+      const music   = document.querySelector('input[name=music_policy]:checked')?.value   || 'selon_humeur';
+      const chat    = document.querySelector('input[name=chat_policy]:checked')?.value    || 'selon_humeur';
 
       const body = {
         endpoint: 'ride-create',
@@ -383,6 +684,10 @@
         is_return_trip: document.getElementById('is_return_trip').checked,
         return_departure_time: document.getElementById('return_departure_time').value || null,
         vehicle_type:   document.getElementById('vehicle_type').value,
+        vehicle_make:   document.getElementById('vehicle_make').value.trim() || null,
+        vehicle_model:  document.getElementById('vehicle_model').value.trim() || null,
+        vehicle_year:   document.getElementById('vehicle_year').value || null,
+        vehicle_color:  document.getElementById('vehicle_color').value.trim() || null,
         trunk_size:     document.getElementById('trunk_size').value,
         available_seats: document.getElementById('available_seats').value,
         accepts_pets:   document.getElementById('accepts_pets').checked,
@@ -390,14 +695,24 @@
         accepts_extra_stops:   document.getElementById('accepts_extra_stops').checked,
         child_seat_available:  document.getElementById('child_seat_available').checked,
         accessible:     document.getElementById('accessible').checked,
-        non_smoker:     document.getElementById('non_smoker').checked,
+        ac_available:   document.getElementById('ac_available').checked,
+        smoking_policy: smoking,
+        non_smoker:     smoking === 'non_fumeur',
+        music_policy:   music,
+        chat_policy:    chat,
         women_only:     document.getElementById('women_only').checked,
         personal_rules: document.getElementById('personal_rules').value.trim() || null,
         cost_per_km:    document.getElementById('cost_per_km').value,
+        stop_points:    getStopPoints(),
+        accepts_packages:   document.getElementById('accepts_packages').checked,
+        package_max_kg:     document.getElementById('package_max_kg').value || null,
+        package_max_dim_cm: document.getElementById('package_max_dim_cm').value || null,
+        pickup_point_id:    document.getElementById('meeting-point-start').value || null,
+        dropoff_point_id:   document.getElementById('meeting-point-end').value || null,
       };
 
       try {
-        const res  = await fetch('/api/ride-create', {
+        const res  = await fetch('/api/platform', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
           body: JSON.stringify(body),
