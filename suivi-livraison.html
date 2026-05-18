@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suivi livraison - PorteàPorte</title>
+  <title>Suivi livraison - PorteÃ Porte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -29,7 +30,7 @@
 <body>
   <main class="wrap">
     <div class="top">
-      <a class="brand" href="/index.html">PorteàPorte</a>
+      <a class="brand" href="/index.html">PorteÃ Porte</a>
       <a class="btn secondary" href="/dashboard-livreur.html" id="dashBtn">Dashboard</a>
     </div>
 
@@ -41,22 +42,22 @@
       <div class="actions">
         <a id="gpsLink" class="btn" href="/gps-tracker.html">Ouvrir le GPS</a>
         <a id="mapsLink" class="btn secondary" href="#" target="_blank" rel="noopener" style="display:none">Ouvrir la carte</a>
-        <button class="btn secondary" type="button" onclick="loadTracking(true)">Rafraîchir</button>
-        <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expéditeur</a>
+        <button class="btn secondary" type="button" onclick="loadTracking(true)">RafraÃ®chir</button>
+        <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expÃ©diteur</a>
       </div>
     </section>
 
     <section class="panel">
       <h2>Position live</h2>
-      <div id="gpsState" class="note">Aucune position GPS reçue pour le moment.</div>
+      <div id="gpsState" class="note">Aucune position GPS reÃ§ue pour le moment.</div>
       <div id="gpsDetails" class="grid" style="display:none"></div>
-      <div id="mapPreview" class="map-preview">La carte s'activera dès qu'une position GPS valide sera reçue.</div>
+      <div id="mapPreview" class="map-preview">La carte s'activera dÃ¨s qu'une position GPS valide sera reÃ§ue.</div>
     </section>
 
     <section class="panel">
       <h2>Confirmation</h2>
-      <p class="note">Une fois la réception confirmée par le destinataire, le paiement peut être libéré au livreur selon les règles Stripe et l'état du dossier.</p>
-      <p class="note">Si aucun humain n'est présent, le livreur peut déposer une preuve photo + GPS. Le paiement reste protégé jusqu'au code destinataire ou une validation admin.</p>
+      <p class="note">Une fois la rÃ©ception confirmÃ©e par le destinataire, le paiement peut Ãªtre libÃ©rÃ© au livreur selon les rÃ¨gles Stripe et l'Ã©tat du dossier.</p>
+      <p class="note">Si aucun humain n'est prÃ©sent, le livreur peut dÃ©poser une preuve photo + GPS. Le paiement reste protÃ©gÃ© jusqu'au code destinataire ou une validation admin.</p>
     </section>
   </main>
 
@@ -95,8 +96,8 @@
         gpsDetailsEl.style.display = 'none';
         mapsLink.style.display = 'none';
         mapPreview.classList.remove('has-location');
-        mapPreview.textContent = 'La carte s'activera dès qu'une position GPS valide sera reçue.';
-        gpsStateEl.textContent = 'Aucune position GPS reçue pour le moment.';
+        mapPreview.textContent = 'La carte s'activera dÃ¨s qu'une position GPS valide sera reÃ§ue.';
+        gpsStateEl.textContent = 'Aucune position GPS reÃ§ue pour le moment.';
         return;
       }
 
@@ -105,14 +106,14 @@
       const recordedAt = location.recorded_at || location.created_at;
       const dot = getLiveDot();
       if (dot) dot.classList.add('on');
-      gpsStateEl.textContent = 'Dernière position GPS reçue il y a ' + ageLabel(recordedAt) + '.';
+      gpsStateEl.textContent = 'DerniÃ¨re position GPS reÃ§ue il y a ' + ageLabel(recordedAt) + '.';
       gpsDetailsEl.style.display = 'grid';
       gpsDetailsEl.innerHTML = [
         item('Latitude', lat.toFixed(6)),
         item('Longitude', lng.toFixed(6)),
-        item('Précision', location.accuracy_m ? Math.round(Number(location.accuracy_m)) + ' m' : '-'),
+        item('PrÃ©cision', location.accuracy_m ? Math.round(Number(location.accuracy_m)) + ' m' : '-'),
         item('Vitesse', location.speed ? Number(location.speed).toFixed(1) + ' m/s' : '-'),
-        item('Reçu il y a', ageLabel(recordedAt)),
+        item('ReÃ§u il y a', ageLabel(recordedAt)),
         item('Heure GPS', recordedAt ? new Date(recordedAt).toLocaleString('fr-CA') : '-')
       ].join('');
       mapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
@@ -154,13 +155,13 @@
         return;
       }
       const l = result.livraison || {};
-      statusEl.innerHTML = '<span id="liveDot" class="live-dot on"></span>Suivi sécurisé chargé' + (manual ? ' à l’instant.' : '.');
+      statusEl.innerHTML = '<span id="liveDot" class="live-dot on"></span>Suivi sÃ©curisÃ© chargÃ©' + (manual ? ' Ã  lâ€™instant.' : '.');
       detailsEl.style.display = 'grid';
       detailsEl.innerHTML = [
         item('Statut', l.statut),
         item('Code', l.code),
-        item('Départ', l.ville_depart),
-        item('Arrivée', l.ville_arrivee),
+        item('DÃ©part', l.ville_depart),
+        item('ArrivÃ©e', l.ville_arrivee),
         item('Colis', l.type_colis || l.type),
         item('Montant', l.prix_total ? Number(l.prix_total).toFixed(2) + ' $' : '-')
       ].join('');

@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vérification livreur - PorteàPorte</title>
+  <title>VÃ©rification livreur - PorteÃ Porte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
@@ -24,24 +25,24 @@
 <body>
   <main class="wrap">
     <div class="top">
-      <a class="brand" href="/index.html">PorteàPorte</a>
+      <a class="brand" href="/index.html">PorteÃ Porte</a>
       <a class="btn secondary" id="driverDashboardLink" href="/dashboard-livreur.html">Dashboard</a>
     </div>
 
     <section class="panel">
-      <h1>Vérification livreur</h1>
-      <p class="hint">Pour protéger les expéditeurs, les colis et les adresses, un livreur doit être vérifié avant de voir les vraies missions. Pour la livraison à pied ou à vélo, un permis de conduire n'est pas obligatoire.</p>
+      <h1>VÃ©rification livreur</h1>
+      <p class="hint">Pour protÃ©ger les expÃ©diteurs, les colis et les adresses, un livreur doit Ãªtre vÃ©rifiÃ© avant de voir les vraies missions. Pour la livraison Ã  pied ou Ã  vÃ©lo, un permis de conduire n'est pas obligatoire.</p>
     </section>
 
     <form id="driverForm" class="panel">
       <div class="grid">
-        <label>Prénom
+        <label>PrÃ©nom
           <input id="prenom" name="prenom" autocomplete="given-name" required>
         </label>
         <label>Nom
           <input id="nom" name="nom" autocomplete="family-name" required>
         </label>
-        <label>Téléphone
+        <label>TÃ©lÃ©phone
           <input id="telephone" name="telephone" autocomplete="tel" required>
         </label>
         <label>Ville principale
@@ -49,15 +50,15 @@
         </label>
         <label>Province
           <select id="province" name="province">
-            <option value="QC">Québec</option>
+            <option value="QC">QuÃ©bec</option>
             <option value="ON">Ontario</option>
             <option value="NB">Nouveau-Brunswick</option>
           </select>
         </label>
         <label>Mode de livraison
           <select id="transport_mode" name="transport_mode">
-            <option value="walking">À pied</option>
-            <option value="bike">Vélo</option>
+            <option value="walking">Ã€ pied</option>
+            <option value="bike">VÃ©lo</option>
             <option value="car">Auto</option>
             <option value="van">Fourgonnette</option>
           </select>
@@ -66,16 +67,16 @@
 
       <label style="margin-top:14px">
         Zone ou trajet habituel
-        <textarea id="trajet" name="trajet" rows="4" placeholder="Exemple : Rosemont, Plateau, centre-ville Montréal"></textarea>
+        <textarea id="trajet" name="trajet" rows="4" placeholder="Exemple : Rosemont, Plateau, centre-ville MontrÃ©al"></textarea>
       </label>
 
       <label style="margin-top:14px;display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:500">
         <input id="consent" type="checkbox" required style="width:auto;margin-top:4px">
-        <span>J'accepte les conditions livreur et je consens à la vérification de mon profil.</span>
+        <span>J'accepte les conditions livreur et je consens Ã  la vÃ©rification de mon profil.</span>
       </label>
 
       <div class="actions">
-        <button class="btn" type="submit">Envoyer ma vérification</button>
+        <button class="btn" type="submit">Envoyer ma vÃ©rification</button>
         <a class="btn secondary" href="/profile.html">Mon profil</a>
       </div>
     </form>
@@ -100,7 +101,7 @@
         dash.setAttribute('aria-disabled', 'true');
       }
       if (profile && !['livreur', 'les deux', 'admin'].includes(profile.role)) {
-        showError('Ton compte est encore seulement expéditeur. En envoyant ce formulaire, on ajoute aussi le rôle livreur à ton profil.');
+        showError('Ton compte est encore seulement expÃ©diteur. En envoyant ce formulaire, on ajoute aussi le rÃ´le livreur Ã  ton profil.');
       }
       if (profile) {
         document.getElementById('prenom').value = profile.prenom || '';
@@ -129,7 +130,7 @@
       });
       if (!roleRes.ok) {
         const roleResult = await roleRes.json().catch(() => ({}));
-        showError(roleResult.error || 'Impossible d’ajouter le rôle livreur pour le moment.');
+        showError(roleResult.error || 'Impossible dâ€™ajouter le rÃ´le livreur pour le moment.');
         return;
       }
 
@@ -155,10 +156,10 @@
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showError(result.error || 'Vérification impossible pour le moment.');
+        showError(result.error || 'VÃ©rification impossible pour le moment.');
         return;
       }
-      showSuccess('Demande envoyée. Ton profil livreur est maintenant en révision.');
+      showSuccess('Demande envoyÃ©e. Ton profil livreur est maintenant en rÃ©vision.');
       setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
     });
 

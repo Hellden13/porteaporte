@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +6,7 @@
   <meta name="description" content="Transparence mensuelle des dons PorteaPorte">
   <title>Transparence - PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
     body{padding:0}
     .hero{padding:56px 0 28px;border-bottom:1px solid var(--brand-bg-surface-light);background:linear-gradient(180deg,rgba(184,245,62,.06),transparent)}
@@ -51,7 +52,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteÀPorte"><span>PorteÀPorte</span></a>
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteÃ€Porte"><span>PorteÃ€Porte</span></a>
     <nav style="display:flex;gap:12px">
       <a class="btn btn-ghost" href="/programme-points.html">Points Impact</a>
       <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
@@ -61,38 +62,38 @@
   <header class="hero">
     <div class="container">
       <span class="status">Transparence en direct</span>
-      <h1>Chaque mois, on montre où va l'argent.</h1>
-      <p>Les dons PorteaPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont estimés en direct à partir des livraisons complétées, puis confirmés à la clôture du mois.</p>
+      <h1>Chaque mois, on montre oÃ¹ va l'argent.</h1>
+      <p>Les dons PorteaPorte sont rÃ©partis entre les organismes sÃ©lectionnÃ©s par l'administration. Les montants ci-dessous sont estimÃ©s en direct Ã  partir des livraisons complÃ©tÃ©es, puis confirmÃ©s Ã  la clÃ´ture du mois.</p>
     </div>
   </header>
 
   <main class="container" style="padding-bottom:48px">
     <div class="impact-grid">
       <div class="metric">
-        <div class="metric-label">Mois affiché</div>
-        <div class="metric-value" id="impact-month">—</div>
+        <div class="metric-label">Mois affichÃ©</div>
+        <div class="metric-value" id="impact-month">â€”</div>
         <div class="metric-sub" id="impact-generated">Chargement...</div>
       </div>
       <div class="metric">
-        <div class="metric-label">Fonds dons estimé</div>
-        <div class="metric-value" id="impact-pool">—</div>
-        <div class="metric-sub">Basé sur la portion solidaire des revenus plateforme.</div>
+        <div class="metric-label">Fonds dons estimÃ©</div>
+        <div class="metric-value" id="impact-pool">â€”</div>
+        <div class="metric-sub">BasÃ© sur la portion solidaire des revenus plateforme.</div>
       </div>
       <div class="metric">
-        <div class="metric-label">Livraisons comptées</div>
-        <div class="metric-value" id="impact-deliveries">—</div>
-        <div class="metric-sub" id="impact-rate">—</div>
+        <div class="metric-label">Livraisons comptÃ©es</div>
+        <div class="metric-value" id="impact-deliveries">â€”</div>
+        <div class="metric-sub" id="impact-rate">â€”</div>
       </div>
     </div>
 
-    <div class="section-title">Organismes sélectionnés</div>
+    <div class="section-title">Organismes sÃ©lectionnÃ©s</div>
     <div id="impact-orgs" class="orgs">
       <div class="panel empty">Chargement des organismes...</div>
     </div>
 
-    <div class="section-title">Méthode de calcul</div>
+    <div class="section-title">MÃ©thode de calcul</div>
     <div class="panel note" id="impact-note">
-      Les montants sont calculés automatiquement à partir des livraisons payées. Les versements réels doivent être rapprochés et confirmés par l'administration.
+      Les montants sont calculÃ©s automatiquement Ã  partir des livraisons payÃ©es. Les versements rÃ©els doivent Ãªtre rapprochÃ©s et confirmÃ©s par l'administration.
     </div>
 
     <div class="section-title">Concours et tirages</div>
@@ -109,15 +110,15 @@
       <div class="request-head">
         <div>
           <div class="section-title" style="margin-top:0">Faire une demande d'aide</div>
-          <h2>Organismes, écoles et initiatives locales</h2>
-          <p class="note">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
+          <h2>Organismes, Ã©coles et initiatives locales</h2>
+          <p class="note">Un organisme, une Ã©cole ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohÃ©rence avec le programme de dons avant d'accepter ou refuser.</p>
         </div>
         <span class="request-badge">Demande distincte</span>
       </div>
       <form id="impact-application-form" class="request-grid">
         <div class="field">
           <label for="app-org">Nom de l'organisme</label>
-          <input id="app-org" required maxlength="160" placeholder="Ex. Club, école, organisme local">
+          <input id="app-org" required maxlength="160" placeholder="Ex. Club, Ã©cole, organisme local">
         </div>
         <div class="field">
           <label for="app-contact">Personne contact</label>
@@ -128,7 +129,7 @@
           <input id="app-email" required type="email" maxlength="180" placeholder="contact@organisme.ca">
         </div>
         <div class="field">
-          <label for="app-phone">Téléphone</label>
+          <label for="app-phone">TÃ©lÃ©phone</label>
           <input id="app-phone" maxlength="60" placeholder="Optionnel">
         </div>
         <div class="field full">
@@ -137,11 +138,11 @@
         </div>
         <div class="field full">
           <label for="app-mission">Mission et impact</label>
-          <textarea id="app-mission" required maxlength="1200" placeholder="Expliquez qui vous aidez, dans quelle région, et pourquoi PorteaPorte devrait vous soutenir."></textarea>
+          <textarea id="app-mission" required maxlength="1200" placeholder="Expliquez qui vous aidez, dans quelle rÃ©gion, et pourquoi PorteaPorte devrait vous soutenir."></textarea>
         </div>
         <div class="field full">
-          <label for="app-support">Type d'aide souhaitée</label>
-          <textarea id="app-support" maxlength="800" placeholder="Ex. dons mensuels, campagne ponctuelle, visibilité, transport solidaire..."></textarea>
+          <label for="app-support">Type d'aide souhaitÃ©e</label>
+          <textarea id="app-support" maxlength="800" placeholder="Ex. dons mensuels, campagne ponctuelle, visibilitÃ©, transport solidaire..."></textarea>
         </div>
         <div class="full" style="display:flex;justify-content:flex-end">
           <button id="impact-application-submit" class="btn" type="submit">Envoyer la demande</button>
@@ -154,7 +155,7 @@
   <script>
     function money(cents){return (Number(cents||0)/100).toLocaleString('fr-CA',{style:'currency',currency:'CAD'});}
     function monthLabel(value){
-      if(!value)return '—';
+      if(!value)return 'â€”';
       const d=new Date(value+'T00:00:00Z');
       return d.toLocaleDateString('fr-CA',{month:'long',year:'numeric',timeZone:'UTC'});
     }
@@ -165,7 +166,7 @@
         if(!res.ok)throw new Error(out.error||'Chargement impossible');
         const impact=out.impact;
         document.getElementById('impact-month').textContent=monthLabel(impact.month);
-        document.getElementById('impact-generated').textContent='Mise à jour '+new Date(impact.generated_at).toLocaleString('fr-CA');
+        document.getElementById('impact-generated').textContent='Mise Ã  jour '+new Date(impact.generated_at).toLocaleString('fr-CA');
         document.getElementById('impact-pool').textContent=money(impact.totals.donation_pool_cents);
         document.getElementById('impact-deliveries').textContent=impact.totals.deliveries_count||0;
         document.getElementById('impact-rate').textContent=`${impact.totals.donation_rate_percent}% de la commission plateforme`;
@@ -187,7 +188,7 @@
               <strong>${draw.title||'Tirage PorteaPorte'}</strong>
               <span>${draw.description||'Concours communautaire PorteaPorte.'}</span>
             </div>
-            <div class="public-tag">${draw.status||'actif'} · ${draw.draw_date||''}</div>
+            <div class="public-tag">${draw.status||'actif'} Â· ${draw.draw_date||''}</div>
           </article>
         `).join(''):'<div class="panel empty">Aucun tirage affiche pour le moment.</div>';
         const winners=out.winners||[];
@@ -195,7 +196,7 @@
           <article class="public-row">
             <div>
               <strong>${winner.user_email||'Gagnant PorteaPorte'}</strong>
-              <span>${winner.prize_title||'Tirage PorteaPorte'} · ${winner.user_role||'utilisateur'}</span>
+              <span>${winner.prize_title||'Tirage PorteaPorte'} Â· ${winner.user_role||'utilisateur'}</span>
             </div>
             <div class="public-tag">${winner.created_at?new Date(winner.created_at).toLocaleDateString('fr-CA'):''}</div>
           </article>
@@ -231,7 +232,7 @@
         if(!res.ok)throw new Error(out.error||'Demande impossible');
         event.target.reset();
         msg.style.color='var(--brand-lime)';
-        msg.textContent='Demande reçue. Elle sera analysée par l’administration.';
+        msg.textContent='Demande reÃ§ue. Elle sera analysÃ©e par lâ€™administration.';
       }catch(err){
         msg.style.color='#ff8a8a';
         msg.textContent=err.message;

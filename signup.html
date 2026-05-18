@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inscription - PorteàPorte</title>
+  <title>Inscription - PorteÃ Porte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/modal-helper.js"></script>
@@ -25,12 +26,12 @@
 </head>
 <body>
   <main class="auth-card">
-    <div class="logo">PorteàPorte</div>
-    <p class="subtitle">Créer un compte pour publier ou livrer des colis.</p>
+    <div class="logo">PorteÃ Porte</div>
+    <p class="subtitle">CrÃ©er un compte pour publier ou livrer des colis.</p>
 
     <form id="signupForm">
       <div class="form-group">
-        <label for="prenom">Prénom</label>
+        <label for="prenom">PrÃ©nom</label>
         <input id="prenom" name="prenom" autocomplete="given-name" required>
       </div>
       <div class="form-group">
@@ -47,18 +48,18 @@
       </div>
 
       <div class="form-group">
-        <label>Rôle</label>
+        <label>RÃ´le</label>
         <div class="role-grid">
-          <label class="role-option"><input type="radio" name="role" value="expediteur" checked>Expéditeur</label>
+          <label class="role-option"><input type="radio" name="role" value="expediteur" checked>ExpÃ©diteur</label>
           <label class="role-option"><input type="radio" name="role" value="livreur">Livreur</label>
           <label class="role-option"><input type="radio" name="role" value="les deux">Les deux</label>
         </div>
       </div>
 
-      <button class="auth-btn" type="submit" id="signupBtn">Créer mon compte</button>
+      <button class="auth-btn" type="submit" id="signupBtn">CrÃ©er mon compte</button>
     </form>
 
-    <div class="links">Déjà inscrit? <a href="login.html">Se connecter</a></div>
+    <div class="links">DÃ©jÃ  inscrit? <a href="login.html">Se connecter</a></div>
   </main>
 
   <script>
@@ -69,7 +70,7 @@
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       btn.disabled = true;
-      btn.textContent = 'Création...';
+      btn.textContent = 'CrÃ©ation...';
 
       const role = new FormData(form).get('role');
       const prenom = form.prenom.value.trim();
@@ -88,7 +89,7 @@
       if (error) {
         showError(error.message || 'Inscription impossible.');
         btn.disabled = false;
-        btn.textContent = 'Créer mon compte';
+        btn.textContent = 'CrÃ©er mon compte';
         return;
       }
 
@@ -108,8 +109,8 @@
         return;
       }
 
-      showSuccess('Compte créé. Vérifie ton email pour confirmer ton inscription avant de te connecter.');
-      btn.textContent = 'Email de confirmation envoyé';
+      showSuccess('Compte crÃ©Ã©. VÃ©rifie ton email pour confirmer ton inscription avant de te connecter.');
+      btn.textContent = 'Email de confirmation envoyÃ©';
     });
   </script>
   <script src="/js/support-widget.js"></script>

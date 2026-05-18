@@ -2247,6 +2247,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
+    if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
+    if (endpoint === 'admin-dispute-action') return await adminDisputeAction(req, res, ctx, body);
     if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
     if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);

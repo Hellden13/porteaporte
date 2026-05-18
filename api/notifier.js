@@ -107,13 +107,22 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-internal-notifier-secret, x-internal-webhook-secret');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') {
+    const fromEmail = process.env.FROM_EMAIL || '';
+    const fromDomain = fromEmail.includes('@') ? fromEmail.split('@').pop() : '';
     return res.status(200).json({
       success: true,
       sendgrid_configured: Boolean(process.env.SENDGRID_API_KEY),
       from_email_configured: Boolean(process.env.FROM_EMAIL),
       admin_email_configured: Boolean(process.env.ADMIN_EMAIL),
       supabase_configured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
-      internal_secret_configured: Boolean(process.env.INTERNAL_API_SECRET)
+      internal_secret_configured: Boolean(process.env.INTERNAL_API_SECRET),
+      from_domain: fromDomain || null,
+      expected_dns: fromDomain ? [
+        `SPF: ${fromDomain} doit autoriser SendGrid`,
+        `DKIM: ${fromDomain} doit etre authentifie dans SendGrid`,
+        `DMARC: _dmarc.${fromDomain} recommande`
+      ] : [],
+      spam_note: 'Si les courriels arrivent en pourriels, verifier surtout SPF, DKIM, DMARC et reputation du domaine expediteur.'
     });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'MÃ©thode non autorisÃ©e' });
@@ -175,7 +184,8 @@ module.exports = async function handler(req, res) {
     return res.status(success ? 200 : 500).json({
       success,
       sent: results.filter(r => r.ok).length,
-      total: results.length
+      total: results.length,
+      results: results.map((r) => ({ ok: r.ok, status: r.status, to: r.to, error: r.error }))
     });
 
   } catch (err) {
@@ -490,7 +500,8 @@ async function sendEmail(emailData, apiKey) {
     ok: response.status === 202,
     status: response.status,
     to: emailData.to,
-    error: response.status === 202 ? undefined : (message || 'SendGrid a refuse le message')
+    error: response.status === 202 ? undefined : (message || 'SendGrid a refuse le message'),
+    sendgrid_message_id: response.headers.get('x-message-id') || null
   };
 }
 

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +6,7 @@
   <meta name="description" content="Missions disponibles pour livreurs verifies - PorteaPorte">
   <title>Missions disponibles - PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth.js"></script>
@@ -54,7 +55,7 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/index.html">PorteàPorte</a>
+    <a class="brand" href="/index.html">PorteÃ Porte</a>
     <a class="btn secondary" href="/dashboard-livreur.html">Mon dashboard</a>
   </header>
 
@@ -147,14 +148,14 @@
       const dist = m.distance_km || 0;
       const poids = m.poids_kg || 0;
       if (mode === 'velo') {
-        if (dist <= 15 && poids <= 10) { score += 30; tags.push({t:'Trajet idéal vélo', c:'green'}); }
-        else if (dist > 30) { score -= 25; tags.push({t:'Trop loin pour vélo', c:'red'}); }
+        if (dist <= 15 && poids <= 10) { score += 30; tags.push({t:'Trajet idÃ©al vÃ©lo', c:'green'}); }
+        else if (dist > 30) { score -= 25; tags.push({t:'Trop loin pour vÃ©lo', c:'red'}); }
         else if (poids > 15) { score -= 20; tags.push({t:'Colis lourd', c:'yellow'}); }
       } else if (mode === 'voiture') {
-        if (dist >= 20 && dist <= 100) { score += 20; tags.push({t:'Distance idéale', c:'green'}); }
+        if (dist >= 20 && dist <= 100) { score += 20; tags.push({t:'Distance idÃ©ale', c:'green'}); }
         if (poids <= 50) { score += 10; }
       } else if (mode === 'camion' || mode === 'camionnette') {
-        if (poids >= 20) { score += 25; tags.push({t:'Charge adaptée', c:'green'}); }
+        if (poids >= 20) { score += 25; tags.push({t:'Charge adaptÃ©e', c:'green'}); }
         score += 10;
       } else {
         score += 10;
@@ -169,7 +170,7 @@
       if (dist > 0 && dist <= 20) { score += 5; tags.push({t:'Livraison courte', c:'green'}); }
 
       // Compatibility text hint
-      if (m.compatibilite && m.compatibilite.toLowerCase().includes('idéal')) score += 10;
+      if (m.compatibilite && m.compatibilite.toLowerCase().includes('idÃ©al')) score += 10;
 
       score = Math.max(10, Math.min(100, score));
       return { score, tags };
@@ -197,14 +198,14 @@
       /* Fetch livreur eco_bonus from profile (stored on loadMissions) */
       const ecoBonus   = currentSession ? (window._livreurEcoBonus || 0) : 0;
       const ecoMode    = window._livreurEcoMode || '';
-      const ECO_ICONS  = { pieds:'🚶', velo:'🚴', trottinette:'🛴', skateboard:'🛹', voiture_electrique:'🔋🚗', moto_electrique:'🔋🏍️', camion_electrique:'🔋🚛' };
+      const ECO_ICONS  = { pieds:'ðŸš¶', velo:'ðŸš´', trottinette:'ðŸ›´', skateboard:'ðŸ›¹', voiture_electrique:'ðŸ”‹ðŸš—', moto_electrique:'ðŸ”‹ðŸï¸', camion_electrique:'ðŸ”‹ðŸš›' };
 
       let bannerHtml = '';
       if (ecoBonus > 0) {
-        bannerHtml = `<div class="eco-banner-top">${ECO_ICONS[ecoMode] || '🌱'} Bonus écologique +${ecoBonus}% actif — ton gain réel est affiché sur chaque mission. <span>Merci de livrer vert !</span></div>`;
+        bannerHtml = `<div class="eco-banner-top">${ECO_ICONS[ecoMode] || 'ðŸŒ±'} Bonus Ã©cologique +${ecoBonus}% actif â€” ton gain rÃ©el est affichÃ© sur chaque mission. <span>Merci de livrer vert !</span></div>`;
       }
 
-      setStatus(`${scored.length} mission(s) · triées par compatibilité · Mode: ${mode}.`, 'info');
+      setStatus(`${scored.length} mission(s) Â· triÃ©es par compatibilitÃ© Â· Mode: ${mode}.`, 'info');
       container.innerHTML = bannerHtml + scored.map((m) => {
         const { score, tags } = m._match;
         const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
@@ -215,16 +216,16 @@
 
         const gainHtml = ecoBonus > 0
           ? `<div class="eco-gain">
-               <span class="eco-gain-left">🌱 Ton gain (60% + ${ecoBonus}% éco)</span>
+               <span class="eco-gain-left">ðŸŒ± Ton gain (60% + ${ecoBonus}% Ã©co)</span>
                <span class="eco-gain-right">${money(totalGain)}</span>
              </div>`
-          : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
+          : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimÃ© : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
 
         return `
         <article class="mission-card">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
             <span class="pill">${text(m.code, 'Mission')}</span>
-            <span class="match-score">${score}% · ${matchLabel(score)}</span>
+            <span class="match-score">${score}% Â· ${matchLabel(score)}</span>
           </div>
           <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>
           <div class="match-tags">
@@ -232,8 +233,8 @@
           </div>
           <h2>${text(m.type_colis, 'Colis')}</h2>
           <div class="route">
-            <div><strong>Départ approx. :</strong> ${text(m.ville_depart, 'Ville masquée')}</div>
-            <div><strong>Arrivée approx. :</strong> ${text(m.ville_arrivee, 'Ville masquée')}</div>
+            <div><strong>DÃ©part approx. :</strong> ${text(m.ville_depart, 'Ville masquÃ©e')}</div>
+            <div><strong>ArrivÃ©e approx. :</strong> ${text(m.ville_arrivee, 'Ville masquÃ©e')}</div>
           </div>
           <div class="meta">
             <div><span>Poids</span>${text(m.poids_kg, 'N/D')} kg</div>

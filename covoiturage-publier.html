@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publier un trajet · Covoiturage PorteàPorte</title>
+  <title>Publier un trajet Â· Covoiturage PorteÃ Porte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
     body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
     .site-header {
@@ -95,7 +96,7 @@
     .radio-card .icon { font-size: 1.5rem; line-height: 1; }
     .radio-card:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
 
-    /* POINTS D'ARRÊT */
+    /* POINTS D'ARRÃŠT */
     .stop-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
     .stop-item {
       display: grid; grid-template-columns: auto 1fr 1fr 80px auto; gap: 8px; align-items: center;
@@ -138,60 +139,60 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
-    <a class="btn btn-ghost" href="/covoiturage.html">← Retour</a>
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÃ Porte</span></a>
+    <a class="btn btn-ghost" href="/covoiturage.html">â† Retour</a>
   </header>
 
   <main class="page-inner">
     <h1 class="page-title">Publier un trajet</h1>
-    <p class="page-subtitle">Partagez les frais d'un trajet que vous effectuez déjà. Simple, transparent et équitable.</p>
+    <p class="page-subtitle">Partagez les frais d'un trajet que vous effectuez dÃ©jÃ . Simple, transparent et Ã©quitable.</p>
 
     <div class="legal-note">
-      🛡️ <strong>Rappel :</strong> Le covoiturage PorteàPorte est basé sur le <strong>partage des frais réels</strong>.
-      Le prix maximum recommandé est de <strong>0,50 $/km</strong>. Vous ne pouvez pas réaliser de profit sur le transport de personnes.
+      ðŸ›¡ï¸ <strong>Rappel :</strong> Le covoiturage PorteÃ Porte est basÃ© sur le <strong>partage des frais rÃ©els</strong>.
+      Le prix maximum recommandÃ© est de <strong>0,50 $/km</strong>. Vous ne pouvez pas rÃ©aliser de profit sur le transport de personnes.
     </div>
 
     <!-- STEPS NAV -->
     <div class="steps-nav">
       <button class="step-tab active" id="tab-1" onclick="goStep(1)">1. Trajet</button>
-      <button class="step-tab"        id="tab-2" onclick="goStep(2)">2. Véhicule</button>
+      <button class="step-tab"        id="tab-2" onclick="goStep(2)">2. VÃ©hicule</button>
       <button class="step-tab"        id="tab-3" onclick="goStep(3)">3. Ambiance</button>
-      <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. Arrêts</button>
+      <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. ArrÃªts</button>
       <button class="step-tab"        id="tab-5" onclick="goStep(5)">5. Prix</button>
     </div>
 
     <!-- STEP 1 : TRAJET -->
     <div class="step-panel active" id="step-1">
       <div class="form-section">
-        <h3>Point de départ</h3>
+        <h3>Point de dÃ©part</h3>
         <div class="form-grid">
-          <div class="field"><label>Ville de départ *</label><input type="text" id="start_city" placeholder="Ex : Québec"></div>
+          <div class="field"><label>Ville de dÃ©part *</label><input type="text" id="start_city" placeholder="Ex : QuÃ©bec"></div>
           <div class="field"><label>Secteur / Quartier</label><input type="text" id="start_sector" placeholder="Ex : Saint-Roch"></div>
         </div>
       </div>
       <div class="form-section">
         <h3>Destination</h3>
         <div class="form-grid">
-          <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal"></div>
+          <div class="field"><label>Ville d'arrivÃ©e *</label><input type="text" id="end_city" placeholder="Ex : MontrÃ©al"></div>
           <div class="field"><label>Secteur / Quartier</label><input type="text" id="end_sector" placeholder="Ex : Plateau"></div>
         </div>
       </div>
       <div class="form-section">
         <h3>Horaire</h3>
         <div class="form-grid cols3">
-          <div class="field"><label>Date et heure de départ *</label><input type="datetime-local" id="departure_time"></div>
-          <div class="field"><label>Flexibilité horaire</label>
+          <div class="field"><label>Date et heure de dÃ©part *</label><input type="datetime-local" id="departure_time"></div>
+          <div class="field"><label>FlexibilitÃ© horaire</label>
             <select id="flexibility_minutes">
               <option value="0">Heure fixe</option>
-              <option value="15">± 15 min</option>
-              <option value="30">± 30 min</option>
-              <option value="60">± 1 heure</option>
+              <option value="15">Â± 15 min</option>
+              <option value="30">Â± 30 min</option>
+              <option value="60">Â± 1 heure</option>
             </select>
           </div>
-          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1" oninput="updatePricePreview()"></div>
+          <div class="field"><label>Distance estimÃ©e (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1" oninput="updatePricePreview()"></div>
         </div>
         <div class="form-grid" style="margin-top:14px;">
-          <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
+          <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> ðŸ”„ Trajet aller-retour</label>
         </div>
         <div id="return-section" style="display:none;margin-top:14px;">
           <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
@@ -200,32 +201,32 @@
       <div class="step-actions">
         <span></span>
         <div class="right">
-          <button class="btn" onclick="nextStep(1)">Suivant →</button>
+          <button class="btn" onclick="nextStep(1)">Suivant â†’</button>
         </div>
       </div>
     </div>
 
-    <!-- STEP 2 : VÉHICULE -->
+    <!-- STEP 2 : VÃ‰HICULE -->
     <div class="step-panel" id="step-2">
       <div class="form-section">
-        <h3>Informations sur votre véhicule</h3>
+        <h3>Informations sur votre vÃ©hicule</h3>
         <div class="info-note">
-          ℹ️ Ces informations aident les passagers à vous choisir. Une belle photo de votre voiture propre augmente vos réservations.
+          â„¹ï¸ Ces informations aident les passagers Ã  vous choisir. Une belle photo de votre voiture propre augmente vos rÃ©servations.
         </div>
         <div class="form-grid cols3">
           <div class="field"><label>Marque</label><input type="text" id="vehicle_make" placeholder="Ex : Toyota"></div>
-          <div class="field"><label>Modèle</label><input type="text" id="vehicle_model" placeholder="Ex : Camry"></div>
-          <div class="field"><label>Année</label><input type="number" id="vehicle_year" placeholder="Ex : 2021" min="2000" max="2030"></div>
+          <div class="field"><label>ModÃ¨le</label><input type="text" id="vehicle_model" placeholder="Ex : Camry"></div>
+          <div class="field"><label>AnnÃ©e</label><input type="number" id="vehicle_year" placeholder="Ex : 2021" min="2000" max="2030"></div>
         </div>
         <div class="form-grid" style="margin-top:14px;">
           <div class="field"><label>Couleur</label><input type="text" id="vehicle_color" placeholder="Ex : Gris argent"></div>
-          <div class="field"><label>Type de véhicule</label>
+          <div class="field"><label>Type de vÃ©hicule</label>
             <select id="vehicle_type">
               <option value="berline">Berline</option>
               <option value="suv">VUS / SUV</option>
               <option value="minivan">Minivan</option>
               <option value="camion">Camion / Pickup</option>
-              <option value="electrique">Électrique</option>
+              <option value="electrique">Ã‰lectrique</option>
               <option value="hybride">Hybride</option>
               <option value="autre">Autre</option>
             </select>
@@ -244,182 +245,182 @@
           </div>
           <div class="field"><label>Espace de rangement (coffre)</label>
             <select id="trunk_size">
-              <option value="petit">Petit — sac à dos seulement</option>
-              <option value="moyen" selected>Moyen — 1 à 2 valises</option>
-              <option value="grand">Grand — plusieurs valises</option>
+              <option value="petit">Petit â€” sac Ã  dos seulement</option>
+              <option value="moyen" selected>Moyen â€” 1 Ã  2 valises</option>
+              <option value="grand">Grand â€” plusieurs valises</option>
             </select>
           </div>
         </div>
       </div>
       <div class="form-section">
-        <h3>Options véhicule</h3>
+        <h3>Options vÃ©hicule</h3>
         <div class="options-grid">
-          <label class="toggle-option"><input type="checkbox" id="ac_available"> ❄️ Climatisation</label>
-          <label class="toggle-option"><input type="checkbox" id="child_seat_available"> 🪑 Siège enfant</label>
-          <label class="toggle-option"><input type="checkbox" id="accessible"> ♿ Accessibilité réduite</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_large_luggage"> 🧳 Gros bagages acceptés</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_pets"> 🐾 Animaux de compagnie</label>
-          <label class="toggle-option"><input type="checkbox" id="women_only"> 👩 Femmes seulement</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_packages" onchange="togglePackageFields()"> 📦 J'accepte des colis</label>
+          <label class="toggle-option"><input type="checkbox" id="ac_available"> â„ï¸ Climatisation</label>
+          <label class="toggle-option"><input type="checkbox" id="child_seat_available"> ðŸª‘ SiÃ¨ge enfant</label>
+          <label class="toggle-option"><input type="checkbox" id="accessible"> â™¿ AccessibilitÃ© rÃ©duite</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_large_luggage"> ðŸ§³ Gros bagages acceptÃ©s</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_pets"> ðŸ¾ Animaux de compagnie</label>
+          <label class="toggle-option"><input type="checkbox" id="women_only"> ðŸ‘© Femmes seulement</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_packages" onchange="togglePackageFields()"> ðŸ“¦ J'accepte des colis</label>
         </div>
       </div>
       <div id="package-fields" style="display:none;margin-top:16px;">
-        <div class="info-note">📦 En acceptant des colis, vous pouvez recevoir des frais supplémentaires (8 $ de base + 1,50 $/kg au-delà de 5 kg). Ces frais vous reviennent intégralement.</div>
+        <div class="info-note">ðŸ“¦ En acceptant des colis, vous pouvez recevoir des frais supplÃ©mentaires (8 $ de base + 1,50 $/kg au-delÃ  de 5 kg). Ces frais vous reviennent intÃ©gralement.</div>
         <div class="form-grid">
-          <div class="field"><label>Poids maximum accepté (kg)</label><input type="number" id="package_max_kg" value="10" min="1" max="50" step="1"></div>
-          <div class="field"><label>Dimension max (cm, plus grand côté)</label><input type="number" id="package_max_dim_cm" value="60" min="10" max="200" step="5"></div>
+          <div class="field"><label>Poids maximum acceptÃ© (kg)</label><input type="number" id="package_max_kg" value="10" min="1" max="50" step="1"></div>
+          <div class="field"><label>Dimension max (cm, plus grand cÃ´tÃ©)</label><input type="number" id="package_max_dim_cm" value="60" min="10" max="200" step="5"></div>
         </div>
       </div>
       <div class="step-actions">
-        <button class="btn btn-ghost" onclick="goStep(1)">← Retour</button>
-        <div class="right"><button class="btn" onclick="nextStep(2)">Suivant →</button></div>
+        <button class="btn btn-ghost" onclick="goStep(1)">â† Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(2)">Suivant â†’</button></div>
       </div>
     </div>
 
     <!-- STEP 3 : AMBIANCE -->
     <div class="step-panel" id="step-3">
       <div class="info-note">
-        💡 Ces critères aident les passagers à trouver un chauffeur compatible avec leurs préférences. Soyez honnête — ça réduit les mauvaises surprises !
+        ðŸ’¡ Ces critÃ¨res aident les passagers Ã  trouver un chauffeur compatible avec leurs prÃ©fÃ©rences. Soyez honnÃªte â€” Ã§a rÃ©duit les mauvaises surprises !
       </div>
 
       <div class="form-section">
-        <h3>🚬 Politique fumeur</h3>
+        <h3>ðŸš¬ Politique fumeur</h3>
         <div class="radio-grid">
           <label class="radio-card">
             <input type="radio" name="smoking_policy" value="non_fumeur" checked>
-            <span class="icon">🚭</span>
+            <span class="icon">ðŸš­</span>
             Non-fumeur
           </label>
           <label class="radio-card">
             <input type="radio" name="smoking_policy" value="exterieur">
-            <span class="icon">🌬️</span>
-            À l'extérieur seulement
+            <span class="icon">ðŸŒ¬ï¸</span>
+            Ã€ l'extÃ©rieur seulement
           </label>
           <label class="radio-card">
             <input type="radio" name="smoking_policy" value="fumeur">
-            <span class="icon">🚬</span>
-            Fumeur accepté
+            <span class="icon">ðŸš¬</span>
+            Fumeur acceptÃ©
           </label>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>🎵 Musique dans le véhicule</h3>
+        <h3>ðŸŽµ Musique dans le vÃ©hicule</h3>
         <div class="radio-grid">
           <label class="radio-card">
             <input type="radio" name="music_policy" value="silence">
-            <span class="icon">🔇</span>
+            <span class="icon">ðŸ”‡</span>
             Silence
           </label>
           <label class="radio-card">
             <input type="radio" name="music_policy" value="selon_humeur" checked>
-            <span class="icon">🎶</span>
+            <span class="icon">ðŸŽ¶</span>
             Selon l'humeur
           </label>
           <label class="radio-card">
             <input type="radio" name="music_policy" value="musique">
-            <span class="icon">🔊</span>
+            <span class="icon">ðŸ”Š</span>
             Toujours de la musique
           </label>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>💬 Conversation</h3>
+        <h3>ðŸ’¬ Conversation</h3>
         <div class="radio-grid">
           <label class="radio-card">
             <input type="radio" name="chat_policy" value="silencieux">
-            <span class="icon">🤫</span>
+            <span class="icon">ðŸ¤«</span>
             Silencieux
           </label>
           <label class="radio-card">
             <input type="radio" name="chat_policy" value="selon_humeur" checked>
-            <span class="icon">🙂</span>
+            <span class="icon">ðŸ™‚</span>
             Selon l'humeur
           </label>
           <label class="radio-card">
             <input type="radio" name="chat_policy" value="bavard">
-            <span class="icon">😄</span>
+            <span class="icon">ðŸ˜„</span>
             J'adore jaser
           </label>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>Autres préférences</h3>
+        <h3>Autres prÃ©fÃ©rences</h3>
         <div class="options-grid">
-          <label class="toggle-option"><input type="checkbox" id="perfume_free"> 🌿 Sans parfum / allergies</label>
-          <label class="toggle-option"><input type="checkbox" id="accepts_extra_stops"> 📍 Arrêts intermédiaires</label>
+          <label class="toggle-option"><input type="checkbox" id="perfume_free"> ðŸŒ¿ Sans parfum / allergies</label>
+          <label class="toggle-option"><input type="checkbox" id="accepts_extra_stops"> ðŸ“ ArrÃªts intermÃ©diaires</label>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>Bio / Règles personnelles</h3>
+        <h3>Bio / RÃ¨gles personnelles</h3>
         <div class="field">
-          <textarea id="personal_rules" placeholder="Ex : Je roule à la vitesse permise, bonne musique, on peut jaser ou pas. Je suis ponctuel — merci d'être là 5 min à l'avance."></textarea>
-          <span class="hint">Facultatif — max 500 caractères</span>
+          <textarea id="personal_rules" placeholder="Ex : Je roule Ã  la vitesse permise, bonne musique, on peut jaser ou pas. Je suis ponctuel â€” merci d'Ãªtre lÃ  5 min Ã  l'avance."></textarea>
+          <span class="hint">Facultatif â€” max 500 caractÃ¨res</span>
         </div>
       </div>
 
       <div class="step-actions">
-        <button class="btn btn-ghost" onclick="goStep(2)">← Retour</button>
-        <div class="right"><button class="btn" onclick="nextStep(3)">Suivant →</button></div>
+        <button class="btn btn-ghost" onclick="goStep(2)">â† Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(3)">Suivant â†’</button></div>
       </div>
     </div>
 
-    <!-- STEP 4 : POINTS D'ARRÊT + SÉCURITAIRES -->
+    <!-- STEP 4 : POINTS D'ARRÃŠT + SÃ‰CURITAIRES -->
     <div class="step-panel" id="step-4">
       <div class="info-note">
-        📍 Définissez vos arrêts intermédiaires. Choisissez des <strong>points sécuritaires</strong> connus (Tim Hortons, Walmart, métro…) — ça rassure les passagers et augmente vos réservations.
+        ðŸ“ DÃ©finissez vos arrÃªts intermÃ©diaires. Choisissez des <strong>points sÃ©curitaires</strong> connus (Tim Hortons, Walmart, mÃ©troâ€¦) â€” Ã§a rassure les passagers et augmente vos rÃ©servations.
       </div>
 
       <div class="form-section">
-        <h3>Point de départ sécuritaire</h3>
-        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">Optionnel — lieu public connu pour que les passagers vous retrouvent facilement.</p>
+        <h3>Point de dÃ©part sÃ©curitaire</h3>
+        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">Optionnel â€” lieu public connu pour que les passagers vous retrouvent facilement.</p>
         <div class="form-grid">
           <div class="field">
-            <label>Ville de départ</label>
-            <input type="text" id="meeting-city-start" placeholder="Ex : Québec" oninput="loadMeetingPoints('start')">
+            <label>Ville de dÃ©part</label>
+            <input type="text" id="meeting-city-start" placeholder="Ex : QuÃ©bec" oninput="loadMeetingPoints('start')">
           </div>
           <div class="field">
-            <label>Point sécuritaire</label>
+            <label>Point sÃ©curitaire</label>
             <select id="meeting-point-start">
-              <option value="">Choisir un endroit…</option>
+              <option value="">Choisir un endroitâ€¦</option>
             </select>
           </div>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>Arrêts intermédiaires</h3>
+        <h3>ArrÃªts intermÃ©diaires</h3>
         <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">
-          Exemple : Québec → <strong>Drummondville</strong> → Montréal. Les passagers qui descendent à Drummondville voient cet arrêt et peuvent réserver.
+          Exemple : QuÃ©bec â†’ <strong>Drummondville</strong> â†’ MontrÃ©al. Les passagers qui descendent Ã  Drummondville voient cet arrÃªt et peuvent rÃ©server.
         </p>
         <div id="stop-list" class="stop-list">
-          <p id="stop-empty-hint" style="font-size:0.82rem;color:var(--brand-muted);margin:0;padding:6px 0;">Aucun arrêt intermédiaire — cliquez le bouton pour en ajouter un.</p>
+          <p id="stop-empty-hint" style="font-size:0.82rem;color:var(--brand-muted);margin:0;padding:6px 0;">Aucun arrÃªt intermÃ©diaire â€” cliquez le bouton pour en ajouter un.</p>
         </div>
-        <button class="btn btn-ghost btn-sm" id="add-stop-btn" onclick="addStop()" type="button">+ Ajouter un arrêt</button>
+        <button class="btn btn-ghost btn-sm" id="add-stop-btn" onclick="addStop()" type="button">+ Ajouter un arrÃªt</button>
       </div>
 
       <div class="form-section">
-        <h3>Point d'arrivée sécuritaire</h3>
+        <h3>Point d'arrivÃ©e sÃ©curitaire</h3>
         <div class="form-grid">
           <div class="field">
-            <label>Ville d'arrivée</label>
-            <input type="text" id="meeting-city-end" placeholder="Ex : Montréal" oninput="loadMeetingPoints('end')">
+            <label>Ville d'arrivÃ©e</label>
+            <input type="text" id="meeting-city-end" placeholder="Ex : MontrÃ©al" oninput="loadMeetingPoints('end')">
           </div>
           <div class="field">
-            <label>Point sécuritaire</label>
+            <label>Point sÃ©curitaire</label>
             <select id="meeting-point-end">
-              <option value="">Choisir un endroit…</option>
+              <option value="">Choisir un endroitâ€¦</option>
             </select>
           </div>
         </div>
       </div>
 
       <div class="step-actions">
-        <button class="btn btn-ghost" onclick="goStep(3)">← Retour</button>
-        <div class="right"><button class="btn" onclick="nextStep(4)">Suivant →</button></div>
+        <button class="btn btn-ghost" onclick="goStep(3)">â† Retour</button>
+        <div class="right"><button class="btn" onclick="nextStep(4)">Suivant â†’</button></div>
       </div>
     </div>
 
@@ -429,36 +430,36 @@
         <h3>Partage des frais</h3>
         <div class="form-grid">
           <div class="field">
-            <label>Coût estimé par km ($/km)</label>
+            <label>CoÃ»t estimÃ© par km ($/km)</label>
             <input type="number" id="cost_per_km" value="0.35" min="0.10" max="0.50" step="0.01" oninput="updatePricePreview()">
-            <span class="hint">Recommandé : 0,25 $ à 0,45 $/km · Maximum légal suggéré : 0,50 $/km</span>
+            <span class="hint">RecommandÃ© : 0,25 $ Ã  0,45 $/km Â· Maximum lÃ©gal suggÃ©rÃ© : 0,50 $/km</span>
           </div>
         </div>
       </div>
 
       <div class="price-preview" id="price-preview">
-        <h4>📊 Aperçu du partage (estimé)</h4>
+        <h4>ðŸ“Š AperÃ§u du partage (estimÃ©)</h4>
         <div id="price-rows"></div>
       </div>
 
       <div class="form-section" style="margin-top:24px;">
         <p style="font-size:0.82rem;color:var(--brand-muted);line-height:1.65;">
-          En publiant ce trajet, vous confirmez qu'il s'agit d'un vrai trajet que vous effectuez déjà,
-          et que le prix demandé reflète uniquement le partage des frais réels.
-          Vous êtes responsable de votre permis de conduire valide et de votre assurance automobile.
+          En publiant ce trajet, vous confirmez qu'il s'agit d'un vrai trajet que vous effectuez dÃ©jÃ ,
+          et que le prix demandÃ© reflÃ¨te uniquement le partage des frais rÃ©els.
+          Vous Ãªtes responsable de votre permis de conduire valide et de votre assurance automobile.
         </p>
       </div>
 
-      <div class="error-msg" id="err-msg">⚠️ Veuillez corriger les erreurs avant de publier.</div>
+      <div class="error-msg" id="err-msg">âš ï¸ Veuillez corriger les erreurs avant de publier.</div>
       <div class="success-box" id="success-box">
-        <h3>✅ Trajet publié avec succès !</h3>
+        <h3>âœ… Trajet publiÃ© avec succÃ¨s !</h3>
         <p>Votre trajet est maintenant visible par les passagers.</p>
         <a class="btn" href="/covoiturage.html">Voir les trajets</a>
       </div>
 
       <div class="step-actions" id="publish-actions">
-        <button class="btn btn-ghost" onclick="goStep(4)">← Retour</button>
-        <div class="right"><button class="btn" id="publish-btn" onclick="publishRide()">🚗 Publier mon trajet</button></div>
+        <button class="btn btn-ghost" onclick="goStep(4)">â† Retour</button>
+        <div class="right"><button class="btn" id="publish-btn" onclick="publishRide()">ðŸš— Publier mon trajet</button></div>
       </div>
     </div>
   </main>
@@ -469,14 +470,14 @@
     let currentStep = 1;
     let stopCount = 0;
 
-    // Auth guard + pré-remplir depuis profil chauffeur existant
+    // Auth guard + prÃ©-remplir depuis profil chauffeur existant
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
       const { data: { session } } = await db.auth.getSession();
       if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
 
-      // Pré-remplir depuis le profil chauffeur sauvegardé
+      // PrÃ©-remplir depuis le profil chauffeur sauvegardÃ©
       try {
         const res = await fetch('/api/platform?endpoint=ride-driver-profile', {
           headers: { Authorization: 'Bearer ' + session.access_token }
@@ -526,9 +527,9 @@
 
     function nextStep(from) {
       if (from === 1) {
-        if (!document.getElementById('start_city').value.trim()) { alert('Ville de départ requise'); return; }
-        if (!document.getElementById('end_city').value.trim())   { alert('Ville d\'arrivée requise'); return; }
-        if (!document.getElementById('departure_time').value)    { alert('Date de départ requise'); return; }
+        if (!document.getElementById('start_city').value.trim()) { alert('Ville de dÃ©part requise'); return; }
+        if (!document.getElementById('end_city').value.trim())   { alert('Ville d\'arrivÃ©e requise'); return; }
+        if (!document.getElementById('departure_time').value)    { alert('Date de dÃ©part requise'); return; }
         const dist = document.getElementById('total_distance_km');
         if (!dist.value) {
           const pairs = {
@@ -543,20 +544,20 @@
       goStep(from + 1);
     }
 
-    function norm(v) { return v.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+    function norm(v) { return v.normalize('NFD').replace(/[Ì€-Í¯]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 
     function toggleReturn() {
       document.getElementById('return-section').style.display =
         document.getElementById('is_return_trip').checked ? 'block' : 'none';
     }
 
-    // ── Colis ────────────────────────────────────────────────────
+    // â”€â”€ Colis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function togglePackageFields() {
       document.getElementById('package-fields').style.display =
         document.getElementById('accepts_packages').checked ? 'block' : 'none';
     }
 
-    // ── Points sécuritaires ───────────────────────────────────────
+    // â”€â”€ Points sÃ©curitaires â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const meetingPointsCache = {};
     async function loadMeetingPoints(side) {
       const cityEl = document.getElementById('meeting-city-' + side);
@@ -574,10 +575,10 @@
 
       const points = meetingPointsCache[city];
       selEl.innerHTML = '<option value="">Aucun (point libre)</option>' +
-        points.map(p => `<option value="${p.id}">${p.name}${p.address ? ' — ' + p.address : ''}${p.verified ? ' ✅' : ''}</option>`).join('');
+        points.map(p => `<option value="${p.id}">${p.name}${p.address ? ' â€” ' + p.address : ''}${p.verified ? ' âœ…' : ''}</option>`).join('');
     }
 
-    // ── Points d'arrêt ──────────────────────────────────────────
+    // â”€â”€ Points d'arrÃªt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function addStop() {
       stopCount++;
       const list = document.getElementById('stop-list');
@@ -590,8 +591,8 @@
         <span class="stop-order">${stopCount}</span>
         <input type="text" placeholder="Ville *" data-field="city" oninput="renumberStops()">
         <input type="text" placeholder="Secteur (optionnel)" data-field="sector">
-        <input type="number" placeholder="Détour km" data-field="detour_km" min="0" step="1" style="width:80px">
-        <button class="stop-remove" onclick="removeStop('stop-${stopCount}')" title="Supprimer">✕</button>
+        <input type="number" placeholder="DÃ©tour km" data-field="detour_km" min="0" step="1" style="width:80px">
+        <button class="stop-remove" onclick="removeStop('stop-${stopCount}')" title="Supprimer">âœ•</button>
       `;
       list.appendChild(div);
       const actual = list.querySelectorAll('.stop-item').length;
@@ -624,7 +625,7 @@
       })).filter(s => s.city);
     }
 
-    // ── Prix preview ─────────────────────────────────────────────
+    // â”€â”€ Prix preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
 
     function updatePricePreview() {
@@ -635,7 +636,7 @@
       const platPct = 0.10;
 
       if (!dist) {
-        document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>';
+        document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimÃ©e Ã  l\'Ã©tape 1 pour voir le calcul.</p>';
         return;
       }
 
@@ -647,18 +648,18 @@
       const overLimit = paxPays > maxPax * 1.05;
 
       document.getElementById('price-rows').innerHTML = `
-        <div class="price-row"><span>Distance estimée</span><span>${dist} km</span></div>
-        <div class="price-row"><span>Coût total estimé (${cpk} $/km)</span><span>${fmt(totalCost)}</span></div>
-        <div class="price-row"><span>Répartition par passager (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)}</span></div>
-        <div class="price-row"><span>Frais de service (10% — plateforme)</span><span>${fmt(platFee)}</span></div>
+        <div class="price-row"><span>Distance estimÃ©e</span><span>${dist} km</span></div>
+        <div class="price-row"><span>CoÃ»t total estimÃ© (${cpk} $/km)</span><span>${fmt(totalCost)}</span></div>
+        <div class="price-row"><span>RÃ©partition par passager (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)}</span></div>
+        <div class="price-row"><span>Frais de service (10% â€” plateforme)</span><span>${fmt(platFee)}</span></div>
         <div class="price-row total"><span>Chaque passager paie</span><span>${fmt(paxPays)}</span></div>
         <div class="price-row driver-gets"><span>Vous recevez par passager</span><span>${fmt(perPax)}</span></div>
         <div class="price-row driver-gets"><span>+ Frais bagage si applicable (100% pour vous)</span><span>${fmt(lugFee)}</span></div>
-        ${overLimit ? '<div class="over-limit-warning">⚠️ Le prix dépasse le seuil recommandé de 0,50 $/km. Considérez de réduire le coût/km.</div>' : ''}
+        ${overLimit ? '<div class="over-limit-warning">âš ï¸ Le prix dÃ©passe le seuil recommandÃ© de 0,50 $/km. ConsidÃ©rez de rÃ©duire le coÃ»t/km.</div>' : ''}
       `;
     }
 
-    // ── Publier ──────────────────────────────────────────────────
+    // â”€â”€ Publier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async function publishRide() {
       const btn = document.getElementById('publish-btn');
       btn.disabled = true; btn.textContent = 'Publication...';
@@ -723,13 +724,13 @@
           document.getElementById('success-box').style.display = 'block';
         } else {
           document.getElementById('err-msg').style.display = 'block';
-          document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || 'Erreur lors de la publication.');
-          btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+          document.getElementById('err-msg').textContent = 'âš ï¸ ' + (data.error || 'Erreur lors de la publication.');
+          btn.disabled = false; btn.textContent = 'ðŸš— Publier mon trajet';
         }
       } catch(e) {
         document.getElementById('err-msg').style.display = 'block';
-        document.getElementById('err-msg').textContent = '⚠️ ' + (e.message || 'Erreur réseau. Réessayez.');
-        btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+        document.getElementById('err-msg').textContent = 'âš ï¸ ' + (e.message || 'Erreur rÃ©seau. RÃ©essayez.');
+        btn.disabled = false; btn.textContent = 'ðŸš— Publier mon trajet';
       }
     }
   </script>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Admin - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
@@ -891,6 +892,7 @@
         <div class="stat-card"><div class="stat-card-label">iOS</div><div class="stat-card-value" id="notif-ios">—</div><div class="stat-card-sub">Safari / iPhone</div></div>
         <div class="stat-card"><div class="stat-card-label">Android/Desktop</div><div class="stat-card-value" id="notif-android">—</div><div class="stat-card-sub">Chrome / Firefox</div></div>
         <div class="stat-card"><div class="stat-card-label">Dernière notif</div><div class="stat-card-value" id="notif-last" style="font-size:1rem">—</div><div class="stat-card-sub">envoyée</div></div>
+        <div class="stat-card"><div class="stat-card-label">Courriels</div><div class="stat-card-value" id="email-health" style="font-size:1rem">—</div><div class="stat-card-sub" id="email-health-sub">SendGrid</div></div>
       </div>
 
       <div class="impact-admin-grid">
@@ -915,6 +917,15 @@
         <div class="form-card">
           <div style="font-size:.8rem;color:var(--brand-muted);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">📋 Abonnés récents</div>
           <div id="notif-subs-list" style="font-size:.82rem;color:var(--brand-muted)">Chargement…</div>
+        </div>
+        <div class="form-card">
+          <div style="font-size:.8rem;color:var(--brand-cyan);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">Courriel transactionnel</div>
+          <div id="email-diagnostics" style="font-size:.82rem;color:var(--brand-muted);line-height:1.6;margin-bottom:12px">Chargement...</div>
+          <form id="email-test-form" class="form-grid">
+            <label for="email-test-to">Envoyer un test a</label>
+            <input id="email-test-to" type="email" placeholder="toi@exemple.com" required>
+            <button class="action-btn" type="submit" id="email-test-btn">Tester SendGrid</button>
+          </form>
         </div>
       </div>
     </div>
@@ -1115,27 +1126,72 @@
   }
 
   async function loadLitiges(db) {
-    const { data } = await db.from('livraisons')
-      .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
-      .in('statut', ['litige', 'rembourse'])
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    const rows = data || [];
+    let rows = [];
+    try {
+      const session = AUTH_API.getUser()?.session;
+      const res = await fetch(apiUrl('/api/platform?endpoint=admin-disputes'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({})
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Lecture litiges impossible');
+      rows = out.litiges || [];
+    } catch (err) {
+      console.error('admin-disputes:', err);
+      const { data } = await db.from('livraisons')
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
+        .in('statut', ['litige', 'rembourse'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      rows = data || [];
+    }
     document.getElementById('litiges-body').innerHTML = rows.length === 0
       ? '<tr><td colspan="6" class="empty-msg">Aucun litige en cours</td></tr>'
       : rows.map(r => {
           const date = r.cree_le || r.created_at;
           const isLitige = r.statut === 'litige';
+          const hasProof = Boolean(r.delivery_proof);
+          const needsReview = r.delivery_proof_required_admin_review || hasProof;
           return `<tr>
             <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
-            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}</td>
+            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}${hasProof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve photo/GPS disponible</div>' : ''}</td>
             <td><span style="background:${isLitige ? '#7C2020' : '#1A3A1A'};color:${isLitige ? '#FF6B6B' : '#6BFF6B'};padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700">${isLitige ? '⚠️ Litige' : '✅ Remboursé'}</span></td>
             <td style="color:#B8F53E;font-weight:700">${$m(r.prix_total)}</td>
             <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
-            <td>${isLitige ? `<div class="action-cell"><button class="action-btn danger" onclick="rembourserLivraison('${r.id}')">Rembourser</button></div>` : '—'}</td>
+            <td><div class="action-cell">
+              ${hasProof ? `<button class="action-btn" onclick="viewDeliveryProof('${r.id}')">Voir preuve</button>` : ''}
+              ${needsReview ? `<button class="action-btn" onclick="markDisputeAction('${r.id}','open_litige')">Ouvrir litige</button>` : ''}
+              ${isLitige || needsReview ? `<button class="action-btn" onclick="markDisputeAction('${r.id}','ask_info')">Demander info</button>` : ''}
+              ${isLitige || needsReview ? `<button class="action-btn" onclick="adminCaptureLegacy('${r.id}')">Libérer</button>` : ''}
+              ${isLitige || needsReview ? `<button class="action-btn danger" onclick="rembourserLivraison('${r.id}')">Rembourser</button>` : '<span style="color:#5A6A7A;font-size:.78rem">—</span>'}
+            </div></td>
           </tr>`;
         }).join('');
+  }
+
+  async function markDisputeAction(livraisonId, action) {
+    const labels = {
+      open_litige: 'ouvrir un litige',
+      ask_info: 'demander plus d information',
+      close_review: 'fermer la revision'
+    };
+    const note = prompt(`Note admin pour ${labels[action] || action} :`, '');
+    if (note === null) return;
+    const user = AUTH_API.getUser();
+    const res = await fetch(apiUrl('/api/platform?endpoint=admin-dispute-action'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user.session.access_token },
+      body: JSON.stringify({ livraison_id: livraisonId, action, note })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert('❌ ' + (out.error || 'Action litige impossible')); return; }
+    alert('Action enregistrée.');
+    await loadLitiges(window.db);
+    await loadData();
   }
 
   async function rembourserLivraison(livraisonId) {
@@ -2183,6 +2239,51 @@
     }
   });
 
+  async function loadEmailDiagnostics() {
+    const box = document.getElementById('email-diagnostics');
+    if (!box) return;
+    try {
+      const res = await fetch(apiUrl('/api/notifier'), { method: 'GET' });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Diagnostic email indisponible');
+      const ok = out.sendgrid_configured && out.from_email_configured && out.admin_email_configured;
+      document.getElementById('email-health').textContent = ok ? 'OK' : 'À vérifier';
+      document.getElementById('email-health-sub').textContent = out.from_domain || 'domaine inconnu';
+      box.innerHTML = `
+        <div>SendGrid : <strong style="color:${out.sendgrid_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.sendgrid_configured ? 'configuré' : 'manquant'}</strong></div>
+        <div>FROM_EMAIL : <strong style="color:${out.from_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.from_domain || 'manquant'}</strong></div>
+        <div>ADMIN_EMAIL : <strong style="color:${out.admin_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.admin_email_configured ? 'configuré' : 'manquant'}</strong></div>
+        <div style="margin-top:8px;color:#8A9BB0">${out.spam_note || ''}</div>
+      `;
+    } catch (err) {
+      document.getElementById('email-health').textContent = 'Erreur';
+      box.innerHTML = `<span style="color:#ff8a8a">${err.message}</span>`;
+    }
+  }
+
+  document.getElementById('email-test-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const btn = document.getElementById('email-test-btn');
+    const email = document.getElementById('email-test-to').value.trim();
+    btn.disabled = true;
+    btn.textContent = 'Envoi...';
+    try {
+      const res = await fetch(apiUrl('/api/notifier'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'test_email', data: { email } })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.success) throw new Error(out.error || 'Email test non envoyé');
+      alert(`Email de test envoyé à ${out.email_masked || email}. Vérifie aussi les pourriels.`);
+    } catch (err) {
+      alert('❌ ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Tester SendGrid';
+    }
+  });
+
   // ── INIT ─────────────────────────────────────────────────────────
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
@@ -2196,6 +2297,7 @@
     await loadGamification();
     loadParrainage();
     loadNotifications();
+    loadEmailDiagnostics();
   }
 
   init();

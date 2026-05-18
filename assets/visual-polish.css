@@ -1,0 +1,84 @@
+/* PorteaPorte - finition visuelle transverse v1 */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+}
+
+h1, h2, h3, .page-title, .section-title, .card-title, .hero-title {
+  letter-spacing: 0 !important;
+  text-wrap: balance;
+}
+
+p, li, .note, .hint, .muted, .mission-note {
+  line-height: 1.58;
+}
+
+button,
+.btn,
+.btn-sm,
+.btn-action,
+.action-btn,
+.accept-btn,
+input[type="submit"],
+a.btn,
+a.btn-sm {
+  min-height: 40px;
+  border-radius: 10px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+.btn,
+.btn-sm.primary,
+.btn-action.btn-approve,
+.accept-btn {
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
+  color: #06100b !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 10px 30px rgba(0,217,255,.16) !important;
+}
+
+.btn.secondary,
+.btn-sm,
+.btn-action,
+.action-btn {
+  border: 1px solid rgba(184,245,62,.42) !important;
+  color: var(--brand-text) !important;
+  background: rgba(255,255,255,.055) !important;
+}
+
+.btn:hover,
+.btn-sm:hover,
+.btn-action:hover,
+.action-btn:hover,
+.accept-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(184,245,62,.85) !important;
+  filter: brightness(1.06);
+}
+
+input, select, textarea {
+  min-height: 42px;
+  font-size: 16px;
+}
+
+.card,
+.panel,
+.form-card,
+.stat-card,
+.mission-card,
+.delivery-row,
+.table-card {
+  border-radius: 14px !important;
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  body { font-size: 15px; }
+  .btn, .btn-sm, .action-btn, .btn-action { width: auto; }
+  .action-cell, .actions, .delivery-actions { gap: 8px !important; }
+}

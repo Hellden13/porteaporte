@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Depot avec preuve - PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -97,7 +98,7 @@
           longitude: pos.coords.longitude,
           accuracy_m: pos.coords.accuracy
         };
-        state.textContent = `GPS capture: ${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)} · precision ${Math.round(gps.accuracy_m || 0)} m`;
+        state.textContent = `GPS capture: ${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)} Â· precision ${Math.round(gps.accuracy_m || 0)} m`;
       }, (err) => {
         state.textContent = 'GPS refuse ou indisponible: ' + err.message;
       }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
