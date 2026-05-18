@@ -2368,7 +2368,6 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
-    if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx, body);
     if (endpoint === 'ride-package-book')    return await ridePackageBook(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
@@ -2392,6 +2391,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'stripe-connect-dashboard') return await stripeConnectDashboard(req, res, ctx);
     if (endpoint === 'stripe-connect-payout')    return await stripeConnectPayout(req, res, ctx, body);
     if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);
+    if (endpoint === 'subscription-create')      return await subscriptionCreate(req, res, ctx);
+    if (endpoint === 'subscription-status')      return await subscriptionStatus(req, res, ctx);
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -4309,4 +4310,124 @@ async function livreurEarnings(req, res, ctx) {
   ).then(r => r.ok ? r.json() : []);
 
   return res.status(200).json({ success: true, earnings: rows, total: rows.length });
+}
+
+/* ── Abonnements ─────────────────────────────────────────── */
+async function subscriptionCreate(req, res, ctx) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+  const body  = req.body || {};
+  const plan  = String(body.plan || '');
+  const PLANS = { conducteur_pro: 'STRIPE_PRICE_PRO', marchand_local: 'STRIPE_PRICE_MARCHAND' };
+  if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide.' });
+
+  const priceId  = process.env[PLANS[plan]];
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!priceId)   return res.status(503).json({ error: 'Ce plan n\'est pas encore disponible.' });
+  if (!stripeKey) return res.status(500).json({ error: 'Paiement temporairement indisponible.' });
+
+  // Récupérer ou créer le customer Stripe
+  const profileRows = await fetch(
+    `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=email,prenom,nom,stripe_customer_id`,
+    { headers: sbHeaders(ctx.sbKey) }
+  ).then(r => r.ok ? r.json() : []).catch(() => []);
+  const profile = profileRows[0] || {};
+
+  let customerId = profile.stripe_customer_id;
+  if (!customerId) {
+    const custRes = await fetch('https://api.stripe.com/v1/customers', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        email: profile.email || '',
+        name: [profile.prenom, profile.nom].filter(Boolean).join(' ') || '',
+        'metadata[supabase_id]': ctx.session.id,
+      }).toString()
+    }).catch(() => null);
+    if (custRes?.ok) {
+      const cust = await custRes.json();
+      customerId = cust.id;
+      await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+        method: 'PATCH',
+        headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+        body: JSON.stringify({ stripe_customer_id: customerId })
+      }).catch(() => {});
+    }
+  }
+
+  const baseUrl = process.env.BASE_URL || 'https://porteaporte.site';
+  const params  = new URLSearchParams({
+    mode: 'subscription',
+    'line_items[0][price]': priceId,
+    'line_items[0][quantity]': '1',
+    success_url: `${baseUrl}/abonnements.html?success=1&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:  `${baseUrl}/abonnements.html?cancel=1`,
+    'metadata[supabase_id]': ctx.session.id,
+    'metadata[plan]': plan,
+    'subscription_data[metadata][supabase_id]': ctx.session.id,
+    'subscription_data[metadata][plan]': plan,
+  });
+  if (customerId) params.set('customer', customerId);
+
+  const sessRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  }).catch(() => null);
+
+  if (!sessRes?.ok) {
+    const err = sessRes ? await sessRes.json().catch(() => ({})) : {};
+    return res.status(500).json({ error: err.error?.message || 'Impossible de créer la session de paiement.' });
+  }
+  const sess = await sessRes.json();
+  return res.status(200).json({ url: sess.url });
+}
+
+async function subscriptionStatus(req, res, ctx) {
+  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
+  const body      = req.body || {};
+  const sessionId = body.session_id || req.query?.session_id || null;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+  // Retour depuis Stripe Checkout : activer l'abonnement en Supabase
+  if (sessionId && stripeKey) {
+    const sessRes = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=subscription`,
+      { headers: { Authorization: `Bearer ${stripeKey}` } }
+    ).catch(() => null);
+    if (sessRes?.ok) {
+      const sess = await sessRes.json().catch(() => ({}));
+      if (sess.payment_status === 'paid' && sess.subscription) {
+        const sub  = typeof sess.subscription === 'object' ? sess.subscription : {};
+        const plan = sess.metadata?.plan || null;
+        await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+          method: 'PATCH',
+          headers: sbHeaders(ctx.sbKey, 'return=minimal'),
+          body: JSON.stringify({
+            subscription_plan:   plan,
+            subscription_status: sub.status || 'active',
+            subscription_end_at: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString() : null,
+            stripe_customer_id:  sub.customer || null,
+          })
+        }).catch(() => {});
+        return res.status(200).json({
+          active: sub.status === 'active',
+          plan,
+          current_period_end: sub.current_period_end || null,
+        });
+      }
+    }
+  }
+
+  // Lecture depuis le profil Supabase
+  const rows = await fetch(
+    `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=subscription_plan,subscription_status,subscription_end_at`,
+    { headers: sbHeaders(ctx.sbKey) }
+  ).then(r => r.ok ? r.json() : []).catch(() => []);
+  const p = rows[0] || {};
+  return res.status(200).json({
+    active: p.subscription_status === 'active',
+    plan:   p.subscription_plan   || null,
+    current_period_end: p.subscription_end_at || null,
+  });
 }

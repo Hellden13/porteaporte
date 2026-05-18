@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -493,12 +493,16 @@
         <div id="driverLevelBox" class="reward-muted">Chargement...</div>
         <div class="reward-title" style="margin-top:18px">Mes badges</div>
         <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Chargement...</p></div>
-        <div class="reward-title" style="margin-top:4px">Tirages mensuels</div>
-        <div id="drawsList"><p class="loading-msg">Chargement...</p></div>
-        <div class="legal-note">
-          Les tirages sont soumis aux <a href="/reglements-concours.html" style="color:var(--brand-lime)">rÃ¨glements officiels</a>.
-          Aucun achat requis lorsque requis par la loi. Les Points Impact n'ont aucune valeur monÃ©taire.
-        </div>
+        <details style="margin-top:14px">
+          <summary style="cursor:pointer;font-size:0.8rem;color:var(--brand-muted);letter-spacing:0.04em;list-style:none;display:flex;align-items:center;gap:6px">
+            <span>▸</span> Tirages mensuels
+          </summary>
+          <div id="drawsList" style="margin-top:10px"><p class="loading-msg">Chargement...</p></div>
+          <div class="legal-note" style="margin-top:8px">
+            Les tirages sont soumis aux <a href="/reglements-concours.html" style="color:var(--brand-lime)">règlements officiels</a>.
+            Aucun achat requis lorsque requis par la loi.
+          </div>
+        </details>
       </div>
     </div>
 
@@ -706,6 +710,24 @@
     ============================= */
     function money(v) {
       return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    }
+    function deliveryStatusLabel(status) {
+      const labels = {
+        confirme: 'Confirme',
+        accepted: 'Confirme',
+        en_route: 'En route',
+        in_transit: 'En route',
+        ramasse: 'Ramasse',
+        picked_up: 'Ramasse',
+        livre: 'Livre - attente confirmation',
+        livree: 'Livre - attente confirmation',
+        delivered: 'Livre - attente confirmation',
+        payee: 'Paye',
+        paid: 'Paye',
+        succeeded: 'Paye',
+        litige: 'Litige'
+      };
+      return labels[status] || status || 'En cours';
     }
 
     const ECO_ICONS = { pieds:'ðŸš¶', velo:'ðŸš´', trottinette:'ðŸ›´', skateboard:'ðŸ›¹', voiture_electrique:'ðŸ”‹ðŸš—', moto_electrique:'ðŸ”‹ðŸï¸', camion_electrique:'ðŸ”‹ðŸš›', voiture:'ðŸš—', moto:'ðŸï¸', camion:'ðŸš›' };
@@ -956,18 +978,19 @@
         return;
       }
       el.innerHTML = data.map(row => {
-        const canMark = ['confirme','en_route','ramasse'].includes(row.statut);
+        const canMark = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
+        const delivered = ['livre','livree','delivered'].includes(row.statut);
         return `
           <div class="delivery-row">
             <div>
               <div class="delivery-route">${row.type_colis || 'Colis'} Â· ${row.code || row.id.slice(0,8)}</div>
-              <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)}</div>
+              <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)} Â· ${deliveryStatusLabel(row.statut)}</div>
             </div>
             <div class="delivery-actions">
               <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
               <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
               <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
-                ${row.statut === 'livre' ? 'LivrÃ© âœ“' : 'Marquer livrÃ©'}
+                ${delivered ? 'Livre - attente confirmation' : 'Marquer livre'}
               </button>
             </div>
           </div>`;
@@ -1165,22 +1188,23 @@
           return;
         }
         el.innerHTML = data.map(row => {
-          const canMark = ['confirme','en_route','ramasse'].includes(row.statut);
+          const canMark = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
+          const delivered = ['livre','livree','delivered'].includes(row.statut);
           const exp = row.expediteur_profile;
-          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'ExpÃ©diteur' : null;
+          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expediteur' : null;
           const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           return `
             <div class="delivery-row">
               <div>
                 <div class="delivery-route">${row.type_colis || 'Colis'} Â· ${row.code || row.id.slice(0,8)}</div>
-                <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)}</div>
-                ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}ðŸ“¦ ${expName}</div>` : ''}
+                <div class="delivery-meta">${row.ville_depart || '?'} â†’ ${row.ville_arrivee || '?'} Â· ${money(row.prix_total)} Â· ${deliveryStatusLabel(row.statut)}</div>
+                ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}</div>` : ''}
               </div>
               <div class="delivery-actions">
                 <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
                 <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
                 <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
-                  ${row.statut === 'livre' ? 'LivrÃ© âœ“' : 'Marquer livrÃ©'}
+                  ${delivered ? 'Livre - attente confirmation' : 'Marquer livre'}
                 </button>
               </div>
             </div>`;

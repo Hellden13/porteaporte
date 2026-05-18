@@ -269,6 +269,14 @@
                      {
                          "source":  "/api/livreur-earnings",
                          "destination":  "/api/platform?endpoint=livreur-earnings"
+                     },
+                     {
+                         "source":  "/api/subscription-create",
+                         "destination":  "/api/platform?endpoint=subscription-create"
+                     },
+                     {
+                         "source":  "/api/subscription-status",
+                         "destination":  "/api/platform?endpoint=subscription-status"
                      }
                  ],
     "headers":  [

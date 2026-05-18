@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abonnements · PorteàPorte</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.88);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; font-size: 1.1rem; }
+    .brand-mark img { width: 30px; height: 30px; }
+    .header-nav { display: flex; gap: 8px; }
+    .header-nav a { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--brand-border); background: transparent; color: var(--brand-text); text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.15s; }
+    .header-nav a:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(0,217,255,0.06), rgba(184,245,62,0.05));
+      border-bottom: 1px solid var(--brand-border);
+      padding: clamp(48px,8vw,96px) clamp(18px,4vw,48px);
+      text-align: center;
+    }
+    .hero-badge { display: inline-block; background: rgba(184,245,62,0.12); border: 1px solid rgba(184,245,62,0.3); color: var(--brand-lime); border-radius: 999px; padding: 6px 18px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(2rem,5vw,3rem); margin: 0 0 14px; }
+    .hero p { font-size: 1rem; color: var(--brand-muted); max-width: 560px; margin: 0 auto 32px; line-height: 1.65; }
+
+    .page-wrap { max-width: 980px; margin: 0 auto; padding: 56px clamp(18px,4vw,48px) 100px; }
+
+    /* Banners */
+    .banner { border-radius: 12px; padding: 16px 22px; margin-bottom: 32px; font-size: 0.95rem; font-weight: 600; display: none; }
+    .banner.success { background: rgba(184,245,62,0.12); border: 1px solid rgba(184,245,62,0.3); color: var(--brand-lime); }
+    .banner.cancel { background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.25); color: #ff7070; }
+    .banner.show { display: block; }
+
+    /* Abonnement actif */
+    #active-sub-box {
+      background: rgba(184,245,62,0.07); border: 1px solid rgba(184,245,62,0.25);
+      border-radius: 16px; padding: 22px 28px; margin-bottom: 36px; display: none;
+    }
+    #active-sub-box.show { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .active-sub-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand-lime); margin-bottom: 4px; }
+    .active-sub-name { font-size: 1.2rem; font-weight: 800; }
+    .active-sub-renew { font-size: 0.85rem; color: var(--brand-muted); }
+
+    /* Plans grid */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 56px;
+    }
+    .plan-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 20px; padding: 32px 28px;
+      display: flex; flex-direction: column;
+      transition: border-color 0.2s;
+    }
+    .plan-card.featured { border-color: rgba(184,245,62,0.4); position: relative; }
+    .plan-card.featured::before {
+      content: 'Populaire';
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--brand-lime); color: var(--brand-bg-dark);
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+      padding: 4px 14px; border-radius: 999px;
+    }
+    .plan-kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand-lime); margin-bottom: 10px; }
+    .plan-name { font-size: 1.35rem; font-weight: 800; margin-bottom: 6px; }
+    .plan-price { font-size: 2.4rem; font-weight: 900; margin: 12px 0 4px; }
+    .plan-price span { font-size: 1rem; font-weight: 500; color: var(--brand-muted); }
+    .plan-desc { font-size: 0.88rem; color: var(--brand-muted); margin-bottom: 24px; line-height: 1.6; }
+    .plan-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; line-height: 1.55; padding: 7px 0; border-top: 1px solid var(--brand-border); }
+    .plan-features li:first-child { border-top: none; }
+    .plan-features li::before { content: '✓'; color: var(--brand-lime); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+    .plan-cta {
+      display: block; width: 100%; padding: 13px; border-radius: 10px;
+      background: var(--brand-lime); color: var(--brand-bg-dark);
+      font-weight: 800; font-size: 0.95rem; text-align: center;
+      border: none; cursor: pointer; transition: opacity 0.15s;
+    }
+    .plan-cta:hover { opacity: 0.88; }
+    .plan-cta:disabled { opacity: 0.45; cursor: not-allowed; }
+    .plan-cta.secondary {
+      background: transparent; color: var(--brand-text);
+      border: 1px solid var(--brand-border);
+    }
+    .plan-cta.secondary:hover { border-color: var(--brand-lime); color: var(--brand-lime); opacity: 1; }
+    .plan-current-badge {
+      text-align: center; padding: 12px; border-radius: 10px;
+      background: rgba(184,245,62,0.1); border: 1px solid rgba(184,245,62,0.3);
+      color: var(--brand-lime); font-weight: 700; font-size: 0.9rem;
+    }
+
+    /* Section FAQ */
+    .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand-lime); margin: 0 0 22px; display: flex; align-items: center; gap: 10px; }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--brand-border); }
+    .faq { display: flex; flex-direction: column; gap: 14px; }
+    .faq-item { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px 22px; }
+    .faq-q { font-weight: 700; margin-bottom: 8px; }
+    .faq-a { color: var(--brand-muted); font-size: 0.9rem; line-height: 1.6; }
+
+    .notice { font-size: 0.8rem; color: var(--brand-muted); margin-top: 32px; line-height: 1.6; text-align: center; }
+    .notice a { color: var(--brand-lime); }
+
+    @media (max-width: 520px) {
+      .plans-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/">
+      <img src="/logo.svg" alt="PorteàPorte" width="30" height="30">
+      PorteàPorte
+    </a>
+    <nav class="header-nav">
+      <a href="/dashboard-livreur.html">Mon espace</a>
+      <a href="/">Accueil</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-badge">Plans Pro</div>
+    <h1>Passez au niveau supérieur</h1>
+    <p>Des abonnements mensuels pour les conducteurs et marchands qui veulent plus de visibilité, moins de frais et un support dédié.</p>
+  </section>
+
+  <div class="page-wrap">
+    <div id="banner-success" class="banner success">Abonnement activé avec succès ! Bienvenue dans le programme Pro.</div>
+    <div id="banner-cancel" class="banner cancel">Paiement annulé. Aucun montant n'a été prélevé.</div>
+
+    <div id="active-sub-box">
+      <div>
+        <div class="active-sub-label">Abonnement actif</div>
+        <div class="active-sub-name" id="active-sub-name">—</div>
+        <div class="active-sub-renew" id="active-sub-renew"></div>
+      </div>
+      <div style="font-size:0.85rem;color:var(--brand-muted)">Gérez votre abonnement via votre courriel de confirmation Stripe.</div>
+    </div>
+
+    <div class="plans-grid">
+      <!-- Conducteur Pro -->
+      <div class="plan-card featured">
+        <div class="plan-kicker">Chauffeurs & livreurs</div>
+        <div class="plan-name">Conducteur Pro</div>
+        <div class="plan-price">14,99 $<span> / mois</span></div>
+        <div class="plan-desc">Idéal pour les conducteurs actifs qui veulent maximiser leurs revenus et leur réputation.</div>
+        <ul class="plan-features">
+          <li>Badge Pro visible sur votre profil</li>
+          <li>Priorité dans les résultats de recherche passagers</li>
+          <li>Frais de service offerts sur vos 5 premières réservations du mois</li>
+          <li>Statistiques avancées : revenus, itinéraires, heures de pointe</li>
+          <li>Support prioritaire par courriel</li>
+        </ul>
+        <div id="cta-pro-wrap">
+          <button class="plan-cta" id="btn-pro" onclick="subscribe('conducteur_pro')">S'abonner — 14,99 $/mois</button>
+        </div>
+      </div>
+
+      <!-- Marchand Local -->
+      <div class="plan-card">
+        <div class="plan-kicker">Commerces & expéditeurs</div>
+        <div class="plan-name">Marchand Local</div>
+        <div class="plan-price">49 $<span> / mois</span></div>
+        <div class="plan-desc">Pour les marchands et expéditeurs qui envoient régulièrement des colis et veulent des conditions préférentielles.</div>
+        <ul class="plan-features">
+          <li>Badge Marchand Vérifié sur votre profil</li>
+          <li>Vos annonces en tête de liste des disponibilités</li>
+          <li>Commission réduite sur vos 20 premières livraisons du mois</li>
+          <li>Tableau de bord analytique : volumes, destinations, délais</li>
+          <li>Support dédié, temps de réponse garanti 4 h</li>
+        </ul>
+        <div id="cta-marchand-wrap">
+          <button class="plan-cta secondary" id="btn-marchand" onclick="subscribe('marchand_local')">S'abonner — 49 $/mois</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-title">Questions fréquentes</p>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q">Comment fonctionne la facturation ?</div>
+        <div class="faq-a">Le montant est prélevé automatiquement chaque mois via Stripe. Vous recevez un reçu par courriel et pouvez annuler à tout moment depuis votre espace Stripe.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puis-je annuler à tout moment ?</div>
+        <div class="faq-a">Oui. L'annulation est immédiate et vous conservez les avantages jusqu'à la fin de la période payée. Aucun remboursement au prorata n'est émis après 7 jours.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Les avantages s'appliquent-ils dès l'abonnement ?</div>
+        <div class="faq-a">Oui, votre badge et votre priorité sont activés dès la confirmation du paiement. Les avantages de commission s'appliquent dès la prochaine livraison ou réservation.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puis-je avoir les deux plans en même temps ?</div>
+        <div class="faq-a">Non, un seul abonnement actif par compte. Choisissez le plan qui correspond à votre activité principale.</div>
+      </div>
+    </div>
+
+    <p class="notice">
+      En vous abonnant, vous acceptez les <a href="/conditions.html">conditions générales</a>.<br>
+      Paiement sécurisé via Stripe. Aucune carte enregistrée sur nos serveurs.
+    </p>
+  </div>
+
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    if (params.get('success') === '1') {
+      document.getElementById('banner-success').classList.add('show');
+      // Activer l'abonnement via l'API si session_id présent
+      const sid = params.get('session_id');
+      if (sid) activateSubscription(sid);
+    }
+    if (params.get('cancel') === '1') {
+      document.getElementById('banner-cancel').classList.add('show');
+    }
+
+    async function getToken() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!db) return null;
+      const { data } = await db.auth.getSession().catch(() => ({ data: null }));
+      return data?.session?.access_token || null;
+    }
+
+    async function activateSubscription(sessionId) {
+      const token = await getToken();
+      if (!token) return;
+      const r = await fetch('/api/subscription-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ session_id: sessionId })
+      }).catch(() => null);
+      if (r?.ok) loadStatus();
+    }
+
+    async function loadStatus() {
+      const token = await getToken();
+      if (!token) return;
+      const r = await fetch('/api/subscription-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({})
+      }).catch(() => null);
+      if (!r?.ok) return;
+      const data = await r.json().catch(() => ({}));
+      if (data.active && data.plan) {
+        const names = { conducteur_pro: 'Conducteur Pro', marchand_local: 'Marchand Local' };
+        document.getElementById('active-sub-name').textContent = names[data.plan] || data.plan;
+        if (data.current_period_end) {
+          const d = new Date(typeof data.current_period_end === 'number'
+            ? data.current_period_end * 1000 : data.current_period_end);
+          document.getElementById('active-sub-renew').textContent =
+            'Renouvellement le ' + d.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        document.getElementById('active-sub-box').classList.add('show');
+
+        // Remplacer les boutons du plan actif
+        const isProActive = data.plan === 'conducteur_pro';
+        const isMarchandActive = data.plan === 'marchand_local';
+        if (isProActive) {
+          document.getElementById('cta-pro-wrap').innerHTML =
+            '<div class="plan-current-badge">✓ Plan actif</div>';
+        }
+        if (isMarchandActive) {
+          document.getElementById('cta-marchand-wrap').innerHTML =
+            '<div class="plan-current-badge">✓ Plan actif</div>';
+        }
+      }
+    }
+
+    async function subscribe(plan) {
+      const token = await getToken();
+      if (!token) {
+        window.location.href = '/login.html?redirect=/abonnements.html';
+        return;
+      }
+
+      const btnId = plan === 'conducteur_pro' ? 'btn-pro' : 'btn-marchand';
+      const btn = document.getElementById(btnId);
+      btn.disabled = true;
+      btn.textContent = 'Redirection vers le paiement...';
+
+      const r = await fetch('/api/subscription-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan })
+      }).catch(() => null);
+
+      if (!r?.ok) {
+        const err = r ? await r.json().catch(() => ({})) : {};
+        btn.disabled = false;
+        btn.textContent = plan === 'conducteur_pro' ? 'S\'abonner — 14,99 $/mois' : 'S\'abonner — 49 $/mois';
+        alert(err.error || 'Une erreur est survenue. Réessayez.');
+        return;
+      }
+
+      const { url } = await r.json().catch(() => ({}));
+      if (url) {
+        window.location.href = url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = plan === 'conducteur_pro' ? 'S\'abonner — 14,99 $/mois' : 'S\'abonner — 49 $/mois';
+        alert('Impossible d\'obtenir le lien de paiement. Réessayez.');
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>
