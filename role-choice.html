@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choisir ton rÃ´le - PorteÃ Porte</title>
+    <title>Choisir ton rôle - PorteàPorte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -169,7 +169,7 @@
         }
 
         .feature-list li::before {
-            content: 'âœ“';
+            content: '✓';
             color: var(--accent-cyan);
             font-weight: 700;
         }
@@ -279,12 +279,12 @@
 </head>
 <body>
     <header>
-        <span>PorteÃ Porte</span>
+        <span>PorteàPorte</span>
     </header>
 
     <div class="container">
         <div class="title-section">
-            <h1 class="title">Quel est ton rÃ´le?</h1>
+            <h1 class="title">Quel est ton rôle?</h1>
             <p class="subtitle">Choisis pour continuer vers ton tableau de bord</p>
         </div>
 
@@ -293,15 +293,15 @@
             <div class="role-card" id="livreur-card">
                 <h2 class="role-title">Je suis Livreur</h2>
                 <p class="role-description">
-                    Accepte les livraisons et gagne de l'argent avec ta propre flexibilitÃ©.
+                    Accepte les livraisons et gagne de l'argent avec ta propre flexibilité.
                 </p>
                 <div class="role-features">
                     <h4>Avantages</h4>
                     <ul class="feature-list">
-                        <li>Gagne jusqu'Ã  60% par livraison</li>
+                        <li>Gagne jusqu'à 60% par livraison</li>
                         <li>Horaires flexibles</li>
-                        <li>Bonus et rÃ©compenses</li>
-                        <li>Protection complÃ¨te</li>
+                        <li>Bonus et récompenses</li>
+                        <li>Protection complète</li>
                         <li>Support 24/7</li>
                     </ul>
                 </div>
@@ -317,16 +317,16 @@
 
             <!-- EXPEDITEUR CARD -->
             <div class="role-card" id="expediteur-card">
-                <h2 class="role-title">Je suis ExpÃ©diteur</h2>
+                <h2 class="role-title">Je suis Expéditeur</h2>
                 <p class="role-description">
-                    Envoie des colis et Ã©conomise jusqu'Ã  60% vs les grands services de livraison.
+                    Envoie des colis et économise jusqu'à 60% vs les grands services de livraison.
                 </p>
                 <div class="role-features">
                     <h4>Avantages</h4>
                     <ul class="feature-list">
                         <li>50-60% moins cher</li>
                         <li>Service humain et local</li>
-                        <li>Suivi en temps rÃ©el</li>
+                        <li>Suivi en temps réel</li>
                         <li>Soutien des orgas humanitaires</li>
                         <li>Compteur de livraisons pour concours</li>
                     </ul>
@@ -344,10 +344,10 @@
 
         <div class="bottom-section">
             <p class="bottom-text">
-                Veux-tu Ãªtre les deux? <button type="button" class="link-button" onclick="selectRole('both')">Oui, je veux Ãªtre livreur ET expÃ©diteur</button>
+                Veux-tu être les deux? <button type="button" class="link-button" onclick="selectRole('both')">Oui, je veux être livreur ET expéditeur</button>
             </p>
             <p class="bottom-text">
-                <button type="button" class="link-button" onclick="logout()">Se dÃ©connecter</button>
+                <button type="button" class="link-button" onclick="logout()">Se déconnecter</button>
             </p>
         </div>
     </div>
@@ -362,7 +362,7 @@
             try {
                 if (!db) {
                     console.error('Erreur: client Supabase indisponible');
-                    showError('âŒ Connexion Supabase indisponible');
+                    showError('❌ Connexion Supabase indisponible');
                     return;
                 }
 
@@ -392,7 +392,7 @@
 
                 if (!response.ok) {
                     console.error('Erreur:', result);
-                    showError('âŒ Erreur lors de la mise Ã  jour du profil: ' + (result.error || 'profil impossible'));
+                    showError('❌ Erreur lors de la mise à jour du profil: ' + (result.error || 'profil impossible'));
                     return;
                 }
 
@@ -406,15 +406,15 @@
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                showError('âŒ Une erreur est survenue');
+                showError('❌ Une erreur est survenue');
             }
         }
 
         function learnMore(role) {
             if (role === 'livreur') {
-                showSuccess('âœ… Mode Livreur: Gagne 60% par livraison, accepte/refuse librement, bonus performance, assurance complÃ¨te');
+                showSuccess('✅ Mode Livreur: Gagne 60% par livraison, accepte/refuse librement, bonus performance, assurance complète');
             } else {
-                showInfo('ExpÃ©diteur:\n\n- 50-60% moins cher que UPS\n- Suivi en temps rÃ©el\n- Service humain\n- Supporte les organismes locaux');
+                showInfo('Expéditeur:\n\n- 50-60% moins cher que UPS\n- Suivi en temps réel\n- Service humain\n- Supporte les organismes locaux');
             }
         }
 

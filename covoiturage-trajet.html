@@ -362,7 +362,7 @@ function renderRide(r) {
   document.getElementById('city-to').textContent   = r.destination_city || r.to_city  || '?';
   document.getElementById('ride-date-line').textContent = formatDate(r.departure_time || r.date);
 
-  const seats = r.available_seats ?? r.seats_available ?? 0;
+  const seats = r.available_seats ? r.seats_available ? 0;
   const dist  = r.distance_km ? r.distance_km + ' km' : '--';
   const trunk = r.trunk_size === 'large' ? 'Grand coffre' : r.trunk_size === 'medium' ? 'Coffre moyen' : r.trunk_size === 'small' ? 'Petit coffre' : '--';
   const flex  = r.flexibility === 'flexible' ? 'Flexible' : r.flexibility === 'on_demand' ? 'Sur demande' : 'Fixe';

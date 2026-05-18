@@ -2,7 +2,7 @@
   const client = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
 
   if (!client) {
-    console.error('âŒ erreur GPS: client Supabase indisponible');
+    console.error('❌ erreur GPS: client Supabase indisponible');
     return;
   }
 
@@ -32,7 +32,7 @@
   async function getSessionUser() {
     const { data, error } = await client.auth.getSession();
     if (error) {
-      console.error('âŒ erreur GPS session:', error.message);
+      console.error('❌ erreur GPS session:', error.message);
       return null;
     }
     return data.session ? data.session.user : null;
@@ -113,7 +113,7 @@
 
   function subscribe(livraisonId, onLocation) {
     if (!livraisonId) {
-      console.error('âŒ erreur Realtime: livraison_id manquant');
+      console.error('❌ erreur Realtime: livraison_id manquant');
       return null;
     }
 
@@ -133,13 +133,13 @@
           filter: 'livraison_id=eq.' + livraisonId
         },
         (payload) => {
-          // console.log('âœ… connectÃ©: position GPS reÃ§ue', livraisonId);
+          // console.log('✅ connecté: position GPS reçue', livraisonId);
           onLocation(payload.new);
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          // console.log('âœ… connectÃ©: Realtime GPS actif', livraisonId);
+          // console.log('✅ connecté: Realtime GPS actif', livraisonId);
         }
       });
 

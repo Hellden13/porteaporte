@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parrainage Â· PorteÃ€Porte</title>
+  <title>Parrainage · PorteÀPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
@@ -86,14 +86,14 @@
     #use-code-msg.ok  { color: var(--brand-lime); }
     #use-code-msg.err { color: #EF4444; }
 
-    /* Ã‰TAPES */
+    /* ÉTAPES */
     .steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
     .step-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 20px 22px; }
     .step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--brand-lime); color: var(--brand-bg-dark); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem; margin-bottom: 14px; }
     .step-title { font-weight: 700; color: var(--brand-text); margin-bottom: 6px; }
     .step-desc { font-size: 0.82rem; color: var(--brand-muted); line-height: 1.55; }
 
-    /* RÃ‰COMPENSES */
+    /* RÉCOMPENSES */
     .rewards-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 0.88rem; }
     .rewards-table th { text-align: left; color: var(--brand-lime); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 14px; border-bottom: 1px solid var(--brand-border); }
     .rewards-table td { padding: 12px 14px; border-bottom: 1px solid var(--brand-border); color: var(--brand-muted); }
@@ -112,7 +112,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÃ€Porte</span></a>
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
     <nav style="display:flex;gap:12px">
       <a class="btn btn-ghost" href="/programme-points.html">Points Impact</a>
       <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
@@ -120,9 +120,9 @@
   </header>
 
   <section class="hero">
-    <div class="hero-badge">ðŸ¤ Programme de parrainage</div>
+    <div class="hero-badge">🤝 Programme de parrainage</div>
     <h1>Invitez vos proches,<br>gagnez ensemble</h1>
-    <p>Partage ton lien unique. Quand ton ami complÃ¨te sa premiÃ¨re livraison ou son premier covoiturage, vous recevez tous les deux des rÃ©compenses rÃ©elles.</p>
+    <p>Partage ton lien unique. Quand ton ami complète sa première livraison ou son premier covoiturage, vous recevez tous les deux des récompenses réelles.</p>
   </section>
 
   <main class="page-wrap">
@@ -133,31 +133,31 @@
       <a class="btn btn-primary" href="/login.html">Se connecter</a>
     </div>
 
-    <!-- SECTION PARRAIN (aprÃ¨s connexion) -->
+    <!-- SECTION PARRAIN (après connexion) -->
     <div id="parrain-section" style="display:none">
 
       <!-- MON CODE -->
       <div class="section-title">Mon code de parrainage</div>
       <div id="code-box">
         <h2>Ton code unique</h2>
-        <p>Partage ce code avec tes amis. La rÃ©compense est attribuÃ©e seulement aprÃ¨s leur premiÃ¨re action rÃ©elle.</p>
+        <p>Partage ce code avec tes amis. La récompense est attribuée seulement après leur première action réelle.</p>
         <div class="code-display">
-          <span class="code" id="my-code">Â·Â·Â·</span>
+          <span class="code" id="my-code">···</span>
           <button onclick="copyCode()">Copier</button>
         </div>
         <div class="share-row">
-          <button class="share-btn" onclick="shareWhatsApp()">ðŸ’¬ WhatsApp</button>
-          <button class="share-btn" onclick="shareSMS()">ðŸ“± SMS</button>
-          <button class="share-btn" onclick="copyLink()">ðŸ”— Copier le lien</button>
+          <button class="share-btn" onclick="shareWhatsApp()">💬 WhatsApp</button>
+          <button class="share-btn" onclick="shareSMS()">📱 SMS</button>
+          <button class="share-btn" onclick="copyLink()">🔗 Copier le lien</button>
         </div>
       </div>
 
       <!-- STATS -->
       <div class="section-title">Mes statistiques</div>
       <div class="stats-row">
-        <div class="stat-card"><div class="val" id="stat-invites">0</div><div class="lbl">Amis invitÃ©s</div></div>
-        <div class="stat-card"><div class="val" id="stat-rewarded">0</div><div class="lbl">RÃ©compenses reÃ§ues</div></div>
-        <div class="stat-card"><div class="val" id="stat-pts">0</div><div class="lbl">Points Impact gagnÃ©s</div></div>
+        <div class="stat-card"><div class="val" id="stat-invites">0</div><div class="lbl">Amis invités</div></div>
+        <div class="stat-card"><div class="val" id="stat-rewarded">0</div><div class="lbl">Récompenses reçues</div></div>
+        <div class="stat-card"><div class="val" id="stat-pts">0</div><div class="lbl">Points Impact gagnés</div></div>
       </div>
 
       <!-- FILLEULS -->
@@ -172,7 +172,7 @@
     <div class="section-title">J'ai un code de parrainage</div>
     <div id="use-code-box">
       <h2>Utiliser un code de parrainage</h2>
-      <p>Entre le code d'un ami pour Ãªtre liÃ© Ã  son parrainage. La rÃ©compense lui sera attribuÃ©e aprÃ¨s ta premiÃ¨re action rÃ©elle.</p>
+      <p>Entre le code d'un ami pour être lié à son parrainage. La récompense lui sera attribuée après ta première action réelle.</p>
       <div class="code-input-row">
         <input type="text" id="code-input" placeholder="Ex : ABC1234" maxlength="10" autocomplete="off">
         <button onclick="submitCode()">Valider</button>
@@ -180,53 +180,53 @@
       <div id="use-code-msg"></div>
     </div>
 
-    <!-- COMMENT Ã‡A MARCHE -->
-    <div class="section-title">Comment Ã§a marche</div>
+    <!-- COMMENT ÇA MARCHE -->
+    <div class="section-title">Comment ça marche</div>
     <div class="steps">
-      <div class="step-card"><div class="step-num">1</div><div class="step-title">Partage ton code</div><div class="step-desc">Envoie ton code unique Ã  tes amis par message, courriel ou via les boutons de partage.</div></div>
-      <div class="step-card"><div class="step-num">2</div><div class="step-title">Ton ami s'inscrit</div><div class="step-desc">Il entre ton code lors de son inscription ou dans cette page. Le parrainage est enregistrÃ©.</div></div>
-      <div class="step-card"><div class="step-num">3</div><div class="step-title">Il complÃ¨te une action</div><div class="step-desc">Sa premiÃ¨re livraison rÃ©elle ou son premier covoiturage dÃ©clenche les rÃ©compenses.</div></div>
-      <div class="step-card"><div class="step-num">4</div><div class="step-title">Vous Ãªtes rÃ©compensÃ©s</div><div class="step-desc">Tu reÃ§ois +100 Points Impact et +50 XP. Lui reÃ§oit aussi un bonus de bienvenue.</div></div>
+      <div class="step-card"><div class="step-num">1</div><div class="step-title">Partage ton code</div><div class="step-desc">Envoie ton code unique à tes amis par message, courriel ou via les boutons de partage.</div></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-title">Ton ami s'inscrit</div><div class="step-desc">Il entre ton code lors de son inscription ou dans cette page. Le parrainage est enregistré.</div></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-title">Il complète une action</div><div class="step-desc">Sa première livraison réelle ou son premier covoiturage déclenche les récompenses.</div></div>
+      <div class="step-card"><div class="step-num">4</div><div class="step-title">Vous êtes récompensés</div><div class="step-desc">Tu reçois +100 Points Impact et +50 XP. Lui reçoit aussi un bonus de bienvenue.</div></div>
     </div>
 
-    <!-- RÃ‰COMPENSES -->
-    <div class="section-title">RÃ©compenses dÃ©taillÃ©es</div>
+    <!-- RÉCOMPENSES -->
+    <div class="section-title">Récompenses détaillées</div>
     <table class="rewards-table">
-      <thead><tr><th>Ã‰vÃ©nement</th><th>Parrain reÃ§oit</th><th>Filleul reÃ§oit</th></tr></thead>
+      <thead><tr><th>Événement</th><th>Parrain reçoit</th><th>Filleul reçoit</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Inscription du filleul</strong></td>
           <td>Rien (en attente)</td>
-          <td>Lien enregistrÃ©</td>
+          <td>Lien enregistré</td>
         </tr>
         <tr>
-          <td><strong>1Ã¨re livraison complÃ©tÃ©e</strong></td>
-          <td><span class="pill-green">+100 pts</span> Â· <span class="pill-green">+50 XP</span></td>
-          <td>Badge ðŸ“¦ Premier trajet</td>
+          <td><strong>1ère livraison complétée</strong></td>
+          <td><span class="pill-green">+100 pts</span> · <span class="pill-green">+50 XP</span></td>
+          <td>Badge 📦 Premier trajet</td>
         </tr>
         <tr>
-          <td><strong>1er covoiturage complÃ©tÃ©</strong></td>
-          <td><span class="pill-green">+100 pts</span> Â· <span class="pill-green">+50 XP</span></td>
-          <td>Badge ðŸš— Premier trajet partagÃ©</td>
+          <td><strong>1er covoiturage complété</strong></td>
+          <td><span class="pill-green">+100 pts</span> · <span class="pill-green">+50 XP</span></td>
+          <td>Badge 🚗 Premier trajet partagé</td>
         </tr>
         <tr>
-          <td><strong>1er filleul rÃ©compensÃ©</strong></td>
-          <td>Badge ðŸ¤ Parrain actif</td>
-          <td>â€”</td>
+          <td><strong>1er filleul récompensé</strong></td>
+          <td>Badge 🤝 Parrain actif</td>
+          <td>—</td>
         </tr>
       </tbody>
     </table>
 
     <!-- ANTI-FRAUDE -->
     <div class="fraud-box">
-      <h3>ðŸ›¡ï¸ Programme anti-fraude</h3>
+      <h3>🛡️ Programme anti-fraude</h3>
       <ul>
-        <li>La rÃ©compense n'est jamais attribuÃ©e Ã  l'inscription â€” seulement aprÃ¨s une action rÃ©elle et vÃ©rifiÃ©e.</li>
-        <li>Un seul code de parrainage peut Ãªtre utilisÃ© par personne.</li>
+        <li>La récompense n'est jamais attribuée à l'inscription — seulement après une action réelle et vérifiée.</li>
+        <li>Un seul code de parrainage peut être utilisé par personne.</li>
         <li>Tu ne peux pas utiliser ton propre code de parrainage.</li>
-        <li>La dÃ©tection de comptes multiples entraÃ®ne l'annulation de toutes les rÃ©compenses et la suspension du compte.</li>
-        <li>Les rÃ©compenses suspectes peuvent Ãªtre annulÃ©es par l'administration Ã  tout moment.</li>
-        <li>Le parrainage est limitÃ© Ã  des actions vÃ©rifiables sur la plateforme (livraisons, covoiturages).</li>
+        <li>La détection de comptes multiples entraîne l'annulation de toutes les récompenses et la suspension du compte.</li>
+        <li>Les récompenses suspectes peuvent être annulées par l'administration à tout moment.</li>
+        <li>Le parrainage est limité à des actions vérifiables sur la plateforme (livraisons, covoiturages).</li>
       </ul>
     </div>
 
@@ -292,7 +292,7 @@
       refs.forEach(ref => {
         const div = document.createElement('div');
         div.className = 'ref-row';
-        const statusLabels = { pending: 'En attente', rewarded: 'RÃ©compensÃ©', cancelled: 'AnnulÃ©' };
+        const statusLabels = { pending: 'En attente', rewarded: 'Récompensé', cancelled: 'Annulé' };
         div.innerHTML = `
           <div>
             <div style="font-weight:700;color:var(--brand-text);font-size:0.9rem">Filleul</div>
@@ -306,21 +306,21 @@
 
     function copyCode() {
       if (!_myCode) return;
-      navigator.clipboard.writeText(_myCode).then(() => alert('Code copiÃ© : ' + _myCode));
+      navigator.clipboard.writeText(_myCode).then(() => alert('Code copié : ' + _myCode));
     }
 
     function copyLink() {
       const link = window.location.origin + '/parrainage.html?code=' + _myCode;
-      navigator.clipboard.writeText(link).then(() => alert('Lien copiÃ© !'));
+      navigator.clipboard.writeText(link).then(() => alert('Lien copié !'));
     }
 
     function shareWhatsApp() {
-      const msg = encodeURIComponent('Rejoins-moi sur PorteÃ€Porte ! Utilise mon code ' + _myCode + ' pour te lier Ã  mon parrainage ðŸš—ðŸ“¦ â†’ ' + window.location.origin + '/parrainage.html?code=' + _myCode);
+      const msg = encodeURIComponent('Rejoins-moi sur PorteÀPorte ! Utilise mon code ' + _myCode + ' pour te lier à mon parrainage 🚗📦 → ' + window.location.origin + '/parrainage.html?code=' + _myCode);
       window.open('https://wa.me/?text=' + msg, '_blank');
     }
 
     function shareSMS() {
-      const msg = encodeURIComponent('Rejoins PorteÃ€Porte avec mon code ' + _myCode + ' â†’ ' + window.location.origin + '/parrainage.html?code=' + _myCode);
+      const msg = encodeURIComponent('Rejoins PorteÀPorte avec mon code ' + _myCode + ' → ' + window.location.origin + '/parrainage.html?code=' + _myCode);
       window.open('sms:?body=' + msg);
     }
 
@@ -328,7 +328,7 @@
       const code = document.getElementById('code-input').value.trim().toUpperCase();
       const msg  = document.getElementById('use-code-msg');
       if (!code) { showMsg('Entre un code de parrainage.', 'err'); return; }
-      if (!_token) { showMsg('Tu dois Ãªtre connectÃ© pour utiliser un code.', 'err'); return; }
+      if (!_token) { showMsg('Tu dois être connecté pour utiliser un code.', 'err'); return; }
 
       const r = await fetch('/api/referral-use', {
         method: 'POST',
@@ -337,11 +337,11 @@
       });
       const d = await r.json();
       if (r.ok) {
-        showMsg('âœ… Code acceptÃ© ! La rÃ©compense sera attribuÃ©e aprÃ¨s ta premiÃ¨re livraison ou covoiturage.', 'ok');
+        showMsg('✅ Code accepté ! La récompense sera attribuée après ta première livraison ou covoiturage.', 'ok');
         document.getElementById('code-input').value = '';
         document.getElementById('code-input').disabled = true;
       } else {
-        showMsg('âŒ ' + (d.error || 'Code invalide.'), 'err');
+        showMsg('❌ ' + (d.error || 'Code invalide.'), 'err');
       }
     }
 
@@ -352,7 +352,7 @@
       el.style.display = 'block';
     }
 
-    // PrÃ©-remplir le code depuis l'URL
+    // Pré-remplir le code depuis l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const preCode = urlParams.get('code');
     if (preCode) document.getElementById('code-input').value = preCode.toUpperCase();

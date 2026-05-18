@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Messagerie - PorteÃ Porte</title>
+  <title>Messagerie - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -382,7 +382,7 @@
 <body>
 
   <header class="topbar">
-    <a class="brand" href="/index.html">PorteÃ Porte</a>
+    <a class="brand" href="/index.html">PorteàPorte</a>
     <div class="topbar-right">
       <a class="topbar-btn" href="/dashboard-livreur.html">Dashboard</a>
       <a class="topbar-btn" href="/browse-missions.html">Missions</a>
@@ -398,16 +398,16 @@
         <span class="conv-count" id="convCount">0</span>
       </div>
       <div class="conv-scroll" id="convScroll">
-        <div class="conv-empty">Chargement des conversationsâ€¦</div>
+        <div class="conv-empty">Chargement des conversations…</div>
       </div>
     </aside>
 
     <!-- Chat window -->
     <div class="chat-window" id="chatWindow">
       <div class="no-conv" id="noConv">
-        <div class="no-conv-icon">ðŸ’¬</div>
+        <div class="no-conv-icon">💬</div>
         <h2>Tes messages</h2>
-        <p>SÃ©lectionne une conversation Ã  gauche pour commencer Ã  Ã©changer avec un livreur ou un expÃ©diteur.</p>
+        <p>Sélectionne une conversation à gauche pour commencer à échanger avec un livreur ou un expéditeur.</p>
       </div>
 
       <!-- Chat zone (hidden until conv selected) -->
@@ -416,8 +416,8 @@
         <div class="chat-header" id="chatHeader">
           <div class="chat-header-avatar" id="chatAvatar">?</div>
           <div class="chat-header-info">
-            <div class="chat-header-name" id="chatName">â€“</div>
-            <div class="chat-header-sub" id="chatSub">â€“</div>
+            <div class="chat-header-name" id="chatName">–</div>
+            <div class="chat-header-sub" id="chatSub">–</div>
           </div>
           <div class="chat-header-actions">
             <a class="chat-action-btn" id="chatMissionLink" href="#">Voir la mission</a>
@@ -433,21 +433,21 @@
         </div>
 
         <div class="attach-bar">
-          <button class="attach-chip" onclick="sendQuickReply('En route ! ðŸš´')">En route !</button>
-          <button class="attach-chip" onclick="sendQuickReply('Colis rÃ©cupÃ©rÃ© ðŸ“¦')">Colis rÃ©cupÃ©rÃ©</button>
-          <button class="attach-chip" onclick="sendQuickReply('Je serai lÃ  dans 10 min')">10 min</button>
-          <button class="attach-chip" onclick="sendQuickReply('LivrÃ© avec succÃ¨s âœ…')">LivrÃ© âœ…</button>
+          <button class="attach-chip" onclick="sendQuickReply('En route ! 🚴')">En route !</button>
+          <button class="attach-chip" onclick="sendQuickReply('Colis récupéré 📦')">Colis récupéré</button>
+          <button class="attach-chip" onclick="sendQuickReply('Je serai là dans 10 min')">10 min</button>
+          <button class="attach-chip" onclick="sendQuickReply('Livré avec succès ✅')">Livré ✅</button>
         </div>
 
         <div class="input-bar">
           <textarea
             id="msgInput"
-            placeholder="Ã‰cris ton messageâ€¦"
+            placeholder="Écris ton message…"
             rows="1"
             onkeydown="handleKey(event)"
             oninput="autoResize(this)"
           ></textarea>
-          <button class="send-btn" id="sendBtn" onclick="sendMessage()">âž¤</button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
       </div>
     </div>
@@ -486,7 +486,7 @@
 
       if (!data?.length) {
         document.getElementById('convScroll').innerHTML =
-          '<div class="conv-empty">Aucune conversation pour l\'instant.<br>Accepte ou envoie une mission pour dÃ©marrer un chat.</div>';
+          '<div class="conv-empty">Aucune conversation pour l\'instant.<br>Accepte ou envoie une mission pour démarrer un chat.</div>';
         return;
       }
 
@@ -525,7 +525,7 @@
         const name = other.nom || other.email?.split('@')[0] || 'Utilisateur';
         const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         const time = new Date(c.cree_le).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
-        const preview = c.contenu?.slice(0, 40) + (c.contenu?.length > 40 ? 'â€¦' : '');
+        const preview = c.contenu?.slice(0, 40) + (c.contenu?.length > 40 ? '…' : '');
         return `
           <div class="conv-item ${activeConvId === c.key ? 'active' : ''}" onclick="openConv('${c.key}', '${otherId}', '${c.livraison_id || ''}', '${name}')">
             <div class="conv-avatar">${initials}</div>
@@ -555,7 +555,7 @@
       document.getElementById('chatAvatar').textContent = initials;
       document.getElementById('chatName').textContent = otherName;
       if (livraisonId) {
-        document.getElementById('chatSub').textContent = 'Mission Â· ' + livraisonId.slice(0, 8).toUpperCase();
+        document.getElementById('chatSub').textContent = 'Mission · ' + livraisonId.slice(0, 8).toUpperCase();
         document.getElementById('chatMissionLink').href = '/suivi-livraison.html?id=' + livraisonId;
       } else {
         document.getElementById('chatSub').textContent = 'Conversation directe';
@@ -614,7 +614,7 @@
           <div class="msg-system">Aucun message pour l'instant. Dis bonjour !</div>
           <div class="mission-card-chat">
             <div class="mc-label">Mission en cours</div>
-            <div class="mc-route">DÃ©tails disponibles aprÃ¨s connexion</div>
+            <div class="mc-route">Détails disponibles après connexion</div>
           </div>`;
         scrollBottom();
         return;
@@ -635,7 +635,7 @@
         out += `
           <div class="msg-group ${mine ? 'mine' : 'theirs'}">
             <div class="msg-bubble">${escHtml(msg.contenu)}</div>
-            <div class="msg-time">${time}${mine ? (msg.lu ? ' Â· Lu' : '') : ''}</div>
+            <div class="msg-time">${time}${mine ? (msg.lu ? ' · Lu' : '') : ''}</div>
           </div>`;
         return out;
       }).join('');

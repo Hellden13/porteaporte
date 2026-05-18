@@ -1,7 +1,7 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// SYSTÃˆME DÃ‰BLOCAGE AUTOMATIQUE PAR NIVEAUX - PorteÃ Porte
-// Fichier: api/livreur-levels-release.js (Ã€ copier dans Vercel)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
+// SYSTÈME DÉBLOCAGE AUTOMATIQUE PAR NIVEAUX - PorteàPorte
+// Fichier: api/livreur-levels-release.js (À copier dans Vercel)
+// ═════════════════════════════════════════════════════════════════════════════
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -10,13 +10,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// FONCTION: DÃ©terminer le niveau du livreur
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
+// FONCTION: Déterminer le niveau du livreur
+// ═════════════════════════════════════════════════════════════════════════════
 
 async function getLivreurLevel(livreurId) {
   try {
-    // RÃ©cupÃ©rer le profil du livreur
+    // Récupérer le profil du livreur
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('livraisons, score')
@@ -28,18 +28,18 @@ async function getLivreurLevel(livreurId) {
     const deliveriesCount = profile.livraisons || 0;
     const rating = profile.score || 0;
 
-    // RÃ©cupÃ©rer la config
+    // Récupérer la config
     const { data: config, error: configError } = await supabase
       .from('livreur_levels_config')
       .select('*')
       .single();
 
     if (configError) {
-      console.warn('Config non trouvÃ©e, utiliser dÃ©faut');
+      console.warn('Config non trouvée, utiliser défaut');
       return getDefaultLevel(deliveriesCount, rating);
     }
 
-    // DÃ©terminer le niveau
+    // Déterminer le niveau
     if (
       deliveriesCount >= config.level3.minDeliveries &&
       rating >= config.level3.minRating
@@ -49,8 +49,8 @@ async function getLivreurLevel(livreurId) {
         number: 3,
         paymentDelayHours: config.level3.paymentDelayHours,
         bonusPerDelivery: config.level3.bonusPerDelivery,
-        emoji: 'ðŸ‘‘',
-        name: 'Livreur Ã‰lite'
+        emoji: '👑',
+        name: 'Livreur Élite'
       };
     } else if (
       deliveriesCount >= config.level2.minDeliveries &&
@@ -61,8 +61,8 @@ async function getLivreurLevel(livreurId) {
         number: 2,
         paymentDelayHours: config.level2.paymentDelayHours,
         bonusPerDelivery: config.level2.bonusPerDelivery,
-        emoji: 'â­',
-        name: 'Livreur ConfirmÃ©'
+        emoji: '⭐',
+        name: 'Livreur Confirmé'
       };
     } else {
       return {
@@ -70,18 +70,18 @@ async function getLivreurLevel(livreurId) {
         number: 1,
         paymentDelayHours: config.level1.paymentDelayHours,
         bonusPerDelivery: config.level1.bonusPerDelivery,
-        emoji: 'ðŸ‘¶',
-        name: 'Livreur DÃ©butant'
+        emoji: '👶',
+        name: 'Livreur Débutant'
       };
     }
 
   } catch (error) {
-    console.error('Erreur dÃ©termination niveau:', error);
+    console.error('Erreur détermination niveau:', error);
     return getDefaultLevel(0, 0);
   }
 }
 
-// Config par dÃ©faut
+// Config par défaut
 function getDefaultLevel(deliveriesCount, rating) {
   if (deliveriesCount >= 100 && rating >= 4.7) {
     return {
@@ -89,8 +89,8 @@ function getDefaultLevel(deliveriesCount, rating) {
       number: 3,
       paymentDelayHours: 0,
       bonusPerDelivery: 5,
-      emoji: 'ðŸ‘‘',
-      name: 'Livreur Ã‰lite'
+      emoji: '👑',
+      name: 'Livreur Élite'
     };
   } else if (deliveriesCount >= 50 && rating >= 4.0) {
     return {
@@ -98,8 +98,8 @@ function getDefaultLevel(deliveriesCount, rating) {
       number: 2,
       paymentDelayHours: 24,
       bonusPerDelivery: 1,
-      emoji: 'â­',
-      name: 'Livreur ConfirmÃ©'
+      emoji: '⭐',
+      name: 'Livreur Confirmé'
     };
   } else {
     return {
@@ -107,44 +107,44 @@ function getDefaultLevel(deliveriesCount, rating) {
       number: 1,
       paymentDelayHours: 48,
       bonusPerDelivery: 0,
-      emoji: 'ðŸ‘¶',
-      name: 'Livreur DÃ©butant'
+      emoji: '👶',
+      name: 'Livreur Débutant'
     };
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// FONCTION: DÃ©bloquer le paiement basÃ© sur le niveau
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
+// FONCTION: Débloquer le paiement basé sur le niveau
+// ═════════════════════════════════════════════════════════════════════════════
 
 async function releasePaymentByLevel(deliveryId, livreurId, createdAt) {
   try {
-    // console.log('ðŸŸ¢ VÃ©rification dÃ©blocage paiement:', { deliveryId, livreurId });
+    // console.log('🟢 Vérification déblocage paiement:', { deliveryId, livreurId });
 
-    // RÃ©cupÃ©rer le niveau du livreur
+    // Récupérer le niveau du livreur
     const livreurLevel = await getLivreurLevel(livreurId);
-    // console.log('ðŸ“Š Niveau livreur:', livreurLevel);
+    // console.log('📊 Niveau livreur:', livreurLevel);
 
-    // Calculer le temps Ã©coulÃ©
+    // Calculer le temps écoulé
     const currentTime = new Date();
     const creationTime = new Date(createdAt);
     const elapsedHours = (currentTime - creationTime) / (1000 * 60 * 60);
 
-    // console.log(`â±ï¸ Temps Ã©coulÃ©: ${elapsedHours.toFixed(1)}h / DÃ©lai requis: ${livreurLevel.paymentDelayHours}h`);
+    // console.log(`⏱️ Temps écoulé: ${elapsedHours.toFixed(1)}h / Délai requis: ${livreurLevel.paymentDelayHours}h`);
 
-    // VÃ©rifier si le dÃ©lai est respectÃ©
+    // Vérifier si le délai est respecté
     if (elapsedHours < livreurLevel.paymentDelayHours) {
-      // console.log('â³ Pas encore le moment - attendre');
+      // console.log('⏳ Pas encore le moment - attendre');
       return {
         success: false,
-        message: `Paiement dÃ©bloquÃ© dans ${(livreurLevel.paymentDelayHours - elapsedHours).toFixed(1)}h`,
+        message: `Paiement débloqué dans ${(livreurLevel.paymentDelayHours - elapsedHours).toFixed(1)}h`,
         remainingHours: livreurLevel.paymentDelayHours - elapsedHours,
         level: livreurLevel
       };
     }
 
-    // âœ… DÃ‰BLOQUER LE PAIEMENT
-    // console.log('âœ… DÃ©blocage du paiement!');
+    // ✅ DÉBLOQUER LE PAIEMENT
+    // console.log('✅ Déblocage du paiement!');
 
     const { error: updateError } = await supabase
       .from('wallet')
@@ -171,11 +171,11 @@ async function releasePaymentByLevel(deliveryId, livreurId, createdAt) {
           created_at: new Date().toISOString()
         });
 
-      if (bonusError) console.warn('âš ï¸ Erreur bonus:', bonusError);
-      // console.log(`ðŸ’° Bonus ${livreurLevel.level} ajoutÃ©: $${livreurLevel.bonusPerDelivery}`);
+      if (bonusError) console.warn('⚠️ Erreur bonus:', bonusError);
+      // console.log(`💰 Bonus ${livreurLevel.level} ajouté: $${livreurLevel.bonusPerDelivery}`);
     }
 
-    // Mettre Ã  jour la transaction
+    // Mettre à jour la transaction
     const { error: txError } = await supabase
       .from('payment_transactions')
       .update({
@@ -185,30 +185,30 @@ async function releasePaymentByLevel(deliveryId, livreurId, createdAt) {
       })
       .eq('delivery_id', deliveryId);
 
-    if (txError) console.warn('âš ï¸ Erreur transaction:', txError);
+    if (txError) console.warn('⚠️ Erreur transaction:', txError);
 
     return {
       success: true,
-      message: `Paiement dÃ©bloquÃ© (${livreurLevel.name})`,
+      message: `Paiement débloqué (${livreurLevel.name})`,
       level: livreurLevel,
       bonusApplied: livreurLevel.bonusPerDelivery
     };
 
   } catch (error) {
-    console.error('âŒ Erreur dÃ©blocage:', error);
+    console.error('❌ Erreur déblocage:', error);
     return { success: false, error: error.message };
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// FONCTION: Cron job (Ã  exÃ©cuter toutes les heures)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
+// FONCTION: Cron job (à exécuter toutes les heures)
+// ═════════════════════════════════════════════════════════════════════════════
 
 async function processAllPendingPayments() {
   try {
-    // console.log('ðŸ”„ Traitement des paiements en attente...');
+    // console.log('🔄 Traitement des paiements en attente...');
 
-    // RÃ©cupÃ©rer tous les paiements en "pending"
+    // Récupérer tous les paiements en "pending"
     const { data: pendingPayments, error: fetchError } = await supabase
       .from('wallet')
       .select('id, user_id, delivery_id, created_at')
@@ -217,7 +217,7 @@ async function processAllPendingPayments() {
 
     if (fetchError) throw fetchError;
 
-    // console.log(`ðŸ“Š TrouvÃ© ${pendingPayments.length} paiements en attente`);
+    // console.log(`📊 Trouvé ${pendingPayments.length} paiements en attente`);
 
     let releasedCount = 0;
 
@@ -231,25 +231,25 @@ async function processAllPendingPayments() {
 
       if (result.success) {
         releasedCount++;
-        // console.log(`âœ… Paiement ${payment.delivery_id} dÃ©bloquÃ© (${result.level.name})`);
+        // console.log(`✅ Paiement ${payment.delivery_id} débloqué (${result.level.name})`);
       } else {
-        // console.log(`â³ Paiement ${payment.delivery_id} - ${result.message}`);
+        // console.log(`⏳ Paiement ${payment.delivery_id} - ${result.message}`);
       }
     }
 
-    // console.log(`ðŸŽ‰ ${releasedCount}/${pendingPayments.length} paiements dÃ©bloquÃ©s`);
+    // console.log(`🎉 ${releasedCount}/${pendingPayments.length} paiements débloqués`);
 
     return { success: true, releasedCount, totalPending: pendingPayments.length };
 
   } catch (error) {
-    console.error('âŒ Erreur cron job:', error);
+    console.error('❌ Erreur cron job:', error);
     return { success: false, error: error.message };
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
 // ENDPOINT: GET /api/livreur-level?user_id=xxx
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') {
@@ -260,10 +260,10 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'user_id required' });
       }
 
-      // RÃ©cupÃ©rer le niveau
+      // Récupérer le niveau
       const level = await getLivreurLevel(user_id);
 
-      // Si delivery_id fourni, vÃ©rifier le dÃ©blocage
+      // Si delivery_id fourni, vérifier le déblocage
       if (delivery_id) {
         const release = await releasePaymentByLevel(delivery_id, user_id, new Date());
         return res.status(200).json({
@@ -280,7 +280,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Cron job endpoint (Ã  appeler via Vercel cron)
+  // Cron job endpoint (à appeler via Vercel cron)
   if (req.method === 'POST') {
     try {
       const result = await processAllPendingPayments();
@@ -294,9 +294,9 @@ module.exports = async (req, res) => {
   return res.status(405).json({ error: 'Method not allowed' });
 };
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// INTÃ‰GRATION AVEC SUPABASE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
+// INTÉGRATION AVEC SUPABASE
+// ═════════════════════════════════════════════════════════════════════════════
 
 /*
 
@@ -328,9 +328,9 @@ CREATE TABLE livreur_levels_config (
 
 */
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION VERCEL CRON
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════════════
 
 /*
 
@@ -343,8 +343,8 @@ Fichier: vercel.json
   }]
 }
 
-Cela exÃ©cute le cron job toutes les heures pour dÃ©bloquer les paiements
-qui ont complÃ©tÃ© leur dÃ©lai d'attente!
+Cela exécute le cron job toutes les heures pour débloquer les paiements
+qui ont complété leur délai d'attente!
 
 */
 

@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carte des missions - PorteÃ Porte</title>
+  <title>Carte des missions - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -299,7 +299,7 @@
 
   <!-- Topbar -->
   <header class="topbar">
-    <a class="brand" href="/index.html">PorteÃ Porte</a>
+    <a class="brand" href="/index.html">PorteàPorte</a>
     <div class="topbar-right">
       <button class="topbar-btn active" id="btnMissions" onclick="setMode('missions')">Missions</button>
       <button class="topbar-btn" id="btnMyPos" onclick="centerOnMe()">Ma position</button>
@@ -318,12 +318,12 @@
       </div>
       <div class="filter-row">
         <button class="filter-pill active" data-filter="all" onclick="setFilter('all',this)">Toutes</button>
-        <button class="filter-pill" data-filter="velo" onclick="setFilter('velo',this)">VÃ©lo</button>
+        <button class="filter-pill" data-filter="velo" onclick="setFilter('velo',this)">Vélo</button>
         <button class="filter-pill" data-filter="voiture" onclick="setFilter('voiture',this)">Voiture</button>
         <button class="filter-pill" data-filter="camion" onclick="setFilter('camion',this)">Camion</button>
       </div>
       <div class="missions-scroll" id="missionsList">
-        <div class="side-loading">Chargement des missionsâ€¦</div>
+        <div class="side-loading">Chargement des missions…</div>
       </div>
     </aside>
 
@@ -334,8 +334,8 @@
       <!-- Detail side panel -->
       <div class="detail-panel" id="detailPanel">
         <div class="detail-header">
-          <h2 id="detailTitle">DÃ©tails de la mission</h2>
-          <button class="close-btn" onclick="closeDetail()">âœ•</button>
+          <h2 id="detailTitle">Détails de la mission</h2>
+          <button class="close-btn" onclick="closeDetail()">✕</button>
         </div>
         <div class="detail-body" id="detailBody"></div>
       </div>
@@ -345,9 +345,9 @@
   <!-- Biometric overlay -->
   <div class="bio-overlay" id="bioOverlay">
     <div class="bio-box">
-      <div class="bio-icon" id="bioIcon">ðŸ‘†</div>
-      <h2>Confirmation biomÃ©trique</h2>
-      <p>Utilise ton empreinte digitale ou Face ID pour dÃ©verrouiller les adresses complÃ¨tes et accepter cette mission.</p>
+      <div class="bio-icon" id="bioIcon">👆</div>
+      <h2>Confirmation biométrique</h2>
+      <p>Utilise ton empreinte digitale ou Face ID pour déverrouiller les adresses complètes et accepter cette mission.</p>
       <div class="bio-actions">
         <button class="bio-cancel" onclick="closeBio()">Annuler</button>
         <button class="bio-confirm" onclick="confirmBio()">Confirmer</button>
@@ -368,7 +368,7 @@
       map = L.map('map', { zoomControl: true }).setView([46.8, -71.2], 9);
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: 'Â© OpenStreetMap Â· Â© CARTO',
+        attribution: '© OpenStreetMap · © CARTO',
         subdomains: 'abcd',
         maxZoom: 19
       }).addTo(map);
@@ -405,11 +405,11 @@
 
       marker.bindPopup(`
         <div style="min-width:160px">
-          <div style="font-weight:800;font-size:.88rem;margin-bottom:4px">${mission.ville_depart || '?'} â†’ ${mission.ville_arrivee || '?'}</div>
-          <div style="color:#A8ACB1;font-size:.76rem;margin-bottom:8px">${mission.type_colis || 'Colis'}${mission.poids_kg ? ' Â· ' + mission.poids_kg + ' kg' : ''}</div>
+          <div style="font-weight:800;font-size:.88rem;margin-bottom:4px">${mission.ville_depart || '?'} → ${mission.ville_arrivee || '?'}</div>
+          <div style="color:#A8ACB1;font-size:.76rem;margin-bottom:8px">${mission.type_colis || 'Colis'}${mission.poids_kg ? ' · ' + mission.poids_kg + ' kg' : ''}</div>
           <div style="font-weight:900;color:#00FF9F;font-size:1rem;margin-bottom:8px">${money(mission.prix_total)}</div>
           <button onclick="showDetail('${mission.id}')" style="width:100%;padding:7px;border:none;border-radius:6px;background:linear-gradient(135deg,#00FF9F,#00D9FF);color:#0A0C10;font-weight:800;font-size:12px;cursor:pointer">
-            ${mission._locked ? 'ðŸ”’ DÃ©verrouiller' : 'Voir dÃ©tails'}
+            ${mission._locked ? '🔒 Déverrouiller' : 'Voir détails'}
           </button>
         </div>
       `);
@@ -434,7 +434,7 @@
       allMissions = (data || []).map((m, i) => ({
         ...m,
         _locked: !session, /* locked if not logged in */
-        /* Use real coords if available, else mock from QuÃ©bec area */
+        /* Use real coords if available, else mock from Québec area */
         _lat: m.lat_depart || (46.5 + Math.random() * 0.8),
         _lng: m.lng_depart || (-72.2 + Math.random() * 2.0)
       }));
@@ -468,13 +468,13 @@
     function renderList() {
       const el = document.getElementById('missionsList');
       if (!filteredMissions.length) {
-        el.innerHTML = '<div class="side-loading">Aucune mission trouvÃ©e.</div>';
+        el.innerHTML = '<div class="side-loading">Aucune mission trouvée.</div>';
         return;
       }
       el.innerHTML = filteredMissions.map(m => `
         <div class="mission-item" id="item-${m.id}" onclick="showDetail('${m.id}')">
-          <div class="mi-route">${m.ville_depart || '?'} â†’ ${m.ville_arrivee || '?'}</div>
-          <div class="mi-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' Â· ' + m.poids_kg + 'kg' : ''}${m.distance_km ? ' Â· ' + m.distance_km + ' km' : ''}</div>
+          <div class="mi-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
+          <div class="mi-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + 'kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
           <div class="mi-bottom">
             <span class="mi-price">${money(m.prix_total)}</span>
             ${m.transport_requis ? `<span class="mi-pill">${m.transport_requis}</span>` : ''}
@@ -503,21 +503,21 @@
       /* Center map */
       if (m._lat && m._lng) map.flyTo([m._lat, m._lng], 13, { duration: 0.8 });
 
-      document.getElementById('detailTitle').textContent = (m.ville_depart || '?') + ' â†’ ' + (m.ville_arrivee || '?');
+      document.getElementById('detailTitle').textContent = (m.ville_depart || '?') + ' → ' + (m.ville_arrivee || '?');
 
       const locked = m._locked;
       document.getElementById('detailBody').innerHTML = `
         <div class="detail-field ${locked ? 'locked' : ''}">
-          <label>DÃ©part</label>
-          <span>${locked ? 'ðŸ”’ Adresse masquÃ©e' : (m.adresse_depart || m.ville_depart || 'Non prÃ©cisÃ©')}</span>
+          <label>Départ</label>
+          <span>${locked ? '🔒 Adresse masquée' : (m.adresse_depart || m.ville_depart || 'Non précisé')}</span>
         </div>
         <div class="detail-field ${locked ? 'locked' : ''}">
-          <label>ArrivÃ©e</label>
-          <span>${locked ? 'ðŸ”’ Adresse masquÃ©e' : (m.adresse_arrivee || m.ville_arrivee || 'Non prÃ©cisÃ©')}</span>
+          <label>Arrivée</label>
+          <span>${locked ? '🔒 Adresse masquée' : (m.adresse_arrivee || m.ville_arrivee || 'Non précisé')}</span>
         </div>
         <div class="detail-field">
           <label>Type de colis</label>
-          <span>${m.type_colis || 'Non prÃ©cisÃ©'}</span>
+          <span>${m.type_colis || 'Non précisé'}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="detail-field">
@@ -533,9 +533,9 @@
         <div class="detail-price">${money(m.prix_total)}</div>
         ${session
           ? `<button class="accept-btn" onclick="openBio('${m.id}')">
-               ${locked ? 'ðŸ”’ DÃ©verrouiller & accepter' : 'Accepter cette mission'}
+               ${locked ? '🔒 Déverrouiller & accepter' : 'Accepter cette mission'}
              </button>
-             <p class="bio-note">Confirmation biomÃ©trique requise</p>`
+             <p class="bio-note">Confirmation biométrique requise</p>`
           : `<a href="/login.html" style="display:block;width:100%;padding:14px;border:none;border-radius:9px;background:linear-gradient(135deg,#00FF9F,#00D9FF);color:#0A0C10;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none">Se connecter pour accepter</a>`
         }
       `;
@@ -554,7 +554,7 @@
     function openBio(id) {
       pendingMissionId = id;
       const hasWebAuthn = !!window.PublicKeyCredential;
-      document.getElementById('bioIcon').textContent = hasWebAuthn ? 'ðŸ‘†' : 'ðŸ”’';
+      document.getElementById('bioIcon').textContent = hasWebAuthn ? '👆' : '🔒';
       document.getElementById('bioOverlay').classList.add('open');
     }
 
@@ -566,7 +566,7 @@
     async function confirmBio() {
       if (!pendingMissionId || !session) return;
       const btn = document.querySelector('.bio-confirm');
-      btn.textContent = 'VÃ©rificationâ€¦';
+      btn.textContent = 'Vérification…';
       btn.disabled = true;
 
       try {
@@ -601,7 +601,7 @@
       const m = allMissions.find(x => x.id === id);
       if (m) m._locked = false;
 
-      alert('Mission acceptÃ©e ! Les adresses complÃ¨tes sont maintenant disponibles.');
+      alert('Mission acceptée ! Les adresses complètes sont maintenant disponibles.');
       closeDetail();
       await loadMissions();
     }
@@ -612,7 +612,7 @@
     let myMarker = null;
 
     function centerOnMe() {
-      if (!navigator.geolocation) { alert('GÃ©olocalisation non disponible'); return; }
+      if (!navigator.geolocation) { alert('Géolocalisation non disponible'); return; }
       navigator.geolocation.getCurrentPosition(pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
         map.flyTo([lat, lng], 14, { duration: 1 });

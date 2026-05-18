@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi GPS en Direct Â· PorteÃ Porte</title>
+    <title>Suivi GPS en Direct · PorteàPorte</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-config.js"></script>
 <script src="/js/auth.js"></script>
@@ -141,10 +141,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 </head>
 <body>
     <div class="navbar">
-        <div class="navbar-brand">ðŸšš PorteÃ Porte - Suivi GPS</div>
+        <div class="navbar-brand">🚚 PorteàPorte - Suivi GPS</div>
         <div class="navbar-links">
-            <a href="javascript:history.back()">â† Retour</a>
-            <a href="/" onclick="logout(); return false;">DÃ©connexion</a>
+            <a href="javascript:history.back()">← Retour</a>
+            <a href="/" onclick="logout(); return false;">Déconnexion</a>
         </div>
     </div>
 
@@ -157,27 +157,27 @@ document.addEventListener('DOMContentLoaded', async function () {
             <div class="section">
                 <h3>Mode de suivi</h3>
                 <div class="mode-toggle">
-                    <button id="mode-livreur" class="btn-secondary active">ðŸ“ Je livre</button>
-                    <button id="mode-client"  class="btn-secondary">ðŸ‘ Suivre</button>
+                    <button id="mode-livreur" class="btn-secondary active">📍 Je livre</button>
+                    <button id="mode-client"  class="btn-secondary">👁 Suivre</button>
                 </div>
             </div>
 
             <div class="section">
                 <h3>Statut</h3>
-                <div class="tracking-status status-inactive" id="status">âšª GPS Inactif</div>
+                <div class="tracking-status status-inactive" id="status">⚪ GPS Inactif</div>
             </div>
 
             <div class="section" id="livreur-controls">
-                <h3>ContrÃ´les livreur</h3>
+                <h3>Contrôles livreur</h3>
                 <div class="controls">
-                    <button id="start-tracking" class="btn-primary">ðŸŸ¢ DÃ©marrer le suivi</button>
-                    <button id="stop-tracking"  class="btn-primary" disabled>ðŸ”´ ArrÃªter le suivi</button>
+                    <button id="start-tracking" class="btn-primary">🟢 Démarrer le suivi</button>
+                    <button id="stop-tracking"  class="btn-primary" disabled>🔴 Arrêter le suivi</button>
                 </div>
                 <div id="accuracy-info" style="font-size:0.85rem;color:#9BA1A9;text-align:center;display:none;">
-                    PrÃ©cision : <span id="accuracy-value">--</span> m
+                    Précision : <span id="accuracy-value">--</span> m
                 </div>
                 <div id="confirm-section" style="display:none;margin-top:0.5rem;">
-                    <button id="confirm-btn">âœ… Confirmer la livraison</button>
+                    <button id="confirm-btn">✅ Confirmer la livraison</button>
                 </div>
             </div>
 
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             </div>
 
             <div class="section">
-                <h3>ðŸ“ Localisation actuelle</h3>
+                <h3>📍 Localisation actuelle</h3>
                 <div class="info-item">
                     <span class="info-label">Latitude</span>
                     <span class="info-value" id="latitude">--</span>
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             </div>
 
             <div class="section">
-                <h3>ðŸ“Š Statistiques</h3>
+                <h3>📊 Statistiques</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="distance">0 km</div>
@@ -243,10 +243,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         function startTracking() {
-            if (!navigator.geolocation) { showAlert('GÃ©olocalisation non supportÃ©e', 'error'); return; }
+            if (!navigator.geolocation) { showAlert('Géolocalisation non supportée', 'error'); return; }
             isTracking = true;
             locationHistory = [];
-            updateStatus('active', 'ðŸŸ¢ GPS Actif');
+            updateStatus('active', '🟢 GPS Actif');
             watchId = navigator.geolocation.watchPosition(handleLocationSuccess, handleLocationError,
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
             document.getElementById('start-tracking').disabled = true;
@@ -254,16 +254,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('accuracy-info').style.display = 'block';
             if (livraisonId) {
                 document.getElementById('confirm-section').style.display = 'block';
-                showAlert('Suivi GPS actif â€” position transmise en temps rÃ©el.', 'success');
+                showAlert('Suivi GPS actif — position transmise en temps réel.', 'success');
             } else {
-                showAlert('Suivi GPS actif (aucune livraison liÃ©e).', 'info');
+                showAlert('Suivi GPS actif (aucune livraison liée).', 'info');
             }
         }
 
         function stopTracking() {
             if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             isTracking = false;
-            updateStatus('inactive', 'âšª GPS ArrÃªtÃ©');
+            updateStatus('inactive', '⚪ GPS Arrêté');
             document.getElementById('start-tracking').disabled = false;
             document.getElementById('stop-tracking').disabled  = true;
         }
@@ -284,8 +284,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         function handleLocationError(error) {
-            const msgs = { 1: ['âŒ AccÃ¨s GPS refusÃ©.', 'error'], 2: ['Position indisponible.', 'warning'], 3: ["DÃ©lai dÃ©passÃ©.", 'warning'] };
-            const [msg, type] = msgs[error.code] || ['âŒ Erreur GPS : ' + error.message, 'error'];
+            const msgs = { 1: ['❌ Accès GPS refusé.', 'error'], 2: ['Position indisponible.', 'warning'], 3: ["Délai dépassé.", 'warning'] };
+            const [msg, type] = msgs[error.code] || ['❌ Erreur GPS : ' + error.message, 'error'];
             showAlert(msg, type);
             updateStatus('error', msg);
         }
@@ -312,26 +312,26 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
                 if (!res.ok) { document.getElementById('client-status').textContent = 'Position indisponible.'; return; }
                 const data = await res.json();
-                const lat = data.livreur_lat ?? data.latitude;
-                const lng = data.livreur_lng ?? data.longitude;
+                const lat = data.livreur_lat ? data.latitude;
+                const lng = data.livreur_lng ? data.longitude;
                 if (lat == null || lng == null) {
-                    document.getElementById('client-status').textContent = "Le livreur n'a pas encore partagÃ© sa position.";
-                    updateStatus('inactive', 'â³ En attente du livreur');
+                    document.getElementById('client-status').textContent = "Le livreur n'a pas encore partagé sa position.";
+                    updateStatus('inactive', '⏳ En attente du livreur');
                     return;
                 }
                 document.getElementById('latitude').textContent  = Number(lat).toFixed(6);
                 document.getElementById('longitude').textContent = Number(lng).toFixed(6);
                 document.getElementById('altitude').textContent  = '--';
-                document.getElementById('client-status').textContent = 'Mis Ã  jour : ' + new Date().toLocaleTimeString('fr-CA');
+                document.getElementById('client-status').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-CA');
                 if (!livreurMarker) {
                     livreurMarker = L.circleMarker([lat, lng], {
                         radius: 12, fillColor: '#B8F53E', color: '#0A0C0F', weight: 2, fillOpacity: 1
-                    }).addTo(map).bindPopup('ðŸšš Livreur');
+                    }).addTo(map).bindPopup('🚚 Livreur');
                 } else {
                     livreurMarker.setLatLng([lat, lng]);
                 }
                 map.setView([lat, lng], Math.max(map.getZoom(), 14));
-                updateStatus('active', 'ðŸŸ¢ Livreur en route');
+                updateStatus('active', '🟢 Livreur en route');
             } catch (err) {
                 console.error('fetchLivreurPosition:', err);
                 document.getElementById('client-status').textContent = 'Erreur de chargement.';
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (!db) throw new Error('Client Supabase indisponible');
                 const { data: { session } } = await db.auth.getSession();
-                if (!session) throw new Error('Session expirÃ©e');
+                if (!session) throw new Error('Session expirée');
                 const res = await fetch('/api/confirm-delivery', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
@@ -395,15 +395,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const result = await res.json();
                 if (res.ok) {
                     stopTracking();
-                    btn.textContent = 'âœ… Livraison confirmÃ©e !';
-                    showAlert('Livraison confirmÃ©e ! Paiement en cours de traitement.', 'success');
-                    updateStatus('inactive', 'âœ… Livraison terminÃ©e');
+                    btn.textContent = '✅ Livraison confirmée !';
+                    showAlert('Livraison confirmée ! Paiement en cours de traitement.', 'success');
+                    updateStatus('inactive', '✅ Livraison terminée');
                 } else {
                     throw new Error(result.error || 'Erreur serveur');
                 }
             } catch (err) {
                 btn.disabled = false;
-                btn.textContent = 'âœ… Confirmer la livraison';
+                btn.textContent = '✅ Confirmer la livraison';
                 showAlert('Erreur : ' + err.message, 'error');
             }
         }
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
             const isLivreur = profile && (profile.role === 'livreur' || profile.role === 'les deux');
             if (isLivreur) {
-                showAlert('Livraison dÃ©tectÃ©e â€” dÃ©marrage du suivi GPS...', 'info');
+                showAlert('Livraison détectée — démarrage du suivi GPS...', 'info');
                 setTimeout(startTracking, 800);
             } else {
                 document.getElementById('mode-client').click();

@@ -2,7 +2,7 @@
   const client = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
 
   if (!client) {
-    console.error('âŒ erreur adminCRUD: client Supabase indisponible');
+    console.error('❌ erreur adminCRUD: client Supabase indisponible');
     return;
   }
 
@@ -58,7 +58,7 @@
   function setRows(tbodyId, rows, emptyMessage, colspan) {
     const tbody = byId(tbodyId);
     if (!tbody) {
-      console.error('âŒ erreur adminCRUD: element manquant #' + tbodyId);
+      console.error('❌ erreur adminCRUD: element manquant #' + tbodyId);
       return;
     }
     tbody.innerHTML = rows.length
@@ -67,12 +67,12 @@
   }
 
   function logOk(scope, count) {
-    // console.log(`âœ… connectÃ©: ${scope} (${count})`);
+    // console.log(`✅ connecté: ${scope} (${count})`);
   }
 
   function reportError(scope, error) {
     const message = error && error.message ? error.message : String(error);
-    console.error(`âŒ erreur ${scope}:`, message);
+    console.error(`❌ erreur ${scope}:`, message);
     return [];
   }
 
@@ -98,7 +98,7 @@
     });
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(payload.error || 'Mise a jour impossible');
-    // console.log('âœ… connectÃ©: statut livreur mis a jour', userId, status);
+    // console.log('✅ connecté: statut livreur mis a jour', userId, status);
     await loadUsers();
     return payload;
   }
@@ -228,11 +228,11 @@
       .single();
 
     if (error) {
-      console.error('âŒ erreur createUser:', error.message);
+      console.error('❌ erreur createUser:', error.message);
       throw error;
     }
 
-    // console.log('âœ… connectÃ©: profil cree', data.id);
+    // console.log('✅ connecté: profil cree', data.id);
     await loadUsers();
     return data;
   }
@@ -267,7 +267,7 @@
     refreshAll
   };
 
-  // console.log('âœ… connectÃ©: fonctions admin CRUD chargees');
+  // console.log('✅ connecté: fonctions admin CRUD chargees');
 })();
 
 

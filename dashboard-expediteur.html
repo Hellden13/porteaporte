@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Dashboard expÃ©diteur - PorteÃ Porte">
-    <title>Dashboard expÃ©diteur - PorteÃ Porte</title>
+    <meta name="description" content="Dashboard expéditeur - PorteàPorte">
+    <title>Dashboard expéditeur - PorteàPorte</title>
     
     <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
@@ -439,11 +439,11 @@
     <nav class="navbar">
         <div class="container">
             <div class="navbar-content">
-                <div class="navbar-brand">PorteÃ Porte</div>
+                <div class="navbar-brand">PorteàPorte</div>
                 <div id="auth-user-info" class="flex items-center gap-md">
                     <span id="auth-user-name" class="text-sm font-semibold"></span>
-                    <a id="admin-back-btn" href="/admin/dashboard-admin.html" class="btn btn-sm" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800;border:none;padding:7px 14px;border-radius:8px;text-decoration:none">âš¡ Admin</a>
-                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">DÃ©connexion</button>
+                    <a id="admin-back-btn" href="/admin/dashboard-admin.html" class="btn btn-sm" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800;border:none;padding:7px 14px;border-radius:8px;text-decoration:none">⚡ Admin</a>
+                    <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
                 </div>
             </div>
         </div>
@@ -455,10 +455,10 @@
             <div class="header-content">
                 <div class="header-title">
                     <div id="header-welcome" style="font-size:.85rem;color:#9BA1A9;margin-bottom:4px">Bonjour,</div>
-                    <h1>Mes ExpÃ©ditions</h1>
+                    <h1>Mes Expéditions</h1>
                 </div>
                 <div class="header-actions">
-                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle ExpÃ©dition</a>
+                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
                 </div>
                 <div class="header-stats">
                     <div class="stat-badge">
@@ -471,7 +471,7 @@
                     </div>
                     <div class="stat-badge">
                         <div class="stat-value" id="stat-completed">0</div>
-                        <div class="stat-label">ComplÃ©tÃ©es</div>
+                        <div class="stat-label">Complétées</div>
                     </div>
                     <div class="stat-badge">
                         <div class="stat-value" id="stat-xp">0</div>
@@ -488,45 +488,45 @@
             <section class="quick-create">
                 <div class="quick-create-header">
                     <div>
-                        <h2 class="quick-create-title">CrÃ©er une livraison rapide</h2>
-                        <div class="quick-create-note">Les adresses complÃ¨tes restent protÃ©gÃ©es. Le paiement escrow se fait Ã  l'Ã©tape suivante.</div>
+                        <h2 class="quick-create-title">Créer une livraison rapide</h2>
+                        <div class="quick-create-note">Les adresses complètes restent protégées. Le paiement escrow se fait à l'étape suivante.</div>
                     </div>
                     <a href="create-mission.html" class="btn btn-ghost">Formulaire complet</a>
                 </div>
                 <form id="quick-create-form" class="quick-create-grid">
                     <div class="form-field">
-                        <label for="qc-ville-depart">Ville dÃ©part</label>
-                        <input id="qc-ville-depart" required autocomplete="address-level2" placeholder="MontrÃ©al">
+                        <label for="qc-ville-depart">Ville départ</label>
+                        <input id="qc-ville-depart" required autocomplete="address-level2" placeholder="Montréal">
                     </div>
                     <div class="form-field">
-                        <label for="qc-ville-arrivee">Ville arrivÃ©e</label>
+                        <label for="qc-ville-arrivee">Ville arrivée</label>
                         <input id="qc-ville-arrivee" required autocomplete="address-level2" placeholder="Laval">
                     </div>
                     <div class="form-field span-2">
                         <label for="qc-adresse-depart">Adresse de ramassage</label>
-                        <input id="qc-adresse-depart" required autocomplete="street-address" placeholder="Adresse complÃ¨te">
+                        <input id="qc-adresse-depart" required autocomplete="street-address" placeholder="Adresse complète">
                     </div>
                     <div class="form-field span-2">
                         <label for="qc-adresse-arrivee">Adresse de livraison</label>
-                        <input id="qc-adresse-arrivee" required autocomplete="street-address" placeholder="Adresse complÃ¨te">
+                        <input id="qc-adresse-arrivee" required autocomplete="street-address" placeholder="Adresse complète">
                     </div>
                     <div class="form-field">
                         <label for="qc-type">Type de colis</label>
                         <select id="qc-type">
                             <option value="document">Document</option>
-                            <option value="vetements">VÃªtements</option>
-                            <option value="electronique">Ã‰lectronique</option>
+                            <option value="vetements">Vêtements</option>
+                            <option value="electronique">Électronique</option>
                             <option value="nourriture">Nourriture</option>
                             <option value="fragile">Fragile</option>
                             <option value="colis" selected>Autre colis</option>
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="qc-poids">Poids estimÃ© (kg)</label>
+                        <label for="qc-poids">Poids estimé (kg)</label>
                         <input id="qc-poids" type="number" min="0.1" step="0.1" value="1">
                     </div>
                     <div class="form-field">
-                        <label for="qc-valeur">Valeur dÃ©clarÃ©e ($)</label>
+                        <label for="qc-valeur">Valeur déclarée ($)</label>
                         <input id="qc-valeur" type="number" min="0" step="1" value="0">
                     </div>
                     <div class="form-field">
@@ -534,11 +534,11 @@
                         <input id="qc-prix" type="number" min="1" step="0.01" value="5">
                     </div>
                     <div class="form-field span-2">
-                        <label for="qc-notes">Notes spÃ©ciales</label>
+                        <label for="qc-notes">Notes spéciales</label>
                         <textarea id="qc-notes" placeholder="Instructions utiles pour le livreur"></textarea>
                     </div>
                     <div class="span-2" style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
-                        <button id="quick-create-btn" class="btn btn-primary" type="submit">CrÃ©er et passer au paiement</button>
+                        <button id="quick-create-btn" class="btn btn-primary" type="submit">Créer et passer au paiement</button>
                     </div>
                 </form>
             </section>
@@ -547,7 +547,7 @@
             <div class="missions-tabs">
                 <button class="tab-button active" onclick="switchTab('all')">Toutes</button>
                 <button class="tab-button" onclick="switchTab('pending')">En attente</button>
-                <button class="tab-button" onclick="switchTab('completed')">ComplÃ©tÃ©es</button>
+                <button class="tab-button" onclick="switchTab('completed')">Complétées</button>
                 <button class="tab-button" onclick="switchTab('disputes')">Litiges</button>
             </div>
 
@@ -556,8 +556,8 @@
                 <div class="empty-state">
                     <div class="empty-state-icon"></div>
                     <div class="empty-state-title">Aucune livraison</div>
-                    <div class="empty-state-text">CrÃ©ez votre premiÃ¨re livraison pour commencer</div>
-                    <a href="create-mission.html" class="btn btn-primary">CrÃ©er une livraison</a>
+                    <div class="empty-state-text">Créez votre première livraison pour commencer</div>
+                    <a href="create-mission.html" class="btn btn-primary">Créer une livraison</a>
                 </div>
             </div>
         </div>
@@ -584,14 +584,14 @@
                     </div>
                     <div class="stats-item">
                         <span class="stats-item-label">Points Impact</span>
-                        <span class="stats-item-value" id="user-points">â€” pts</span>
+                        <span class="stats-item-value" id="user-points">— pts</span>
                     </div>
                     <div class="stats-item">
                         <span class="stats-item-label">Score</span>
-                        <span class="stats-item-value" id="user-score">â€”</span>
+                        <span class="stats-item-value" id="user-score">—</span>
                     </div>
                     <div class="stats-item">
-                        <span class="stats-item-label">Total dÃ©pensÃ©</span>
+                        <span class="stats-item-label">Total dépensé</span>
                         <span class="stats-item-value" id="user-spent">$0</span>
                     </div>
                     <div class="stats-item">
@@ -602,11 +602,11 @@
             </div>
             <!-- Points Impact & Badges -->
             <div class="sidebar-card" id="growth-sidebar" style="display:none">
-                <div class="sidebar-title">Mes rÃ©compenses</div>
+                <div class="sidebar-title">Mes récompenses</div>
                 <div id="exp-badges-row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
                 <div id="exp-level-info" style="font-size:0.8rem;color:#9BA1A9;line-height:1.5"></div>
-                <a href="/programme-points.html" style="display:block;margin-top:10px;font-size:0.8rem;color:var(--brand-lime,#B8F53E)">Voir le programme Points Impact â†’</a>
-                <a href="/parrainage.html" style="display:block;margin-top:4px;font-size:0.8rem;color:#9BA1A9">ðŸ¤ Parrainer un ami</a>
+                <a href="/programme-points.html" style="display:block;margin-top:10px;font-size:0.8rem;color:var(--brand-lime,#B8F53E)">Voir le programme Points Impact →</a>
+                <a href="/parrainage.html" style="display:block;margin-top:4px;font-size:0.8rem;color:#9BA1A9">🤝 Parrainer un ami</a>
             </div>
         </aside>
     </div>
@@ -630,9 +630,9 @@
             document.getElementById('auth-user-name').textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || user.email || '';
             if (user.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
 
-            // Accueil personnalisÃ©
+            // Accueil personnalisé
             const prenom = user.prenom || user.email?.split('@')[0] || '';
-            document.getElementById('header-welcome').textContent = 'Bonjour, ' + prenom + ' ðŸ‘‹';
+            document.getElementById('header-welcome').textContent = 'Bonjour, ' + prenom + ' 👋';
 
             // Stats profil sidebar
             const profile = user.profile || {};
@@ -640,7 +640,7 @@
             const score = profile.score || profile.score_confiance || 0;
             document.getElementById('user-xp').textContent = xp + ' XP';
             document.getElementById('stat-xp').textContent = xp;
-            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1) + 'â˜…' : 'â€”';
+            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1) + '★' : '—';
             document.getElementById('user-balance').textContent = '$' + ((profile.coins || 0) / 100).toFixed(2);
 
             await loadMissions();
@@ -667,11 +667,11 @@
                 notes: document.getElementById('qc-notes').value.trim()
             };
             if (!payload.ville_depart || !payload.ville_arrivee || !payload.adresse_depart || !payload.adresse_arrivee || payload.prix_total <= 0) {
-                showError('âŒ Remplis les villes, les adresses et un prix valide.');
+                showError('❌ Remplis les villes, les adresses et un prix valide.');
                 return;
             }
             btn.disabled = true;
-            btn.textContent = 'CrÃ©ation...';
+            btn.textContent = 'Création...';
             try {
                 const res = await fetch('/api/create-livraison', {
                     method: 'POST',
@@ -683,7 +683,7 @@
                 });
                 const result = await res.json().catch(() => ({}));
                 if (!res.ok) {
-                    showError('âŒ ' + (result.error || 'CrÃ©ation impossible'));
+                    showError('❌ ' + (result.error || 'Création impossible'));
                     return;
                 }
                 const livraison = result.livraison || {};
@@ -695,11 +695,11 @@
                     type: payload.type_colis,
                     poids: String(payload.poids_kg)
                 });
-                showSuccess('âœ… Livraison crÃ©Ã©e. Redirection vers le paiement escrow.');
+                showSuccess('✅ Livraison créée. Redirection vers le paiement escrow.');
                 setTimeout(() => { window.location.href = 'paiement.html?' + params.toString(); }, 700);
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'CrÃ©er et passer au paiement';
+                btn.textContent = 'Créer et passer au paiement';
             }
         }
 
@@ -729,17 +729,17 @@
                 const badgesRow = document.getElementById('exp-badges-row');
                 const badges = d.badges_earned || [];
                 badgesRow.innerHTML = badges.length
-                    ? badges.slice(0, 8).map(b => `<span title="${b.badges?.name || 'Badge'}" style="font-size:1.4rem;cursor:help">${b.badges?.icon || 'ðŸ…'}</span>`).join('')
+                    ? badges.slice(0, 8).map(b => `<span title="${b.badges?.name || 'Badge'}" style="font-size:1.4rem;cursor:help">${b.badges?.icon || '🏅'}</span>`).join('')
                       + (badges.length > 8 ? `<span style="font-size:0.78rem;color:#9BA1A9;align-self:center">+${badges.length - 8}</span>` : '')
-                    : '<span style="font-size:0.78rem;color:#9BA1A9">ComplÃ¨te des missions pour dÃ©bloquer des badges.</span>';
+                    : '<span style="font-size:0.78rem;color:#9BA1A9">Complète des missions pour débloquer des badges.</span>';
 
                 // Niveau XP
                 const lvl = d.level;
                 const levelEl = document.getElementById('exp-level-info');
                 if (lvl?.current) {
                     levelEl.innerHTML = `
-                        <strong style="color:#E8EDF5">${lvl.current.icon || ''} Niveau ${lvl.current.level} â€” ${lvl.current.name}</strong><br>
-                        XP : ${d.xp || 0} Â· ${lvl.progress || 0}% vers ${lvl.next ? lvl.next.name : 'niveau max'}
+                        <strong style="color:#E8EDF5">${lvl.current.icon || ''} Niveau ${lvl.current.level} — ${lvl.current.name}</strong><br>
+                        XP : ${d.xp || 0} · ${lvl.progress || 0}% vers ${lvl.next ? lvl.next.name : 'niveau max'}
                     `;
                 }
             } catch (e) { /* silencieux */ }
@@ -773,7 +773,7 @@
                     <div class="empty-state">
                         <div class="empty-state-title">Erreur chargement</div>
                         <div class="empty-state-text">${error.message}</div>
-                        <button class="btn btn-primary" type="button" onclick="loadMissions()">RÃ©essayer</button>
+                        <button class="btn btn-primary" type="button" onclick="loadMissions()">Réessayer</button>
                     </div>
                 `;
             }
@@ -783,27 +783,36 @@
             const labels = {
                 en_attente: 'Brouillon',
                 publie: 'Publiee',
+                pending: 'En attente',
                 paiement_autorise: 'Escrow autorise',
                 requires_capture: 'Escrow autorise',
                 processing: 'Paiement en traitement',
                 succeeded: 'Paiement recu',
                 paid: 'Payee',
                 confirme: 'Livreur assigne',
+                accepted: 'Livreur assigne',
                 en_route: 'En route',
+                in_transit: 'En route',
                 ramasse: 'Ramassee',
-                livre: 'Livree - a confirmer',
+                picked_up: 'Ramassee',
+                livre: 'Livree - confirmation requise',
+                livree: 'Livree - confirmation requise',
+                delivered: 'Livree - confirmation requise',
                 payee: 'Payee',
                 annule: 'Annulee',
                 annulee: 'Annulee',
+                canceled: 'Annulee',
                 litige: 'Litige',
-                rembourse: 'Remboursee'
+                rembourse: 'Remboursee',
+                refunded: 'Remboursee'
             };
             return labels[status] || status || 'En attente';
         }
 
         function statusClass(status) {
-            if (['payee', 'paid', 'succeeded', 'livre'].includes(status)) return 'completed';
-            if (['paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(status)) return 'active';
+            if (['payee', 'paid', 'succeeded'].includes(status)) return 'completed';
+            if (['livre', 'livree', 'delivered', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up'].includes(status)) return 'active';
+            if (['litige', 'rembourse', 'refunded', 'annule', 'annulee', 'canceled'].includes(status)) return 'problem';
             return 'pending';
         }
 
@@ -835,7 +844,7 @@
                 buttons.push(`<a class="btn btn-ghost" href="map.html?id=${id}">Suivi GPS</a>`);
             }
             if (mission.livreur_id && ['confirme','en_route','ramasse','livre'].includes(mission.statut)) {
-                buttons.push(`<a class="btn btn-ghost" href="messagerie.html?livraison=${id}">ðŸ’¬ Livreur</a>`);
+                buttons.push(`<a class="btn btn-ghost" href="messagerie.html?livraison=${id}">💬 Livreur</a>`);
             }
 
             if (['en_attente', 'publie'].includes(mission.statut)) {
@@ -879,10 +888,10 @@
                         <label for="rating-${mission.id}">Note livreur</label>
                         <select id="rating-${mission.id}">
                             <option value="5">5 - Excellent</option>
-                            <option value="4">4 - TrÃ¨s bien</option>
+                            <option value="4">4 - Très bien</option>
                             <option value="3">3 - Correct</option>
-                            <option value="2">2 - Ã€ amÃ©liorer</option>
-                            <option value="1">1 - ProblÃ¨me important</option>
+                            <option value="2">2 - À améliorer</option>
+                            <option value="1">1 - Problème important</option>
                         </select>
                     </div>
                     <textarea id="comment-${mission.id}" maxlength="800" placeholder="Commentaire court et utile"></textarea>
@@ -918,10 +927,10 @@
                 });
                 const result = await res.json().catch(() => ({}));
                 if (!res.ok) {
-                    showError('âŒ ' + (result.error || 'Avis impossible'));
+                    showError('❌ ' + (result.error || 'Avis impossible'));
                     return;
                 }
-                showSuccess('âœ… Avis envoyÃ©. Merci.');
+                showSuccess('✅ Avis envoyé. Merci.');
                 document.getElementById('review-' + livraisonId).style.display = 'none';
             } finally {
                 reviewInProgress.delete(livraisonId);
@@ -941,16 +950,16 @@
             });
             const result = await res.json().catch(() => ({}));
             if (!res.ok) {
-                showError('âŒ ' + (result.error || 'Annulation impossible'));
+                showError('❌ ' + (result.error || 'Annulation impossible'));
                 return;
             }
-            showSuccess('âœ… ' + (result.message || 'Livraison annulÃ©e'));
+            showSuccess('✅ ' + (result.message || 'Livraison annulée'));
             await loadMissions();
         }
 
         async function capturePayment(livraisonId, statut) {
             if (!['livre', 'livree', 'delivered'].includes(statut)) {
-                showError('âŒ La livraison doit etre marquee livree avant de liberer Stripe.');
+                showError('❌ La livraison doit etre marquee livree avant de liberer Stripe.');
                 return;
             }
             if (captureInProgress.has(livraisonId)) return;
@@ -974,10 +983,10 @@
                 });
                 const result = await res.json().catch(() => ({}));
                 if (!res.ok) {
-                    showError('âŒ ' + (result.error || 'Capture Stripe impossible'));
+                    showError('❌ ' + (result.error || 'Capture Stripe impossible'));
                     return;
                 }
-                showSuccess('âœ… Reception confirmee. Paiement libere au livreur.');
+                showSuccess('✅ Reception confirmee. Paiement libere au livreur.');
                 await loadMissions();
             } finally {
                 captureInProgress.delete(livraisonId);
@@ -1025,14 +1034,14 @@
                         <div class="mission-price">${money(mission.prix_total)}</div>
                         ${mission.livreur_id && mission.livreur_profile
                           ? `<div class="mission-driver" style="display:flex;align-items:center;gap:8px;margin-top:6px">
-                              ${mission.livreur_profile.photo_url ? `<img src="${mission.livreur_profile.photo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--brand-bg-surface-light);display:flex;align-items:center;justify-content:center;font-size:14px">ðŸšš</div>`}
+                              ${mission.livreur_profile.photo_url ? `<img src="${mission.livreur_profile.photo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--brand-bg-surface-light);display:flex;align-items:center;justify-content:center;font-size:14px">🚚</div>`}
                               <div>
                                 <div style="font-size:.82rem;font-weight:700;color:var(--brand-text)">${[mission.livreur_profile.prenom, mission.livreur_profile.nom].filter(Boolean).join(' ') || 'Livreur'}</div>
-                                ${mission.livreur_profile.score_confiance ? `<div style="font-size:.75rem;color:var(--brand-muted)">${(mission.livreur_profile.score_confiance / 20).toFixed(1)}â˜…</div>` : ''}
+                                ${mission.livreur_profile.score_confiance ? `<div style="font-size:.75rem;color:var(--brand-muted)">${(mission.livreur_profile.score_confiance / 20).toFixed(1)}★</div>` : ''}
                               </div>
                             </div>`
                           : mission.livreur_id
-                          ? `<div class="mission-driver">ðŸšš Livreur assignÃ©</div>`
+                          ? `<div class="mission-driver">🚚 Livreur assigné</div>`
                           : `<div class="mission-driver">En attente de livreur</div>`}
                     </div>
                     <div class="mission-actions">${actionButtons(mission)}</div>

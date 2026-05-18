@@ -6,7 +6,7 @@
   window.PORTEAPORTE_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
   if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-    console.error('âŒ erreur Supabase: CDN non charge');
+    console.error('❌ erreur Supabase: CDN non charge');
     return;
   }
 
@@ -18,6 +18,6 @@
     return window.db;
   };
 
-  // console.log('âœ… connectÃ©: Supabase client pret');
+  // console.log('✅ connecté: Supabase client pret');
 })();
 

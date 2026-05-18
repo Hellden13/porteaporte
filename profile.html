@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon profil - PorteÃ Porte</title>
+    <title>Mon profil - PorteàPorte</title>
     <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -283,7 +283,7 @@
     <div class="container">
         <div class="header">
             <h1>Mon Profil</h1>
-            <a href="/dashboard-livreur.html" class="btn-back" id="backBtn">â† Retour</a>
+            <a href="/dashboard-livreur.html" class="btn-back" id="backBtn">← Retour</a>
         </div>
 
         <div id="loadingContainer" class="loading">
@@ -319,7 +319,7 @@
                 <div class="info-card">
                     <div class="section-title">Informations personnelles</div>
                     <div class="info-row">
-                        <span class="info-label">PrÃ©nom</span>
+                        <span class="info-label">Prénom</span>
                         <span class="info-value" id="infoPrenom">-</span>
                     </div>
                     <div class="info-row">
@@ -331,7 +331,7 @@
                         <span class="info-value" id="infoEmail">-</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">TÃ©lÃ©phone</span>
+                        <span class="info-label">Téléphone</span>
                         <span class="info-value" id="infoTelephone">-</span>
                     </div>
 
@@ -356,29 +356,29 @@
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="logout()">Se dÃ©connecter</button>
+                        <button class="btn btn-primary" onclick="logout()">Se déconnecter</button>
                     </div>
                 </div>
             </div>
 
             <!-- BADGES -->
             <div class="badges-section">
-                <div class="section-title">ðŸŽ–ï¸ Mes badges</div>
+                <div class="section-title">🎖️ Mes badges</div>
                 <div class="badges-grid" id="badges-grid">
-                    <div class="badges-empty">Chargementâ€¦</div>
+                    <div class="badges-empty">Chargement…</div>
                 </div>
             </div>
 
             <!-- PARRAINAGE -->
             <div class="referral-section">
                 <div>
-                    <div class="section-title" style="margin-bottom:6px">ðŸ¤ Mon code de parrainage</div>
-                    <div style="color:var(--brand-muted);font-size:0.85rem;margin-bottom:12px">Partage ce code â€” tu gagnes des points Ã  chaque filleul actif.</div>
-                    <div id="referral-code-display" class="referral-code-display">Â·Â·Â·</div>
+                    <div class="section-title" style="margin-bottom:6px">🤝 Mon code de parrainage</div>
+                    <div style="color:var(--brand-muted);font-size:0.85rem;margin-bottom:12px">Partage ce code — tu gagnes des points à chaque filleul actif.</div>
+                    <div id="referral-code-display" class="referral-code-display">···</div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <button class="referral-copy-btn" onclick="copyReferralCode()">ðŸ“‹ Copier le code</button>
-                    <a class="referral-copy-btn" href="/parrainage.html" style="background:transparent;border:1px solid var(--brand-lime);color:var(--brand-lime);text-decoration:none">Voir ma page parrainage â†’</a>
+                    <button class="referral-copy-btn" onclick="copyReferralCode()">📋 Copier le code</button>
+                    <a class="referral-copy-btn" href="/parrainage.html" style="background:transparent;border:1px solid var(--brand-lime);color:var(--brand-lime);text-decoration:none">Voir ma page parrainage →</a>
                 </div>
             </div>
 
@@ -432,21 +432,21 @@
                     document.getElementById('livraisons').textContent = profile.livraisons_count || profile.livraisons || 0;
                     document.getElementById('score').textContent      = profile.score_confiance ? Number(profile.score_confiance).toFixed(1) : (Number(profile.score || 0).toFixed(1));
                     document.getElementById('xp').textContent         = profile.xp || 0;
-                    document.getElementById('coins').textContent      = profile.points_impact ?? profile.coins ?? 0;
+                    document.getElementById('coins').textContent      = profile.points_impact ? profile.coins ? 0;
 
                     document.getElementById('infoPrenom').textContent   = profile.prenom || '-';
                     document.getElementById('infoNom').textContent      = profile.nom || '-';
                     document.getElementById('infoTelephone').textContent= profile.telephone || '-';
                     document.getElementById('infoVille').textContent    = profile.ville || '-';
-                    document.getElementById('infoProvince').textContent = profile.province || 'QuÃ©bec';
-                    document.getElementById('infoNiveau').textContent   = profile.niveau || (profile.xp >= 500 ? 'Expert' : profile.xp >= 100 ? 'Actif' : 'DÃ©butant');
+                    document.getElementById('infoProvince').textContent = profile.province || 'Québec';
+                    document.getElementById('infoNiveau').textContent   = profile.niveau || (profile.xp >= 500 ? 'Expert' : profile.xp >= 100 ? 'Actif' : 'Débutant');
                     document.getElementById('infoStreak').textContent   = profile.streak_semaines || 0;
                 }
 
                 document.getElementById('profileEmail').textContent = userEmail;
                 document.getElementById('infoEmail').textContent    = userEmail;
 
-                // Charger badges + code parrainage en parallÃ¨le
+                // Charger badges + code parrainage en parallèle
                 await Promise.all([loadBadges(userId), loadReferralCode(token)]);
 
             } catch (err) {
@@ -464,15 +464,15 @@
 
                 const grid = document.getElementById('badges-grid');
                 if (!userBadges?.length) {
-                    grid.innerHTML = '<div class="badges-empty">Aucun badge encore â€” complÃ¨te des actions pour en gagner !</div>';
+                    grid.innerHTML = '<div class="badges-empty">Aucun badge encore — complète des actions pour en gagner !</div>';
                     return;
                 }
                 grid.innerHTML = userBadges.map(ub => {
                     const b = ub.badges || {};
                     const date = ub.granted_at ? new Date(ub.granted_at).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : '';
-                    return `<div class="badge-chip" title="${b.name || ''} Â· ${date}">
-                        <span class="badge-icon">${b.icon || 'ðŸ…'}</span>
-                        <span>${b.name || b.slug || 'â€”'}</span>
+                    return `<div class="badge-chip" title="${b.name || ''} · ${date}">
+                        <span class="badge-icon">${b.icon || '🏅'}</span>
+                        <span>${b.name || b.slug || '—'}</span>
                         ${b.points_reward ? `<span class="badge-pts">+${b.points_reward} pts</span>` : ''}
                     </div>`;
                 }).join('');
@@ -500,7 +500,7 @@
         function copyReferralCode() {
             if (!_referralCode) return;
             navigator.clipboard.writeText(_referralCode)
-                .then(() => alert('Code copiÃ© : ' + _referralCode))
+                .then(() => alert('Code copié : ' + _referralCode))
                 .catch(() => {
                     const el = document.getElementById('referral-code-display');
                     const range = document.createRange();
@@ -508,12 +508,12 @@
                     window.getSelection().removeAllRanges();
                     window.getSelection().addRange(range);
                     document.execCommand('copy');
-                    alert('Code copiÃ© : ' + _referralCode);
+                    alert('Code copié : ' + _referralCode);
                 });
         }
 
         async function logout() {
-            if (confirm('Es-tu sÃ»r de vouloir te dÃ©connecter ?')) {
+            if (confirm('Es-tu sûr de vouloir te déconnecter ?')) {
                 await db.auth.signOut();
                 localStorage.removeItem('auth_token');
                 window.location.href = '/index.html';

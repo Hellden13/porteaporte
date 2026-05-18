@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -35,7 +35,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 
 .layout{display:grid;grid-template-columns:1fr 380px;gap:32px;max-width:960px;margin:40px auto;padding:0 24px}
 
-/* RÃ‰SUMÃ‰ COMMANDE */
+/* RÉSUMÉ COMMANDE */
 .order-summary{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:24px;position:sticky;top:24px}
 .os-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;color:var(--lime);margin-bottom:16px}
 .os-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,240,232,.06);font-size:13px}
@@ -89,7 +89,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 
 .test-banner strong{color:#FAC775}
 
-/* SUCCÃˆS */
+/* SUCCÈS */
 .success-screen{display:none;text-align:center;padding:60px 20px}
 .success-screen.show{display:block}
 .success-icon{font-size:56px;margin-bottom:16px;animation:pop .5s ease}
@@ -161,30 +161,30 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 
     <!-- ETAPE 2 : DETAILS COLIS -->
     <div class="step-block">
-      <div class="step-title"><span class="step-num">2</span>DÃ©tails du colis</div>
+      <div class="step-title"><span class="step-num">2</span>Détails du colis</div>
       <div class="fr">
         <div>
-          <label class="fl">Ville de dÃ©part</label>
-          <input class="fi" type="text" id="ville-dep" placeholder="LÃ©vis, QC" oninput="updatePrix()">
+          <label class="fl">Ville de départ</label>
+          <input class="fi" type="text" id="ville-dep" placeholder="Lévis, QC" oninput="updatePrix()">
         </div>
         <div>
           <label class="fl">Ville de destination</label>
-          <input class="fi" type="text" id="ville-arr" placeholder="MontrÃ©al, QC" oninput="updatePrix()">
+          <input class="fi" type="text" id="ville-arr" placeholder="Montréal, QC" oninput="updatePrix()">
         </div>
       </div>
       <div class="fr">
         <div>
           <label class="fl">Type de colis</label>
           <select class="fi" id="type-colis" onchange="updatePrix()">
-            <option value="1">ðŸ“¦ Petit colis</option>
-            <option value="1">ðŸ§³ Valises</option>
-            <option value="1.3">ðŸ“± Ã‰lectronique</option>
-            <option value="1.6">ðŸ›‹ Meubles</option>
-            <option value="2.5">ðŸš— VÃ©hicule</option>
+            <option value="1">📦 Petit colis</option>
+            <option value="1">🧳 Valises</option>
+            <option value="1.3">📱 Électronique</option>
+            <option value="1.6">🛋 Meubles</option>
+            <option value="2.5">🚗 Véhicule</option>
           </select>
         </div>
         <div>
-          <label class="fl">Poids estimÃ© (kg)</label>
+          <label class="fl">Poids estimé (kg)</label>
           <input class="fi" type="number" id="poids" placeholder="10" value="10" min="1" oninput="updatePrix()">
         </div>
       </div>
@@ -202,45 +202,45 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
         <div>
           <label class="fl">Mode de prix</label>
           <select class="fi" id="mode-prix" onchange="updatePrix()">
-            <option value="fixe">ðŸŽ¯ Prix fixe</option>
-            <option value="offre">ðŸ¤ Appel d'offres</option>
+            <option value="fixe">🎯 Prix fixe</option>
+            <option value="offre">🤝 Appel d'offres</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- Ã‰TAPE 3 : CARTE DE CRÃ‰DIT -->
+    <!-- ÉTAPE 3 : CARTE DE CRÉDIT -->
     <div class="step-block">
       <div class="step-title"><span class="step-num">3</span>Informations de paiement</div>
-      <label class="fl">Carte de crÃ©dit ou dÃ©bit</label>
+      <label class="fl">Carte de crédit ou débit</label>
       <div class="stripe-wrap" id="stripe-wrap">
         <div id="card-element"></div>
       </div>
       <div id="card-errors"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">ðŸ”’ Tes informations de carte sont chiffrÃ©es par Stripe et ne sont jamais stockÃ©es sur nos serveurs. Conforme PCI-DSS niveau 1.</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">🔒 Tes informations de carte sont chiffrées par Stripe et ne sont jamais stockées sur nos serveurs. Conforme PCI-DSS niveau 1.</div>
       <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">Votre paiement est protege. Le livreur est paye seulement apres confirmation de livraison.</div>
     </div>
 
     <!-- PAYER -->
     <button class="pay-btn" id="pay-btn" onclick="handlePayment()">
       <div class="spinner"></div>
-      <span class="btn-text">ðŸ”’ Payer et sÃ©curiser mon colis â†’</span>
+      <span class="btn-text">🔒 Payer et sécuriser mon colis →</span>
     </button>
 
     <div class="security-badges">
-      <div class="sec-badge">ðŸ”’ SSL 256-bit</div>
-      <div class="sec-badge">ðŸ’³ PCI-DSS</div>
-      <div class="sec-badge">ðŸ‡¨ðŸ‡¦ Stripe Canada</div>
-      <div class="sec-badge">ðŸ” Escrow protÃ©gÃ©</div>
+      <div class="sec-badge">🔒 SSL 256-bit</div>
+      <div class="sec-badge">💳 PCI-DSS</div>
+      <div class="sec-badge">🇨🇦 Stripe Canada</div>
+      <div class="sec-badge">🔐 Escrow protégé</div>
     </div>
 
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6">En payant, tu acceptes les <a href="cgu.html" style="color:var(--lime)">CGU PorteÃ Porte</a> et la <a href="confidentialite.html" style="color:var(--lime)">politique de confidentialitÃ©</a>. Ton paiement est bloquÃ© en escrow Stripe jusqu'Ã  confirmation de livraison.</div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6">En payant, tu acceptes les <a href="cgu.html" style="color:var(--lime)">CGU PorteàPorte</a> et la <a href="confidentialite.html" style="color:var(--lime)">politique de confidentialité</a>. Ton paiement est bloqué en escrow Stripe jusqu'à confirmation de livraison.</div>
   </div>
 
-  <!-- RÃ‰SUMÃ‰ -->
+  <!-- RÉSUMÉ -->
   <div>
     <div class="order-summary">
-      <div class="os-title">ðŸ“¦ RÃ©sumÃ© de la commande</div>
+      <div class="os-title">📦 Résumé de la commande</div>
       <div class="os-item"><span class="os-label">Trajet</span><span class="os-val" id="sum-trajet">?</span></div>
       <div class="os-item"><span class="os-label">Type</span><span class="os-val" id="sum-type">Petit colis</span></div>
       <div class="os-item"><span class="os-label">Prix de livraison</span><span class="os-val" id="sum-livraison">?</span></div>
@@ -253,24 +253,24 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
         <span class="os-total-val" id="sum-total">?</span>
       </div>
       <div class="escrow-note">
-        ðŸ” <strong>Paiement en escrow :</strong> Ton argent est bloquÃ© chez Stripe et ne sera libÃ©rÃ© au livreur qu'aprÃ¨s la confirmation du destinataire. Si la livraison Ã©choue, tu es remboursÃ© automatiquement.
+        🔐 <strong>Paiement en escrow :</strong> Ton argent est bloqué chez Stripe et ne sera libéré au livreur qu'après la confirmation du destinataire. Si la livraison échoue, tu es remboursé automatiquement.
       </div>
 
       <div class="escrow-flow" aria-label="Fonctionnement de l'escrow Stripe">
         <div class="escrow-step">
-          <div class="escrow-icon">ðŸ”’</div>
+          <div class="escrow-icon">🔒</div>
           <strong>Argent protege</strong>
           <span>Stripe autorise la carte et garde les fonds en attente.</span>
         </div>
         <div class="escrow-arrow"></div>
         <div class="escrow-step">
-          <div class="escrow-icon">ðŸ“¦</div>
+          <div class="escrow-icon">📦</div>
           <strong>Livraison confirmee</strong>
           <span>Le destinataire confirme la reception avec son code.</span>
         </div>
         <div class="escrow-arrow"></div>
         <div class="escrow-step">
-          <div class="escrow-icon">âœ…</div>
+          <div class="escrow-icon">✅</div>
           <strong>Paiement libere</strong>
           <span>L'API capture le PaymentIntent et marque la livraison payee.</span>
         </div>
@@ -279,10 +279,10 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(245,240,232,.07)">
         <div style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Distribution du paiement</div>
         <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">â†’ Livreur (88%)</span><span id="dist-livreur" style="color:var(--lime)">?</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">â†’ Commission PorteÃ Porte</span><span id="dist-comm" style="color:var(--muted)">?</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">â†’ Dons humanitaires (5%)</span><span id="dist-dons" style="color:var(--teal)">?</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">â†’ Tirage mensuel (2%)</span><span id="dist-tirage" style="color:var(--muted)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Livreur (88%)</span><span id="dist-livreur" style="color:var(--lime)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Commission PorteàPorte</span><span id="dist-comm" style="color:var(--muted)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Dons humanitaires (5%)</span><span id="dist-dons" style="color:var(--teal)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Tirage mensuel (2%)</span><span id="dist-tirage" style="color:var(--muted)">?</span></div>
         </div>
       </div>
     </div>
@@ -291,7 +291,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 </div>
 
 <script>
-// ?? STRIPE INIT ??
+// ? STRIPE INIT ?
 const db = window.getSupabaseClient();
 const stripe = Stripe('pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a');
 const elements = stripe.elements({
@@ -327,7 +327,7 @@ cardElement.on('change',e=>{
   else{errEl.style.display='none'}
 });
 
-// ?? CALCUL PRIX ??
+// ? CALCUL PRIX ?
 let prixLivraison=85;
 let paiementLivraisonExistante=false;
 let livraisonChargee=null;
@@ -343,7 +343,7 @@ function updatePrix(){
   const mult=parseFloat(document.getElementById('type-colis').value)||1;
   const ass=parseFloat(document.getElementById('assurance').value)||0;
 
-  // Estimation distance basÃ©e sur les villes
+  // Estimation distance basée sur les villes
   let dist=200;
   if(dep&&arr&&dep.toLowerCase()!==arr.toLowerCase()){
     const hash=(dep+arr).split('').reduce((a,c)=>a+c.charCodeAt(0),0);
@@ -359,7 +359,7 @@ function updatePrix(){
   const partLivreur=Math.round((prixLivraison-comm)*100)/100;
 
   const fmt=n=>n.toFixed(2)+' $';
-  document.getElementById('sum-trajet').textContent=(dep&&arr)?dep+' â†’ '+arr:'?';
+  document.getElementById('sum-trajet').textContent=(dep&&arr)?dep+' → '+arr:'?';
   document.getElementById('sum-livraison').textContent=fmt(prixLivraison);
   document.getElementById('sum-assurance').textContent=ass===0?'Gratuit':fmt(ass);
   document.getElementById('sum-comm').textContent=fmt(comm);
@@ -374,7 +374,7 @@ if (!hasExistingLivraisonParam()) {
   updatePrix();
 }
 
-// ?? PAIEMENT ??
+// ? PAIEMENT ?
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
@@ -561,12 +561,12 @@ async function handlePayment(){
   }
 
   btn.disabled = true;
-  btn.textContent = 'â³ Traitement en cours...';
+  btn.textContent = '⏳ Traitement en cours...';
   btn.classList.add('loading');
   errEl.style.display = 'none';
 
   try {
-    // 1. CrÃ©er PaymentIntent cÃ´tÃ© serveur
+    // 1. Créer PaymentIntent côté serveur
     const session = await getSessionOrThrow();
     const livraisonId = await createLivraisonIfNeeded(session);
 
@@ -599,10 +599,10 @@ async function handlePayment(){
     window.location.href = `/confirmation.html?type=livraison&livraison_id=${encodeURIComponent(livraisonId)}&montant=${montant}&pi=${paymentIntent.id}`;
 
   } catch(err) {
-    errEl.textContent = 'âŒ ' + err.message;
+    errEl.textContent = '❌ ' + err.message;
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'ðŸ”’ Payer et securiser mon colis â†’';
+    btn.textContent = '🔒 Payer et securiser mon colis →';
     btn.classList.remove('loading');
   }
 }

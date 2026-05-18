@@ -971,13 +971,28 @@
   function livBadge(s) {
     const map = {
       livre:      ['badge-livre',     'Livré'],
+      livree:     ['badge-livre',     'Livré'],
+      delivered:  ['badge-livre',     'Livré'],
       en_route:   ['badge-en-route',  'En route'],
+      in_transit: ['badge-en-route',  'En route'],
       confirme:   ['badge-en-route',  'Confirmé'],
+      accepted:   ['badge-en-route',  'Confirmé'],
       ramasse:    ['badge-en-route',  'Ramassé'],
+      picked_up:  ['badge-en-route',  'Ramassé'],
       payee:      ['badge-verified',  'Payé'],
+      paid:       ['badge-verified',  'Payé'],
+      succeeded:  ['badge-verified',  'Payé'],
       en_attente: ['badge-attente',   'En attente'],
+      pending:    ['badge-attente',   'En attente'],
       publie:     ['badge-attente',   'Publié'],
+      paiement_autorise: ['badge-en-route', 'Escrow autorisé'],
+      requires_capture:  ['badge-en-route', 'Escrow autorisé'],
+      processing: ['badge-en-route', 'Paiement en traitement'],
       annule:     ['badge-rejected',  'Annulé'],
+      annulee:    ['badge-rejected',  'Annulé'],
+      canceled:   ['badge-rejected',  'Annulé'],
+      rembourse:  ['badge-rejected',  'Remboursé'],
+      refunded:   ['badge-rejected',  'Remboursé'],
       litige:     ['badge-rejected',  'Litige']
     };
     const [cls, label] = map[s] || ['badge-attente', s||'—'];
@@ -1237,7 +1252,7 @@
               <td style="color:#A8B0BA;font-size:.8rem">${r.driver_prenom || r.driver_id?.slice(0,8) || '—'}</td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}</td>
               <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
-              <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
+              <td style="color:#A8B0BA">${r.available_seats ? '—'} place(s)</td>
             </tr>`;
           }).join('');
 
@@ -1444,11 +1459,12 @@
       title.textContent = `${livraison.code || livraisonId.slice(0, 8)} · ${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}`;
       content.innerHTML = `
         <div>
-          ${proof.photo_data_url ? `<img class="proof-photo" src="${proof.photo_data_url}" alt="Photo de preuve de depot">` : '<div class="empty-msg">Aucune photo disponible</div>'}
+          ${proof.photo_signed_url || proof.photo_data_url ? `<img class="proof-photo" src="${proof.photo_signed_url || proof.photo_data_url}" alt="Photo de preuve de depot">` : '<div class="empty-msg">Aucune photo disponible</div>'}
         </div>
         <div>
           ${proofField('Type de depot', proof.dropoff_type)}
           ${proofField('Statut preuve', proof.status)}
+          ${proofField('Stockage photo', proof.photo_storage_path ? 'Supabase Storage' : 'Base de donnees legacy')}
           ${proofField('Note livreur', proof.note)}
           ${proofField('GPS', hasGps ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : null)}
           ${proofField('Precision', proof.accuracy_m ? Math.round(Number(proof.accuracy_m)) + ' m' : null)}
@@ -1491,17 +1507,17 @@
       const out = await impactRequest(null, 'GET');
       const impact = out.impact;
       const settings = impact.settings || {};
-      document.getElementById('pct-livreur').value     = settings.pct_livreur     ?? 60;
-      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ?? 12;
-      document.getElementById('pct-don').value         = settings.pct_don         ?? 5;
-      document.getElementById('pct-tirage').value      = settings.pct_tirage      ?? 3;
-      document.getElementById('pct-developpeur').value = settings.pct_developpeur ?? 0;
-      document.getElementById('pct-securite').value    = settings.pct_securite    ?? 0;
-      document.getElementById('pct-assurance').value   = settings.pct_assurance   ?? 0;
-      document.getElementById('impact-ride-pct').value     = settings.ride_platform_pct ?? 10;
-      document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
-      document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
-      document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
+      document.getElementById('pct-livreur').value     = settings.pct_livreur     ? 60;
+      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ? 12;
+      document.getElementById('pct-don').value         = settings.pct_don         ? 5;
+      document.getElementById('pct-tirage').value      = settings.pct_tirage      ? 3;
+      document.getElementById('pct-developpeur').value = settings.pct_developpeur ? 0;
+      document.getElementById('pct-securite').value    = settings.pct_securite    ? 0;
+      document.getElementById('pct-assurance').value   = settings.pct_assurance   ? 0;
+      document.getElementById('impact-ride-pct').value     = settings.ride_platform_pct ? 10;
+      document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ? 5;
+      document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ? 8;
+      document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ? 3;
       document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
       window.__platformSettings = settings;
       updateLivraisonTotal();
@@ -1578,8 +1594,8 @@
     try {
       loadBadgeSelector();
       const out = await rewardsRequest(null, 'GET');
-      document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ?? 0;
-      document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ?? 0;
+      document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ? 0;
+      document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ? 0;
       document.getElementById('reward-admin-draws').textContent = (out.draws || []).filter(d => d.status === 'active').length;
       document.getElementById('reward-missions-body').innerHTML = (out.missions || []).length ? out.missions.map(m => `
         <tr>
