@@ -1375,7 +1375,7 @@
         if (data.onboarding_url) {
           window.location.href = data.onboarding_url;
         } else {
-          alert(data.error || 'Erreur Stripe');
+          alert((data.error || 'Erreur Stripe') + (data.details ? '\n\nDétail : ' + data.details : ''));
           if (btn) { btn.disabled = false; btn.textContent = '⚡ Configurer mes paiements'; }
         }
       } catch (e) {
