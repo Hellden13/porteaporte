@@ -242,6 +242,32 @@
       min-width: 230px;
       align-items: center;
     }
+    .proof-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(5px);
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .proof-modal-card {
+      width: min(920px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: var(--brand-bg-surface);
+      border: 1px solid rgba(184,245,62,.24);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 28px 90px rgba(0,0,0,.5);
+    }
+    .proof-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 360px); gap: 18px; }
+    .proof-photo { width: 100%; border-radius: 12px; border: 1px solid var(--brand-bg-surface-light); background: var(--brand-bg-dark); }
+    .proof-kv { background: var(--brand-bg-dark); border: 1px solid var(--brand-bg-surface-light); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+    .proof-kv strong { display: block; font-size: .7rem; color: var(--brand-muted-dark); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .proof-kv span { color: var(--brand-text); font-weight: 700; overflow-wrap: anywhere; }
     td:last-child .action-btn + .action-btn { margin-left: 0 !important; }
     .empty-msg { text-align: center; color: var(--brand-muted-dark); padding: 32px; }
     .impact-admin-grid{display:grid;grid-template-columns:1fr;gap:16px}
@@ -271,6 +297,7 @@
       table { min-width: 680px; }
       .action-cell { min-width: 190px; }
       .admin-layout .action-btn { min-height: 38px !important; padding: 8px 11px !important; font-size: .78rem !important; }
+      .proof-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -413,11 +440,11 @@
         <table>
           <thead>
             <tr>
-              <th>Code</th><th>De → À</th><th>Statut</th><th>Prix</th><th>Date</th>
+              <th>Code</th><th>De → À</th><th>Statut</th><th>Prix</th><th>Date</th><th>Action</th>
             </tr>
           </thead>
           <tbody id="livraisons-body">
-            <tr><td colspan="5" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
           </tbody>
         </table>
       </div>
@@ -895,7 +922,24 @@
   </main>
 </div>
 
+<div id="proof-modal" class="proof-modal" onclick="if(event.target===this) closeProofModal()">
+  <div class="proof-modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="color:var(--brand-lime);font-size:.8rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em">Preuve de depot</div>
+        <h3 id="proof-title" style="margin:4px 0 0;font-size:1.25rem">Chargement...</h3>
+      </div>
+      <button class="action-btn" type="button" onclick="closeProofModal()">Fermer</button>
+    </div>
+    <div id="proof-content" class="proof-grid">
+      <div class="empty-msg">Chargement...</div>
+    </div>
+  </div>
+</div>
+
 <script>
+  let adminLivraisonsCache = [];
+
   function roleBadge(role) {
     const map = { admin:'badge-admin', livreur:'badge-livreur', expediteur:'badge-expediteur', 'les deux':'badge-les-deux' };
     return `<span class="badge ${map[role]||'badge-attente'}">${role||'—'}</span>`;
@@ -1176,13 +1220,37 @@
     const db = window.db;
     if (!db) return;
 
-    const [{ data: profiles }, { data: livraisons }] = await Promise.all([
-      db.from('profiles').select('*').order('prenom'),
-      db.from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
-        .order('created_at', { ascending: false })
-        .limit(30)
-    ]);
+    let profiles = [];
+    let livraisons = [];
+    try {
+      const session = AUTH_API.getUser()?.session;
+      const res = await fetch(apiUrl('/api/platform?endpoint=admin-dashboard'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({})
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Lecture admin impossible');
+      profiles = out.profiles || [];
+      livraisons = out.livraisons || [];
+      adminLivraisonsCache = livraisons;
+    } catch (err) {
+      console.error('admin-dashboard API:', err);
+      const [{ data: fallbackProfiles }, { data: fallbackLivraisons }] = await Promise.all([
+        db.from('profiles').select('*').order('prenom'),
+        db.from('livraisons').select('*').limit(100)
+      ]);
+      profiles = fallbackProfiles || [];
+      livraisons = (fallbackLivraisons || []).sort((a, b) => {
+        const da = new Date(a.created_at || a.cree_le || 0).getTime();
+        const dbb = new Date(b.created_at || b.cree_le || 0).getTime();
+        return dbb - da;
+      });
+      adminLivraisonsCache = livraisons;
+    }
     loadLitiges(db);
     loadCovoiturage();
 
@@ -1237,20 +1305,109 @@
     }
 
     if (livraisons) {
-      document.getElementById('stat-livraisons').textContent = livraisons.length;
+      const delivered = livraisons.filter(l => ['livre', 'livree', 'delivered', 'payee', 'paid', 'succeeded'].includes(String(l.statut || '').toLowerCase())).length;
+      document.getElementById('stat-livraisons').textContent = delivered > 0 ? `${livraisons.length} (${delivered} livrees/payees)` : livraisons.length;
       document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
-        ? '<tr><td colspan="5" class="empty-msg">Aucune livraison</td></tr>'
+        ? '<tr><td colspan="6" class="empty-msg">Aucune livraison</td></tr>'
         : livraisons.map(l => {
             const date = l.cree_le || l.created_at;
+            const canManualCapture = ['livre', 'livree', 'delivered'].includes(String(l.statut || '').toLowerCase());
+            const proofNote = l.delivery_proof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve depot recue</div>' : '';
+            const proofBtn = l.delivery_proof ? `<button class="action-btn" onclick="viewDeliveryProof('${l.id}')">Voir preuve</button>` : '';
             return `
             <tr>
               <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${l.code||'—'}</td>
-              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}</td>
+              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}${proofNote}</td>
               <td>${livBadge(l.statut)}</td>
               <td style="color:#B8F53E;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
               <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
+              <td><div class="action-cell">${proofBtn}${canManualCapture ? `<button class="action-btn" onclick="adminCaptureLegacy('${l.id}')">Validation admin</button>` : '<span style="color:#5A6A7A;font-size:.78rem">-</span>'}</div></td>
             </tr>`;
           }).join('');
+    }
+  }
+
+  async function adminCaptureLegacy(livraisonId) {
+    const reason = prompt('Validation admin exceptionnelle. Inscris la preuve: appel au destinataire, photo, message, ou autre.');
+    if (!reason || reason.trim().length < 6) return;
+    if (!confirm('Confirmer la reception manuellement et liberer le paiement Stripe?')) return;
+    const session = AUTH_API.getUser()?.session;
+    const res = await fetch(apiUrl('/api/capture-payment'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ livraison_id: livraisonId, admin_override_reason: reason.trim() })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(out.error || 'Capture impossible');
+      return;
+    }
+    alert('Paiement libere et audit enregistre.');
+    await loadData();
+  }
+
+  function closeProofModal() {
+    document.getElementById('proof-modal').style.display = 'none';
+  }
+
+  function proofField(label, value) {
+    return `<div class="proof-kv"><strong>${label}</strong><span>${value || '—'}</span></div>`;
+  }
+
+  async function viewDeliveryProof(livraisonId) {
+    const modal = document.getElementById('proof-modal');
+    const content = document.getElementById('proof-content');
+    const title = document.getElementById('proof-title');
+    modal.style.display = 'flex';
+    title.textContent = 'Chargement...';
+    content.innerHTML = '<div class="empty-msg">Chargement de la preuve...</div>';
+
+    try {
+      const session = AUTH_API.getUser()?.session;
+      const res = await fetch(apiUrl('/api/platform?endpoint=admin-delivery-proof'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ livraison_id: livraisonId })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Lecture preuve impossible');
+
+      const proof = out.proof || {};
+      const livraison = out.livraison || adminLivraisonsCache.find(l => l.id === livraisonId) || {};
+      const lat = Number(proof.latitude);
+      const lng = Number(proof.longitude);
+      const hasGps = Number.isFinite(lat) && Number.isFinite(lng);
+      const maps = hasGps ? `https://www.google.com/maps?q=${lat},${lng}` : '#';
+
+      title.textContent = `${livraison.code || livraisonId.slice(0, 8)} · ${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}`;
+      content.innerHTML = `
+        <div>
+          ${proof.photo_data_url ? `<img class="proof-photo" src="${proof.photo_data_url}" alt="Photo de preuve de depot">` : '<div class="empty-msg">Aucune photo disponible</div>'}
+        </div>
+        <div>
+          ${proofField('Type de depot', proof.dropoff_type)}
+          ${proofField('Statut preuve', proof.status)}
+          ${proofField('Note livreur', proof.note)}
+          ${proofField('GPS', hasGps ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : null)}
+          ${proofField('Precision', proof.accuracy_m ? Math.round(Number(proof.accuracy_m)) + ' m' : null)}
+          ${proofField('Heure', proof.created_at ? new Date(proof.created_at).toLocaleString('fr-CA') : null)}
+          <div class="action-cell" style="margin-top:12px">
+            ${hasGps ? `<a class="action-btn" href="${maps}" target="_blank" rel="noopener">Ouvrir GPS</a>` : ''}
+            <button class="action-btn danger" onclick="adminCaptureLegacy('${livraisonId}')">Valider et liberer</button>
+          </div>
+          <div style="color:var(--brand-muted-dark);font-size:.78rem;line-height:1.45;margin-top:12px">
+            Valide seulement si la photo, le GPS et la note sont coherents. Sinon, garde le paiement bloque et ouvre un litige.
+          </div>
+        </div>`;
+    } catch (err) {
+      title.textContent = 'Preuve indisponible';
+      content.innerHTML = `<div class="empty-msg">${err.message || 'Lecture preuve impossible'}</div>`;
     }
   }
 

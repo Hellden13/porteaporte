@@ -90,6 +90,19 @@ function toNumber(value, fallback = null) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function generateReceptionCode() {
+  const crypto = require('crypto');
+  return String(crypto.randomInt(100000, 1000000));
+}
+
+function hashReceptionCode(code, livraisonId) {
+  const crypto = require('crypto');
+  return crypto
+    .createHash('sha256')
+    .update(`${String(code || '').trim()}|${String(livraisonId || '')}`)
+    .digest('hex');
+}
+
 function normalizeText(value) {
   return String(value || '')
     .normalize('NFD')
@@ -298,6 +311,19 @@ async function createLivraison(req, res, ctx, body) {
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
+  let receptionCode = livraison?.id ? generateReceptionCode() : null;
+  if (receptionCode) {
+    const hash = hashReceptionCode(receptionCode, livraison.id);
+    const codePatch = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison.id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify({
+        recipient_confirmation_hash: hash,
+        recipient_confirmation_created_at: new Date().toISOString()
+      })
+    }).catch(() => {});
+    if (!codePatch || !codePatch.ok) receptionCode = null;
+  }
   await deliverPush(ctx, {
     type: 'nouvelle_mission',
     data: {
@@ -307,7 +333,7 @@ async function createLivraison(req, res, ctx, body) {
       prix_total: livraison?.prix_total ?? payload.prix_total
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
-  return res.status(200).json({ success: true, livraison });
+  return res.status(200).json({ success: true, livraison, recipient_confirmation_code: receptionCode });
 }
 
 async function setUserRole(req, res, ctx, body) {
@@ -445,6 +471,99 @@ async function confirmDelivery(req, res, ctx, body) {
   rewardReferralIfPending(ctx, livraison.livreur_id, 'first_delivery').catch(() => {});
 
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
+}
+
+async function submitDeliveryProof(req, res, ctx, body) {
+  const livraisonId = body.livraison_id || body.livraisonId;
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+  if (!isVerifiedDriver(ctx.session, ctx.profile) && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur verifie requis' });
+  }
+
+  const note = String(body.note || '').trim();
+  const dropoffType = String(body.dropoff_type || 'sans_contact').trim();
+  const photoDataUrl = String(body.photo_data_url || '').trim();
+  const latitude = toNumber(body.latitude);
+  const longitude = toNumber(body.longitude);
+  const accuracyM = toNumber(body.accuracy_m);
+
+  if (!note || note.length < 8) {
+    return res.status(400).json({ error: 'Note de depot requise (minimum 8 caracteres)' });
+  }
+  if (!photoDataUrl || !photoDataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Photo de preuve requise' });
+  }
+  if (photoDataUrl.length > 950000) {
+    return res.status(413).json({ error: 'Photo trop lourde. Reprends une photo plus legere.' });
+  }
+  if (latitude === null || longitude === null || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return res.status(400).json({ error: 'Position GPS obligatoire pour un depot sans destinataire' });
+  }
+
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = livRes.ok ? await livRes.json() : [];
+  const livraison = rows[0];
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (!roleIn(ctx.profile, ['admin']) && livraison.livreur_id !== ctx.session.id) {
+    return res.status(403).json({ error: 'Seul le livreur assigne peut deposer une preuve' });
+  }
+  if (!['confirme', 'en_route', 'ramasse'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Statut livraison incompatible avec depot preuve' });
+  }
+
+  const proofPayload = {
+    livraison_id: livraisonId,
+    livreur_id: ctx.session.id,
+    proof_type: 'dropoff_without_recipient',
+    dropoff_type: dropoffType,
+    note,
+    photo_data_url: photoDataUrl,
+    latitude,
+    longitude,
+    accuracy_m: accuracyM,
+    status: 'submitted',
+    created_at: new Date().toISOString()
+  };
+
+  const proofRes = await fetch(`${ctx.sbUrl}/rest/v1/delivery_proofs`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(proofPayload)
+  });
+  const proofData = await proofRes.json().catch(() => ({}));
+  if (!proofRes.ok) return res.status(400).json({ error: 'Enregistrement preuve impossible', details: proofData });
+
+  const patchCandidates = [
+    {
+      statut: 'livre',
+      livre_le: new Date().toISOString(),
+      delivery_confirmation_mode: 'proof_without_recipient',
+      delivery_proof_required_admin_review: true
+    },
+    { statut: 'livre', livre_le: new Date().toISOString() },
+    { statut: 'livre' }
+  ];
+  let patched = false;
+  for (const patch of patchCandidates) {
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(patch)
+    });
+    if (r.ok) {
+      patched = true;
+      break;
+    }
+  }
+  if (!patched) return res.status(400).json({ error: 'Preuve enregistree, mais statut livraison non mis a jour' });
+
+  return res.status(200).json({
+    success: true,
+    proof: Array.isArray(proofData) ? proofData[0] : proofData,
+    message: 'Preuve enregistree. Paiement Stripe bloque jusqu au code destinataire ou validation admin.'
+  });
 }
 async function gpsUpdate(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
@@ -684,11 +803,28 @@ async function adminDashboard(req, res, ctx) {
     return res.status(400).json({ error: 'Lecture livraisons admin impossible', details: livraisons });
   }
 
+  const livraisonIds = livraisons.map((l) => l.id).filter(Boolean).slice(0, 100);
+  let proofByLivraison = {};
+  if (livraisonIds.length) {
+    const ids = livraisonIds.map((id) => `"${id}"`).join(',');
+    const proofRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${ids})&select=id,livraison_id,proof_type,dropoff_type,status,created_at&order=created_at.desc`,
+      { headers: sbHeaders(ctx.sbKey) }
+    ).catch(() => null);
+    if (proofRes?.ok) {
+      const proofRows = await proofRes.json().catch(() => []);
+      proofRows.forEach((proof) => {
+        if (!proofByLivraison[proof.livraison_id]) proofByLivraison[proof.livraison_id] = proof;
+      });
+    }
+  }
+
   const normalizedLivraisons = livraisons.map((row) => ({
     ...row,
     statut: row.statut || row.status || 'inconnu',
     prix_total: row.prix_total ?? row.prix ?? row.montant ?? 0,
     created_at: row.created_at || row.cree_le || row.date_creation || null,
+    delivery_proof: proofByLivraison[row.id] || null,
   }));
 
   return res.status(200).json({
@@ -696,6 +832,133 @@ async function adminDashboard(req, res, ctx) {
     profiles,
     livraisons: normalizedLivraisons
   });
+}
+
+async function adminDeliveryProof(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+  const livraisonId = body.livraison_id || body.livraisonId;
+  const proofId = body.proof_id || body.proofId;
+  if (!livraisonId && !proofId) return res.status(400).json({ error: 'livraison_id ou proof_id requis' });
+
+  const filter = proofId
+    ? `id=eq.${encodeURIComponent(proofId)}`
+    : `livraison_id=eq.${encodeURIComponent(livraisonId)}`;
+  const proofRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/delivery_proofs?${filter}&select=*&order=created_at.desc&limit=1`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const proofs = proofRes.ok ? await proofRes.json().catch(() => []) : [];
+  if (!proofRes.ok) return res.status(400).json({ error: 'Lecture preuve impossible', details: proofs });
+  const proof = proofs[0];
+  if (!proof) return res.status(404).json({ error: 'Preuve introuvable' });
+
+  const livRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(proof.livraison_id)}&select=id,code,ville_depart,ville_arrivee,statut,prix_total,livreur_id,expediteur_id,created_at,cree_le&limit=1`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const livraisons = livRes.ok ? await livRes.json().catch(() => []) : [];
+
+  return res.status(200).json({
+    success: true,
+    proof,
+    livraison: livraisons[0] || null
+  });
+}
+
+async function adminDisputes(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+
+  let livRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/livraisons?select=*&or=(statut.in.(litige,rembourse),delivery_proof_required_admin_review.eq.true)&order=created_at.desc&limit=100`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  let livraisons = livRes.ok ? await livRes.json().catch(() => []) : [];
+
+  if (!livRes.ok) {
+    livRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/livraisons?select=*&statut=in.(litige,rembourse)&limit=100`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    livraisons = livRes.ok ? await livRes.json().catch(() => []) : [];
+  }
+  if (!livRes.ok) return res.status(400).json({ error: 'Lecture litiges impossible', details: livraisons });
+
+  const ids = livraisons.map((l) => l.id).filter(Boolean);
+  let proofByLivraison = {};
+  if (ids.length) {
+    const inIds = ids.map((id) => `"${id}"`).join(',');
+    const proofRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${inIds})&select=id,livraison_id,proof_type,dropoff_type,note,latitude,longitude,accuracy_m,status,created_at&order=created_at.desc`,
+      { headers: sbHeaders(ctx.sbKey) }
+    ).catch(() => null);
+    if (proofRes?.ok) {
+      const proofRows = await proofRes.json().catch(() => []);
+      proofRows.forEach((proof) => {
+        if (!proofByLivraison[proof.livraison_id]) proofByLivraison[proof.livraison_id] = proof;
+      });
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    litiges: livraisons.map((row) => ({
+      ...row,
+      statut: row.statut || row.status || 'inconnu',
+      prix_total: row.prix_total ?? row.prix ?? row.montant ?? 0,
+      created_at: row.created_at || row.cree_le || row.date_creation || null,
+      delivery_proof: proofByLivraison[row.id] || null
+    }))
+  });
+}
+
+async function adminDisputeAction(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+  const livraisonId = body.livraison_id || body.livraisonId;
+  const action = String(body.action || '').trim();
+  const note = String(body.note || '').trim().slice(0, 800);
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+  if (!['open_litige', 'ask_info', 'close_review'].includes(action)) {
+    return res.status(400).json({ error: 'Action litige invalide' });
+  }
+
+  const patch = {
+    updated_at: new Date().toISOString()
+  };
+  if (action === 'open_litige' || action === 'ask_info') {
+    patch.statut = 'litige';
+    patch.delivery_proof_required_admin_review = true;
+  }
+  if (action === 'close_review') {
+    patch.delivery_proof_required_admin_review = false;
+  }
+  if (note) {
+    patch.admin_note = note;
+  }
+
+  const candidates = [patch, { statut: patch.statut || 'litige' }, { delivery_proof_required_admin_review: patch.delivery_proof_required_admin_review }];
+  let lastData = null;
+  for (const candidate of candidates) {
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey, 'return=representation'),
+      body: JSON.stringify(candidate)
+    });
+    lastData = await r.json().catch(() => ({}));
+    if (r.ok) {
+      return res.status(200).json({
+        success: true,
+        livraison: Array.isArray(lastData) ? lastData[0] : lastData,
+        action
+      });
+    }
+  }
+  return res.status(400).json({ error: 'Mise a jour litige impossible', details: lastData });
 }
 
 async function tracking(req, res, ctx, body) {
@@ -1978,10 +2241,12 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
+    if (endpoint === 'delivery-proof') return await submitDeliveryProof(req, res, ctx, body);
     if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
+    if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'tracking') return await tracking(req, res, ctx, body);
     if (endpoint === 'notifications') return await notifications(req, res, ctx, body);
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);

@@ -25,7 +25,7 @@
   <main class="wrap">
     <div class="top">
       <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" href="/dashboard-livreur.html">Dashboard</a>
+      <a class="btn secondary" id="driverDashboardLink" href="/dashboard-livreur.html">Dashboard</a>
     </div>
 
     <section class="panel">
@@ -93,6 +93,12 @@
       }
       const user = data.session.user;
       const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+      const dash = document.getElementById('driverDashboardLink');
+      if (dash && profile && profile.role !== 'admin' && profile.driver_status !== 'verified') {
+        dash.textContent = profile.driver_status === 'pending_review' ? 'Dossier en revision' : 'Verification';
+        dash.href = '#driverForm';
+        dash.setAttribute('aria-disabled', 'true');
+      }
       if (profile && !['livreur', 'les deux', 'admin'].includes(profile.role)) {
         showError('Ton compte est encore seulement expéditeur. En envoyant ce formulaire, on ajoute aussi le rôle livreur à ton profil.');
       }

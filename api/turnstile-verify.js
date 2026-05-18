@@ -1,5 +1,5 @@
 // api/turnstile-verify.js - WITH AUDIT LOGGING
-const { log } = require('./logger');
+const { log } = require('../lib/logger');
 
 module.exports = async function handler(req, res) {
   const SECRET = process.env.TURNSTILE_SECRET;

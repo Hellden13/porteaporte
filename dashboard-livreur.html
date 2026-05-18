@@ -964,6 +964,7 @@
             </div>
             <div class="delivery-actions">
               <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
+              <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
               <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
                 ${row.statut === 'livre' ? 'Livré ✓' : 'Marquer livré'}
               </button>
@@ -1176,6 +1177,7 @@
               </div>
               <div class="delivery-actions">
                 <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
+                <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
                 <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
                   ${row.statut === 'livre' ? 'Livré ✓' : 'Marquer livré'}
                 </button>

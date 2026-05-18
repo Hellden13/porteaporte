@@ -400,12 +400,38 @@
 
           <button class="filters-toggle" onclick="toggleFilters(this)">+ Filtres avancés</button>
           <div class="filters-extra" id="filters-extra">
+            <label class="checkbox-option"><input type="checkbox" id="f-nonsmoker"> 🚭 Non-fumeur</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-ac"> ❄️ Climatisation</label>
             <label class="checkbox-option"><input type="checkbox" id="f-pets"> 🐾 Animaux acceptés</label>
             <label class="checkbox-option"><input type="checkbox" id="f-luggage"> 🧳 Gros bagages</label>
-            <label class="checkbox-option"><input type="checkbox" id="f-stops"> 📍 Arrêts intermédiaires</label>
-            <label class="checkbox-option"><input type="checkbox" id="f-nonsmoker"> 🚭 Non-fumeur</label>
             <label class="checkbox-option"><input type="checkbox" id="f-accessible"> ♿ Accessible</label>
-            <label class="checkbox-option"><input type="checkbox" id="f-childseat"> 🪑 Siège enfant dispo</label>
+            <label class="checkbox-option"><input type="checkbox" id="f-childseat"> 🪑 Siège enfant</label>
+            <div class="field" style="grid-column:span 2">
+              <label>Espace coffre minimum</label>
+              <select id="f-trunk">
+                <option value="">Peu importe</option>
+                <option value="moyen">Moyen (1-2 valises)</option>
+                <option value="grand">Grand (plusieurs valises)</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:span 2">
+              <label>Ambiance musicale</label>
+              <select id="f-music">
+                <option value="">Peu importe</option>
+                <option value="silence">Silence total</option>
+                <option value="selon_humeur">Selon l'humeur</option>
+                <option value="musique">Toujours de la musique</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:span 2">
+              <label>Niveau de conversation</label>
+              <select id="f-chat">
+                <option value="">Peu importe</option>
+                <option value="silencieux">Silencieux</option>
+                <option value="selon_humeur">Selon l'humeur</option>
+                <option value="bavard">J'adore jaser</option>
+              </select>
+            </div>
           </div>
 
           <div style="margin-top:18px;">
@@ -557,16 +583,31 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Recherche...';
 
-      const params = new URLSearchParams({
-        start_city: document.getElementById('s-from').value.trim(),
-        end_city:   document.getElementById('s-to').value.trim(),
-        date:       document.getElementById('s-date').value,
-        seats:      document.getElementById('s-seats').value,
-        endpoint:   'ride-search',
-      });
+      const params = new URLSearchParams({ endpoint: 'ride-search' });
+      const from  = document.getElementById('s-from').value.trim();
+      const to    = document.getElementById('s-to').value.trim();
+      const date  = document.getElementById('s-date').value;
+      const seats = document.getElementById('s-seats').value;
+      if (from)  params.set('start_city', from);
+      if (to)    params.set('end_city',   to);
+      if (date)  params.set('date',       date);
+      if (seats) params.set('seats',      seats);
+
+      // Filtres avancés
+      if (document.getElementById('f-nonsmoker').checked) params.set('smoking_policy', 'non_fumeur');
+      if (document.getElementById('f-ac').checked)        params.set('ac_available',   'true');
+      if (document.getElementById('f-pets').checked)      params.set('accepts_pets',   'true');
+      if (document.getElementById('f-luggage').checked)   params.set('accepts_large_luggage', 'true');
+      if (document.getElementById('f-accessible').checked) params.set('accessible',    'true');
+      const trunk = document.getElementById('f-trunk').value;
+      const music = document.getElementById('f-music').value;
+      const chat  = document.getElementById('f-chat').value;
+      if (trunk) params.set('trunk_size',   trunk);
+      if (music) params.set('music_policy', music);
+      if (chat)  params.set('chat_policy',  chat);
 
       try {
-        const res  = await fetch('/api/ride-search?' + params);
+        const res  = await fetch('/api/platform?' + params);
         const data = await res.json();
         renderResults(data.rides || []);
       } catch (e) {
@@ -576,6 +617,11 @@
         btn.textContent = '🔍 Rechercher';
       }
     }
+
+    const SMOKING_LABEL = { non_fumeur: '🚭 Non-fumeur', fumeur: '🚬 Fumeur OK', exterieur: '🌬️ Ext. seulement' };
+    const MUSIC_LABEL   = { silence: '🔇 Silence', selon_humeur: '🎶 Selon l\'humeur', musique: '🔊 Musique' };
+    const CHAT_LABEL    = { silencieux: '🤫 Silencieux', selon_humeur: '🙂 Selon l\'humeur', bavard: '😄 Bavard' };
+    const TRUNK_LABEL   = { petit: '🎒 Petit coffre', moyen: '🧳 Coffre moyen', grand: '🚚 Grand coffre' };
 
     function renderResults(rides) {
       const section = document.getElementById('results-section');
@@ -591,39 +637,72 @@
       }
 
       list.innerHTML = rides.map(r => {
-        const badges = [];
-        if (r.accepts_pets)          badges.push('<span class="badge">🐾 Animaux</span>');
-        if (r.accepts_large_luggage) badges.push('<span class="badge">🧳 Gros bagages</span>');
-        if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts</span>');
-        if (r.non_smoker)            badges.push('<span class="badge">🚭 Non-fumeur</span>');
-        if (r.driver && r.driver.verified) badges.push('<span class="badge green">✅ Vérifié</span>');
-        if (r.accessible)            badges.push('<span class="badge blue">♿ Accessible</span>');
-
+        const d = r.driver || {};
         const seats = r.available_seats;
         const seatsLabel = seats === 1 ? '1 place restante' : seats + ' places restantes';
 
+        // Badges verts/bleus
+        const badges = [];
+        if (d.verified)              badges.push('<span class="badge green">✅ Vérifié</span>');
+        if (r.accepts_pets)          badges.push('<span class="badge">🐾 Animaux</span>');
+        if (r.accepts_large_luggage) badges.push('<span class="badge">🧳 Gros bagages</span>');
+        if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts</span>');
+        if (r.accepts_packages)      badges.push(`<span class="badge blue">📦 Colis jusqu'à ${r.package_max_kg||10} kg</span>`);
+        if (r.ac_available)          badges.push('<span class="badge blue">❄️ Clim</span>');
+        if (r.accessible)            badges.push('<span class="badge blue">♿</span>');
+
+        // Infos véhicule
+        const vehicleStr = [d.vehicle_year, d.vehicle_make, d.vehicle_model, d.vehicle_color]
+          .filter(Boolean).join(' ') || r.vehicle_type || 'Véhicule';
+
+        // Ambiance chips
+        const ambiance = [
+          SMOKING_LABEL[r.smoking_policy] || SMOKING_LABEL['non_fumeur'],
+          MUSIC_LABEL[r.music_policy]     || '',
+          CHAT_LABEL[r.chat_policy]       || '',
+          TRUNK_LABEL[r.trunk_size]       || '',
+        ].filter(Boolean).map(t => `<span class="badge">${t}</span>`).join('');
+
+        // Points d'arrêt intermédiaires
+        const stops = Array.isArray(r.stop_points) && r.stop_points.length
+          ? `<div style="margin-top:6px;font-size:0.78rem;color:var(--brand-muted);">
+               📍 Arrêts : ${r.stop_points.map(s => s.city + (s.sector ? ' · ' + s.sector : '')).join(' → ')}
+             </div>`
+          : '';
+
+        // Score étoiles
+        const score = d.score > 0 ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${(d.score / 20).toFixed(1)}</span>` : '';
+
         return `
           <div class="ride-card">
-            <div>
+            <div style="min-width:0">
               <div class="ride-route">
                 <span>${r.start_city}${r.start_sector ? ' · ' + r.start_sector : ''}</span>
                 <span class="arrow">→</span>
                 <span>${r.end_city}${r.end_sector ? ' · ' + r.end_sector : ''}</span>
               </div>
-              <div class="ride-meta">
+              <div class="ride-meta" style="margin-bottom:6px;">
                 <span>🗓 ${formatDate(r.departure_time)}</span>
-                <span>🚗 ${r.vehicle_type || 'Véhicule'}</span>
+                <span>🚗 ${vehicleStr}</span>
                 <span>🪑 ${seatsLabel}</span>
-                ${r.total_distance_km ? '<span>📏 ' + r.total_distance_km + ' km</span>' : ''}
+                ${r.total_distance_km ? `<span>📏 ${r.total_distance_km} km</span>` : ''}
                 ${badges.join('')}
               </div>
-              ${r.driver ? '<div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);">Conducteur : <strong style="color:var(--brand-text)">' + r.driver.prenom + '</strong></div>' : ''}
+              <div class="ride-meta">${ambiance}</div>
+              ${stops}
+              <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;gap:8px;">
+                <strong style="color:var(--brand-text)">${d.prenom || 'Chauffeur'}</strong>
+                ${score}
+                ${d.bio ? `<span style="color:var(--brand-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px">"${d.bio}"</span>` : ''}
+              </div>
             </div>
             <div class="ride-price">
               <div class="ride-price-amount">${fmt(r.estimated_price)}</div>
               <div class="ride-price-label">par personne</div>
-              <div style="font-size:0.75rem;color:var(--brand-muted);margin-top:2px;">dont ${fmt(r.platform_fee)} frais plateforme</div>
-              <a class="btn" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;">Voir le trajet</a>
+              <div style="font-size:0.72rem;color:var(--brand-muted);margin-top:2px;">dont ${fmt(r.platform_fee)} frais service</div>
+              ${r.luggage_fee_info ? `<div style="font-size:0.72rem;color:var(--brand-cyan);margin-top:2px;">+${fmt(r.luggage_fee_info)} bagage → chauffeur</div>` : ''}
+              ${r.group_discount ? `<div style="font-size:0.72rem;color:#f59e0b;margin-top:4px;">👥 +1 passager = -${r.group_discount.next_pct}% pour tous</div>` : ''}
+              <a class="btn" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;white-space:nowrap;">Voir le trajet</a>
             </div>
           </div>
         `;

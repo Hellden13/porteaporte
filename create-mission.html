@@ -108,6 +108,12 @@
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison creee, mais ID introuvable.');
+        if(out.recipient_confirmation_code){
+          localStorage.setItem('pap_reception_code_'+id,out.recipient_confirmation_code);
+          const confirmLink=window.location.origin+'/confirmation-destinataire.html?livraison_id='+encodeURIComponent(id);
+          localStorage.setItem('pap_reception_link_'+id,confirmLink);
+          alert('Code de reception destinataire: '+out.recipient_confirmation_code+'\\n\\nLien destinataire: '+confirmLink+'\\n\\nDonne ce code et ce lien uniquement au destinataire. Il confirmera lui-meme la reception pour liberer le paiement apres livraison.');
+        }
         const payParams=new URLSearchParams({livraison_id:id,montant:String(total),dep:payload.ville_depart,arr:payload.ville_arrivee,type:payload.type_colis,poids:String(payload.poids_kg),assurance:payload.assurance_plan});
         el('success-message').classList.add('show'); setTimeout(()=>{window.location.href='paiement.html?'+payParams.toString()},500);
       }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Creer la livraison'}
@@ -118,4 +124,3 @@
   <script src="/js/support-widget.js"></script>
 </body>
 </html>
-

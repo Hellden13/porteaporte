@@ -646,6 +646,8 @@
             loadGrowthSidebar();
             setupRealtime();
             document.getElementById('quick-create-form')?.addEventListener('submit', createQuickLivraison);
+
+            if (window.NotifBell) NotifBell.init(db, user.id);
         }
 
         async function createQuickLivraison(event) {
@@ -847,8 +849,8 @@
                 buttons.unshift(`<a class="btn btn-primary" href="paiement.html?${params.toString()}">Payer escrow</a>`);
             }
 
-            if (mission.statut === 'livre') {
-                buttons.unshift(`<button class="btn btn-primary" type="button" data-capture-id="${mission.id}" onclick="capturePayment('${mission.id}', '${mission.statut}')">Confirmer reception</button>`);
+            if (['livre', 'livree', 'delivered'].includes(mission.statut)) {
+                buttons.unshift(`<button class="btn btn-primary" type="button" data-capture-id="${mission.id}" onclick="openRecipientConfirmation('${mission.id}')">Lien confirmation destinataire</button>`);
             }
 
             if (mission.statut === 'payee' && mission.livreur_id) {
@@ -859,7 +861,13 @@
                 buttons.push(`<button class="btn btn-ghost" type="button" onclick="cancelLivraison('${mission.id}')">Annuler</button>`);
             }
 
-            return buttons.join('') + '<div class="mission-note">Confirmez la reception seulement lorsque vous avez bien recu votre colis. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+            return buttons.join('') + '<div class="mission-note">Le destinataire doit confirmer la reception avec son code. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+        }
+
+        function openRecipientConfirmation(livraisonId) {
+            const link = `${window.location.origin}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}`;
+            navigator.clipboard?.writeText(link).catch(() => {});
+            window.open(link, '_blank', 'noopener,noreferrer');
         }
 
         function reviewBox(mission) {
@@ -940,12 +948,14 @@
         }
 
         async function capturePayment(livraisonId, statut) {
-            if (statut !== 'livre') {
+            if (!['livre', 'livree', 'delivered'].includes(statut)) {
                 showError('❌ La livraison doit etre marquee livree avant de liberer Stripe.');
                 return;
             }
             if (captureInProgress.has(livraisonId)) return;
-            if (!confirm('Confirmer la reception et liberer le paiement Stripe au livreur?')) return;
+            const recipientCode = prompt('Entre le code de reception donne par le destinataire. Sans ce code, le paiement reste protege.');
+            if (!recipientCode) return;
+            if (!confirm('Code destinataire saisi. Liberer le paiement Stripe au livreur?')) return;
             captureInProgress.add(livraisonId);
             document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
                 btn.disabled = true;
@@ -959,7 +969,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + user.session.access_token
                     },
-                    body: JSON.stringify({ livraison_id: livraisonId })
+                    body: JSON.stringify({ livraison_id: livraisonId, recipient_code: recipientCode.trim() })
                 });
                 const result = await res.json().catch(() => ({}));
                 if (!res.ok) {
@@ -972,7 +982,7 @@
                 captureInProgress.delete(livraisonId);
                 document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
                     btn.disabled = false;
-                    btn.textContent = 'Confirmer reception';
+                    btn.textContent = 'Lien confirmation destinataire';
                 });
             }
         }
@@ -1058,6 +1068,7 @@
             initPage();
         }
     </script>
+  <script src="/js/notif-bell.js"></script>
   <script src="/js/support-widget.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // api/stripe.js - WITH AUDIT LOGGING
-const { log } = require('./logger');
+const { log } = require('../lib/logger');
 
 async function stripeRequest(method, path, body) {
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
