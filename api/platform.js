@@ -2438,7 +2438,7 @@ async function deliverPush(ctx, body) {
   }
 
   webpush.setVapidDetails(
-    'mailto:bonjour@porteaporte.site',
+    process.env.VAPID_EMAIL || 'mailto:bonjour@porteaporte.site',
     vapidPublic,
     vapidPrivate
   );
