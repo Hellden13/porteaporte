@@ -722,13 +722,13 @@
             </div>
             <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
               <label for="pct-livreur">🚚 Livreur</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-livreur" type="number" min="0" max="100" step="0.1" value="60" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-livreur" type="number" min="0" max="100" step="0.1" value="85" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-plateforme">⚡ Plateforme</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-plateforme" type="number" min="0" max="100" step="0.1" value="12" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-plateforme" type="number" min="0" max="100" step="0.1" value="15" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-don">❤️ Dons organismes</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-don" type="number" min="0" max="100" step="0.1" value="5" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-don" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-tirage">🎟 Fond tirage</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-tirage" type="number" min="0" max="100" step="0.1" value="3" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><input id="pct-tirage" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-developpeur">💻 Développeur</label>
               <div style="display:flex;align-items:center;gap:6px"><input id="pct-developpeur" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-securite">🛡 Fond de sécurité</label>
@@ -1507,17 +1507,17 @@
       const out = await impactRequest(null, 'GET');
       const impact = out.impact;
       const settings = impact.settings || {};
-      document.getElementById('pct-livreur').value     = settings.pct_livreur     ? 60;
-      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ? 12;
-      document.getElementById('pct-don').value         = settings.pct_don         ? 5;
-      document.getElementById('pct-tirage').value      = settings.pct_tirage      ? 3;
-      document.getElementById('pct-developpeur').value = settings.pct_developpeur ? 0;
-      document.getElementById('pct-securite').value    = settings.pct_securite    ? 0;
-      document.getElementById('pct-assurance').value   = settings.pct_assurance   ? 0;
-      document.getElementById('impact-ride-pct').value     = settings.ride_platform_pct ? 10;
-      document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ? 5;
-      document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ? 8;
-      document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ? 3;
+      document.getElementById('pct-livreur').value     = settings.pct_livreur     ?? 85;
+      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ?? 15;
+      document.getElementById('pct-don').value         = settings.pct_don         ?? 0;
+      document.getElementById('pct-tirage').value      = settings.pct_tirage      ?? 0;
+      document.getElementById('pct-developpeur').value = settings.pct_developpeur ?? 0;
+      document.getElementById('pct-securite').value    = settings.pct_securite    ?? 0;
+      document.getElementById('pct-assurance').value   = settings.pct_assurance   ?? 0;
+      document.getElementById('impact-ride-pct').value     = settings.ride_platform_fee ?? 1.50;
+      document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
+      document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
+      document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
       document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
       window.__platformSettings = settings;
       updateLivraisonTotal();

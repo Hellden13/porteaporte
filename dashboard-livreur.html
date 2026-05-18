@@ -486,6 +486,14 @@
         <div id="bonusMissionsList"><p class="loading-msg">Chargement des missions bonus...</p></div>
       </div>
       <div class="reward-card">
+        <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(184,245,62,0.08);border:1px solid rgba(184,245,62,0.3);border-radius:10px;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--brand-lime);font-weight:800;margin-bottom:2px">Abonnement actif</div>
+            <div id="sub-pro-name" style="font-weight:800;font-size:0.95rem"></div>
+            <div id="sub-pro-renew" style="font-size:0.75rem;color:var(--brand-muted)"></div>
+          </div>
+          <a href="/abonnements.html" style="font-size:0.75rem;color:var(--brand-lime);text-decoration:none;font-weight:700;white-space:nowrap">Gérer →</a>
+        </div>
         <div class="reward-title">Points Impact</div>
         <div class="coins-balance" id="porteCoinsBalance">—</div>
         <div class="reward-muted">Les Points Impact n'ont aucune valeur monétaire. Ils servent aux tirages, badges et avantages plateforme.</div>
@@ -733,7 +741,23 @@
     const ECO_ICONS = { pieds:'🚶', velo:'🚴', trottinette:'🛴', skateboard:'🛹', voiture_electrique:'🔋🚗', moto_electrique:'🔋🏍️', camion_electrique:'🔋🚛', voiture:'🚗', moto:'🏍️', camion:'🚛' };
     const ECO_LABELS = { pieds:'À pied', velo:'Vélo', trottinette:'Trottinette', skateboard:'Skateboard', voiture_electrique:'Voiture élec.', moto_electrique:'Moto élec.', camion_electrique:'Camion élec.', voiture:'Voiture', moto:'Moto', camion:'Camion' };
 
+    function renderSubscriptionBanner() {
+      const banner = document.getElementById('sub-pro-banner');
+      if (!banner) return;
+      if (profile.subscription_status === 'active' && profile.subscription_plan) {
+        const names = { conducteur_pro: 'Conducteur Pro', marchand_local: 'Marchand Local' };
+        document.getElementById('sub-pro-name').textContent = names[profile.subscription_plan] || profile.subscription_plan;
+        if (profile.subscription_end_at) {
+          const d = new Date(profile.subscription_end_at);
+          document.getElementById('sub-pro-renew').textContent =
+            'Renouvellement le ' + d.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        banner.style.display = 'flex';
+      }
+    }
+
     function renderStats() {
+      renderSubscriptionBanner();
       const deliveries = profile.livraisons || 0;
       const earnings   = (profile.coins || 0) / 100;
       const score      = ((profile.score || 0) / 20).toFixed(1);
