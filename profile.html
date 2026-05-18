@@ -197,19 +197,83 @@
             color: var(--brand-muted);
         }
 
+        /* BADGES */
+        .badges-section {
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+        }
+        .badges-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+        .badge-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(184,245,62,0.08);
+            border: 1px solid rgba(184,245,62,0.2);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--brand-text);
+            transition: border-color 0.2s;
+        }
+        .badge-chip:hover { border-color: var(--brand-lime); }
+        .badge-chip .badge-icon { font-size: 1.1rem; }
+        .badge-chip .badge-pts { font-size: 0.72rem; color: var(--brand-lime); margin-left: 4px; }
+        .badges-empty { color: var(--brand-muted); font-size: 0.9rem; padding: 12px 0; }
+
+        /* PARRAINAGE */
+        .referral-section {
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-bg-surface-light);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .referral-code-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--brand-lime);
+            letter-spacing: 0.15em;
+            background: rgba(184,245,62,0.08);
+            border: 2px dashed rgba(184,245,62,0.35);
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        .referral-copy-btn {
+            padding: 10px 18px;
+            background: var(--brand-lime);
+            color: var(--brand-bg-dark);
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: opacity 0.15s;
+        }
+        .referral-copy-btn:hover { opacity: 0.85; }
+
+        /* Avatar photo */
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
         @media (max-width: 768px) {
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .btn-group {
-                flex-direction: column;
-            }
+            .profile-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 1rem; }
+            .btn-group { flex-direction: column; }
+            .referral-section { flex-direction: column; text-align: center; }
         }
     </style>
     <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -228,7 +292,7 @@
         <div id="profileContainer" style="display: none;">
             <div class="profile-grid">
                 <div class="profile-card">
-                    <div class="avatar">P</div>
+                    <div class="avatar" id="avatarBox"><span id="avatarInitials">P</span></div>
                     <div class="profile-name" id="profileName">Nom</div>
                     <div class="profile-email" id="profileEmail">email@example.com</div>
                     <div class="profile-stats">
@@ -295,23 +359,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- BADGES -->
+            <div class="badges-section">
+                <div class="section-title">🎖️ Mes badges</div>
+                <div class="badges-grid" id="badges-grid">
+                    <div class="badges-empty">Chargement…</div>
+                </div>
+            </div>
+
+            <!-- PARRAINAGE -->
+            <div class="referral-section">
+                <div>
+                    <div class="section-title" style="margin-bottom:6px">🤝 Mon code de parrainage</div>
+                    <div style="color:var(--brand-muted);font-size:0.85rem;margin-bottom:12px">Partage ce code — tu gagnes des points à chaque filleul actif.</div>
+                    <div id="referral-code-display" class="referral-code-display">···</div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="referral-copy-btn" onclick="copyReferralCode()">📋 Copier le code</button>
+                    <a class="referral-copy-btn" href="/parrainage.html" style="background:transparent;border:1px solid var(--brand-lime);color:var(--brand-lime);text-decoration:none">Voir ma page parrainage →</a>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
         const db = window.db || window.getSupabaseClient();
+        let _referralCode = null;
 
         async function loadProfile() {
             try {
                 const { data } = await db.auth.getSession();
-                
-                if (!data || !data.session) {
-                    window.location.href = '/login.html';
-                    return;
-                }
+                if (!data?.session) { window.location.href = '/login.html'; return; }
 
-                const userId = data.session.user.id;
+                const userId    = data.session.user.id;
                 const userEmail = data.session.user.email;
+                const token     = data.session.access_token;
 
                 const { data: profile } = await db
                     .from('profiles')
@@ -323,7 +407,6 @@
                 document.getElementById('profileContainer').style.display = 'grid';
 
                 if (profile) {
-                    // Set back button to correct dashboard based on role
                     const role = profile.role || 'expediteur';
                     const dashMap = {
                         livreur:    '/dashboard-livreur.html',
@@ -332,31 +415,104 @@
                         admin:      '/admin/dashboard-admin.html'
                     };
                     document.getElementById('backBtn').href = dashMap[role] || '/dashboard-expediteur.html';
-                    document.getElementById('profileName').textContent = `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Utilisateur';
-                    document.getElementById('livraisons').textContent = profile.livraisons || 0;
-                    document.getElementById('score').textContent = (profile.score || 0).toFixed(1);
-                    document.getElementById('xp').textContent = profile.xp || 0;
-                    document.getElementById('coins').textContent = `$${((profile.coins || 0) / 100).toFixed(2)}`;
 
-                    document.getElementById('infoPrenom').textContent = profile.prenom || '-';
-                    document.getElementById('infoNom').textContent = profile.nom || '-';
-                    document.getElementById('infoTelephone').textContent = profile.telephone || '-';
-                    document.getElementById('infoVille').textContent = profile.ville || '-';
-                    document.getElementById('infoProvince').textContent = profile.province || '-';
-                    document.getElementById('infoNiveau').textContent = profile.niveau || '-';
-                    document.getElementById('infoStreak').textContent = profile.streak_semaines || 0;
+                    const fullName = `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Utilisateur';
+                    document.getElementById('profileName').textContent = fullName;
+
+                    // Avatar dynamique
+                    const avatarBox = document.getElementById('avatarBox');
+                    if (profile.photo_url) {
+                        avatarBox.innerHTML = `<img src="${profile.photo_url}" alt="${fullName}">`;
+                    } else {
+                        const initials = fullName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                        document.getElementById('avatarInitials').textContent = initials;
+                    }
+
+                    document.getElementById('livraisons').textContent = profile.livraisons_count || profile.livraisons || 0;
+                    document.getElementById('score').textContent      = profile.score_confiance ? Number(profile.score_confiance).toFixed(1) : (Number(profile.score || 0).toFixed(1));
+                    document.getElementById('xp').textContent         = profile.xp || 0;
+                    document.getElementById('coins').textContent      = `${((profile.coins || 0) / 100).toFixed(2)} $`;
+
+                    document.getElementById('infoPrenom').textContent   = profile.prenom || '-';
+                    document.getElementById('infoNom').textContent      = profile.nom || '-';
+                    document.getElementById('infoTelephone').textContent= profile.telephone || '-';
+                    document.getElementById('infoVille').textContent    = profile.ville || '-';
+                    document.getElementById('infoProvince').textContent = profile.province || 'Québec';
+                    document.getElementById('infoNiveau').textContent   = profile.niveau || (profile.xp >= 500 ? 'Expert' : profile.xp >= 100 ? 'Actif' : 'Débutant');
+                    document.getElementById('infoStreak').textContent   = profile.streak_semaines || 0;
                 }
-                
-                document.getElementById('profileEmail').textContent = userEmail;
-                document.getElementById('infoEmail').textContent = userEmail;
 
-            } catch (error) {
-                document.getElementById('loadingContainer').innerHTML = 'Erreur: ' + error.message;
+                document.getElementById('profileEmail').textContent = userEmail;
+                document.getElementById('infoEmail').textContent    = userEmail;
+
+                // Charger badges + code parrainage en parallèle
+                await Promise.all([loadBadges(userId), loadReferralCode(token)]);
+
+            } catch (err) {
+                document.getElementById('loadingContainer').innerHTML = 'Erreur : ' + err.message;
             }
         }
 
+        async function loadBadges(userId) {
+            try {
+                const { data: userBadges } = await db
+                    .from('user_badges')
+                    .select('badge_id, granted_at, badges(slug, name, icon, points_reward, xp_reward, category)')
+                    .eq('user_id', userId)
+                    .order('granted_at', { ascending: false });
+
+                const grid = document.getElementById('badges-grid');
+                if (!userBadges?.length) {
+                    grid.innerHTML = '<div class="badges-empty">Aucun badge encore — complète des actions pour en gagner !</div>';
+                    return;
+                }
+                grid.innerHTML = userBadges.map(ub => {
+                    const b = ub.badges || {};
+                    const date = ub.granted_at ? new Date(ub.granted_at).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : '';
+                    return `<div class="badge-chip" title="${b.name || ''} · ${date}">
+                        <span class="badge-icon">${b.icon || '🏅'}</span>
+                        <span>${b.name || b.slug || '—'}</span>
+                        ${b.points_reward ? `<span class="badge-pts">+${b.points_reward} pts</span>` : ''}
+                    </div>`;
+                }).join('');
+            } catch (_) {
+                document.getElementById('badges-grid').innerHTML = '<div class="badges-empty">Badges indisponibles pour l\'instant.</div>';
+            }
+        }
+
+        async function loadReferralCode(token) {
+            try {
+                const r = await fetch('/api/referral-get', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({})
+                });
+                if (!r.ok) return;
+                const d = await r.json();
+                _referralCode = d.referral?.code || d.code || null;
+                if (_referralCode) {
+                    document.getElementById('referral-code-display').textContent = _referralCode;
+                }
+            } catch (_) {}
+        }
+
+        function copyReferralCode() {
+            if (!_referralCode) return;
+            navigator.clipboard.writeText(_referralCode)
+                .then(() => alert('Code copié : ' + _referralCode))
+                .catch(() => {
+                    const el = document.getElementById('referral-code-display');
+                    const range = document.createRange();
+                    range.selectNode(el);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    document.execCommand('copy');
+                    alert('Code copié : ' + _referralCode);
+                });
+        }
+
         async function logout() {
-            if (confirm('Es-tu sûr de vouloir te déconnecter?')) {
+            if (confirm('Es-tu sûr de vouloir te déconnecter ?')) {
                 await db.auth.signOut();
                 localStorage.removeItem('auth_token');
                 window.location.href = '/index.html';
