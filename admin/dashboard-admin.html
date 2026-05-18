@@ -280,27 +280,26 @@
   <aside class="sidebar">
     <div class="sidebar-brand">⚡ PorteàPorte</div>
     <div class="sidebar-label">Navigation</div>
-    <a href="#section-stats"     class="nav-link active"><span class="icon">📊</span> Tableau de bord</a>
-    <a href="#section-users"     class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
-    <a href="#section-livreurs"  class="nav-link"><span class="icon">🚚</span> Livreurs</a>
-    <a href="#section-livraisons"class="nav-link"><span class="icon">📦</span> Livraisons</a>
-    <a href="#section-revenus"   class="nav-link"><span class="icon">💰</span> Revenus</a>
-    <a href="#section-litiges"   class="nav-link"><span class="icon">⚠️</span> Litiges</a>
-    <a href="#section-rewards"       class="nav-link"><span class="icon">★</span> Missions & tirages</a>
-    <a href="#section-gamification"  class="nav-link"><span class="icon">🎮</span> Gamification</a>
-    <a href="#section-impact"        class="nav-link"><span class="icon">♥</span> Transparence</a>
-    <a href="#section-covoiturage"   class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
-    <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
+    <a href="#section-stats"        class="nav-link active"><span class="icon">📊</span> Tableau de bord</a>
+    <a href="#section-users"        class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
+    <a href="#section-livreurs"     class="nav-link"><span class="icon">🚚</span> Livreurs</a>
+    <a href="#section-livraisons"   class="nav-link"><span class="icon">📦</span> Livraisons</a>
+    <a href="#section-revenus"      class="nav-link"><span class="icon">💰</span> Revenus</a>
+    <a href="#section-litiges"      class="nav-link"><span class="icon">⚠️</span> Litiges</a>
+    <a href="#section-rewards"      class="nav-link"><span class="icon">★</span> Missions & tirages</a>
+    <a href="#section-gamification" class="nav-link"><span class="icon">🎮</span> Gamification</a>
+    <a href="#section-impact"       class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <a href="#section-covoiturage"  class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
+    <a href="#section-parrainage"   class="nav-link"><span class="icon">🤝</span> Parrainage</a>
+    <a href="#section-notifications"class="nav-link"><span class="icon">🔔</span> Notifications push</a>
+    <div class="sidebar-label" style="margin-top:16px">Outils admin</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
+    <a href="/transparence.html"     class="nav-link"><span class="icon">↗</span> Page transparence</a>
     <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
     <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
     <a href="/dashboard-livreur.html"     class="nav-link"><span class="icon">🚚</span> Espace livreur</a>
     <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">🚗</span> Espace covoiturage</a>
-    <a href="/covoiturage-publier.html"   class="nav-link"><span class="icon">➕</span> Publier un trajet</a>
     <a href="/compte.html"               class="nav-link"><span class="icon">👤</span> Mon profil</a>
-    <div class="sidebar-label" style="margin-top:16px">Liens rapides</div>
-    <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
-    <a href="/transparence.html" class="nav-link"><span class="icon">↗</span> Page transparence</a>
     <div class="sidebar-bottom">
       <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
       <button class="logout-btn" onclick="AUTH_API.logout()">Se déconnecter</button>
@@ -309,12 +308,18 @@
 
   <main class="main">
     <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
-      <a href="#section-stats">Stats</a>
-      <a href="#section-users">Utilisateurs</a>
-      <a href="#section-livreurs">Livreurs</a>
-      <a href="#section-livraisons">Livraisons</a>
-      <a href="#section-rewards">Missions</a>
-      <a href="#section-impact">Transparence</a>
+      <a href="#section-stats">📊 Stats</a>
+      <a href="#section-users">👥 Utilisateurs</a>
+      <a href="#section-livreurs">🚚 Livreurs</a>
+      <a href="#section-livraisons">📦 Livraisons</a>
+      <a href="#section-revenus">💰 Revenus</a>
+      <a href="#section-litiges">⚠️ Litiges</a>
+      <a href="#section-rewards">★ Missions</a>
+      <a href="#section-gamification">🎮 Gamification</a>
+      <a href="#section-impact">♥ Transparence</a>
+      <a href="#section-covoiturage">🚗 Covoiturage</a>
+      <a href="#section-parrainage">🤝 Parrainage</a>
+      <a href="#section-notifications">🔔 Notifs</a>
     </nav>
     <div class="page-header">
       <div>
@@ -820,6 +825,71 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ═══════════════════════════════════════ PARRAINAGE ═══ -->
+    <div id="section-parrainage" class="section">
+      <div class="section-title">Parrainage — Codes & filleuls</div>
+
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-card-label">Codes actifs</div><div class="stat-card-value" id="par-codes-actifs">—</div><div class="stat-card-sub">codes créés</div></div>
+        <div class="stat-card"><div class="stat-card-label">Parrainages réalisés</div><div class="stat-card-value" id="par-total">—</div><div class="stat-card-sub">filleuls inscrits</div></div>
+        <div class="stat-card"><div class="stat-card-label">Récompensés</div><div class="stat-card-value" id="par-rewarded">—</div><div class="stat-card-sub">bonus accordés</div></div>
+        <div class="stat-card"><div class="stat-card-label">En attente</div><div class="stat-card-value" id="par-pending">—</div><div class="stat-card-sub">à valider</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:8px">Codes de parrainage</div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Code</th><th>Parrain</th><th>Filleuls</th><th>Créé le</th><th>Actif</th></tr></thead>
+          <tbody id="par-codes-body"><tr><td colspan="5" class="empty-msg">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Parrainages récents</div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Parrain</th><th>Filleul</th><th>Code utilisé</th><th>Récompensé</th><th>Date</th></tr></thead>
+          <tbody id="par-referrals-body"><tr><td colspan="5" class="empty-msg">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ NOTIFICATIONS PUSH ═══ -->
+    <div id="section-notifications" class="section">
+      <div class="section-title">Notifications Push</div>
+
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-card-label">Abonnés actifs</div><div class="stat-card-value" id="notif-count">—</div><div class="stat-card-sub">appareils enregistrés</div></div>
+        <div class="stat-card"><div class="stat-card-label">iOS</div><div class="stat-card-value" id="notif-ios">—</div><div class="stat-card-sub">Safari / iPhone</div></div>
+        <div class="stat-card"><div class="stat-card-label">Android/Desktop</div><div class="stat-card-value" id="notif-android">—</div><div class="stat-card-sub">Chrome / Firefox</div></div>
+        <div class="stat-card"><div class="stat-card-label">Dernière notif</div><div class="stat-card-value" id="notif-last" style="font-size:1rem">—</div><div class="stat-card-sub">envoyée</div></div>
+      </div>
+
+      <div class="impact-admin-grid">
+        <div class="form-card">
+          <div style="font-size:.8rem;color:var(--brand-cyan);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">📢 Diffusion générale</div>
+          <form id="notif-broadcast-form" class="form-grid">
+            <label for="notif-title">Titre</label>
+            <input id="notif-title" placeholder="Nouvelle fonctionnalité PorteàPorte" required>
+            <label for="notif-body">Message</label>
+            <textarea id="notif-body" placeholder="Découvrez les nouvelles mises à jour…" required></textarea>
+            <label for="notif-url">URL à ouvrir (optionnel)</label>
+            <input id="notif-url" placeholder="/dashboard-livreur.html">
+            <label for="notif-role">Destinataires</label>
+            <select id="notif-role">
+              <option value="">Tous les abonnés</option>
+              <option value="livreur">Livreurs seulement</option>
+              <option value="expediteur">Expéditeurs seulement</option>
+            </select>
+            <button class="action-btn" type="submit" id="notif-send-btn">📤 Envoyer la notification</button>
+          </form>
+        </div>
+        <div class="form-card">
+          <div style="font-size:.8rem;color:var(--brand-muted);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">📋 Abonnés récents</div>
+          <div id="notif-subs-list" style="font-size:.82rem;color:var(--brand-muted)">Chargement…</div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -1801,6 +1871,161 @@
     if (e.target === this) closeCampaignModal();
   });
 
+  // ── PARRAINAGE ───────────────────────────────────────────────────
+  async function loadParrainage() {
+    const db = window.db;
+    if (!db) return;
+    try {
+      const [{ data: codes, error: codesErr }, { data: referrals, error: refErr }] = await Promise.all([
+        db.from('referral_codes').select('*').order('created_at', { ascending: false }),
+        db.from('referrals').select('*').order('created_at', { ascending: false }).limit(50)
+      ]);
+
+      if (codesErr || refErr) {
+        const msg = codesErr?.message || refErr?.message || 'Erreur chargement parrainage';
+        document.getElementById('par-codes-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${msg}</td></tr>`;
+        document.getElementById('par-referrals-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${msg}</td></tr>`;
+        return;
+      }
+
+      const codesList = codes || [];
+      const refList = referrals || [];
+
+      const rewarded = refList.filter(r => r.rewarded).length;
+      const pending  = refList.filter(r => !r.rewarded).length;
+
+      document.getElementById('par-codes-actifs').textContent = codesList.filter(c => c.is_active !== false).length;
+      document.getElementById('par-total').textContent        = refList.length;
+      document.getElementById('par-rewarded').textContent     = rewarded;
+      document.getElementById('par-pending').textContent      = pending;
+
+      // Compter filleuls par code/owner
+      const filleulsParUser = {};
+      refList.forEach(r => {
+        const key = r.referrer_id || r.referral_code;
+        filleulsParUser[key] = (filleulsParUser[key] || 0) + 1;
+      });
+
+      // Fetch profiles des parrains
+      const ownerIds = [...new Set(codesList.map(c => c.user_id).filter(Boolean))];
+      let profileMap = {};
+      if (ownerIds.length) {
+        const { data: profiles } = await db.from('profiles').select('id,prenom,nom,email').in('id', ownerIds);
+        (profiles || []).forEach(p => { profileMap[p.id] = p; });
+      }
+
+      document.getElementById('par-codes-body').innerHTML = codesList.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucun code créé</td></tr>'
+        : codesList.map(c => {
+            const p = profileMap[c.user_id] || {};
+            const name = [p.prenom, p.nom].filter(Boolean).join(' ') || p.email || c.user_id?.slice(0,8) || '—';
+            const count = filleulsParUser[c.user_id] || filleulsParUser[c.code] || 0;
+            const actif = c.is_active !== false;
+            const date  = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-CA') : '—';
+            return `<tr>
+              <td style="font-family:monospace;color:#00D9FF;font-weight:700;font-size:.9rem">${c.code || '—'}</td>
+              <td>${name}</td>
+              <td style="color:#B8F53E;font-weight:700">${count}</td>
+              <td style="color:#5A6A7A;font-size:.8rem">${date}</td>
+              <td><span class="badge ${actif ? 'badge-verified' : 'badge-rejected'}">${actif ? 'Actif' : 'Inactif'}</span></td>
+            </tr>`;
+          }).join('');
+
+      // Fetch profiles des filleuls
+      const filleulIds = [...new Set(refList.map(r => r.referred_id).filter(Boolean))];
+      let filleulMap = {};
+      if (filleulIds.length) {
+        const { data: fProfiles } = await db.from('profiles').select('id,prenom,nom,email').in('id', filleulIds);
+        (fProfiles || []).forEach(p => { filleulMap[p.id] = p; });
+      }
+
+      document.getElementById('par-referrals-body').innerHTML = refList.length === 0
+        ? '<tr><td colspan="5" class="empty-msg">Aucun parrainage enregistré</td></tr>'
+        : refList.map(r => {
+            const parrain  = profileMap[r.referrer_id]  || {};
+            const filleul  = filleulMap[r.referred_id]  || {};
+            const parrainN = [parrain.prenom, parrain.nom].filter(Boolean).join(' ') || parrain.email || r.referrer_id?.slice(0,8) || '—';
+            const filleulN = [filleul.prenom, filleul.nom].filter(Boolean).join(' ') || filleul.email || r.referred_id?.slice(0,8) || '—';
+            const date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-CA') : '—';
+            return `<tr>
+              <td>${parrainN}</td>
+              <td>${filleulN}</td>
+              <td style="font-family:monospace;color:#00D9FF;font-size:.82rem">${r.referral_code || r.code || '—'}</td>
+              <td><span class="badge ${r.rewarded ? 'badge-verified' : 'badge-pending'}">${r.rewarded ? '✓ Oui' : '⏳ Non'}</span></td>
+              <td style="color:#5A6A7A;font-size:.8rem">${date}</td>
+            </tr>`;
+          }).join('');
+    } catch (err) {
+      document.getElementById('par-codes-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${err.message}</td></tr>`;
+    }
+  }
+
+  // ── NOTIFICATIONS PUSH ───────────────────────────────────────────
+  async function loadNotifications() {
+    const db = window.db;
+    if (!db) return;
+    try {
+      const { data: subs, error } = await db.from('push_subscriptions').select('*').order('created_at', { ascending: false });
+      const list = error ? [] : (subs || []);
+
+      document.getElementById('notif-count').textContent   = list.length;
+      document.getElementById('notif-ios').textContent     = list.filter(s => /safari|iphone|ipad/i.test(s.user_agent || '')).length;
+      document.getElementById('notif-android').textContent = list.filter(s => !/safari|iphone|ipad/i.test(s.user_agent || '')).length;
+
+      const last = list[0];
+      document.getElementById('notif-last').textContent = last
+        ? new Date(last.created_at).toLocaleDateString('fr-CA', { month:'short', day:'numeric' })
+        : '—';
+
+      document.getElementById('notif-subs-list').innerHTML = list.length === 0
+        ? '<div style="color:var(--brand-muted);padding:12px 0">Aucun abonné pour l\'instant.</div>'
+        : list.slice(0, 10).map(s => {
+            const ua = s.user_agent || '';
+            const icon = /iphone|ipad/i.test(ua) ? '🍎' : /android/i.test(ua) ? '🤖' : '💻';
+            const date = new Date(s.created_at).toLocaleDateString('fr-CA', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brand-border)">
+              <span>${icon} ${s.user_id ? s.user_id.slice(0,8) + '…' : 'Anonyme'}</span>
+              <span style="color:#5A6A7A;font-size:.75rem">${date}</span>
+            </div>`;
+          }).join('')
+        + (list.length > 10 ? `<div style="color:#5A6A7A;font-size:.78rem;padding:8px 0">… et ${list.length - 10} autres abonnés</div>` : '');
+    } catch (err) {
+      document.getElementById('notif-subs-list').innerHTML = `<div style="color:#ff8a8a">${err.message}</div>`;
+    }
+  }
+
+  document.getElementById('notif-broadcast-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const btn = document.getElementById('notif-send-btn');
+    const title = document.getElementById('notif-title').value.trim();
+    const body  = document.getElementById('notif-body').value.trim();
+    const url   = document.getElementById('notif-url').value.trim() || '/dashboard-livreur.html';
+    const role  = document.getElementById('notif-role').value;
+
+    if (!confirm(`Envoyer "${title}" à tous les abonnés${role ? ' (' + role + ')' : ''} ?`)) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi en cours…';
+
+    try {
+      const user = AUTH_API.getUser();
+      const res = await fetch('/api/admin-push-broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user.session.access_token },
+        body: JSON.stringify({ title, body, url, role: role || null })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur envoi');
+      alert(`✅ Notification envoyée à ${out.sent || '?'} abonné(s).${out.failed ? ' Échecs : ' + out.failed : ''}`);
+      event.target.reset();
+    } catch (err) {
+      alert('❌ ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📤 Envoyer la notification';
+    }
+  });
+
   // ── INIT ─────────────────────────────────────────────────────────
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
@@ -1812,6 +2037,8 @@
     await loadImpact();
     loadRevenus(db);
     await loadGamification();
+    loadParrainage();
+    loadNotifications();
   }
 
   init();
