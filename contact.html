@@ -1,24 +1,247 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact - PorteàPorte</title>
+  <title>Contact &amp; Support · PorteàPorte</title>
+  <meta name="description" content="Contacte l'équipe PorteàPorte pour toute question sur la livraison, le covoiturage ou ton compte.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <style>
-    body{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .box{max-width:680px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px;text-align:center}
-    .btn{display:inline-flex;width:auto;text-decoration:none;margin-top:16px}
-    p{line-height:1.6}
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.92);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; font-weight: 900; color: var(--brand-text); text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; }
+
+    /* HERO */
+    .hero {
+      padding: clamp(56px,8vw,88px) clamp(18px,4vw,48px) clamp(40px,6vw,64px);
+      text-align: center;
+      background: linear-gradient(180deg, rgba(0,217,255,0.04) 0%, transparent 100%);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .hero-badge { display: inline-block; background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.25); color: var(--brand-cyan); border-radius: 999px; padding: 5px 16px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 18px; }
+    .hero h1 { font-size: clamp(2rem,5vw,3rem); font-weight: 900; margin: 0 0 14px; }
+    .hero p { color: var(--brand-muted); font-size: 1rem; max-width: 500px; margin: 0 auto; line-height: 1.65; }
+
+    /* LAYOUT */
+    .page-wrap { max-width: 1040px; margin: 0 auto; padding: 56px clamp(18px,4vw,48px) 100px; display: grid; grid-template-columns: 1fr 400px; gap: 40px; align-items: start; }
+    @media(max-width:820px){ .page-wrap { grid-template-columns: 1fr; } .sidebar { order: -1; } }
+
+    /* CANAUX DE SUPPORT */
+    .channels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 14px; margin-bottom: 40px; }
+    .channel-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 22px 20px; text-align: center;
+      transition: border-color .2s, transform .15s;
+    }
+    .channel-card:hover { border-color: rgba(0,217,255,0.35); transform: translateY(-2px); }
+    .channel-icon { font-size: 2rem; margin-bottom: 12px; }
+    .channel-title { font-weight: 800; color: var(--brand-text); font-size: 0.95rem; margin-bottom: 5px; }
+    .channel-desc { font-size: 0.8rem; color: var(--brand-muted); line-height: 1.5; }
+    .channel-time { display: inline-block; margin-top: 10px; font-size: 0.75rem; font-weight: 700; color: var(--brand-lime); background: rgba(184,245,62,0.1); border-radius: 99px; padding: 2px 10px; }
+
+    /* FORMULAIRE */
+    .form-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 16px; padding: 28px 30px; }
+    .form-card h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }
+    .form-card p { font-size: 0.85rem; color: var(--brand-muted); margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 7px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; background: var(--brand-bg-dark); border: 1.5px solid var(--brand-border);
+      border-radius: 9px; padding: 11px 14px; color: var(--brand-text); font-size: 0.92rem;
+      outline: none; transition: border-color .2s; font-family: inherit; box-sizing: border-box;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--brand-cyan); }
+    .form-group textarea { resize: vertical; min-height: 110px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+    .submit-btn { width: 100%; background: linear-gradient(135deg, var(--brand-cyan), #0099cc); color: #0A0C10; border: none; border-radius: 11px; padding: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity .2s, transform .15s; margin-top: 6px; }
+    .submit-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .form-success { display: none; text-align: center; padding: 24px 0; }
+    .form-success .success-icon { font-size: 3rem; margin-bottom: 12px; }
+    .form-success h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; color: var(--brand-lime); }
+    .form-success p { color: var(--brand-muted); font-size: 0.9rem; }
+
+    /* SIDEBAR */
+    .sidebar-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px 24px; margin-bottom: 16px; }
+    .sidebar-card h3 { font-size: 0.9rem; font-weight: 800; margin-bottom: 14px; color: var(--brand-text); }
+    .quick-link { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--brand-border); font-size: 0.87rem; color: var(--brand-muted); text-decoration: none; transition: color .15s; }
+    .quick-link:last-child { border-bottom: none; padding-bottom: 0; }
+    .quick-link:hover { color: var(--brand-cyan); }
+    .quick-link .ql-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+
+    .hours-row { display: flex; justify-content: space-between; font-size: 0.83rem; padding: 7px 0; border-bottom: 1px solid var(--brand-border); }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-row .day { color: var(--brand-muted); }
+    .hours-row .time { color: var(--brand-text); font-weight: 600; }
+
+    .response-time { display: flex; align-items: center; gap: 10px; background: rgba(184,245,62,0.07); border: 1px solid rgba(184,245,62,0.2); border-radius: 10px; padding: 12px 14px; margin-top: 16px; }
+    .rt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-lime); animation: pulse 2s infinite; flex-shrink: 0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .rt-text { font-size: 0.82rem; color: var(--brand-lime); font-weight: 700; }
   </style>
 </head>
 <body>
-  <main class="box">
-    <h1>Contact</h1>
-    <p>Pour une question, un problème de livraison ou une demande de support, écris-nous à l'adresse officielle du projet.</p>
-    <p><a href="mailto:denismorneaubtc@gmail.com">denismorneaubtc@gmail.com</a></p>
-    <a class="btn secondary" href="/index.html">Retour à l'accueil</a>
-  </main>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
+    <div style="display:flex;gap:8px">
+      <a class="btn btn-ghost" href="/faq.html">FAQ</a>
+      <a class="btn" href="/role-choice.html">Commencer</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-badge">Support humain</div>
+    <h1>Comment pouvons-nous aider?</h1>
+    <p>Notre équipe répond en moins de 4 heures, 7 jours sur 7. Une vraie personne — pas un robot.</p>
+  </div>
+
+  <!-- Canaux -->
+  <div style="max-width:1040px;margin:40px auto 0;padding:0 clamp(18px,4vw,48px)">
+    <div class="channels-grid">
+      <div class="channel-card">
+        <div class="channel-icon">💬</div>
+        <div class="channel-title">Assistant intégré</div>
+        <div class="channel-desc">Utilise le widget de support sur n'importe quelle page — c'est le plus rapide.</div>
+        <div class="channel-time">Réponse &lt; 2h</div>
+      </div>
+      <div class="channel-card">
+        <div class="channel-icon">📧</div>
+        <div class="channel-title">Courriel</div>
+        <div class="channel-desc"><a href="mailto:support@porteaporte.site" style="color:var(--brand-cyan)">support@porteaporte.site</a><br>Pour les dossiers complexes ou les pièces jointes.</div>
+        <div class="channel-time">Réponse &lt; 4h</div>
+      </div>
+      <div class="channel-card">
+        <div class="channel-icon">📋</div>
+        <div class="channel-title">Formulaire</div>
+        <div class="channel-desc">Remplis le formulaire ci-dessous avec tous les détails de ta demande.</div>
+        <div class="channel-time">Réponse &lt; 4h</div>
+      </div>
+      <div class="channel-card">
+        <div class="channel-icon">❓</div>
+        <div class="channel-title">FAQ</div>
+        <div class="channel-desc">La plupart des questions trouvent déjà leur réponse dans notre FAQ complète.</div>
+        <a href="/faq.html" style="display:inline-block;margin-top:10px;font-size:.78rem;font-weight:700;color:var(--brand-lime)">Consulter la FAQ →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- Formulaire principal -->
+    <div>
+      <div class="form-card">
+        <h2>Envoie-nous un message</h2>
+        <p>On te répond dans les 4 heures. Les urgences liées à une livraison en cours sont prioritaires.</p>
+        <div id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prénom</label>
+              <input type="text" id="cfPrenom" placeholder="Marie-Claude" required>
+            </div>
+            <div class="form-group">
+              <label>Nom</label>
+              <input type="text" id="cfNom" placeholder="Bouchard" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Courriel</label>
+            <input type="email" id="cfEmail" placeholder="marie@exemple.com" required>
+          </div>
+          <div class="form-group">
+            <label>Sujet</label>
+            <select id="cfSujet">
+              <option value="">Choisir un sujet…</option>
+              <option value="livraison">Problème de livraison</option>
+              <option value="covoiturage">Covoiturage</option>
+              <option value="paiement">Paiement ou remboursement</option>
+              <option value="compte">Mon compte / vérification</option>
+              <option value="litige">Litige ou réclamation</option>
+              <option value="securite">Sécurité ou signalement</option>
+              <option value="autre">Autre question</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea id="cfMessage" placeholder="Décris ta situation avec le maximum de détails — numéro de mission, date, ville, etc. Cela nous aide à traiter ta demande plus rapidement."></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitContact()">Envoyer le message</button>
+        </div>
+        <div class="form-success" id="formSuccess">
+          <div class="success-icon">✅</div>
+          <h3>Message envoyé !</h3>
+          <p>On revient vers toi dans les 4 heures. Surveille ton courriel (<span id="confirmEmail"></span>).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Heures de support -->
+      <div class="sidebar-card">
+        <h3>🕐 Heures de support</h3>
+        <div class="hours-row"><span class="day">Lundi – Vendredi</span><span class="time">8h – 22h</span></div>
+        <div class="hours-row"><span class="day">Samedi</span><span class="time">9h – 21h</span></div>
+        <div class="hours-row"><span class="day">Dimanche &amp; jours fériés</span><span class="time">10h – 18h</span></div>
+        <div class="response-time">
+          <div class="rt-dot"></div>
+          <div class="rt-text">Équipe active — réponse habituelle &lt; 2h</div>
+        </div>
+      </div>
+
+      <!-- Liens rapides -->
+      <div class="sidebar-card">
+        <h3>🔗 Liens utiles</h3>
+        <a class="quick-link" href="/faq.html"><span class="ql-icon">❓</span>FAQ complète (25+ questions)</a>
+        <a class="quick-link" href="/assurance.html"><span class="ql-icon">🛡️</span>Assurance &amp; réclamations</a>
+        <a class="quick-link" href="/transparence.html"><span class="ql-icon">📊</span>Transparence de la plateforme</a>
+        <a class="quick-link" href="/cgu.html"><span class="ql-icon">📄</span>Conditions générales</a>
+        <a class="quick-link" href="/confidentialite.html"><span class="ql-icon">🔒</span>Politique de confidentialité</a>
+      </div>
+
+      <!-- Info urgence -->
+      <div class="sidebar-card" style="border-color:rgba(255,107,107,0.3);background:rgba(255,107,107,0.04)">
+        <h3 style="color:#FF6B6B">🚨 Urgence en cours de livraison?</h3>
+        <p style="font-size:.83rem;color:var(--brand-muted);line-height:1.55">Pour tout problème urgent lié à une livraison active (livreur injoignable, situation dangereuse), utilise le <strong style="color:var(--brand-text)">bouton d'urgence</strong> dans la mission active de ton dashboard. Notre équipe surveille ces alertes en priorité 24h/24.</p>
+        <p style="font-size:.78rem;color:#FF6B6B;margin-top:10px;font-weight:700">En cas de danger immédiat → Appelle le 911</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function submitContact() {
+      const prenom = document.getElementById('cfPrenom').value.trim();
+      const nom    = document.getElementById('cfNom').value.trim();
+      const email  = document.getElementById('cfEmail').value.trim();
+      const sujet  = document.getElementById('cfSujet').value;
+      const msg    = document.getElementById('cfMessage').value.trim();
+
+      if (!prenom || !email || !msg) { alert('Remplis les champs obligatoires (prénom, courriel, message).'); return; }
+
+      const btn = document.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours…';
+
+      try {
+        // Envoi par mailto en fallback simple
+        const body = encodeURIComponent(`Prénom: ${prenom} ${nom}\nSujet: ${sujet}\n\n${msg}`);
+        window.location.href = `mailto:support@porteaporte.site?subject=${encodeURIComponent('[PorteàPorte] ' + (sujet || 'Contact'))}&body=${body}`;
+        document.getElementById('confirmEmail').textContent = email;
+        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById('formSuccess').style.display = '';
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Envoyer le message';
+        alert('Erreur. Écris-nous directement à support@porteaporte.site');
+      }
+    }
+  </script>
   <script src="/js/support-widget.js"></script>
 </body>
 </html>

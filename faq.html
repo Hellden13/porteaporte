@@ -1,38 +1,342 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAQ - PorteàPorte</title>
+  <title>FAQ — Questions fréquentes · PorteàPorte</title>
+  <meta name="description" content="Toutes les réponses sur la livraison collaborative, le covoiturage, les paiements et la sécurité sur PorteàPorte.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <style>
-    body{padding:24px}
-    .wrap{max-width:920px;margin:0 auto}
-    .top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:24px}
-    .brand{text-decoration:none;font-size:1.25rem}
-    .faq{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:20px;margin-bottom:12px}
-    .faq h2{font-size:1.05rem;margin-bottom:8px;color:var(--brand-lime)}
-    .faq p{line-height:1.6;color:var(--brand-muted)}
-    .btn{display:inline-flex;width:auto;text-decoration:none}
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.92);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; font-weight: 900; color: var(--brand-text); text-decoration: none; }
+    .brand-mark img { width: 30px; height: 30px; }
+    .nav-links { display: flex; gap: 8px; }
+
+    /* HERO */
+    .hero {
+      padding: clamp(56px,8vw,96px) clamp(18px,4vw,48px) clamp(40px,6vw,72px);
+      text-align: center;
+      background: linear-gradient(180deg, rgba(184,245,62,0.04) 0%, transparent 100%);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .hero-badge { display: inline-block; background: rgba(184,245,62,0.12); border: 1px solid rgba(184,245,62,0.3); color: var(--brand-lime); border-radius: 999px; padding: 5px 16px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 18px; }
+    .hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 900; margin: 0 0 14px; }
+    .hero p { color: var(--brand-muted); font-size: 1.05rem; max-width: 540px; margin: 0 auto 28px; line-height: 1.65; }
+
+    /* SEARCH */
+    .search-wrap { max-width: 520px; margin: 0 auto; position: relative; }
+    .search-wrap input {
+      width: 100%; padding: 14px 48px 14px 18px;
+      background: var(--brand-bg-surface); border: 1.5px solid var(--brand-border);
+      border-radius: 12px; color: var(--brand-text); font-size: 1rem; outline: none;
+      transition: border-color .2s;
+    }
+    .search-wrap input:focus { border-color: var(--brand-lime); }
+    .search-wrap input::placeholder { color: var(--brand-muted); }
+    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--brand-muted); font-size: 1.1rem; pointer-events: none; }
+
+    /* CATÉGORIES */
+    .page-wrap { max-width: 920px; margin: 0 auto; padding: 56px clamp(18px,4vw,48px) 100px; }
+    .cat-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 40px; }
+    .cat-tab {
+      padding: 8px 18px; border-radius: 99px; font-size: 0.84rem; font-weight: 700;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      color: var(--brand-muted); cursor: pointer; transition: all .2s;
+    }
+    .cat-tab:hover, .cat-tab.active { background: rgba(184,245,62,0.12); border-color: rgba(184,245,62,0.35); color: var(--brand-lime); }
+
+    /* FAQ SECTIONS */
+    .faq-section { margin-bottom: 48px; }
+    .faq-section-title {
+      font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--brand-lime); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .faq-section-title::after { content:''; flex:1; height:1px; background:var(--brand-border); }
+
+    /* ACCORDION */
+    .faq-item { border: 1px solid var(--brand-border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; background: var(--brand-bg-surface); transition: border-color .2s; }
+    .faq-item:hover { border-color: rgba(184,245,62,0.25); }
+    .faq-item.open { border-color: rgba(184,245,62,0.4); }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; background: none; border: none; text-align: left;
+      color: var(--brand-text); font-size: 0.97rem; font-weight: 700; cursor: pointer;
+      gap: 14px; line-height: 1.4;
+    }
+    .faq-q .faq-icon { font-size: 1rem; color: var(--brand-muted); flex-shrink: 0; transition: transform .25s; }
+    .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); color: var(--brand-lime); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+    .faq-a-inner { padding: 0 22px 20px; color: var(--brand-muted); font-size: 0.9rem; line-height: 1.7; }
+    .faq-a-inner a { color: var(--brand-cyan); }
+    .faq-item.open .faq-a { max-height: 500px; }
+
+    /* CONTACT CTA */
+    .contact-cta {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 32px; text-align: center; margin-top: 56px;
+    }
+    .contact-cta h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+    .contact-cta p { color: var(--brand-muted); font-size: 0.92rem; margin-bottom: 22px; }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <div class="top">
-      <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" href="/contact.html">Contact</a>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
+    <div class="nav-links">
+      <a class="btn btn-ghost" href="/contact.html">Contact</a>
+      <a class="btn" href="/role-choice.html">Commencer</a>
     </div>
-    <h1>Questions fréquentes</h1>
+  </header>
 
-    <section class="faq"><h2>Le paiement est-il sécurisé?</h2><p>Oui. Le paiement est protégé et le livreur est payé seulement après confirmation de livraison.</p></section>
-    <section class="faq"><h2>Les colis sont-ils assurés automatiquement?</h2><p>Non. La protection livraison est optionnelle. Sans protection payée, aucune couverture contractuelle ne s'applique.</p></section>
-    <section class="faq"><h2>Quels sont les plans de protection?</h2><p>Aucune protection 0 $, Base 1 $ max 50 $, Standard 2,99 $ max 250 $, Plus 5,99 $ max 1 000 $.</p></section>
-    <section class="faq"><h2>Les adresses sont-elles visibles?</h2><p>Non. Les adresses complètes restent masquées avant acceptation de la livraison.</p></section>
-    <section class="faq"><h2>Que se passe-t-il si le colis est perdu ou endommagé?</h2><p>Un litige peut être ouvert. Les preuves comme photos, GPS, messages et historique de livraison peuvent être utilisées.</p></section>
-    <section class="faq"><h2>Un livreur non vérifié peut-il voir les colis?</h2><p>Non. Un livreur non vérifié ne doit pas voir les colis réels ni les informations sensibles.</p></section>
-    <section class="faq"><h2>Puis-je annuler une livraison?</h2><p>Oui, mais des frais peuvent s'appliquer selon l'état de la livraison.</p></section>
-    <section class="faq"><h2>Quand le livreur est-il payé?</h2><p>Après confirmation de réception ou résolution du dossier selon le cas.</p></section>
+  <div class="hero">
+    <div class="hero-badge">Centre d'aide</div>
+    <h1>Questions fréquentes</h1>
+    <p>Tout ce que tu dois savoir sur PorteàPorte — livraison, covoiturage, paiements et sécurité.</p>
+    <div class="search-wrap">
+      <input type="text" id="faqSearch" placeholder="Cherche une question…" oninput="filterFaq(this.value)">
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+
+  <main class="page-wrap">
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="filterCat('all', this)">Toutes</button>
+      <button class="cat-tab" onclick="filterCat('general', this)">Général</button>
+      <button class="cat-tab" onclick="filterCat('expediteur', this)">Expéditeurs</button>
+      <button class="cat-tab" onclick="filterCat('livreur', this)">Livreurs</button>
+      <button class="cat-tab" onclick="filterCat('covoiturage', this)">Covoiturage</button>
+      <button class="cat-tab" onclick="filterCat('paiement', this)">Paiements</button>
+      <button class="cat-tab" onclick="filterCat('securite', this)">Sécurité</button>
+    </div>
+
+    <!-- GÉNÉRAL -->
+    <section class="faq-section" data-cat="general">
+      <div class="faq-section-title">Général</div>
+
+      <div class="faq-item" data-cat="general">
+        <button class="faq-q" onclick="toggleFaq(this)">Qu'est-ce que PorteàPorte? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">PorteàPorte est une plateforme québécoise de livraison collaborative et de covoiturage. Elle connecte des expéditeurs qui ont besoin d'envoyer des colis avec des livreurs locaux qui font déjà le trajet — et des passagers avec des conducteurs qui partagent la même route. C'est plus humain, plus local et souvent beaucoup moins cher que les grandes compagnies.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="general">
+        <button class="faq-q" onclick="toggleFaq(this)">PorteàPorte est-il disponible partout au Québec? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui. Le réseau couvre l'ensemble du Québec. Les grandes villes (Montréal, Québec, Laval, Sherbrooke, Trois-Rivières, Saguenay) ont le plus de livreurs actifs, mais des missions inter-villes sont disponibles partout. Plus il y a de membres dans une région, plus les missions y sont fréquentes.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="general">
+        <button class="faq-q" onclick="toggleFaq(this)">Est-ce que c'est légal? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui. Le covoiturage entre particuliers avec partage des frais est légal au Québec. La livraison de colis entre particuliers est également légale. PorteàPorte opère dans le cadre des lois québécoises en vigueur et nous sommes transparents sur nos pratiques — voir notre <a href="/transparence.html">page Transparence</a>.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="general">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment créer un compte? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Va sur <a href="/role-choice.html">Choisir mon rôle</a>, sélectionne si tu es expéditeur, livreur ou les deux, puis suis les étapes d'inscription. La confirmation d'email est requise. Pour les livreurs, une vérification d'identité (KYC) est également nécessaire avant d'accéder aux missions réelles.</div></div>
+      </div>
+    </section>
+
+    <!-- EXPÉDITEURS -->
+    <section class="faq-section" data-cat="expediteur">
+      <div class="faq-section-title">Expéditeurs</div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment envoyer un colis via PorteàPorte? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Crée un compte, puis clique sur <a href="/create-mission.html">Créer une livraison</a>. Tu décris ton colis (poids, dimensions, type), les adresses de départ et d'arrivée, tes disponibilités et le montant que tu proposes. Un livreur qui fait déjà ce trajet accepte ta mission. Tu suis ensuite la livraison en temps réel.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Quels colis puis-je envoyer? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">La plupart des colis standard sont acceptés : vêtements, électronique, documents, meubles légers, nourriture non périssable, etc. Sont interdits : armes, drogues, matières dangereuses, alcool non accompagné de permis, animaux vivants, articles contrefaits. En cas de doute, contacte-nous avant d'envoyer.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Puis-je suivre mon colis en temps réel? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui. Dès que le livreur accepte ta mission et active le suivi, tu reçois une notification et tu peux voir sa position GPS depuis ton dashboard. Tu reçois également une notification automatique quand le colis est livré, avec une photo de confirmation si disponible.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Que se passe-t-il si mon colis est endommagé? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Si tu as souscrit une protection (Base 1$, Standard 2,99$ ou Plus 5,99$), tu peux ouvrir un litige dans les 48 heures suivant la livraison avec photos à l'appui. Notre équipe examine le dossier en 3 à 5 jours ouvrables. Voir la page <a href="/assurance.html">Assurance</a> pour tous les détails. Sans protection souscrite, aucune couverture contractuelle ne s'applique.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment est calculé le prix de ma livraison? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Le prix dépend de la distance, du poids et du type de colis. PorteàPorte affiche le tarif PorteàPorte estimé ainsi qu'une comparaison avec UPS, FedEx et Purolator pour que tu voies immédiatement combien tu économises. En moyenne, nos membres économisent entre 40% et 65% par rapport aux transporteurs traditionnels.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="expediteur">
+        <button class="faq-q" onclick="toggleFaq(this)">Puis-je annuler une livraison après l'avoir créée? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui, tant qu'aucun livreur n'a accepté ta mission, l'annulation est gratuite. Si un livreur a déjà accepté, des frais d'annulation peuvent s'appliquer selon l'état de la livraison. Les détails sont dans nos <a href="/cgu.html">Conditions générales d'utilisation</a>.</div></div>
+      </div>
+    </section>
+
+    <!-- LIVREURS -->
+    <section class="faq-section" data-cat="livreur">
+      <div class="faq-section-title">Livreurs</div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment devenir livreur sur PorteàPorte? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Crée un compte, sélectionne le rôle "Livreur", puis complète la vérification d'identité KYC (environ 10 minutes). Tu soumets une pièce d'identité officielle qui est vérifiée manuellement par notre équipe. Une fois approuvé (généralement en 24 à 48 heures), tu peux voir et accepter les missions disponibles.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Faut-il avoir une voiture? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Non ! Tu peux livrer à pied, à vélo ou en transport en commun pour les missions locales. Pour les missions inter-villes ou avec des colis volumineux, une voiture est recommandée. Tu indiques ton mode de transport lors de l'inscription et les missions qui te sont proposées correspondent à tes capacités.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Combien puis-je gagner? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Les gains varient selon ton trajet, ta fréquence et ton mode de transport. À titre indicatif : un livreur faisant 2 trajets Montréal–Laval par semaine en voiture gagne environ 280–340$/mois supplémentaires. Un livreur très actif sur des trajets inter-villes peut dépasser 1 000$/mois. Consulte notre <a href="/devenir-livreur.html">page Devenir livreur</a> avec un calculateur de gains.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Quand suis-je payé? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Le paiement est confirmé après la livraison. Tes gains s'accumulent dans ton solde disponible (après un délai de 48 heures). Tu peux ensuite déclencher un virement vers ton compte bancaire directement depuis ton dashboard. Minimum de retrait : 10$. Les virements sont traités via Stripe et arrivent en 2 jours ouvrables.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Puis-je refuser une mission? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Absolument. Tu n'as aucune obligation d'accepter une mission. Tu choisis uniquement les missions qui correspondent à tes trajets prévus et à tes disponibilités. Il n'y a pas de quota minimum ni de pénalité pour ne pas avoir accepté suffisamment de missions.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="livreur">
+        <button class="faq-q" onclick="toggleFaq(this)">Que faire si l'expéditeur n'est pas disponible à la livraison? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Contacte l'expéditeur via la messagerie intégrée de l'app. Si impossible après 2 tentatives documentées, prends des photos et contacte notre support. Nous gérerons la situation et tu seras protégé. Ne laisse jamais un colis sans preuve photo.</div></div>
+      </div>
+    </section>
+
+    <!-- COVOITURAGE -->
+    <section class="faq-section" data-cat="covoiturage">
+      <div class="faq-section-title">Covoiturage</div>
+
+      <div class="faq-item" data-cat="covoiturage">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment fonctionne le covoiturage sur PorteàPorte? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Un chauffeur publie son trajet (ville de départ, destination, date, heure, places disponibles, prix). Les passagers cherchent et réservent des places. Le partage des frais est légal au Québec selon l'article 82.1 de la Loi sur les transports. Chaque chauffeur a un profil vérifié avec score de confiance visible.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="covoiturage">
+        <button class="faq-q" onclick="toggleFaq(this)">Qu'est-ce qu'un point sécuritaire d'embarquement? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Ce sont des lieux publics vérifiés (Tim Hortons, Walmart, stations de métro, terminus d'autobus, Canadian Tire…) proposés comme point de rendez-vous pour le covoiturage. Rencontrer quelqu'un dans un lieu public achalandé est plus sécuritaire qu'à une adresse privée. Ces points sont sélectionnés par notre équipe dans chaque ville du Québec.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="covoiturage">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment est calculé le prix d'un trajet covoiturage? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Le chauffeur fixe son prix par place (doit refléter le partage des frais, pas un profit commercial). PorteàPorte perçoit une commission de 10% sur le prix de base. Les frais de bagage supplémentaires vont à 100% au chauffeur — aucune commission là-dessus. Si plusieurs passagers embarquent, un rabais de groupe peut s'appliquer automatiquement.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="covoiturage">
+        <button class="faq-q" onclick="toggleFaq(this)">Puis-je envoyer un colis dans un trajet covoiturage? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui ! C'est une fonctionnalité unique à PorteàPorte. Si le chauffeur a activé l'option "colis acceptés", tu peux envoyer un colis dans son coffre pour ce trajet. C'est pratique si tu n'as pas besoin d'y aller en personne. Le tarif du colis va intégralement au chauffeur.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="covoiturage">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment vérifier la fiabilité d'un chauffeur? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Chaque chauffeur a un score de confiance multi-dimensions visible sur son profil : ponctualité, fiabilité, comportement, taux d'annulation, nombre de trajets complétés et avis des passagers. Un badge "Identité vérifiée" confirme que son identité a été validée. Tu peux aussi voir les photos de son véhicule.</div></div>
+      </div>
+    </section>
+
+    <!-- PAIEMENTS -->
+    <section class="faq-section" data-cat="paiement">
+      <div class="faq-section-title">Paiements</div>
+
+      <div class="faq-item" data-cat="paiement">
+        <button class="faq-q" onclick="toggleFaq(this)">Le paiement est-il sécurisé? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui. Tous les paiements passent par Stripe, le leader mondial du paiement en ligne (certifié PCI-DSS niveau 1). Ta carte de crédit n'est jamais stockée sur nos serveurs. Le paiement est mis en dépôt jusqu'à confirmation de la livraison — le livreur est payé uniquement après livraison réussie.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="paiement">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment les livreurs reçoivent-ils leur argent? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Les livreurs configurent un compte Stripe Connect Express (environ 5 minutes) qui lie directement leur compte bancaire. Les gains s'accumulent dans leur solde disponible et ils peuvent déclencher un virement vers leur compte bancaire canadien à tout moment (minimum 10$). Les virements arrivent en 2 jours ouvrables. PorteàPorte ne touche jamais l'argent des livreurs directement.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="paiement">
+        <button class="faq-q" onclick="toggleFaq(this)">Quels sont les frais de plateforme? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">PorteàPorte perçoit une commission de 10% sur le prix de base des livraisons et du covoiturage. Cette commission est modifiable selon les conditions du marché. Les frais de bagage supplémentaires pour les livreurs vont à 100% au chauffeur/livreur. Aucun frais caché. Tout est affiché avant confirmation.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="paiement">
+        <button class="faq-q" onclick="toggleFaq(this)">Puis-je obtenir un remboursement? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Les remboursements sont possibles en cas d'annulation (avant acceptation par un livreur : remboursement complet), de litige résolu en ta faveur, ou d'erreur de facturation. Les remboursements sont traités dans les 5 à 10 jours ouvrables selon ta banque. Contacte le support pour ouvrir un dossier.</div></div>
+      </div>
+    </section>
+
+    <!-- SÉCURITÉ -->
+    <section class="faq-section" data-cat="securite">
+      <div class="faq-section-title">Sécurité &amp; Confidentialité</div>
+
+      <div class="faq-item" data-cat="securite">
+        <button class="faq-q" onclick="toggleFaq(this)">Mes adresses personnelles sont-elles visibles par les livreurs? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Non. Les adresses complètes restent masquées tant qu'un livreur n'a pas accepté la mission. Avant acceptation, seule la zone générale (quartier ou ville) est visible. Une fois la mission acceptée, les détails sont partagés uniquement avec le livreur assigné.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="securite">
+        <button class="faq-q" onclick="toggleFaq(this)">Comment PorteàPorte vérifie-t-il les livreurs? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Chaque livreur soumet une pièce d'identité officielle (permis de conduire, passeport ou carte d'identité) qui est examinée manuellement par notre équipe. Un livreur non vérifié ne peut voir aucune adresse réelle ni accepter de mission. Le badge "Identité vérifiée" est affiché sur tous les profils approuvés.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="securite">
+        <button class="faq-q" onclick="toggleFaq(this)">Mes données personnelles sont-elles protégées? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Oui. PorteàPorte est conforme à la Loi 25 du Québec sur la protection des renseignements personnels. Tes données sont chiffrées au repos et en transit (SSL/HTTPS). Elles ne sont jamais revendues à des tiers. Tu peux demander la suppression de ton compte et de toutes tes données à tout moment via <a href="/contact.html">contact.html</a>.</div></div>
+      </div>
+
+      <div class="faq-item" data-cat="securite">
+        <button class="faq-q" onclick="toggleFaq(this)">Que faire si je me sens en danger lors d'un covoiturage? <span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">En cas d'urgence réelle, appelle le 911 immédiatement. Dans l'app, tu peux signaler un problème via le bouton d'urgence de la mission active. Notre équipe intervient en priorité. Toujours privilégier les points sécuritaires d'embarquement vérifiés (Tim Hortons, Walmart, etc.) pour tes rendez-vous covoiturage.</div></div>
+      </div>
+    </section>
+
+    <!-- CTA contact -->
+    <div class="contact-cta">
+      <h2>Tu n'as pas trouvé ta réponse?</h2>
+      <p>Notre équipe répond en moins de 4 heures, 7 jours sur 7. Aucun robot — une vraie personne.</p>
+      <div class="cta-row">
+        <a class="btn" href="/contact.html">Nous écrire</a>
+        <a class="btn btn-ghost" href="/transparence.html">Voir la transparence</a>
+      </div>
+    </div>
   </main>
+
+  <script>
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    function filterCat(cat, tab) {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.faq-section').forEach(s => {
+        s.style.display = (cat === 'all' || s.dataset.cat === cat) ? '' : 'none';
+      });
+      document.querySelectorAll('.faq-item').forEach(i => {
+        i.style.display = (cat === 'all' || i.dataset.cat === cat) ? '' : 'none';
+      });
+    }
+
+    function filterFaq(query) {
+      const q = query.toLowerCase().trim();
+      document.querySelectorAll('.faq-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+      document.querySelectorAll('.faq-section').forEach(section => {
+        const visible = [...section.querySelectorAll('.faq-item')].some(i => i.style.display !== 'none');
+        section.style.display = visible ? '' : 'none';
+      });
+    }
+  </script>
   <script src="/js/support-widget.js"></script>
 </body>
 </html>
