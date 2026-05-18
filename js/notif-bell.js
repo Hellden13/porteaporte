@@ -236,9 +236,9 @@
     }
 
     list.innerHTML = notifications.map(n => {
-      const icon = iconFor(n.type);
+      const icon = iconFor(n.notif_type);
       const unread = !n.read_at ? 'unread' : '';
-      const url = n.url || '#';
+      const url = n.action_url || '#';
       return `
         <a class="notif-item ${unread}" data-id="${n.id}" href="${url}">
           <div class="notif-icon">${icon}</div>
@@ -292,7 +292,7 @@
     if (!_db || !_userId) return [];
     const { data, error } = await _db
       .from('notifications')
-      .select('id, title, body, type, url, read_at, created_at')
+      .select('id, title, body, notif_type, action_url, read_at, created_at')
       .eq('user_id', _userId)
       .order('created_at', { ascending: false })
       .limit(20);
