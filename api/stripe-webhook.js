@@ -124,5 +124,37 @@ module.exports = async function handler(req, res) {
       { status: 'available', stripe_transfer_id: null });
   }
 
+  /* ── customer.subscription.created / updated ───────────── */
+  if (type === 'customer.subscription.created' || type === 'customer.subscription.updated') {
+    const supabaseId = obj.metadata?.supabase_id;
+    if (supabaseId) {
+      const plan   = obj.metadata?.plan || null;
+      const status = obj.status || 'active';
+      const endAt  = obj.current_period_end
+        ? new Date(obj.current_period_end * 1000).toISOString()
+        : null;
+      await sbPatch(sbUrl, sbKey, 'profiles', `id=eq.${supabaseId}`, {
+        subscription_plan:   status === 'active' ? plan : null,
+        subscription_status: status,
+        subscription_end_at: endAt,
+        stripe_customer_id:  obj.customer || null,
+      }).catch(() => {});
+    }
+  }
+
+  /* ── customer.subscription.deleted ─────────────────────── */
+  if (type === 'customer.subscription.deleted') {
+    const supabaseId = obj.metadata?.supabase_id;
+    if (supabaseId) {
+      await sbPatch(sbUrl, sbKey, 'profiles', `id=eq.${supabaseId}`, {
+        subscription_plan:   null,
+        subscription_status: 'canceled',
+        subscription_end_at: obj.current_period_end
+          ? new Date(obj.current_period_end * 1000).toISOString()
+          : null,
+      }).catch(() => {});
+    }
+  }
+
   return res.status(200).json({ received: true, type });
 };
