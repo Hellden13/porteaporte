@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation destinataire - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #05080c;
+      color: #f7f8fb;
+      font-family: Inter, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+    .confirm-card {
+      width: min(100%, 520px);
+      border: 1px solid rgba(184,245,62,.22);
+      background: linear-gradient(180deg, rgba(16,22,30,.96), rgba(8,12,18,.98));
+      border-radius: 18px;
+      padding: 26px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.38);
+    }
+    .brand {
+      color: #b8f53e;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      font-size: .8rem;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 8vw, 2.7rem);
+      line-height: 1.02;
+      color: #fff;
+    }
+    p {
+      color: #a8b0ba;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+    label {
+      display: block;
+      color: #e9edf2;
+      font-weight: 800;
+      margin: 20px 0 8px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,.16);
+      background: #05080c;
+      color: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 1.25rem;
+      letter-spacing: .18em;
+      text-align: center;
+      font-weight: 900;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 12px;
+      padding: 15px 18px;
+      background: linear-gradient(135deg, #b8f53e, #78d900);
+      color: #071006;
+      font-weight: 950;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+    .notice {
+      border: 1px solid rgba(0,217,255,.22);
+      background: rgba(0,217,255,.08);
+      border-radius: 12px;
+      padding: 12px;
+      color: #d7f7ff;
+      font-size: .92rem;
+      margin-top: 18px;
+    }
+    .result {
+      display: none;
+      margin-top: 16px;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .result.ok { display: block; border: 1px solid rgba(184,245,62,.3); background: rgba(184,245,62,.1); color: #dfff9c; }
+    .result.err { display: block; border: 1px solid rgba(255,90,90,.35); background: rgba(255,90,90,.1); color: #ffb0b0; }
+    .small {
+      margin-top: 16px;
+      font-size: .82rem;
+      color: #6d7886;
+    }
+  </style>
+</head>
+<body>
+  <main class="confirm-card">
+    <div class="brand">PorteaPorte</div>
+    <h1>Confirmer la reception</h1>
+    <p>Entre le code de reception remis pour cette livraison. Cette confirmation peut liberer le paiement protege au livreur.</p>
+
+    <form id="confirm-form">
+      <label for="recipient-code">Code destinataire</label>
+      <input id="recipient-code" name="recipient-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" required>
+      <button id="confirm-btn" type="submit">Confirmer la reception</button>
+    </form>
+
+    <div class="notice">Confirme seulement si le colis est bien arrive. En cas de probleme, n'entre pas le code et contacte PorteaPorte.</div>
+    <div id="result" class="result"></div>
+    <p class="small">Les preuves de livraison, messages, photos et donnees GPS peuvent etre utilisees en cas de litige.</p>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const livraisonId = params.get('livraison_id') || params.get('id');
+    const form = document.getElementById('confirm-form');
+    const btn = document.getElementById('confirm-btn');
+    const result = document.getElementById('result');
+
+    function show(type, message) {
+      result.className = 'result ' + type;
+      result.textContent = message;
+    }
+
+    if (!livraisonId) {
+      show('err', 'Lien de confirmation invalide: livraison_id manquant.');
+      btn.disabled = true;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const code = document.getElementById('recipient-code').value.trim();
+      if (!code || !livraisonId) return;
+      btn.disabled = true;
+      btn.textContent = 'Confirmation...';
+      try {
+        const res = await fetch('/api/capture-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ livraison_id: livraisonId, recipient_code: code })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Confirmation impossible');
+        show('ok', 'Reception confirmee. Le paiement protege peut maintenant etre libere au livreur.');
+        form.style.display = 'none';
+      } catch (err) {
+        show('err', err.message || 'Confirmation impossible');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirmer la reception';
+      }
+    });
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>
