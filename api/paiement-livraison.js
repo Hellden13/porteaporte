@@ -56,6 +56,7 @@ module.exports = async function handler(req, res) {
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
 
+  try {
   const session = await getSessionUser(req, SB_URL, SB_KEY);
   if (!session) return res.status(401).json({ error: 'Session requise' });
 
@@ -72,7 +73,7 @@ module.exports = async function handler(req, res) {
       }
     }
   );
-  const livraisons = livraisonRes.ok ? await livraisonRes.json() : [];
+  const livraisons = livraisonRes.ok ? await livraisonRes.json().catch(() => []) : [];
   const livraison = livraisons[0];
 
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
@@ -230,5 +231,9 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error('[paiement-livraison]', err.message);
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
+  }
+  } catch (outerErr) {
+    console.error('[paiement-livraison] outer crash:', outerErr.message);
+    return res.status(500).json({ error: 'Erreur serveur', details: outerErr.message });
   }
 };
