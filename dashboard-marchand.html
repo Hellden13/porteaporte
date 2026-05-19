@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Marchand — PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+
+    .topbar { display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,12,16,.97);border-bottom:1px solid var(--brand-border);position:sticky;top:0;z-index:100; }
+    .brand { font-weight:900;font-size:19px;color:var(--brand-lime);text-decoration:none; }
+    .topbar-right { display:flex;gap:8px;align-items:center; }
+    .topbar-btn { padding:7px 13px;border:1px solid var(--brand-border);border-radius:7px;background:transparent;color:var(--brand-muted);font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s; }
+    .topbar-btn:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
+
+    .page { max-width:900px;margin:0 auto;padding:28px 20px 80px; }
+
+    /* Badge abonnement */
+    .sub-banner {
+      display:flex;align-items:center;gap:14px;
+      background:linear-gradient(135deg,rgba(255,180,0,.12),rgba(255,140,0,.06));
+      border:1px solid rgba(255,180,0,.3);border-radius:14px;
+      padding:16px 20px;margin-bottom:28px;
+    }
+    .sub-icon { font-size:2rem; }
+    .sub-info { flex:1; }
+    .sub-name { font-weight:800;font-size:1rem;color:#FFB400; }
+    .sub-desc { font-size:.8rem;color:var(--brand-muted);margin-top:2px; }
+    .sub-btn { padding:8px 16px;border-radius:8px;background:#FFB400;color:#0A0F1E;font-weight:700;font-size:.82rem;text-decoration:none;white-space:nowrap; }
+
+    /* Stats */
+    .stats-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px; }
+    .stat-card { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:18px;text-align:center; }
+    .stat-val { font-size:1.8rem;font-weight:900;color:var(--brand-lime); }
+    .stat-lbl { font-size:.75rem;color:var(--brand-muted);margin-top:4px; }
+
+    /* Section */
+    .section { margin-bottom:32px; }
+    .section-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px; }
+    .section-title { font-size:1rem;font-weight:800; }
+    .btn-primary { padding:9px 18px;background:var(--brand-lime);color:#0A0F1E;border:none;border-radius:9px;font-weight:700;font-size:.85rem;cursor:pointer;text-decoration:none;display:inline-block; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { padding:8px 16px;background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);border-radius:9px;font-weight:700;font-size:.82rem;cursor:pointer;text-decoration:none;display:inline-block; }
+
+    /* Formulaire livraison rapide */
+    .quick-form { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:22px;display:none; }
+    .quick-form.open { display:block; }
+    .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px; }
+    .form-group { display:flex;flex-direction:column;gap:6px; }
+    .form-group label { font-size:.78rem;font-weight:700;color:var(--brand-muted); }
+    .form-group input, .form-group select, .form-group textarea {
+      background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;
+      padding:10px 12px;color:var(--brand-text);font-size:.88rem;outline:none;
+      transition:border .2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--brand-cyan); }
+    .form-group.full { grid-column:1/-1; }
+    .price-preview { background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.2);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.85rem; }
+    .price-row { display:flex;justify-content:space-between;padding:3px 0; }
+    .price-total { font-weight:800;color:var(--brand-lime);border-top:1px solid rgba(184,245,62,.2);padding-top:6px;margin-top:4px; }
+
+    /* Liste livraisons */
+    .livraison-list { display:flex;flex-direction:column;gap:10px; }
+    .livraison-card { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px; }
+    .livraison-card:hover { border-color:var(--brand-cyan); }
+    .liv-status { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+    .liv-info { flex:1;min-width:0; }
+    .liv-trajet { font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .liv-meta { font-size:.75rem;color:var(--brand-muted);margin-top:3px; }
+    .liv-price { font-weight:800;color:var(--brand-lime);font-size:.95rem;white-space:nowrap; }
+    .status-badge { font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap; }
+
+    .empty-msg { text-align:center;color:var(--brand-muted);padding:32px;font-size:.88rem; }
+
+    @media(max-width:600px) {
+      .stats-grid { grid-template-columns:1fr 1fr; }
+      .form-grid { grid-template-columns:1fr; }
+      .form-group.full { grid-column:1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">Porte<span style="color:#fff">à</span>Porte</a>
+    <div class="topbar-right">
+      <a class="topbar-btn" href="/create-mission.html">+ Livraison complète</a>
+      <button class="topbar-btn" onclick="logout()">Déconnecter</button>
+    </div>
+  </header>
+
+  <main class="page" id="mainPage" style="display:none">
+
+    <!-- Banner abonnement -->
+    <div class="sub-banner" id="subBanner" style="display:none">
+      <div class="sub-icon">🏪</div>
+      <div class="sub-info">
+        <div class="sub-name" id="subName">Marchand Local</div>
+        <div class="sub-desc">Abonnement actif — livraisons prioritaires, badge marchand, facturation consolidée</div>
+      </div>
+      <a href="/abonnements.html" class="sub-btn">Gérer →</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="statTotal">—</div>
+        <div class="stat-lbl">Livraisons totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statActives">—</div>
+        <div class="stat-lbl">En cours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statDepenses">—</div>
+        <div class="stat-lbl">Dépensé ce mois</div>
+      </div>
+    </div>
+
+    <!-- Livraison rapide -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">⚡ Livraison rapide</span>
+        <button class="btn-primary" onclick="toggleForm()">+ Nouvelle livraison</button>
+      </div>
+
+      <div class="quick-form" id="quickForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ville de départ</label>
+            <input type="text" id="fVilleDepart" placeholder="Lévis" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Ville d'arrivée</label>
+            <input type="text" id="fVilleArrivee" placeholder="Québec" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Type de colis</label>
+            <select id="fTypeColis" onchange="updatePreview()">
+              <option value="petit_colis">Petit colis (&lt; 5 kg)</option>
+              <option value="colis_moyen">Colis moyen (5-20 kg)</option>
+              <option value="gros_colis">Gros colis (&gt; 20 kg)</option>
+              <option value="fragile">Fragile</option>
+              <option value="alimentaire">Alimentaire</option>
+              <option value="document">Document</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Poids estimé (kg)</label>
+            <input type="number" id="fPoids" value="2" min="0.1" step="0.5" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Distance estimée (km)</label>
+            <input type="number" id="fDistance" value="10" min="1" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Date souhaitée</label>
+            <input type="date" id="fDate">
+          </div>
+          <div class="form-group full">
+            <label>Description / instructions</label>
+            <textarea id="fDescription" rows="2" placeholder="Fragile, sonner avant, laisser à la réception…"></textarea>
+          </div>
+        </div>
+
+        <div class="price-preview" id="pricePreview">
+          <div class="price-row"><span>Prix livraison estimé</span><span id="pvPrix">—</span></div>
+          <div class="price-row"><span>Commission plateforme (15%)</span><span id="pvComm">—</span></div>
+          <div class="price-row price-total"><span>Total à payer</span><span id="pvTotal">—</span></div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn-secondary" onclick="toggleForm()">Annuler</button>
+          <button class="btn-primary" onclick="submitLivraison()" id="btnSubmit">Publier la livraison</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Livraisons en cours -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">📦 En cours</span>
+      </div>
+      <div class="livraison-list" id="listActives">
+        <div class="empty-msg">Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">📋 Historique</span>
+      </div>
+      <div class="livraison-list" id="listHistorique">
+        <div class="empty-msg">Chargement…</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const db = window.getSupabaseClient();
+    let session = null;
+    let profile = null;
+    let livraisons = [];
+
+    const STATUS_COLORS = {
+      publie: '#FFB400', paiement_autorise: '#00c3ff', assignee: '#00c3ff',
+      en_route: '#6366f1', livre: '#22c55e', complete: '#22c55e',
+      annule: '#ef4444', litige: '#ef4444'
+    };
+    const STATUS_LABELS = {
+      publie: 'Publié', paiement_autorise: 'Paiement autorisé', assignee: 'Assigné',
+      en_route: 'En route', livre: 'Livré', complete: 'Complété',
+      annule: 'Annulé', litige: 'Litige'
+    };
+    const ACTIF = new Set(['publie', 'paiement_autorise', 'assignee', 'en_route']);
+
+    function money(v) { return Number(v || 0).toFixed(2) + ' $'; }
+
+    async function init() {
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { window.location.href = '/login.html'; return; }
+      session = data.session;
+
+      const me = await fetch('/api/me', {
+        headers: { Authorization: 'Bearer ' + session.access_token }
+      }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+      profile = me;
+      document.getElementById('mainPage').style.display = '';
+
+      // Badge abonnement
+      if (profile?.subscription_status === 'active' && profile?.subscription_plan) {
+        const names = { marchand_local: 'Marchand Local 🏪', conducteur_pro: 'Conducteur Pro ⚡' };
+        document.getElementById('subName').textContent = names[profile.subscription_plan] || profile.subscription_plan;
+        document.getElementById('subBanner').style.display = 'flex';
+      }
+
+      await loadLivraisons();
+      setDefaultDate();
+      updatePreview();
+    }
+
+    function setDefaultDate() {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      document.getElementById('fDate').value = d.toISOString().split('T')[0];
+    }
+
+    async function loadLivraisons() {
+      const { data, error } = await db
+        .from('livraisons')
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,type_colis,poids_kg')
+        .eq('expediteur_id', session.user.id)
+        .order('cree_le', { ascending: false })
+        .limit(50);
+
+      if (error || !data) { return; }
+      livraisons = data;
+      renderStats();
+      renderLivraisons();
+    }
+
+    function renderStats() {
+      const now = new Date();
+      const moisDebut = new Date(now.getFullYear(), now.getMonth(), 1);
+      const actives = livraisons.filter(l => ACTIF.has(l.statut));
+      const depensesMois = livraisons
+        .filter(l => new Date(l.cree_le) >= moisDebut)
+        .reduce((s, l) => s + Number(l.prix_total || 0), 0);
+
+      document.getElementById('statTotal').textContent = livraisons.length;
+      document.getElementById('statActives').textContent = actives.length;
+      document.getElementById('statDepenses').textContent = money(depensesMois);
+    }
+
+    function renderLivraisons() {
+      const actives   = livraisons.filter(l => ACTIF.has(l.statut));
+      const historique = livraisons.filter(l => !ACTIF.has(l.statut));
+
+      document.getElementById('listActives').innerHTML = actives.length
+        ? actives.map(livCard).join('')
+        : '<div class="empty-msg">Aucune livraison en cours.</div>';
+
+      document.getElementById('listHistorique').innerHTML = historique.length
+        ? historique.slice(0, 20).map(livCard).join('')
+        : '<div class="empty-msg">Aucune livraison complétée.</div>';
+    }
+
+    function livCard(l) {
+      const color = STATUS_COLORS[l.statut] || '#888';
+      const label = STATUS_LABELS[l.statut] || l.statut;
+      const date  = new Date(l.cree_le).toLocaleDateString('fr-CA', { day:'numeric', month:'short' });
+      return `
+        <div class="livraison-card" onclick="window.location='/compte.html?liv=${l.id}'">
+          <div class="liv-status" style="background:${color}"></div>
+          <div class="liv-info">
+            <div class="liv-trajet">${l.ville_depart} → ${l.ville_arrivee}</div>
+            <div class="liv-meta">${l.code || ''} · ${l.type_colis || ''} · ${date}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <div class="liv-price">${money(l.prix_total)}</div>
+            <span class="status-badge" style="background:${color}22;color:${color}">${label}</span>
+          </div>
+        </div>`;
+    }
+
+    function toggleForm() {
+      const f = document.getElementById('quickForm');
+      f.classList.toggle('open');
+    }
+
+    function updatePreview() {
+      const dist  = Number(document.getElementById('fDistance').value) || 10;
+      const poids = Number(document.getElementById('fPoids').value) || 2;
+      const base  = Math.max(8, dist * 0.45 + poids * 0.5);
+      const comm  = Math.max(2, base * 0.15);
+      const total = base + comm;
+      document.getElementById('pvPrix').textContent  = money(base);
+      document.getElementById('pvComm').textContent  = money(comm);
+      document.getElementById('pvTotal').textContent = money(total);
+    }
+
+    async function submitLivraison() {
+      const btn = document.getElementById('btnSubmit');
+      const villeDepart  = document.getElementById('fVilleDepart').value.trim();
+      const villeArrivee = document.getElementById('fVilleArrivee').value.trim();
+      const typeColis    = document.getElementById('fTypeColis').value;
+      const poids        = Number(document.getElementById('fPoids').value) || 2;
+      const distance     = Number(document.getElementById('fDistance').value) || 10;
+      const date         = document.getElementById('fDate').value;
+      const description  = document.getElementById('fDescription').value.trim();
+
+      if (!villeDepart || !villeArrivee) { alert('Remplis les villes de départ et d\'arrivée.'); return; }
+
+      const base  = Math.max(8, distance * 0.45 + poids * 0.5);
+      const comm  = Math.max(2, base * 0.15);
+      const total = Math.round((base + comm) * 100) / 100;
+
+      btn.disabled = true;
+      btn.textContent = 'Publication…';
+
+      try {
+        const r = await fetch('/api/create-livraison', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({
+            ville_depart: villeDepart, ville_arrivee: villeArrivee,
+            type_colis: typeColis, poids_kg: poids,
+            distance_km: distance, prix_total: total,
+            date_souhaitee: date, description,
+            source: 'dashboard_marchand'
+          })
+        });
+        const data = await r.json();
+        if (data.success || data.id) {
+          toggleForm();
+          await loadLivraisons();
+          document.getElementById('fVilleDepart').value = '';
+          document.getElementById('fVilleArrivee').value = '';
+          document.getElementById('fDescription').value = '';
+        } else {
+          alert(data.error || 'Erreur lors de la publication.');
+        }
+      } catch (e) {
+        alert('Erreur : ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Publier la livraison';
+      }
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      window.location.href = '/';
+    }
+
+    init();
+  </script>
+</body>
+</html>
