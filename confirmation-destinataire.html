@@ -146,7 +146,7 @@
       btn.disabled = true;
       btn.textContent = 'Confirmation...';
       try {
-        const res = await fetch('/api/capture-payment', {
+        const res = await fetch('/api/capture-livraison', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ livraison_id: livraisonId, recipient_code: code })

@@ -120,7 +120,7 @@
         return;
       }
 
-      const roleRes = await fetch('/api/set-role', {
+      const roleRes = await fetch('/api/platform?endpoint=set-role', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@
         consent_accepted: form.consent.checked
       };
 
-      const res = await fetch('/api/submit-driver-verification', {
+      const res = await fetch('/api/platform?endpoint=submit-driver-verification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

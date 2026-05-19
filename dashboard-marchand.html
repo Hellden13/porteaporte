@@ -228,9 +228,7 @@
       if (!data?.session) { window.location.href = '/login.html'; return; }
       session = data.session;
 
-      const me = await fetch('/api/me', {
-        headers: { Authorization: 'Bearer ' + session.access_token }
-      }).then(r => r.ok ? r.json() : null).catch(() => null);
+      const { data: me } = await db.from('profiles').select('*').eq('id', session.user.id).single();
 
       profile = me;
       document.getElementById('mainPage').style.display = '';
