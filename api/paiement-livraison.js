@@ -229,11 +229,15 @@ module.exports = async function handler(req, res) {
       status: intent.status,
     });
   } catch (err) {
-    console.error('[paiement-livraison]', err.message);
-    return res.status(500).json({ error: 'Erreur serveur', details: err.message });
+    const msg = err?.message || String(err) || 'erreur inconnue';
+    const type = err?.constructor?.name || typeof err;
+    console.error('[paiement-livraison] inner catch:', type, msg);
+    return res.status(500).json({ error: 'Erreur serveur', details: `[${type}] ${msg}` });
   }
   } catch (outerErr) {
-    console.error('[paiement-livraison] outer crash:', outerErr.message);
-    return res.status(500).json({ error: 'Erreur serveur', details: outerErr.message });
+    const msg = outerErr?.message || String(outerErr) || 'erreur inconnue';
+    const type = outerErr?.constructor?.name || typeof outerErr;
+    console.error('[paiement-livraison] outer crash:', type, msg, outerErr?.stack?.slice(0, 300));
+    return res.status(500).json({ error: 'Erreur serveur', details: `[${type}] ${msg}` });
   }
 };
