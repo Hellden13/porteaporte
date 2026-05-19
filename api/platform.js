@@ -4095,7 +4095,7 @@ async function stripeConnectOnboard(req, res, ctx, body) {
   }
 
   // Créer le lien d'onboarding (toujours régénérer — expire après utilisation)
-  const baseUrl = process.env.BASE_URL || 'https://porteaporte.site';
+  const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
   const accountLink = await stripeConnectRequest('POST', '/v1/account_links', {
     account:     stripeAccountId,
     refresh_url: `${baseUrl}/dashboard-livreur.html?stripe=refresh`,
@@ -4355,7 +4355,7 @@ async function subscriptionCreate(req, res, ctx) {
     }
   }
 
-  const baseUrl = process.env.BASE_URL || 'https://porteaporte.site';
+  const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
   const params  = new URLSearchParams({
     mode: 'subscription',
     'line_items[0][price]': priceId,
