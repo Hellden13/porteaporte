@@ -581,7 +581,8 @@ async function handlePayment(){
 
     const piData = await piRes.json().catch(() => ({}));
     if(!piRes.ok || !piData.client_secret) {
-      throw new Error(piData.error || piData.details || 'Erreur serveur (' + piRes.status + ')');
+      const msg = [piData.error, piData.details].filter(Boolean).join(' — ') || ('Erreur ' + piRes.status);
+      throw new Error(msg);
     }
 
     // 2. Confirmer le paiement avec Stripe.js
