@@ -1,7 +1,7 @@
 // PorteàPorte — Push Notification Manager
 // Gère l'abonnement aux notifications push Web
 
-const VAPID_PUBLIC_KEY = 'BGfzmTu5d3xktqUjNw9XbvquS6R56k_2iobxnnVzZG0uBGtOkeAcpI5LFzwFcYmr0H0JSUV7HUV2k_TJoJ7-sNE';
+const VAPID_PUBLIC_KEY = 'BPDdeLXsBIuxyDaC0egz2ZQMYJeW2Zpz9klasSGHN4QbV_Pp9b4otTR0-iBaFUR_duOpkBzSlw0mvUl92omYmQ0';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
