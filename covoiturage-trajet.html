@@ -6,7 +6,6 @@
   <title>Détail du trajet — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css"/>
   <link rel="stylesheet" href="/assets/visual-polish.css">
-  <link rel="stylesheet" href="/css/main.css"/>
   <style>
     body { background: #f7f8fa; }
     .trajet-wrapper {
@@ -541,7 +540,7 @@ async function loadRide() {
 async function submitBooking() {
   if (!currentUser) {
     showToast('Connectez-vous pour reserver.', 'error');
-    setTimeout(function() { location.href = '/connexion.html?next=' + encodeURIComponent(location.href); }, 1200);
+    setTimeout(function() { location.href = '/login.html?next=' + encodeURIComponent(location.href); }, 1200);
     return;
   }
   var btn = document.getElementById('btn-reserve');

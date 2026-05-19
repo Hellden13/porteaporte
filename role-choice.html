@@ -380,7 +380,7 @@
                 const normalizedRole = role === 'both' ? 'les deux' : role;
                 localStorage.setItem('userRole', normalizedRole);
 
-                const response = await fetch('/api/set-role', {
+                const response = await fetch('/api/platform?endpoint=set-role', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
