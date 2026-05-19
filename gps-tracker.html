@@ -312,8 +312,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
                 if (!res.ok) { document.getElementById('client-status').textContent = 'Position indisponible.'; return; }
                 const data = await res.json();
-                const lat = data.livreur_lat ? data.latitude;
-                const lng = data.livreur_lng ? data.longitude;
+                const lat = data.livreur_lat ?? data.latitude;
+                const lng = data.livreur_lng ?? data.longitude;
                 if (lat == null || lng == null) {
                     document.getElementById('client-status').textContent = "Le livreur n'a pas encore partagé sa position.";
                     updateStatus('inactive', '⏳ En attente du livreur');
