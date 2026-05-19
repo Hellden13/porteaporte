@@ -4073,6 +4073,7 @@ async function stripeConnectOnboard(req, res, ctx, body) {
       type: 'express',
       country: 'CA',
       email,
+      'capabilities[card_payments][requested]': 'true',
       'capabilities[transfers][requested]': 'true',
       'settings[payouts][schedule][interval]': 'weekly',
       'settings[payouts][schedule][weekly_anchor]': 'friday',
