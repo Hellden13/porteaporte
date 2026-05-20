@@ -57,6 +57,7 @@ module.exports = async function handler(req, res) {
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
 
   try {
+  console.log('[paiement-livraison] START method=%s', req.method);
   const session = await getSessionUser(req, SB_URL, SB_KEY);
   if (!session) return res.status(401).json({ error: 'Session requise' });
 
@@ -64,7 +65,7 @@ module.exports = async function handler(req, res) {
   const livraisonId = body.livraison_id || body.livraisonId;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
 
-  const livraisonRes = await fetch(
+  let livraisonRes = await fetch(
     `${SB_URL}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,prix_total,statut`,
     {
       headers: {
@@ -73,6 +74,12 @@ module.exports = async function handler(req, res) {
       }
     }
   );
+  if (!livraisonRes.ok) {
+    livraisonRes = await fetch(
+      `${SB_URL}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,expediteur_id,livreur_id,prix_total,statut`,
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
+    );
+  }
   const livraisons = livraisonRes.ok ? await livraisonRes.json().catch(() => []) : [];
   const livraison = livraisons[0];
 
@@ -96,11 +103,12 @@ module.exports = async function handler(req, res) {
   const desc = 'Livraison PorteaPorte - ' + colisId;
 
   try {
+    console.log('[paiement-livraison] livraison=%s montantCents=%s', livraison.id, montantCents);
     const txListRes = await fetch(
       `${SB_URL}/rest/v1/transactions?livraison_id=eq.${livraison.id}&type=eq.paiement_livraison&select=stripe_payment_intent,created_at&order=created_at.desc&limit=5`,
       { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
     );
-    const txRows = txListRes.ok ? await txListRes.json() : [];
+    const txRows = txListRes.ok ? await txListRes.json().catch(() => []) : [];
     for (const row of txRows) {
       const piId = row.stripe_payment_intent;
       if (!piId) continue;

@@ -5,12 +5,10 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/logo.svg">
 <meta name="apple-mobile-web-app-title" content="PorteaPorte">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <meta name="theme-color" content="#05080A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <meta name="description" content="PorteaPorte - Paiement securise. Escrow Stripe Canada, TPS/TVQ automatique, paiement libere apres confirmation.">
 <meta property="og:title" content="PorteaPorte">
@@ -425,16 +423,13 @@ async function hydrateBillingProfile() {
 
     const { data: profile } = await db
       .from('profiles')
-      .select('prenom, nom, full_name, telephone, phone')
+      .select('prenom, nom')
       .eq('id', session.user.id)
       .maybeSingle();
 
     if (profile) {
-      const fullName = profile.full_name || [profile.prenom, profile.nom].filter(Boolean).join(' ');
+      const fullName = [profile.prenom, profile.nom].filter(Boolean).join(' ');
       if (nameField && !nameField.value) nameField.value = fullName || session.user.email || '';
-
-      const phoneField = document.getElementById('tel');
-      if (phoneField && !phoneField.value) phoneField.value = profile.telephone || profile.phone || '';
     }
   } catch (err) {
     console.warn('Profil paiement non charge:', err.message);
@@ -580,8 +575,10 @@ async function handlePayment(){
     });
 
     const piData = await piRes.json().catch(() => ({}));
+    console.log('[paiement] API response status=' + piRes.status, piData);
     if(!piRes.ok || !piData.client_secret) {
-      const msg = [piData.error, piData.details].filter(Boolean).join(' — ') || ('Erreur ' + piRes.status);
+      const parts = [piData.error, piData.details].filter(Boolean);
+      const msg = parts.length ? parts.join(' — ') : ('Erreur HTTP ' + piRes.status + (piData.message ? ': ' + piData.message : ''));
       throw new Error(msg);
     }
 
