@@ -587,7 +587,8 @@ async function handlePayment(){
       payment_method: {
         card: cardElement,
         billing_details: { name: nom, email: email }
-      }
+      },
+      return_url: window.location.origin + '/confirmation.html?type=livraison&livraison_id=' + encodeURIComponent(livraisonId)
     });
 
     if(error) throw new Error(error.message);

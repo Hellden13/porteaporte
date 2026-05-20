@@ -150,7 +150,7 @@ module.exports = async function handler(req, res) {
       'metadata[colis_id]': colisId,
       'metadata[livraison_id]': livraison.id,
       'metadata[expediteur_id]': session.id,
-      'automatic_payment_methods[enabled]': 'true',
+      'payment_method_types[]': 'card',
       capture_method: 'manual',
     });
 
@@ -160,7 +160,7 @@ module.exports = async function handler(req, res) {
         Authorization: 'Bearer ' + STRIPE_KEY,
         'Content-Type': 'application/x-www-form-urlencoded',
         'Stripe-Version': '2024-04-10',
-        'Idempotency-Key': `paiement-livraison-${livraison.id}-${montantCents}-${currency}`,
+        'Idempotency-Key': `paiement-livraison-v3-${livraison.id}-${montantCents}-${currency}`,
       },
       body: params.toString(),
     });
