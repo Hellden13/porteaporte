@@ -49,9 +49,9 @@ module.exports = async function handler(req, res) {
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode non autorisee' });
 
-  const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
-  const SB_URL = process.env.SUPABASE_URL;
-  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const STRIPE_KEY = (process.env.STRIPE_SECRET_KEY || '').replace(/[﻿​]/g, '').trim();
+  const SB_URL = (process.env.SUPABASE_URL || '').replace(/[﻿​]/g, '').trim();
+  const SB_KEY = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[﻿​]/g, '').trim();
 
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
