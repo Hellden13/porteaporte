@@ -396,13 +396,15 @@
                     return;
                 }
 
-                // Redirect to appropriate dashboard or onboarding
+                // Redirect to appropriate dashboard or onboarding.
+                // Pour "les deux", on commence par la verification livreur,
+                // mais le dashboard livreur affiche aussi un lien clair vers l'espace expediteur.
                 if (role === 'livreur') {
-                    window.location.href = 'livreur.html';
+                    window.location.href = '/livreur.html';
                 } else if (role === 'expediteur') {
-                    window.location.href = 'dashboard-expediteur.html';
+                    window.location.href = '/dashboard-expediteur.html';
                 } else if (role === 'both') {
-                    window.location.href = 'livreur.html'; // Start with livreur verification
+                    window.location.href = '/livreur.html';
                 }
             } catch (error) {
                 console.error('Erreur:', error);

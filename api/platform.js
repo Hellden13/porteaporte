@@ -1060,17 +1060,22 @@ async function tracking(req, res, ctx, body) {
 
   const isUuid = /^[0-9a-f-]{36}$/i.test(code);
   const filter = isUuid ? `id=eq.${encodeURIComponent(code)}` : `code=eq.${encodeURIComponent(code.toUpperCase())}`;
-  let r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?${filter}&select=id,code,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,type,poids_kg,valeur_declaree,assurance_plan,prix_total,created_at,cree_le&limit=1`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  if (!r.ok) {
+  const trackingSelects = [
+    'id,code,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,type,poids_kg,valeur_declaree,assurance_plan,prix_total,created_at,cree_le',
+    'id,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,created_at',
+    'id,expediteur_id,statut,ville_depart,ville_arrivee,prix_total,created_at',
+    'id,expediteur_id,statut,prix_total',
+  ];
+  let r = null;
+  let rows = [];
+  for (const sel of trackingSelects) {
     r = await fetch(
-      `${ctx.sbUrl}/rest/v1/livraisons?${filter}&select=id,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,created_at&limit=1`,
+      `${ctx.sbUrl}/rest/v1/livraisons?${filter}&select=${sel}&limit=1`,
       { headers: sbHeaders(ctx.sbKey) }
     );
+    rows = await r.json().catch(() => []);
+    if (r.ok) break;
   }
-  const rows = await r.json().catch(() => []);
   if (!r.ok) return res.status(400).json({ error: 'Lecture suivi impossible', details: rows });
   const livraison = rows[0];
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
