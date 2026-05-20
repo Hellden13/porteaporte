@@ -41,6 +41,12 @@ async function getSessionUser(req, sbUrl, sbKey) {
   return r.ok ? r.json() : null;
 }
 
+function sanitizeEnv(s) {
+  let v = (s || '').trim();
+  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
+  return v.trim();
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
@@ -49,9 +55,10 @@ module.exports = async function handler(req, res) {
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode non autorisee' });
 
-  const STRIPE_KEY = (process.env.STRIPE_SECRET_KEY || '').replace(/[﻿​]/g, '').trim();
-  const SB_URL = (process.env.SUPABASE_URL || '').replace(/[﻿​]/g, '').trim();
-  const SB_KEY = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[﻿​]/g, '').trim();
+  const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
+  const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
+  const SB_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
+  console.log('[env] STRIPE_KEY[0]=%d SB_KEY[0]=%d', (process.env.STRIPE_SECRET_KEY||'').charCodeAt(0), (process.env.SUPABASE_SERVICE_KEY||'').charCodeAt(0));
 
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
