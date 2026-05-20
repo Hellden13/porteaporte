@@ -458,7 +458,7 @@
                     <h1>Mes Expéditions</h1>
                 </div>
                 <div class="header-actions">
-                    <a href="create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
+                    <a href="/create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
                 </div>
                 <div class="header-stats">
                     <div class="stat-badge">
@@ -491,7 +491,7 @@
                         <h2 class="quick-create-title">Créer une livraison rapide</h2>
                         <div class="quick-create-note">Les adresses complètes restent protégées. Le paiement escrow se fait à l'étape suivante.</div>
                     </div>
-                    <a href="create-mission.html" class="btn btn-ghost">Formulaire complet</a>
+                    <a href="/create-mission.html" class="btn btn-ghost">Formulaire complet</a>
                 </div>
                 <form id="quick-create-form" class="quick-create-grid">
                     <div class="form-field">
@@ -557,7 +557,7 @@
                     <div class="empty-state-icon"></div>
                     <div class="empty-state-title">Aucune livraison</div>
                     <div class="empty-state-text">Créez votre première livraison pour commencer</div>
-                    <a href="create-mission.html" class="btn btn-primary">Créer une livraison</a>
+                    <a href="/create-mission.html" class="btn btn-primary">Créer une livraison</a>
                 </div>
             </div>
         </div>
@@ -568,9 +568,9 @@
             <div class="sidebar-card">
                 <div class="sidebar-title">Actions rapides</div>
                 <div class="quick-actions">
-                    <a href="create-mission.html" class="quick-action-btn">Nouvelle livraison</a>
-                    <a href="browse-missions.html" class="quick-action-btn">Parcourir</a>
-                    <a href="profile.html" class="quick-action-btn">Mon profil</a>
+                    <a href="/create-mission.html" class="quick-action-btn">Nouvelle livraison</a>
+                    <a href="/browse-missions.html" class="quick-action-btn">Parcourir</a>
+                    <a href="/profile.html" class="quick-action-btn">Mon profil</a>
                 </div>
             </div>
 
@@ -613,9 +613,9 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/modal-helper.js"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/auth-complete.js"></script>
+    <script src="/js/modal-helper.js"></script>
+    <script src="/js/supabase-config.js"></script>
+    <script src="/js/auth-complete.js"></script>
     
     <script>
         let currentTab = 'all';
@@ -841,10 +841,10 @@
             const id = encodeURIComponent(mission.id);
             const buttons = [];
             if (['confirme','en_route','ramasse'].includes(mission.statut)) {
-                buttons.push(`<a class="btn btn-ghost" href="map.html?id=${id}">Suivi GPS</a>`);
+                buttons.push(`<a class="btn btn-ghost" href="/map.html?id=${id}">Suivi GPS</a>`);
             }
             if (mission.livreur_id && ['confirme','en_route','ramasse','livre'].includes(mission.statut)) {
-                buttons.push(`<a class="btn btn-ghost" href="messagerie.html?livraison=${id}">💬 Livreur</a>`);
+                buttons.push(`<a class="btn btn-ghost" href="/messagerie.html?livraison=${id}">💬 Livreur</a>`);
             }
 
             if (['en_attente', 'publie'].includes(mission.statut)) {
@@ -856,7 +856,7 @@
                     type: mission.type_colis || 'colis',
                     poids: String(mission.poids_kg || 1)
                 });
-                buttons.unshift(`<a class="btn btn-primary" href="paiement.html?${params.toString()}">Payer escrow</a>`);
+                buttons.unshift(`<a class="btn btn-primary" href="/paiement.html?${params.toString()}">Payer escrow</a>`);
             }
 
             if (['livre', 'livree', 'delivered'].includes(mission.statut)) {
@@ -1012,7 +1012,7 @@
                     <div class="empty-state">
                         <div class="empty-state-title">Aucune livraison</div>
                         <div class="empty-state-text">${currentTab === 'all' ? 'Creez votre premiere livraison' : 'Aucune livraison dans cette categorie'}</div>
-                        <a href="create-mission.html" class="btn btn-primary">Creer une livraison</a>
+                        <a href="/create-mission.html" class="btn btn-primary">Creer une livraison</a>
                     </div>
                 `;
                 return;
