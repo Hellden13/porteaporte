@@ -121,7 +121,27 @@ module.exports = async function handler(req, res) {
       if (!piId) continue;
       const existing = await stripeGetPaymentIntent(piId, STRIPE_KEY);
       if (!existing) continue;
-      if (existing.amount === montantCents && existing.currency === currency && STRIPE_OPEN.has(existing.status)) {
+      console.log('[paiement-livraison] existing PI=%s status=%s amount=%s', existing.id, existing.status, existing.amount);
+
+      // PI deja autorise (capture manuelle en attente) → pas besoin de confirmer a nouveau
+      if (existing.status === 'requires_capture' && existing.amount === montantCents) {
+        return res.status(200).json({
+          success: true,
+          already_authorized: true,
+          client_secret: existing.client_secret,
+          payment_intent_id: existing.id,
+          montant: montantCents,
+          montant_dollars: (montantCents / 100).toFixed(2),
+          currency: existing.currency,
+          colis_id: colisId,
+          livraison_id: livraison.id,
+          status: existing.status,
+          reused: true,
+        });
+      }
+
+      // PI encore ouvert (besoin d'entrer la carte) → reutiliser
+      if (existing.amount === montantCents && existing.currency === currency && STRIPE_OPEN.has(existing.status) && existing.status !== 'requires_capture') {
         return res.status(200).json({
           success: true,
           client_secret: existing.client_secret,
@@ -135,6 +155,7 @@ module.exports = async function handler(req, res) {
           reused: true,
         });
       }
+
       if (existing.status === 'succeeded') {
         return res.status(409).json({ error: 'Paiement livraison deja complete pour ce dossier', payment_intent_id: existing.id });
       }
