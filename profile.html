@@ -432,7 +432,7 @@
                     document.getElementById('livraisons').textContent = profile.livraisons_count || profile.livraisons || 0;
                     document.getElementById('score').textContent      = profile.score_confiance ? Number(profile.score_confiance).toFixed(1) : (Number(profile.score || 0).toFixed(1));
                     document.getElementById('xp').textContent         = profile.xp || 0;
-                    document.getElementById('coins').textContent      = profile.points_impact ? profile.coins ? 0;
+                    document.getElementById('coins').textContent      = profile.points_impact || profile.coins || 0;
 
                     document.getElementById('infoPrenom').textContent   = profile.prenom || '-';
                     document.getElementById('infoNom').textContent      = profile.nom || '-';

@@ -74,6 +74,10 @@
 
     if (id) gpsLink.href = '/gps-tracker.html?id=' + encodeURIComponent(id);
 
+    function getLiveDot() {
+      return document.querySelector('#status .live-dot');
+    }
+
     function item(label, value) {
       return `<div class="kv"><div class="label">${label}</div><div class="value">${value || '-'}</div></div>`;
     }
@@ -96,8 +100,8 @@
         gpsDetailsEl.style.display = 'none';
         mapsLink.style.display = 'none';
         mapPreview.classList.remove('has-location');
-        mapPreview.textContent = 'La carte s'activera dès qu'une position GPS valide sera reçue.';
-        gpsStateEl.textContent = 'Aucune position GPS reçue pour le moment.';
+        mapPreview.textContent = "La carte s'activera d\xE8s qu'une position GPS valide sera re\xE7ue.";
+        gpsStateEl.textContent = "Aucune position GPS re\xE7ue pour le moment.";
         return;
       }
 
@@ -106,7 +110,7 @@
       const recordedAt = location.recorded_at || location.created_at;
       const dot = getLiveDot();
       if (dot) dot.classList.add('on');
-      gpsStateEl.textContent = 'Dernière position GPS reçue il y a ' + ageLabel(recordedAt) + '.';
+      gpsStateEl.textContent = "Derni\xE8re position GPS re\xE7ue il y a " + ageLabel(recordedAt) + ".";
       gpsDetailsEl.style.display = 'grid';
       gpsDetailsEl.innerHTML = [
         item('Latitude', lat.toFixed(6)),
@@ -177,6 +181,3 @@
   <script src="/js/support-widget.js"></script>
 </body>
 </html>
-    function getLiveDot() {
-      return document.querySelector('#status .live-dot');
-    }

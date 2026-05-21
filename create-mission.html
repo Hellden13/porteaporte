@@ -84,8 +84,8 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js"></script>
-  <script src="js/auth-complete.js"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
   <script>
     function el(id){return document.getElementById(id)}
     function showError(message){const box=el('error-message'); box.textContent='ERREUR: '+message; box.classList.add('show'); box.scrollIntoView({behavior:'smooth',block:'center'})}
@@ -116,7 +116,7 @@
           alert('Code de reception destinataire: '+out.recipient_confirmation_code+'\\n\\nLien destinataire: '+confirmLink+'\\n\\nDonne ce code et ce lien uniquement au destinataire. Il confirmera lui-meme la reception pour liberer le paiement apres livraison.');
         }
         const payParams=new URLSearchParams({livraison_id:id,montant:String(total),dep:payload.ville_depart,arr:payload.ville_arrivee,type:payload.type_colis,poids:String(payload.poids_kg),assurance:payload.assurance_plan});
-        el('success-message').classList.add('show'); setTimeout(()=>{window.location.href='paiement.html?'+payParams.toString()},500);
+        el('success-message').classList.add('show'); setTimeout(()=>{window.location.href='/paiement.html?'+payParams.toString()},500);
       }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Creer la livraison'}
       return false;
     }
