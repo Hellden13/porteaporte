@@ -1,8 +1,14 @@
 // api/stripe.js - WITH AUDIT LOGGING
 const { log } = require('../lib/logger');
 
+function sanitizeEnv(s) {
+  let v = (s || '').trim();
+  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
+  return v.trim();
+}
+
 async function stripeRequest(method, path, body) {
-  const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
+  const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   const url = `https://api.stripe.com${path}`;
   const response = await fetch(url, {
     method,
@@ -26,7 +32,7 @@ async function stripeRequest(method, path, body) {
 }
 
 module.exports = async function handler(req, res) {
-  const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
+  const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   const IS_LIVE = STRIPE_KEY && STRIPE_KEY.startsWith('sk_live_');
   const IS_TEST = STRIPE_KEY && STRIPE_KEY.startsWith('sk_test_');
 

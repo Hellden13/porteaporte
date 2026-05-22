@@ -7,6 +7,12 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+function sanitizeEnv(s) {
+  let v = (s || '').trim();
+  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
+  return v.trim();
+}
+
 function headers(key) {
   return {
     apikey: key,
@@ -120,8 +126,8 @@ module.exports = async function handler(req, res) {
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode non autorisee' });
 
-  const SB_URL = process.env.SUPABASE_URL;
-  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
+  const SB_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
   const { action, ...p } = req.body || {};
 
   if (action === 'calculer_prix') {

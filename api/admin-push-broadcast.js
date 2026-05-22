@@ -4,6 +4,12 @@
 
 const webpush = require('web-push');
 
+function sanitizeEnv(s) {
+  let v = (s || '').trim();
+  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
+  return v.trim();
+}
+
 function sbHeaders(key) {
   return {
     apikey: key,
@@ -36,10 +42,10 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
-  const sbUrl = process.env.SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_KEY;
-  const vapidPublic  = process.env.VAPID_PUBLIC_KEY;
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const sbUrl      = sanitizeEnv(process.env.SUPABASE_URL);
+  const sbKey      = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
+  const vapidPublic  = sanitizeEnv(process.env.VAPID_PUBLIC_KEY);
+  const vapidPrivate = sanitizeEnv(process.env.VAPID_PRIVATE_KEY);
   const vapidEmail   = process.env.VAPID_EMAIL || 'mailto:admin@porteaporte.site';
 
   if (!sbUrl || !sbKey || !vapidPublic || !vapidPrivate) {
