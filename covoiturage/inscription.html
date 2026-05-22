@@ -425,7 +425,8 @@
         await db.from('profiles').upsert({ id: authData.user.id, ...profileUpdate });
 
         // 3. Attribuer badge "Nouveau covoitureur" + 50 XP via API
-        const { data: { session } } = await db.auth.getSession();
+        const { data: _inscData } = await db.auth.getSession();
+        const session = _inscData?.session;
         if (session) {
           await fetch('/api/cov-onboard', {
             method: 'POST',

@@ -1302,7 +1302,8 @@
     }
 
     async function apiCall(endpoint, method, body) {
-      const { data: { session } } = await window._db.auth.getSession();
+      const { data: _apiCallData } = await window._db.auth.getSession();
+      const session = _apiCallData?.session;
       const opts = {
         method: method || 'GET',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token || ''}` },
