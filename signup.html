@@ -105,7 +105,7 @@
           driver_status: 'not_started',
           mis_a_jour_le: new Date().toISOString()
         }, { onConflict: 'id' }).catch(() => {});
-        window.location.href = role === 'expediteur' ? 'dashboard-expediteur.html' : 'livreur.html';
+        window.location.href = role === 'expediteur' ? '/dashboard-expediteur.html' : '/livreur.html';
         return;
       }
 

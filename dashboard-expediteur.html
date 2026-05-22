@@ -696,7 +696,7 @@
                     poids: String(payload.poids_kg)
                 });
                 showSuccess('✅ Livraison créée. Redirection vers le paiement escrow.');
-                setTimeout(() => { window.location.href = 'paiement.html?' + params.toString(); }, 700);
+                setTimeout(() => { window.location.href = '/paiement.html?' + params.toString(); }, 700);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Créer et passer au paiement';

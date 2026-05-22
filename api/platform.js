@@ -5,6 +5,12 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+function sanitizeEnv(s) {
+  let v = (s || '').trim();
+  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
+  return v.trim();
+}
+
 function sbHeaders(key, prefer = 'return=representation') {
   return {
     apikey: key,
@@ -2302,8 +2308,8 @@ module.exports = async function handler(req, res) {
   try {
     const body = req.body || {};
     endpoint = endpointFromReq(req, body);
-    const sbUrl = (process.env.SUPABASE_URL || '').replace(/[﻿​]/g, '').trim();
-    const sbKey = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[﻿​]/g, '').trim();
+    const sbUrl = sanitizeEnv(process.env.SUPABASE_URL);
+    const sbKey = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
     if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
     const internalSecret = process.env.INTERNAL_API_SECRET;
     const internalHeader = req.headers['x-internal-notifier-secret'];
@@ -2320,7 +2326,7 @@ module.exports = async function handler(req, res) {
       const ctx = {
         sbUrl,
         sbKey,
-        stripeKey: process.env.STRIPE_SECRET_KEY,
+        stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY),
         session: { id: 'internal', email: 'internal@porteaporte.site' },
         profile: { role: 'admin', suspendu: false },
         internal: true
@@ -2335,13 +2341,13 @@ module.exports = async function handler(req, res) {
       if (profile && (profile.suspendu || profile.verification_status === 'suspended')) {
         return res.status(403).json({ error: 'Profil suspendu' });
       }
-      return await setUserRole(req, res, { sbUrl, sbKey, stripeKey: process.env.STRIPE_SECRET_KEY, session, profile }, body);
+      return await setUserRole(req, res, { sbUrl, sbKey, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY), session, profile }, body);
     }
     if (!profile || profile.suspendu || profile.verification_status === 'suspended') {
       return res.status(403).json({ error: 'Profil invalide ou suspendu' });
     }
 
-    const ctx = { sbUrl, sbKey, stripeKey: process.env.STRIPE_SECRET_KEY, session, profile };
+    const ctx = { sbUrl, sbKey, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY), session, profile };
 
     if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
@@ -4336,7 +4342,7 @@ async function subscriptionCreate(req, res, ctx) {
   if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide.' });
 
   const priceId  = process.env[PLANS[plan]];
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   if (!priceId)   return res.status(503).json({ error: 'Ce plan n\'est pas encore disponible.' });
   if (!stripeKey) return res.status(500).json({ error: 'Paiement temporairement indisponible.' });
 
@@ -4401,7 +4407,7 @@ async function subscriptionStatus(req, res, ctx) {
   if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
   const body      = req.body || {};
   const sessionId = body.session_id || req.query?.session_id || null;
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
 
   // Retour depuis Stripe Checkout : activer l'abonnement en Supabase
   if (sessionId && stripeKey) {
