@@ -506,8 +506,9 @@ async function sendEmail(emailData, apiKey) {
 }
 
 async function generateSupabaseMagicLink(email) {
-  const sbUrl = process.env.SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_KEY;
+  const _s = v => { let r = (v || '').trim(); while (r.length > 0 && r.charCodeAt(0) > 127) r = r.slice(1); return r.trim(); };
+  const sbUrl = _s(process.env.SUPABASE_URL);
+  const sbKey = _s(process.env.SUPABASE_SERVICE_KEY);
   if (!sbUrl || !sbKey) throw new Error('Supabase non configure pour les liens email');
 
   const redirectTo = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '') + '/login.html?confirmed=1';

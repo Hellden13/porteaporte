@@ -49,9 +49,10 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Methode non autorisee' });
 
-  const sbUrl    = process.env.SUPABASE_URL;
-  const sbKey    = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-  const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const _san = s => { let v = (s || '').trim(); while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1); return v.trim(); };
+  const sbUrl    = _san(process.env.SUPABASE_URL);
+  const sbKey    = _san(process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY);
+  const whSecret = _san(process.env.STRIPE_WEBHOOK_SECRET);
 
   if (!whSecret) return res.status(503).json({ error: 'STRIPE_WEBHOOK_SECRET non configure' });
 
