@@ -254,9 +254,9 @@
     async function loadLivraisons() {
       const { data, error } = await db
         .from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,type_colis,poids_kg')
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at,type_colis,poids_kg')
         .eq('expediteur_id', session.user.id)
-        .order('cree_le', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error || !data) { return; }
@@ -270,7 +270,7 @@
       const moisDebut = new Date(now.getFullYear(), now.getMonth(), 1);
       const actives = livraisons.filter(l => ACTIF.has(l.statut));
       const depensesMois = livraisons
-        .filter(l => new Date(l.cree_le) >= moisDebut)
+        .filter(l => new Date(l.created_at) >= moisDebut)
         .reduce((s, l) => s + Number(l.prix_total || 0), 0);
 
       document.getElementById('statTotal').textContent = livraisons.length;
@@ -294,7 +294,7 @@
     function livCard(l) {
       const color = STATUS_COLORS[l.statut] || '#888';
       const label = STATUS_LABELS[l.statut] || l.statut;
-      const date  = new Date(l.cree_le).toLocaleDateString('fr-CA', { day:'numeric', month:'short' });
+      const date  = new Date(l.created_at).toLocaleDateString('fr-CA', { day:'numeric', month:'short' });
       return `
         <div class="livraison-card" onclick="window.location='/compte.html?liv=${l.id}'">
           <div class="liv-status" style="background:${color}"></div>

@@ -189,7 +189,7 @@
       const livraisonIds = Object.keys(convMap);
       const { data: livs } = await db
         .from('livraisons')
-        .select('id, adresse_pickup, adresse_livraison, livreur_id, expediteur_id')
+        .select('id, adresse_depart, adresse_arrivee, livreur_id, expediteur_id')
         .in('id', livraisonIds);
 
       const partnerIds = new Set();
@@ -211,8 +211,8 @@
           partnerName: profMap[partnerId]?.nom || 'Utilisateur',
           lastMsg: conv.lastMsg,
           unread: conv.unread || 0,
-          pickup: l.adresse_pickup || '',
-          destination: l.adresse_livraison || '',
+          pickup: l.adresse_depart || '',
+          destination: l.adresse_arrivee || '',
         };
       }).filter(c => c.lastMsg)
         .sort((a, b) => new Date(b.lastMsg.cree_le) - new Date(a.lastMsg.cree_le));

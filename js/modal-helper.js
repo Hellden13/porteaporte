@@ -74,7 +74,8 @@
           closeOverlay(overlay, true, resolve);
         } catch (err) {
           confirm.disabled = false;
-          showError(err.message || 'Action impossible');
+          if (typeof window.showError === 'function') window.showError(err.message || 'Action impossible');
+          else showToast(err.message || 'Action impossible', 'error');
         }
       });
 

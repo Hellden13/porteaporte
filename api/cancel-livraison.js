@@ -33,10 +33,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const stripBom = s => (s || '').replace(/^﻿/, '').trim();
-  const STRIPE_KEY = stripBom(process.env.STRIPE_SECRET_KEY);
-  const SB_URL = stripBom(process.env.SUPABASE_URL);
-  const SB_KEY = stripBom(process.env.SUPABASE_SERVICE_KEY);
+  const sanitizeEnv = s => { let v = (s || '').trim(); while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1); return v.trim(); };
+  const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
+  const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
+  const SB_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
 
   if (!SB_URL || !SB_KEY) {
     log('ERROR', 'supabase_config_missing', null, { hasSBUrl: !!SB_URL, hasSBKey: !!SB_KEY });

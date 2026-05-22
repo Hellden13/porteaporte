@@ -395,7 +395,7 @@
     (async () => {
       if (!window.getSupabaseClient) return;
       const db = window.getSupabaseClient();
-      const { data: { session } } = await db.auth.getSession();
+      const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) return;
       const role = session.user?.user_metadata?.role || '';
       const dashUrl = (role === 'livreur' || role === 'les deux')

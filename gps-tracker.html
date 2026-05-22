@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (!db) return;
-                const { data: { session } } = await db.auth.getSession();
+                const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
                 if (!session) return;
                 const res = await fetch('/api/tracking?livraison_id=' + livraisonId, {
                     headers: { Authorization: 'Bearer ' + session.access_token }
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (!db || !livraisonId) return;
-                const { data: { session } } = await db.auth.getSession();
+                const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
                 if (!session) return;
                 const res = await fetch('/api/gps-update', {
                     method: 'POST',
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (!db) throw new Error('Client Supabase indisponible');
-                const { data: { session } } = await db.auth.getSession();
+                const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
                 if (!session) throw new Error('Session expirée');
                 const res = await fetch('/api/confirm-delivery', {
                     method: 'POST',
@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!livraisonId) return;
             const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
             if (!db) return;
-            const { data: { session } } = await db.auth.getSession();
+            const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
             if (!session) return;
             const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
             const isLivreur = profile && (profile.role === 'livreur' || profile.role === 'les deux');

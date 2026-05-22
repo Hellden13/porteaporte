@@ -428,7 +428,7 @@
         .select('id,code,ville_depart,ville_arrivee,adresse_depart,adresse_arrivee,type_colis,poids_kg,prix_total,distance_km,statut,transport_requis,lat_depart,lng_depart,lat_arrivee,lng_arrivee')
         .in('statut', ['publie', 'paiement_autorise'])
         .is('livreur_id', null)
-        .order('cree_le', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       allMissions = (data || []).map((m, i) => ({

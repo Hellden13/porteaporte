@@ -474,7 +474,7 @@
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
-      const { data: { session } } = await db.auth.getSession();
+      const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
 
       // Pré-remplir depuis le profil chauffeur sauvegardé
@@ -666,7 +666,7 @@
 
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
-      const { data: { session } } = await db.auth.getSession();
+      const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) { window.location.href = '/login.html'; return; }
 
       const smoking = document.querySelector('input[name=smoking_policy]:checked')?.value || 'non_fumeur';

@@ -891,7 +891,7 @@
         .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,distance_km')
         .in('statut', ['publie', 'paiement_autorise'])
         .is('livreur_id', null)
-        .order('cree_le', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(5);
 
       const el = document.getElementById('missionsList');
@@ -1025,8 +1025,8 @@
         .from('livraisons')
         .select('id,code,ville_depart,ville_arrivee,type_colis,prix_total,statut')
         .eq('livreur_id', session.user.id)
-        .not('statut', 'in', '("livre","annule","payee")')
-        .order('cree_le', { ascending: false })
+        .not('statut', 'in', '(livre,annule,payee,livre_confirme,payee_livreur)')
+        .order('created_at', { ascending: false })
         .limit(10);
 
       const el = document.getElementById('myDeliveries');

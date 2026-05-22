@@ -208,7 +208,7 @@
     (async function initNav() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) return;
-      const { data: { session } } = await db.auth.getSession();
+      const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) return;
 
       // Utilisateur connecté — déterminer son dashboard selon son rôle
@@ -226,7 +226,7 @@
     (async function loadMyDashboard() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) return;
-      const { data: { session } } = await db.auth.getSession();
+      const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) return;
 
       const token = session.access_token;
