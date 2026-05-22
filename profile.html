@@ -423,7 +423,11 @@
                     // Avatar dynamique
                     const avatarBox = document.getElementById('avatarBox');
                     if (profile.photo_url) {
-                        avatarBox.innerHTML = `<img src="${profile.photo_url}" alt="${fullName}">`;
+                        const _avatarImg = document.createElement('img');
+                        _avatarImg.src = profile.photo_url; /* .src via propriété DOM — safe */
+                        _avatarImg.alt = fullName;
+                        avatarBox.innerHTML = '';
+                        avatarBox.appendChild(_avatarImg);
                     } else {
                         const initials = fullName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
                         document.getElementById('avatarInitials').textContent = initials;
@@ -450,8 +454,15 @@
                 await Promise.all([loadBadges(userId), loadReferralCode(token)]);
 
             } catch (err) {
-                document.getElementById('loadingContainer').innerHTML = 'Erreur : ' + err.message;
+                document.getElementById('loadingContainer').textContent = 'Erreur : ' + err.message;
             }
+        }
+
+        /* Échappement HTML — prévention XSS */
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
         }
 
         async function loadBadges(userId) {
@@ -470,10 +481,13 @@
                 grid.innerHTML = userBadges.map(ub => {
                     const b = ub.badges || {};
                     const date = ub.granted_at ? new Date(ub.granted_at).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : '';
-                    return `<div class="badge-chip" title="${b.name || ''} · ${date}">
-                        <span class="badge-icon">${b.icon || '🏅'}</span>
-                        <span>${b.name || b.slug || '—'}</span>
-                        ${b.points_reward ? `<span class="badge-pts">+${b.points_reward} pts</span>` : ''}
+                    const bName = esc(b.name || '');
+                    const bSlug = esc(b.slug || '');
+                    const bIcon = esc(b.icon || '🏅'); /* icônes unicode — esc par sécurité */
+                    return `<div class="badge-chip" title="${bName} · ${esc(date)}">
+                        <span class="badge-icon">${bIcon}</span>
+                        <span>${bName || bSlug || '—'}</span>
+                        ${b.points_reward ? `<span class="badge-pts">+${Number(b.points_reward)}</span>` : ''}
                     </div>`;
                 }).join('');
             } catch (_) {

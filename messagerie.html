@@ -239,7 +239,7 @@
         const active = c.livraisonId === activeConvId ? 'active' : '';
         return `
           <div class="conv-item ${active}" onclick="openConv('${c.livraisonId}','${c.partnerId}')">
-            <div class="conv-avatar">${init}</div>
+            <div class="conv-avatar">${esc(init)}</div>
             <div class="conv-info">
               <div class="conv-name">${esc(c.partnerName)}</div>
               <div class="conv-preview">${esc(preview.slice(0,60))}</div>

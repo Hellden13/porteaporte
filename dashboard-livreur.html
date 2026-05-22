@@ -931,9 +931,16 @@
         renderBadges(out.badges_earned || []);
         renderDraws(out);
       } catch (err) {
-        document.getElementById('bonusMissionsList').innerHTML = `<div class="empty-msg">${err.message}</div>`;
+        document.getElementById('bonusMissionsList').innerHTML = `<div class="empty-msg">${esc(err.message)}</div>`;
         document.getElementById('drawsList').innerHTML = '<div class="empty-msg">Tirages indisponibles pour le moment.</div>';
       }
+    }
+
+    /* Échappement HTML — prévention XSS */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
     }
 
     function renderBonusMissions(out) {
@@ -1223,7 +1230,7 @@
           </div>`;
         }).join('');
       } catch (error) {
-        el.innerHTML = `<div class="empty-msg">${error.message}</div>`;
+        el.innerHTML = `<div class="empty-msg">${esc(error.message)}</div>`;
       }
     };
 
@@ -1267,7 +1274,7 @@
             </div>`;
         }).join('');
       } catch (error) {
-        el.innerHTML = `<div class="empty-msg">${error.message}</div>`;
+        el.innerHTML = `<div class="empty-msg">${esc(error.message)}</div>`;
       }
     };
 
@@ -1360,7 +1367,7 @@
                   <div style="font-weight:700;color:var(--brand-text)">${money(p.amount_cents / 100)}</div>
                   <div style="color:var(--brand-muted);font-size:.75rem">${new Date(p.requested_at).toLocaleDateString('fr-CA')}</div>
                 </div>
-                <span>${statusMap[p.status] || p.status}</span>
+                <span>${statusMap[p.status] || esc(p.status)}</span>
               </div>`).join('');
           }
         }

@@ -184,6 +184,14 @@
     return ICONS[type] || ICONS.default;
   }
 
+  /* Autorise uniquement les URLs relatives ou https — bloque javascript: */
+  function safeUrl(url) {
+    if (!url) return '#';
+    const s = String(url).trim();
+    if (s.startsWith('/') || s.startsWith('https://') || s.startsWith('http://')) return s;
+    return '#';
+  }
+
   function timeAgo(dateStr) {
     const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
     if (diff < 60) return 'À l\'instant';
@@ -238,9 +246,9 @@
     list.innerHTML = notifications.map(n => {
       const icon = iconFor(n.notif_type);
       const unread = !n.read_at ? 'unread' : '';
-      const url = n.action_url || '#';
+      const url = safeUrl(n.action_url);
       return `
-        <a class="notif-item ${unread}" data-id="${n.id}" href="${url}">
+        <a class="notif-item ${unread}" data-id="${escHtml(String(n.id || ''))}" href="${escHtml(url)}">
           <div class="notif-icon">${icon}</div>
           <div class="notif-body">
             <div class="notif-title">${escHtml(n.title || 'Notification')}</div>
