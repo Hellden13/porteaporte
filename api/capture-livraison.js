@@ -147,6 +147,15 @@ module.exports = async function handler(req, res) {
 
   const { livraison_id, recipient_code, admin_override_reason } = req.body || {};
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+
+  /* Longueur minimale du code destinataire pour éviter le brute-force */
+  if (recipient_code !== undefined && recipient_code !== null) {
+    const codeStr = String(recipient_code).trim();
+    if (codeStr.length < 6) {
+      return res.status(400).json({ error: 'Code de reception invalide (trop court)' });
+    }
+  }
+
   const session = await getSessionUser(req, SB_URL, SB_KEY);
   if (!session && !recipient_code) return res.status(401).json({ error: 'Session ou code destinataire requis' });
 

@@ -315,6 +315,13 @@ function updatePkgPrice() {
   document.getElementById('pkg-price-preview').style.display = '';
 }
 
+/* Échappement HTML pour prévenir les XSS */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
 function stars(n) {
   const f = Math.round(n || 0);
   return '&#9733;'.repeat(f) + '&#9734;'.repeat(5 - f);
@@ -397,8 +404,12 @@ function renderRide(r) {
   var prenom = dp.prenom || p.prenom || 'Chauffeur';
 
   var avatarEl = document.getElementById('driver-avatar');
+  avatarEl.innerHTML = '';
   if (dp.avatar_url || p.avatar_url) {
-    avatarEl.innerHTML = '<img src="' + (dp.avatar_url || p.avatar_url) + '" alt="' + prenom + '"/>';
+    var _img = document.createElement('img');
+    _img.src = dp.avatar_url || p.avatar_url; /* .src via propriété — safe */
+    _img.alt = prenom;
+    avatarEl.appendChild(_img);
   } else {
     avatarEl.textContent = (prenom[0] || '?').toUpperCase();
   }
@@ -412,7 +423,14 @@ function renderRide(r) {
   document.getElementById('driver-trips').textContent = nCh > 0 ? nCh + ' trajet' + (nCh > 1 ? 's' : '') + ' comme chauffeur' : '';
 
   var bio = p.bio || dp.bio;
-  document.getElementById('driver-bio-wrap').innerHTML = bio ? '<p class="driver-bio">"' + bio + '"</p>' : '';
+  var _bioWrap = document.getElementById('driver-bio-wrap');
+  _bioWrap.innerHTML = '';
+  if (bio) {
+    var _bioP = document.createElement('p');
+    _bioP.className = 'driver-bio';
+    _bioP.textContent = '“' + bio + '”'; /* textContent — safe */
+    _bioWrap.appendChild(_bioP);
+  }
 
   var sc = dp.score_confiance    || 0;
   var sp = dp.score_ponctualite  || 0;
@@ -472,10 +490,10 @@ function renderRide(r) {
     document.getElementById('reviews-list').innerHTML = reviews.map(function(rv) {
       return '<div class="review-item">' +
         '<div class="review-header">' +
-          '<span class="review-name">' + (rv.reviewer_name || 'Anonyme') + '</span>' +
+          '<span class="review-name">' + esc(rv.reviewer_name || 'Anonyme') + '</span>' +
           '<span class="review-stars">' + stars(rv.rating || rv.note || 0) + '</span>' +
         '</div>' +
-        (rv.comment ? '<div class="review-text">' + rv.comment + '</div>' : '') +
+        (rv.comment ? '<div class="review-text">' + esc(rv.comment) + '</div>' : '') +
         '<div class="review-date">' + formatShortDate(rv.created_at) + '</div>' +
         '</div>';
     }).join('');

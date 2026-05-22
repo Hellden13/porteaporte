@@ -96,6 +96,13 @@
       return value === null || value === undefined || value === '' ? fallback : String(value);
     }
 
+    /* Échappement HTML — prévention XSS */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+    }
+
     function setStatus(message, type) {
       const el = document.getElementById('status');
       el.textContent = message;
@@ -234,25 +241,25 @@
         return `
         <article class="mission-card">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <span class="pill">${text(m.code, 'Mission')}</span>
+            <span class="pill">${esc(text(m.code, 'Mission'))}</span>
             <span class="match-score">${score}% · ${matchLabel(score)}</span>
           </div>
           <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>
           <div class="match-tags">
-            ${tags.map(tag => `<span class="match-tag tag-${tag.c}">${tag.t}</span>`).join('')}
+            ${tags.map(tag => `<span class="match-tag tag-${esc(tag.c)}">${esc(tag.t)}</span>`).join('')}
           </div>
-          <h2>${text(m.type_colis, 'Colis')}</h2>
+          <h2>${esc(text(m.type_colis, 'Colis'))}</h2>
           <div class="route">
-            <div><strong>Départ approx. :</strong> ${text(m.ville_depart, 'Ville masquée')}</div>
-            <div><strong>Arrivée approx. :</strong> ${text(m.ville_arrivee, 'Ville masquée')}</div>
+            <div><strong>Départ approx. :</strong> ${esc(text(m.ville_depart, 'Ville masquée'))}</div>
+            <div><strong>Arrivée approx. :</strong> ${esc(text(m.ville_arrivee, 'Ville masquée'))}</div>
           </div>
           <div class="meta">
-            <div><span>Poids</span>${text(m.poids_kg, 'N/D')} kg</div>
-            <div><span>Distance</span>${m.distance_km ? m.distance_km + ' km' : 'N/D'}</div>
+            <div><span>Poids</span>${esc(text(m.poids_kg, 'N/D'))} kg</div>
+            <div><span>Distance</span>${m.distance_km ? Number(m.distance_km).toFixed(1) + ' km' : 'N/D'}</div>
           </div>
           <div class="price">${money(m.prix_total)}</div>
           ${gainHtml}
-          <button class="btn" type="button" onclick="acceptMission('${m.id}')">Accepter la mission</button>
+          <button class="btn" type="button" onclick="acceptMission('${esc(m.id)}')">Accepter la mission</button>
         </article>`;
       }).join('');
     }

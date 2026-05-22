@@ -11,6 +11,12 @@ function sanitizeEnv(s) {
   return v.trim();
 }
 
+/* Valide qu'un ID est un UUID ou identifiant Supabase sûr (hex + tirets, max 64 chars).
+   Empêche l'injection dans les filtres in.() de PostgREST. */
+function safeIds(arr) {
+  return (arr || []).filter(id => typeof id === 'string' && /^[0-9a-f\-]{1,64}$/i.test(id));
+}
+
 function sbHeaders(key, prefer = 'return=representation') {
   return {
     apikey: key,
@@ -718,8 +724,9 @@ async function availableLivraisons(req, res, ctx) {
   // Enrichir avec les profils expéditeurs
   const expIds = [...new Set(filtered.map(({ row }) => row.expediteur_id).filter(Boolean))];
   let expProfiles = {};
-  if (expIds.length > 0) {
-    const ids = expIds.map(id => `"${id}"`).join(',');
+  const _safeExpIds1 = safeIds(expIds);
+  if (_safeExpIds1.length > 0) {
+    const ids = _safeExpIds1.map(id => `"${id}"`).join(',');
     const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance`, { headers: sbHeaders(ctx.sbKey) });
     if (pr.ok) { (await pr.json()).forEach(p => { expProfiles[p.id] = p; }); }
   }
@@ -790,8 +797,9 @@ async function myLivraisons(req, res, ctx, body) {
   // Enrichir avec les profils des livreurs assignés
   const livreurIds = [...new Set(livraisons.map(l => l.livreur_id).filter(Boolean))];
   let livreurProfiles = {};
-  if (livreurIds.length > 0) {
-    const ids = livreurIds.map(id => `"${id}"`).join(',');
+  const _safeLivreurIds = safeIds(livreurIds);
+  if (_safeLivreurIds.length > 0) {
+    const ids = _safeLivreurIds.map(id => `"${id}"`).join(',');
     const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance,telephone`, { headers: sbHeaders(ctx.sbKey) });
     if (pr.ok) {
       const prows = await pr.json();
@@ -843,8 +851,9 @@ async function myDriverLivraisons(req, res, ctx) {
   // Enrichir avec les profils des expéditeurs
   const expIds = [...new Set(livraisons.map(l => l.expediteur_id).filter(Boolean))];
   let expProfiles = {};
-  if (expIds.length > 0) {
-    const ids = expIds.map(id => `"${id}"`).join(',');
+  const _safeExpIds2 = safeIds(expIds);
+  if (_safeExpIds2.length > 0) {
+    const ids = _safeExpIds2.map(id => `"${id}"`).join(',');
     const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${ids})&select=id,prenom,nom,photo_url,score_confiance`, { headers: sbHeaders(ctx.sbKey) });
     if (pr.ok) { (await pr.json()).forEach(p => { expProfiles[p.id] = p; }); }
   }
@@ -897,8 +906,9 @@ async function adminDashboard(req, res, ctx) {
 
   const livraisonIds = livraisons.map((l) => l.id).filter(Boolean).slice(0, 100);
   let proofByLivraison = {};
-  if (livraisonIds.length) {
-    const ids = livraisonIds.map((id) => `"${id}"`).join(',');
+  const _safeLivraisonIds = safeIds(livraisonIds);
+  if (_safeLivraisonIds.length) {
+    const ids = _safeLivraisonIds.map((id) => `"${id}"`).join(',');
     const proofRes = await fetch(
       `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${ids})&select=id,livraison_id,proof_type,dropoff_type,status,created_at,photo_storage_path&order=created_at.desc`,
       { headers: sbHeaders(ctx.sbKey) }
