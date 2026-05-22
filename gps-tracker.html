@@ -11,7 +11,8 @@
 document.addEventListener('DOMContentLoaded', async function () {
   const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
   if (!db) return;
-  const { data: { session } } = await db.auth.getSession();
+  const { data, error: _e } = await db.auth.getSession();
+  const session = data?.session;
   if (!session) { window.location.href = '/login.html'; }
 });
 </script>

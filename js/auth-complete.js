@@ -55,6 +55,13 @@
     return data;
   }
 
+  function showError(msg) {
+    if (typeof window.showError === 'function') { window.showError(msg); return; }
+    const el = document.getElementById('error-message') || document.getElementById('auth-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+    else console.error('[auth]', msg);
+  }
+
   async function requireAuth(role) {
     const { data, error } = await client.auth.getSession();
 
@@ -75,14 +82,14 @@
 
     if (currentUser.suspendu || currentUser.verification_status === 'suspended' || currentUser.driver_status === 'suspended') {
       console.error('ERREUR auth: profil suspendu');
-      window.location.href = 'login.html';
+      window.location.href = '/login.html';
       return false;
     }
 
     if (!isEmailVerified(data.session, profile)) {
       console.error('ERREUR auth: email non confirme');
       showError('Confirme ton email avant d acceder aux donnees sensibles.');
-      window.location.href = 'login.html';
+      window.location.href = '/login.html';
       return false;
     }
 
@@ -102,7 +109,7 @@
     if (currentUser.role !== 'admin' && currentUser.driver_status !== 'verified') {
       console.error('ERREUR livreur: verification requise');
       showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
-      window.location.href = 'livreur.html';
+      window.location.href = '/livreur.html';
       return false;
     }
 
@@ -124,7 +131,7 @@
       return;
     }
     // console.log('OK deconnecte');
-    window.location.href = 'login.html';
+    window.location.href = '/login.html';
   }
 
   window.AUTH_API = {

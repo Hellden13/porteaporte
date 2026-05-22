@@ -241,8 +241,9 @@
     async function init() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
       if (!db) return;
-      const { data: { session } } = await db.auth.getSession();
-      if (!session) return;
+      const { data, error: sessionErr } = await db.auth.getSession();
+      if (sessionErr || !data?.session) return;
+      const session = data.session;
 
       _token = session.access_token;
 

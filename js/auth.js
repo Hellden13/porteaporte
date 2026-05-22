@@ -46,6 +46,13 @@
     return data;
   }
 
+  function showError(msg) {
+    if (typeof window.showError === 'function') { window.showError(msg); return; }
+    const el = document.getElementById('error-message') || document.getElementById('auth-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+    else console.error('[auth]', msg);
+  }
+
   async function requireSession(redirectTo) {
     const session = await getSession();
     if (!session) {
@@ -132,7 +139,6 @@
   async function logout() {
     const { error } = await client.auth.signOut();
     if (error) console.error('ERREUR deconnexion:', error.message);
-    else // console.log('OK deconnecte');
     window.location.href = '/login.html';
   }
 
