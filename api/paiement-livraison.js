@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
   const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
   const SB_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
-  console.log('[env] STRIPE_KEY[0]=%d SB_KEY[0]=%d', (process.env.STRIPE_SECRET_KEY||'').charCodeAt(0), (process.env.SUPABASE_SERVICE_KEY||'').charCodeAt(0));
+  /* debug BOM supprimé — sanitizeEnv() suffit */
 
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
