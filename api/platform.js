@@ -1055,7 +1055,10 @@ async function adminDisputeAction(req, res, ctx, body) {
 
 async function tracking(req, res, ctx, body) {
   const url = new URL(req.url || '/', 'https://porteaporte.site');
-  const code = body.code || url.searchParams.get('code') || url.searchParams.get('id');
+  const code = body.code || body.livraison_id || body.livraisonId
+    || url.searchParams.get('code')
+    || url.searchParams.get('id')
+    || url.searchParams.get('livraison_id');
   if (!code) return res.status(400).json({ error: 'code ou id requis' });
 
   const isUuid = /^[0-9a-f-]{36}$/i.test(code);
