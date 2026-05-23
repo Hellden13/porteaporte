@@ -428,6 +428,32 @@
   <!-- Main content -->
   <main class="page" id="mainPage" style="display:none">
 
+    <!-- Mode de transport ACTIF aujourd'hui -->
+    <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25)">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:900;color:#7dffc1;font-size:.9rem;margin-bottom:4px">🚦 Mode actif aujourd'hui</div>
+          <div style="color:#a8b0ba;font-size:.78rem">Choisis ton véhicule du jour. Les missions affichées s'adapteront automatiquement.</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="modeButtons">
+          <!-- Boutons générés via JS selon transport_modes_disponibles -->
+        </div>
+      </div>
+      <div id="modeAddZone" style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.08);display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:.78rem;color:#a8b0ba;font-weight:700">+ Ajouter un mode :</span>
+        <select id="addModeSelect" style="padding:6px 10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:6px;font-size:.82rem">
+          <option value="">— Choisir —</option>
+          <option value="foot">🚶 À pied</option>
+          <option value="bike">🚴 Vélo</option>
+          <option value="scooter">🛴 Trottinette</option>
+          <option value="moto">🏍️ Moto</option>
+          <option value="car">🚗 Voiture</option>
+          <option value="truck">🚛 Camion / Van</option>
+        </select>
+        <button class="btn-sm" onclick="addMode()" style="padding:6px 12px;background:rgba(0,255,159,.15);border:1px solid rgba(0,255,159,.4);color:#7dffc1;border-radius:6px;font-size:.78rem;cursor:pointer">+ Ajouter</button>
+      </div>
+    </div>
+
     <!-- Ma carte d'identité (à montrer à l'expéditeur au pickup) -->
     <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.22);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="flex:1;min-width:200px">
@@ -765,7 +791,7 @@
       updateToggleLabel(isOnline);
 
       renderStats();
-      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm()]);
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm(), loadModes()]);
       // Lien vers ma carte
       const cardLink = document.getElementById('myCardLink');
       if (cardLink) cardLink.href = '/livreur-card.html?id=' + encodeURIComponent(session.user.id);
@@ -1422,6 +1448,85 @@
         msgEl.style.color = '#ffb0b0';
         msgEl.textContent = '❌ ' + err.message;
       }
+    }
+
+    // ── Mode de transport multi/actif ──
+    const MODE_LABELS = {
+      foot: { icon: '🚶', name: 'À pied' },
+      bike: { icon: '🚴', name: 'Vélo' },
+      scooter: { icon: '🛴', name: 'Trottinette' },
+      moto: { icon: '🏍️', name: 'Moto' },
+      car: { icon: '🚗', name: 'Voiture' },
+      truck: { icon: '🚛', name: 'Camion' }
+    };
+
+    async function loadModes() {
+      const { data: p } = await db.from('profiles').select('transport_modes_disponibles,transport_mode_actif,transport_mode,mode_livraison,vehicule').eq('id', session.user.id).single();
+      if (!p) return;
+      let modes = Array.isArray(p.transport_modes_disponibles) ? p.transport_modes_disponibles : [];
+      if (!modes.length) {
+        // Migration auto : utiliser transport_mode + mode_livraison existants
+        const guess = [];
+        const raw = [p.transport_mode, p.mode_livraison, p.vehicule].filter(Boolean).join(' ').toLowerCase();
+        if (/pied|walk|foot/.test(raw)) guess.push('foot');
+        if (/velo|bike/.test(raw)) guess.push('bike');
+        if (/trotti|scoot|skate/.test(raw)) guess.push('scooter');
+        if (/moto/.test(raw)) guess.push('moto');
+        if (/voiture|auto|car/.test(raw)) guess.push('car');
+        if (/camion|truck|van/.test(raw)) guess.push('truck');
+        modes = guess.length ? guess : ['car'];
+        await db.from('profiles').update({ transport_modes_disponibles: modes, transport_mode_actif: modes[0] }).eq('id', session.user.id);
+      }
+      renderModeButtons(modes, p.transport_mode_actif || modes[0]);
+    }
+
+    function renderModeButtons(modes, active) {
+      const wrap = document.getElementById('modeButtons');
+      if (!wrap) return;
+      wrap.innerHTML = modes.map(m => {
+        const lbl = MODE_LABELS[m] || { icon: '🚲', name: m };
+        const isActive = m === active;
+        return `
+          <button class="btn-sm" onclick="setActiveMode('${m}')" style="padding:8px 14px;background:${isActive ? 'linear-gradient(135deg,#00ff9f,#b8f53e)' : 'rgba(255,255,255,.04)'};border:1px solid ${isActive ? '#b8f53e' : '#1E2535'};color:${isActive ? '#071006' : '#fff'};border-radius:8px;font-weight:800;cursor:pointer;font-size:.85rem;display:inline-flex;align-items:center;gap:5px">
+            ${lbl.icon} ${lbl.name}${isActive ? ' ✓' : ''}
+          </button>
+          <button onclick="removeMode('${m}')" title="Retirer ce mode" style="padding:4px 8px;background:transparent;border:none;color:#6d7886;cursor:pointer;font-size:.8rem">✕</button>
+        `;
+      }).join('');
+    }
+
+    async function setActiveMode(mode) {
+      const { error } = await db.from('profiles').update({ transport_mode_actif: mode, transport_mode: mode }).eq('id', session.user.id);
+      if (error) { alert('Erreur : ' + error.message); return; }
+      await loadModes();
+      if (typeof loadMissions === 'function') loadMissions();
+    }
+
+    async function addMode() {
+      const sel = document.getElementById('addModeSelect');
+      const newMode = sel?.value;
+      if (!newMode) return;
+      const { data: p } = await db.from('profiles').select('transport_modes_disponibles').eq('id', session.user.id).single();
+      const modes = Array.isArray(p?.transport_modes_disponibles) ? p.transport_modes_disponibles : [];
+      if (modes.includes(newMode)) { alert('Mode déjà ajouté'); return; }
+      modes.push(newMode);
+      await db.from('profiles').update({ transport_modes_disponibles: modes }).eq('id', session.user.id);
+      sel.value = '';
+      await loadModes();
+    }
+
+    async function removeMode(mode) {
+      if (!confirm('Retirer ' + (MODE_LABELS[mode]?.name || mode) + ' de tes modes disponibles ?')) return;
+      const { data: p } = await db.from('profiles').select('transport_modes_disponibles,transport_mode_actif').eq('id', session.user.id).single();
+      let modes = (p?.transport_modes_disponibles || []).filter(m => m !== mode);
+      if (!modes.length) { alert('Tu dois garder au moins un mode'); return; }
+      const patch = { transport_modes_disponibles: modes };
+      if (p?.transport_mode_actif === mode) {
+        patch.transport_mode_actif = modes[0];
+        patch.transport_mode = modes[0];
+      }
+      await db.from('profiles').update(patch).eq('id', session.user.id);
+      await loadModes();
     }
 
     // ── Route livreur (IA matching) ──
