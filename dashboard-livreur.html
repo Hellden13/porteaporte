@@ -428,6 +428,18 @@
   <!-- Main content -->
   <main class="page" id="mainPage" style="display:none">
 
+    <!-- ── TABS NAVIGATION ── -->
+    <nav id="livreurTabs" style="position:sticky;top:60px;z-index:50;display:flex;gap:4px;margin:0 -20px 18px;padding:8px 20px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border);overflow-x:auto;backdrop-filter:blur(12px)">
+      <button class="liv-tab active" data-tab="encours" onclick="switchTab('encours')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#00ff9f,#b8f53e);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">🚀 En cours</button>
+      <button class="liv-tab" data-tab="missions" onclick="switchTab('missions')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Missions</button>
+      <button class="liv-tab" data-tab="config" onclick="switchTab('config')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">⚙️ Profil</button>
+      <button class="liv-tab" data-tab="stats" onclick="switchTab('stats')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📊 Stats</button>
+      <button class="liv-tab" data-tab="paiements" onclick="switchTab('paiements')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">💰 Paiements</button>
+    </nav>
+
+    <!-- Section CONFIG (modes, carte, route) -->
+    <div data-section="config">
+
     <!-- Mode de transport ACTIF aujourd'hui -->
     <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25)">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -479,6 +491,11 @@
       <p style="margin-top:10px;font-size:.78rem;color:#a8b0ba">💡 Le matching IA affichera prioritairement les missions <strong>sur ta route</strong> (dans ta déviation km) et <strong>compatibles avec ton horaire</strong>.</p>
     </details>
 
+    </div><!-- /config -->
+
+    <!-- Section STATS -->
+    <div data-section="stats">
+
     <!-- Eco bonus banner -->
     <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);align-items:center;gap:14px;flex-wrap:wrap">
       <span style="font-size:24px" id="ecoIcon">🌱</span>
@@ -518,7 +535,10 @@
       </div>
     </div>
 
-    <!-- Missions disponibles -->
+    </div><!-- /stats -->
+
+    <!-- Section MISSIONS disponibles -->
+    <div data-section="missions">
     <div class="section-header">
       <span class="section-title">Missions disponibles</span>
       <a class="section-link" href="/browse-missions.html">Voir toutes →</a>
@@ -526,6 +546,7 @@
     <div class="missions-list" id="missionsList">
       <p class="loading-msg">Chargement des missions…</p>
     </div>
+    </div><!-- /missions -->
 
     <div class="section-header">
       <span class="section-title">Points Impact &amp; Missions</span>
@@ -587,7 +608,8 @@
       <div id="cfMilestones" style="display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
 
-    <!-- 2-col grid -->
+    <!-- Section EN COURS -->
+    <div data-section="encours">
     <div class="content-grid">
 
       <!-- Mes livraisons en cours -->
@@ -634,6 +656,10 @@
         </div>
       </div>
     </div>
+    </div><!-- /encours -->
+
+    <!-- Section PAIEMENTS -->
+    <div data-section="paiements">
 
     <!-- ── Section Paiements & Retraits ────────────────────── -->
     <!-- ── Graphe revenus mensuels ────────────────────────────── -->
@@ -708,6 +734,7 @@
         <div id="payoutHistory"></div>
       </div>
     </div>
+    </div><!-- /paiements -->
 
   </main>
 
@@ -1449,6 +1476,36 @@
         msgEl.textContent = '❌ ' + err.message;
       }
     }
+
+    // ── Tabs navigation ──
+    function switchTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.liv-tab').forEach(btn => {
+        const isActive = btn.dataset.tab === tab;
+        if (isActive) {
+          btn.style.background = 'linear-gradient(135deg,#00ff9f,#b8f53e)';
+          btn.style.color = '#071006';
+          btn.style.border = 'none';
+        } else {
+          btn.style.background = 'rgba(255,255,255,.04)';
+          btn.style.color = '#a8b0ba';
+          btn.style.border = '1px solid #1E2535';
+        }
+      });
+      // Show/hide sections
+      document.querySelectorAll('[data-section]').forEach(sec => {
+        sec.style.display = (sec.dataset.section === tab) ? '' : 'none';
+      });
+      // Sauvegarder la prefs tab
+      try { localStorage.setItem('pap_livreur_tab', tab); } catch (e) {}
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Restaurer tab au chargement
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('pap_livreur_tab') || 'encours';
+      setTimeout(() => switchTab(saved), 200);
+    });
 
     // ── Refus / Rescue ──
     async function refuserMission(id) {
