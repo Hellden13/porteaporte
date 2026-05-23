@@ -2,9 +2,13 @@
     "cleanUrls":  false,
     "trailingSlash":  false,
     "functions": {
-        "api/**/*.js": {
-            "includeFiles": "api/_*.js"
-        }
+        "api/platform.js": { "includeFiles": "api/_*.js" },
+        "api/capture-livraison.js": { "includeFiles": "api/_*.js" },
+        "api/paiement-livraison.js": { "includeFiles": "api/_*.js" },
+        "api/notifier.js": { "includeFiles": "api/_*.js" },
+        "api/stripe-webhook.js": { "includeFiles": "api/_*.js" },
+        "api/tracking-public.js": { "includeFiles": "api/_*.js" },
+        "api/cron-cleanup.js": { "includeFiles": "api/_*.js" }
     },
     "crons": [
         { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
