@@ -30,7 +30,15 @@
     .meta div{border:1px solid var(--brand-border);background:var(--brand-bg-dark);border-radius:8px;padding:9px}
     .meta span{display:block;color:var(--brand-muted);font-size:11px;margin-bottom:2px}
     .price{font-size:26px;font-weight:900;color:var(--brand-lime);margin-top:4px}
-    .empty{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:24px;color:var(--brand-muted)}
+    .empty{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:40px 24px;color:var(--brand-muted);text-align:center}
+    .empty-icon{font-size:48px;margin-bottom:12px}
+    .empty h3{font-size:18px;color:var(--brand-text);margin-bottom:8px}
+    .empty p{font-size:14px;line-height:1.6;margin-bottom:16px}
+    .cta-box{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:40px 24px;text-align:center;margin-top:16px}
+    .cta-box .cta-icon{font-size:52px;margin-bottom:16px}
+    .cta-box h3{font-size:22px;margin-bottom:8px}
+    .cta-box p{color:var(--brand-muted);font-size:14px;line-height:1.6;max-width:420px;margin:0 auto 24px}
+    .cta-box .btn{width:auto;display:inline-block;text-decoration:none;padding:13px 28px;font-size:15px}
     .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:var(--brand-bg-dark)}
     .btn.secondary{width:auto;background:var(--brand-bg-surface-light);color:var(--brand-text);border:1px solid var(--brand-border);text-decoration:none}
     .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -68,7 +76,8 @@
       <button class="btn secondary" type="button" onclick="loadMissions()">Rafraichir</button>
     </section>
 
-    <div id="status" class="status">Chargement des missions compatibles...</div>
+    <div id="status" class="status" style="display:none"></div>
+    <div id="cta-login" style="display:none"></div>
     <section id="missions-list" class="missions-grid" style="margin-top:16px"></section>
   </main>
 
@@ -106,28 +115,39 @@
     function setStatus(message, type) {
       const el = document.getElementById('status');
       el.textContent = message;
+      el.style.display = 'block';
       el.style.borderColor = type === 'error' ? '#EF4444' : '#1F2937';
       el.style.color = type === 'error' ? '#ffb4b4' : '#A8ACB1';
+    }
+
+    function showLoginCta() {
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('cta-login').style.display = 'block';
+      document.getElementById('cta-login').innerHTML = `
+        <div class="cta-box">
+          <div class="cta-icon">📦</div>
+          <h3>Des missions t'attendent</h3>
+          <p>Connecte-toi avec ton compte livreur vérifié pour voir les livraisons disponibles dans ta zone et commencer à gagner.</p>
+          <a class="btn" href="/login.html">Se connecter</a>
+          &nbsp;&nbsp;
+          <a class="btn secondary" href="/devenir-livreur.html">Devenir livreur</a>
+        </div>`;
     }
 
     async function requireSession() {
       const { data } = await db.auth.getSession();
       currentSession = data && data.session ? data.session : null;
       if (!currentSession) {
-        setStatus('Connecte-toi comme livreur verifie pour voir les missions.', 'error');
-        await showModal({
-          title: 'Connexion requise',
-          description: 'Tu dois etre connecte avec un compte livreur verifie pour consulter les missions.',
-          confirmText: 'Connexion',
-          cancelText: 'Fermer',
-          onConfirm: () => { window.location.href = '/login.html'; }
-        });
+        showLoginCta();
         return false;
       }
       return true;
     }
 
     async function loadMissions() {
+      document.getElementById('cta-login').style.display = 'none';
+      document.getElementById('missions-list').innerHTML = '';
+      setStatus('Recherche de missions sur ta route...', 'info');
       try {
         if (window.PorteAuth && !await window.PorteAuth.requireVerifiedDriver('/livreur.html')) return;
         if (!await requireSession()) return;
@@ -135,7 +155,6 @@
         const { data: prof } = await db.from('profiles').select('eco_bonus,transport_mode').eq('id', currentSession.user.id).single();
         window._livreurEcoBonus = prof?.eco_bonus || 0;
         window._livreurEcoMode  = prof?.transport_mode || '';
-        setStatus('Chargement des missions compatibles...', 'info');
 
         const res = await fetch('/api/available-livraisons', {
           method: 'POST',
@@ -203,8 +222,14 @@
     function renderMissions(mode) {
       const container = document.getElementById('missions-list');
       if (!missions.length) {
-        setStatus('Aucune mission compatible pour ton mode de transport actuellement.', 'info');
-        container.innerHTML = '<div class="empty">Reviens plus tard ou ajuste ta zone de livraison dans ton profil livreur.</div>';
+        document.getElementById('status').style.display = 'none';
+        container.innerHTML = `
+          <div class="empty" style="grid-column:1/-1">
+            <div class="empty-icon">🔍</div>
+            <h3>Aucune mission pour l'instant</h3>
+            <p>Il n'y a pas encore de livraisons compatibles avec ton mode de transport dans ta zone.<br>Reviens dans quelques minutes ou ajuste ta zone dans ton profil.</p>
+            <button class="btn secondary" type="button" onclick="loadMissions()" style="display:inline-block;width:auto;padding:10px 22px">Rafraîchir</button>
+          </div>`;
         return;
       }
 
@@ -256,6 +281,8 @@
           <div class="meta">
             <div><span>Poids</span>${esc(text(m.poids_kg, 'N/D'))} kg</div>
             <div><span>Distance</span>${m.distance_km ? Number(m.distance_km).toFixed(1) + ' km' : 'N/D'}</div>
+            <div><span>Taille</span>${esc(text(m.taille_colis, 'N/D'))}</div>
+            <div><span>Dispo destinataire</span>${(Array.isArray(m.destinataire_dispo_jours) && m.destinataire_dispo_jours.length) ? esc(m.destinataire_dispo_jours.join(', ')) + (m.destinataire_dispo_debut ? '<br>' + esc(m.destinataire_dispo_debut.slice(0,5)) + '–' + esc((m.destinataire_dispo_fin || '').slice(0,5)) : '') : 'Flexible'}</div>
           </div>
           <div class="price">${money(m.prix_total)}</div>
           ${gainHtml}
@@ -293,7 +320,20 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', loadMissions);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMissions();
+      // Auto-refresh toutes les 45 secondes — nouvelles missions en temps quasi-réel
+      let refreshTimer = setInterval(loadMissions, 45000);
+      // Arrêter le refresh si l'onglet est caché (économie batterie)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          clearInterval(refreshTimer);
+        } else {
+          loadMissions();
+          refreshTimer = setInterval(loadMissions, 45000);
+        }
+      });
+    });
   </script>
   <script src="/js/support-widget.js"></script>
 </body>
