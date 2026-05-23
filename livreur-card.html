@@ -6,6 +6,7 @@
   <title>Carte d'identité livreur - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
     body { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, #0a0e14 0%, #001828 100%); }
@@ -63,7 +64,11 @@
     .info-row:last-child { border-bottom: none; }
     .info-label { color: #a8b0ba; }
     .info-val { color: #fff; font-weight: 700; }
-    .qr-section { text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(255,255,255,.1); }
+    .qr-section { text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(255,255,255,.15); }
+    .qr-section h4 { margin: 0 0 10px; font-size: .85rem; color: #fff; }
+    .qr-section .qr-wrap { display: inline-block; padding: 10px; background: #fff; border-radius: 12px; }
+    .qr-section canvas, .qr-section img { display: block; }
+    .qr-section .qr-note { font-size: .72rem; color: #a8b0ba; margin-top: 8px; }
     .footer-note { text-align: center; margin-top: 16px; font-size: .72rem; color: #6d7886; line-height: 1.5; }
     .err { text-align: center; color: #ffb0b0; padding: 30px; }
   </style>
@@ -142,12 +147,28 @@
           <div class="info-row"><span class="info-label">Véhicule</span><span class="info-val">${p.vehicule || transport}</span></div>
         </div>
 
+        <div class="qr-section">
+          <h4>📲 Vérifier l'authenticité</h4>
+          <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+          <div class="qr-note">Scanne ce QR code pour vérifier que la carte vient bien de PorteàPorte</div>
+        </div>
+
         <div class="footer-note">
           🔒 Carte authentique générée par PorteàPorte<br>
           Compare le visage de la personne à cette photo<br>
           En cas de doute, n'ouvre pas et contacte-nous immédiatement
         </div>
       `;
+
+      // Générer le QR code qui pointe vers cette page (verification croisée)
+      try {
+        const cardUrl = window.location.origin + '/livreur-card.html?id=' + encodeURIComponent(p.id);
+        QRCode.toCanvas(document.getElementById('qrCanvas'), cardUrl, {
+          width: 140,
+          margin: 1,
+          color: { dark: '#000000', light: '#FFFFFF' }
+        });
+      } catch (e) { console.warn('[qr]', e); }
     }
     load();
   </script>
