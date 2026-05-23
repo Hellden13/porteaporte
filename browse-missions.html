@@ -297,14 +297,74 @@
       }).join('');
     }
 
+    // Modal de consentement GPS obligatoire
+    async function askGpsConsent(mission) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:grid;place-items:center;padding:20px';
+        overlay.innerHTML = `
+          <div style="max-width:480px;width:100%;background:#0a0e14;border:2px solid rgba(184,245,62,.4);border-radius:14px;padding:28px">
+            <div style="text-align:center;margin-bottom:16px">
+              <div style="font-size:48px;margin-bottom:8px">🛰️</div>
+              <h2 style="margin:0;color:#fff;font-size:1.25rem">Consentement GPS obligatoire</h2>
+            </div>
+            <p style="color:#a8b0ba;line-height:1.6;font-size:.9rem;margin:0 0 14px">
+              En acceptant cette mission, tu acceptes que <strong style="color:#fff">ta position GPS soit suivie en continu</strong> jusqu'à la confirmation de livraison.
+            </p>
+            <ul style="color:#a8b0ba;font-size:.85rem;line-height:1.7;margin:0 0 16px;padding-left:20px">
+              <li>L'expéditeur et le destinataire voient ta position en temps réel</li>
+              <li>En cas de litige, le GPS sert de preuve</li>
+              <li>Si tu désactives le GPS pendant la livraison, ton compte sera signalé</li>
+              <li>Tracking arrêté automatiquement à la fin de la livraison</li>
+            </ul>
+            <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.25);border-radius:8px;cursor:pointer;margin-bottom:14px">
+              <input type="checkbox" id="gpsConsentBox" style="margin-top:3px">
+              <span style="color:#fff;font-size:.88rem;font-weight:700">J'accepte de partager ma position GPS jusqu'à la fin de la livraison</span>
+            </label>
+            <div style="display:flex;gap:10px">
+              <button id="gpsCancel" style="flex:1;padding:12px;background:#1E2535;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">Annuler</button>
+              <button id="gpsAccept" style="flex:1;padding:12px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900" disabled>Continuer</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        const box = overlay.querySelector('#gpsConsentBox');
+        const acceptBtn = overlay.querySelector('#gpsAccept');
+        box.onchange = () => { acceptBtn.disabled = !box.checked; };
+        overlay.querySelector('#gpsCancel').onclick = () => { overlay.remove(); resolve(false); };
+        acceptBtn.onclick = async () => {
+          overlay.remove();
+          // Demander la permission GPS au navigateur
+          if (!navigator.geolocation) {
+            alert('Ton navigateur ne supporte pas le GPS. Tu ne peux pas accepter cette mission.');
+            resolve(false);
+            return;
+          }
+          try {
+            await new Promise((res, rej) => {
+              navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
+            });
+            resolve(true);
+          } catch (e) {
+            alert('GPS refusé : tu dois autoriser la géolocalisation pour livrer. Active-le dans les paramètres de ton navigateur.');
+            resolve(false);
+          }
+        };
+      });
+    }
+
     async function acceptMission(id) {
       const mission = missions.find((m) => m.id === id);
       if (!mission) return showError('Mission introuvable.');
 
+      // Vérifier la permission GPS avant d'accepter
+      const gpsConsent = await askGpsConsent(mission);
+      if (!gpsConsent) return;
+
       const ok = await showModal({
-        title: 'Accepter cette mission?',
-        description: `Trajet approx.: ${mission.ville_depart || 'depart'} vers ${mission.ville_arrivee || 'arrivee'}\nPaiement propose: ${money(mission.prix_total)}\n\nLes details complets seront debloques seulement apres assignation valide.`,
-        confirmText: 'Accepter',
+        title: 'Confirmer l\'acceptation',
+        description: `Trajet approx.: ${mission.ville_depart || 'depart'} vers ${mission.ville_arrivee || 'arrivee'}\nPaiement propose: ${money(mission.prix_total)}\n\n🛰️ Ton GPS sera activé jusqu'à la livraison complète.`,
+        confirmText: 'Accepter et activer GPS',
         cancelText: 'Annuler',
         onConfirm: async () => {
           const res = await fetch('/api/assign-driver', {
@@ -317,6 +377,10 @@
           });
           const out = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error(out.error || 'Assignation impossible');
+          // Démarrer GPS tracker tout de suite
+          if (window.papGps && typeof window.papGps.start === 'function') {
+            window.papGps.start();
+          }
         }
       });
 
@@ -342,6 +406,7 @@
     });
   </script>
   <script src="/js/support-widget.js"></script>
+  <script src="/js/gps-tracker.js"></script>
 </body>
 </html>
 
