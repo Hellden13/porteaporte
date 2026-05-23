@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification faciale - Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/face-match.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; }
+    .liv-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+    @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+    .photo-box { background: #05080c; border: 2px solid var(--brand-border); border-radius: 12px; padding: 12px; text-align: center; }
+    .photo-box .label { font-size: .72rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .photo-box img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 4px solid rgba(255,255,255,.1); }
+    .photo-box .missing { padding: 60px 0; color: var(--brand-muted); font-size: .85rem; }
+    .result { margin-top: 14px; padding: 14px; border-radius: 10px; text-align: center; font-weight: 800; }
+    .result.match { background: rgba(0,255,159,.15); border: 1px solid rgba(0,255,159,.4); color: #7dffc1; }
+    .result.nomatch { background: rgba(255,90,90,.15); border: 1px solid rgba(255,90,90,.4); color: #ffb0b0; }
+    .result.unknown { background: rgba(255,200,0,.15); border: 1px solid rgba(255,200,0,.4); color: #ffd700; }
+    .meta { color: var(--brand-muted); font-size: .85rem; line-height: 1.6; }
+    .empty { text-align: center; color: var(--brand-muted); padding: 40px; }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>👤 Vérification faciale (IA)</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+    </div>
+    <p class="meta" style="margin-bottom:16px">Compare automatiquement la selfie du pickup avec la selfie KYC pour détecter les usurpations d'identité. La détection se fait <strong style="color:#fff">100% dans ton navigateur</strong> (privé, gratuit, instantané).</p>
+    <div id="loading" class="empty">Chargement des modèles IA (~7 MB)…</div>
+    <div id="list"></div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+
+      try {
+        await PapFace.loadModels();
+        document.getElementById('loading').textContent = '✅ Modèles IA chargés';
+        await load();
+      } catch (e) {
+        document.getElementById('loading').innerHTML = '❌ Erreur chargement IA : ' + e.message;
+      }
+    }
+
+    async function load() {
+      // Récupérer livraisons avec pickup_selfie + livreur_id (pour KYC selfie)
+      const { data: livs } = await db.from('livraisons')
+        .select('id,code,statut,livreur_id,pickup_selfie_url,pickup_confirmed_at,pickup_face_match_score,pickup_face_match_status')
+        .not('pickup_selfie_url', 'is', null)
+        .order('pickup_confirmed_at', { ascending: false })
+        .limit(50);
+
+      if (!livs?.length) {
+        document.getElementById('list').innerHTML = '<div class="empty">Aucune livraison avec selfie pickup.</div>';
+        return;
+      }
+
+      // Récup les KYC selfies des livreurs concernés
+      const livreurIds = [...new Set(livs.map(l => l.livreur_id).filter(Boolean))];
+      const { data: kycs } = livreurIds.length
+        ? await db.from('kyc_submissions').select('user_id,selfie_path').in('user_id', livreurIds)
+        : { data: [] };
+      const kycMap = {};
+      for (const k of kycs || []) kycMap[k.user_id] = k.selfie_path;
+
+      const list = document.getElementById('list');
+      list.innerHTML = livs.map(l => `
+        <div class="liv-card" id="liv-${l.id}">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center">
+            <div><strong>#${l.code || l.id.slice(0,8)}</strong> <span class="badge" style="background:rgba(168,176,186,.15);color:#a8b0ba">${l.statut}</span></div>
+            <div class="meta">${l.pickup_confirmed_at ? new Date(l.pickup_confirmed_at).toLocaleString('fr-CA') : '—'}</div>
+          </div>
+          <div class="compare">
+            <div class="photo-box">
+              <div class="label">📋 Selfie KYC (inscription)</div>
+              <div id="kyc-${l.id}">${kycMap[l.livreur_id] ? '<div class="missing">Chargement…</div>' : '<div class="missing">⚠️ Aucune selfie KYC</div>'}</div>
+            </div>
+            <div class="photo-box">
+              <div class="label">📷 Selfie pickup (livraison)</div>
+              <img src="${l.pickup_selfie_url}" alt="Pickup selfie" onerror="this.parentNode.innerHTML='<div class=missing>❌ Image inaccessible</div>'">
+            </div>
+          </div>
+          <div id="result-${l.id}" class="result unknown" style="margin-top:14px">⏳ Analyse en cours…</div>
+        </div>
+      `).join('');
+
+      // Charger les KYC selfies depuis le storage et lancer comparaison
+      for (const l of livs) {
+        if (!kycMap[l.livreur_id]) {
+          document.getElementById('result-' + l.id).innerHTML = '⚠️ Pas de selfie KYC à comparer';
+          document.getElementById('result-' + l.id).className = 'result unknown';
+          continue;
+        }
+        try {
+          const { data: signed } = await db.storage.from('kyc-documents').createSignedUrl(kycMap[l.livreur_id], 600);
+          if (!signed?.signedUrl) {
+            document.getElementById('kyc-' + l.id).innerHTML = '<div class="missing">⚠️ KYC inaccessible</div>';
+            continue;
+          }
+          document.getElementById('kyc-' + l.id).innerHTML = `<img src="${signed.signedUrl}" alt="KYC selfie">`;
+          // Comparer
+          const result = await PapFace.compare(signed.signedUrl, l.pickup_selfie_url, 0.55);
+          const resEl = document.getElementById('result-' + l.id);
+          if (result.match === null) {
+            resEl.className = 'result unknown';
+            resEl.innerHTML = '⚠️ ' + result.reason;
+          } else if (result.match) {
+            resEl.className = 'result match';
+            resEl.innerHTML = `✅ IDENTITÉ CONFIRMÉE — Score ${(result.score*100).toFixed(0)}% (distance ${result.distance.toFixed(3)})`;
+            // Sauvegarder le résultat
+            await db.from('livraisons').update({
+              pickup_face_match_score: result.score,
+              pickup_face_match_distance: result.distance,
+              pickup_face_match_status: 'match'
+            }).eq('id', l.id);
+          } else {
+            resEl.className = 'result nomatch';
+            resEl.innerHTML = `🚨 ALERTE — Visages différents (score ${(result.score*100).toFixed(0)}%, distance ${result.distance.toFixed(3)})`;
+            await db.from('livraisons').update({
+              pickup_face_match_score: result.score,
+              pickup_face_match_distance: result.distance,
+              pickup_face_match_status: 'nomatch'
+            }).eq('id', l.id);
+          }
+        } catch (e) {
+          document.getElementById('result-' + l.id).innerHTML = '❌ Erreur : ' + e.message;
+        }
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

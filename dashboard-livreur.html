@@ -1492,14 +1492,13 @@
       }
     }
 
-    function captureSelfie(id) {
+    async function captureSelfie(id) {
       const video = document.getElementById('selfie-video-' + id);
       const canvas = document.getElementById('selfie-canvas-' + id);
       const size = 320;
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
-      // Crop centré carré
       const minDim = Math.min(video.videoWidth, video.videoHeight);
       const sx = (video.videoWidth - minDim) / 2;
       const sy = (video.videoHeight - minDim) / 2;
@@ -1512,10 +1511,58 @@
       video.style.display = 'none';
       document.getElementById('selfie-capture-' + id).style.display = 'none';
       document.getElementById('selfie-retake-' + id).style.display = 'inline-flex';
-      // Stopper le stream
       if (selfieStreams[id]) {
         selfieStreams[id].getTracks().forEach(t => t.stop());
         delete selfieStreams[id];
+      }
+      // Lancer la vérif faciale IA en background
+      verifyFaceMatch(id, dataUrl);
+    }
+
+    async function verifyFaceMatch(id, pickupSelfieDataUrl) {
+      const msgEl = document.getElementById('pickup-msg-' + id);
+      if (!window.PapFace) return;
+      msgEl.style.color = '#7de4ff';
+      msgEl.textContent = '🤖 Vérification faciale IA en cours...';
+      try {
+        // Récupérer la selfie KYC du livreur
+        const { data: kyc } = await db.from('kyc_submissions').select('selfie_path').eq('user_id', session.user.id).single();
+        if (!kyc?.selfie_path) {
+          msgEl.style.color = '#ffd700';
+          msgEl.textContent = '⚠️ Aucune selfie KYC trouvée (vérif IA skip)';
+          window._faceMatchOk = id;
+          return;
+        }
+        const { data: signed } = await db.storage.from('kyc-documents').createSignedUrl(kyc.selfie_path, 300);
+        if (!signed?.signedUrl) {
+          msgEl.style.color = '#ffd700';
+          msgEl.textContent = '⚠️ KYC inaccessible (vérif IA skip)';
+          window._faceMatchOk = id;
+          return;
+        }
+        await PapFace.loadModels();
+        const result = await PapFace.compare(signed.signedUrl, pickupSelfieDataUrl, 0.55);
+        if (result.match === null) {
+          msgEl.style.color = '#ffd700';
+          msgEl.textContent = '⚠️ Visage non détecté — reprends une selfie plus claire';
+          delete selfieData[id];
+          return;
+        }
+        if (!result.match) {
+          msgEl.style.color = '#ffb0b0';
+          msgEl.innerHTML = `🚨 ALERTE — Le visage ne correspond pas à ta KYC (score ${(result.score*100).toFixed(0)}%). Reprends la photo. Si problème persiste, contacte le support.`;
+          delete selfieData[id];
+          window._faceMatchOk = null;
+          return;
+        }
+        msgEl.style.color = '#7dffc1';
+        msgEl.innerHTML = `✅ Identité confirmée par IA (score ${(result.score*100).toFixed(0)}%)`;
+        window._faceMatchOk = id;
+        window._faceMatchScore = result.score;
+      } catch (e) {
+        msgEl.style.color = '#ffd700';
+        msgEl.textContent = '⚠️ IA indisponible (vérif skip): ' + e.message;
+        window._faceMatchOk = id;
       }
     }
 
@@ -2235,5 +2282,6 @@
   <script src="/js/notif-bell.js"></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/gps-tracker.js"></script>
+  <script src="/js/face-match.js"></script>
 </body>
 </html>
