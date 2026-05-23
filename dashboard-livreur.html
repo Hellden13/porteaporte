@@ -1472,6 +1472,71 @@
       if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
 
+    // ── Selfie camera ──
+    const selfieStreams = {};
+    const selfieData = {};
+
+    async function startSelfie(id) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } }
+        });
+        selfieStreams[id] = stream;
+        const video = document.getElementById('selfie-video-' + id);
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('selfie-start-' + id).style.display = 'none';
+        document.getElementById('selfie-capture-' + id).style.display = 'inline-flex';
+      } catch (e) {
+        alert('Impossible d\'accéder à la caméra : ' + e.message);
+      }
+    }
+
+    function captureSelfie(id) {
+      const video = document.getElementById('selfie-video-' + id);
+      const canvas = document.getElementById('selfie-canvas-' + id);
+      const size = 320;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Crop centré carré
+      const minDim = Math.min(video.videoWidth, video.videoHeight);
+      const sx = (video.videoWidth - minDim) / 2;
+      const sy = (video.videoHeight - minDim) / 2;
+      ctx.drawImage(video, sx, sy, minDim, minDim, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      selfieData[id] = dataUrl;
+      const preview = document.getElementById('selfie-preview-' + id);
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+      video.style.display = 'none';
+      document.getElementById('selfie-capture-' + id).style.display = 'none';
+      document.getElementById('selfie-retake-' + id).style.display = 'inline-flex';
+      // Stopper le stream
+      if (selfieStreams[id]) {
+        selfieStreams[id].getTracks().forEach(t => t.stop());
+        delete selfieStreams[id];
+      }
+    }
+
+    function retakeSelfie(id) {
+      delete selfieData[id];
+      document.getElementById('selfie-preview-' + id).style.display = 'none';
+      document.getElementById('selfie-retake-' + id).style.display = 'none';
+      startSelfie(id);
+    }
+
+    function getGPS() {
+      return new Promise(resolve => {
+        if (!navigator.geolocation) return resolve({ lat: null, lng: null });
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve({ lat: null, lng: null }),
+          { timeout: 5000, maximumAge: 60000 }
+        );
+      });
+    }
+
     async function submitPickup(id) {
       const msgEl = document.getElementById('pickup-msg-' + id);
       const code = document.getElementById('pickup-code-' + id)?.value.trim();
@@ -1480,18 +1545,31 @@
         msgEl.textContent = '⚠️ Code invalide (4 caractères min.)';
         return;
       }
+      if (!selfieData[id]) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '⚠️ Selfie obligatoire — capture une photo';
+        return;
+      }
       msgEl.style.color = '#a8b0ba';
-      msgEl.textContent = '⏳ Validation…';
+      msgEl.textContent = '⏳ Récupération GPS + envoi…';
+      const gps = await getGPS();
       try {
         const res = await fetch('/api/livraison-pickup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ livraison_id: id, pickup_code: code })
+          body: JSON.stringify({
+            livraison_id: id,
+            pickup_code: code,
+            selfie_data_url: selfieData[id],
+            gps_lat: gps.lat,
+            gps_lng: gps.lng
+          })
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
         msgEl.style.color = '#7dffc1';
-        msgEl.textContent = '✅ Pickup validé. Statut → "ramassé".';
+        msgEl.textContent = '✅ Pickup validé avec selfie + GPS.';
+        delete selfieData[id];
         setTimeout(() => loadMyDeliveries(), 1800);
       } catch (err) {
         msgEl.style.color = '#ffb0b0';
@@ -1828,9 +1906,22 @@
               <div id="intel-${row.id}" data-addr="${esc(adresseArrivee || row.ville_arrivee || '')}" data-ville="${esc(row.ville_arrivee || '')}" class="intel-zone"></div>
 
               <div id="pickup-${row.id}" style="display:none;margin-top:8px;padding:14px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.25);border-radius:10px">
-                <div style="font-weight:800;color:#7de4ff;margin-bottom:10px">🔑 Code de récupération (donné par l'expéditeur)</div>
-                <input id="pickup-code-${row.id}" type="text" placeholder="Ex: 123456" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:12px;font-size:1rem;letter-spacing:.15em;text-align:center;font-weight:800;text-transform:uppercase">
-                <button class="btn-sm primary" style="margin-top:10px;width:100%" onclick="submitPickup('${row.id}')">✅ Valider le pickup (passe au statut "ramassé")</button>
+                <div style="font-weight:800;color:#7de4ff;margin-bottom:10px">🔑 Pickup sécurisé (code + selfie + GPS)</div>
+
+                <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">1. Code de récupération (donné par l'expéditeur)</label>
+                <input id="pickup-code-${row.id}" type="text" placeholder="Ex: 123456" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:12px;font-size:1rem;letter-spacing:.15em;text-align:center;font-weight:800;text-transform:uppercase;margin-bottom:12px">
+
+                <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">2. Selfie au pickup (preuve d'identité)</label>
+                <div id="selfie-zone-${row.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:#05080c;border:1px dashed #1E2535;border-radius:10px;margin-bottom:12px">
+                  <video id="selfie-video-${row.id}" autoplay playsinline style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(184,245,62,.5)"></video>
+                  <canvas id="selfie-canvas-${row.id}" style="display:none"></canvas>
+                  <img id="selfie-preview-${row.id}" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #b8f53e">
+                  <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);color:#b8f53e">📷 Activer la caméra</button>
+                  <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006">📸 Capturer ma selfie</button>
+                  <button class="btn-sm" type="button" onclick="retakeSelfie('${row.id}')" id="selfie-retake-${row.id}" style="display:none;background:#1E2535;color:#fff">🔄 Reprendre</button>
+                </div>
+
+                <button class="btn-sm primary" style="width:100%" onclick="submitPickup('${row.id}')">✅ Valider le pickup (envoie code + selfie + GPS)</button>
                 <div id="pickup-msg-${row.id}" style="margin-top:8px;font-size:.82rem"></div>
               </div>
 

@@ -431,8 +431,9 @@ async function destinataireLivraisons(req, res, ctx) {
 
 // ── Code de récupération expéditeur (pickup) ──
 async function livraisonPickup(req, res, ctx, body) {
-  const { livraison_id, pickup_code } = body;
+  const { livraison_id, pickup_code, selfie_data_url, gps_lat, gps_lng } = body;
   if (!livraison_id || !pickup_code) return res.status(400).json({ error: 'livraison_id et pickup_code requis' });
+  if (!selfie_data_url) return res.status(400).json({ error: 'Selfie obligatoire pour preuve d\'identité au pickup' });
 
   const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,livreur_id,pickup_code_hash,taille_colis`, {
     headers: sbHeaders(ctx.sbKey)
@@ -463,19 +464,32 @@ async function livraisonPickup(req, res, ctx, body) {
     return res.status(403).json({ error: 'Code de récupération invalide' });
   }
 
+  // Upload selfie au storage Supabase
+  let selfieUrl = null;
+  try {
+    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, livraison_id + '-pickup-selfie', selfie_data_url);
+    selfieUrl = uploaded;
+  } catch (e) {
+    return res.status(400).json({ error: 'Upload selfie impossible: ' + e.message });
+  }
+
+  const patch = {
+    statut: 'ramasse',
+    pickup_confirmed_at: new Date().toISOString(),
+    pickup_selfie_url: selfieUrl,
+    pickup_gps_lat: gps_lat != null ? Number(gps_lat) : null,
+    pickup_gps_lng: gps_lng != null ? Number(gps_lng) : null
+  };
   const pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({
-      statut: 'ramasse',
-      pickup_confirmed_at: new Date().toISOString()
-    })
+    body: JSON.stringify(patch)
   });
   if (!pr.ok) {
     const errData = await pr.json().catch(() => ({}));
     return res.status(400).json({ error: 'Mise à jour impossible', details: errData });
   }
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, pickup_selfie_url: selfieUrl });
 }
 
 // ── Confirmation XL — destinataire doit confirmer présence avant départ livreur ──
