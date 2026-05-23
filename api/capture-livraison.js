@@ -180,21 +180,27 @@ module.exports = async function handler(req, res) {
   }
 
   if (confirmationHash) {
-    if (!recipientCodeValid) {
+    if (!recipientCodeValid && !admin) {
       return res.status(403).json({
         error: 'Code de reception destinataire invalide. Le paiement reste protege.'
       });
     }
+    if (!recipientCodeValid && admin && !admin_override_reason) {
+      return res.status(403).json({
+        error: 'Code invalide. En tant qu\'admin, fournis une raison de validation manuelle (admin_override_reason).',
+        requires_admin_override: true
+      });
+    }
   } else if (!admin || !admin_override_reason) {
     return res.status(409).json({
-      error: 'Confirmation destinataire requise. Cette ancienne livraison n a pas de code de reception; validation admin requise.',
+      error: 'Confirmation destinataire requise. Cette livraison n a pas de code de reception; validation admin requise.',
       requires_admin_override: true
     });
   }
 
   const recipientConfirmationPatch = {
     recipient_confirmed_at: new Date().toISOString(),
-    recipient_confirmation_method: confirmationHash ? 'recipient_code' : 'admin_override'
+    recipient_confirmation_method: recipientCodeValid ? 'recipient_code' : 'admin_override'
   };
 
   let tx = await getPaymentTransaction(SB_URL, SB_KEY, livraison_id);
@@ -301,6 +307,68 @@ module.exports = async function handler(req, res) {
       admin_override_reason: admin_override_reason || null
     }
   });
+
+  // Créditer les gains du livreur (60% du montant capturé)
+  if (livraison.livreur_id && captured.amount_received > 0) {
+    const grossCents = captured.amount_received;
+    const netCents   = Math.floor(grossCents * 0.60); // 60% au livreur
+    const feeCents   = grossCents - netCents;          // 40% plateforme
+    await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id:               livraison.livreur_id,
+        livraison_id,
+        gross_amount:          grossCents / 100,
+        platform_fee:          feeCents   / 100,
+        net_amount:            netCents   / 100,
+        currency:              captured.currency || 'cad',
+        status:                'available',
+        available_after:       new Date().toISOString(),
+        stripe_payment_intent: captured.id,
+        created_at:            new Date().toISOString()
+      })
+    }).catch(e => console.error('[livreur_earnings insert]', e.message));
+  }
+
+  // ── Notifier expéditeur + livreur : livraison complète, paiement libéré ──
+  try {
+    const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
+    const notifHeaders = { 'Content-Type': 'application/json' };
+    if (process.env.INTERNAL_API_SECRET) notifHeaders['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+
+    // Récupérer emails expéditeur + livreur
+    const ids = [livraison.expediteur_id, livraison.livreur_id].filter(Boolean);
+    const profRes = await fetch(
+      `${SB_URL}/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,email,nom,prenom`,
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
+    );
+    const profiles = profRes.ok ? await profRes.json().catch(() => []) : [];
+    const expProfile = profiles.find(p => p.id === livraison.expediteur_id);
+    const livProfile = profiles.find(p => p.id === livraison.livreur_id);
+
+    const netCents = (livraison.livreur_id && captured.amount_received > 0)
+      ? Math.floor(captured.amount_received * 0.60)
+      : 0;
+
+    await fetch(`${origin}/api/notifier`, {
+      method: 'POST',
+      headers: notifHeaders,
+      body: JSON.stringify({
+        type: 'livraison_complete',
+        data: {
+          expediteur_email: expProfile?.email,
+          livreur_email:    livProfile?.email,
+          code:             livraison.code,
+          montant_livreur:  (netCents / 100).toFixed(2),
+          ville_depart:     livraison.ville_depart,
+          ville_arrivee:    livraison.ville_arrivee,
+        }
+      })
+    }).catch(e => console.error('[notifier livraison_complete fetch]', e.message));
+  } catch (e) {
+    console.error('[livraison_complete notify error]', e.message);
+  }
 
   return res.status(200).json({
     success: true,

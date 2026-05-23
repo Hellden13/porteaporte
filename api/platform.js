@@ -1,350 +1,33 @@
-const CORS = {
-  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
+// api/platform.js — Gestionnaire principal PorteaPorte
+// Modules extraits : _lib.js · _push.js · _rides.js · _growth.js · _connect.js
 
-function sanitizeEnv(s) {
-  let v = (s || '').trim();
-  while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
-  return v.trim();
-}
+const {
+  CORS, sanitizeEnv, safeIds, sbHeaders, parseDataUrl, uploadProofPhoto,
+  signStorageUrl, getSession, getProfile, roleIn, mergeUserRole,
+  isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
+  generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
+  driverTransportMode, estimateRouteKm, siteOrigin, internalHeaders,
+  callNotifier, deliveryEligibility, missingColumn, insertWithSchemaFallback,
+  stripeRequest, defaultRewardMissions,
+} = require('./_lib');
 
-/* Valide qu'un ID est un UUID ou identifiant Supabase sûr (hex + tirets, max 64 chars).
-   Empêche l'injection dans les filtres in.() de PostgREST. */
-function safeIds(arr) {
-  return (arr || []).filter(id => typeof id === 'string' && /^[0-9a-f\-]{1,64}$/i.test(id));
-}
-
-function sbHeaders(key, prefer = 'return=representation') {
-  return {
-    apikey: key,
-    Authorization: `Bearer ${key}`,
-    'Content-Type': 'application/json',
-    Prefer: prefer,
-  };
-}
-
-function parseDataUrl(dataUrl) {
-  const match = String(dataUrl || '').match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
-  if (!match) return null;
-  const mimeType = match[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].toLowerCase();
-  const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
-  return {
-    mimeType,
-    ext,
-    buffer: Buffer.from(match[2], 'base64')
-  };
-}
-
-async function uploadProofPhoto(sbUrl, sbKey, livraisonId, dataUrl) {
-  const parsed = parseDataUrl(dataUrl);
-  if (!parsed || !parsed.buffer.length) return null;
-  if (parsed.buffer.length > 900000) {
-    const err = new Error('Photo trop lourde. Reprends une photo plus legere.');
-    err.status = 413;
-    throw err;
-  }
-  const objectPath = `${encodeURIComponent(livraisonId)}/${Date.now()}-${Math.random().toString(36).slice(2)}.${parsed.ext}`;
-  const upload = await fetch(`${sbUrl}/storage/v1/object/delivery-proofs/${objectPath}`, {
-    method: 'POST',
-    headers: {
-      apikey: sbKey,
-      Authorization: `Bearer ${sbKey}`,
-      'Content-Type': parsed.mimeType,
-      'x-upsert': 'false'
-    },
-    body: parsed.buffer
-  }).catch(() => null);
-  if (!upload?.ok) return null;
-  return {
-    bucket: 'delivery-proofs',
-    path: objectPath,
-    mimeType: parsed.mimeType,
-    size: parsed.buffer.length
-  };
-}
-
-async function signStorageUrl(sbUrl, sbKey, bucket, path) {
-  if (!bucket || !path) return null;
-  const r = await fetch(`${sbUrl}/storage/v1/object/sign/${bucket}/${path}`, {
-    method: 'POST',
-    headers: {
-      apikey: sbKey,
-      Authorization: `Bearer ${sbKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ expiresIn: 60 * 10 })
-  }).catch(() => null);
-  if (!r?.ok) return null;
-  const data = await r.json().catch(() => ({}));
-  if (!data.signedURL && !data.signedUrl) return null;
-  const signed = data.signedURL || data.signedUrl;
-  return signed.startsWith('http') ? signed : `${sbUrl}/storage/v1${signed}`;
-}
-
-async function getSession(req, sbUrl, sbKey) {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  if (!token) return null;
-  const r = await fetch(`${sbUrl}/auth/v1/user`, {
-    headers: { apikey: sbKey, Authorization: `Bearer ${token}` }
-  });
-  return r.ok ? r.json() : null;
-}
-
-async function getProfile(userId, sbUrl, sbKey) {
-  let r = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}&select=id,email,prenom,nom,role,suspendu,email_verified,verification_status,driver_status,ville,vehicule,trajet_principal,mode_livraison,transport_mode`, {
-    headers: sbHeaders(sbKey)
-  });
-  if (!r.ok) {
-    r = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}&select=id,email,prenom,nom,role,suspendu,email_verified,verification_status,driver_status,ville,vehicule,trajet_principal`, {
-      headers: sbHeaders(sbKey)
-    });
-  }
-  if (!r.ok) {
-    r = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}&select=id,email,prenom,nom,role,suspendu,email_verified,verification_status,driver_status`, {
-      headers: sbHeaders(sbKey)
-    });
-  }
-  if (!r.ok) {
-    r = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}&select=id,role,suspendu`, {
-      headers: sbHeaders(sbKey)
-    });
-  }
-  const rows = r.ok ? await r.json() : [];
-  return rows[0] || null;
-}
-
-function roleIn(profile, roles) {
-  return profile && !profile.suspendu && roles.includes(profile.role);
-}
-
-function mergeUserRole(currentRole, requestedRole) {
-  const current = normalizeText(currentRole);
-  const requested = normalizeText(requestedRole === 'both' ? 'les deux' : requestedRole);
-  if (requested === 'les deux') return 'les deux';
-  if (current === 'admin') return 'admin';
-  if ((current === 'expediteur' && requested === 'livreur') || (current === 'livreur' && requested === 'expediteur')) {
-    return 'les deux';
-  }
-  if (current === 'les deux') return 'les deux';
-  if (requested === 'livreur') return 'livreur';
-  if (requested === 'expediteur') return 'expediteur';
-  return currentRole || 'expediteur';
-}
-
-function isEmailVerified(session, profile) {
-  return Boolean(profile?.email_verified || session?.email_confirmed_at || session?.confirmed_at);
-}
-
-function isVerifiedDriver(session, profile) {
-  if (profile?.role === 'admin' && !profile?.suspendu) return true;
-  return Boolean(
-    profile &&
-    !profile.suspendu &&
-    isEmailVerified(session, profile) &&
-    ['livreur', 'les deux'].includes(profile.role) &&
-    profile.driver_status === 'verified'
-  );
-}
-
-function endpointFromReq(req, body) {
-  const url = new URL(req.url || '/', 'https://porteaporte.site');
-  return body.endpoint || url.searchParams.get('endpoint') || url.pathname.split('/').pop() || body.action;
-}
-
-function toNumber(value, fallback = null) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function generateReceptionCode() {
-  const crypto = require('crypto');
-  return String(crypto.randomInt(100000, 1000000));
-}
-
-function hashReceptionCode(code, livraisonId) {
-  const crypto = require('crypto');
-  return crypto
-    .createHash('sha256')
-    .update(`${String(code || '').trim()}|${String(livraisonId || '')}`)
-    .digest('hex');
-}
-
-function normalizeText(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function normalizeCity(value) {
-  return normalizeText(value).replace(/[^a-z0-9]/g, '');
-}
-
-function driverTransportMode(profile) {
-  const raw = [
-    profile?.mode_livraison,
-    profile?.transport_mode,
-    profile?.vehicule,
-    profile?.trajet_principal
-  ].filter(Boolean).join(' ');
-  const text = normalizeText(raw);
-
-  if (!text) return 'unknown';
-  if (text.includes('pied') || text.includes('marche')) return 'foot';
-  if (text.includes('velo') || text.includes('bicyc') || text.includes('bike')) return 'bike';
-  if (text.includes('trottinette')) return 'scooter';
-  if (text.includes('moto') || text.includes('auto') || text.includes('voiture') || text.includes('camion') || text.includes('vus') || text.includes('fourgon') || text.includes('remorque')) return 'motor';
-  return 'unknown';
-}
-
-function estimateRouteKm(from, to) {
-  const a = normalizeCity(from);
-  const b = normalizeCity(to);
-  if (!a || !b) return null;
-  if (a === b) return 5;
-  const pairs = {
-    'quebec-levis': 8,
-    'levis-quebec': 8,
-    'montreal-laval': 18,
-    'laval-montreal': 18,
-    'montreal-longueuil': 12,
-    'longueuil-montreal': 12,
-    'montreal-brossard': 16,
-    'brossard-montreal': 16,
-    'quebec-montreal': 265,
-    'montreal-quebec': 265,
-    'montreal-sherbrooke': 145,
-    'sherbrooke-montreal': 145,
-    'quebec-troisrivieres': 130,
-    'troisrivieres-quebec': 130,
-    'montreal-troisrivieres': 140,
-    'troisrivieres-montreal': 140,
-    'gatineau-montreal': 200,
-    'montreal-gatineau': 200
-  };
-  return pairs[`${a}-${b}`] ?? 200;
-}
-
-function siteOrigin() {
-  return (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
-}
-
-function internalHeaders() {
-  const headers = { 'Content-Type': 'application/json' };
-  const secret = process.env.INTERNAL_API_SECRET;
-  if (secret) headers['x-internal-notifier-secret'] = secret;
-  return headers;
-}
-
-async function callNotifier(type, data) {
-  const r = await fetch(`${siteOrigin()}/api/notifier`, {
-    method: 'POST',
-    headers: internalHeaders(),
-    body: JSON.stringify({ type, data })
-  });
-  const out = await r.json().catch(() => ({}));
-  return { ok: r.ok, status: r.status, data: out };
-}
-
-function deliveryEligibility(profile, livraison) {
-  if (profile?.role === 'admin') {
-    return { allowed: true, reason: 'Accès admin', mode: 'motor', routeKm: estimateRouteKm(livraison?.ville_depart, livraison?.ville_arrivee) };
-  }
-  const mode = driverTransportMode(profile);
-  const driverCity = normalizeCity(profile?.ville || '');
-  const fromCity = normalizeCity(livraison?.ville_depart || '');
-  const toCity = normalizeCity(livraison?.ville_arrivee || '');
-  const sameDeliveryCity = fromCity && toCity && fromCity === toCity;
-  const startsNearDriver = !driverCity || !fromCity || driverCity === fromCity;
-  const routeKm = estimateRouteKm(livraison?.ville_depart, livraison?.ville_arrivee);
-  const weightKg = toNumber(livraison?.poids_kg, null);
-
-  if (!fromCity || !toCity) {
-    return { allowed: false, reason: 'Villes de livraison incompletes', mode, routeKm };
-  }
-
-  if (mode === 'foot') {
-    if (!sameDeliveryCity) return { allowed: false, reason: 'A pied: meme ville seulement', mode, routeKm };
-    if (!startsNearDriver) return { allowed: false, reason: 'A pied: ville de depart trop loin', mode, routeKm };
-    if (routeKm !== null && routeKm > 5) return { allowed: false, reason: 'A pied: distance maximale 5 km', mode, routeKm };
-    if (weightKg !== null && weightKg > 5) return { allowed: false, reason: 'A pied: colis trop lourd', mode, routeKm };
-    return { allowed: true, reason: 'Compatible a pied', mode, routeKm };
-  }
-
-  if (mode === 'bike' || mode === 'scooter') {
-    if (!sameDeliveryCity) return { allowed: false, reason: 'Velo/trottinette: meme ville seulement', mode, routeKm };
-    if (!startsNearDriver) return { allowed: false, reason: 'Velo/trottinette: ville de depart trop loin', mode, routeKm };
-    if (routeKm !== null && routeKm > 20) return { allowed: false, reason: 'Velo/trottinette: distance maximale 20 km', mode, routeKm };
-    if (weightKg !== null && weightKg > 15) return { allowed: false, reason: 'Velo/trottinette: colis trop lourd', mode, routeKm };
-    return { allowed: true, reason: 'Compatible velo/trottinette', mode, routeKm };
-  }
-
-  if (mode === 'motor') {
-    return { allowed: true, reason: 'Compatible vehicule motorise', mode, routeKm };
-  }
-
-  if (!sameDeliveryCity || !startsNearDriver) {
-    return { allowed: false, reason: 'Mode de transport a configurer pour voir les livraisons plus loin', mode, routeKm };
-  }
-  return { allowed: true, reason: 'Compatible localement; mode de transport a completer', mode, routeKm };
-}
-
-function missingColumn(details) {
-  const message = typeof details === 'string' ? details : details?.message || '';
-  const match = message.match(/Could not find the '([^']+)' column/i);
-  return match ? match[1] : null;
-}
-
-async function insertWithSchemaFallback(url, headers, payload, optionalColumns = []) {
-  const current = { ...payload };
-
-  for (let attempt = 0; attempt <= optionalColumns.length + 2; attempt += 1) {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(current)
-    });
-    const data = await r.json().catch(() => ({}));
-    if (r.ok) return { ok: true, data };
-
-    const missing = missingColumn(data);
-    if (missing && Object.prototype.hasOwnProperty.call(current, missing)) {
-      delete current[missing];
-      continue;
-    }
-
-    const removable = optionalColumns.find((column) => Object.prototype.hasOwnProperty.call(current, column));
-    if (removable) {
-      delete current[removable];
-      continue;
-    }
-
-    return { ok: false, data };
-  }
-
-  return { ok: false, data: { message: 'Schema incompatible avec livraisons' } };
-}
-
-async function stripeRequest(method, path, body, secretKey) {
-  const options = {
-    method,
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Stripe-Version': '2024-04-10',
-    },
-  };
-  if (body && method !== 'GET') options.body = new URLSearchParams(body).toString();
-  const r = await fetch(`https://api.stripe.com${path}`, options);
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error?.message || `Stripe ${r.status}`);
-  return data;
-}
+const { pushSubscribe, deliverPush, pushSend } = require('./_push');
+const {
+  getRideSettings,
+  rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
+  rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
+  covDashboard, covOnboard, covProgress,
+} = require('./_rides');
+const {
+  growthDashboard, referralGet, referralUse, badgesList, badgesGrant,
+  xpHistory, pointsHistory, adminGrowth, badgeCampaigns, badgeCampaignSave,
+  badgeCampaignToggle, badgeBenefitStatus, rewardReferralIfPending,
+} = require('./_growth');
+const {
+  stripeConnectOnboard, stripeConnectStatus, stripeConnectDashboard,
+  stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
+} = require('./_connect');
+const { checkRateLimit, getClientIp } = require('./_ratelimit');
 
 async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
@@ -365,6 +48,9 @@ async function createLivraison(req, res, ctx, body) {
     prix_total: toNumber(body.prix_total || body.prix, 0),
     assurance_plan: body.assurance_plan || null,
     notes: body.notes || null,
+    nom_destinataire: body.nom_destinataire || null,
+    email_destinataire: body.email_destinataire || null,
+    telephone_destinataire: body.telephone_destinataire || null,
   };
 
   if (!payload.adresse_depart || !payload.adresse_arrivee) {
@@ -375,7 +61,7 @@ async function createLivraison(req, res, ctx, body) {
     `${ctx.sbUrl}/rest/v1/livraisons`,
     sbHeaders(ctx.sbKey),
     payload,
-    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'assurance_plan', 'notes']
+    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire']
   );
 
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
@@ -403,6 +89,25 @@ async function createLivraison(req, res, ctx, body) {
       prix_total: livraison?.prix_total ?? payload.prix_total
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
+
+  // Email à l'expéditeur avec le code de réception destinataire
+  if (receptionCode && (ctx.session.email || ctx.profile?.email)) {
+    callNotifier('livraison_creee_expediteur', {
+      expediteur_email: ctx.session.email || ctx.profile?.email,
+      prenom: ctx.profile?.prenom || '',
+      code: livraison?.code || livraison?.id?.slice(0, 8) || '',
+      livraison_id: livraison?.id || '',
+      ville_depart: livraison?.ville_depart || payload.ville_depart || '',
+      ville_arrivee: livraison?.ville_arrivee || payload.ville_arrivee || '',
+      adresse_depart: payload.adresse_depart || '',
+      adresse_arrivee: payload.adresse_arrivee || '',
+      type_colis: payload.type_colis || 'Colis',
+      prix_total: livraison?.prix_total ?? payload.prix_total,
+      recipient_code: receptionCode,
+      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}`
+    }).catch((err) => console.error('[notifier livraison_creee_expediteur]', err.message));
+  }
+
   return res.status(200).json({ success: true, livraison, recipient_confirmation_code: receptionCode });
 }
 
@@ -657,6 +362,75 @@ async function submitDeliveryProof(req, res, ctx, body) {
   }
   if (!patched) return res.status(400).json({ error: 'Preuve enregistree, mais statut livraison non mis a jour' });
 
+  // Notifications post-preuve — fire and forget
+  try {
+    const fullLivRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,ville_depart,adresse_depart,ville_arrivee,adresse_arrivee,type_colis,prix_total,expediteur_id,email_destinataire,nom_destinataire`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    const fullLivRows = fullLivRes.ok ? await fullLivRes.json() : [];
+    const fullLiv = fullLivRows[0] || {};
+
+    // Récupérer l'email de l'expéditeur
+    let expediteurEmail = null;
+    let expediteurPrenom = '';
+    if (fullLiv.expediteur_id) {
+      const epRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(fullLiv.expediteur_id)}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+      const epRows = epRes.ok ? await epRes.json() : [];
+      expediteurEmail = epRows[0]?.email || null;
+      expediteurPrenom = epRows[0]?.prenom || '';
+    }
+
+    const adminLink = `${siteOrigin()}/admin/dashboard-admin.html`;
+    const livraisonCode = fullLiv.code || livraisonId.slice(0, 8);
+    const confirmLink = `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}`;
+
+    // 1. Notif admin — preuve soumise, action requise
+    callNotifier('preuve_soumise_admin', {
+      code: livraisonCode,
+      livraison_id: livraisonId,
+      ville_depart: fullLiv.ville_depart || '',
+      ville_arrivee: fullLiv.ville_arrivee || '',
+      type_colis: fullLiv.type_colis || 'Colis',
+      prix_total: fullLiv.prix_total || 0,
+      livreur_prenom: ctx.profile?.prenom || '',
+      livreur_email: ctx.session.email || '',
+      note,
+      admin_link: adminLink,
+      confirm_link: confirmLink
+    }).catch((e) => console.error('[notifier preuve_soumise_admin]', e.message));
+
+    // 2. Notif expéditeur — colis livré, en attente confirmation
+    if (expediteurEmail) {
+      callNotifier('colis_livre_expediteur', {
+        expediteur_email: expediteurEmail,
+        prenom: expediteurPrenom,
+        code: livraisonCode,
+        livraison_id: livraisonId,
+        ville_depart: fullLiv.ville_depart || '',
+        ville_arrivee: fullLiv.ville_arrivee || '',
+        adresse_arrivee: fullLiv.adresse_arrivee || '',
+        type_colis: fullLiv.type_colis || 'Colis',
+        confirm_link: confirmLink,
+        nom_destinataire: fullLiv.nom_destinataire || ''
+      }).catch((e) => console.error('[notifier colis_livre_expediteur]', e.message));
+    }
+
+    // 3. Notif destinataire — si email disponible
+    if (fullLiv.email_destinataire) {
+      callNotifier('colis_livre_destinataire', {
+        destinataire_email: fullLiv.email_destinataire,
+        nom_destinataire: fullLiv.nom_destinataire || '',
+        code: livraisonCode,
+        livraison_id: livraisonId,
+        ville_arrivee: fullLiv.ville_arrivee || '',
+        confirm_link: confirmLink
+      }).catch((e) => console.error('[notifier colis_livre_destinataire]', e.message));
+    }
+  } catch (notifErr) {
+    console.error('[post-proof notifications]', notifErr.message);
+  }
+
   return res.status(200).json({
     success: true,
     proof: Array.isArray(proofData) ? proofData[0] : proofData,
@@ -741,15 +515,17 @@ async function availableLivraisons(req, res, ctx) {
       adresse_depart: null,
       ville_arrivee: row.ville_arrivee,
       adresse_arrivee: null,
+      adresse_masquees: true,
       type_colis: row.type_colis,
       poids_kg: row.poids_kg,
       prix_total: row.prix_total,
       statut: row.statut,
       description: row.description,
+      notes: null,
       distance_km: eligibility.routeKm,
       compatibilite: eligibility.reason,
       cree_le: row.cree_le || row.created_at,
-      expediteur_profile: null
+      expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
     }))
   });
 }
@@ -1059,6 +835,19 @@ async function adminDisputeAction(req, res, ctx, body) {
     });
     lastData = await r.json().catch(() => ({}));
     if (r.ok) {
+      // Si litige ouvert → enregistrer la date sur le profil du livreur pour reset le streak
+      if (action === 'open_litige') {
+        const liv = Array.isArray(lastData) ? lastData[0] : lastData;
+        const driverId = liv?.livreur_id;
+        if (driverId) {
+          // Appel RPC record_driver_litige (fail silencieux)
+          fetch(`${ctx.sbUrl}/rest/v1/rpc/record_driver_litige`, {
+            method: 'POST',
+            headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ p_driver_id: driverId })
+          }).catch(() => {});
+        }
+      }
       return res.status(200).json({
         success: true,
         livraison: Array.isArray(lastData) ? lastData[0] : lastData,
@@ -1144,6 +933,9 @@ async function submitDriverVerification(req, res, ctx, body) {
   if (!['livreur', 'les deux', 'admin'].includes(ctx.profile.role)) {
     return res.status(403).json({ error: 'Role livreur requis' });
   }
+  // Rate limit : 3 soumissions KYC par utilisateur par 24h
+  const rl = await checkRateLimit(`kyc:${ctx.session.id}`, 3, 86400);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop de soumissions KYC aujourd\'hui. Réessayez demain.' });
   if (!isEmailVerified(ctx.session, ctx.profile)) {
     return res.status(403).json({ error: 'Courriel confirme requis avant verification livreur' });
   }
@@ -1505,13 +1297,14 @@ async function refundPayment(req, res, ctx, body) {
 }
 
 async function createReview(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role expediteur requis' });
-  }
+  // Rate limit : 5 avis par utilisateur par heure
+  const rl = await checkRateLimit(`review:${ctx.session.id}`, 5, 3600);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop d\'avis soumis. Réessayez dans une heure.' });
 
   const livraisonId = body.livraison_id || body.livraisonId || body.delivery_id;
   const rating = Math.round(toNumber(body.rating || body.note, 0));
   const comment = String(body.comment || body.commentaire || '').trim().slice(0, 800);
+  const reviewerRole = body.reviewer_role || 'expediteur'; // 'expediteur' | 'livreur'
   if (!livraisonId || rating < 1 || rating > 5) {
     return res.status(400).json({ error: 'livraison_id et note 1-5 requis' });
   }
@@ -1523,17 +1316,32 @@ async function createReview(req, res, ctx, body) {
   const livraison = rows[0];
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
   const admin = roleIn(ctx.profile, ['admin']);
-  if (!admin && livraison.expediteur_id !== ctx.session.id) {
-    return res.status(403).json({ error: 'Avis reserve a l expediteur de la livraison' });
-  }
-  if (!livraison.livreur_id) return res.status(409).json({ error: 'Aucun livreur assigne a evaluer' });
-  if (!['livre', 'payee'].includes(livraison.statut)) {
+  if (!['livre', 'livree', 'payee', 'confirmee', 'succeeded'].includes(livraison.statut) && !admin) {
     return res.status(409).json({ error: 'Avis possible seulement apres livraison' });
   }
 
+  let reviewedId, reviewedRole;
+  if (reviewerRole === 'livreur') {
+    // Livreur évalue l'expéditeur
+    if (!admin && livraison.livreur_id !== ctx.session.id)
+      return res.status(403).json({ error: 'Avis reserve au livreur de cette livraison' });
+    if (!livraison.expediteur_id) return res.status(409).json({ error: 'Aucun expediteur a evaluer' });
+    reviewedId   = livraison.expediteur_id;
+    reviewedRole = 'expediteur';
+  } else {
+    // Expéditeur évalue le livreur (défaut)
+    if (!admin && livraison.expediteur_id !== ctx.session.id)
+      return res.status(403).json({ error: 'Avis reserve a l expediteur de la livraison' });
+    if (!livraison.livreur_id) return res.status(409).json({ error: 'Aucun livreur assigne a evaluer' });
+    reviewedId   = livraison.livreur_id;
+    reviewedRole = 'livreur';
+  }
+
   const reviewPayload = {
-    reviewed_id: livraison.livreur_id,
-    reviewer_id: ctx.session.id,
+    reviewed_id:   reviewedId,
+    reviewer_id:   ctx.session.id,
+    reviewer_role: reviewerRole,
+    reviewed_role: reviewedRole,
     rating,
     comment,
     delivery_id: livraison.id
@@ -1579,6 +1387,67 @@ async function createReview(req, res, ctx, body) {
 
   if (!r.ok) return res.status(400).json({ error: 'Creation avis impossible', details: data });
   return res.status(200).json({ success: true, review: Array.isArray(data) ? data[0] : data });
+}
+
+// Avis public du destinataire (sans auth — prouvé par le code de confirmation)
+async function recipientReview(req, res, sbUrl, sbKey, body) {
+  // Rate limit : 3 avis par IP par heure (endpoint public sans auth)
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`recipient-review:${ip}`, 3, 3600);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans une heure.' });
+
+  const livraisonId = body.livraison_id;
+  const rating  = Math.round(toNumber(body.rating || body.note, 0));
+  const comment = String(body.comment || body.commentaire || '').trim().slice(0, 800);
+  if (!livraisonId || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'livraison_id et note 1-5 requis' });
+  }
+  // Vérifier que la livraison est bien confirmée/livrée
+  const livRes = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,statut`, {
+    headers: sbHeaders(sbKey)
+  });
+  const rows = livRes.ok ? await livRes.json() : [];
+  const liv = rows[0];
+  if (!liv) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (!['livre', 'livree', 'payee', 'confirmee', 'succeeded'].includes(liv.statut)) {
+    return res.status(409).json({ error: 'Livraison pas encore confirmee' });
+  }
+  if (!liv.livreur_id) return res.status(409).json({ error: 'Aucun livreur a evaluer' });
+
+  // Vérifier qu'il n'y a pas déjà un avis destinataire pour cette livraison
+  const existRes = await fetch(`${sbUrl}/rest/v1/reviews?delivery_id=eq.${encodeURIComponent(livraisonId)}&reviewer_role=eq.destinataire&select=id&limit=1`, {
+    headers: sbHeaders(sbKey)
+  });
+  const existing = existRes.ok ? await existRes.json() : [];
+  if (existing.length) return res.status(409).json({ error: 'Avis destinataire deja soumis' });
+
+  const payload = {
+    reviewed_id:   liv.livreur_id,
+    reviewer_id:   null,
+    reviewer_role: 'destinataire',
+    reviewed_role: 'livreur',
+    is_anonymous:  true,
+    rating,
+    comment,
+    delivery_id: liv.id
+  };
+  // Essai schema moderne
+  let r = await fetch(`${sbUrl}/rest/v1/reviews`, {
+    method: 'POST',
+    headers: sbHeaders(sbKey),
+    body: JSON.stringify(payload)
+  });
+  let data = await r.json().catch(() => ({}));
+  // Fallback schema legacy
+  if (!r.ok) {
+    const legacy = { livreur_id: liv.livreur_id, note: rating, commentaire: comment, livraison_id: liv.id };
+    r = await fetch(`${sbUrl}/rest/v1/reviews`, {
+      method: 'POST', headers: sbHeaders(sbKey), body: JSON.stringify(legacy)
+    });
+    data = await r.json().catch(() => ({}));
+  }
+  if (!r.ok) return res.status(400).json({ error: 'Avis destinataire impossible', details: data });
+  return res.status(200).json({ success: true });
 }
 
 async function fetchImpactState(sbUrl, sbKey) {
@@ -1668,6 +1537,18 @@ async function fetchImpactState(sbUrl, sbKey) {
 
 async function impactPublic(req, res, ctx) {
   const state = await fetchImpactState(ctx.sbUrl, ctx.sbKey);
+
+  // Fonds de protection : 2% de toutes les livraisons confirmées depuis le début
+  const fundRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total&statut=eq.confirmee&limit=10000`,
+    { headers: sbHeaders(ctx.sbKey) }
+  ).catch(() => null);
+  const fundRows = fundRes?.ok ? await fundRes.json().catch(() => []) : [];
+  const fundTotalCents = Math.round(
+    fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0) * 0.02
+  );
+  const fundMaxClaimCents = Math.floor(fundTotalCents * 0.5); // max 50% du fonds par réclamation
+
   const [drawsRes, winnersRes] = await Promise.all([
     fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
       headers: sbHeaders(ctx.sbKey)
@@ -1692,7 +1573,14 @@ async function impactPublic(req, res, ctx) {
     totals: state.totals,
     allocations: state.allocations
   };
-  return res.status(200).json({ success: true, impact: publicState, draws, winners });
+  const protectionFund = {
+    total_cents: fundTotalCents,
+    max_claim_cents: fundMaxClaimCents,
+    funded_by: '2% de chaque livraison confirmée',
+    note: 'Fonds volontaire bêta — pas un contrat d\'assurance.'
+  };
+
+  return res.status(200).json({ success: true, impact: publicState, draws, winners, protection_fund: protectionFund });
 }
 
 async function impactApplicationPublic(req, res, ctx, body) {
@@ -1881,42 +1769,6 @@ async function impactAdmin(req, res, ctx, body) {
   return res.status(400).json({ error: 'Mode impact inconnu' });
 }
 
-function defaultRewardMissions() {
-  const now = new Date();
-  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59));
-  return [
-    {
-      id: 'default-5-week',
-      title: '5 livraisons cette semaine',
-      description: 'Completer 5 livraisons pour debloquer un bonus de regularite.',
-      objective_type: 'deliveries_week',
-      objective_target: 5,
-      reward_coins: 50,
-      deadline: monthEnd.toISOString(),
-      status: 'active'
-    },
-    {
-      id: 'default-perfect',
-      title: 'Service impeccable',
-      description: 'Maintenir une note moyenne de 4.8 ou plus sur 10 livraisons.',
-      objective_type: 'rating',
-      objective_target: 10,
-      reward_coins: 75,
-      deadline: monthEnd.toISOString(),
-      status: 'active'
-    },
-    {
-      id: 'default-community',
-      title: 'Coup de main communautaire',
-      description: 'Aider un aine ou une demande solidaire approuvee.',
-      objective_type: 'community',
-      objective_target: 1,
-      reward_coins: 50,
-      deadline: monthEnd.toISOString(),
-      status: 'active'
-    }
-  ];
-}
 
 function computeDriverLevel(profile, coinsBalance) {
   const deliveries = Number(profile?.livraisons || 0);
@@ -1969,6 +1821,40 @@ async function rewardsDashboard(req, res, ctx) {
     entries = entriesRes.ok ? await entriesRes.json() : [];
   }
 
+  // ── Claim-free streak ──────────────────────────────────────────────────────
+  const MILESTONES = [
+    { key: '7j',   days: 7,   label: 'Semaine propre',       emoji: '🌱', points: 25 },
+    { key: '30j',  days: 30,  label: 'Mois irréprochable',   emoji: '⭐', points: 100 },
+    { key: '90j',  days: 90,  label: 'Livreur fiable',       emoji: '🏆', points: 250 },
+    { key: '180j', days: 180, label: 'Livreur de confiance', emoji: '💎', points: 500 },
+    { key: '365j', days: 365, label: 'Livreur élite',        emoji: '🚀', points: 1000 },
+  ];
+  let claimFreeData = { claim_free_days: 0, milestones_reached: [] };
+  try {
+    const cfRes = await fetch(`${ctx.sbUrl}/rest/v1/rpc/get_claim_free_days`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_driver_id: ctx.session.id })
+    });
+    if (cfRes.ok) claimFreeData = await cfRes.json();
+  } catch (_) {}
+
+  // Auto-attribution des jalons non encore donnés
+  const reached = claimFreeData.milestones_reached || [];
+  for (const m of MILESTONES) {
+    if (claimFreeData.claim_free_days >= m.days && !reached.includes(m.key)) {
+      // Attribuer le jalon (fire & forget)
+      fetch(`${ctx.sbUrl}/rest/v1/rpc/award_claim_free_milestone`, {
+        method: 'POST',
+        headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_driver_id: ctx.session.id, p_milestone_key: m.key, p_points: m.points })
+      }).catch(() => {});
+      reached.push(m.key); // optimistic update pour la réponse courante
+    }
+  }
+
+  const nextMilestone = MILESTONES.find(m => !reached.includes(m.key)) || null;
+
   return res.status(200).json({
     success: true,
     porte_coins_balance: coinsBalance,
@@ -1978,6 +1864,18 @@ async function rewardsDashboard(req, res, ctx) {
     draws,
     entries,
     level: computeDriverLevel(ctx.profile, coinsBalance),
+    claim_free: {
+      days: claimFreeData.claim_free_days || 0,
+      milestones: MILESTONES.map(m => ({
+        ...m,
+        reached: reached.includes(m.key),
+        current: claimFreeData.claim_free_days >= m.days
+      })),
+      next: nextMilestone ? {
+        ...nextMilestone,
+        days_remaining: Math.max(0, nextMilestone.days - (claimFreeData.claim_free_days || 0))
+      } : null
+    },
     legal_notice: 'Les tirages sont soumis aux reglements officiels. Aucun achat requis lorsque requis par la loi. Les PorteCoins n ont aucune valeur monetaire.'
   });
 }
@@ -2314,6 +2212,16 @@ module.exports = async function handler(req, res) {
   }
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
 
+  // Rate limit global : 120 requêtes / minute par IP
+  const _ip = getClientIp(req);
+  const { allowed: _ipOk } = await checkRateLimit(`ip:${_ip}:platform`, 120, 60);
+  if (!_ipOk) {
+    return res.status(429).json({
+      error: 'Trop de requêtes. Réessayez dans une minute.',
+      code: 'RATE_LIMIT',
+    });
+  }
+
   let endpoint = 'unknown';
   try {
     const body = req.body || {};
@@ -2328,8 +2236,155 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'impact-public') {
       return await impactPublic(req, res, { sbUrl, sbKey });
     }
+    if (endpoint === 'impact-feedback') {
+      try {
+        const payload = {
+          points:       String(body.points       || '').slice(0,20),
+          transparence: String(body.transparence || '').slice(0,20),
+          sans_impact:  String(body.sans_impact  || '').slice(0,20),
+          source:       String(body.source       || 'unknown').slice(0,40),
+          created_at:   new Date().toISOString()
+        };
+        await fetch(`${sbUrl}/rest/v1/impact_mode_feedback`, {
+          method: 'POST',
+          headers: sbHeaders(sbKey),
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+        return res.status(200).json({ success: true });
+      } catch (_) {
+        return res.status(200).json({ success: true }); // silencieux
+      }
+    }
+    if (endpoint === 'platform-claim-free') {
+      try {
+        const r = await fetch(`${sbUrl}/rest/v1/rpc/platform_claim_free_days`, {
+          method: 'POST',
+          headers: { ...sbHeaders(sbKey), 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const days = r.ok ? await r.json() : 0;
+        return res.status(200).json({ success: true, days: Math.max(0, Number(days) || 0) });
+      } catch (_) {
+        return res.status(200).json({ success: true, days: 0 });
+      }
+    }
     if (endpoint === 'impact-application') {
       return await impactApplicationPublic(req, res, { sbUrl, sbKey }, body);
+    }
+
+    // ── maps-config (public, clé Google Maps) ──────────────────────
+    if (endpoint === 'maps-config') {
+      const key = (process.env.GOOGLE_MAPS_API_KEY || '').trim();
+      if (!key) {
+        return res.status(200).json({
+          success: true,
+          provider: 'leaflet',
+          key: null,
+          warning: 'GOOGLE_MAPS_API_KEY non configuree; repli Leaflet/OpenStreetMap actif'
+        });
+      }
+      return res.status(200).json({ success: true, provider: 'google', key });
+    }
+
+    // ── recipient-review (public, avis destinataire sans auth) ──────
+    if (endpoint === 'ride-search') {
+      return await rideSearch(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'ride-detail') {
+      return await rideDetail(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'safe-meeting-points') {
+      return await safeMeetingPoints(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'ride-settings') {
+      const settings = await getRideSettings({ sbUrl, sbKey });
+      return res.status(200).json({
+        success: true,
+        settings: {
+          ride_platform_fee: 1.5,
+          ride_fee_luggage: 5,
+          ride_fee_pet: 8,
+          ride_fee_stop: 3,
+          ride_fee_package_base: 8,
+          ride_fee_package_per_kg: 1.5,
+          ...settings,
+        },
+      });
+    }
+
+    if (endpoint === 'recipient-review') {
+      return await recipientReview(req, res, sbUrl, sbKey, body);
+    }
+
+    // ── tracking-public (public, suivi sans auth) ───────────────────
+    if (endpoint === 'tracking-public') {
+      const STATUS_LABELS_PUB = {
+        en_attente: { label: 'En attente de livreur', icon: '⏳', step: 1 },
+        acceptee:   { label: 'Livreur assigné',        icon: '✅', step: 2 },
+        en_route:   { label: 'En route',               icon: '🚗', step: 3 },
+        livree:     { label: 'Livrée',                 icon: '📦', step: 4 },
+        confirmee:  { label: 'Livraison confirmée',    icon: '🎉', step: 5 },
+        annulee:    { label: 'Annulée',                icon: '❌', step: 0 },
+        litige:     { label: 'En litige',              icon: '⚠️', step: 0 },
+      };
+      let tpCode;
+      if (req.method === 'GET') {
+        const u = new URL(req.url, siteOrigin());
+        tpCode = u.searchParams.get('code') || u.searchParams.get('id');
+      } else {
+        tpCode = (body || {}).code || (body || {}).id;
+      }
+      tpCode = String(tpCode || '').trim().toUpperCase();
+      if (!tpCode) return res.status(400).json({ error: 'Code de suivi requis' });
+      const isUuid = /^[0-9a-f-]{36}$/i.test(tpCode);
+      const tpFilter = isUuid ? `id=eq.${encodeURIComponent(tpCode)}` : `code=eq.${encodeURIComponent(tpCode)}`;
+      try {
+        const tr = await fetch(
+          `${sbUrl}/rest/v1/livraisons?${tpFilter}&select=id,code,statut,ville_depart,ville_arrivee,type,type_colis,created_at,cree_le&limit=1`,
+          { headers: sbHeaders(sbKey) }
+        );
+        if (!tr.ok) return res.status(400).json({ error: 'Suivi indisponible' });
+        const tpRows = await tr.json().catch(() => []);
+        if (!tpRows.length) return res.status(404).json({ error: 'Code de suivi introuvable. Vérifiez le code et réessayez.' });
+        const liv = tpRows[0];
+        const si = STATUS_LABELS_PUB[liv.statut] || { label: liv.statut, icon: '📋', step: 1 };
+        let position = null;
+        if (liv.statut === 'en_route') {
+          const gr = await fetch(
+            `${sbUrl}/rest/v1/delivery_locations?livraison_id=eq.${liv.id}&select=latitude,longitude,recorded_at&order=recorded_at.desc&limit=1`,
+            { headers: sbHeaders(sbKey) }
+          );
+          if (gr.ok) {
+            const gRows = await gr.json().catch(() => []);
+            if (gRows[0]) {
+              position = {
+                lat: Math.round(gRows[0].latitude  * 100) / 100,
+                lng: Math.round(gRows[0].longitude * 100) / 100,
+                updated_at: gRows[0].recorded_at,
+              };
+            }
+          }
+        }
+        return res.status(200).json({
+          success: true,
+          tracking: {
+            code: liv.code || tpCode,
+            statut: liv.statut,
+            statut_label: si.label,
+            statut_icon: si.icon,
+            statut_step: si.step,
+            ville_depart:  liv.ville_depart  || '—',
+            ville_arrivee: liv.ville_arrivee || '—',
+            type: liv.type || liv.type_colis || 'colis',
+            created_at: liv.created_at || liv.cree_le,
+            position,
+            steps: Object.values(STATUS_LABELS_PUB).filter(s => s.step > 0).sort((a, b) => a.step - b.step),
+            current_step: si.step,
+          }
+        });
+      } catch (tpErr) {
+        return res.status(500).json({ error: 'Erreur de suivi', details: tpErr.message });
+      }
     }
 
     if (endpoint === 'push-send' && internal) {
@@ -2423,6 +2478,44 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);
     if (endpoint === 'subscription-create')      return await subscriptionCreate(req, res, ctx);
     if (endpoint === 'subscription-status')      return await subscriptionStatus(req, res, ctx);
+    // ── admin-push-broadcast ────────────────────────────────────────
+    if (endpoint === 'admin-push-broadcast') {
+      if (ctx.profile.role !== 'admin') return res.status(403).json({ error: 'Accès réservé aux admins' });
+      const webpush = require('web-push');
+      const vapidPublic  = (process.env.VAPID_PUBLIC_KEY  || '').trim();
+      const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || '').trim();
+      const vapidEmail   = process.env.VAPID_EMAIL || 'mailto:admin@porteaporte.site';
+      if (!vapidPublic || !vapidPrivate) return res.status(500).json({ error: 'VAPID non configuré' });
+      const { title: pbTitle, body: pbBody, url: pbUrl, role: pbRole } = body || {};
+      if (!pbTitle || !pbBody) return res.status(400).json({ error: 'title et body sont requis' });
+      webpush.setVapidDetails(vapidEmail, vapidPublic, vapidPrivate);
+      let subsUrl = `${sbUrl}/rest/v1/push_subscriptions?select=id,subscription,user_id`;
+      if (pbRole) {
+        const prRes = await fetch(`${sbUrl}/rest/v1/profiles?role=eq.${pbRole}&select=id`, { headers: sbHeaders(sbKey) });
+        if (!prRes.ok) return res.status(500).json({ error: 'Erreur lecture profils' });
+        const pbProfiles = await prRes.json();
+        const pbIds = (pbProfiles || []).map(p => p.id);
+        if (!pbIds.length) return res.status(200).json({ success: true, sent: 0, failed: 0, message: 'Aucun abonné dans ce rôle' });
+        subsUrl += `&user_id=in.(${pbIds.join(',')})`;
+      }
+      const subsRes = await fetch(subsUrl, { headers: sbHeaders(sbKey) });
+      if (!subsRes.ok) return res.status(500).json({ error: 'Erreur lecture abonnements' });
+      const pbSubs = await subsRes.json();
+      if (!pbSubs?.length) return res.status(200).json({ success: true, sent: 0, failed: 0, message: 'Aucun abonné' });
+      const pbPayload = JSON.stringify({ title: pbTitle, body: pbBody, icon: '/logo.svg', badge: '/logo.svg', tag: 'pap-admin-broadcast', data: { url: pbUrl || '/' } });
+      let pbSent = 0, pbFailed = 0;
+      const pbStale = [];
+      await Promise.all(pbSubs.map(async (row) => {
+        let sub;
+        try { sub = typeof row.subscription === 'string' ? JSON.parse(row.subscription) : row.subscription; } catch { pbFailed++; return; }
+        try { await webpush.sendNotification(sub, pbPayload); pbSent++; }
+        catch (e) { pbFailed++; if (e.statusCode === 410 || e.statusCode === 404) pbStale.push(row.id); }
+      }));
+      if (pbStale.length) {
+        await fetch(`${sbUrl}/rest/v1/push_subscriptions?id=in.(${pbStale.join(',')})`, { method: 'DELETE', headers: sbHeaders(sbKey) }).catch(() => {});
+      }
+      return res.status(200).json({ success: true, sent: pbSent, failed: pbFailed, total: pbSubs.length, stale_removed: pbStale.length });
+    }
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -2430,2035 +2523,3 @@ module.exports = async function handler(req, res) {
   }
 };
 
-/* ============================================================
-   PUSH NOTIFICATIONS
-============================================================ */
-async function pushSubscribe(req, res, ctx, body) {
-  const { subscription } = body;
-  const userId = ctx.session.id;
-  if (req.method === 'DELETE') {
-    const ep = body.endpoint;
-    if (!ep) return res.status(400).json({ error: 'endpoint requis' });
-    await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(ep)}`, {
-      method: 'DELETE', headers: sbHeaders(ctx.sbKey)
-    });
-    return res.status(200).json({ ok: true });
-  }
-  if (!subscription?.endpoint) return res.status(400).json({ error: 'subscription requise' });
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      user_id:    userId,
-      endpoint:   subscription.endpoint,
-      p256dh:     subscription.keys?.p256dh,
-      auth:       subscription.keys?.auth,
-      created_at: new Date().toISOString()
-    })
-  });
-  return res.status(r.ok ? 200 : 500).json({ ok: r.ok });
-}
-
-async function deliverPush(ctx, body) {
-  const webpush = require('web-push');
-  const vapidPublic = (process.env.VAPID_PUBLIC_KEY || '').trim();
-  const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || '').trim();
-  if (!vapidPublic || !vapidPrivate) {
-    return { ok: false, status: 503, error: 'VAPID non configure', sent: 0, failed: 0 };
-  }
-
-  webpush.setVapidDetails(
-    process.env.VAPID_EMAIL || 'mailto:bonjour@porteaporte.site',
-    vapidPublic,
-    vapidPrivate
-  );
-
-  const TEMPLATES = {
-    nouvelle_mission: d => ({ title: '📦 Nouvelle mission !', body: `${d.ville_depart} → ${d.ville_arrivee} · ${d.prix_total} $`, tag: 'mission-' + d.id, data: { url: '/browse-missions.html' } }),
-    mission_assignee: d => ({ title: '✅ Mission confirmée !', body: `Livraison ${d.code}`, tag: 'assigned-' + d.id, data: { url: '/map.html?id=' + d.id } }),
-    kyc_approuve:     () => ({ title: '🎉 Vérification approuvée !', body: 'Tu peux maintenant accepter des livraisons.', tag: 'kyc-ok', data: { url: '/dashboard-livreur.html' } }),
-    kyc_rejete:       d  => ({ title: '⚠️ Dossier KYC refusé', body: d.raison || 'Consulte ta messagerie.', tag: 'kyc-ko', data: { url: '/kyc.html' } }),
-    message_recu:     d  => ({ title: '💬 Nouveau message', body: (d.expediteur || 'Client') + ' : ' + (d.apercu || ''), tag: 'msg-' + d.conv_id, data: { url: '/messagerie.html?conv=' + d.conv_id } }),
-    paiement_libere:  d  => ({ title: '💰 Paiement libéré !', body: `${d.montant} $ déposés sur ton compte.`, tag: 'pay-' + d.livraison_id, data: { url: '/dashboard-livreur.html' } })
-  };
-
-  const { type, data = {}, userIds = null } = body;
-  if (!type || !TEMPLATES[type]) return { ok: false, status: 400, error: 'type invalide', sent: 0, failed: 0 };
-  const payload = TEMPLATES[type](data);
-
-  let targetUserIds = Array.isArray(userIds) ? userIds : null;
-  if (!targetUserIds && type === 'nouvelle_mission') {
-    const driversRes = await fetch(
-      `${ctx.sbUrl}/rest/v1/profiles?select=id&role=in.(livreur,les%20deux)&suspendu=eq.false&driver_status=eq.verified&disponible=eq.true&limit=500`,
-      { headers: sbHeaders(ctx.sbKey) }
-    );
-    const drivers = driversRes.ok ? await driversRes.json() : [];
-    targetUserIds = drivers.map((driver) => driver.id).filter(Boolean);
-    if (!targetUserIds.length) return { ok: true, sent: 0, failed: 0, targeted: 0 };
-  }
-
-  let url = `${ctx.sbUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth`;
-  if (targetUserIds?.length) url += `&user_id=in.(${targetUserIds.join(',')})`;
-  const r   = await fetch(url, { headers: sbHeaders(ctx.sbKey) });
-  const subs = r.ok ? await r.json() : [];
-  if (!subs.length) return { ok: true, sent: 0, failed: 0, targeted: targetUserIds?.length || null };
-
-  const results = await Promise.allSettled(
-    subs.map(s => webpush.sendNotification(
-      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-      JSON.stringify(payload)
-    ).catch(async err => {
-      if (err.statusCode === 410 || err.statusCode === 404) {
-        await fetch(`${ctx.sbUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(s.endpoint)}`, {
-          method: 'DELETE', headers: sbHeaders(ctx.sbKey)
-        });
-      }
-      throw err;
-    }))
-  );
-
-  const sent = results.filter(r => r.status === 'fulfilled').length;
-  return { ok: true, sent, failed: results.length - sent, targeted: targetUserIds?.length || null };
-}
-
-async function pushSend(req, res, ctx, body) {
-  if (!ctx.internal && !['admin', 'expediteur'].includes(ctx.profile?.role)) {
-    return res.status(403).json({ error: 'Non autorise' });
-  }
-
-  const result = await deliverPush(ctx, body);
-  return res.status(result.status || (result.ok ? 200 : 400)).json(result);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// COVOITURAGE
-// ═══════════════════════════════════════════════════════════════
-
-const RIDE_COST_PER_KM       = 0.35;
-const RIDE_PLATFORM_FEE      = 1.50; // frais fixe par siège réservé (non %)
-const RIDE_PLATFORM_FEE_MIN  = 1.00; // plancher absolu
-const RIDE_MAX_COST_PER_KM   = 0.50;
-const RIDE_FEE_LUGGAGE       = 5.00;
-const RIDE_FEE_PET           = 8.00;
-const RIDE_FEE_STOP          = 3.00;
-const RIDE_FEE_PACKAGE_BASE  = 8.00;   // frais fixes colis
-const RIDE_FEE_PACKAGE_PER_KG = 1.50; // par kg supplémentaire au-delà de 5 kg
-
-async function getRideSettings(ctx) {
-  try {
-    const r = await fetch(`${ctx.sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_pct,ride_fee_luggage,ride_fee_pet,ride_fee_stop,ride_fee_package_base,ride_fee_package_per_kg&limit=1`, { headers: sbHeaders(ctx.sbKey) });
-    const rows = r.ok ? await r.json() : [];
-    return rows[0] || {};
-  } catch (_) { return {}; }
-}
-
-function calcPackageFee(weightKg, rideSettings) {
-  const s = rideSettings || {};
-  const base  = Math.max(0, toNumber(s.ride_fee_package_base,   RIDE_FEE_PACKAGE_BASE));
-  const perKg = Math.max(0, toNumber(s.ride_fee_package_per_kg, RIDE_FEE_PACKAGE_PER_KG));
-  const kg    = Math.max(0, Number(weightKg) || 0);
-  const extra = Math.max(0, kg - 5) * perKg;
-  return Math.round((base + extra) * 100) / 100;
-}
-
-function groupBonusPct(confirmedPassengers) {
-  const n = Number(confirmedPassengers) || 0;
-  if (n >= 4) return 0.15;
-  if (n === 3) return 0.10;
-  if (n === 2) return 0.05;
-  return 0;
-}
-
-function calcRidePrice({ totalDistanceKm, passengerDistanceKm, costPerKm, hasLuggage, hasPet, extraStops, detourKm, seats, confirmedPassengers, rideSettings }) {
-  const s = rideSettings || {};
-  const feeLuggage   = Math.max(0, toNumber(s.ride_fee_luggage, RIDE_FEE_LUGGAGE));
-  const feePet       = Math.max(0, toNumber(s.ride_fee_pet, RIDE_FEE_PET));
-  const feeStop      = Math.max(0, toNumber(s.ride_fee_stop, RIDE_FEE_STOP));
-  const platformFeePerSeat = Math.max(RIDE_PLATFORM_FEE_MIN, toNumber(s.ride_platform_fee, RIDE_PLATFORM_FEE));
-
-  const cpk = Number(costPerKm) || RIDE_COST_PER_KM;
-  const totalKm = Number(totalDistanceKm) || 0;
-  const paxKm   = Number(passengerDistanceKm) || totalKm;
-  const nSeats  = Number(seats) || 1;
-
-  const totalCostBase = totalKm * cpk;
-  const paxSharePct   = totalKm > 0 ? (paxKm / totalKm) : 1;
-  const paxBaseRaw    = totalCostBase * paxSharePct * nSeats;
-
-  // Bonus groupe : réduction sur la part de base
-  const bonus    = groupBonusPct(confirmedPassengers);
-  const paxBase  = Math.round(paxBaseRaw * (1 - bonus) * 100) / 100;
-
-  const luggageFee = hasLuggage ? feeLuggage : 0;
-  const petFee     = hasPet     ? feePet     : 0;
-  const stopFee    = (Number(extraStops) || 0) * feeStop;
-  const detourFee  = (Number(detourKm)  || 0) * cpk;
-
-  // Frais fixe par siège ($1.50/siège) — indépendant de la distance
-  const commissionBase = paxBase + petFee + stopFee + detourFee;
-  const platformFee    = Math.round(platformFeePerSeat * nSeats * 100) / 100;
-  // Le chauffeur reçoit la base + bagages complets (plateforme prend seulement le frais fixe)
-  const driverAmount   = Math.round((commissionBase + luggageFee) * 100) / 100;
-  const totalPassenger = Math.round((commissionBase + platformFee + luggageFee) * 100) / 100;
-
-  const maxAllowed = Math.round(paxKm * RIDE_MAX_COST_PER_KM * 100) / 100;
-  const overLimit  = totalPassenger > maxAllowed + platformFee;
-
-  return {
-    costPerKm: cpk,
-    totalDistanceKm: totalKm,
-    totalCostBase: Math.round(totalCostBase * 100) / 100,
-    paxDistanceKm: paxKm,
-    paxSharePct: Math.round(paxSharePct * 10000) / 100,
-    paxBase:       Math.round(paxBase * 100) / 100,
-    luggageFee, petFee, stopFee, detourFee,
-    platformFee, driverAmount, totalPassenger,
-    overLimit, maxAllowed,
-  };
-}
-
-async function rideDriverProfile(req, res, ctx) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const [rideRes, profileRes] = await Promise.all([
-    fetch(
-      `${ctx.sbUrl}/rest/v1/rides?driver_id=eq.${ctx.session.id}&select=vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_type,trunk_size,smoking_policy,music_policy,chat_policy,ac_available,perfume_free,personal_rules&order=created_at.desc&limit=1`,
-      { headers: sbHeaders(ctx.sbKey) }
-    ),
-    fetch(
-      `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=bio,prenom,nom&limit=1`,
-      { headers: sbHeaders(ctx.sbKey) }
-    ),
-  ]);
-
-  const rides    = rideRes.ok    ? await rideRes.json().catch(() => [])    : [];
-  const profiles = profileRes.ok ? await profileRes.json().catch(() => []) : [];
-
-  const lastRide  = rides[0]    || {};
-  const profile   = profiles[0] || {};
-
-  return res.status(200).json({
-    success: true,
-    profile: {
-      vehicle_make:   lastRide.vehicle_make   || null,
-      vehicle_model:  lastRide.vehicle_model  || null,
-      vehicle_year:   lastRide.vehicle_year   || null,
-      vehicle_color:  lastRide.vehicle_color  || null,
-      vehicle_type:   lastRide.vehicle_type   || null,
-      trunk_size:     lastRide.trunk_size     || null,
-      smoking_policy: lastRide.smoking_policy || null,
-      music_policy:   lastRide.music_policy   || null,
-      chat_policy:    lastRide.chat_policy    || null,
-      ac_available:   lastRide.ac_available   ?? false,
-      perfume_free:   lastRide.perfume_free   ?? false,
-      bio:            lastRide.personal_rules || profile.bio || null,
-    },
-  });
-}
-
-async function rideCreate(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const {
-    start_city, end_city, departure_time,
-    available_seats, vehicle_type, trunk_size,
-    accepts_pets, accepts_large_luggage, accepts_extra_stops,
-    non_smoker, women_only, child_seat_available, accessible,
-    flexibility_minutes, is_return_trip, return_departure_time,
-    is_recurring, recurrence_days,
-    start_sector, end_sector,
-    start_lat, start_lng, end_lat, end_lng,
-    total_distance_km, cost_per_km, personal_rules,
-    // Profil véhicule / ambiance
-    smoking_policy, music_policy, chat_policy, ac_available,
-    // Points d'arrêt intermédiaires
-    stop_points,
-  } = body;
-
-  if (!start_city || !end_city || !departure_time || !available_seats) {
-    return res.status(400).json({ error: 'Champs requis : start_city, end_city, departure_time, available_seats' });
-  }
-
-  const distKm = Number(total_distance_km) || estimateRouteKm(start_city, end_city) || 100;
-  const cpk    = Math.min(Number(cost_per_km) || RIDE_COST_PER_KM, RIDE_MAX_COST_PER_KM);
-
-  // Valider et nettoyer les points d'arrêt
-  const cleanStops = Array.isArray(stop_points)
-    ? stop_points.slice(0, 10).map((s, i) => ({
-        order:      i + 1,
-        city:       String(s.city || '').trim().slice(0, 100),
-        sector:     s.sector ? String(s.sector).trim().slice(0, 100) : null,
-        lat:        s.lat ? Number(s.lat) : null,
-        lng:        s.lng ? Number(s.lng) : null,
-        detour_km:  s.detour_km ? Number(s.detour_km) : 0,
-      })).filter(s => s.city)
-    : [];
-
-  const smokingVal = ['non_fumeur','fumeur','exterieur'].includes(smoking_policy)
-    ? smoking_policy
-    : (non_smoker === false ? 'fumeur' : 'non_fumeur');
-
-  const payload = {
-    driver_id: ctx.session.id,
-    start_city: String(start_city).trim(),
-    start_sector: start_sector ? String(start_sector).trim() : null,
-    start_lat: start_lat ? Number(start_lat) : null,
-    start_lng: start_lng ? Number(start_lng) : null,
-    end_city: String(end_city).trim(),
-    end_sector: end_sector ? String(end_sector).trim() : null,
-    end_lat: end_lat ? Number(end_lat) : null,
-    end_lng: end_lng ? Number(end_lng) : null,
-    departure_time: new Date(departure_time).toISOString(),
-    flexibility_minutes: Number(flexibility_minutes) || 0,
-    is_return_trip: Boolean(is_return_trip),
-    return_departure_time: is_return_trip && return_departure_time ? new Date(return_departure_time).toISOString() : null,
-    is_recurring: Boolean(is_recurring),
-    recurrence_days: is_recurring && Array.isArray(recurrence_days) ? recurrence_days : null,
-    vehicle_type: vehicle_type || 'berline',
-    trunk_size: ['petit','moyen','grand'].includes(trunk_size) ? trunk_size : 'moyen',
-    available_seats: Math.min(Math.max(Number(available_seats) || 1, 1), 8),
-    accepts_pets: Boolean(accepts_pets),
-    accepts_large_luggage: Boolean(accepts_large_luggage),
-    accepts_extra_stops: Boolean(accepts_extra_stops),
-    accepts_packages: Boolean(body.accepts_packages),
-    package_max_kg: body.package_max_kg ? Math.min(Number(body.package_max_kg), 50) : 10,
-    package_max_dim_cm: body.package_max_dim_cm ? Math.min(Number(body.package_max_dim_cm), 200) : 60,
-    non_smoker: smokingVal === 'non_fumeur',
-    smoking_policy: smokingVal,
-    music_policy: ['silence','selon_humeur','musique'].includes(music_policy) ? music_policy : 'selon_humeur',
-    chat_policy: ['silencieux','selon_humeur','bavard'].includes(chat_policy) ? chat_policy : 'selon_humeur',
-    ac_available: Boolean(ac_available),
-    women_only: Boolean(women_only),
-    child_seat_available: Boolean(child_seat_available),
-    accessible: Boolean(accessible),
-    personal_rules: personal_rules ? String(personal_rules).slice(0, 500) : null,
-    cost_per_km: cpk,
-    total_distance_km: distKm,
-    stop_points: cleanStops,
-    status: 'publie',
-  };
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-    body: JSON.stringify(payload),
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(400).json({ error: 'Création trajet impossible', details: data });
-
-  const ride = Array.isArray(data) ? data[0] : data;
-
-  // Mettre à jour le profil chauffeur avec les préférences de ce trajet (upsert)
-  await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({
-      user_id:        ctx.session.id,
-      smoking_policy: smokingVal,
-      music_policy:   payload.music_policy,
-      chat_policy:    payload.chat_policy,
-      ac_available:   payload.ac_available,
-    }),
-  }).catch(() => {});
-
-  return res.status(200).json({ success: true, ride });
-}
-
-async function rideSearch(req, res, ctx, body) {
-  const url = new URL(req.url || '/', 'https://porteaporte.site');
-  const p = (k) => body[k] || url.searchParams.get(k) || '';
-  const start  = p('start_city');
-  const end    = p('end_city');
-  const date   = p('date');
-  const seats  = Number(p('seats') || 1);
-  // Filtres passager
-  const smokingFilter   = p('smoking_policy');    // 'non_fumeur' | 'fumeur' | ''
-  const trunkFilter     = p('trunk_size');         // 'petit' | 'moyen' | 'grand' | ''
-  const petsFilter      = p('accepts_pets');       // 'true' | ''
-  const luggageFilter   = p('accepts_large_luggage'); // 'true' | ''
-  const acFilter        = p('ac_available');        // 'true' | ''
-  const musicFilter     = p('music_policy');        // silence | selon_humeur | musique | ''
-  const chatFilter      = p('chat_policy');         // silencieux | selon_humeur | bavard | ''
-  const womenFilter     = p('women_only');          // 'true' | ''
-
-  let filter = `status=eq.publie&available_seats=gte.${seats}`;
-  if (start) filter += `&start_city=ilike.*${encodeURIComponent(start)}*`;
-  if (end)   filter += `&end_city=ilike.*${encodeURIComponent(end)}*`;
-  if (date) {
-    const d = new Date(date);
-    if (!isNaN(d)) {
-      const from = new Date(d); from.setHours(0,0,0,0);
-      const to   = new Date(d); to.setHours(23,59,59,999);
-      filter += `&departure_time=gte.${from.toISOString()}&departure_time=lte.${to.toISOString()}`;
-    }
-  }
-  if (smokingFilter)          filter += `&smoking_policy=eq.${smokingFilter}`;
-  if (trunkFilter)            filter += `&trunk_size=eq.${trunkFilter}`;
-  if (petsFilter === 'true')  filter += `&accepts_pets=eq.true`;
-  if (luggageFilter === 'true') filter += `&accepts_large_luggage=eq.true`;
-  if (acFilter === 'true')    filter += `&ac_available=eq.true`;
-  if (musicFilter)            filter += `&music_policy=eq.${musicFilter}`;
-  if (chatFilter)             filter += `&chat_policy=eq.${chatFilter}`;
-  if (womenFilter === 'true') filter += `&women_only=eq.true`;
-  filter += '&order=departure_time.asc&limit=50';
-
-  const packagesFilter = p('accepts_packages');
-  if (packagesFilter === 'true') filter += `&accepts_packages=eq.true`;
-
-  const select = 'id,start_city,start_sector,end_city,end_sector,departure_time,available_seats,vehicle_type,trunk_size,accepts_pets,accepts_large_luggage,accepts_extra_stops,accepts_packages,package_max_kg,smoking_policy,music_policy,chat_policy,ac_available,women_only,accessible,cost_per_km,total_distance_km,status,driver_id,stop_points';
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?${filter}&select=${select}`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const rides = r.ok ? await r.json() : [];
-
-  if (!rides.length) return res.status(200).json({ rides: [] });
-
-  // Récupérer profils chauffeurs + ride_driver_profiles en batch
-  const driverIds = [...new Set(rides.map(r => r.driver_id))];
-  const [profilesRes, driverProfilesRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/profiles?id=in.(${driverIds.join(',')})&select=id,prenom,driver_status,score_confiance`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=in.(${driverIds.join(',')})&select=user_id,vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_photos,bio`, { headers: sbHeaders(ctx.sbKey) }),
-  ]);
-
-  const profiles      = profilesRes.ok ? await profilesRes.json() : [];
-  const driverProfiles = driverProfilesRes.ok ? await driverProfilesRes.json() : [];
-  const profileMap     = Object.fromEntries(profiles.map(p => [p.id, p]));
-  const driverProfileMap = Object.fromEntries(driverProfiles.map(p => [p.user_id, p]));
-
-  const rideSettings = await getRideSettings(ctx);
-  const enriched = rides.map((ride) => {
-    const price = calcRidePrice({
-      totalDistanceKm: ride.total_distance_km,
-      passengerDistanceKm: ride.total_distance_km,
-      costPerKm: ride.cost_per_km,
-      seats,
-      rideSettings,
-    });
-    const profile      = profileMap[ride.driver_id] || {};
-    const driverProfile = driverProfileMap[ride.driver_id] || {};
-
-    return {
-      ...ride,
-      start_lat: undefined, start_lng: undefined,
-      end_lat: undefined,   end_lng: undefined,
-      driver: {
-        prenom:       profile.prenom || 'Chauffeur',
-        verified:     profile.driver_status === 'verified',
-        score:        profile.score_confiance || 0,
-        vehicle_make:  driverProfile.vehicle_make || null,
-        vehicle_model: driverProfile.vehicle_model || null,
-        vehicle_year:  driverProfile.vehicle_year || null,
-        vehicle_color: driverProfile.vehicle_color || null,
-        vehicle_photo: (driverProfile.vehicle_photos || [])[0] || null,
-        bio:           driverProfile.bio || null,
-      },
-      estimated_price:   price.totalPassenger,
-      driver_amount:     price.driverAmount,
-      platform_fee:      price.platformFee,
-      luggage_fee_info:  RIDE_FEE_LUGGAGE,
-      // Rabais groupe — afficher la prochaine étape de réduction
-      group_discount: (() => {
-        const cur = groupBonusPct(0);
-        const next = groupBonusPct(1);
-        const diff = next - cur;
-        if (diff > 0) return { next_pct: Math.round(diff * 100), seats_needed: 1 };
-        return null;
-      })(),
-    };
-  });
-
-  return res.status(200).json({ rides: enriched });
-}
-
-async function rideDetail(req, res, ctx, body) {
-  const url    = new URL(req.url || '/', 'https://porteaporte.site');
-  const rideId = body.ride_id || url.searchParams.get('ride_id');
-  if (!rideId) return res.status(400).json({ error: 'ride_id requis' });
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${rideId}&select=*`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const rows = r.ok ? await r.json() : [];
-  if (!rows.length) return res.status(404).json({ error: 'Trajet introuvable' });
-
-  const ride = rows[0];
-  if (ride.status !== 'publie' && ride.driver_id !== ctx.session?.id &&
-      ctx.profile?.role !== 'admin') {
-    return res.status(403).json({ error: 'Trajet non disponible' });
-  }
-
-  // Arrêts (table ride_stops legacy + colonne stop_points JSONB)
-  const stopsRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_stops?ride_id=eq.${rideId}&order=stop_order.asc`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const legacyStops = stopsRes.ok ? await stopsRes.json() : [];
-  const stops = legacyStops.length ? legacyStops : (ride.stop_points || []);
-
-  // Chauffeur — profil public
-  const [pRes, dpRes, reviewsRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ride.driver_id}&select=prenom,driver_status,created_at,score_confiance,photo_url`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=eq.${ride.driver_id}&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/reviews?driver_id=eq.${ride.driver_id}&select=note,created_at&order=created_at.desc&limit=5`, { headers: sbHeaders(ctx.sbKey) }),
-  ]);
-
-  const driver      = (pRes.ok ? await pRes.json() : [])[0] || {};
-  const driverProfile = (dpRes.ok ? await dpRes.json() : [])[0] || {};
-  const reviews     = reviewsRes.ok ? await reviewsRes.json() : [];
-
-  // Calcul prix avec options passager depuis body
-  const paxKm = Number(body.passenger_distance_km) || ride.total_distance_km;
-  const rideSettingsDetail = await getRideSettings(ctx);
-  const price = calcRidePrice({
-    totalDistanceKm: ride.total_distance_km,
-    passengerDistanceKm: paxKm,
-    costPerKm: ride.cost_per_km,
-    hasLuggage:  body.has_large_luggage,
-    hasPet:      body.has_pet,
-    extraStops:  body.extra_stops_count,
-    detourKm:    body.requested_detour_km,
-    seats:       body.seats_reserved || 1,
-    rideSettings: rideSettingsDetail,
-  });
-
-  // Masquer coordonnées exactes si non confirmé
-  const isParty = ctx.session && (ride.driver_id === ctx.session.id || ctx.profile?.role === 'admin');
-  const safeRide = { ...ride };
-  if (!isParty) {
-    delete safeRide.start_lat; delete safeRide.start_lng;
-    delete safeRide.end_lat;   delete safeRide.end_lng;
-  }
-
-  return res.status(200).json({
-    ride: safeRide,
-    stops,
-    driver: {
-      prenom:        driver.prenom || 'Chauffeur',
-      photo_url:     driver.photo_url || null,
-      verified:      driver.driver_status === 'verified',
-      score:         driver.score_confiance || 0,
-      member_since:  driver.created_at ? new Date(driver.created_at).getFullYear() : null,
-      // Profil véhicule
-      vehicle_make:   driverProfile.vehicle_make || null,
-      vehicle_model:  driverProfile.vehicle_model || null,
-      vehicle_year:   driverProfile.vehicle_year || null,
-      vehicle_color:  driverProfile.vehicle_color || null,
-      vehicle_photos: driverProfile.vehicle_photos || [],
-      // Ambiance / préférences
-      smoking_policy: ride.smoking_policy || driverProfile.smoking_policy || 'non_fumeur',
-      music_policy:   ride.music_policy   || driverProfile.music_policy   || 'selon_humeur',
-      chat_policy:    ride.chat_policy    || driverProfile.chat_policy    || 'selon_humeur',
-      ac_available:   ride.ac_available   ?? driverProfile.ac_available   ?? false,
-      perfume_free:   driverProfile.perfume_free || false,
-      bio:            driverProfile.bio || null,
-      recent_reviews: reviews,
-    },
-    price_breakdown: {
-      ...price,
-      luggage_note: 'Les frais de bagage vont intégralement au chauffeur',
-    },
-  });
-}
-
-async function rideBook(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const { ride_id, pickup_city, dropoff_city, seats_reserved,
-          has_large_luggage, has_pet, extra_stops_count,
-          requested_detour_km, passenger_distance_km, special_requests,
-          pickup_sector, dropoff_sector } = body;
-
-  if (!ride_id || !pickup_city || !dropoff_city) {
-    return res.status(400).json({ error: 'ride_id, pickup_city, dropoff_city requis' });
-  }
-
-  // Vérifier que le trajet existe et a des places
-  const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}&select=id,driver_id,available_seats,status,cost_per_km,total_distance_km,accepts_pets,accepts_large_luggage`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const rRows = rRes.ok ? await rRes.json() : [];
-  if (!rRows.length) return res.status(404).json({ error: 'Trajet introuvable' });
-
-  const ride = rRows[0];
-  if (ride.status !== 'publie') return res.status(400).json({ error: 'Ce trajet n\'est plus disponible' });
-  if (ride.driver_id === ctx.session.id) return res.status(400).json({ error: 'Vous ne pouvez pas réserver votre propre trajet' });
-  if (!ride.accepts_pets && has_pet) return res.status(400).json({ error: 'Ce chauffeur n\'accepte pas les animaux' });
-  if (!ride.accepts_large_luggage && has_large_luggage) return res.status(400).json({ error: 'Ce chauffeur n\'accepte pas les gros bagages' });
-
-  const seats = Math.max(1, Number(seats_reserved) || 1);
-  if (seats > ride.available_seats) return res.status(400).json({ error: `Seulement ${ride.available_seats} place(s) disponible(s)` });
-
-  const paxKm = Number(passenger_distance_km) || ride.total_distance_km;
-  const rideSettingsBook = await getRideSettings(ctx);
-  const price = calcRidePrice({
-    totalDistanceKm: ride.total_distance_km,
-    passengerDistanceKm: paxKm,
-    costPerKm: ride.cost_per_km,
-    hasLuggage:  has_large_luggage,
-    hasPet:      has_pet,
-    extraStops:  extra_stops_count,
-    detourKm:    requested_detour_km,
-    seats,
-    rideSettings: rideSettingsBook,
-  });
-
-  const booking = {
-    ride_id,
-    passenger_id: ctx.session.id,
-    pickup_city:  String(pickup_city).trim(),
-    pickup_sector: pickup_sector ? String(pickup_sector).trim() : null,
-    dropoff_city: String(dropoff_city).trim(),
-    dropoff_sector: dropoff_sector ? String(dropoff_sector).trim() : null,
-    seats_reserved: seats,
-    has_large_luggage: Boolean(has_large_luggage),
-    has_pet:           Boolean(has_pet),
-    extra_stops_count: Number(extra_stops_count) || 0,
-    requested_detour_km: Number(requested_detour_km) || 0,
-    special_requests: special_requests ? String(special_requests).slice(0, 500) : null,
-    passenger_distance_km: price.paxDistanceKm,
-    base_share:    price.paxBase,
-    luggage_fee:   price.luggageFee,
-    pet_fee:       price.petFee,
-    stop_fee:      price.stopFee,
-    detour_fee:    price.detourFee,
-    platform_fee:  price.platformFee,
-    driver_amount: price.driverAmount,
-    total_passenger: price.totalPassenger,
-    status: 'en_attente',
-  };
-
-  const bRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-    body: JSON.stringify(booking),
-  });
-  const bData = await bRes.json().catch(() => ({}));
-  if (!bRes.ok) return res.status(400).json({ error: 'Réservation impossible', details: bData });
-
-  const saved = Array.isArray(bData) ? bData[0] : bData;
-
-  // Sauvegarder le breakdown pour audit
-  await fetch(`${ctx.sbUrl}/rest/v1/ride_price_breakdowns`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({
-      booking_id:     saved.id,
-      cost_per_km:    price.costPerKm,
-      total_distance: price.totalDistanceKm,
-      total_cost_base: price.totalCostBase,
-      pax_distance:   price.paxDistanceKm,
-      pax_share_pct:  price.paxSharePct,
-      pax_base:       price.paxBase,
-      extras_detail:  { luggage: price.luggageFee, pet: price.petFee, stops: price.stopFee, detour: price.detourFee },
-      platform_fee_per_seat: RIDE_PLATFORM_FEE,
-      driver_receives: price.driverAmount,
-      passenger_pays:  price.totalPassenger,
-    }),
-  }).catch(() => {});
-
-  // Décrémenter places disponibles
-  await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}`, {
-    method: 'PATCH',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ available_seats: ride.available_seats - seats }),
-  }).catch(() => {});
-
-  return res.status(200).json({ success: true, booking: saved, price_breakdown: price });
-}
-
-async function rideCancel(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const { booking_id, ride_id } = body;
-
-  // Annulation par passager (via booking_id)
-  if (booking_id) {
-    const bRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?id=eq.${booking_id}&select=id,passenger_id,ride_id,seats_reserved,status`, {
-      headers: sbHeaders(ctx.sbKey),
-    });
-    const bRows = bRes.ok ? await bRes.json() : [];
-    if (!bRows.length) return res.status(404).json({ error: 'Réservation introuvable' });
-
-    const b = bRows[0];
-    if (b.passenger_id !== ctx.session.id && ctx.profile?.role !== 'admin') {
-      return res.status(403).json({ error: 'Non autorisé' });
-    }
-    if (['annule_passager','annule_chauffeur','complete'].includes(b.status)) {
-      return res.status(400).json({ error: 'Réservation déjà annulée ou complétée' });
-    }
-
-    await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?id=eq.${booking_id}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ status: 'annule_passager' }),
-    });
-
-    // Remettre les places
-    const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${b.ride_id}&select=available_seats`, {
-      headers: sbHeaders(ctx.sbKey),
-    });
-    const rRows = rRes.ok ? await rRes.json() : [];
-    if (rRows.length) {
-      await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${b.ride_id}`, {
-        method: 'PATCH',
-        headers: sbHeaders(ctx.sbKey),
-        body: JSON.stringify({ available_seats: (rRows[0].available_seats || 0) + b.seats_reserved }),
-      }).catch(() => {});
-    }
-
-    return res.status(200).json({ success: true, action: 'annule_passager' });
-  }
-
-  // Annulation par chauffeur (via ride_id)
-  if (ride_id) {
-    const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}&select=id,driver_id,status`, {
-      headers: sbHeaders(ctx.sbKey),
-    });
-    const rRows = rRes.ok ? await rRes.json() : [];
-    if (!rRows.length) return res.status(404).json({ error: 'Trajet introuvable' });
-
-    const ride = rRows[0];
-    if (ride.driver_id !== ctx.session.id && ctx.profile?.role !== 'admin') {
-      return res.status(403).json({ error: 'Non autorisé' });
-    }
-
-    await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ status: 'annule' }),
-    });
-
-    await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?ride_id=eq.${ride_id}&status=eq.en_attente`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ status: 'annule_chauffeur' }),
-    }).catch(() => {});
-
-    return res.status(200).json({ success: true, action: 'trajet_annule' });
-  }
-
-  return res.status(400).json({ error: 'booking_id ou ride_id requis' });
-}
-
-async function rideMyRides(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const url  = new URL(req.url || '/', 'https://porteaporte.site');
-  const view = body.view || url.searchParams.get('view') || 'all';
-
-  const ridesRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/rides?driver_id=eq.${ctx.session.id}&order=departure_time.desc&limit=50&select=id,start_city,end_city,departure_time,available_seats,status,total_distance_km,cost_per_km`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  const myRides = ridesRes.ok ? await ridesRes.json() : [];
-
-  const bookingsRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/ride_bookings?passenger_id=eq.${ctx.session.id}&order=created_at.desc&limit=50&select=id,ride_id,pickup_city,dropoff_city,seats_reserved,total_passenger,driver_amount,status,created_at`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  const myBookings = bookingsRes.ok ? await bookingsRes.json() : [];
-
-  return res.status(200).json({ my_rides: myRides, my_bookings: myBookings });
-}
-
-async function rideAdmin(req, res, ctx, body) {
-  if (ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
-
-  const url   = new URL(req.url || '/', 'https://porteaporte.site');
-  const limit = Number(body.limit || url.searchParams.get('limit') || 100);
-
-  const [ridesRes, bookingsRes, reportsRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/rides?order=created_at.desc&limit=${limit}&select=*,driver_profile:profiles!driver_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?order=created_at.desc&limit=${limit}&select=*,passenger_profile:profiles!passenger_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_reports?order=created_at.desc&limit=50&select=*,reporter_profile:profiles!reporter_id(prenom)`, { headers: sbHeaders(ctx.sbKey) }),
-  ]);
-
-  const rides    = ridesRes.ok    ? (await ridesRes.json()).map(r => ({ ...r, driver_prenom: r.driver_profile?.prenom || null, driver_profile: undefined }))       : [];
-  const bookings = bookingsRes.ok ? (await bookingsRes.json()).map(b => ({ ...b, passenger_prenom: b.passenger_profile?.prenom || null, passenger_profile: undefined })) : [];
-  const reports  = reportsRes.ok  ? (await reportsRes.json()).map(r => ({ ...r, reporter_prenom: r.reporter_profile?.prenom || null, reporter_profile: undefined }))    : [];
-
-  return res.status(200).json({ rides, bookings, reports });
-}
-
-async function rideReport(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const { ride_id, booking_id, reported_id, reason, details } = body;
-  if (!reason) return res.status(400).json({ error: 'reason requis' });
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_reports`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({
-      ride_id:     ride_id    || null,
-      booking_id:  booking_id || null,
-      reporter_id: ctx.session.id,
-      reported_id: reported_id || null,
-      reason:      String(reason).slice(0, 200),
-      details:     details ? String(details).slice(0, 1000) : null,
-      status: 'ouvert',
-    }),
-  });
-
-  if (!r.ok) return res.status(400).json({ error: 'Signalement impossible' });
-  return res.status(200).json({ success: true, message: 'Signalement reçu. Notre équipe va examiner.' });
-}
-
-async function rideDriverProfile(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const uid = ctx.session.id;
-
-  // GET — lire son propre profil
-  if (req.method === 'GET') {
-    const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=eq.${uid}`, {
-      headers: sbHeaders(ctx.sbKey),
-    });
-    const rows = r.ok ? await r.json() : [];
-    return res.status(200).json({ profile: rows[0] || null });
-  }
-
-  // POST — créer ou mettre à jour
-  const {
-    vehicle_make, vehicle_model, vehicle_year, vehicle_color,
-    vehicle_photos, smoking_policy, music_policy, chat_policy,
-    ac_available, perfume_free, bio,
-  } = body;
-
-  const smokingVal = ['non_fumeur','fumeur','exterieur'].includes(smoking_policy) ? smoking_policy : undefined;
-  const musicVal   = ['silence','selon_humeur','musique'].includes(music_policy) ? music_policy : undefined;
-  const chatVal    = ['silencieux','selon_humeur','bavard'].includes(chat_policy) ? chat_policy : undefined;
-
-  const photos = Array.isArray(vehicle_photos)
-    ? vehicle_photos.slice(0, 6).filter(u => typeof u === 'string' && u.startsWith('http'))
-    : undefined;
-
-  const payload = { user_id: uid };
-  if (vehicle_make  !== undefined) payload.vehicle_make  = String(vehicle_make).slice(0, 60);
-  if (vehicle_model !== undefined) payload.vehicle_model = String(vehicle_model).slice(0, 60);
-  if (vehicle_year  !== undefined) payload.vehicle_year  = Number(vehicle_year) || null;
-  if (vehicle_color !== undefined) payload.vehicle_color = String(vehicle_color).slice(0, 40);
-  if (photos        !== undefined) payload.vehicle_photos = photos;
-  if (smokingVal    !== undefined) payload.smoking_policy = smokingVal;
-  if (musicVal      !== undefined) payload.music_policy   = musicVal;
-  if (chatVal       !== undefined) payload.chat_policy    = chatVal;
-  if (ac_available  !== undefined) payload.ac_available   = Boolean(ac_available);
-  if (perfume_free  !== undefined) payload.perfume_free   = Boolean(perfume_free);
-  if (bio           !== undefined) payload.bio            = String(bio).slice(0, 400);
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify(payload),
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(400).json({ error: 'Sauvegarde impossible', details: data });
-
-  const saved = Array.isArray(data) ? data[0] : data;
-  return res.status(200).json({ success: true, profile: saved });
-}
-
-/* ── RÉSERVATION COLIS ──────────────────────────────────────── */
-async function ridePackageBook(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-
-  const { ride_id, pickup_city, dropoff_city, package_weight_kg,
-          package_description, pickup_point_id, dropoff_point_id,
-          pickup_sector, dropoff_sector } = body;
-
-  if (!ride_id || !pickup_city || !dropoff_city) {
-    return res.status(400).json({ error: 'ride_id, pickup_city, dropoff_city requis' });
-  }
-  if (!package_weight_kg || Number(package_weight_kg) <= 0) {
-    return res.status(400).json({ error: 'package_weight_kg requis' });
-  }
-
-  // Vérifier le trajet
-  const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${ride_id}&select=id,driver_id,status,accepts_packages,package_max_kg,package_max_dim_cm,total_distance_km,cost_per_km`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const rRows = rRes.ok ? await rRes.json() : [];
-  if (!rRows.length) return res.status(404).json({ error: 'Trajet introuvable' });
-
-  const ride = rRows[0];
-  if (ride.status !== 'publie') return res.status(400).json({ error: 'Trajet non disponible' });
-  if (!ride.accepts_packages)  return res.status(400).json({ error: 'Ce chauffeur n\'accepte pas de colis' });
-  if (ride.driver_id === ctx.session.id) return res.status(400).json({ error: 'Vous ne pouvez pas réserver votre propre trajet' });
-
-  const kg = Number(package_weight_kg);
-  if (kg > (ride.package_max_kg || 10)) {
-    return res.status(400).json({ error: `Poids maximum accepté : ${ride.package_max_kg} kg` });
-  }
-
-  const settings     = await getRideSettings(ctx);
-  const packageFee   = calcPackageFee(kg, settings);
-  const platformFee  = Math.round(RIDE_PLATFORM_FEE * 100) / 100;
-  const totalPays    = Math.round((packageFee + platformFee) * 100) / 100;
-  const driverAmount = packageFee;
-
-  const booking = {
-    ride_id,
-    passenger_id:        ctx.session.id,
-    booking_type:        'package',
-    pickup_city:         String(pickup_city).trim(),
-    pickup_sector:       pickup_sector ? String(pickup_sector).trim() : null,
-    dropoff_city:        String(dropoff_city).trim(),
-    dropoff_sector:      dropoff_sector ? String(dropoff_sector).trim() : null,
-    pickup_point_id:     pickup_point_id || null,
-    dropoff_point_id:    dropoff_point_id || null,
-    seats_reserved:      0,
-    package_weight_kg:   kg,
-    package_description: package_description ? String(package_description).slice(0, 300) : null,
-    package_fee:         packageFee,
-    platform_fee:        platformFee,
-    driver_amount:       driverAmount,
-    total_passenger:     totalPays,
-    base_share:          0,
-    luggage_fee:         0,
-    pet_fee:             0,
-    stop_fee:            0,
-    detour_fee:          0,
-    status:              'en_attente',
-  };
-
-  const bRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-    body: JSON.stringify(booking),
-  });
-  const bData = await bRes.json().catch(() => ({}));
-  if (!bRes.ok) return res.status(400).json({ error: 'Réservation colis impossible', details: bData });
-
-  const saved = Array.isArray(bData) ? bData[0] : bData;
-  return res.status(200).json({
-    success: true,
-    booking: saved,
-    price_breakdown: {
-      package_fee:   packageFee,
-      platform_fee:  platformFee,
-      total_pays:    totalPays,
-      driver_receives: driverAmount,
-      note: `Frais de base ${RIDE_FEE_PACKAGE_BASE}$ + ${Math.max(0, kg - 5).toFixed(1)} kg sup. × ${RIDE_FEE_PACKAGE_PER_KG}$/kg`,
-    },
-  });
-}
-
-/* ── POINTS SÉCURITAIRES ────────────────────────────────────── */
-async function safeMeetingPoints(req, res, ctx, body) {
-  const url    = new URL(req.url || '/', 'https://porteaporte.site');
-  const city   = body.city || url.searchParams.get('city') || '';
-  const type   = body.type || url.searchParams.get('type') || '';
-
-  let filter = 'active=eq.true&order=verified.desc,name.asc&limit=50';
-  if (city) filter += `&city=ilike.*${encodeURIComponent(city)}*`;
-  if (type) filter += `&type=eq.${type}`;
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/safe_meeting_points?${filter}&select=id,name,type,address,city,lat,lng,verified`, {
-    headers: sbHeaders(ctx.sbKey),
-  });
-  const points = r.ok ? await r.json() : [];
-  return res.status(200).json({ points });
-}
-
-/* ── COV DASHBOARD ─────────────────────────────────────────── */
-async function covDashboard(req, res, ctx) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-  const uid = ctx.session.id;
-
-  const [
-    ridesRes, bookingsRes, receivedRes,
-    missionsRes, badgesRes, reportsRes, reviewsRes
-  ] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/rides?driver_id=eq.${uid}&order=departure_time.desc&limit=50&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?passenger_id=eq.${uid}&order=created_at.desc&limit=50&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?select=*,passenger_profile:profiles!passenger_id(prenom)&ride_id=in.(${encodeURIComponent('select id from rides where driver_id = \'' + uid + '\'')})&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?user_id=eq.${uid}&select=*,mission:cov_missions(*)`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges?user_id=eq.${uid}&select=*,badge:cov_badges(*)`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_reports?reporter_id=eq.${uid}&order=created_at.desc&limit=20&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/cov_reviews?reviewed_id=eq.${uid}&order=created_at.desc&limit=20&select=*`, { headers: sbHeaders(ctx.sbKey) }),
-  ]);
-
-  const rawMissions = missionsRes.ok ? await missionsRes.json() : [];
-  const rawBadges   = badgesRes.ok   ? await badgesRes.json()   : [];
-
-  // Charger tous les badges du catalogue pour montrer ceux non débloqués
-  const allBadgesRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?select=*`, { headers: sbHeaders(ctx.sbKey) });
-  const allBadges    = allBadgesRes.ok ? await allBadgesRes.json() : [];
-  const earnedSlugs  = rawBadges.map(b => b.badge?.slug);
-
-  const badges = allBadges.map(b => ({
-    ...b,
-    earned:    earnedSlugs.includes(b.slug),
-    earned_at: rawBadges.find(ub => ub.badge?.slug === b.slug)?.earned_at || null,
-  }));
-
-  // Charger toutes les missions du catalogue
-  const allMissionsRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_missions?active=eq.true&select=*`, { headers: sbHeaders(ctx.sbKey) });
-  const allMissions    = allMissionsRes.ok ? await allMissionsRes.json() : [];
-  const missions = allMissions.map(m => {
-    const progress = rawMissions.find(um => um.mission_id === m.id);
-    return {
-      ...m,
-      progress:     progress?.progress || 0,
-      done:         progress?.done     || false,
-      completed_at: progress?.completed_at || null,
-    };
-  });
-
-  const receivedBookings = receivedRes.ok ? (await receivedRes.json()).map(b => ({
-    ...b, passenger_prenom: b.passenger_profile?.prenom || null, passenger_profile: undefined
-  })) : [];
-
-  return res.status(200).json({
-    my_rides:      ridesRes.ok      ? await ridesRes.json()      : [],
-    my_bookings:   bookingsRes.ok   ? await bookingsRes.json()   : [],
-    ride_bookings: receivedBookings,
-    missions,
-    badges,
-    reports:       reportsRes.ok    ? await reportsRes.json()    : [],
-    reviews:       reviewsRes.ok    ? await reviewsRes.json()    : [],
-  });
-}
-
-/* ── COV ONBOARD — badge + XP à l'inscription ─────────────── */
-async function covOnboard(req, res, ctx) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-  const uid = ctx.session.id;
-
-  // Badge "nouveau_covoitureur"
-  const badgeRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?slug=eq.nouveau_covoitureur&select=id`, { headers: sbHeaders(ctx.sbKey) });
-  const badges   = badgeRes.ok ? await badgeRes.json() : [];
-  if (badges[0]) {
-    await fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges`, {
-      method: 'POST',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ user_id: uid, badge_id: badges[0].id }),
-    });
-  }
-
-  // +50 XP de bienvenue
-  await covGrantXP(ctx, uid, 50, 'Inscription covoiturage');
-
-  return res.status(200).json({ success: true, xp: 50, badge: 'nouveau_covoitureur' });
-}
-
-/* ── COV PROGRESS — mise à jour mission après un trajet ───── */
-async function covProgress(req, res, ctx, body) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-  const uid    = ctx.session.id;
-  const { event, ride_id, booking_id, distance_km, passenger_count } = body;
-
-  if (!event) return res.status(400).json({ error: 'event requis' });
-
-  // Charger toutes les missions actives
-  const missionsRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_missions?active=eq.true&select=*`, { headers: sbHeaders(ctx.sbKey) });
-  const missions    = missionsRes.ok ? await missionsRes.json() : [];
-
-  const updates = [];
-
-  for (const mission of missions) {
-    const qualifies = await missionQualifies(mission.slug, event, { distance_km, passenger_count });
-    if (!qualifies) continue;
-
-    // Récupérer ou créer la progression
-    const progRes = await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?user_id=eq.${uid}&mission_id=eq.${mission.id}&select=*`, { headers: sbHeaders(ctx.sbKey) });
-    const progs   = progRes.ok ? await progRes.json() : [];
-    const current = progs[0];
-
-    if (current?.done) continue;
-
-    const newProg = (current?.progress || 0) + 1;
-    const done    = newProg >= mission.target;
-
-    if (current) {
-      await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions?id=eq.${current.id}`, {
-        method: 'PATCH',
-        headers: sbHeaders(ctx.sbKey),
-        body: JSON.stringify({ progress: newProg, done, completed_at: done ? new Date().toISOString() : null }),
-      });
-    } else {
-      await fetch(`${ctx.sbUrl}/rest/v1/user_cov_missions`, {
-        method: 'POST',
-        headers: sbHeaders(ctx.sbKey),
-        body: JSON.stringify({ user_id: uid, mission_id: mission.id, progress: newProg, done, completed_at: done ? new Date().toISOString() : null }),
-      });
-    }
-
-    if (done) {
-      await covGrantXP(ctx, uid, mission.xp_reward, `Mission: ${mission.name}`);
-
-      if (mission.badge_slug) {
-        const bRes = await fetch(`${ctx.sbUrl}/rest/v1/cov_badges?slug=eq.${mission.badge_slug}&select=id`, { headers: sbHeaders(ctx.sbKey) });
-        const bs   = bRes.ok ? await bRes.json() : [];
-        if (bs[0]) {
-          await fetch(`${ctx.sbUrl}/rest/v1/user_cov_badges`, {
-            method: 'POST',
-            headers: sbHeaders(ctx.sbKey),
-            body: JSON.stringify({ user_id: uid, badge_id: bs[0].id }),
-          });
-        }
-      }
-      updates.push({ mission: mission.slug, xp: mission.xp_reward, badge: mission.badge_slug });
-    }
-  }
-
-  return res.status(200).json({ success: true, updates });
-}
-
-/* ── HELPERS ───────────────────────────────────────────────── */
-async function covGrantXP(ctx, uid, amount, reason) {
-  await fetch(`${ctx.sbUrl}/rest/v1/cov_xp_log`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ user_id: uid, amount, reason }),
-  });
-  // Incrémenter cov_xp dans profiles
-  const profRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}&select=cov_xp`, { headers: sbHeaders(ctx.sbKey) });
-  const profs   = profRes.ok ? await profRes.json() : [];
-  const current = profs[0]?.cov_xp || 0;
-  const newXp   = current + amount;
-  const level   = newXp >= 2000 ? 5 : newXp >= 1000 ? 4 : newXp >= 500 ? 3 : newXp >= 200 ? 2 : 1;
-  await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}`, {
-    method: 'PATCH',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ cov_xp: newXp, cov_level: level }),
-  });
-  // Aussi incrémenter le XP global
-  const gXp = (profs[0]?.xp || 0) + amount;
-  await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${uid}`, {
-    method: 'PATCH',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ xp: gXp }),
-  });
-}
-
-function missionQualifies(slug, event, { distance_km = 0, passenger_count = 0 }) {
-  switch (slug) {
-    case 'premier_trajet':     return event === 'ride_complete';
-    case 'cinq_trajets':       return event === 'ride_complete';
-    case 'dix_trajets':        return event === 'ride_complete';
-    case 'ponctualite':        return event === 'ride_complete';
-    case 'ambassadeur':        return event === 'ride_complete';
-    case 'trajet_complet':     return event === 'ride_full';
-    case 'groupe_optimise':    return event === 'ride_full';
-    case 'eco_route':          return event === 'ride_complete' && distance_km >= 50 && passenger_count >= 2;
-    case 'aide_communautaire': return event === 'community_help';
-    case 'route_regionale':    return event === 'ride_complete' && distance_km >= 80;
-    case 'grand_explorateur':  return event === 'ride_complete' && distance_km >= 200;
-    case 'premier_avis':       return event === 'review_left';
-    default: return false;
-  }
-}
-
-/* ================================================================
-   SYSTÈMES DE CROISSANCE v2
-   Points Impact · Badges · Parrainage · XP unifié
-   Toutes les attributions passent par le serveur (service_role)
-   Le frontend ne peut jamais s'attribuer des points lui-même.
-   ================================================================ */
-
-/* ── Helpers internes ──────────────────────────────────────────── */
-
-async function sbRpc(ctx, fnName, params) {
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/rpc/${fnName}`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify(params)
-  });
-  return { ok: r.ok, data: r.ok ? await r.json().catch(() => null) : null };
-}
-
-async function getPointsBalance(ctx, userId) {
-  const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&user_id=eq.${userId}&limit=2000`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  const txs = r.ok ? await r.json() : [];
-  return txs.reduce((s, t) => s + Number(t.amount || 0), 0);
-}
-
-async function getUserXP(ctx, userId) {
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${userId}&select=xp&limit=1`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const rows = r.ok ? await r.json() : [];
-  return Number(rows[0]?.xp || 0);
-}
-
-function computeLevel(xp) {
-  const levels = [
-    { level: 1, name: 'Nouveau',           min_xp: 0,    next_xp: 200,  icon: '🟢', benefit: 'Accès aux missions de base.' },
-    { level: 2, name: 'Fiable',            min_xp: 200,  next_xp: 500,  icon: '🔵', benefit: 'Meilleure visibilité sur les missions.' },
-    { level: 3, name: 'Habitué',           min_xp: 500,  next_xp: 1000, icon: '🟩', benefit: 'Missions prioritaires et badges avancés.' },
-    { level: 4, name: 'Ambassadeur',       min_xp: 1000, next_xp: 2000, icon: '🟡', benefit: 'Missions exclusives, support prioritaire.' },
-    { level: 5, name: 'Capitaine régional',min_xp: 2000, next_xp: null, icon: '⭐', benefit: 'Priorité trajets groupés, reconnaissance publique.' }
-  ];
-  const current = [...levels].reverse().find(l => xp >= l.min_xp) || levels[0];
-  const next = levels.find(l => l.level === current.level + 1) || null;
-  const progress = next
-    ? Math.min(100, Math.round(((xp - current.min_xp) / (next.min_xp - current.min_xp)) * 100))
-    : 100;
-  return { current, next, xp, progress };
-}
-
-async function generateReferralCode(userId) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 7; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
-}
-
-/* ── GROWTH DASHBOARD ──────────────────────────────────────────── */
-async function growthDashboard(req, res, ctx) {
-  const uid = ctx.session.id;
-
-  const [ptBalance, userXp, badgesRes, refCodeRes, refRes, missionsRes, drawsRes, txRes] = await Promise.all([
-    getPointsBalance(ctx, uid),
-    getUserXP(ctx, uid),
-    fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=granted_at,badge_id,badges(slug,name,icon,category,description)&user_id=eq.${uid}&order=granted_at.desc`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/referral_codes?select=code,total_uses,total_rewarded&user_id=eq.${uid}&limit=1`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/referrals?select=*&referrer_id=eq.${uid}&order=created_at.desc&limit=20`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&status=eq.active&order=created_at.desc&limit=20`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&status=eq.active&order=draw_date.asc&limit=5`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount,reason,created_at&user_id=eq.${uid}&order=created_at.desc&limit=15`, { headers: sbHeaders(ctx.sbKey) })
-  ]);
-
-  const badges     = badgesRes.ok     ? await badgesRes.json()  : [];
-  const refCodes   = refCodeRes.ok    ? await refCodeRes.json() : [];
-  const referrals  = refRes.ok        ? await refRes.json()     : [];
-  const missions   = missionsRes.ok   ? await missionsRes.json(): defaultRewardMissions();
-  const draws      = drawsRes.ok      ? await drawsRes.json()   : [];
-  const recentTx   = txRes.ok         ? await txRes.json()      : [];
-
-  // Récupérer mes participations aux tirages actifs
-  let entries = [];
-  const drawIds = draws.map(d => d.id);
-  if (drawIds.length) {
-    const eRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_entries?select=draw_id,entries&user_id=eq.${uid}&draw_id=in.(${drawIds.join(',')})`, { headers: sbHeaders(ctx.sbKey) });
-    entries = eRes.ok ? await eRes.json() : [];
-  }
-
-  // Prochain badge à débloquer (simple heuristique)
-  const allBadgesRes = await fetch(`${ctx.sbUrl}/rest/v1/badges?select=slug,name,icon,description,category&active=eq.true&order=xp_reward.asc`, { headers: sbHeaders(ctx.sbKey) });
-  const allBadges = allBadgesRes.ok ? await allBadgesRes.json() : [];
-  const earnedSlugs = new Set(badges.map(b => b.badges?.slug).filter(Boolean));
-  const nextBadges  = allBadges.filter(b => !earnedSlugs.has(b.slug)).slice(0, 3);
-
-  return res.status(200).json({
-    success: true,
-    points_balance: ptBalance,
-    points_label: 'Points Impact',
-    xp: userXp,
-    level: computeLevel(userXp),
-    badges_earned: badges,
-    badges_next: nextBadges,
-    badges_count: badges.length,
-    referral_code: refCodes[0] || null,
-    referrals,
-    missions,
-    draws,
-    entries,
-    recent_transactions: recentTx,
-    legal_notice: 'Les Points Impact n\'ont aucune valeur monétaire et ne peuvent être échangés contre de l\'argent. Les tirages sont soumis aux règlements officiels. Aucun achat requis lorsque requis par la loi.',
-    rename_notice: 'PorteCoins est maintenant appelé Points Impact.'
-  });
-}
-
-/* ── REFERRAL GET ──────────────────────────────────────────────── */
-async function referralGet(req, res, ctx) {
-  const uid = ctx.session.id;
-
-  // Chercher le code existant
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?select=*&user_id=eq.${uid}&limit=1`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const existing = r.ok ? await r.json() : [];
-  if (existing.length) return res.status(200).json({ success: true, referral: existing[0] });
-
-  // Générer un nouveau code unique
-  let code, tries = 0;
-  while (tries < 5) {
-    const candidate = await generateReferralCode(uid);
-    const check = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${candidate}&select=id&limit=1`, { headers: sbHeaders(ctx.sbKey) });
-    const rows = check.ok ? await check.json() : [1];
-    if (!rows.length) { code = candidate; break; }
-    tries++;
-  }
-  if (!code) return res.status(500).json({ error: 'Impossible de générer un code unique' });
-
-  const ins = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ user_id: uid, code })
-  });
-  const created = ins.ok ? await ins.json().catch(() => ({})) : {};
-  const ref = Array.isArray(created) ? created[0] : created;
-  return res.status(200).json({ success: true, referral: { user_id: uid, code, total_uses: 0, total_rewarded: 0, ...ref } });
-}
-
-/* ── REFERRAL USE ──────────────────────────────────────────────── */
-async function referralUse(req, res, ctx, body) {
-  const uid  = ctx.session.id;
-  const code = String(body.code || '').toUpperCase().trim();
-  if (!code) return res.status(400).json({ error: 'Code de parrainage requis' });
-
-  // Anti-fraude : déjà parrainé ?
-  const alreadyRes = await fetch(`${ctx.sbUrl}/rest/v1/referrals?referee_id=eq.${uid}&select=id&limit=1`, { headers: sbHeaders(ctx.sbKey) });
-  const already = alreadyRes.ok ? await alreadyRes.json() : [];
-  if (already.length) return res.status(409).json({ error: 'Tu as déjà utilisé un code de parrainage' });
-
-  // Trouver le propriétaire du code
-  const codeRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${code}&select=user_id,code,total_uses&limit=1`, { headers: sbHeaders(ctx.sbKey) });
-  const codes = codeRes.ok ? await codeRes.json() : [];
-  if (!codes.length) return res.status(404).json({ error: 'Code invalide ou expiré' });
-  const { user_id: referrerId } = codes[0];
-
-  // Anti-fraude : on ne peut pas se parrainer soi-même
-  if (referrerId === uid) return res.status(409).json({ error: 'Tu ne peux pas utiliser ton propre code' });
-
-  // Créer la relation de parrainage (statut pending — récompense après action réelle)
-  const insRes = await fetch(`${ctx.sbUrl}/rest/v1/referrals`, {
-    method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ referrer_id: referrerId, referee_id: uid, code, status: 'pending' })
-  });
-  if (!insRes.ok) {
-    const err = await insRes.json().catch(() => ({}));
-    return res.status(400).json({ error: 'Enregistrement parrainage impossible', details: err });
-  }
-
-  // Incrémenter total_uses
-  await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${code}`, {
-    method: 'PATCH',
-    headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-    body: JSON.stringify({ total_uses: (codes[0].total_uses || 0) + 1 })
-  }).catch(() => {});
-
-  return res.status(200).json({
-    success: true,
-    message: 'Code accepté ! La récompense sera attribuée après ta première livraison ou ton premier trajet covoiturage.',
-    referrer_rewarded_on: 'first_completed_action'
-  });
-}
-
-/* ── BADGES LIST ───────────────────────────────────────────────── */
-async function badgesList(req, res, ctx) {
-  const uid = ctx.session.id;
-
-  const [earnedRes, allRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=granted_at,badge_id,badges(*)&user_id=eq.${uid}&order=granted_at.desc`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/badges?select=*&active=eq.true&order=category.asc,xp_reward.asc`, { headers: sbHeaders(ctx.sbKey) })
-  ]);
-
-  const earned = earnedRes.ok ? await earnedRes.json() : [];
-  const all    = allRes.ok    ? await allRes.json()    : [];
-  const earnedIds = new Set(earned.map(e => e.badge_id));
-  const categorized = {};
-  for (const b of all) {
-    const cat = b.category || 'general';
-    if (!categorized[cat]) categorized[cat] = [];
-    categorized[cat].push({ ...b, earned: earnedIds.has(b.id), earned_at: earned.find(e => e.badge_id === b.id)?.granted_at || null });
-  }
-
-  return res.status(200).json({ success: true, badges_earned_count: earned.length, badges_total: all.length, categorized, earned });
-}
-
-/* ── BADGES GRANT (admin seulement) ───────────────────────────── */
-async function badgesGrant(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const { user_id, badge_slug } = body;
-  if (!user_id || !badge_slug) return res.status(400).json({ error: 'user_id et badge_slug requis' });
-
-  const result = await sbRpc(ctx, 'grant_badge', { p_user_id: user_id, p_badge_slug: badge_slug, p_granted_by: ctx.session.id });
-  if (!result.ok) return res.status(400).json({ error: 'Échec attribution badge' });
-  return res.status(200).json({ success: true, new_badge: result.data, badge_slug });
-}
-
-/* ── XP HISTORY ────────────────────────────────────────────────── */
-async function xpHistory(req, res, ctx) {
-  const uid = ctx.session.id;
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/xp_transactions?select=amount,reason,ref_type,created_at&user_id=eq.${uid}&order=created_at.desc&limit=50`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const txs  = r.ok ? await r.json() : [];
-  const xp   = await getUserXP(ctx, uid);
-  return res.status(200).json({ success: true, xp_total: xp, level: computeLevel(xp), history: txs });
-}
-
-/* ── POINTS HISTORY ────────────────────────────────────────────── */
-async function pointsHistory(req, res, ctx) {
-  const uid = ctx.session.id;
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount,reason,created_at,metadata&user_id=eq.${uid}&order=created_at.desc&limit=50`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const txs     = r.ok ? await r.json() : [];
-  const balance = txs.reduce((s, t) => s + Number(t.amount || 0), 0);
-  return res.status(200).json({
-    success: true,
-    points_balance: balance,
-    points_label: 'Points Impact',
-    history: txs,
-    legal: 'Les Points Impact n\'ont aucune valeur monétaire.'
-  });
-}
-
-/* ── ADMIN GROWTH ──────────────────────────────────────────────── */
-async function adminGrowth(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const mode = body.mode || 'stats';
-
-  if (mode === 'stats') {
-    const [badgesRes, refRes, xpRes, txRes, auditRes] = await Promise.all([
-      fetch(`${ctx.sbUrl}/rest/v1/user_badges?select=badge_id&limit=2000`, { headers: sbHeaders(ctx.sbKey) }),
-      fetch(`${ctx.sbUrl}/rest/v1/referrals?select=status&limit=2000`, { headers: sbHeaders(ctx.sbKey) }),
-      fetch(`${ctx.sbUrl}/rest/v1/xp_transactions?select=amount&limit=5000`, { headers: sbHeaders(ctx.sbKey) }),
-      fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&limit=5000`, { headers: sbHeaders(ctx.sbKey) }),
-      fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs?select=action,created_at&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) })
-    ]);
-    const badges   = badgesRes.ok ? await badgesRes.json() : [];
-    const refs     = refRes.ok    ? await refRes.json()    : [];
-    const xpTxs    = xpRes.ok     ? await xpRes.json()     : [];
-    const ptTxs    = txRes.ok     ? await txRes.json()     : [];
-    const audit    = auditRes.ok  ? await auditRes.json()  : [];
-    return res.status(200).json({
-      success: true,
-      stats: {
-        badges_granted_total: badges.length,
-        referrals_total: refs.length,
-        referrals_rewarded: refs.filter(r => r.status === 'rewarded').length,
-        xp_issued_total: xpTxs.reduce((s, t) => s + Number(t.amount || 0), 0),
-        points_issued_net: ptTxs.reduce((s, t) => s + Number(t.amount || 0), 0)
-      },
-      recent_audit: audit
-    });
-  }
-
-  if (mode === 'grant_badge') {
-    return badgesGrant(req, res, ctx, body);
-  }
-
-  if (mode === 'grant_points') {
-    const { user_id, amount, reason } = body;
-    if (!user_id || !amount || !reason) return res.status(400).json({ error: 'user_id, amount, reason requis' });
-    const safeAmount = Math.min(Math.max(-9999, Math.round(Number(amount))), 9999);
-    const ins = await fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions`, {
-      method: 'POST',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ user_id, amount: safeAmount, reason, metadata: { admin_id: ctx.session.id } })
-    });
-    await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs`, {
-      method: 'POST',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ user_id, action: 'admin_points_grant', points_delta: safeAmount, admin_id: ctx.session.id, note: reason })
-    }).catch(() => {});
-    return ins.ok
-      ? res.status(200).json({ success: true, amount: safeAmount })
-      : res.status(400).json({ error: 'Impossible d\'attribuer les points' });
-  }
-
-  if (mode === 'cancel_reward') {
-    const { audit_log_id, note } = body;
-    if (!audit_log_id) return res.status(400).json({ error: 'audit_log_id requis' });
-    const upd = await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs?id=eq.${audit_log_id}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ cancelled: true, note: note || 'Annulé par admin' })
-    });
-    return upd.ok
-      ? res.status(200).json({ success: true })
-      : res.status(400).json({ error: 'Annulation impossible' });
-  }
-
-  if (mode === 'batch_grant_badge') {
-    const { badge_slug, dry_run } = body;
-    if (!badge_slug) return res.status(400).json({ error: 'badge_slug requis' });
-    // Récupère tous les profils actifs (max 5000)
-    const profRes = await fetch(
-      `${ctx.sbUrl}/rest/v1/profiles?select=id&limit=5000`,
-      { headers: sbHeaders(ctx.sbKey) }
-    );
-    if (!profRes.ok) return res.status(500).json({ error: 'Impossible de lire les profils' });
-    const profiles = await profRes.json();
-    if (dry_run) return res.status(200).json({ dry_run: true, total_profiles: profiles.length, badge_slug });
-
-    let granted = 0, skipped = 0, errors = 0;
-    for (const p of profiles) {
-      const r = await sbRpc(ctx, 'grant_badge', { p_user_id: p.id, p_badge_slug: badge_slug, p_granted_by: ctx.session.id });
-      if (!r.ok) { errors++; continue; }
-      if (r.data === true) granted++; else skipped++;
-    }
-    return res.status(200).json({ success: true, badge_slug, total: profiles.length, granted, skipped, errors });
-  }
-
-  return res.status(400).json({ error: 'Mode admin-growth inconnu: ' + mode });
-}
-
-/* ── BADGE CAMPAIGNS ───────────────────────────────────────────── */
-async function badgeCampaigns(req, res, ctx) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/badge_campaign_status?order=created_at.desc`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  if (!r.ok) {
-    // Si la vue n'existe pas encore (SQL pas encore exécuté), fallback sur la table
-    const fallback = await fetch(`${ctx.sbUrl}/rest/v1/badges?order=category.asc,name.asc`, { headers: sbHeaders(ctx.sbKey) });
-    const data = fallback.ok ? await fallback.json() : [];
-    return res.status(200).json({ success: true, campaigns: data, fallback: true });
-  }
-  const data = await r.json();
-  return res.status(200).json({ success: true, campaigns: data });
-}
-
-async function badgeCampaignSave(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const {
-    id, slug, name, description, icon, category,
-    points_reward, xp_reward,
-    campaign_name, role_filter, auto_trigger,
-    active_from, active_until,
-    benefit_from, benefit_until,
-    seasonal_months, max_recipients,
-    active
-  } = body;
-
-  if (!slug || !name) return res.status(400).json({ error: 'slug et name requis' });
-
-  const payload = {
-    slug, name,
-    description: description || null,
-    icon: icon || '🏅',
-    category: category || 'general',
-    points_reward: Number(points_reward) || 0,
-    xp_reward: Number(xp_reward) || 0,
-    campaign_name: campaign_name || null,
-    role_filter: role_filter || null,
-    auto_trigger: auto_trigger || 'manual',
-    active_from:  active_from  || null,
-    active_until: active_until || null,
-    benefit_from: benefit_from || null,
-    benefit_until: benefit_until || null,
-    seasonal_months: Array.isArray(seasonal_months) && seasonal_months.length ? seasonal_months : null,
-    max_recipients: max_recipients ? Number(max_recipients) : null,
-    active: active !== false,
-    paused: false,
-    condition_type: 'manual',
-    condition_value: 1
-  };
-
-  let r;
-  if (id) {
-    r = await fetch(`${ctx.sbUrl}/rest/v1/badges?id=eq.${id}`, {
-      method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=representation'),
-      body: JSON.stringify(payload)
-    });
-  } else {
-    r = await fetch(`${ctx.sbUrl}/rest/v1/badges`, {
-      method: 'POST', headers: sbHeaders(ctx.sbKey, 'return=representation'),
-      body: JSON.stringify(payload)
-    });
-  }
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(400).json({ error: 'Sauvegarde impossible', details: data });
-  return res.status(200).json({ success: true, badge: Array.isArray(data) ? data[0] : data });
-}
-
-async function badgeCampaignToggle(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const { id, action } = body; // action: 'pause'|'resume'|'activate'|'deactivate'
-  if (!id || !action) return res.status(400).json({ error: 'id et action requis' });
-
-  let patch = {};
-  if (action === 'pause')      patch = { paused: true };
-  if (action === 'resume')     patch = { paused: false };
-  if (action === 'activate')   patch = { active: true, paused: false };
-  if (action === 'deactivate') patch = { active: false };
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/badges?id=eq.${id}`, {
-    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-    body: JSON.stringify(patch)
-  });
-  return r.ok
-    ? res.status(200).json({ success: true, action })
-    : res.status(400).json({ error: 'Mise à jour impossible' });
-}
-
-async function badgeBenefitStatus(req, res, ctx, body) {
-  // Vérifie si les bénéfices d'un badge sont actifs maintenant (accessible sans admin)
-  const { badge_slug } = body;
-  if (!badge_slug) return res.status(400).json({ error: 'badge_slug requis' });
-  const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/badges?slug=eq.${encodeURIComponent(badge_slug)}&select=slug,seasonal_months,benefit_from,benefit_until,active,paused`,
-    { headers: sbHeaders(ctx.sbKey) }
-  );
-  const rows = r.ok ? await r.json() : [];
-  const b = rows[0];
-  if (!b) return res.status(404).json({ error: 'Badge introuvable' });
-
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  let benefitActive = false;
-  if (b.seasonal_months && b.seasonal_months.includes(month)) benefitActive = true;
-  if (b.benefit_from && !b.benefit_until) benefitActive = now >= new Date(b.benefit_from);
-  if (b.benefit_from && b.benefit_until)  benefitActive = now >= new Date(b.benefit_from) && now <= new Date(b.benefit_until);
-  if (!b.seasonal_months && !b.benefit_from) benefitActive = true;
-
-  return res.status(200).json({
-    success: true, slug: b.slug,
-    benefit_active: benefitActive && b.active && !b.paused
-  });
-}
-
-/* ── RÉCOMPENSE PARRAINAGE (déclenchée après livraison/trajet) ── */
-async function rewardReferralIfPending(ctx, refereeId, actionType) {
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/referrals?referee_id=eq.${refereeId}&status=eq.pending&select=*&limit=1`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const refs = r.ok ? await r.json() : [];
-  if (!refs.length) return;
-  const ref = refs[0];
-
-  const POINTS_REWARD = 100;
-  const XP_REWARD     = 50;
-
-  // Accorder au parrain
-  await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions`, {
-      method: 'POST', headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ user_id: ref.referrer_id, amount: POINTS_REWARD, reason: 'referral_reward', metadata: { referee_id: refereeId, action: actionType } })
-    }),
-    sbRpc(ctx, 'grant_xp', { p_user_id: ref.referrer_id, p_amount: XP_REWARD, p_reason: 'referral_reward', p_ref_type: 'referral', p_ref_id: ref.id })
-  ]);
-
-  // Badge parrain actif si premier filleul récompensé
-  const codeRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?user_id=eq.${ref.referrer_id}&select=total_rewarded&limit=1`, { headers: sbHeaders(ctx.sbKey) });
-  const codes = codeRes.ok ? await codeRes.json() : [];
-  const rewarded = (codes[0]?.total_rewarded || 0) + 1;
-  await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?user_id=eq.${ref.referrer_id}`, {
-    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-    body: JSON.stringify({ total_rewarded: rewarded })
-  }).catch(() => {});
-  if (rewarded === 1) {
-    await sbRpc(ctx, 'grant_badge', { p_user_id: ref.referrer_id, p_badge_slug: 'parrain_actif', p_granted_by: 'system' }).catch(() => {});
-  }
-
-  // Marquer le parrainage comme récompensé
-  await fetch(`${ctx.sbUrl}/rest/v1/referrals?id=eq.${ref.id}`, {
-    method: 'PATCH', headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-    body: JSON.stringify({ status: 'rewarded', action_type: actionType, rewarded_at: new Date().toISOString(), points_granted: POINTS_REWARD, xp_granted: XP_REWARD })
-  }).catch(() => {});
-
-  await fetch(`${ctx.sbUrl}/rest/v1/reward_audit_logs`, {
-    method: 'POST', headers: sbHeaders(ctx.sbKey),
-    body: JSON.stringify({ user_id: ref.referrer_id, action: 'referral_reward', points_delta: POINTS_REWARD, xp_delta: XP_REWARD, ref_type: 'referral', ref_id: ref.id })
-  }).catch(() => {});
-}
-
-/* ============================================================
-   STRIPE CONNECT EXPRESS — paiements livreurs
-============================================================ */
-
-async function stripeConnectRequest(method, path, body, secretKey, connectedAccountId) {
-  const headers = {
-    Authorization: `Bearer ${secretKey}`,
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Stripe-Version': '2024-04-10',
-  };
-  if (connectedAccountId) headers['Stripe-Account'] = connectedAccountId;
-  const options = { method, headers };
-  if (body && method !== 'GET') options.body = new URLSearchParams(body).toString();
-  const r    = await fetch(`https://api.stripe.com${path}`, options);
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error?.message || `Stripe ${r.status}`);
-  return data;
-}
-
-/* ── Créer compte + lien d'onboarding ────────────────────── */
-async function stripeConnectOnboard(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role livreur requis' });
-  }
-  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
-
-  const uid   = ctx.session.id;
-  const sbUrl = ctx.sbUrl;
-  const sbKey = ctx.sbKey;
-
-  // Vérifier si un compte existe déjà
-  const existing = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
-    headers: sbHeaders(sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  let stripeAccountId = existing[0]?.stripe_account_id;
-
-  if (!stripeAccountId) {
-    // Récupérer email du profil
-    const profileRows = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${uid}&select=email,prenom,nom`, {
-      headers: sbHeaders(sbKey)
-    }).then(r => r.ok ? r.json() : []);
-    const email = profileRows[0]?.email || ctx.session.email || '';
-
-    // Créer le compte Express
-    const account = await stripeConnectRequest('POST', '/v1/accounts', {
-      type: 'express',
-      country: 'CA',
-      email,
-      'capabilities[card_payments][requested]': 'true',
-      'capabilities[transfers][requested]': 'true',
-      'settings[payouts][schedule][interval]': 'weekly',
-      'settings[payouts][schedule][weekly_anchor]': 'friday',
-    }, ctx.stripeKey);
-
-    stripeAccountId = account.id;
-
-    // Sauvegarder en base
-    await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts`, {
-      method: 'POST',
-      headers: sbHeaders(sbKey),
-      body: JSON.stringify({
-        user_id: uid,
-        stripe_account_id: stripeAccountId,
-        status: 'pending',
-        country: 'CA',
-      })
-    });
-  }
-
-  // Créer le lien d'onboarding (toujours régénérer — expire après utilisation)
-  const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
-  const accountLink = await stripeConnectRequest('POST', '/v1/account_links', {
-    account:     stripeAccountId,
-    refresh_url: `${baseUrl}/dashboard-livreur.html?stripe=refresh`,
-    return_url:  `${baseUrl}/dashboard-livreur.html?stripe=success`,
-    type: 'account_onboarding',
-  }, ctx.stripeKey);
-
-  return res.status(200).json({
-    success: true,
-    onboarding_url: accountLink.url,
-    stripe_account_id: stripeAccountId,
-  });
-}
-
-/* ── Statut du compte + solde disponible ─────────────────── */
-async function stripeConnectStatus(req, res, ctx) {
-  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role livreur requis' });
-  }
-
-  const uid   = ctx.session.id;
-  const sbUrl = ctx.sbUrl;
-  const sbKey = ctx.sbKey;
-
-  // Récupérer compte en base
-  const rows = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
-    headers: sbHeaders(sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  const account = rows[0] || null;
-
-  // Récupérer le solde depuis v_livreur_balance
-  const balRows = await fetch(`${sbUrl}/rest/v1/v_livreur_balance?user_id=eq.${uid}`, {
-    headers: sbHeaders(sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  const balance = balRows[0] || { balance_available: 0, balance_pending: 0, total_earned: 0, total_transferred: 0 };
-
-  // Historique des 10 derniers virements
-  const payouts = await fetch(`${sbUrl}/rest/v1/payout_requests?user_id=eq.${uid}&order=requested_at.desc&limit=10&select=*`, {
-    headers: sbHeaders(sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  // Si le compte existe, rafraîchir le statut depuis Stripe
-  if (account?.stripe_account_id && ctx.stripeKey) {
-    try {
-      const stripeAcct = await stripeConnectRequest('GET', `/v1/accounts/${account.stripe_account_id}`, null, ctx.stripeKey);
-      const newStatus = stripeAcct.charges_enabled && stripeAcct.payouts_enabled ? 'active'
-                      : stripeAcct.details_submitted ? 'onboarding'
-                      : 'pending';
-      if (newStatus !== account.status) {
-        await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}`, {
-          method: 'PATCH',
-          headers: sbHeaders(sbKey, 'return=minimal'),
-          body: JSON.stringify({
-            status:            newStatus,
-            charges_enabled:   stripeAcct.charges_enabled,
-            payouts_enabled:   stripeAcct.payouts_enabled,
-            details_submitted: stripeAcct.details_submitted,
-          })
-        });
-        account.status          = newStatus;
-        account.charges_enabled = stripeAcct.charges_enabled;
-        account.payouts_enabled = stripeAcct.payouts_enabled;
-      }
-    } catch (_) { /* Silencieux si Stripe inaccessible */ }
-  }
-
-  return res.status(200).json({
-    success: true,
-    account: account || null,
-    balance: {
-      available:    parseFloat(balance.balance_available || 0),
-      pending:      parseFloat(balance.balance_pending   || 0),
-      total_earned: parseFloat(balance.total_earned      || 0),
-      transferred:  parseFloat(balance.total_transferred || 0),
-    },
-    recent_payouts: payouts,
-  });
-}
-
-/* ── Lien vers le dashboard Express Stripe ───────────────── */
-async function stripeConnectDashboard(req, res, ctx) {
-  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role livreur requis' });
-  }
-  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
-
-  const uid  = ctx.session.id;
-  const rows = await fetch(`${ctx.sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=stripe_account_id,status`, {
-    headers: sbHeaders(ctx.sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  if (!rows.length || !rows[0].stripe_account_id) {
-    return res.status(404).json({ error: 'Compte Stripe non configure' });
-  }
-  if (rows[0].status !== 'active') {
-    return res.status(400).json({ error: 'Compte non encore actif' });
-  }
-
-  const link = await stripeConnectRequest('POST', `/v1/accounts/${rows[0].stripe_account_id}/login_links`, {}, ctx.stripeKey);
-  return res.status(200).json({ success: true, url: link.url });
-}
-
-/* ── Déclencher un virement vers le livreur ─────────────── */
-async function stripeConnectPayout(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role livreur requis' });
-  }
-  if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configure' });
-
-  const uid   = ctx.session.id;
-  const sbUrl = ctx.sbUrl;
-  const sbKey = ctx.sbKey;
-
-  // Vérifier compte actif
-  const acctRows = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
-    headers: sbHeaders(sbKey)
-  }).then(r => r.ok ? r.json() : []);
-
-  const account = acctRows[0];
-  if (!account?.stripe_account_id)  return res.status(400).json({ error: 'Configure ton compte de paiement d\'abord' });
-  if (!account.payouts_enabled)     return res.status(400).json({ error: 'Ton compte Stripe n\'est pas encore actif' });
-
-  // Récupérer les gains disponibles
-  const earningRows = await fetch(
-    `${sbUrl}/rest/v1/livreur_earnings?user_id=eq.${uid}&status=eq.available&available_after=lte.${new Date().toISOString()}&select=*`,
-    { headers: sbHeaders(sbKey) }
-  ).then(r => r.ok ? r.json() : []);
-
-  const totalNet = earningRows.reduce((s, e) => s + parseFloat(e.net_amount || 0), 0);
-  const MINIMUM  = 10; // $ minimum de retrait
-
-  if (totalNet < MINIMUM) {
-    return res.status(400).json({
-      error: `Solde insuffisant. Minimum ${MINIMUM} $ requis (disponible: ${totalNet.toFixed(2)} $)`
-    });
-  }
-
-  const amountCents = Math.floor(totalNet * 100);
-  const earningIds  = earningRows.map(e => e.id);
-
-  // Créer le virement Stripe
-  let transfer;
-  try {
-    transfer = await stripeConnectRequest('POST', '/v1/transfers', {
-      amount:      amountCents,
-      currency:    'cad',
-      destination: account.stripe_account_id,
-      description: `Gains PorteaPorte — ${new Date().toLocaleDateString('fr-CA')}`,
-    }, ctx.stripeKey);
-  } catch (e) {
-    return res.status(502).json({ error: 'Erreur Stripe : ' + e.message });
-  }
-
-  // Marquer les gains comme transférés
-  await Promise.all(earningIds.map(id =>
-    fetch(`${sbUrl}/rest/v1/livreur_earnings?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: sbHeaders(sbKey, 'return=minimal'),
-      body: JSON.stringify({ status: 'transferred', stripe_transfer_id: transfer.id })
-    })
-  ));
-
-  // Enregistrer la demande de virement
-  const payoutRow = {
-    user_id:            uid,
-    amount_cents:       amountCents,
-    currency:           'cad',
-    status:             'processing',
-    stripe_transfer_id: transfer.id,
-    requested_at:       new Date().toISOString(),
-  };
-  await fetch(`${sbUrl}/rest/v1/payout_requests`, {
-    method: 'POST',
-    headers: sbHeaders(sbKey),
-    body: JSON.stringify(payoutRow)
-  });
-
-  // Notification in-app
-  await fetch(`${sbUrl}/rest/v1/notifications`, {
-    method: 'POST',
-    headers: sbHeaders(sbKey),
-    body: JSON.stringify({
-      user_id: uid,
-      type: 'system',
-      title: 'Virement en cours',
-      message: `${(amountCents / 100).toFixed(2)} $ ont ete envoyes a ton compte bancaire. Arrive sous 2 jours ouvrables.`,
-    })
-  }).catch(() => {});
-
-  return res.status(200).json({
-    success: true,
-    amount:      amountCents / 100,
-    currency:    'cad',
-    transfer_id: transfer.id,
-    message:     `Virement de ${(amountCents / 100).toFixed(2)} $ initie avec succes.`,
-  });
-}
-
-/* ── Historique des gains ────────────────────────────────── */
-async function livreurEarnings(req, res, ctx) {
-  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role livreur requis' });
-  }
-
-  const uid   = ctx.session.id;
-  const limit = 50;
-
-  const rows = await fetch(
-    `${ctx.sbUrl}/rest/v1/livreur_earnings?user_id=eq.${uid}&order=created_at.desc&limit=${limit}&select=*`,
-    { headers: sbHeaders(ctx.sbKey) }
-  ).then(r => r.ok ? r.json() : []);
-
-  return res.status(200).json({ success: true, earnings: rows, total: rows.length });
-}
-
-/* ── Abonnements ─────────────────────────────────────────── */
-async function subscriptionCreate(req, res, ctx) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-  const body  = req.body || {};
-  const plan  = String(body.plan || '');
-  const PLANS = { conducteur_pro: 'STRIPE_PRICE_PRO', marchand_local: 'STRIPE_PRICE_MARCHAND' };
-  if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide.' });
-
-  const priceId  = process.env[PLANS[plan]];
-  const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
-  if (!priceId)   return res.status(503).json({ error: 'Ce plan n\'est pas encore disponible.' });
-  if (!stripeKey) return res.status(500).json({ error: 'Paiement temporairement indisponible.' });
-
-  // Récupérer ou créer le customer Stripe
-  const profileRows = await fetch(
-    `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=email,prenom,nom,stripe_customer_id`,
-    { headers: sbHeaders(ctx.sbKey) }
-  ).then(r => r.ok ? r.json() : []).catch(() => []);
-  const profile = profileRows[0] || {};
-
-  let customerId = profile.stripe_customer_id;
-  if (!customerId) {
-    const custRes = await fetch('https://api.stripe.com/v1/customers', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        email: profile.email || '',
-        name: [profile.prenom, profile.nom].filter(Boolean).join(' ') || '',
-        'metadata[supabase_id]': ctx.session.id,
-      }).toString()
-    }).catch(() => null);
-    if (custRes?.ok) {
-      const cust = await custRes.json();
-      customerId = cust.id;
-      await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
-        method: 'PATCH',
-        headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-        body: JSON.stringify({ stripe_customer_id: customerId })
-      }).catch(() => {});
-    }
-  }
-
-  const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
-  const params  = new URLSearchParams({
-    mode: 'subscription',
-    'line_items[0][price]': priceId,
-    'line_items[0][quantity]': '1',
-    success_url: `${baseUrl}/abonnements.html?success=1&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:  `${baseUrl}/abonnements.html?cancel=1`,
-    'metadata[supabase_id]': ctx.session.id,
-    'metadata[plan]': plan,
-    'subscription_data[metadata][supabase_id]': ctx.session.id,
-    'subscription_data[metadata][plan]': plan,
-  });
-  if (customerId) params.set('customer', customerId);
-
-  const sessRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString()
-  }).catch(() => null);
-
-  if (!sessRes?.ok) {
-    const err = sessRes ? await sessRes.json().catch(() => ({})) : {};
-    return res.status(500).json({ error: err.error?.message || 'Impossible de créer la session de paiement.' });
-  }
-  const sess = await sessRes.json();
-  return res.status(200).json({ url: sess.url });
-}
-
-async function subscriptionStatus(req, res, ctx) {
-  if (!ctx.session) return res.status(401).json({ error: 'Authentification requise' });
-  const body      = req.body || {};
-  const sessionId = body.session_id || req.query?.session_id || null;
-  const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
-
-  // Retour depuis Stripe Checkout : activer l'abonnement en Supabase
-  if (sessionId && stripeKey) {
-    const sessRes = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=subscription`,
-      { headers: { Authorization: `Bearer ${stripeKey}` } }
-    ).catch(() => null);
-    if (sessRes?.ok) {
-      const sess = await sessRes.json().catch(() => ({}));
-      if (sess.payment_status === 'paid' && sess.subscription) {
-        const sub  = typeof sess.subscription === 'object' ? sess.subscription : {};
-        const plan = sess.metadata?.plan || null;
-        await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
-          method: 'PATCH',
-          headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-          body: JSON.stringify({
-            subscription_plan:   plan,
-            subscription_status: sub.status || 'active',
-            subscription_end_at: sub.current_period_end
-              ? new Date(sub.current_period_end * 1000).toISOString() : null,
-            stripe_customer_id:  sub.customer || null,
-          })
-        }).catch(() => {});
-        return res.status(200).json({
-          active: sub.status === 'active',
-          plan,
-          current_period_end: sub.current_period_end || null,
-        });
-      }
-    }
-  }
-
-  // Lecture depuis le profil Supabase
-  const rows = await fetch(
-    `${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}&select=subscription_plan,subscription_status,subscription_end_at`,
-    { headers: sbHeaders(ctx.sbKey) }
-  ).then(r => r.ok ? r.json() : []).catch(() => []);
-  const p = rows[0] || {};
-  return res.status(200).json({
-    active: p.subscription_status === 'active',
-    plan:   p.subscription_plan   || null,
-    current_period_end: p.subscription_end_at || null,
-  });
-}
