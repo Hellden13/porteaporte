@@ -1,4 +1,5 @@
 /* PorteaPorte brand consistency layer — Design System v1.0 */
+@import url('/assets/mobile-polish.css');
 :root {
   /* ── Palette principale ── */
   --brand-bg-dark: #0A0C10;

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fonctionnalités — PorteàPorte</title>
+  <meta name="description" content="Découvre toutes les fonctionnalités de sécurité, matching IA et transparence de PorteàPorte.">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { padding: 0; }
+    .hero {
+      background: linear-gradient(135deg, #0a0e14 0%, #001828 100%);
+      padding: 60px 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 12px; }
+    .hero p { color: var(--brand-muted); font-size: 1.05rem; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 50px 24px; }
+    .section-title { font-size: 1.4rem; margin: 40px 0 18px; color: var(--brand-lime); }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .feature { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px; transition: transform .2s, border-color .2s; }
+    .feature:hover { transform: translateY(-2px); border-color: rgba(184,245,62,.4); }
+    .feature .icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .feature h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--brand-text); }
+    .feature p { color: var(--brand-muted); font-size: .88rem; line-height: 1.55; margin: 0; }
+    .feature .new-tag { display: inline-block; padding: 2px 8px; background: rgba(184,245,62,.15); color: var(--brand-lime); border-radius: 999px; font-size: .68rem; font-weight: 800; margin-left: 8px; }
+    .cta { text-align: center; margin-top: 50px; padding: 30px; background: rgba(184,245,62,.05); border: 1px solid rgba(184,245,62,.2); border-radius: 16px; }
+    .cta h2 { margin: 0 0 14px; }
+    .btn-lg { display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); color: #001828; border: none; border-radius: 10px; font-weight: 900; font-size: 1rem; text-decoration: none; cursor: pointer; margin: 4px; }
+  </style>
+</head>
+<body>
+  <header class="site-header" style="position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,14,20,.95);border-bottom:1px solid var(--brand-border);backdrop-filter:blur(12px)">
+    <a href="/" style="font-weight:900;color:var(--brand-lime);text-decoration:none;font-size:1.1rem">PorteàPorte</a>
+    <nav style="display:flex;gap:8px">
+      <a class="btn secondary" href="/index.html">Accueil</a>
+      <a class="btn" href="/login.html">Connexion</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>✨ Toutes nos fonctionnalités</h1>
+    <p>Sécurité maximale, matching IA, transparence totale. Une plateforme pensée pour la confiance entre expéditeurs, livreurs et destinataires.</p>
+  </section>
+
+  <main class="wrap">
+    <h2 class="section-title">🔒 Sécurité & Identité</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">🆔</div><h3>Carte d'identité numérique <span class="new-tag">NEW</span></h3><p>Chaque livreur a une carte virtuelle avec photo + QR code à scanner. L'expéditeur vérifie l'identité avant d'ouvrir.</p></div>
+      <div class="feature"><div class="icon">🤖</div><h3>IA Face matching <span class="new-tag">NEW</span></h3><p>Au pickup, la selfie du livreur est comparée automatiquement à sa selfie KYC. Si différent → alerte.</p></div>
+      <div class="feature"><div class="icon">⚡</div><h3>Vérification instantanée Stripe <span class="new-tag">NEW</span></h3><p>KYC en 30 secondes via Stripe Identity (permis + selfie + liveness). Plus besoin d'attendre 48h.</p></div>
+      <div class="feature"><div class="icon">🤳</div><h3>Selfie + GPS au pickup <span class="new-tag">NEW</span></h3><p>Le livreur doit prendre une selfie au moment où il récupère le colis. GPS + photo = preuve d'identité incontestable.</p></div>
+      <div class="feature"><div class="icon">🔑</div><h3>Double code (pickup + réception)</h3><p>Un code pour le livreur à l'arrivée + un code pour le destinataire. Personne ne peut détourner le colis.</p></div>
+    </div>
+
+    <h2 class="section-title">🛰️ Tracking & GPS</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">📍</div><h3>GPS obligatoire <span class="new-tag">NEW</span></h3><p>Le livreur s'engage à laisser son GPS activé jusqu'à la livraison. S'il le désactive → alerte automatique.</p></div>
+      <div class="feature"><div class="icon">🗺️</div><h3>Tracking live avec ETA <span class="new-tag">NEW</span></h3><p>L'expéditeur et le destinataire voient la position du livreur en temps réel + ETA + progress bar.</p></div>
+      <div class="feature"><div class="icon">📲</div><h3>Notifications par email</h3><p>À chaque étape (création, paiement, départ, arrivée, confirmation), tous les acteurs sont prévenus.</p></div>
+    </div>
+
+    <h2 class="section-title">🤖 Matching IA</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">🧠</div><h3>Algo Haversine <span class="new-tag">NEW</span></h3><p>Distance GPS précise entre 44 villes du Québec. Matching intelligent selon transport, taille et trajet.</p></div>
+      <div class="feature"><div class="icon">🚗</div><h3>Covoiturage de colis <span class="new-tag">NEW</span></h3><p>Le livreur configure sa route (origine, destination, déviation km). L'IA trouve les missions sur son chemin.</p></div>
+      <div class="feature"><div class="icon">📦</div><h3>Matching taille colis <span class="new-tag">NEW</span></h3><p>Un vélo ne livre pas un frigidaire. L'algo filtre les missions selon ton véhicule.</p></div>
+    </div>
+
+    <h2 class="section-title">💬 Confiance & Communication</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">⚖️</div><h3>Signalement bidirectionnel <span class="new-tag">NEW</span></h3><p>Expéditeur, livreur et destinataire peuvent se signaler mutuellement. 48h pour contester. Admin tranche.</p></div>
+      <div class="feature"><div class="icon">⭐</div><h3>Score de fiabilité <span class="new-tag">NEW</span></h3><p>Chaque utilisateur a un score 0-100 basé sur les manquements validés. Visible publiquement.</p></div>
+      <div class="feature"><div class="icon">💬</div><h3>Messagerie groupe 3-4 personnes <span class="new-tag">NEW</span></h3><p>Canal partagé entre expéditeur, livreur, destinataire et admin si besoin.</p></div>
+      <div class="feature"><div class="icon">🚨</div><h3>Intelligence d'adresses <span class="new-tag">NEW</span></h3><p>Les livreurs partagent des notes : chien dangereux, code porte, étages... Communauté solidaire.</p></div>
+    </div>
+
+    <h2 class="section-title">🚨 Gestion des imprévus</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">⏱️</div><h3>Pré-confirmation XL <span class="new-tag">NEW</span></h3><p>Pour les gros colis (électroménager), le destinataire doit confirmer sa présence avant départ du livreur (15 min).</p></div>
+      <div class="feature"><div class="icon">↩️</div><h3>3 actions imprévu</h3><p>Dépôt sécurisé (photo), Re-livraison programmée, ou Retour expéditeur — selon la situation.</p></div>
+      <div class="feature"><div class="icon">💰</div><h3>Compensation automatique <span class="new-tag">NEW</span></h3><p>Si le destinataire est fautif (absent, refus), le livreur reçoit 25%-50% de compensation pour son déplacement.</p></div>
+    </div>
+
+    <h2 class="section-title">💳 Paiement sécurisé</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">🏦</div><h3>Escrow Stripe</h3><p>Le paiement est bloqué dès la création. Libéré au livreur seulement après confirmation du destinataire.</p></div>
+      <div class="feature"><div class="icon">⚙️</div><h3>Connect Express pour livreurs</h3><p>Les livreurs reçoivent leurs gains sur leur compte bancaire via Stripe Connect.</p></div>
+      <div class="feature"><div class="icon">📊</div><h3>Répartition transparente</h3><p>60% livreur · 12% plateforme · 5% cause humanitaire · TPS/TVQ.</p></div>
+    </div>
+
+    <h2 class="section-title">📱 Mobile & App</h2>
+    <div class="features">
+      <div class="feature"><div class="icon">📲</div><h3>Installable comme app <span class="new-tag">NEW</span></h3><p>PWA : ajoute PorteàPorte à ton écran d'accueil en 1 clic. Fonctionne comme une vraie app.</p></div>
+      <div class="feature"><div class="icon">🔔</div><h3>Notifications push <span class="new-tag">NEW</span></h3><p>Sois prévenu instantanément des nouvelles missions, messages, paiements...</p></div>
+      <div class="feature"><div class="icon">🌐</div><h3>Mode hors-ligne</h3><p>Le service worker garde le site accessible même sans connexion.</p></div>
+    </div>
+
+    <div class="cta">
+      <h2>Prêt à commencer ?</h2>
+      <p style="color:var(--brand-muted);margin-bottom:20px">Inscription gratuite. Pas d'engagement.</p>
+      <a class="btn-lg" href="/login.html">Créer mon compte</a>
+      <a class="btn-lg" style="background:transparent;border:2px solid var(--brand-lime);color:var(--brand-lime)" href="/devenir-livreur.html">Devenir livreur</a>
+    </div>
+  </main>
+
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/pwa-install.js"></script>
+</body>
+</html>

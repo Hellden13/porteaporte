@@ -1,0 +1,125 @@
+/* PorteàPorte — Mobile UX polish */
+
+/* Empêcher zoom auto sur inputs iOS */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 640px) {
+  button, .btn, a.btn, .btn-sm {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .btn-sm {
+    min-height: 38px;
+    padding: 10px 14px !important;
+  }
+}
+
+/* Tableaux responsive */
+@media (max-width: 640px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Cards fluides */
+@media (max-width: 640px) {
+  .card, .panel, .stat, .liv-card, .user-card, .mission-card {
+    padding: 14px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* Texte plus lisible mobile */
+@media (max-width: 640px) {
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.2rem !important; }
+  h3 { font-size: 1rem !important; }
+  body { -webkit-tap-highlight-color: rgba(184,245,62,.15); }
+}
+
+/* Topbar mobile : icônes seulement */
+@media (max-width: 540px) {
+  .topbar, .site-header {
+    padding: 10px 14px !important;
+  }
+  .topbar .topbar-right, .site-header nav {
+    gap: 6px !important;
+  }
+  .topbar-btn {
+    padding: 6px 10px !important;
+    font-size: .78rem !important;
+  }
+}
+
+/* Modal/popup mobile : pleine largeur */
+@media (max-width: 540px) {
+  .modal, .popup, [class*="overlay"] > div {
+    max-width: 95% !important;
+    margin: 10px !important;
+  }
+}
+
+/* Grids responsive */
+@media (max-width: 640px) {
+  .grid, .stats-grid, .two-col, .compare {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Form polish */
+@media (max-width: 640px) {
+  form .row, form .form-row, form .field-group {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  label {
+    margin-top: 10px !important;
+  }
+}
+
+/* Scrollbar discrète sur mobile */
+@media (max-width: 640px) {
+  *::-webkit-scrollbar { width: 2px; height: 2px; }
+  *::-webkit-scrollbar-thumb { background: rgba(184,245,62,.3); }
+}
+
+/* Safe area iOS (notch) */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(env(safe-area-inset-left), 0);
+    padding-right: max(env(safe-area-inset-right), 0);
+  }
+  .topbar, .site-header {
+    padding-top: max(env(safe-area-inset-top), 10px) !important;
+  }
+}
+
+/* Animations plus douces pour mobile (réduit la batterie) */
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  * { animation-duration: .3s !important; }
+}
+
+/* Sticky footer bar mobile pour CTA principal */
+@media (max-width: 540px) {
+  .mobile-cta-sticky {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10,14,20,.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(184,245,62,.3);
+    padding: 12px 16px;
+    z-index: 100;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .mobile-cta-sticky button, .mobile-cta-sticky a {
+    width: 100%;
+  }
+}
