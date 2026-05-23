@@ -30,6 +30,7 @@ const PUBLIC_TYPES = new Set([
   'manquement_signale',
   'preuve_soumise_admin',
   'prefs_destinataire',
+  'xl_confirmation_destinataire',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -329,7 +330,38 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <a href="${data.confirm_link}" style="color:#b8f53e;word-break:break-all;font-size:.85rem">${data.confirm_link}</a>
               <div style="margin-top:8px;font-size:.78rem;color:#6d7886">Tu peux partager ce lien par SMS, WhatsApp ou courriel. Le destinataire entre le code sur cette page pour confirmer la réception.</div>
             </div>
+            ${data.pickup_code ? `
+            <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">🔑 CODE DE RAMASSAGE (PICKUP)</div>
+              <div style="font-size:2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.pickup_code}</div>
+              <div style="font-size:.82rem;color:#a8b0ba">À donner au livreur <strong>seulement</strong> quand il arrive chez toi pour récupérer le colis. Cela garantit que personne ne peut prendre ton colis sans ton accord.</div>
+            </div>
+            ` : ''}
             <p style="color:#6d7886;font-size:.8rem;margin-top:20px">PorteàPorte · Livraison sécurisée au Québec</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ── XL CONFIRMATION — destinataire doit confirmer présence avant départ livreur ──
+    case 'xl_confirmation_destinataire': {
+      emails.push({
+        to: data.destinataire_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🚨 URGENT — Le livreur de ton colis XL part dans 15 min — Confirme ta présence`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">🚨 Confirmation requise — Colis XL</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.destinataire_nom || ''},<br><br>Le livreur de ton colis <strong style="color:#fff">#${data.code}</strong> est prêt à partir vers <strong>${data.ville_arrivee}</strong>.</p>
+            <div style="background:rgba(255,90,90,.08);border:2px solid rgba(255,90,90,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+              <div style="font-size:.9rem;color:#ffb0b0;font-weight:800;margin-bottom:10px">⏱️ Tu as 15 minutes pour confirmer ta présence</div>
+              <div style="font-size:.85rem;color:#a8b0ba">Sans réponse, la livraison sera <strong>annulée automatiquement</strong> et reprogrammée. Le livreur sera compensé pour son temps perdu.</div>
+            </div>
+            <div style="text-align:center;margin:20px 0">
+              <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block;font-size:1rem">✅ Je serai présent — Confirmer</a>
+            </div>
+            <p style="color:#a8b0ba;font-size:.85rem;margin-top:18px">⚠️ <strong>Important</strong> : pour les gros colis (électroménager, meubles), nous ne pouvons pas faire de dépôt sans confirmation. Cela évite vol et dommages.</p>
           </div>`
       });
       break;

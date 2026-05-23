@@ -72,17 +72,20 @@ async function createLivraison(req, res, ctx, body) {
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
   let receptionCode = livraison?.id ? generateReceptionCode() : null;
+  let pickupCode = livraison?.id ? generateReceptionCode() : null;
   if (receptionCode) {
     const hash = hashReceptionCode(receptionCode, livraison.id);
+    const pickupHash = pickupCode ? hashReceptionCode(pickupCode, livraison.id) : null;
     const codePatch = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison.id)}`, {
       method: 'PATCH',
       headers: sbHeaders(ctx.sbKey),
       body: JSON.stringify({
         recipient_confirmation_hash: hash,
-        recipient_confirmation_created_at: new Date().toISOString()
+        recipient_confirmation_created_at: new Date().toISOString(),
+        pickup_code_hash: pickupHash
       })
     }).catch(() => {});
-    if (!codePatch || !codePatch.ok) receptionCode = null;
+    if (!codePatch || !codePatch.ok) { receptionCode = null; pickupCode = null; }
   }
   await deliverPush(ctx, {
     type: 'nouvelle_mission',
@@ -94,10 +97,11 @@ async function createLivraison(req, res, ctx, body) {
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
 
-  // Email à l'expéditeur avec le code de réception destinataire
+  // Email à l'expéditeur avec le code de réception destinataire + pickup code
   if (receptionCode && (ctx.session.email || ctx.profile?.email)) {
     callNotifier('livraison_creee_expediteur', {
       expediteur_email: ctx.session.email || ctx.profile?.email,
+      pickup_code: pickupCode,
       prenom: ctx.profile?.prenom || '',
       code: livraison?.code || livraison?.id?.slice(0, 8) || '',
       livraison_id: livraison?.id || '',
@@ -127,7 +131,7 @@ async function createLivraison(req, res, ctx, body) {
     }).catch((err) => console.error('[notifier code_destinataire]', err.message));
   }
 
-  return res.status(200).json({ success: true, livraison, recipient_confirmation_code: receptionCode });
+  return res.status(200).json({ success: true, livraison, recipient_confirmation_code: receptionCode, pickup_code: pickupCode });
 }
 
 async function setUserRole(req, res, ctx, body) {
@@ -231,6 +235,118 @@ async function assignDriver(req, res, ctx, body) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Assignation impossible', details: data });
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
+}
+
+// ── Code de récupération expéditeur (pickup) ──
+async function livraisonPickup(req, res, ctx, body) {
+  const { livraison_id, pickup_code } = body;
+  if (!livraison_id || !pickup_code) return res.status(400).json({ error: 'livraison_id et pickup_code requis' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,livreur_id,pickup_code_hash,taille_colis`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  const admin = roleIn(ctx.profile, ['admin']);
+  if (!admin && livraison.livreur_id !== ctx.session.id) {
+    return res.status(403).json({ error: 'Livreur assigné requis' });
+  }
+  if (!['confirme', 'en_route'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Pickup impossible dans l\'état actuel' });
+  }
+
+  // Bloquer si XL et confirmation destinataire pas reçue
+  if (livraison.taille_colis === 'xl' && !livraison.xl_confirmation_recue_at) {
+    return res.status(409).json({
+      error: 'Colis XL : confirmation destinataire requise avant pickup. Utilise le bouton de pré-confirmation.',
+      requires_xl_confirmation: true
+    });
+  }
+
+  const expectedHash = livraison.pickup_code_hash;
+  if (!expectedHash) return res.status(409).json({ error: 'Aucun code pickup configuré pour cette livraison' });
+  const suppliedHash = hashReceptionCode(pickup_code, livraison.id);
+  if (suppliedHash !== expectedHash && !admin) {
+    return res.status(403).json({ error: 'Code de récupération invalide' });
+  }
+
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      statut: 'ramasse',
+      pickup_confirmed_at: new Date().toISOString()
+    })
+  });
+  if (!pr.ok) {
+    const errData = await pr.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Mise à jour impossible', details: errData });
+  }
+  return res.status(200).json({ success: true });
+}
+
+// ── Confirmation XL — destinataire doit confirmer présence avant départ livreur ──
+async function xlConfirmationRequest(req, res, ctx, body) {
+  const { livraison_id } = body;
+  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,livreur_id,statut,taille_colis,destinataire_email,nom_destinataire,ville_arrivee`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (livraison.livreur_id !== ctx.session.id && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur assigné requis' });
+  }
+  if (livraison.taille_colis !== 'xl') {
+    return res.status(409).json({ error: 'Confirmation XL non requise (colis non-XL)' });
+  }
+
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ xl_confirmation_demande_at: new Date().toISOString() })
+  });
+
+  // Email destinataire avec lien de confirmation
+  if (livraison.destinataire_email) {
+    callNotifier('xl_confirmation_destinataire', {
+      destinataire_email: livraison.destinataire_email,
+      destinataire_nom: livraison.nom_destinataire || '',
+      code: livraison.code || livraison_id.slice(0,8),
+      ville_arrivee: livraison.ville_arrivee,
+      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison_id)}&xl=1`
+    }).catch(err => console.error('[notifier xl_confirmation_destinataire]', err.message));
+  }
+
+  return res.status(200).json({ success: true, message: 'Destinataire notifié. Il a 15 minutes pour confirmer sa présence.' });
+}
+
+// ── Livreur : configurer sa route + déviation km ──
+async function livreurRouteUpdate(req, res, ctx, body) {
+  if (!isVerifiedDriver(ctx.session, ctx.profile) && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur vérifié requis' });
+  }
+  const patch = {
+    route_origine: body.route_origine || null,
+    route_destination: body.route_destination || null,
+    route_deviation_km: body.route_deviation_km != null ? Number(body.route_deviation_km) : null,
+    route_date: body.route_date || null,
+    route_heure_debut: body.route_heure_debut || null,
+    route_heure_fin: body.route_heure_fin || null,
+    route_updated_at: new Date().toISOString()
+  };
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(ctx.session.id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(patch)
+  });
+  if (!pr.ok) {
+    const errData = await pr.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Mise à jour route impossible', details: errData });
+  }
+  return res.status(200).json({ success: true });
 }
 
 // ── Imprévu réception (3 actions livreur) ──
@@ -779,6 +895,35 @@ async function availableLivraisons(req, res, ctx) {
     .map((row) => ({ row, eligibility: deliveryEligibility(ctx.profile, row) }))
     .filter((item) => item.eligibility.allowed);
 
+  // IA matching : prioriser missions sur la route du livreur
+  const profile = ctx.profile || {};
+  const hasRoute = profile.route_origine && profile.route_destination;
+  if (hasRoute) {
+    const normalize = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    const orig = normalize(profile.route_origine);
+    const dest = normalize(profile.route_destination);
+    filtered.forEach(item => {
+      const villeD = normalize(item.row.ville_depart);
+      const villeA = normalize(item.row.ville_arrivee);
+      let routeScore = 0;
+      // Mission départ matches livreur origine OU sur la route
+      if (villeD === orig || villeD === dest) routeScore += 50;
+      if (villeA === orig || villeA === dest) routeScore += 30;
+      // Bonus si dispo horaires correspondent
+      if (profile.route_heure_debut && profile.route_heure_fin && item.row.destinataire_dispo_debut) {
+        const livDeb = profile.route_heure_debut;
+        const livFin = profile.route_heure_fin;
+        const dDeb = item.row.destinataire_dispo_debut;
+        const dFin = item.row.destinataire_dispo_fin;
+        if (livDeb <= dFin && livFin >= dDeb) routeScore += 20;
+      }
+      item.routeScore = routeScore;
+      item.onRoute = routeScore >= 50;
+    });
+    // Trier : missions sur la route en premier
+    filtered.sort((a, b) => (b.routeScore || 0) - (a.routeScore || 0));
+  }
+
   // Enrichir avec les profils expéditeurs
   const expIds = [...new Set(filtered.map(({ row }) => row.expediteur_id).filter(Boolean))];
   let expProfiles = {};
@@ -812,6 +957,8 @@ async function availableLivraisons(req, res, ctx) {
       notes: null,
       distance_km: eligibility.routeKm,
       compatibilite: eligibility.reason,
+      route_score: filtered.find(f => f.row.id === row.id)?.routeScore || 0,
+      on_route: filtered.find(f => f.row.id === row.id)?.onRoute || false,
       cree_le: row.cree_le || row.created_at,
       expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
     }))
@@ -2782,6 +2929,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
     if (endpoint === 'livraison-imprevu') return await livraisonImprevu(req, res, ctx, body);
+    if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
+    if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
+    if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
     if (endpoint === 'manquement-signaler') return await manquementSignaler(req, res, ctx, body);
     if (endpoint === 'manquement-contester') return await manquementContester(req, res, ctx, body);
     if (endpoint === 'manquement-list') return await manquementList(req, res, ctx, body);

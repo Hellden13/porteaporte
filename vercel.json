@@ -351,6 +351,18 @@
                      {
                          "source":  "/api/fiabilite-get",
                          "destination":  "/api/platform?endpoint=fiabilite-get"
+                     },
+                     {
+                         "source":  "/api/livraison-pickup",
+                         "destination":  "/api/platform?endpoint=livraison-pickup"
+                     },
+                     {
+                         "source":  "/api/xl-confirmation-request",
+                         "destination":  "/api/platform?endpoint=xl-confirmation-request"
+                     },
+                     {
+                         "source":  "/api/livreur-route-update",
+                         "destination":  "/api/platform?endpoint=livreur-route-update"
                      }
                  ],
     "headers":  [

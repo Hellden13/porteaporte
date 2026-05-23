@@ -428,6 +428,22 @@
   <!-- Main content -->
   <main class="page" id="mainPage" style="display:none">
 
+    <!-- Route du livreur (IA matching covoiturage colis) -->
+    <details style="margin-bottom:18px;padding:16px;border-radius:12px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.22)">
+      <summary style="cursor:pointer;font-weight:900;color:#7de4ff;font-size:1rem">🗺️ Ma route prévue (matching IA covoiturage colis)</summary>
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Ville de départ</label><input id="route-origine" type="text" placeholder="Ex: Montréal" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Ville d'arrivée</label><input id="route-destination" type="text" placeholder="Ex: Québec" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Déviation max (km)</label><input id="route-deviation" type="number" value="5" min="0" max="50" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Date du trajet</label><input id="route-date" type="date" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Heure début</label><input id="route-debut" type="time" value="08:00" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+        <div><label style="font-size:.78rem;color:#a8b0ba;font-weight:700">Heure fin</label><input id="route-fin" type="time" value="18:00" style="width:100%;padding:10px;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;font-size:.9rem"></div>
+      </div>
+      <button class="btn" style="margin-top:12px;width:auto" onclick="saveRoute()">💾 Sauvegarder ma route</button>
+      <div id="route-msg" style="margin-top:8px;font-size:.85rem"></div>
+      <p style="margin-top:10px;font-size:.78rem;color:#a8b0ba">💡 Le matching IA affichera prioritairement les missions <strong>sur ta route</strong> (dans ta déviation km) et <strong>compatibles avec ton horaire</strong>.</p>
+    </details>
+
     <!-- Eco bonus banner -->
     <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);align-items:center;gap:14px;flex-wrap:wrap">
       <span style="font-size:24px" id="ecoIcon">🌱</span>
@@ -740,7 +756,7 @@
       updateToggleLabel(isOnline);
 
       renderStats();
-      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite()]);
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm()]);
 
       if (window.NotifBell) NotifBell.init(db, session.user.id);
     }
@@ -1296,6 +1312,97 @@
       }
     }
 
+    // ── Route livreur (IA matching) ──
+    async function saveRoute() {
+      const msgEl = document.getElementById('route-msg');
+      const payload = {
+        route_origine: document.getElementById('route-origine').value.trim() || null,
+        route_destination: document.getElementById('route-destination').value.trim() || null,
+        route_deviation_km: Number(document.getElementById('route-deviation').value) || 0,
+        route_date: document.getElementById('route-date').value || null,
+        route_heure_debut: document.getElementById('route-debut').value || null,
+        route_heure_fin: document.getElementById('route-fin').value || null
+      };
+      msgEl.style.color = '#a8b0ba';
+      msgEl.textContent = '⏳ Sauvegarde…';
+      try {
+        const res = await fetch('/api/livreur-route-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify(payload)
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msgEl.style.color = '#7dffc1';
+        msgEl.textContent = '✅ Route enregistrée. Le matching IA va prioriser les missions sur ton trajet.';
+        if (typeof loadMissions === 'function') setTimeout(loadMissions, 800);
+      } catch (err) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '❌ ' + err.message;
+      }
+    }
+
+    // Pré-remplir la route depuis le profil au chargement
+    async function loadRouteIntoForm() {
+      const { data: p } = await db.from('profiles').select('route_origine,route_destination,route_deviation_km,route_date,route_heure_debut,route_heure_fin').eq('id', session.user.id).single();
+      if (!p) return;
+      if (p.route_origine) document.getElementById('route-origine').value = p.route_origine;
+      if (p.route_destination) document.getElementById('route-destination').value = p.route_destination;
+      if (p.route_deviation_km != null) document.getElementById('route-deviation').value = p.route_deviation_km;
+      if (p.route_date) document.getElementById('route-date').value = p.route_date;
+      if (p.route_heure_debut) document.getElementById('route-debut').value = p.route_heure_debut.slice(0,5);
+      if (p.route_heure_fin) document.getElementById('route-fin').value = p.route_heure_fin.slice(0,5);
+    }
+
+    // ── Pickup code (récupération chez expéditeur) ──
+    function togglePickup(id) {
+      const box = document.getElementById('pickup-' + id);
+      if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function submitPickup(id) {
+      const msgEl = document.getElementById('pickup-msg-' + id);
+      const code = document.getElementById('pickup-code-' + id)?.value.trim();
+      if (!code || code.length < 4) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '⚠️ Code invalide (4 caractères min.)';
+        return;
+      }
+      msgEl.style.color = '#a8b0ba';
+      msgEl.textContent = '⏳ Validation…';
+      try {
+        const res = await fetch('/api/livraison-pickup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id, pickup_code: code })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msgEl.style.color = '#7dffc1';
+        msgEl.textContent = '✅ Pickup validé. Statut → "ramassé".';
+        setTimeout(() => loadMyDeliveries(), 1800);
+      } catch (err) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '❌ ' + err.message;
+      }
+    }
+
+    async function requestXlConfirmation(id) {
+      if (!confirm('Envoyer une demande de pré-confirmation au destinataire ? Il a 15 min pour répondre.')) return;
+      try {
+        const res = await fetch('/api/xl-confirmation-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        alert('✅ ' + (out.message || 'Destinataire notifié. Tu seras informé de sa réponse.'));
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
     function toggleImprevu(id) {
       const box = document.getElementById('imprevu-' + id);
       if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -1596,11 +1703,20 @@
               <div class="delivery-actions">
                 <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
                 <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
+                ${row.statut === 'confirme' ? `<button class="btn-sm" style="background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);color:#7de4ff" onclick="togglePickup('${row.id}')">🔑 Code pickup</button>` : ''}
+                ${row.taille_colis === 'xl' && row.statut === 'confirme' && !row.xl_confirmation_recue_at ? `<button class="btn-sm" style="background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.4);color:#ffb0b0" onclick="requestXlConfirmation('${row.id}')">📞 Pré-confirmer XL</button>` : ''}
                 <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
                   ${delivered ? 'Livré — attente confirmation' : 'Marquer livré'}
                 </button>
                 ${canMark ? `<button class="btn-sm" style="background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.4);color:#ffb74d" onclick="toggleImprevu('${row.id}')">🚨 Imprévu</button>` : ''}
                 <button class="btn-sm" style="background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.3);color:#ffb0b0" onclick="toggleManquement('${row.id}')">⚖️ Signaler</button>
+              </div>
+
+              <div id="pickup-${row.id}" style="display:none;margin-top:8px;padding:14px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.25);border-radius:10px">
+                <div style="font-weight:800;color:#7de4ff;margin-bottom:10px">🔑 Code de récupération (donné par l'expéditeur)</div>
+                <input id="pickup-code-${row.id}" type="text" placeholder="Ex: 123456" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:12px;font-size:1rem;letter-spacing:.15em;text-align:center;font-weight:800;text-transform:uppercase">
+                <button class="btn-sm primary" style="margin-top:10px;width:100%" onclick="submitPickup('${row.id}')">✅ Valider le pickup (passe au statut "ramassé")</button>
+                <div id="pickup-msg-${row.id}" style="margin-top:8px;font-size:.82rem"></div>
               </div>
 
               <div id="imprevu-${row.id}" style="display:none;margin-top:8px;padding:14px;background:rgba(255,150,0,.08);border:1px solid rgba(255,150,0,.3);border-radius:10px">
