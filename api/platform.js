@@ -430,6 +430,28 @@ async function destinataireLivraisons(req, res, ctx) {
   return res.status(200).json({ success: true, livraisons });
 }
 
+// ── BACKUP — export admin de toutes les tables critiques en JSON ──
+async function adminBackupExport(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const tables = body.tables || ['profiles', 'livraisons', 'livreur_earnings', 'transactions', 'manquements', 'address_intelligence', 'kyc_submissions', 'reviews'];
+  const backup = {
+    backup_at: new Date().toISOString(),
+    backed_up_by: ctx.session.email || ctx.session.id,
+    tables: {}
+  };
+  for (const tbl of tables) {
+    try {
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/${tbl}?select=*&limit=10000`, {
+        headers: sbHeaders(ctx.sbKey)
+      });
+      backup.tables[tbl] = r.ok ? await r.json() : { error: 'failed', status: r.status };
+    } catch (e) {
+      backup.tables[tbl] = { error: e.message };
+    }
+  }
+  return res.status(200).json(backup);
+}
+
 // ── REFUS / RESCUE — système d'entraide entre livreurs ──
 
 async function livreurRefuserMission(req, res, ctx, body) {
@@ -3506,8 +3528,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-refuser-mission') return await livreurRefuserMission(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
-    if (endpoint === 'livreur-refuser-mission') return await livreurRefuserMission(req, res, ctx, body);
-    if (endpoint === 'expediteur-bloquer-livreur') return await expediteurBloquerLivreur(req, res, ctx, body);
+    if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);
     if (endpoint === 'expediteur-blocked-list') return await expediteurBlockedList(req, res, ctx, body);
     if (endpoint === 'address-intel-list') return await addressIntelList(req, res, ctx, body);
     if (endpoint === 'address-intel-add') return await addressIntelAdd(req, res, ctx, body);

@@ -328,6 +328,7 @@
     <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Arbitrage manquements</a>
     <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
     <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
+    <a href="/admin/backup.html" class="nav-link"><span class="icon">💾</span> Backup &amp; Export</a>
     <a href="/transparence.html"     class="nav-link"><span class="icon">?</span> Page transparence</a>
     <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
     <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
@@ -1511,7 +1512,7 @@
       title.textContent = `${livraison.code || livraisonId.slice(0, 8)} · ${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}`;
       content.innerHTML = `
         <div>
-          ${proof.photo_signed_url || proof.photo_data_url ? `<img class="proof-photo" src="${proof.photo_signed_url || proof.photo_data_url}" alt="Photo de preuve de depot">` : '<div class="empty-msg">Aucune photo disponible</div>'}
+          ${proof.photo_signed_url || proof.photo_data_url ? `<img loading="lazy" decoding="async" class="proof-photo" src="${proof.photo_signed_url || proof.photo_data_url}" alt="Photo de preuve de depot">` : '<div class="empty-msg">Aucune photo disponible</div>'}
         </div>
         <div>
           ${proofField('Type de depot', proof.dropoff_type)}

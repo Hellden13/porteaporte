@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backup - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 880px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 22px; margin-bottom: 18px; }
+    .panel h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .table-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .table-row:last-child { border-bottom: none; }
+    .table-row label { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
+    .badge.ok { background: rgba(0,255,159,.15); color: #7dffc1; }
+    .badge.warn { background: rgba(255,200,0,.15); color: #ffd700; }
+    .info { background: rgba(0,217,255,.06); border: 1px solid rgba(0,217,255,.25); border-radius: 10px; padding: 14px; margin-bottom: 18px; color: #a8b0ba; font-size: .88rem; line-height: 1.6; }
+    .progress { margin-top: 14px; padding: 10px; background: rgba(0,0,0,.3); border-radius: 8px; font-family: monospace; font-size: .85rem; color: #7dffc1; display: none; }
+    .btn-big { padding: 14px 28px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); color: #001828; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: .95rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>💾 Backup &amp; Export</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+    </div>
+
+    <div class="info">
+      <strong>📋 Stratégie de backup :</strong><br>
+      ① <strong>Supabase</strong> fait des backups automatiques quotidiens (7 jours rétention sur plan Free).<br>
+      ② <strong>Export manuel JSON</strong> ci-dessous — télécharge à conserver hors-ligne ou cloud personnel.<br>
+      ③ <strong>Recommandation</strong> : faire un export complet 1 fois par semaine.<br><br>
+      🔗 <a href="https://supabase.com/dashboard/project/_/database/backups" target="_blank" style="color:var(--brand-cyan)">Voir les backups Supabase →</a>
+    </div>
+
+    <div class="panel">
+      <h2>📦 Export complet (toutes les tables critiques)</h2>
+      <p style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">Génère un fichier JSON avec toutes les données de la plateforme. À garder en lieu sûr.</p>
+      <div id="tables-list">
+        <div class="table-row"><label><input type="checkbox" value="profiles" checked> profiles <span style="color:#6d7886">(comptes utilisateurs)</span></label><span class="badge ok">CRITIQUE</span></div>
+        <div class="table-row"><label><input type="checkbox" value="livraisons" checked> livraisons <span style="color:#6d7886">(toutes les missions)</span></label><span class="badge ok">CRITIQUE</span></div>
+        <div class="table-row"><label><input type="checkbox" value="livreur_earnings" checked> livreur_earnings <span style="color:#6d7886">(gains à payer)</span></label><span class="badge ok">CRITIQUE</span></div>
+        <div class="table-row"><label><input type="checkbox" value="transactions" checked> transactions <span style="color:#6d7886">(paiements Stripe)</span></label><span class="badge ok">CRITIQUE</span></div>
+        <div class="table-row"><label><input type="checkbox" value="manquements" checked> manquements</label><span class="badge warn">IMPORTANT</span></div>
+        <div class="table-row"><label><input type="checkbox" value="address_intelligence" checked> address_intelligence</label><span class="badge warn">IMPORTANT</span></div>
+        <div class="table-row"><label><input type="checkbox" value="kyc_submissions" checked> kyc_submissions</label><span class="badge warn">IMPORTANT</span></div>
+        <div class="table-row"><label><input type="checkbox" value="reviews" checked> reviews</label><span class="badge warn">IMPORTANT</span></div>
+        <div class="table-row"><label><input type="checkbox" value="messages"> messages</label></div>
+        <div class="table-row"><label><input type="checkbox" value="delivery_locations"> delivery_locations <span style="color:#6d7886">(GPS history)</span></label></div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-big" onclick="exportBackup()">📥 Télécharger le backup JSON</button>
+        <button class="btn secondary" onclick="selectAll(true)">Tout cocher</button>
+        <button class="btn secondary" onclick="selectAll(false)">Tout décocher</button>
+      </div>
+      <div id="progress" class="progress"></div>
+    </div>
+
+    <div class="panel">
+      <h2>📊 Dernier backup local</h2>
+      <div id="lastBackup" style="color:var(--brand-muted)">Aucun backup téléchargé depuis ce navigateur.</div>
+    </div>
+  </main>
+
+  <script>
+    let session = null;
+    async function init() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      showLastBackup();
+    }
+
+    function selectAll(state) {
+      document.querySelectorAll('#tables-list input[type=checkbox]').forEach(cb => cb.checked = state);
+    }
+
+    function showLastBackup() {
+      const last = localStorage.getItem('pap_last_backup');
+      if (last) {
+        document.getElementById('lastBackup').innerHTML = '✅ Dernier backup : <strong style="color:#fff">' + new Date(last).toLocaleString('fr-CA') + '</strong>';
+      }
+    }
+
+    async function exportBackup() {
+      const tables = Array.from(document.querySelectorAll('#tables-list input:checked')).map(cb => cb.value);
+      if (!tables.length) { alert('Sélectionne au moins une table'); return; }
+      const progress = document.getElementById('progress');
+      progress.style.display = 'block';
+      progress.textContent = '⏳ Récupération de ' + tables.length + ' tables...';
+      try {
+        const res = await fetch('/api/platform?endpoint=admin-backup-export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ tables })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        // Stats
+        let totalRows = 0;
+        const stats = Object.entries(data.tables).map(([t, rows]) => {
+          const n = Array.isArray(rows) ? rows.length : 0;
+          totalRows += n;
+          return `  ${t}: ${n} rows`;
+        }).join('\n');
+        progress.textContent = `✅ Backup généré (${totalRows} lignes au total)\n${stats}\n\n📥 Téléchargement...`;
+        // Téléchargement
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `porteaporte-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        localStorage.setItem('pap_last_backup', new Date().toISOString());
+        showLastBackup();
+      } catch (err) {
+        progress.textContent = '❌ Erreur : ' + err.message;
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
