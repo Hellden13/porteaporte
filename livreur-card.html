@@ -141,7 +141,7 @@
 
         <div class="qr-section">
           <h4>📲 Vérifier l'authenticité</h4>
-          <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+          <div class="qr-wrap" id="qrWrap"></div>
           <div class="qr-note">Scanne ce QR code pour vérifier que la carte vient bien de PorteàPorte</div>
         </div>
 
@@ -152,15 +152,11 @@
         </div>
       `;
 
-      // Générer le QR code qui pointe vers cette page (verification croisée)
-      try {
-        const cardUrl = window.location.origin + '/livreur-card.html?id=' + encodeURIComponent(p.id);
-        QRCode.toCanvas(document.getElementById('qrCanvas'), cardUrl, {
-          width: 140,
-          margin: 1,
-          color: { dark: '#000000', light: '#FFFFFF' }
-        });
-      } catch (e) { console.warn('[qr]', e); }
+      // QR code via service externe (pas de dépendance JS)
+      const cardUrl = window.location.origin + '/livreur-card.html?id=' + encodeURIComponent(p.id);
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=' + encodeURIComponent(cardUrl);
+      const wrap = document.getElementById('qrWrap');
+      if (wrap) wrap.innerHTML = `<img src="${qrUrl}" alt="QR code" width="140" height="140">`;
     }
     load();
   </script>
