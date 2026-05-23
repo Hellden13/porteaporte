@@ -365,6 +365,18 @@
                          "destination":  "/api/platform?endpoint=livreur-route-update"
                      },
                      {
+                         "source":  "/api/livreur-refuser-mission",
+                         "destination":  "/api/platform?endpoint=livreur-refuser-mission"
+                     },
+                     {
+                         "source":  "/api/livreur-rescue-request",
+                         "destination":  "/api/platform?endpoint=livreur-rescue-request"
+                     },
+                     {
+                         "source":  "/api/livreur-rescue-accept",
+                         "destination":  "/api/platform?endpoint=livreur-rescue-accept"
+                     },
+                     {
                          "source":  "/api/address-intel-list",
                          "destination":  "/api/platform?endpoint=address-intel-list"
                      },

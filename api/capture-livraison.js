@@ -308,11 +308,14 @@ module.exports = async function handler(req, res) {
     }
   });
 
-  // Créditer les gains du livreur (60% du montant capturé)
+  // Créditer les gains du livreur (60% + bonus rescue si applicable)
   if (livraison.livreur_id && captured.amount_received > 0) {
     const grossCents = captured.amount_received;
-    const netCents   = Math.floor(grossCents * 0.60); // 60% au livreur
-    const feeCents   = grossCents - netCents;          // 40% plateforme
+    const baseNetCents = Math.floor(grossCents * 0.60);
+    const bonusPct = livraison.rescue_livreur_original ? (Number(livraison.rescue_bonus_pct) || 20) : 0;
+    const bonusCents = bonusPct > 0 ? Math.floor(baseNetCents * (bonusPct / 100)) : 0;
+    const netCents = baseNetCents + bonusCents;
+    const feeCents = grossCents - netCents;
     await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
@@ -326,6 +329,8 @@ module.exports = async function handler(req, res) {
         status:                'available',
         available_after:       new Date().toISOString(),
         stripe_payment_intent: captured.id,
+        type:                  bonusPct > 0 ? 'rescue_bonus' : 'livraison',
+        notes:                 bonusPct > 0 ? `Livraison rescue (+${bonusPct}% bonus)` : null,
         created_at:            new Date().toISOString()
       })
     }).catch(e => console.error('[livreur_earnings insert]', e.message));

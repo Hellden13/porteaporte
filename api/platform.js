@@ -429,6 +429,203 @@ async function destinataireLivraisons(req, res, ctx) {
   return res.status(200).json({ success: true, livraisons });
 }
 
+// ── REFUS / RESCUE — système d'entraide entre livreurs ──
+
+async function livreurRefuserMission(req, res, ctx, body) {
+  const { livraison_id, raison } = body;
+  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,livreur_id,expediteur_id,refus_history,refus_count`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (livraison.livreur_id !== ctx.session.id) return res.status(403).json({ error: 'Livreur assigné requis' });
+
+  // BLOQUER refus si statut >= ramasse (colis déjà chez le livreur)
+  if (['ramasse', 'picked_up', 'en_route', 'in_transit', 'livre', 'livree', 'delivered', 'payee', 'paid'].includes(livraison.statut)) {
+    return res.status(409).json({
+      error: 'Refus impossible : tu as déjà le colis. Utilise "🆘 Demander rescue" pour transférer à un autre livreur.',
+      requires_rescue: true
+    });
+  }
+
+  // Autoriser refus si statut = confirme ou en_attente
+  if (!['confirme', 'accepted', 'paiement_autorise'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Refus impossible dans l\'état actuel' });
+  }
+
+  const history = Array.isArray(livraison.refus_history) ? livraison.refus_history : [];
+  history.push({
+    livreur_id: ctx.session.id,
+    raison: raison || '',
+    at: new Date().toISOString()
+  });
+
+  const patch = {
+    livreur_id: null,
+    statut: 'paiement_autorise', // retour au pool
+    refus_count: (livraison.refus_count || 0) + 1,
+    refus_history: history
+  };
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch)
+  });
+
+  // Notifier expéditeur
+  try {
+    const exp = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.expediteur_id)}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+    const expProfile = exp.ok ? (await exp.json())[0] : null;
+    if (expProfile?.email) {
+      callNotifier('livraison_imprevu', {
+        expediteur_email: expProfile.email,
+        prenom: expProfile.prenom || '',
+        code: livraison.code,
+        action: 'refus_livreur',
+        raison: raison || 'Non précisé',
+        fautif: 'livreur'
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  return res.status(200).json({ success: true, message: 'Mission refusée. Elle est de retour dans le pool.' });
+}
+
+async function livreurRescueRequest(req, res, ctx, body) {
+  const { livraison_id, raison, bonus_pct, pickup_address, gps_lat, gps_lng } = body;
+  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,livreur_id,expediteur_id,ville_depart,ville_arrivee,prix_total`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (livraison.livreur_id !== ctx.session.id) return res.status(403).json({ error: 'Livreur assigné requis' });
+  if (!['ramasse', 'picked_up', 'en_route', 'in_transit'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Rescue uniquement si colis déjà ramassé' });
+  }
+
+  const bonusPct = Math.max(10, Math.min(50, Number(bonus_pct) || 20));
+  const patch = {
+    rescue_mode: true,
+    rescue_demande_at: new Date().toISOString(),
+    rescue_livreur_original: ctx.session.id,
+    rescue_bonus_pct: bonusPct,
+    rescue_pickup_address: pickup_address || '',
+    rescue_pickup_gps_lat: gps_lat != null ? Number(gps_lat) : null,
+    rescue_pickup_gps_lng: gps_lng != null ? Number(gps_lng) : null,
+    livreur_id: null, // libère pour qu'un autre livreur puisse l'accepter
+    statut: 'paiement_autorise',
+    imprevu_raison: 'RESCUE: ' + (raison || 'Livreur demande aide')
+  };
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch)
+  });
+
+  // Push notification à tous les livreurs proches
+  try {
+    await deliverPush(ctx, {
+      type: 'rescue_mission',
+      data: {
+        id: livraison.id,
+        code: livraison.code,
+        ville_depart: livraison.ville_depart,
+        ville_arrivee: livraison.ville_arrivee,
+        prix_total: livraison.prix_total,
+        bonus_pct: bonusPct,
+        rescue_pickup_address: pickup_address || livraison.ville_depart
+      }
+    });
+  } catch (e) { console.error('[push rescue]', e.message); }
+
+  // Notifier expéditeur
+  try {
+    const exp = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.expediteur_id)}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+    const expProfile = exp.ok ? (await exp.json())[0] : null;
+    if (expProfile?.email) {
+      callNotifier('livraison_imprevu', {
+        expediteur_email: expProfile.email,
+        prenom: expProfile.prenom || '',
+        code: livraison.code,
+        action: 'rescue_demande',
+        raison: 'Le livreur cherche un remplaçant (rescue). Tu seras notifié dès que quelqu\'un accepte.',
+        ville_depart: livraison.ville_depart,
+        ville_arrivee: livraison.ville_arrivee
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  return res.status(200).json({ success: true, message: 'Rescue diffusée. Les livreurs proches sont notifiés.' });
+}
+
+async function livreurRescueAccept(req, res, ctx, body) {
+  const { livraison_id } = body;
+  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+  if (!isVerifiedDriver(ctx.session, ctx.profile)) return res.status(403).json({ error: 'Livreur vérifié requis' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,rescue_mode,rescue_livreur_original,rescue_bonus_pct,prix_total,expediteur_id`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (!livraison.rescue_mode) return res.status(409).json({ error: 'Cette livraison n\'est pas en rescue' });
+  if (livraison.rescue_livreur_original === ctx.session.id) return res.status(409).json({ error: 'Tu ne peux pas accepter ta propre rescue' });
+
+  // Assigner le nouveau livreur
+  const patch = {
+    livreur_id: ctx.session.id,
+    statut: 'ramasse', // colis déjà pris, en route pour récupération chez l'autre livreur
+    rescue_mode: false
+  };
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch)
+  });
+
+  // Compensation au livreur original (30% de sa part)
+  if (livraison.rescue_livreur_original && Number(livraison.prix_total) > 0) {
+    const grossCad = Number(livraison.prix_total) * 0.30;
+    const netCad = grossCad * 0.60;
+    await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: livraison.rescue_livreur_original,
+        livraison_id,
+        gross_amount: Number(grossCad.toFixed(2)),
+        platform_fee: Number((grossCad - netCad).toFixed(2)),
+        net_amount: Number(netCad.toFixed(2)),
+        currency: 'cad',
+        status: 'available',
+        available_after: new Date().toISOString(),
+        type: 'rescue_partage_original',
+        notes: 'Part originale (30%) — transferée via rescue',
+        created_at: new Date().toISOString()
+      })
+    }).catch(() => {});
+  }
+
+  // Notifier le livreur original
+  try {
+    const orig = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.rescue_livreur_original)}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+    const origProfile = orig.ok ? (await orig.json())[0] : null;
+    if (origProfile?.email) {
+      callNotifier('livraison_imprevu', {
+        expediteur_email: origProfile.email,
+        prenom: origProfile.prenom || '',
+        code: livraison.code,
+        action: 'rescue_acceptee',
+        raison: 'Un autre livreur a accepté de récupérer ton colis. Prépare-le pour le transfert.',
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  return res.status(200).json({
+    success: true,
+    message: 'Rescue acceptée ! Tu reçois le colis chez l\'autre livreur, puis livraison normale. Bonus +' + (livraison.rescue_bonus_pct || 20) + '% sur ton gain.',
+    bonus_pct: livraison.rescue_bonus_pct
+  });
+}
+
 // ── Code de récupération expéditeur (pickup) ──
 async function livraisonPickup(req, res, ctx, body) {
   const { livraison_id, pickup_code, selfie_data_url, gps_lat, gps_lng } = body;
@@ -1092,7 +1289,7 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,statut,description,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,statut,description,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -1188,6 +1385,9 @@ async function availableLivraisons(req, res, ctx) {
       route_score: filtered.find(f => f.row.id === row.id)?.routeScore || 0,
       on_route: filtered.find(f => f.row.id === row.id)?.onRoute || false,
       detour_km: filtered.find(f => f.row.id === row.id)?.detourKm,
+      rescue_mode: row.rescue_mode || false,
+      rescue_bonus_pct: row.rescue_bonus_pct,
+      rescue_pickup_address: row.rescue_pickup_address,
       cree_le: row.cree_le || row.created_at,
       expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
     }))
@@ -3302,6 +3502,12 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
+    if (endpoint === 'livreur-refuser-mission') return await livreurRefuserMission(req, res, ctx, body);
+    if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
+    if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
+    if (endpoint === 'livreur-refuser-mission') return await livreurRefuserMission(req, res, ctx, body);
+    if (endpoint === 'expediteur-bloquer-livreur') return await expediteurBloquerLivreur(req, res, ctx, body);
+    if (endpoint === 'expediteur-blocked-list') return await expediteurBlockedList(req, res, ctx, body);
     if (endpoint === 'address-intel-list') return await addressIntelList(req, res, ctx, body);
     if (endpoint === 'address-intel-add') return await addressIntelAdd(req, res, ctx, body);
     if (endpoint === 'address-intel-vote') return await addressIntelVote(req, res, ctx, body);

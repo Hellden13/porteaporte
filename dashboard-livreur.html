@@ -1450,6 +1450,55 @@
       }
     }
 
+    // ── Refus / Rescue ──
+    async function refuserMission(id) {
+      const raison = prompt('Raison du refus (optionnel) :') || '';
+      if (raison === null) return; // cancel
+      try {
+        const res = await fetch('/api/livreur-refuser-mission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id, raison })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (out.requires_rescue) {
+            if (confirm('⚠️ Tu as déjà le colis ! Veux-tu plutôt demander un RESCUE (autre livreur prend la relève + bonus) ?')) {
+              return demanderRescue(id);
+            }
+            return;
+          }
+          throw new Error(out.error || 'Erreur');
+        }
+        alert('✅ ' + (out.message || 'Mission refusée'));
+        await loadMyDeliveries();
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    async function demanderRescue(id) {
+      const raison = prompt('Pourquoi tu dois passer la main ? (ex: panne, urgence familiale)') || '';
+      if (!raison) return;
+      const bonus = Number(prompt('Bonus offert au livreur qui te dépanne (en %, défaut 20) :', '20')) || 20;
+      let coords = { lat: null, lng: null };
+      try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
+        coords.lat = pos.coords.latitude;
+        coords.lng = pos.coords.longitude;
+      } catch (e) {}
+      const addr = prompt('Adresse approximative où l\'autre livreur peut venir te chercher le colis :') || '';
+      try {
+        const res = await fetch('/api/livreur-rescue-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id, raison, bonus_pct: bonus, pickup_address: addr, gps_lat: coords.lat, gps_lng: coords.lng })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        alert('🆘 ' + (out.message || 'Rescue diffusée'));
+        await loadMyDeliveries();
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
     // ── Mode de transport multi/actif ──
     const MODE_LABELS = {
       foot: { icon: '🚶', name: 'À pied' },
@@ -2053,6 +2102,8 @@
                 ${canMark ? `<button class="btn-sm" style="background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.4);color:#ffb74d" onclick="toggleImprevu('${row.id}')">🚨 Imprévu</button>` : ''}
                 <button class="btn-sm" style="background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.3);color:#ffb0b0" onclick="toggleManquement('${row.id}')">⚖️ Signaler</button>
                 <button class="btn-sm" style="background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.3);color:#ffd700" onclick="openIntelAdd('${row.id}','${(adresseArrivee || row.ville_arrivee || '').replace(/'/g, '&#39;')}','${(row.ville_arrivee || '').replace(/'/g, '&#39;')}')">💡 Note adresse</button>
+                ${['confirme','accepted','paiement_autorise'].includes(row.statut) ? `<button class="btn-sm" style="background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);color:#ffb0b0" onclick="refuserMission('${row.id}')">❌ Refuser</button>` : ''}
+                ${['ramasse','picked_up','en_route','in_transit'].includes(row.statut) ? `<button class="btn-sm" style="background:rgba(255,90,90,.15);border:1px solid #ff6b6b;color:#ff6b6b;font-weight:900" onclick="demanderRescue('${row.id}')">🆘 Rescue</button>` : ''}
               </div>
 
               <div id="intel-${row.id}" data-addr="${esc(adresseArrivee || row.ville_arrivee || '')}" data-ville="${esc(row.ville_arrivee || '')}" class="intel-zone"></div>

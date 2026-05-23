@@ -269,10 +269,17 @@
         const detourBadge = (m.detour_km != null && m.detour_km > 0)
           ? `<span style="display:inline-block;padding:2px 8px;background:rgba(255,200,0,.12);color:#ffd700;border-radius:999px;font-size:.72rem;font-weight:700;margin-left:4px">+${m.detour_km} km détour</span>`
           : '';
+        const rescueBadge = m.rescue_mode
+          ? `<span style="display:inline-block;padding:3px 10px;background:#ff4444;color:#fff;border-radius:999px;font-size:.75rem;font-weight:900;margin-left:6px;animation:rescuePulse 1.2s infinite">🆘 RESCUE +${m.rescue_bonus_pct||20}%</span>`
+          : '';
+        const rescueStyle = m.rescue_mode
+          ? ' style="border:2px solid #ff4444;background:linear-gradient(135deg,rgba(255,68,68,.06),rgba(255,150,0,.04));box-shadow:0 0 30px rgba(255,68,68,.2)"'
+          : (m.on_route ? ' style="border-color:rgba(0,255,159,.4);box-shadow:0 0 0 1px rgba(0,255,159,.2)"' : '');
         return `
-        <article class="mission-card"${m.on_route ? ' style="border-color:rgba(0,255,159,.4);box-shadow:0 0 0 1px rgba(0,255,159,.2)"' : ''}>
+        <article class="mission-card"${rescueStyle}>
+          ${m.rescue_mode ? `<div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,68,68,.1);border-left:3px solid #ff4444;border-radius:6px;font-size:.82rem;color:#ffb0b0"><strong>🆘 MISSION RESCUE</strong><br>Un autre livreur a besoin d'aide. Tu reçois <strong style="color:#ffd700">+${m.rescue_bonus_pct||20}% bonus</strong>. ${m.rescue_pickup_address ? 'Va chercher le colis chez : <strong style="color:#fff">'+m.rescue_pickup_address+'</strong>' : 'Contacte le livreur original pour récupérer le colis.'}</div>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-            <div><span class="pill">${esc(text(m.code, 'Mission'))}</span>${onRouteBadge}${detourBadge}</div>
+            <div><span class="pill">${esc(text(m.code, 'Mission'))}</span>${rescueBadge}${onRouteBadge}${detourBadge}</div>
             <span class="match-score">${score}% · ${matchLabel(score)}</span>
           </div>
           <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>
@@ -292,9 +299,39 @@
           </div>
           <div class="price">${money(m.prix_total)}</div>
           ${gainHtml}
-          <button class="btn" type="button" onclick="acceptMission('${esc(m.id)}')">Accepter la mission</button>
+          ${m.rescue_mode
+            ? `<button class="btn" type="button" style="background:linear-gradient(135deg,#ff4444,#ff8800);color:#fff;font-weight:900" onclick="acceptRescue('${esc(m.id)}')">🆘 Accepter ce RESCUE (+${m.rescue_bonus_pct||20}% bonus)</button>`
+            : `<button class="btn" type="button" onclick="acceptMission('${esc(m.id)}')">Accepter la mission</button>`
+          }
         </article>`;
       }).join('');
+    }
+
+    // Accepter une mission RESCUE
+    async function acceptRescue(id) {
+      if (!confirm('🆘 Accepter ce RESCUE ?\n\nTu vas :\n1. Aller chercher le colis chez l\'autre livreur\n2. Continuer la livraison normale\n3. Recevoir ton gain + le bonus')) return;
+      const gpsOk = await askGpsConsent({ ville_depart: '—', ville_arrivee: '—', prix_total: 0 });
+      if (!gpsOk) return;
+      try {
+        const res = await fetch('/api/livreur-rescue-accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+          body: JSON.stringify({ livraison_id: id })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        alert('✅ ' + (out.message || 'Rescue acceptée'));
+        if (window.papGps?.start) window.papGps.start();
+        setTimeout(() => loadMissions(), 1000);
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    // Animation rescue pulse
+    if (!document.querySelector('style[data-rescue]')) {
+      const s = document.createElement('style');
+      s.dataset.rescue = '1';
+      s.textContent = '@keyframes rescuePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,68,68,.5); } 50% { box-shadow: 0 0 0 8px rgba(255,68,68,0); } }';
+      document.head.appendChild(s);
     }
 
     // Modal de consentement GPS obligatoire
