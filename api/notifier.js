@@ -290,6 +290,107 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── LIVRAISON CRÉÉE — email expéditeur avec code destinataire ──
+    case 'livraison_creee_expediteur': {
+      emails.push({
+        to: data.expediteur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `📦 Livraison créée — Code destinataire : ${data.recipient_code}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">📦 Livraison confirmée !</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.prenom || 'cher expéditeur'},<br><br>Ta livraison <strong style="color:#fff">#${data.code}</strong> a bien été créée. Le livreur te sera assigné sous peu.</p>
+            <div style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:10px;padding:16px;margin:20px 0">
+              <div style="font-size:.75rem;color:#6d7886;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Trajet</div>
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">📦 ${data.adresse_depart || data.ville_depart}</div>
+              <div style="font-weight:700;color:#b8f53e">🏠 ${data.adresse_arrivee || data.ville_arrivee}</div>
+              <div style="margin-top:8px;font-size:.85rem;color:#a8b0ba">${data.type_colis} · ${parseFloat(data.prix_total || 0).toFixed(2)} $</div>
+            </div>
+            <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">⚠️ CODE DE RÉCEPTION — CONFIDENTIEL</div>
+              <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.recipient_code}</div>
+              <div style="font-size:.82rem;color:#a8b0ba">Donne ce code <strong>uniquement</strong> au destinataire du colis.<br>Il devra l'entrer pour confirmer la réception et libérer ton paiement au livreur.</div>
+            </div>
+            <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin:16px 0">
+              <div style="font-size:.8rem;color:#00d9ff;font-weight:700;margin-bottom:6px">🔗 Lien de confirmation à envoyer au destinataire :</div>
+              <a href="${data.confirm_link}" style="color:#b8f53e;word-break:break-all;font-size:.85rem">${data.confirm_link}</a>
+              <div style="margin-top:8px;font-size:.78rem;color:#6d7886">Tu peux partager ce lien par SMS, WhatsApp ou courriel. Le destinataire entre le code sur cette page pour confirmer la réception.</div>
+            </div>
+            <p style="color:#6d7886;font-size:.8rem;margin-top:20px">PorteàPorte · Livraison sécurisée au Québec</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ── PREUVE SOUMISE — alerte admin action requise ──
+    case 'preuve_soumise_admin': {
+      emails.push({
+        to: adminEmail,
+        from: { email: fromEmail, name: fromName },
+        subject: `🔔 ACTION REQUISE — Preuve déposée : livraison #${data.code}`,
+        html: templateAdminNotif('⚠️ Preuve de livraison soumise — paiement en attente', [
+          { label: 'Code livraison', value: data.code },
+          { label: 'Trajet', value: `${data.ville_depart} → ${data.ville_arrivee}` },
+          { label: 'Type', value: data.type_colis },
+          { label: 'Montant en escrow', value: `${parseFloat(data.prix_total || 0).toFixed(2)} $` },
+          { label: 'Livreur', value: `${data.livreur_prenom} (${data.livreur_email})` },
+          { label: 'Note du livreur', value: data.note || '—' },
+          { label: 'Lien confirmation destinataire', value: data.confirm_link },
+          { label: 'Actions disponibles', value: '1. Attendre que le destinataire entre son code → libération automatique\n2. OU valider manuellement dans le dashboard admin si confirmé verbalement' }
+        ], true) +
+        `<div style="text-align:center;margin:20px 0"><a href="${data.admin_link}" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Ouvrir le dashboard admin</a></div>`
+      });
+      break;
+    }
+
+    // ── COLIS LIVRÉ — notif expéditeur ──
+    case 'colis_livre_expediteur': {
+      emails.push({
+        to: data.expediteur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🚚 Colis #${data.code} livré — confirmation du destinataire en attente`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">🚚 Ton colis a été livré !</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.prenom || ''},<br><br>Le livreur a déposé une preuve de livraison pour ton colis <strong style="color:#fff">#${data.code}</strong>.</p>
+            <div style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:10px;padding:16px;margin:20px 0">
+              <div style="font-weight:700;color:#b8f53e">✅ Livré à : ${data.adresse_arrivee || data.ville_arrivee}</div>
+              ${data.nom_destinataire ? `<div style="color:#a8b0ba;margin-top:4px">Destinataire : ${data.nom_destinataire}</div>` : ''}
+            </div>
+            <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin:16px 0">
+              <div style="font-size:.85rem;color:#00d9ff;font-weight:700;margin-bottom:8px">📋 Prochaine étape</div>
+              <p style="color:#a8b0ba;font-size:.88rem;margin:0">Le destinataire doit confirmer la réception avec son code pour libérer le paiement au livreur. Transmets-lui ce lien si ce n'est pas encore fait :</p>
+              <a href="${data.confirm_link}" style="display:block;margin-top:8px;color:#b8f53e;word-break:break-all;font-size:.82rem">${data.confirm_link}</a>
+            </div>
+            <p style="color:#6d7886;font-size:.8rem;margin-top:20px">Si le destinataire ne confirme pas sous 48h, contacte le support ou l'admin peut valider manuellement.<br><br>PorteàPorte · Livraison sécurisée au Québec</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ── COLIS LIVRÉ — notif destinataire (si email connu) ──
+    case 'colis_livre_destinataire': {
+      emails.push({
+        to: data.destinataire_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `📦 Votre colis est arrivé — Code de confirmation requis`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">📦 Votre colis est arrivé !</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.nom_destinataire || ''},<br><br>Un colis vous a été livré à <strong style="color:#fff">${data.ville_arrivee}</strong>.</p>
+            <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.35);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+              <div style="font-size:.85rem;color:#ffd700;font-weight:700;margin-bottom:12px">Pour confirmer la réception, cliquez ci-dessous et entrez le code qui vous a été remis :</div>
+              <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:10px;font-weight:900;text-decoration:none;display:inline-block;font-size:1rem">✅ Confirmer la réception</a>
+            </div>
+            <p style="color:#6d7886;font-size:.8rem;margin-top:20px">N'entrez le code que si vous avez bien reçu votre colis. En cas de problème, contactez PorteàPorte avant de confirmer.<br><br>PorteàPorte · Livraison sécurisée au Québec</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── LIVRAISON COMPLÉTÉE ──
     case 'livraison_complete': {
       // À l'expéditeur

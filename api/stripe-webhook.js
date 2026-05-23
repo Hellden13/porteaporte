@@ -106,20 +106,42 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  /* ── transfer.paid ─────────────────────────────────────── */
-  if (type === 'transfer.paid') {
+  /* ── transfer.created ──────────────────────────────────── */
+  /* Virement créé vers le compte connecté livreur            */
+  if (type === 'transfer.created') {
     await sbPatch(sbUrl, sbKey, 'payout_requests',
       `stripe_transfer_id=eq.${obj.id}`,
       { status: 'paid', processed_at: new Date().toISOString() });
   }
 
-  /* ── transfer.failed ───────────────────────────────────── */
-  if (type === 'transfer.failed') {
+  /* ── transfer.reversed ──────────────────────────────────── */
+  /* Virement annulé / remboursé                              */
+  if (type === 'transfer.reversed') {
     await sbPatch(sbUrl, sbKey, 'payout_requests',
       `stripe_transfer_id=eq.${obj.id}`,
-      { status: 'failed', failure_reason: obj.failure_message || 'Echec virement', processed_at: new Date().toISOString() });
+      { status: 'failed', failure_reason: 'Virement inversé par Stripe', processed_at: new Date().toISOString() });
 
     /* Remettre les gains en available */
+    await sbPatch(sbUrl, sbKey, 'livreur_earnings',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'available', stripe_transfer_id: null });
+  }
+
+  /* ── payout.paid ────────────────────────────────────────── */
+  /* Virement arrivé sur le compte bancaire du livreur        */
+  if (type === 'payout.paid') {
+    await sbPatch(sbUrl, sbKey, 'payout_requests',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'paid', processed_at: new Date().toISOString() });
+  }
+
+  /* ── payout.failed ──────────────────────────────────────── */
+  /* Échec du virement bancaire                               */
+  if (type === 'payout.failed') {
+    await sbPatch(sbUrl, sbKey, 'payout_requests',
+      `stripe_transfer_id=eq.${obj.id}`,
+      { status: 'failed', failure_reason: obj.failure_message || 'Echec virement bancaire', processed_at: new Date().toISOString() });
+
     await sbPatch(sbUrl, sbKey, 'livreur_earnings',
       `stripe_transfer_id=eq.${obj.id}`,
       { status: 'available', stripe_transfer_id: null });

@@ -2,12 +2,11 @@
     "cleanUrls":  false,
     "trailingSlash":  false,
     "functions": {
-        "api/platform.js": { "includeFiles": "api/_*.js" },
-        "api/capture-livraison.js": { "includeFiles": "api/_*.js" },
-        "api/paiement-livraison.js": { "includeFiles": "api/_*.js" },
-        "api/notifier.js": { "includeFiles": "api/_*.js" },
-        "api/stripe-webhook.js": { "includeFiles": "api/_*.js" },
-        "api/cron-cleanup.js": { "includeFiles": "api/_*.js" }
+        "api/platform.js": { "includeFiles": "lib/**" },
+        "api/capture-livraison.js": { "includeFiles": "lib/**" },
+        "api/paiement-livraison.js": { "includeFiles": "lib/**" },
+        "api/cron-cleanup.js": { "includeFiles": "lib/**" },
+        "api/turnstile-verify.js": { "includeFiles": "lib/**" }
     },
     "crons": [
         { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }

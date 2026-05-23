@@ -9,25 +9,25 @@ const {
   driverTransportMode, estimateRouteKm, siteOrigin, internalHeaders,
   callNotifier, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
-} = require('./_lib');
+} = require('../lib/_lib');
 
-const { pushSubscribe, deliverPush, pushSend } = require('./_push');
+const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
-} = require('./_rides');
+} = require('../lib/_rides');
 const {
   growthDashboard, referralGet, referralUse, badgesList, badgesGrant,
   xpHistory, pointsHistory, adminGrowth, badgeCampaigns, badgeCampaignSave,
   badgeCampaignToggle, badgeBenefitStatus, rewardReferralIfPending,
-} = require('./_growth');
+} = require('../lib/_growth');
 const {
   stripeConnectOnboard, stripeConnectStatus, stripeConnectDashboard,
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
-} = require('./_connect');
-const { checkRateLimit, getClientIp } = require('./_ratelimit');
+} = require('../lib/_connect');
+const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
 async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {

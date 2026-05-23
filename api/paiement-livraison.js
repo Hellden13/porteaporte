@@ -1,5 +1,7 @@
 // api/paiement-livraison.js - PaymentIntent Stripe escrow pour une livraison.
 
+const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -54,6 +56,15 @@ module.exports = async function handler(req, res) {
   }
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode non autorisee' });
+
+  // Rate limit : 5 initiations de paiement / minute par IP
+  const _ip = getClientIp(req);
+  const { allowed: _ipOk } = await checkRateLimit(`ip:${_ip}:paiement`, 5, 60);
+  if (!_ipOk) {
+    return res.status(429).json({
+      error: 'Trop de tentatives de paiement. Réessayez dans une minute.',
+    });
+  }
 
   const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
@@ -242,6 +253,7 @@ module.exports = async function handler(req, res) {
       })
     }).catch((err) => console.error('[paiement-livraison] audit:', err.message));
 
+    // Sauvegarder le PaymentIntent directement sur la livraison (critique pour capture)
     await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison.id}`, {
       method: 'PATCH',
       headers: {
@@ -250,7 +262,11 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
         Prefer: 'return=minimal'
       },
-      body: JSON.stringify({ statut: 'paiement_autorise' })
+      body: JSON.stringify({
+        statut: 'paiement_autorise',
+        stripe_payment_intent: intent.id,
+        payment_intent_id: intent.id
+      })
     }).catch((err) => console.error('[paiement-livraison] statut:', err.message));
 
     return res.status(200).json({

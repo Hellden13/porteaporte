@@ -1,5 +1,6 @@
 // api/turnstile-verify.js - WITH AUDIT LOGGING
 const { log } = require('../lib/logger');
+const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
 module.exports = async function handler(req, res) {
   const SECRET = process.env.TURNSTILE_SECRET;
@@ -7,6 +8,20 @@ module.exports = async function handler(req, res) {
   if (!SECRET) {
     log('ERROR', 'turnstile_config_missing', null, {});
     return res.status(500).json({ success: false, error: 'Config manquante' });
+  }
+
+  // Rate limit : 10 tentatives / minute par IP
+  const ip = getClientIp(req);
+  if (req.method !== 'OPTIONS') {
+    const { allowed, retryAfter } = await checkRateLimit(`ip:${ip}:turnstile`, 10, 60);
+    if (!allowed) {
+      log('WARN', 'turnstile_rate_limited', null, { ip });
+      return res.status(429).json({
+        success: false,
+        error: 'Trop de tentatives. Réessayez dans une minute.',
+        retryAfter,
+      });
+    }
   }
 
   if (req.method === 'OPTIONS') {
@@ -22,7 +37,7 @@ module.exports = async function handler(req, res) {
   }
 
   const { token, action } = req.body || {};
-  const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '127.0.0.1';
+  // ip déjà déclarée via getClientIp() au début du handler
 
   if (!token) {
     log('WARN', 'turnstile_missing_token', null, {

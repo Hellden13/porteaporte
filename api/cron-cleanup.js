@@ -2,7 +2,7 @@
 // Appelé par Vercel Cron (voir vercel.json) — toutes les heures
 'use strict';
 
-const { sanitizeEnv, sbHeaders } = require('./_lib');
+const { sanitizeEnv, sbHeaders } = require('../lib/_lib');
 
 module.exports = async function handler(req, res) {
   // Sécurité : seulement Vercel Cron ou secret interne
