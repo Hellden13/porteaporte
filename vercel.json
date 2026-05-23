@@ -7,7 +7,6 @@
         "api/paiement-livraison.js": { "includeFiles": "api/_*.js" },
         "api/notifier.js": { "includeFiles": "api/_*.js" },
         "api/stripe-webhook.js": { "includeFiles": "api/_*.js" },
-        "api/tracking-public.js": { "includeFiles": "api/_*.js" },
         "api/cron-cleanup.js": { "includeFiles": "api/_*.js" }
     },
     "crons": [
