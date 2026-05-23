@@ -428,9 +428,12 @@ function applyExistingLivraison(livraison) {
   paiementLivraisonExistante = true;
   livraisonChargee = livraison;
 
-  setFieldValue('ville-dep', livraison.ville_depart || livraison.adresse_depart || '');
-  setFieldValue('ville-arr', livraison.ville_arrivee || livraison.adresse_arrivee || '');
-  setFieldValue('poids', livraison.poids_kg || 1);
+  // Ne pas écraser les valeurs existantes par du vide
+  const villeDep = livraison.ville_depart || livraison.adresse_depart || '';
+  const villeArr = livraison.ville_arrivee || livraison.adresse_arrivee || '';
+  if (villeDep) setFieldValue('ville-dep', villeDep);
+  if (villeArr) setFieldValue('ville-arr', villeArr);
+  if (livraison.poids_kg) setFieldValue('poids', livraison.poids_kg);
 
   const typeSelect = document.getElementById('type-colis');
   if (typeSelect) {
@@ -445,7 +448,9 @@ function applyExistingLivraison(livraison) {
   const partLivreur = Math.round((total - comm) * 100) / 100;
   const fmt = n => Number(n || 0).toFixed(2) + ' $';
 
-  document.getElementById('sum-trajet').textContent = (livraison.ville_depart || '-') + ' -> ' + (livraison.ville_arrivee || '-');
+  const finalDep = livraison.ville_depart || livraison.adresse_depart || document.getElementById('ville-dep').value || '-';
+  const finalArr = livraison.ville_arrivee || livraison.adresse_arrivee || document.getElementById('ville-arr').value || '-';
+  document.getElementById('sum-trajet').textContent = finalDep + ' -> ' + finalArr;
   document.getElementById('sum-type').textContent = livraison.type_colis || 'Colis';
   document.getElementById('sum-livraison').textContent = fmt(total);
   document.getElementById('sum-assurance').textContent = assuranceLabel(livraison.assurance_plan);
