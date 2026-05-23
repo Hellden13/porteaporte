@@ -1178,6 +1178,47 @@ async function myDriverLivraisons(req, res, ctx) {
     return res.status(403).json({ error: 'Livreur verifie requis' });
   }
 
+  // Auto-cancel XL livraisons timeout 15 min (opportuniste, on profite de cet appel)
+  try {
+    const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const xlRes = await fetch(
+      `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=eq.${encodeURIComponent(ctx.session.id)}&xl_confirmation_demande_at=lt.${cutoff}&xl_confirmation_recue_at=is.null&taille_colis=eq.xl&statut=in.(confirme,en_route)&select=id,prix_total`,
+      { headers: sbHeaders(ctx.sbKey) }
+    );
+    const expiredXl = xlRes.ok ? await xlRes.json() : [];
+    for (const liv of expiredXl) {
+      await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(liv.id)}`, {
+        method: 'PATCH',
+        headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify({
+          statut: 'retour_expediteur',
+          imprevu_raison: 'XL : destinataire n\'a pas confirmé sa présence dans les 15 min',
+          imprevu_demande_le: new Date().toISOString()
+        })
+      });
+      // Crédit compensation 30% au livreur
+      if (Number(liv.prix_total) > 0) {
+        const grossCad = Number(liv.prix_total) * 0.50;
+        const netCad = grossCad * 0.60;
+        await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
+          method: 'POST',
+          headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            user_id: ctx.session.id, livraison_id: liv.id,
+            gross_amount: Number(grossCad.toFixed(2)),
+            platform_fee: Number((grossCad - netCad).toFixed(2)),
+            net_amount: Number(netCad.toFixed(2)),
+            currency: 'cad', status: 'available',
+            available_after: new Date().toISOString(),
+            type: 'compensation_xl_timeout',
+            notes: 'XL timeout 15 min auto',
+            created_at: new Date().toISOString()
+          })
+        }).catch(() => {});
+      }
+    }
+  } catch (e) { /* silent */ }
+
   const baseUrl = `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=eq.${encodeURIComponent(ctx.session.id)}&select=*&limit=100`;
   let r = await fetch(`${baseUrl}&order=cree_le.desc`, { headers: sbHeaders(ctx.sbKey) });
   let rows = r.ok ? await r.json() : [];
