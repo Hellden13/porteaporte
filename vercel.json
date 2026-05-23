@@ -363,6 +363,30 @@
                      {
                          "source":  "/api/livreur-route-update",
                          "destination":  "/api/platform?endpoint=livreur-route-update"
+                     },
+                     {
+                         "source":  "/api/address-intel-list",
+                         "destination":  "/api/platform?endpoint=address-intel-list"
+                     },
+                     {
+                         "source":  "/api/address-intel-add",
+                         "destination":  "/api/platform?endpoint=address-intel-add"
+                     },
+                     {
+                         "source":  "/api/address-intel-vote",
+                         "destination":  "/api/platform?endpoint=address-intel-vote"
+                     },
+                     {
+                         "source":  "/api/address-intel-admin",
+                         "destination":  "/api/platform?endpoint=address-intel-admin"
+                     },
+                     {
+                         "source":  "/api/destinataire-claim-account",
+                         "destination":  "/api/platform?endpoint=destinataire-claim-account"
+                     },
+                     {
+                         "source":  "/api/destinataire-livraisons",
+                         "destination":  "/api/platform?endpoint=destinataire-livraisons"
                      }
                  ],
     "headers":  [

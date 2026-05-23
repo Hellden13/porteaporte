@@ -237,6 +237,153 @@ async function assignDriver(req, res, ctx, body) {
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 
+// ── INTELLIGENCE ADRESSES (notes communautaires livreurs) ──
+function normalizeAddress(addr) {
+  return String(addr || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+async function addressIntelList(req, res, ctx, body) {
+  const addr = body.address || body.adresse || '';
+  if (!addr) return res.status(400).json({ error: 'address requis' });
+  const norm = normalizeAddress(addr);
+  const r = await fetch(
+    `${ctx.sbUrl}/rest/v1/address_intelligence?address_normalized=eq.${encodeURIComponent(norm)}&admin_blocked=eq.false&select=*&order=severity.desc,validated_count.desc&limit=20`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const rows = r.ok ? await r.json() : [];
+  // Filtrer expirées
+  const now = Date.now();
+  const active = rows.filter(n => !n.expires_at || new Date(n.expires_at).getTime() > now);
+  return res.status(200).json({ success: true, notes: active });
+}
+
+async function addressIntelAdd(req, res, ctx, body) {
+  if (!isVerifiedDriver(ctx.session, ctx.profile) && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur vérifié requis' });
+  }
+  const { address, ville, category, note, severity } = body;
+  if (!address || !category || !note) return res.status(400).json({ error: 'address, category, note requis' });
+  const norm = normalizeAddress(address);
+  const insert = await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      address_normalized: norm,
+      address_original: address,
+      ville: ville || '',
+      category,
+      note,
+      severity: Number(severity) || 1,
+      reported_by: ctx.session.id
+    })
+  });
+  if (!insert.ok) {
+    const errData = await insert.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Création note impossible', details: errData });
+  }
+  const created = await insert.json().catch(() => ({}));
+  return res.status(200).json({ success: true, note: Array.isArray(created) ? created[0] : created });
+}
+
+async function addressIntelVote(req, res, ctx, body) {
+  if (!isVerifiedDriver(ctx.session, ctx.profile) && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur vérifié requis' });
+  }
+  const { intel_id, vote, comment } = body;
+  if (!intel_id || !['confirm','contest'].includes(vote)) return res.status(400).json({ error: 'intel_id et vote (confirm|contest) requis' });
+
+  // Upsert vote (1 par user par note)
+  const insertVote = await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence_votes?on_conflict=intel_id,user_id`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ intel_id, user_id: ctx.session.id, vote, comment: comment || '' })
+  });
+  if (!insertVote.ok) {
+    const err = await insertVote.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Vote impossible', details: err });
+  }
+
+  // Recalculer compteurs
+  const countRes = await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence_votes?intel_id=eq.${intel_id}&select=vote`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const votes = countRes.ok ? await countRes.json() : [];
+  const confirmCount = votes.filter(v => v.vote === 'confirm').length + 1; // +1 pour le rapporteur initial
+  const contestCount = votes.filter(v => v.vote === 'contest').length;
+  await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence?id=eq.${intel_id}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      validated_count: confirmCount,
+      contested_count: contestCount,
+      updated_at: new Date().toISOString()
+    })
+  });
+  return res.status(200).json({ success: true, validated: confirmCount, contested: contestCount });
+}
+
+async function addressIntelAdmin(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const { intel_id, action } = body;
+  if (!intel_id || !['validate','block','delete'].includes(action)) return res.status(400).json({ error: 'intel_id et action (validate|block|delete) requis' });
+  if (action === 'delete') {
+    await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence?id=eq.${intel_id}`, {
+      method: 'DELETE',
+      headers: sbHeaders(ctx.sbKey)
+    });
+    return res.status(200).json({ success: true });
+  }
+  const patch = action === 'validate' ? { admin_validated: true } : { admin_blocked: true };
+  await fetch(`${ctx.sbUrl}/rest/v1/address_intelligence?id=eq.${intel_id}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(patch)
+  });
+  return res.status(200).json({ success: true });
+}
+
+// ── Compte destinataire optionnel ──
+async function destinataireClaimAccount(req, res, ctx, body) {
+  const { livraison_id } = body;
+  if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
+  // Vérifier que l'email destinataire correspond à celui de l'user connecté
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,destinataire_email,email_destinataire,destinataire_user_id`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  const destEmail = (livraison.destinataire_email || livraison.email_destinataire || '').toLowerCase();
+  const userEmail = (ctx.session.email || '').toLowerCase();
+  if (destEmail !== userEmail) return res.status(403).json({ error: 'Email destinataire ne correspond pas' });
+
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ destinataire_user_id: ctx.session.id })
+  });
+
+  // Lier aussi toutes les autres livraisons avec le même email destinataire
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?destinataire_email=eq.${encodeURIComponent(userEmail)}&destinataire_user_id=is.null`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ destinataire_user_id: ctx.session.id })
+  }).catch(() => {});
+
+  return res.status(200).json({ success: true });
+}
+
+async function destinataireLivraisons(req, res, ctx) {
+  const userEmail = (ctx.session.email || '').toLowerCase();
+  const filter = `or=(destinataire_user_id.eq.${ctx.session.id},destinataire_email.eq.${encodeURIComponent(userEmail)},email_destinataire.eq.${encodeURIComponent(userEmail)})`;
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?${filter}&select=id,code,statut,ville_depart,ville_arrivee,type_colis,taille_colis,prix_total,cree_le,expediteur_id,livreur_id,recipient_confirmed_at&order=cree_le.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraisons = r.ok ? await r.json() : [];
+  return res.status(200).json({ success: true, livraisons });
+}
+
 // ── Code de récupération expéditeur (pickup) ──
 async function livraisonPickup(req, res, ctx, body) {
   const { livraison_id, pickup_code } = body;
@@ -2998,6 +3145,12 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
+    if (endpoint === 'address-intel-list') return await addressIntelList(req, res, ctx, body);
+    if (endpoint === 'address-intel-add') return await addressIntelAdd(req, res, ctx, body);
+    if (endpoint === 'address-intel-vote') return await addressIntelVote(req, res, ctx, body);
+    if (endpoint === 'address-intel-admin') return await addressIntelAdmin(req, res, ctx, body);
+    if (endpoint === 'destinataire-claim-account') return await destinataireClaimAccount(req, res, ctx, body);
+    if (endpoint === 'destinataire-livraisons') return await destinataireLivraisons(req, res, ctx, body);
     if (endpoint === 'manquement-signaler') return await manquementSignaler(req, res, ctx, body);
     if (endpoint === 'manquement-contester') return await manquementContester(req, res, ctx, body);
     if (endpoint === 'manquement-list') return await manquementList(req, res, ctx, body);

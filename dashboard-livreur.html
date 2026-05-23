@@ -1312,6 +1312,106 @@
       }
     }
 
+    // ── Intelligence Adresses (alertes communautaires) ──
+    const INTEL_LABELS = {
+      animal: { icon: '🐕', name: 'Animal', color: '#ffd700' },
+      acces: { icon: '🪜', name: 'Accès', color: '#7de4ff' },
+      code_sonnette: { icon: '🚪', name: 'Code/Sonnette', color: '#b8f53e' },
+      stationnement: { icon: '🅿️', name: 'Stationnement', color: '#ffb74d' },
+      securite: { icon: '⚠️', name: 'Sécurité', color: '#ffb0b0' },
+      comportement: { icon: '😡', name: 'Comportement', color: '#ff6b6b' },
+      do_not_deliver: { icon: '🚫', name: 'NE PAS LIVRER', color: '#ff4444' },
+      horaires: { icon: '⏰', name: 'Horaires', color: '#a8b0ba' },
+      reception: { icon: '🏢', name: 'Réception', color: '#7de4ff' },
+      pourboire: { icon: '💸', name: 'Pourboire', color: '#b8f53e' },
+      autre: { icon: '💡', name: 'Info', color: '#a8b0ba' }
+    };
+
+    async function loadAllIntel() {
+      document.querySelectorAll('.intel-zone').forEach(async zone => {
+        const addr = zone.dataset.addr;
+        const ville = zone.dataset.ville;
+        if (!addr) return;
+        try {
+          const res = await fetch('/api/address-intel-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({ address: addr, ville })
+          });
+          const out = await res.json().catch(() => ({}));
+          const notes = out.notes || [];
+          if (!notes.length) return;
+          const dnd = notes.find(n => n.category === 'do_not_deliver' && n.admin_validated);
+          if (dnd) {
+            zone.innerHTML = `<div style="margin-top:10px;padding:14px;background:rgba(255,68,68,.15);border:2px solid #ff4444;border-radius:10px;text-align:center"><div style="font-size:1.1rem;font-weight:900;color:#ff4444;margin-bottom:6px">🚫 NE PAS LIVRER À CETTE ADRESSE</div><div style="font-size:.85rem;color:#fff">${esc(dnd.note)}</div><div style="margin-top:6px;font-size:.75rem;color:#ffb0b0">Bloqué par administration</div></div>`;
+            return;
+          }
+          const html = notes.slice(0, 6).map(n => {
+            const lbl = INTEL_LABELS[n.category] || INTEL_LABELS.autre;
+            const validated = n.validated_count || 1;
+            return `<div style="display:flex;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);border-left:3px solid ${lbl.color};border-radius:4px;margin-bottom:4px;font-size:.82rem;line-height:1.4">
+              <span style="flex-shrink:0">${lbl.icon}</span>
+              <div style="flex:1">
+                <strong style="color:${lbl.color}">${lbl.name}</strong> — ${esc(n.note)}
+                <span style="color:#6d7886;font-size:.72rem">(confirmé ${validated}×)</span>
+              </div>
+            </div>`;
+          }).join('');
+          zone.innerHTML = `<div style="margin-top:10px;padding:12px;background:rgba(255,150,0,.05);border:1px solid rgba(255,150,0,.25);border-radius:10px">
+            <div style="font-weight:800;color:#ffb74d;margin-bottom:8px">⚠️ Intelligence adresse — ${notes.length} alerte${notes.length > 1 ? 's' : ''}</div>
+            ${html}
+          </div>`;
+        } catch (e) {}
+      });
+    }
+
+    function openIntelAdd(livraisonId, addr, ville) {
+      const cats = Object.entries(INTEL_LABELS).map(([k, v]) => `<option value="${k}">${v.icon} ${v.name}</option>`).join('');
+      const form = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:grid;place-items:center;padding:20px" onclick="if(event.target===this)this.remove()">
+        <div style="max-width:480px;width:100%;background:#0a0e14;border:1px solid #1E2535;border-radius:14px;padding:24px">
+          <h3 style="margin:0 0 14px;color:#fff">💡 Ajouter une note pour cette adresse</h3>
+          <div style="color:#a8b0ba;font-size:.85rem;margin-bottom:14px">📍 ${addr}</div>
+          <label style="display:block;font-size:.78rem;color:#a8b0ba;font-weight:700;margin-bottom:4px">Catégorie</label>
+          <select id="ia-cat" style="width:100%;padding:10px;background:#05080c;color:#fff;border:1px solid #1E2535;border-radius:8px;margin-bottom:10px">${cats}</select>
+          <label style="display:block;font-size:.78rem;color:#a8b0ba;font-weight:700;margin-bottom:4px">Note (visible par les autres livreurs)</label>
+          <textarea id="ia-note" rows="3" placeholder="Ex: Chien aboyeur mais gentil, sonnette cassée frapper fort..." style="width:100%;box-sizing:border-box;padding:10px;background:#05080c;color:#fff;border:1px solid #1E2535;border-radius:8px;font-family:inherit;margin-bottom:10px"></textarea>
+          <label style="display:block;font-size:.78rem;color:#a8b0ba;font-weight:700;margin-bottom:4px">Gravité (1 = info, 5 = danger)</label>
+          <input id="ia-sev" type="range" min="1" max="5" value="2" style="width:100%;margin-bottom:14px">
+          <div style="display:flex;gap:10px">
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:12px;background:#1E2535;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">Annuler</button>
+            <button onclick="submitIntel('${addr.replace(/'/g,"\\'")}','${ville.replace(/'/g,"\\'")}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900">📨 Publier</button>
+          </div>
+          <div id="ia-msg" style="margin-top:10px;font-size:.82rem"></div>
+        </div>
+      </div>`;
+      const div = document.createElement('div');
+      div.innerHTML = form;
+      document.body.appendChild(div.firstChild);
+    }
+
+    async function submitIntel(addr, ville) {
+      const cat = document.getElementById('ia-cat').value;
+      const note = document.getElementById('ia-note').value.trim();
+      const sev = Number(document.getElementById('ia-sev').value);
+      const msgEl = document.getElementById('ia-msg');
+      if (!note || note.length < 5) { msgEl.style.color = '#ffb0b0'; msgEl.textContent = '⚠️ Note trop courte'; return; }
+      try {
+        const res = await fetch('/api/address-intel-add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ address: addr, ville, category: cat, note, severity: sev })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msgEl.style.color = '#7dffc1';
+        msgEl.textContent = '✅ Note publiée. Merci pour la communauté livreurs !';
+        setTimeout(() => { document.querySelector('div[style*="position:fixed"]')?.remove(); loadAllIntel(); }, 1500);
+      } catch (err) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '❌ ' + err.message;
+      }
+    }
+
     // ── Route livreur (IA matching) ──
     async function saveRoute() {
       const msgEl = document.getElementById('route-msg');
@@ -1710,7 +1810,10 @@
                 </button>
                 ${canMark ? `<button class="btn-sm" style="background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.4);color:#ffb74d" onclick="toggleImprevu('${row.id}')">🚨 Imprévu</button>` : ''}
                 <button class="btn-sm" style="background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.3);color:#ffb0b0" onclick="toggleManquement('${row.id}')">⚖️ Signaler</button>
+                <button class="btn-sm" style="background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.3);color:#ffd700" onclick="openIntelAdd('${row.id}','${(adresseArrivee || row.ville_arrivee || '').replace(/'/g, '&#39;')}','${(row.ville_arrivee || '').replace(/'/g, '&#39;')}')">💡 Note adresse</button>
               </div>
+
+              <div id="intel-${row.id}" data-addr="${esc(adresseArrivee || row.ville_arrivee || '')}" data-ville="${esc(row.ville_arrivee || '')}" class="intel-zone"></div>
 
               <div id="pickup-${row.id}" style="display:none;margin-top:8px;padding:14px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.25);border-radius:10px">
                 <div style="font-weight:800;color:#7de4ff;margin-bottom:10px">🔑 Code de récupération (donné par l'expéditeur)</div>
@@ -1764,6 +1867,8 @@
               </div>
             </div>`;
         }).join('');
+        // Charger l'intelligence adresses pour chaque carte
+        if (typeof loadAllIntel === 'function') setTimeout(loadAllIntel, 100);
       } catch (error) {
         el.innerHTML = `<div class="empty-msg">${esc(error.message)}</div>`;
       }

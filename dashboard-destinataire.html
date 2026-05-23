@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes colis reçus - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    h1 { margin: 0; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; text-align: center; }
+    .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
+    .stat-lbl { font-size: .82rem; color: var(--brand-muted); margin-top: 4px; }
+    .liv-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .liv-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+    .pill.payee { background: rgba(0,255,159,.15); color: #7dffc1; }
+    .pill.en_route { background: rgba(0,217,255,.15); color: #7de4ff; }
+    .pill.livre { background: rgba(255,200,0,.15); color: #ffd700; }
+    .pill.publie, .pill.confirme, .pill.paiement_autorise { background: rgba(0,217,255,.1); color: #a8b0ba; }
+    .pill.annule, .pill.retour_expediteur { background: rgba(255,90,90,.15); color: #ffb0b0; }
+    .meta { color: var(--brand-muted); font-size: .85rem; line-height: 1.6; }
+    .empty { text-align: center; color: var(--brand-muted); padding: 40px 20px; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn-sm { padding: 8px 14px; border-radius: 8px; font-size: .85rem; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>📦 Mes colis reçus</h1>
+      <a class="btn secondary" href="/index.html">← Accueil</a>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="list"><p class="empty">Chargement…</p></div>
+  </main>
+
+  <script>
+    let session = null;
+    async function init() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html?next=' + encodeURIComponent(window.location.pathname); return; }
+      session = sess.session;
+      await load();
+    }
+    async function load() {
+      const res = await fetch('/api/destinataire-livraisons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({})
+      });
+      const out = await res.json().catch(() => ({}));
+      const livs = out.livraisons || [];
+      renderStats(livs);
+      renderList(livs);
+    }
+    function renderStats(livs) {
+      const total = livs.length;
+      const recus = livs.filter(l => ['payee','paid'].includes(l.statut)).length;
+      const enAttente = livs.filter(l => !['payee','paid','annule','retour_expediteur'].includes(l.statut)).length;
+      const valeur = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
+      document.getElementById('stats').innerHTML = `
+        <div class="stat"><div class="stat-val">${total}</div><div class="stat-lbl">Colis totaux</div></div>
+        <div class="stat"><div class="stat-val">${recus}</div><div class="stat-lbl">Reçus confirmés</div></div>
+        <div class="stat"><div class="stat-val">${enAttente}</div><div class="stat-lbl">En cours</div></div>
+        <div class="stat"><div class="stat-val">${valeur.toFixed(0)} $</div><div class="stat-lbl">Valeur totale</div></div>
+      `;
+    }
+    function renderList(livs) {
+      const list = document.getElementById('list');
+      if (!livs.length) {
+        list.innerHTML = '<div class="empty">Aucun colis pour cet email. Quand un expéditeur t\'envoie un colis, il apparaîtra ici.</div>';
+        return;
+      }
+      list.innerHTML = livs.map(l => {
+        const date = l.cree_le ? new Date(l.cree_le).toLocaleDateString('fr-CA') : '';
+        return `
+          <div class="liv-card">
+            <div class="liv-head">
+              <div>
+                <span class="pill ${l.statut}">${l.statut}</span>
+                <strong style="margin-left:10px">#${l.code || l.id.slice(0,8)}</strong>
+              </div>
+              <div class="meta">${date} · ${l.prix_total ? Number(l.prix_total).toFixed(2) + ' $' : ''}</div>
+            </div>
+            <div class="meta">
+              📦 <strong>${l.ville_depart || '—'}</strong> → 🏠 <strong>${l.ville_arrivee || '—'}</strong>
+              ${l.type_colis ? ` · ${l.type_colis}` : ''}
+              ${l.taille_colis ? ` (${l.taille_colis})` : ''}
+            </div>
+            <div class="actions">
+              <a class="btn-sm" style="background:rgba(0,217,255,.12);color:#7de4ff;border:1px solid rgba(0,217,255,.3)" href="/suivi-livraison.html?id=${l.id}">📍 Suivi</a>
+              ${['livre','livree','delivered'].includes(l.statut) ? `<a class="btn-sm" style="background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006" href="/confirmation-destinataire.html?livraison_id=${l.id}">✅ Confirmer réception</a>` : ''}
+              <a class="btn-sm" style="background:rgba(255,150,0,.12);color:#ffd700;border:1px solid rgba(255,150,0,.3)" href="/confirmation-destinataire.html?livraison_id=${l.id}">⚙️ Préférences</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    init();
+  </script>
+</body>
+</html>
