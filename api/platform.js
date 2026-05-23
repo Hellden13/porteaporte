@@ -2682,7 +2682,7 @@ module.exports = async function handler(req, res) {
       const livId = body.livraison_id;
       if (!livId) return res.status(400).json({ error: 'livraison_id requis' });
       // Vérifier que la livraison existe et n'est pas finale
-      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,statut`, {
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,code,statut,expediteur_id,livreur_id,ville_depart,ville_arrivee`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
       });
       const lrows = lr.ok ? await lr.json().catch(() => []) : [];
@@ -2690,6 +2690,7 @@ module.exports = async function handler(req, res) {
       if (['payee', 'paid', 'annule', 'rembourse'].includes(lrows[0].statut)) {
         return res.status(409).json({ error: 'Livraison cloturee — modifications impossibles' });
       }
+      const livraisonForNotif = lrows[0];
       const patch = {
         reception_mode: body.reception_mode || null,
         reception_heure_debut: body.reception_heure_debut || null,
@@ -2708,6 +2709,46 @@ module.exports = async function handler(req, res) {
         const errData = await pr.json().catch(() => ({}));
         return res.status(400).json({ error: 'Sauvegarde impossible', details: errData });
       }
+
+      // Notifier livreur + expéditeur des nouvelles préférences
+      try {
+        const ids = [livraisonForNotif.expediteur_id, livraisonForNotif.livreur_id].filter(Boolean);
+        if (ids.length) {
+          const profRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,email`,
+            { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+          );
+          const profs = profRes.ok ? await profRes.json().catch(() => []) : [];
+          const expEmail = profs.find(p => p.id === livraisonForNotif.expediteur_id)?.email || null;
+          const livEmail = profs.find(p => p.id === livraisonForNotif.livreur_id)?.email || null;
+          const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
+          const headers = { 'Content-Type': 'application/json' };
+          if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+          await fetch(`${origin}/api/notifier`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              type: 'prefs_destinataire',
+              data: {
+                livreur_email: livEmail,
+                expediteur_email: expEmail,
+                code: livraisonForNotif.code || livId.slice(0,8),
+                ville_depart: livraisonForNotif.ville_depart,
+                ville_arrivee: livraisonForNotif.ville_arrivee,
+                reception_mode: patch.reception_mode,
+                reception_heure_debut: patch.reception_heure_debut,
+                reception_heure_fin: patch.reception_heure_fin,
+                reception_photo_obligatoire: patch.reception_photo_obligatoire,
+                reception_lieu_repli: patch.reception_lieu_repli,
+                reception_note_livreur: patch.reception_note_livreur
+              }
+            })
+          }).catch(err => console.error('[notifier prefs_destinataire]', err.message));
+        }
+      } catch (e) {
+        console.error('[prefs notify error]', e.message);
+      }
+
       return res.status(200).json({ success: true });
     }
 

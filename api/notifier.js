@@ -29,6 +29,7 @@ const PUBLIC_TYPES = new Set([
   'livraison_imprevu',
   'manquement_signale',
   'preuve_soumise_admin',
+  'prefs_destinataire',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -331,6 +332,60 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             <p style="color:#6d7886;font-size:.8rem;margin-top:20px">PorteàPorte · Livraison sécurisée au Québec</p>
           </div>`
       });
+      break;
+    }
+
+    // ── PRÉFÉRENCES DESTINATAIRE — notif livreur (et expéditeur) ──
+    case 'prefs_destinataire': {
+      const modeLabels = {
+        signature: '✍️ Signature obligatoire',
+        depot_porte: '📦 Dépôt à la porte (photo)',
+        concierge: '🛎️ Laisser au concierge',
+        voisin: '🏘️ Laisser au voisin',
+        boite_securisee: '🔐 Boîte sécurisée'
+      };
+      const prefsHtml = `
+        <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:16px;margin:16px 0">
+          ${data.reception_mode ? `<div style="margin-bottom:6px"><strong>Mode :</strong> ${modeLabels[data.reception_mode] || data.reception_mode}</div>` : ''}
+          ${data.reception_heure_debut ? `<div style="margin-bottom:6px"><strong>🕐 Plage horaire :</strong> ${data.reception_heure_debut.slice(0,5)} à ${(data.reception_heure_fin||'').slice(0,5)}</div>` : ''}
+          ${data.reception_photo_obligatoire ? `<div style="margin-bottom:6px;color:#ffd700">📸 <strong>Photo de dépôt obligatoire</strong></div>` : ''}
+          ${data.reception_lieu_repli ? `<div style="margin-bottom:6px"><strong>🏠 Si absent :</strong> ${data.reception_lieu_repli}</div>` : ''}
+          ${data.reception_note_livreur ? `<div style="margin-top:10px;padding:10px;background:rgba(255,200,0,.08);border-left:3px solid #ffd700;border-radius:4px">💬 <strong>Note :</strong> <em>${data.reception_note_livreur}</em></div>` : ''}
+        </div>`;
+      // Email livreur
+      if (data.livreur_email) {
+        emails.push({
+          to: data.livreur_email,
+          from: { email: fromEmail, name: fromName },
+          subject: `📋 Préférences destinataire mises à jour — Livraison #${data.code}`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+              <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+              <h2 style="margin:0 0 16px;color:#fff">📋 Le destinataire a configuré ses préférences</h2>
+              <p style="color:#a8b0ba">Pour la livraison <strong style="color:#fff">#${data.code}</strong> (${data.ville_depart} → ${data.ville_arrivee}), voici comment le destinataire souhaite recevoir son colis :</p>
+              ${prefsHtml}
+              <p style="color:#a8b0ba;font-size:.9rem">⚠️ <strong>Respecte ces consignes</strong>. En cas d'imprévu (absence, refus…), utilise les boutons « 🚨 Imprévu » de ton dashboard pour signaler et être protégé.</p>
+              <div style="text-align:center;margin:20px 0">
+                <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Voir sur mon dashboard</a>
+              </div>
+            </div>`
+        });
+      }
+      // Email expéditeur (copie info)
+      if (data.expediteur_email) {
+        emails.push({
+          to: data.expediteur_email,
+          from: { email: fromEmail, name: fromName },
+          subject: `📋 Le destinataire a configuré la réception — Livraison #${data.code}`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+              <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+              <h2 style="margin:0 0 16px;color:#fff">📋 Préférences de réception du destinataire</h2>
+              <p style="color:#a8b0ba">Ton destinataire a précisé ses préférences pour la livraison <strong style="color:#fff">#${data.code}</strong>. Le livreur a été informé.</p>
+              ${prefsHtml}
+            </div>`
+        });
+      }
       break;
     }
 
