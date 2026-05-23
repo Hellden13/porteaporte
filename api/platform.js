@@ -3084,11 +3084,12 @@ module.exports = async function handler(req, res) {
       const livId = body.user_id || url.searchParams.get('id');
       if (!livId) return res.status(400).json({ error: 'user_id requis' });
       const r = await fetch(
-        `${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livId)}&select=id,prenom,nom,photo_url,score_confiance,driver_status,verification_status,role,ville,transport_mode,vehicule,cree_le`,
+        `${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livId)}&select=id,prenom,nom,avatar,score_confiance,driver_status,verification_status,role,ville,transport_mode,vehicule,cree_le`,
         { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
       );
       const rows = r.ok ? await r.json().catch(() => []) : [];
       const p = rows[0];
+      if (p && p.avatar && !p.photo_url) p.photo_url = p.avatar;
       if (!p) return res.status(404).json({ error: 'Profil introuvable' });
       if (!['livreur','les deux','admin'].includes(p.role)) return res.status(404).json({ error: 'Pas un livreur' });
       // Compter livraisons complétées
