@@ -31,6 +31,7 @@ const PUBLIC_TYPES = new Set([
   'preuve_soumise_admin',
   'prefs_destinataire',
   'xl_confirmation_destinataire',
+  'xl_confirmation_resultat',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -362,6 +363,30 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block;font-size:1rem">✅ Je serai présent — Confirmer</a>
             </div>
             <p style="color:#a8b0ba;font-size:.85rem;margin-top:18px">⚠️ <strong>Important</strong> : pour les gros colis (électroménager, meubles), nous ne pouvons pas faire de dépôt sans confirmation. Cela évite vol et dommages.</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ── XL CONFIRMATION RÉSULTAT — notif livreur ──
+    case 'xl_confirmation_resultat': {
+      const accepted = !!data.accepted;
+      emails.push({
+        to: data.livreur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: accepted
+          ? `✅ Destinataire CONFIRMÉ — Livraison #${data.code}`
+          : `❌ Destinataire ABSENT — Livraison #${data.code} annulée`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">${accepted ? '✅ Destinataire présent' : '❌ Destinataire absent / refus'}</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.prenom || ''},<br><br>${accepted
+              ? `Le destinataire a confirmé sa présence pour la livraison <strong style="color:#fff">#${data.code}</strong>. Tu peux partir avec le colis XL en toute sécurité.`
+              : `Le destinataire a refusé ou n'a pas répondu pour la livraison <strong style="color:#fff">#${data.code}</strong>. La livraison passe en retour expéditeur. Tu recevras une compensation pour ton temps.`}</p>
+            <div style="text-align:center;margin:20px 0">
+              <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Dashboard livreur</a>
+            </div>
           </div>`
       });
       break;

@@ -2823,6 +2823,72 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── Confirmation XL destinataire (public — appelé depuis email link) ──
+    if (endpoint === 'xl-confirmation-respond') {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+      const livId = body.livraison_id;
+      const accept = body.accept !== false;
+      if (!livId) return res.status(400).json({ error: 'livraison_id requis' });
+
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,code,statut,livreur_id,taille_colis,xl_confirmation_demande_at`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const lrows = lr.ok ? await lr.json().catch(() => []) : [];
+      const livraison = lrows[0];
+      if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+      if (livraison.taille_colis !== 'xl') return res.status(409).json({ error: 'Confirmation XL non requise' });
+
+      // Vérifier que la demande est dans les 15 min
+      if (livraison.xl_confirmation_demande_at) {
+        const elapsedMs = Date.now() - new Date(livraison.xl_confirmation_demande_at).getTime();
+        if (elapsedMs > 15 * 60 * 1000) {
+          return res.status(409).json({ error: 'Délai de 15 min dépassé. Le livreur a déjà annulé.' });
+        }
+      }
+
+      const patch = accept
+        ? { xl_confirmation_recue_at: new Date().toISOString() }
+        : { statut: 'retour_expediteur', imprevu_raison: 'Destinataire a refusé la livraison XL avant pickup', imprevu_demande_le: new Date().toISOString() };
+
+      const pr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}`, {
+        method: 'PATCH',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(patch)
+      });
+      if (!pr.ok) {
+        const errData = await pr.json().catch(() => ({}));
+        return res.status(400).json({ error: 'Mise à jour impossible', details: errData });
+      }
+
+      // Notifier le livreur du résultat
+      if (livraison.livreur_id) {
+        const livRes = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.livreur_id)}&select=email,prenom`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        const livProfile = livRes.ok ? (await livRes.json())[0] : null;
+        if (livProfile?.email) {
+          const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
+          const headers = { 'Content-Type': 'application/json' };
+          if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+          await fetch(`${origin}/api/notifier`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              type: 'xl_confirmation_resultat',
+              data: {
+                livreur_email: livProfile.email,
+                prenom: livProfile.prenom || '',
+                code: livraison.code || livId.slice(0,8),
+                accepted: accept
+              }
+            })
+          }).catch(err => console.error('[notifier xl_resultat]', err.message));
+        }
+      }
+
+      return res.status(200).json({ success: true, accepted: accept });
+    }
+
     // ── Préférences de réception destinataire (public, identifié par livraison_id) ──
     if (endpoint === 'recipient-preferences') {
       if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });

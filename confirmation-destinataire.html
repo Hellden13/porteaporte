@@ -141,6 +141,17 @@
     <h1>Ta livraison</h1>
     <p>Configure tes préférences de réception ci-dessous, puis reviens entrer ton code dès que ton colis arrive.</p>
 
+    <!-- ── Pré-confirmation XL (visible si ?xl=1) ── -->
+    <div id="xl-panel" style="display:none;border:2px solid rgba(255,90,90,.45);background:rgba(255,90,90,.08);border-radius:12px;padding:18px 20px;margin-bottom:18px">
+      <div style="font-size:1rem;font-weight:900;color:#ffb0b0;margin-bottom:8px">🚨 Confirmation URGENTE — Colis XL</div>
+      <p style="color:#a8b0ba;margin:0 0 14px;font-size:.92rem">Le livreur s'apprête à partir avec ton gros colis. Tu as <strong style="color:#ffd700" id="xl-timer">15:00</strong> pour confirmer ta présence à la livraison.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="respondXl(true)" style="background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;font-weight:900;padding:14px;border:none;border-radius:10px;cursor:pointer;font-size:.92rem">✅ Je serai présent</button>
+        <button onclick="respondXl(false)" style="background:rgba(255,90,90,.15);color:#ffb0b0;font-weight:900;padding:14px;border:1px solid rgba(255,90,90,.4);border-radius:10px;cursor:pointer;font-size:.92rem">❌ Annuler (refuser)</button>
+      </div>
+      <div id="xl-result" style="margin-top:12px;font-size:.88rem"></div>
+    </div>
+
     <!-- ── Préférences de réception (visible avant livraison) ── -->
     <details id="prefs-panel" open style="border:1px solid rgba(0,217,255,.22);background:rgba(0,217,255,.05);border-radius:12px;padding:14px 16px;margin-bottom:18px">
       <summary style="cursor:pointer;color:#00d9ff;font-weight:900;font-size:.95rem">⚙️ Mes préférences de réception</summary>
@@ -237,6 +248,44 @@
     codeInput.addEventListener('input', () => {
       codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     });
+
+    // ── Pré-confirmation XL (si ?xl=1 dans URL) ──
+    if (params.get('xl') === '1' && livraisonId) {
+      document.getElementById('xl-panel').style.display = 'block';
+      // Compte à rebours 15 min
+      let totalSec = 15 * 60;
+      const timerEl = document.getElementById('xl-timer');
+      const tick = setInterval(() => {
+        totalSec--;
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        if (totalSec <= 0) {
+          clearInterval(tick);
+          timerEl.textContent = '00:00';
+          document.getElementById('xl-result').innerHTML = '<span style="color:#ffb0b0">⏱️ Délai écoulé. La livraison a probablement été annulée.</span>';
+        }
+      }, 1000);
+    }
+
+    async function respondXl(accept) {
+      const resultEl = document.getElementById('xl-result');
+      resultEl.innerHTML = '<span style="color:#a8b0ba">⏳ Envoi…</span>';
+      try {
+        const res = await fetch('/api/platform?endpoint=xl-confirmation-respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ livraison_id: livraisonId, accept })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        resultEl.innerHTML = accept
+          ? '<span style="color:#7dffc1">✅ Le livreur a été notifié de ta présence. Bonne réception !</span>'
+          : '<span style="color:#ffb74d">↩️ La livraison sera retournée à l\'expéditeur. Tu peux recommander si besoin.</span>';
+      } catch (err) {
+        resultEl.innerHTML = '<span style="color:#ffb0b0">❌ ' + err.message + '</span>';
+      }
+    }
 
     // ── Sauvegarde des préférences de réception ──
     async function savePrefs() {
