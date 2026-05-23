@@ -195,6 +195,17 @@
 
     <div id="statusMsg" class="status-msg"></div>
 
+    <!-- ===== STRIPE IDENTITY (alternative rapide) ===== -->
+    <div style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(184,245,62,.08),rgba(0,217,255,.06));border:2px solid rgba(184,245,62,.4);border-radius:14px">
+      <div style="text-align:center">
+        <div style="color:#b8f53e;font-weight:900;font-size:1.1rem;margin-bottom:6px">⚡ Vérification instantanée (30 secondes)</div>
+        <p style="color:#a8b0ba;font-size:.92rem;line-height:1.6;margin:0 0 14px">Évite le formulaire long et la vérification manuelle (24-48h). Stripe Identity vérifie ton permis + selfie + détection de vie en 30 secondes.</p>
+        <button onclick="startStripeIdentity()" style="padding:14px 28px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:.95rem;cursor:pointer">⚡ Vérifier mon identité maintenant</button>
+        <div id="identity-msg" style="margin-top:10px;font-size:.82rem"></div>
+        <p style="margin-top:14px;font-size:.72rem;color:#6d7886">OU continue le formulaire ci-dessous (vérification manuelle par admin sous 24-48h)</p>
+      </div>
+    </div>
+
     <!-- ===== STEP 1 : MODE DE TRANSPORT ===== -->
     <div class="panel active" id="panel1">
       <h2 class="panel-title">Ton mode de transport</h2>
