@@ -84,16 +84,22 @@
     async function load() {
       const id = new URLSearchParams(location.search).get('id');
       if (!id) { document.getElementById('content').innerHTML = '<div class="err">❌ Lien invalide</div>'; return; }
-      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-      const { data: p, error } = await db
-        .from('profiles')
-        .select('id,prenom,nom,photo_url,score_confiance,driver_status,verification_status,xp,role,ville,transport_mode,vehicule,cree_le,created_at,mis_a_jour_le')
-        .eq('id', id)
-        .single();
-      if (error || !p) { document.getElementById('content').innerHTML = '<div class="err">❌ Profil introuvable</div>'; return; }
-      if (!['livreur','les deux','admin'].includes(p.role)) {
-        document.getElementById('content').innerHTML = '<div class="err">❌ Ce profil n\'est pas un livreur</div>'; return;
+      let out = {};
+      try {
+        const res = await fetch('/api/platform?endpoint=livreur-card-public', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: id })
+        });
+        out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Profil introuvable');
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="err">❌ ' + e.message + '</div>';
+        return;
       }
+      const p = out.profile;
+      const livraisonsCount = out.livraisons_count || 0;
+      const fiabilite = out.fiabilite;
       const verified = p.driver_status === 'verified';
       const photo = p.photo_url
         ? `<img src="${p.photo_url}" class="photo" alt="Photo livreur">`
@@ -102,20 +108,6 @@
       const since = p.cree_le ? new Date(p.cree_le).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long' }) : '—';
       const transport = p.transport_mode === 'car' ? '🚗 Voiture' : p.transport_mode === 'truck' ? '🚛 Camion' : p.transport_mode === 'bike' ? '🚴 Vélo' : p.transport_mode === 'walking' ? '🚶 À pied' : p.transport_mode || '—';
       const idCourt = (p.id || '').slice(0,4).toUpperCase() + '-' + (p.id || '').slice(4,8).toUpperCase();
-
-      // Charger fiabilité
-      let fiabilite = null;
-      try {
-        const { data: fr } = await db.from('v_user_fiabilite').select('score,manquements_valides').eq('id', p.id).single();
-        if (fr) fiabilite = fr;
-      } catch (e) {}
-
-      // Charger nombre de livraisons complétées
-      let livraisonsCount = 0;
-      try {
-        const { count } = await db.from('livraisons').select('id', { count: 'exact', head: true }).eq('livreur_id', p.id).in('statut', ['payee','paid']);
-        livraisonsCount = count || 0;
-      } catch (e) {}
 
       const stars = p.score_confiance ? '★'.repeat(Math.round(p.score_confiance / 20)) + '☆'.repeat(5 - Math.round(p.score_confiance / 20)) : '—';
 

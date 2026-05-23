@@ -3079,6 +3079,39 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── Carte d'identité publique livreur (no auth, infos publiques) ──
+    if (endpoint === 'livreur-card-public') {
+      const livId = body.user_id || url.searchParams.get('id');
+      if (!livId) return res.status(400).json({ error: 'user_id requis' });
+      const r = await fetch(
+        `${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livId)}&select=id,prenom,nom,photo_url,score_confiance,driver_status,verification_status,role,ville,transport_mode,vehicule,cree_le`,
+        { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+      );
+      const rows = r.ok ? await r.json().catch(() => []) : [];
+      const p = rows[0];
+      if (!p) return res.status(404).json({ error: 'Profil introuvable' });
+      if (!['livreur','les deux','admin'].includes(p.role)) return res.status(404).json({ error: 'Pas un livreur' });
+      // Compter livraisons complétées
+      let livraisonsCount = 0;
+      try {
+        const cr = await fetch(`${sbUrl}/rest/v1/livraisons?livreur_id=eq.${livId}&statut=in.(payee,paid)&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const contentRange = cr.headers.get('content-range') || '0-0/0';
+        livraisonsCount = Number(contentRange.split('/')[1]) || 0;
+      } catch (e) {}
+      // Fiabilité
+      let fiabilite = null;
+      try {
+        const fr = await fetch(`${sbUrl}/rest/v1/v_user_fiabilite?id=eq.${livId}&select=score,manquements_valides`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        const frows = fr.ok ? await fr.json().catch(() => []) : [];
+        fiabilite = frows[0] || null;
+      } catch (e) {}
+      return res.status(200).json({ success: true, profile: p, livraisons_count: livraisonsCount, fiabilite });
+    }
+
     // ── Confirmation XL destinataire (public — appelé depuis email link) ──
     if (endpoint === 'xl-confirmation-respond') {
       if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
