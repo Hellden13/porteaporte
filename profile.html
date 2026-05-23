@@ -513,17 +513,23 @@
 
         function copyReferralCode() {
             if (!_referralCode) return;
-            navigator.clipboard.writeText(_referralCode)
-                .then(() => alert('Code copié : ' + _referralCode))
-                .catch(() => {
-                    const el = document.getElementById('referral-code-display');
-                    const range = document.createRange();
-                    range.selectNode(el);
-                    window.getSelection().removeAllRanges();
-                    window.getSelection().addRange(range);
-                    document.execCommand('copy');
-                    alert('Code copié : ' + _referralCode);
-                });
+            const btn = document.querySelector('.referral-copy-btn');
+            const flash = () => {
+                if (!btn) return;
+                const orig = btn.textContent;
+                btn.textContent = '✓ Copié !';
+                btn.style.opacity = '0.75';
+                setTimeout(() => { btn.textContent = orig; btn.style.opacity = ''; }, 1800);
+            };
+            navigator.clipboard.writeText(_referralCode).then(flash).catch(() => {
+                const el = document.getElementById('referral-code-display');
+                const range = document.createRange();
+                range.selectNode(el);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                document.execCommand('copy');
+                flash();
+            });
         }
 
         async function logout() {

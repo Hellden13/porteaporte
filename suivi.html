@@ -1,9 +1,288 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="refresh" content="1; url=/suivi-livraison.html"><title>Suivi - PorteaPorte</title><link rel="stylesheet" href="/assets/brand-uniform.css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Suivez votre livraison PorteÀPorte en temps réel. Entrez votre code de suivi pour voir le statut, la position et l'historique.">
+  <meta property="og:title" content="Suivi livraison · PorteÀPorte">
+  <meta property="og:description" content="Suivez votre livraison en temps réel avec votre code de suivi PorteÀPorte.">
+  <title>Suivi livraison · PorteÀPorte</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
-<style>body{min-height:100vh;display:grid;place-items:center;padding:24px}.box{max-width:560px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px;text-align:center}.btn{display:inline-flex;width:auto;text-decoration:none;margin-top:14px}</style></head>
-<body><main class="box"><h1>Suivi livraison</h1><p>Redirection vers la page de suivi active.</p><a class="btn" href="/suivi-livraison.html">Ouvrir le suivi</a></main>  <script src="/js/support-widget.js"></script>
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.88);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 28px; height: 28px; }
+
+    .hero { text-align: center; padding: clamp(40px,7vw,80px) clamp(18px,4vw,48px) clamp(32px,5vw,56px); }
+    .hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); margin: 0 0 10px; }
+    .hero p { color: var(--brand-muted); max-width: 520px; margin: 0 auto 32px; line-height: 1.65; }
+
+    /* Saisie code */
+    .search-box {
+      max-width: 520px; margin: 0 auto;
+      display: flex; gap: 10px;
+    }
+    .search-box input {
+      flex: 1; padding: 13px 18px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 10px; color: var(--brand-text); font-size: 1rem;
+      outline: none; font-family: monospace; letter-spacing: 0.1em; text-transform: uppercase;
+      transition: border-color 0.15s;
+    }
+    .search-box input:focus { border-color: var(--brand-lime); }
+    .search-box button {
+      padding: 13px 22px; background: var(--brand-lime); color: var(--brand-bg-dark);
+      border: none; border-radius: 10px; font-weight: 800; cursor: pointer;
+      font-size: 0.95rem; white-space: nowrap; transition: opacity 0.15s;
+    }
+    .search-box button:hover { opacity: 0.88; }
+
+    /* Résultat */
+    .page-wrap { max-width: 680px; margin: 0 auto; padding: 0 clamp(18px,4vw,48px) 80px; }
+
+    #result { display: none; }
+
+    .status-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; text-align: center;
+    }
+    .status-icon { font-size: 3rem; margin-bottom: 12px; }
+    .status-label { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+    .status-meta { color: var(--brand-muted); font-size: 0.88rem; line-height: 1.6; }
+    .code-pill {
+      display: inline-block; font-family: monospace; font-weight: 800; font-size: 1rem;
+      background: rgba(184,245,62,0.1); border: 1px solid rgba(184,245,62,0.3);
+      color: var(--brand-lime); border-radius: 8px; padding: 4px 14px; margin-bottom: 14px;
+    }
+    .route-row {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      font-weight: 700; font-size: 1rem; margin-top: 14px;
+    }
+    .route-arrow { color: var(--brand-lime); font-size: 1.2rem; }
+
+    /* Stepper */
+    .stepper { display: flex; gap: 0; margin-bottom: 24px; }
+    .step {
+      flex: 1; text-align: center; position: relative;
+    }
+    .step::before {
+      content: ''; position: absolute; top: 16px; left: 50%; right: -50%;
+      height: 2px; background: var(--brand-border); z-index: 0;
+    }
+    .step:last-child::before { display: none; }
+    .step-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--brand-bg-surface); border: 2px solid var(--brand-border);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 8px; position: relative; z-index: 1; font-size: 0.85rem; font-weight: 800;
+      transition: all 0.2s;
+    }
+    .step.done .step-dot { background: var(--brand-lime); border-color: var(--brand-lime); color: var(--brand-bg-dark); }
+    .step.active .step-dot { background: var(--brand-bg-surface); border-color: var(--brand-lime); color: var(--brand-lime); box-shadow: 0 0 0 4px rgba(184,245,62,0.15); }
+    .step.done::before { background: var(--brand-lime); }
+    .step-name { font-size: 0.7rem; color: var(--brand-muted); line-height: 1.3; }
+    .step.done .step-name, .step.active .step-name { color: var(--brand-text); }
+
+    /* Infos */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .info-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 10px; padding: 14px 18px; }
+    .info-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand-muted); margin-bottom: 4px; }
+    .info-value { font-weight: 700; font-size: 0.95rem; }
+
+    /* Position GPS */
+    .gps-card {
+      background: rgba(0,217,255,0.06); border: 1px solid rgba(0,217,255,0.2);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .gps-icon { font-size: 1.6rem; }
+    .gps-label { font-weight: 700; color: #00D9FF; font-size: 0.88rem; }
+    .gps-sub { color: var(--brand-muted); font-size: 0.78rem; margin-top: 2px; }
+
+    /* Actions */
+    .actions-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Error */
+    #error-msg { display: none; text-align: center; color: #EF4444; padding: 20px; font-size: 0.9rem; }
+
+    @media (max-width: 480px) {
+      .search-box { flex-direction: column; }
+      .info-grid { grid-template-columns: 1fr; }
+      .step-name { font-size: 0.62rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
+    <a class="btn btn-ghost" href="/login.html">Mon compte</a>
+  </header>
+
+  <section class="hero">
+    <h1>Suivre ma livraison</h1>
+    <p>Entre le code de suivi reçu par courriel ou SMS pour voir l'état de ta livraison en temps réel.</p>
+    <div class="search-box">
+      <input type="text" id="code-input" placeholder="Ex : ABC-12345" maxlength="20" autocomplete="off" spellcheck="false">
+      <button onclick="track()">Suivre →</button>
+    </div>
+    <div id="error-msg"></div>
+  </section>
+
+  <div class="page-wrap">
+    <div id="result">
+
+      <!-- Statut principal -->
+      <div class="status-card">
+        <div class="status-icon" id="status-icon">📦</div>
+        <div class="code-pill" id="result-code">—</div>
+        <div class="status-label" id="status-label">—</div>
+        <div class="route-row">
+          <span id="ville-depart">—</span>
+          <span class="route-arrow">→</span>
+          <span id="ville-arrivee">—</span>
+        </div>
+        <div class="status-meta" id="status-meta"></div>
+      </div>
+
+      <!-- Stepper -->
+      <div class="stepper" id="stepper"></div>
+
+      <!-- GPS en route -->
+      <div class="gps-card" id="gps-card" style="display:none">
+        <div class="gps-icon">📡</div>
+        <div>
+          <div class="gps-label">Livreur en route</div>
+          <div class="gps-sub" id="gps-sub">Position mise à jour récemment</div>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <div class="info-grid">
+        <div class="info-card"><div class="info-label">Type de colis</div><div class="info-value" id="info-type">—</div></div>
+        <div class="info-card"><div class="info-label">Date de création</div><div class="info-value" id="info-date">—</div></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions-row">
+        <button class="btn btn-ghost" onclick="track()">↺ Rafraîchir</button>
+        <a class="btn btn-ghost" href="/login.html">Connexion pour plus de détails</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Pré-remplir depuis l'URL ?code=XXX
+    const params = new URLSearchParams(window.location.search);
+    const preCode = params.get('code') || params.get('id');
+    if (preCode) {
+      document.getElementById('code-input').value = preCode.toUpperCase();
+      // Auto-lancer après chargement
+      window.addEventListener('load', () => track());
+    }
+
+    const STEP_NAMES = ['En attente', 'Livreur assigné', 'En route', 'Livrée', 'Confirmée'];
+
+    async function track() {
+      const code = document.getElementById('code-input').value.trim().toUpperCase();
+      if (!code) { showError('Entre un code de suivi.'); return; }
+
+      hideError();
+      document.getElementById('result').style.display = 'none';
+
+      try {
+        const r = await fetch('/api/tracking-public', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const d = await r.json();
+        if (!r.ok) { showError(d.error || 'Code introuvable.'); return; }
+        render(d.tracking);
+      } catch {
+        showError('Erreur réseau. Vérifiez votre connexion et réessayez.');
+      }
+    }
+
+    function render(t) {
+      hideError();
+
+      document.getElementById('status-icon').textContent  = t.statut_icon;
+      document.getElementById('result-code').textContent  = t.code;
+      document.getElementById('status-label').textContent = t.statut_label;
+      document.getElementById('ville-depart').textContent  = t.ville_depart;
+      document.getElementById('ville-arrivee').textContent = t.ville_arrivee;
+
+      // Meta date
+      if (t.created_at) {
+        const d = new Date(t.created_at);
+        document.getElementById('status-meta').textContent = 'Créée le ' + d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+      }
+
+      // Infos
+      document.getElementById('info-type').textContent = t.type || 'Colis';
+      document.getElementById('info-date').textContent = t.created_at
+        ? new Date(t.created_at).toLocaleDateString('fr-CA')
+        : '—';
+
+      // Stepper
+      const stepper = document.getElementById('stepper');
+      stepper.innerHTML = (t.steps || []).map((s, i) => {
+        const stepNum = i + 1;
+        const done   = t.current_step > stepNum || (t.statut === 'confirmee' || t.statut === 'livree');
+        const active = t.current_step === stepNum;
+        return `<div class="step ${done ? 'done' : active ? 'active' : ''}">
+          <div class="step-dot">${done ? '✓' : stepNum}</div>
+          <div class="step-name">${s.label}</div>
+        </div>`;
+      }).join('');
+
+      // GPS
+      if (t.position) {
+        document.getElementById('gps-card').style.display = 'flex';
+        const ago = t.position.updated_at
+          ? Math.round((Date.now() - new Date(t.position.updated_at)) / 60000)
+          : null;
+        document.getElementById('gps-sub').textContent = ago !== null
+          ? `Mis à jour il y a ${ago < 1 ? 'moins d\'une minute' : ago + ' min'}`
+          : 'Position disponible';
+      } else {
+        document.getElementById('gps-card').style.display = 'none';
+      }
+
+      document.getElementById('result').style.display = 'block';
+
+      // Mettre à jour l'URL sans recharger
+      const url = new URL(window.location);
+      url.searchParams.set('code', t.code);
+      window.history.replaceState({}, '', url);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = '❌ ' + msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error-msg').style.display = 'none';
+    }
+
+    // Entrée clavier
+    document.getElementById('code-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') track();
+    });
+  </script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>
-

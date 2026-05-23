@@ -2,8 +2,10 @@
 <html lang="fr-CA">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devenir livreur — PorteàPorte</title>
+  <title>Livre en passant — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
@@ -54,7 +56,7 @@
     }
     .hero-bg {
       position: absolute; inset: 0;
-      background: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1600&h=900&fit=crop') center/cover no-repeat;
+      background: url('/assets/services-collage.png') center/cover no-repeat;
     }
     .hero-overlay {
       position: absolute; inset: 0;
@@ -221,6 +223,18 @@
     .footer-links a:hover { color: var(--brand-text); }
     .footer-copy { font-size: 0.78rem; color: var(--brand-muted); }
   </style>
+
+  <meta name="description" content="Tu fais déjà le trajet Québec–Lévis, Montréal–Laval, chaque jour pour le travail ? Livre un colis en passant et gagne de l'argent sans rien changer à ta journée.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Livre en passant — PorteàPorte">
+  <meta property="og:description" content="Tu fais déjà le trajet. Quelqu'un a un colis à envoyer dans ta direction. Gagne de l'argent sans détour.">
+  <meta property="og:image" content="https://porteaporte.site/hero-right.jpg">
+  <meta property="og:url" content="https://porteaporte.site/devenir-livreur.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Livre en passant — PorteàPorte">
+  <meta name="twitter:description" content="Tu fais déjà le trajet. Quelqu'un a un colis à envoyer dans ta direction. Gagne de l'argent sans détour.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-right.jpg">
 </head>
 <body>
 
@@ -244,17 +258,17 @@
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <div class="hero-badge">🚗 Rejoins 600+ livreurs actifs au Québec</div>
-    <h1>Tes trajets valent<br>de <em>l'argent</em>.</h1>
-    <p>Que tu fasses Montréal–Québec chaque semaine ou des livraisons locales à vélo — PorteàPorte te connecte à des colis sur ta route. Pas de boss, pas d'horaire fixe, des gains transparents.</p>
+    <div class="hero-badge">🚗 Tu passes déjà par là — profites-en</div>
+    <h1>Tu fais déjà<br>le <em>trajet</em>.</h1>
+    <p>Tu travailles à Québec, t'habites à Lévis. Tu fais Montréal–Laval chaque matin. Tu passes devant le dépanneur du coin. Quelqu'un a un colis à envoyer dans ta direction — PorteàPorte te connecte sans que tu changes ta route d'un mètre.</p>
     <div class="hero-actions">
-      <a href="/livreur.html" class="btn btn-primary">🚀 Commencer gratuitement</a>
-      <a href="#gains" class="btn btn-ghost">Voir mes gains estimés</a>
+      <a href="/livreur.html" class="btn btn-primary">📍 Inscrire mon trajet habituel</a>
+      <a href="#gains" class="btn btn-ghost">Voir ce que je peux gagner</a>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><strong>890 $</strong><span>gain moyen/mois</span></div>
+      <div class="hero-stat"><strong>0 km</strong><span>de détour requis</span></div>
       <div class="hero-stat"><strong>10 min</strong><span>pour s'inscrire</span></div>
-      <div class="hero-stat"><strong>600+</strong><span>livreurs actifs</span></div>
+      <div class="hero-stat"><strong>0 $</strong><span>pour démarrer</span></div>
     </div>
   </div>
 </section>
@@ -262,9 +276,9 @@
 <!-- CALCULATEUR -->
 <section class="calc-section" id="gains">
   <div class="container">
-    <div class="section-label">Calculateur de revenus</div>
-    <h2 class="section-title">Combien peux-tu gagner ?</h2>
-    <p class="section-sub">Ajuste les curseurs selon ta situation et vois ton revenu estimé en temps réel.</p>
+    <div class="section-label">Calculateur — argent de poche</div>
+    <h2 class="section-title">Combien peux-tu gagner<br>sans changer ta route ?</h2>
+    <p class="section-sub">Entre ton trajet habituel. On te montre ce que ça peut rapporter en ajoutant un simple colis sur ta route.</p>
     <div class="calc-wrapper">
       <div>
         <div class="calc-form">
@@ -288,20 +302,20 @@
         <div class="calc-examples">
           <div class="section-label" style="margin-top: 2rem; margin-bottom: 0.75rem;">Exemples pré-calculés</div>
           <div class="calc-example">
-            <span class="desc">2 trajets Montréal–Laval/semaine (voiture)</span>
-            <span class="amount">~320 $/mois</span>
+            <span class="desc">Travailleur Québec↔Lévis, 5j/semaine (voiture)</span>
+            <span class="amount">~200–350 $/mois*</span>
           </div>
           <div class="calc-example">
-            <span class="desc">5 livraisons locales/semaine à vélo</span>
-            <span class="amount">~180 $/mois</span>
+            <span class="desc">Navetteur Montréal↔Laval, 3j/semaine (voiture)</span>
+            <span class="amount">~150–280 $/mois*</span>
           </div>
           <div class="calc-example">
-            <span class="desc">3 trajets Montréal–Québec/semaine (voiture)</span>
-            <span class="amount">~1 200 $/mois</span>
+            <span class="desc">Cycliste urbain, quartier local, 3x/semaine</span>
+            <span class="amount">~80–160 $/mois*</span>
           </div>
           <div class="calc-example">
-            <span class="desc">Livreur temps partiel, 2 soirs/semaine</span>
-            <span class="amount">~260 $/mois</span>
+            <span class="desc">Travailleur Montréal↔Québec, 2 fois/semaine</span>
+            <span class="amount">~300–500 $/mois*</span>
           </div>
         </div>
       </div>
@@ -329,33 +343,33 @@
 <!-- COMMENT ÇA MARCHE -->
 <section>
   <div class="container">
-    <div class="section-label">Processus</div>
-    <h2 class="section-title">Commence à livrer en 4 étapes</h2>
-    <p class="section-sub">De l'inscription à ton premier virement — simple, rapide et 100 % en ligne.</p>
+    <div class="section-label">Comment ça marche</div>
+    <h2 class="section-title">4 étapes, zéro changement<br>à ta journée</h2>
+    <p class="section-sub">Tu t'inscris une fois. Ensuite, tu fais ton trajet habituel — et si un colis va dans ta direction, tu le sais avant même de partir.</p>
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-num">01</div>
         <div class="step-icon">🪪</div>
-        <h3>Vérification d'identité</h3>
-        <p>10 minutes depuis ton téléphone. Photo de ta pièce d'identité + selfie de confirmation. Vérification sécurisée par notre partenaire KYC.</p>
+        <h3>Vérifie ton identité</h3>
+        <p>10 minutes depuis ton téléphone. Photo de ta pièce d'identité + selfie. Une seule fois, pour toujours. C'est ce qui rend le réseau fiable.</p>
       </div>
       <div class="step-card">
         <div class="step-num">02</div>
-        <div class="step-icon">⚡</div>
-        <h3>Active ton profil livreur</h3>
-        <p>Choisis ton type de véhicule, ta zone de couverture, et tes disponibilités. Ton profil est actif dès approbation — généralement en moins de 24h.</p>
+        <div class="step-icon">🗺️</div>
+        <h3>Enregistre ton trajet habituel</h3>
+        <p>Ton point de départ, ta destination, ta fréquence (quotidien, quelques fois/semaine). Ton propre véhicule — jamais le véhicule de ton employeur.</p>
       </div>
       <div class="step-card">
         <div class="step-num">03</div>
-        <div class="step-icon">📍</div>
-        <h3>Choisis tes missions</h3>
-        <p>Vois les colis disponibles sur ta route — avant même d'accepter. Prix affiché, distance, nature du colis. Tu décides, tu n'es jamais obligé.</p>
+        <div class="step-icon">📦</div>
+        <h3>Un colis passe par là ? Tu le vois</h3>
+        <p>L'app t'alerte quand un colis correspond à ta route. Tu vois le gain, le type de colis, la distance. Tu acceptes ou tu passes — aucune obligation.</p>
       </div>
       <div class="step-card">
         <div class="step-num">04</div>
         <div class="step-icon">💸</div>
-        <h3>Reçois tes gains</h3>
-        <p>Virement automatique via Stripe dans les 24 à 48h suivant chaque livraison confirmée. Aucun délai, aucune paperasse.</p>
+        <h3>Tu livres en passant, tu es payé</h3>
+        <p>Dépôt du colis sur ta route, confirmation par le destinataire, virement automatique via Stripe dans les 24–48h. C'est tout.</p>
       </div>
     </div>
   </div>
@@ -364,50 +378,50 @@
 <!-- CE QUE TU GAGNES -->
 <section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
   <div class="container">
-    <div class="section-label">Avantages livreur</div>
-    <h2 class="section-title">Ce que tu gagnes en rejoignant PorteàPorte</h2>
-    <p class="section-sub">On a conçu la plateforme pour que les livreurs soient traités équitablement et sans surprise.</p>
+    <div class="section-label">Pourquoi ça a du sens</div>
+    <h2 class="section-title">Toi, le petit commerce, et la planète</h2>
+    <p class="section-sub">Quand tu passes déjà par là, livrer un colis n'est pas un travail — c'est juste du bon sens.</p>
     <div class="gains-grid">
+      <div class="gain-card">
+        <div class="gain-icon">🏪</div>
+        <div>
+          <h3>Tu aides le petit commerce local</h3>
+          <p>Le dépanneur du coin, la boutique artisanale, le restaurateur — ils ne peuvent pas se payer Purolator. Toi, tu passes déjà devant leur client.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🌱</div>
+        <div>
+          <h3>Tu évites un camion de livraison</h3>
+          <p>Un camion fait 40 arrêts pour livrer 40 colis dans le même secteur. Toi, tu livres un colis sur un trajet que tu faisais déjà. Zéro émission supplémentaire.</p>
+        </div>
+      </div>
       <div class="gain-card">
         <div class="gain-icon">💰</div>
         <div>
-          <h3>Tarif transparent</h3>
-          <p>Tu vois le montant exact que tu gagnes avant d'accepter une mission. Jamais de calcul opaque.</p>
+          <h3>Tu récupères le coût de ton trajet</h3>
+          <p>Essence, usure, stationnement — ton trajet te coûte déjà de l'argent. Un colis sur ta route te rembourse une partie de ça. Logique.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🤝</div>
+        <div>
+          <h3>Tu deviens une personne de confiance</h3>
+          <p>Les gens de ton quartier, de ta ville, de ton corridor sauront que tu es fiable. Chaque livraison réussie construit ta réputation dans le réseau.</p>
+        </div>
+      </div>
+      <div class="gain-card">
+        <div class="gain-icon">🕐</div>
+        <div>
+          <h3>Zéro contrainte horaire</h3>
+          <p>Pas de shifts, pas de boss, pas de minimum. Tu acceptes quand ça te convient. Tu passes — ou tu passes pas. C'est ton choix à chaque fois.</p>
         </div>
       </div>
       <div class="gain-card">
         <div class="gain-icon">💳</div>
         <div>
-          <h3>Paiement Stripe garanti</h3>
-          <p>Tes gains sont sécurisés par Stripe dès que l'expéditeur confirme la mission. Virement en 24–48h.</p>
-        </div>
-      </div>
-      <div class="gain-card">
-        <div class="gain-icon">⭐</div>
-        <div>
-          <h3>Score de confiance visible</h3>
-          <p>Chaque livraison réussie améliore ton score. Un score élevé t'ouvre l'accès à des missions premium mieux rémunérées.</p>
-        </div>
-      </div>
-      <div class="gain-card">
-        <div class="gain-icon">🏅</div>
-        <div>
-          <h3>Badges et récompenses</h3>
-          <p>Débloque des badges (Livreur Express, Longue Distance, 0 incident) qui augmentent ta visibilité auprès des expéditeurs.</p>
-        </div>
-      </div>
-      <div class="gain-card">
-        <div class="gain-icon">🗺️</div>
-        <div>
-          <h3>Missions sur ta route</h3>
-          <p>L'algorithme t'affiche uniquement les colis qui correspondent à tes trajets habituels. Tu ne fais pas de détour pour rien.</p>
-        </div>
-      </div>
-      <div class="gain-card">
-        <div class="gain-icon">🧑‍💼</div>
-        <div>
-          <h3>Support 7j/7</h3>
-          <p>Un problème avec une mission ? Notre équipe est disponible tous les jours pour te soutenir et résoudre les litiges rapidement.</p>
+          <h3>Paiement sécurisé, sans friction</h3>
+          <p>Le gain est visible avant d'accepter. Il est préautorisé par Stripe dès la prise en charge. Virement dans les 24–48h après livraison confirmée.</p>
         </div>
       </div>
     </div>
@@ -417,43 +431,43 @@
 <!-- TÉMOIGNAGES -->
 <section>
   <div class="container">
-    <div class="section-label">Ils livrent déjà</div>
-    <h2 class="section-title">Ce que disent nos livreurs</h2>
-    <p class="section-sub">Des revenus réels, des vraies personnes, de vrais trajets au Québec.</p>
+    <div class="section-label">Scénarios réels</div>
+    <h2 class="section-title">Des trajets qui ressemblent<br>aux tiens</h2>
+    <p class="section-sub">Exemples illustratifs de personnes qui font déjà ces trajets chaque semaine. <em style="font-size:0.8rem;color:var(--brand-muted)">(Témoignages fictifs — nous sommes en bêta)</em></p>
     <div class="testimonials">
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">« Je fais Montréal–Laval–Montréal trois fois par semaine pour le travail. Depuis que j'utilise PorteàPorte, je rentre jamais à vide. Je prends 2 ou 3 colis sur la route du retour, et ça me fait un revenu net d'environ 1 100 $ par mois sans changer mon horaire d'une miette. C'est du pur génie. »</p>
+        <div class="testi-stars">🚗 Navetteur quotidien</div>
+        <p class="testi-text">« Je travaille à Québec, j'habite à Lévis. Je fais le pont deux fois par jour, 5 jours par semaine. Avec PorteàPorte, je prends un colis le matin en allant travailler — quelqu'un à Québec commande quelque chose d'un commerce à Lévis. Je passe déjà là. Ça prend 3 minutes d'arrêt de plus. »</p>
         <div class="testi-author">
-          <img src="https://randomuser.me/api/portraits/men/52.jpg" alt="David T.">
+          <img src="https://ui-avatars.com/api/?name=Martin+L&background=1a2535&color=B8F53E&size=64&bold=true&format=svg" alt="Scénario navetteur">
           <div>
-            <strong>David T.</strong>
-            <span>Montréal, QC</span>
-            <div class="testi-earnings">~1 100 $/mois</div>
+            <strong>Navetteur Lévis↔Québec</strong>
+            <span>Travailleur lundi–vendredi</span>
+            <div class="testi-earnings">Trajet déjà fait de toute façon</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">« Je fais ça à vélo le weekend dans le Vieux-Québec et Saint-Roch. Je me fais un peu de sport, je découvre des coins de la ville, et je rentre avec 100 à 120 $ dans les poches pour une journée de 4h. C'est ben mieux que de traîner dans un café à rien faire. Vraiment une belle initiative québécoise. »</p>
+        <div class="testi-stars">🚲 Cycliste urbain</div>
+        <p class="testi-text">« Je fais du vélo pour aller au gym le matin dans Rosemont. En passant, je ramasse un colis pour quelqu'un dans le Plateau. C'est à deux rues de mon trajet. Le petit commerce local ne pouvait pas se payer un service de livraison express. Moi, j'aidais juste en passant. »</p>
         <div class="testi-author">
-          <img src="https://randomuser.me/api/portraits/men/29.jpg" alt="François B.">
+          <img src="https://ui-avatars.com/api/?name=Alex+T&background=1a2535&color=00D9FF&size=64&bold=true&format=svg" alt="Scénario cycliste">
           <div>
-            <strong>François B.</strong>
-            <span>Québec, QC</span>
-            <div class="testi-earnings">~480 $/mois</div>
+            <strong>Cycliste urbain — Montréal</strong>
+            <span>Trajet quotidien à vélo</span>
+            <div class="testi-earnings">Zéro km supplémentaire</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">« Je suis maman et je travaille à temps partiel. PorteàPorte s'adapte parfaitement à mon horaire — je choisis mes missions selon ma disponibilité ce jour-là. Certaines semaines je fais 200 $, d'autres 60 $, selon ce que j'ai le temps de faire. Le support est toujours là quand j'en ai besoin. Je recommande sans hésiter. »</p>
+        <div class="testi-stars">🛣️ Longue distance</div>
+        <p class="testi-text">« Je fais Rimouski–Québec une fois par semaine pour voir ma famille. Un trajet de 3h aller. Avec PorteàPorte, je prends un ou deux colis dans le coffre — quelqu'un à Québec qui commande chez un artisan du Bas-du-Fleuve. Je faisais déjà le trajet. Je repartais à vide. »</p>
         <div class="testi-author">
-          <img src="https://randomuser.me/api/portraits/women/55.jpg" alt="Nadia K.">
+          <img src="https://ui-avatars.com/api/?name=Julie+B&background=1a2535&color=00FF9F&size=64&bold=true&format=svg" alt="Scénario longue distance">
           <div>
-            <strong>Nadia K.</strong>
-            <span>Laval, QC</span>
-            <div class="testi-earnings">~720 $/mois</div>
+            <strong>Rimouski↔Québec</strong>
+            <span>Trajet familial hebdomadaire</span>
+            <div class="testi-earnings">Coffre qui servait à rien</div>
           </div>
         </div>
       </div>
@@ -464,9 +478,9 @@
 <!-- PRÉREQUIS -->
 <section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
   <div class="container">
-    <div class="section-label">Conditions d'admissibilité</div>
-    <h2 class="section-title">Ce qu'il te faut pour commencer</h2>
-    <p class="section-sub">Les exigences sont minimes — mais non négociables. On veut que tout le monde soit protégé.</p>
+    <div class="section-label">Qui peut participer</div>
+    <h2 class="section-title">C'est pour toi si tu fais<br>déjà le trajet dans ta propre voiture</h2>
+    <p class="section-sub">PorteàPorte est conçu pour des particuliers qui utilisent leur véhicule personnel. Le véhicule de ton employeur n'est pas le tien — on ne peut pas t'y autoriser.</p>
     <div class="req-grid">
       <div class="req-box" style="border-top: 3px solid var(--brand-lime);">
         <h3>🚗 Pour livrer en voiture</h3>
@@ -479,7 +493,7 @@
           <li><span class="ok">✓</span>Bon dossier de conduite (sans suspensions récentes)</li>
           <li><span class="ok">✓</span>Téléphone avec accès GPS et données mobiles</li>
         </ul>
-        <div class="req-note">🔍 Vérification du permis et de l'assurance requise à l'inscription. Fait en ligne en 10 minutes.</div>
+        <div class="req-note">🔍 Vérification du permis et de l'assurance requise à l'inscription. Fait en ligne en 10 minutes.<br><br>⚠️ <strong>Important :</strong> Ton véhicule personnel uniquement. Si tu travailles pour une compagnie de transport, tu ne peux pas utiliser leur véhicule pour des livraisons personnelles.</div>
       </div>
       <div class="req-box" style="border-top: 3px solid var(--brand-cyan);">
         <h3>🚲 Pour livrer à vélo ou à pied</h3>
@@ -522,8 +536,8 @@
       </div>
       <div class="sec-card">
         <div class="sec-icon">📋</div>
-        <h3>Assurance plateforme</h3>
-        <p>En cas d'incident grave lors d'une livraison, une assurance de responsabilité plateforme peut s'appliquer.</p>
+        <h3>Fonds de protection (bêta)</h3>
+        <p>2% de chaque livraison confirmée alimente un fonds commun. En cas d'incident admissible, une compensation peut être accordée selon les fonds disponibles.</p>
       </div>
     </div>
   </div>
@@ -532,33 +546,33 @@
 <!-- FAQ -->
 <section id="faq" style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
   <div class="container">
-    <div class="section-label">FAQ livreurs</div>
-    <h2 class="section-title">Questions fréquentes</h2>
-    <p class="section-sub">Tout ce que tu veux savoir avant de te lancer.</p>
+    <div class="section-label">Questions fréquentes</div>
+    <h2 class="section-title">Ce que tu veux savoir<br>avant de te lancer</h2>
+    <p class="section-sub">Des réponses honnêtes — on est en bêta, on ne promettra rien qu'on ne peut pas tenir.</p>
     <div class="faq-list">
       <div class="faq-item">
-        <div class="faq-q">Combien puis-je gagner concrètement ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Le revenu moyen de nos livreurs actifs est de 890 $/mois. Nos livreurs les plus actifs (trajets longue distance en voiture, 4+ missions par semaine) gagnent régulièrement entre 1 500 $ et 2 200 $ par mois. Les livreurs à vélo gagnent en général entre 250 $ et 600 $/mois selon leur disponibilité. Tout dépend de ta fréquence et de tes trajets.</div>
+        <div class="faq-q">Je travaille pour une compagnie — est-ce que je peux quand même participer ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Oui — mais uniquement avec ton véhicule personnel. Le camion ou l'auto de ton employeur ne t'appartient pas. Utiliser le véhicule de ta compagnie pour des livraisons personnelles pourrait violer ton contrat de travail et ta couverture d'assurance. PorteàPorte est fait pour des particuliers qui se déplacent dans leur propre voiture, leur propre vélo, leur propre camionnette.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Quand suis-je payé ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Dès que le destinataire confirme la livraison (ou après le délai de confirmation automatique de 2h), ton gain est libéré. Le virement est effectué via Stripe sur ton compte bancaire dans les 24 à 48h ouvrables. Tu peux suivre tous tes paiements depuis l'application dans la section "Mes gains".</div>
+        <div class="faq-q">Est-ce que je dois changer mon trajet pour livrer ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Non — et c'est justement le principe. L'app ne te propose que des colis dont la destination est sur ta route déclarée. Si le colis t'oblige à faire un détour important, tu n'es pas obligé de l'accepter. Tu vois tout le détail avant d'accepter quoi que ce soit.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Que faire si le client n'est pas là à la livraison ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Si le destinataire est absent, tu as trois options : attendre 15 minutes (recommandé), laisser le colis dans un endroit sécurisé avec photo à l'appui, ou retourner le colis à l'expéditeur si les instructions le spécifient. Dans tous les cas, tu es payé pour le trajet effectué. Le protocole exact est indiqué dans chaque mission.</div>
+        <div class="faq-q">Combien puis-je espérer gagner ? <span class="arrow">▼</span></div>
+        <div class="faq-a">On est honnêtes : on est en bêta, le réseau grandit. Les gains dépendent du nombre de missions disponibles sur ton corridor. Utilise le calculateur sur cette page pour une estimation selon ton trajet. Ce sont des simulations, pas des revenus garantis — le réseau doit atteindre une masse critique pour que les missions soient fréquentes sur chaque route.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Puis-je refuser une mission ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Absolument. Tu vois le détail complet de chaque mission — destination, type de colis, gain, distance — avant d'accepter. Tu n'acceptes que ce qui te convient. Une fois acceptée, on t'encourage à compléter la mission pour maintenir ton score de fiabilité, mais des exceptions sont possibles avec notification à l'expéditeur.</div>
+        <div class="faq-q">Quand est-ce que je suis payé ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Dès que le destinataire confirme la réception (ou après 2h automatiquement), ton gain est libéré par Stripe. Virement sur ton compte bancaire dans les 24–48h. Tu suis tout depuis l'app dans la section "Mes gains".</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Y a-t-il un minimum d'heures ou de livraisons ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Aucun. PorteàPorte est totalement flexible — c'est toi qui gères ton horaire et ta fréquence. Tu peux faire une livraison par mois ou dix par semaine. Aucun contrat, aucun engagement, aucune pénalité si tu prends une pause.</div>
+        <div class="faq-q">Que se passe-t-il si le destinataire est absent ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Tu peux attendre 15 minutes, laisser le colis en lieu sécurisé avec photo, ou retourner le colis selon les instructions de la mission. Tu es payé pour le trajet effectué dans tous les cas. Le protocole est indiqué clairement pour chaque mission avant que tu l'acceptes.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Comment fonctionne le processus KYC ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Le KYC (Know Your Customer) est une vérification d'identité standard : tu fournis une photo de ta pièce d'identité officielle (permis, passeport, carte d'identité) et un selfie en temps réel pour confirmer que c'est bien toi. Ce processus se fait entièrement depuis l'application en environ 10 minutes. Tes données sont chiffrées et jamais revendues.</div>
+        <div class="faq-q">Y a-t-il un minimum de livraisons exigé ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Zéro. Aucun contrat, aucun engagement, aucune pénalité si tu prends une pause d'un mois. Tu acceptes une mission quand ça te convient. PorteàPorte n'est pas ton employeur — tu es travailleur autonome libre de travailler autant ou aussi peu que tu veux.</div>
       </div>
     </div>
   </div>
@@ -567,17 +581,30 @@
 <!-- CTA FINAL -->
 <section class="cta-final">
   <div class="container">
-    <h2>Commence à gagner de l'argent dès aujourd'hui</h2>
-    <p>Inscription gratuite en 10 minutes. Tes premiers gains pourraient arriver dans les prochains jours.</p>
+    <h2>Tu fais déjà le trajet.<br>Autant en profiter.</h2>
+    <p>Inscription gratuite en 10 minutes. Enregistre ton trajet habituel — on s'occupe du reste quand un colis passe par là.</p>
+    <div style="margin:0 auto 24px;max-width:520px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px 20px;text-align:left">
+      <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:.88rem;color:var(--brand-muted);line-height:1.55">
+        <input type="checkbox" id="autonome-check" style="margin-top:3px;accent-color:var(--brand-lime);width:16px;height:16px;flex-shrink:0">
+        <span>Je comprends que j'agis comme <strong style="color:var(--brand-text)">travailleur autonome indépendant</strong>, que je suis responsable de déclarer mes revenus à Revenu Québec, et que PorteàPorte n'est pas mon employeur. (<a href="/cgu.html#section-15" style="color:var(--brand-cyan)">Section 15 des CGU</a>)</span>
+      </label>
+    </div>
     <div class="cta-btns">
-      <a href="/livreur.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
-        🚀 Devenir livreur PorteàPorte
+      <a href="/livreur.html" id="cta-livreur-btn" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem; opacity:.5;pointer-events:none" aria-disabled="true">
+        📍 Inscrire mon trajet habituel
       </a>
-      <a href="#gains" class="btn btn-ghost">Calculer mes gains</a>
+      <a href="#gains" class="btn btn-ghost">Estimer mes gains</a>
     </div>
     <p style="margin-top: 1.5rem; font-size: 0.82rem; color: var(--brand-muted);">
       Des questions ? <a href="/contact.html" style="color: var(--brand-cyan); text-decoration: underline;">Parle à notre équipe</a> — on répond tous les jours.
     </p>
+    <script>
+      document.getElementById('autonome-check').addEventListener('change', function() {
+        const btn = document.getElementById('cta-livreur-btn');
+        if (this.checked) { btn.style.opacity = '1'; btn.style.pointerEvents = ''; btn.removeAttribute('aria-disabled'); }
+        else { btn.style.opacity = '.5'; btn.style.pointerEvents = 'none'; btn.setAttribute('aria-disabled','true'); }
+      });
+    </script>
   </div>
 </section>
 
@@ -586,7 +613,7 @@
   <div class="footer-links">
     <a href="/index.html">Accueil</a>
     <a href="/expediteur.html">Expédier un colis</a>
-    <a href="/assurance.html">Assurance</a>
+    <a href="/assurance.html">Protection colis</a>
     <a href="/cgu.html">Conditions d'utilisation</a>
     <a href="/confidentialite.html">Confidentialité</a>
     <a href="/contact.html">Contact</a>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fond vert foncé -->
+  <rect width="512" height="512" fill="#0D1F15" rx="80"/>
+
+  <!-- Pin de localisation stylisé formant un "P" -->
+  <!-- Tête du pin (cercle) -->
+  <circle cx="230" cy="195" r="95" fill="#00D97E"/>
+  <!-- Tige du pin -->
+  <path d="M230 280 Q200 330 230 410 Q260 330 230 280Z" fill="#00D97E"/>
+
+  <!-- Lettre P blanche à l'intérieur du cercle -->
+  <text
+    x="215"
+    y="220"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="100"
+    font-weight="900"
+    fill="#0D1F15"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >P</text>
+
+  <!-- Texte "PorteàPorte" -->
+  <text
+    x="340"
+    y="210"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="52"
+    font-weight="900"
+    fill="#FFFFFF"
+    text-anchor="start"
+    dominant-baseline="middle"
+  >Porte</text>
+  <text
+    x="340"
+    y="268"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="52"
+    font-weight="900"
+    fill="#00D97E"
+    text-anchor="start"
+    dominant-baseline="middle"
+  >àPorte</text>
+
+  <!-- Tagline -->
+  <text
+    x="256"
+    y="460"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="22"
+    font-weight="400"
+    fill="#5A8A6A"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >Quelqu'un passe déjà dans ta direction.</text>
+</svg>

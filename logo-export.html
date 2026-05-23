@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Export Logo PorteàPorte</title>
+  <style>
+    body { background: #0A0C10; color: white; font-family: sans-serif; padding: 40px; text-align: center; }
+    canvas { border: 1px solid #333; margin: 20px; }
+    .btn { background: #00D97E; color: #0D1F15; border: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; margin: 10px; }
+    h2 { color: #00D97E; }
+    .preview { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; margin: 30px 0; }
+    .preview-box { text-align: center; }
+    label { display: block; margin-top: 8px; color: #888; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>🎨 Export Logo PorteàPorte</h1>
+  <h2>Pour Stripe Branding</h2>
+
+  <div class="preview">
+    <div class="preview-box">
+      <canvas id="logo-square" width="512" height="512"></canvas>
+      <label>Logo carré 512×512 (pour Stripe)</label>
+      <br>
+      <button class="btn" onclick="download('logo-square', 'logo-porteaporte-512.png')">⬇ Télécharger PNG 512px</button>
+    </div>
+    <div class="preview-box">
+      <canvas id="logo-icon" width="256" height="256"></canvas>
+      <label>Icône 256×256 (favicon / icône)</label>
+      <br>
+      <button class="btn" onclick="download('logo-icon', 'icone-porteaporte-256.png')">⬇ Télécharger PNG 256px</button>
+    </div>
+  </div>
+
+  <script>
+    function drawLogo(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const s = size / 512; // scale factor
+
+      // Background
+      ctx.fillStyle = '#0D1F15';
+      roundRect(ctx, 0, 0, size, size, 80 * s);
+      ctx.fill();
+
+      // Pin circle
+      ctx.fillStyle = '#00D97E';
+      ctx.beginPath();
+      ctx.arc(230 * s, 195 * s, 95 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pin tail
+      ctx.beginPath();
+      ctx.moveTo(230 * s, 280 * s);
+      ctx.quadraticCurveTo(200 * s, 330 * s, 230 * s, 410 * s);
+      ctx.quadraticCurveTo(260 * s, 330 * s, 230 * s, 280 * s);
+      ctx.fill();
+
+      // Letter P
+      ctx.fillStyle = '#0D1F15';
+      ctx.font = `900 ${100 * s}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('P', 230 * s, 198 * s);
+
+      // "Porte" white
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `900 ${52 * s}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText('Porte', 340 * s, 210 * s);
+
+      // "àPorte" green
+      ctx.fillStyle = '#00D97E';
+      ctx.fillText('àPorte', 340 * s, 268 * s);
+
+      // Tagline
+      ctx.fillStyle = '#5A8A6A';
+      ctx.font = `400 ${20 * s}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText("Quelqu'un passe déjà dans ta direction.", 256 * s, 460 * s);
+    }
+
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const s = size / 256;
+
+      // Background
+      ctx.fillStyle = '#0D1F15';
+      roundRect(ctx, 0, 0, size, size, 48 * s);
+      ctx.fill();
+
+      // Pin circle
+      ctx.fillStyle = '#00D97E';
+      ctx.beginPath();
+      ctx.arc(128 * s, 105 * s, 72 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pin tail
+      ctx.beginPath();
+      ctx.moveTo(128 * s, 172 * s);
+      ctx.quadraticCurveTo(100 * s, 210 * s, 128 * s, 245 * s);
+      ctx.quadraticCurveTo(156 * s, 210 * s, 128 * s, 172 * s);
+      ctx.fill();
+
+      // Letter P
+      ctx.fillStyle = '#0D1F15';
+      ctx.font = `900 ${78 * s}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('P', 128 * s, 108 * s);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function download(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Draw on load
+    drawLogo(document.getElementById('logo-square'), 512);
+    drawIcon(document.getElementById('logo-icon'), 256);
+  </script>
+</body>
+</html>

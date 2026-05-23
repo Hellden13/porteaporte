@@ -20,6 +20,10 @@
     .hint{color:var(--brand-muted);line-height:1.6}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
     .btn{display:inline-flex;width:auto;text-decoration:none}
+    .state-panel{display:none}
+    .state-panel.show{display:block}
+    .state-title{font-size:1.35rem;font-weight:900;margin:0 0 8px}
+    .state-note{color:var(--brand-muted);line-height:1.6;margin:0}
   </style>
 </head>
 <body>
@@ -33,6 +37,8 @@
       <h1>Vérification livreur</h1>
       <p class="hint">Pour protéger les expéditeurs, les colis et les adresses, un livreur doit être vérifié avant de voir les vraies missions. Pour la livraison à pied ou à vélo, un permis de conduire n'est pas obligatoire.</p>
     </section>
+
+    <section id="verificationState" class="panel state-panel" aria-live="polite"></section>
 
     <form id="driverForm" class="panel">
       <div class="grid">
@@ -85,6 +91,33 @@
   <script>
     const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
     const form = document.getElementById('driverForm');
+    const statePanel = document.getElementById('verificationState');
+
+    function renderState(profile) {
+      if (!statePanel || !profile) return;
+      const status = profile.driver_status || 'not_started';
+      const isDriverRole = ['livreur', 'les deux', 'admin'].includes(profile.role);
+      let html = '';
+
+      if (profile.role === 'admin') {
+        html = '<div class="state-title">Acces admin detecte</div><p class="state-note">Ton compte admin peut ouvrir les outils d administration ou les espaces de test.</p><div class="actions"><a class="btn" href="/admin/dashboard-admin.html">Dashboard admin</a><a class="btn secondary" href="/dashboard-livreur.html">Espace livreur</a></div>';
+      } else if (!isDriverRole) {
+        html = '<div class="state-title">Ajouter le role livreur</div><p class="state-note">Ton compte est expediteur. Remplis ce formulaire pour demander aussi l acces livreur.</p>';
+      } else if (status === 'verified') {
+        html = '<div class="state-title">Profil livreur verifie</div><p class="state-note">Ton profil est actif. Tu peux voir les missions compatibles avec ton mode de transport.</p><div class="actions"><a class="btn" href="/dashboard-livreur.html">Ouvrir mon dashboard livreur</a><a class="btn secondary" href="/profile.html">Mon profil</a></div>';
+        form.style.display = 'none';
+      } else if (status === 'pending_review') {
+        html = '<div class="state-title">Dossier en revision</div><p class="state-note">Ta demande livreur est envoyee. Les vraies missions et les adresses restent bloquees jusqu a validation admin.</p><div class="actions"><a class="btn secondary" href="/dashboard-expediteur.html">Espace expediteur</a><a class="btn secondary" href="/profile.html">Mon profil</a></div>';
+        form.style.display = 'none';
+      } else if (status === 'rejected') {
+        html = '<div class="state-title">Verification a reprendre</div><p class="state-note">Ton dossier doit etre corrige. Mets tes informations a jour puis renvoie la demande.</p>';
+      }
+
+      if (html) {
+        statePanel.innerHTML = html;
+        statePanel.classList.add('show');
+      }
+    }
 
     async function init() {
       const { data } = await db.auth.getSession();
@@ -97,13 +130,14 @@
       const dash = document.getElementById('driverDashboardLink');
       if (dash && profile && profile.role !== 'admin' && profile.driver_status !== 'verified') {
         dash.textContent = profile.driver_status === 'pending_review' ? 'Dossier en revision' : 'Verification';
-        dash.href = '#driverForm';
+        dash.href = profile.driver_status === 'pending_review' ? '#verificationState' : '#driverForm';
         dash.setAttribute('aria-disabled', 'true');
       }
       if (profile && !['livreur', 'les deux', 'admin'].includes(profile.role)) {
         showError('Ton compte est encore seulement expéditeur. En envoyant ce formulaire, on ajoute aussi le rôle livreur à ton profil.');
       }
       if (profile) {
+        renderState(profile);
         document.getElementById('prenom').value = profile.prenom || '';
         document.getElementById('nom').value = profile.nom || '';
         document.getElementById('telephone').value = profile.telephone || '';
@@ -160,7 +194,7 @@
         return;
       }
       showSuccess('Demande envoyée. Ton profil livreur est maintenant en révision.');
-      setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
+      setTimeout(() => { window.location.href = '/livreur.html'; }, 1200);
     });
 
     init();

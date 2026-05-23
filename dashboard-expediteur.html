@@ -1131,7 +1131,29 @@
                 const livreurNom = mission.livreur_profile
                     ? esc([mission.livreur_profile.prenom, mission.livreur_profile.nom].filter(Boolean).join(' ') || 'Livreur')
                     : '';
-                const livreurBlock = mission.livreur_id && mission.livreur_profile
+                const isActive = mission.livreur_id && ['confirme','en_route','ramasse','livre','livree','delivered'].includes(mission.statut);
+                const livreurBlock = mission.livreur_id && mission.livreur_profile && isActive
+                    ? `<div style="margin-top:14px;padding:16px;background:rgba(0,217,255,.06);border:2px solid rgba(0,217,255,.35);border-radius:12px">
+                        <div style="display:flex;align-items:center;gap:14px">
+                          ${mission.livreur_profile.photo_url
+                              ? `<img src="${esc(mission.livreur_profile.photo_url)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(0,217,255,.5)">`
+                              : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#b8f53e);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
+                          <div style="flex:1">
+                            <div style="font-size:.72rem;color:#00d9ff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
+                            <div style="font-size:1.05rem;font-weight:900;color:#fff;margin-top:2px">${livreurNom}</div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:.85rem">
+                              ${mission.livreur_profile.score_confiance ? `<span style="color:#ffd700">★ ${(mission.livreur_profile.score_confiance / 20).toFixed(1)}</span>` : ''}
+                              <span style="color:#7dffc1;font-weight:700">✓ Identité vérifiée</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                          <a href="/livreur-card.html?id=${esc(mission.livreur_id)}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:8px;color:#b8f53e;font-weight:800;text-decoration:none;font-size:.85rem">🆔 Voir sa carte d'identité</a>
+                          <a href="/messagerie.html?livraison=${esc(mission.id)}" style="flex:1;text-align:center;padding:10px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
+                        </div>
+                        <p style="margin:10px 0 0;font-size:.75rem;color:#a8b0ba;text-align:center">⚠️ Vérifie son identité avant d'ouvrir : compare son visage à la photo</p>
+                      </div>`
+                    : mission.livreur_id && mission.livreur_profile
                     ? `<div class="mission-driver" style="display:flex;align-items:center;gap:8px;margin-top:6px">
                         ${mission.livreur_profile.photo_url
                             ? `<img src="${esc(mission.livreur_profile.photo_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`

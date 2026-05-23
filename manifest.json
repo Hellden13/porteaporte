@@ -1,18 +1,56 @@
 {
-  "name": "PorteaPorte",
-  "short_name": "PorteaPorte",
-  "description": "Plateforme canadienne de livraison collaborative.",
+  "name": "PorteÀPorte",
+  "short_name": "PorteÀPorte",
+  "description": "Livraison collaborative et covoiturage entre particuliers au Québec.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0A1628",
-  "theme_color": "#0A1628",
+  "orientation": "portrait-primary",
+  "background_color": "#0A0C10",
+  "theme_color": "#0A0C10",
+  "categories": ["transportation", "shopping", "social"],
+  "lang": "fr",
   "icons": [
     {
       "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Envoyer un colis",
+      "short_name": "Envoyer",
+      "url": "/create-mission.html",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Covoiturage",
+      "short_name": "Covoiturage",
+      "url": "/covoiturage.html",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Mon dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard-expediteur.html",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/hero-center.jpg",
+      "sizes": "512x1024",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "PorteÀPorte — Livraison collaborative"
     }
   ]
 }

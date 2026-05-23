@@ -10,50 +10,85 @@
     body {
       margin: 0;
       padding: 0;
-      background: #f5f7fa;
-      color: #1e293b;
-      font-family: Arial, sans-serif;
-      line-height: 1.7;
+      background: var(--brand-bg-dark);
+      color: var(--brand-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      line-height: 1.75;
     }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px clamp(18px,4vw,48px);
+      background: rgba(10,12,16,0.92);
+      border-bottom: 1px solid var(--brand-border);
+      backdrop-filter: blur(16px);
+    }
+    .brand-mark { display: flex; align-items: center; gap: 10px; font-weight: 900; text-decoration: none; color: var(--brand-text); }
+    .brand-mark img { width: 30px; height: 30px; }
     .container {
-      max-width: 950px;
+      max-width: 860px;
       margin: 40px auto;
-      background: #ffffff;
-      padding: 40px;
+      background: var(--brand-bg-surface);
+      padding: 40px 48px;
       border-radius: 14px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      border: 1px solid var(--brand-border);
     }
-    h1 { color: #0f172a; margin-bottom: 10px; }
-    h2 { margin-top: 35px; color: #1e293b; }
-    p, li { color: #334155; }
+    h1 { color: var(--brand-lime); margin-bottom: 8px; font-size: 2rem; }
+    h2 { margin-top: 36px; color: var(--brand-text); font-size: 1.15rem; border-bottom: 1px solid var(--brand-border); padding-bottom: 8px; }
+    p { color: var(--brand-muted); margin: 10px 0; }
+    li { color: var(--brand-muted); margin-bottom: 4px; }
     ul { padding-left: 20px; }
     .highlight {
-      background: #eef6ff;
-      padding: 16px;
-      border-left: 4px solid #2563eb;
+      background: rgba(0,217,255,0.06);
+      padding: 16px 20px;
+      border-left: 4px solid var(--brand-cyan);
       border-radius: 8px;
-      margin: 25px 0;
+      margin: 22px 0;
+      color: var(--brand-text);
     }
     .warning {
-      background: #fff7ed;
-      border-left: 4px solid #ea580c;
-      padding: 16px;
+      background: rgba(245,158,11,0.08);
+      border-left: 4px solid var(--brand-warning);
+      padding: 16px 20px;
       border-radius: 8px;
-      margin: 25px 0;
+      margin: 22px 0;
+      color: var(--brand-text);
     }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    .stripe-box {
+      background: rgba(99,91,255,0.08);
+      border: 1px solid rgba(99,91,255,0.3);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin: 22px 0;
+    }
+    a { color: var(--brand-cyan); text-decoration: none; }
+    a:hover { color: var(--brand-lime); text-decoration: underline; }
     footer {
       margin-top: 50px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--brand-border);
       padding-top: 20px;
-      font-size: 14px;
-      color: #64748b;
+      font-size: 13px;
+      color: var(--brand-muted);
     }
+    .btn { display: inline-flex; align-items: center; padding: 9px 18px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.9rem; }
+    .btn-ghost { border: 1px solid var(--brand-border); color: var(--brand-muted); background: transparent; }
+    .btn-primary { background: var(--brand-lime); color: #071008; border: none; }
     @media (max-width: 768px) {
-      .container { margin: 0; border-radius: 0; padding: 24px; }
+      .container { margin: 0; border-radius: 0; padding: 24px 20px; }
     }
   </style>
+
+  <meta name="description" content="Conditions générales d'utilisation de la plateforme PorteÀPorte.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Conditions d'utilisation - PorteàPorte">
+  <meta property="og:description" content="Conditions générales d'utilisation de la plateforme PorteÀPorte.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/cgu.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Conditions d'utilisation - PorteàPorte">
+  <meta name="twitter:description" content="Conditions générales d'utilisation de la plateforme PorteÀPorte.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
@@ -90,8 +125,20 @@
     </div>
     <h2>6. Responsabilités des utilisateurs</h2>
     <p>Vous êtes entièrement responsable des colis expédiés, des informations fournies et du respect des lois. Les livreurs doivent posséder les permis et assurances nécessaires.</p>
-    <h2>7. Paiements</h2>
-    <p>Paiements traités via Stripe. PorteàPorte ne conserve jamais les numéros complets de cartes.</p>
+    <h2>7. Paiements — Escrow Stripe</h2>
+    <div class="stripe-box">
+      <strong style="color:var(--brand-text)">🔒 Système de paiement sécurisé</strong>
+      <p style="margin:8px 0 0">PorteàPorte utilise <strong>Stripe</strong> comme processeur de paiement tiers. Les paiements sont placés en <strong>dépôt fiduciaire (escrow)</strong> au moment de la commande et ne sont libérés au livreur qu'après confirmation de réception par le destinataire.</p>
+    </div>
+    <ul>
+      <li>PorteàPorte n'accède jamais directement aux numéros de carte bancaire — tout est géré par Stripe.</li>
+      <li>Le paiement est préautorisé au moment de la création de la livraison (capture manuelle).</li>
+      <li>La capture définitive n'a lieu qu'après confirmation de réception (code destinataire) ou validation administrative.</li>
+      <li>Les livreurs reçoivent leurs gains via <strong>Stripe Connect Express</strong> sur leur compte bancaire personnel.</li>
+      <li>En cas de litige, les fonds peuvent être retenus jusqu'à résolution.</li>
+      <li>Les remboursements sont traités dans un délai de 5 à 10 jours ouvrables selon votre institution financière.</li>
+      <li>La politique de remboursement de Stripe s'applique : <a href="https://stripe.com/fr-ca/legal/consumer" target="_blank" rel="noopener">stripe.com/fr-ca/legal/consumer</a></li>
+    </ul>
     <h2>8. Litiges</h2>
     <p>Délai raisonnable pour les demandes. Première réponse généralement dans 48h. PorteàPorte peut suspendre des fonds durant enquête.</p>
     <h2>9. Limitation de responsabilité</h2>
@@ -106,6 +153,31 @@
     <p>Régis par les lois du Québec et du Canada. Compétence des tribunaux du Québec.</p>
     <h2>14. Contact</h2>
     <p>📧 <a href="mailto:denismorneaubtc@gmail.com">denismorneaubtc@gmail.com</a></p>
+
+    <h2 id="section-15">15. Statut du livreur — travailleur autonome</h2>
+    <div class="warning">
+      <strong>Important :</strong> Les livreurs qui utilisent PorteàPorte agissent en tant que <strong>travailleurs autonomes indépendants</strong>, et non en tant qu'employés de PorteàPorte inc.
+    </div>
+    <p>En acceptant une mission sur PorteàPorte, le livreur reconnaît et accepte ce qui suit :</p>
+    <ul>
+      <li>Il exerce ses activités de livraison à son propre compte, de façon indépendante.</li>
+      <li>Il est seul responsable de déclarer ses revenus à <strong>Revenu Québec</strong> et à l'<strong>Agence du revenu du Canada</strong>.</li>
+      <li>Il est seul responsable de ses cotisations au Régime de rentes du Québec (RRQ) et à l'assurance-emploi, le cas échéant.</li>
+      <li>PorteàPorte n'agit pas comme employeur et ne retient aucune cotisation sociale.</li>
+      <li>PorteàPorte se réserve le droit d'émettre des relevés de paiement (T4A fédéral / RL-1 provincial) pour tout livreur ayant reçu plus de <strong>500 $ par année civile</strong> via la plateforme.</li>
+      <li>Le livreur est libre de choisir ses missions, ses horaires et ses moyens de transport. PorteàPorte ne contrôle pas la façon dont les livraisons sont effectuées, seulement la mise en relation entre parties.</li>
+    </ul>
+    <p>Il est recommandé à tout livreur de s'inscrire comme travailleur autonome auprès de Revenu Québec : <a href="https://www.revenuquebec.ca/fr/travailleurs-autonomes/" target="_blank" rel="noopener">revenuquebec.ca — Travailleurs autonomes</a>.</p>
+
+    <h2>16. Fonds de protection bêta</h2>
+    <p>PorteàPorte maintient un <strong>fonds de protection volontaire</strong> alimenté par 2 % des revenus de chaque livraison confirmée. Ce fonds peut être utilisé pour compenser partiellement les expéditeurs en cas de perte ou dommage admissible, à la discrétion de l'administration.</p>
+    <ul>
+      <li>Ce fonds n'est pas un contrat d'assurance au sens de la <em>Loi sur les assurances</em> du Québec.</li>
+      <li>Les compensations sont volontaires, limitées au solde du fonds disponible, et traitées au cas par cas.</li>
+      <li>Le solde du fonds est affiché publiquement sur la page <a href="/assurance.html">Protection colis</a>.</li>
+      <li>PorteàPorte se réserve le droit de modifier les règles du fonds en tout temps.</li>
+    </ul>
+
     <footer>© 2026 PorteàPorte — Tous droits réservés.</footer>
   </div>
   <script src="/js/support-widget.js"></script>

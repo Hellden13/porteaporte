@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://porteaporte.site/</loc><priority>1.0</priority></url>
-  <url><loc>https://porteaporte.site/index.html</loc><priority>1.0</priority></url>
-  <url><loc>https://porteaporte.site/livreur.html</loc><priority>0.9</priority></url>
-  <url><loc>https://porteaporte.site/expediteur.html</loc><priority>0.9</priority></url>
-  <url><loc>https://porteaporte.site/contact.html</loc><priority>0.7</priority></url>
-  <url><loc>https://porteaporte.site/faq.html</loc><priority>0.7</priority></url>
-  <url><loc>https://porteaporte.site/confidentialite.html</loc><priority>0.5</priority></url>
-  <url><loc>https://porteaporte.site/cgu.html</loc><priority>0.5</priority></url>
-  <url><loc>https://porteaporte.site/loi25.html</loc><priority>0.5</priority></url>
+  <url><loc>https://porteaporte.site/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://porteaporte.site/covoiturage.html</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://porteaporte.site/expediteur.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://porteaporte.site/devenir-livreur.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://porteaporte.site/covoiturage-info.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://porteaporte.site/parrainage.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://porteaporte.site/programme-points.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://porteaporte.site/abonnements.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://porteaporte.site/faq.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://porteaporte.site/transparence.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://porteaporte.site/assurance.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://porteaporte.site/contact.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://porteaporte.site/partenaire.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://porteaporte.site/cgu.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://porteaporte.site/cgv.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://porteaporte.site/confidentialite.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://porteaporte.site/reglements-concours.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://porteaporte.site/reglements-tirage.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

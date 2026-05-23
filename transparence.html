@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Transparence mensuelle des dons PorteaPorte">
   <title>Transparence - PorteaPorte</title>
@@ -30,6 +32,10 @@
     .note{font-size:.84rem;color:var(--brand-muted);line-height:1.65}
     .status{display:inline-flex;padding:5px 10px;border:1px solid rgba(184,245,62,.35);border-radius:999px;color:var(--brand-lime);font-size:.78rem;font-weight:800;margin-bottom:14px}
     .empty{color:var(--brand-muted);padding:22px;text-align:center}
+    .beta-notice{border:1px solid rgba(184,245,62,.25);background:rgba(184,245,62,.06);border-radius:10px;padding:14px 18px;color:var(--brand-lime);font-size:.88rem;line-height:1.6;margin-bottom:20px}
+    .beta-notice strong{display:block;margin-bottom:4px;font-size:.95rem}
+    @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+    .loading-pulse{animation:pulse 1.4s ease-in-out infinite;color:var(--brand-muted);font-size:.9rem;padding:20px;text-align:center}
     .public-list{display:grid;gap:12px}
     .public-row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border:1px solid var(--brand-bg-surface-light);background:rgba(255,255,255,.025);border-radius:10px;padding:14px}
     .public-row strong{display:block;color:var(--brand-text);margin-bottom:4px}
@@ -49,6 +55,18 @@
     .field textarea{min-height:92px;resize:vertical}
     .form-message{font-size:.88rem;margin-top:12px;color:var(--brand-muted)}
   </style>
+
+  <meta name="description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Transparence - PorteaPorte">
+  <meta property="og:description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/transparence.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Transparence - PorteaPorte">
+  <meta name="twitter:description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
@@ -71,24 +89,34 @@
     <div class="impact-grid">
       <div class="metric">
         <div class="metric-label">Mois affiché</div>
-        <div class="metric-value" id="impact-month">—</div>
-        <div class="metric-sub" id="impact-generated">Chargement...</div>
+        <div class="metric-value" id="impact-month">Bêta</div>
+        <div class="metric-sub" id="impact-generated">Données disponibles après les premières livraisons.</div>
       </div>
       <div class="metric">
         <div class="metric-label">Fonds dons estimé</div>
-        <div class="metric-value" id="impact-pool">—</div>
+        <div class="metric-value" id="impact-pool">0,00 $</div>
         <div class="metric-sub">Basé sur la portion solidaire des revenus plateforme.</div>
       </div>
       <div class="metric">
         <div class="metric-label">Livraisons comptées</div>
-        <div class="metric-value" id="impact-deliveries">—</div>
-        <div class="metric-sub" id="impact-rate">—</div>
+        <div class="metric-value" id="impact-deliveries">0</div>
+        <div class="metric-sub" id="impact-rate">5% de la commission reversés aux organismes</div>
       </div>
+      <div class="metric" style="border-color:rgba(0,255,159,.25);background:rgba(0,255,159,.04)">
+        <div class="metric-label" style="color:var(--brand-lime)">🛡️ Jours sans réclamation</div>
+        <div class="metric-value" id="platform-claim-free" style="color:var(--brand-lime)">—</div>
+        <div class="metric-sub">Compteur plateforme — remis à zéro à chaque litige ouvert.</div>
+      </div>
+    </div>
+
+    <div id="beta-notice" class="beta-notice" style="display:none">
+      <strong>🌱 Plateforme en bêta</strong>
+      Les données de transparence seront disponibles dès les premières livraisons complétées. Les organismes partenaires sont en cours de sélection par l'administration.
     </div>
 
     <div class="section-title">Organismes sélectionnés</div>
     <div id="impact-orgs" class="orgs">
-      <div class="panel empty">Chargement des organismes...</div>
+      <div class="panel empty" style="grid-column:1/-1">🌱 Les organismes partenaires seront affichés ici dès les premières livraisons confirmées. Nous sommes en bêta.</div>
     </div>
 
     <div class="section-title">Méthode de calcul</div>
@@ -98,12 +126,12 @@
 
     <div class="section-title">Concours et tirages</div>
     <div id="public-draws" class="public-list">
-      <div class="panel empty">Chargement des tirages...</div>
+      <div class="panel empty">🎯 Aucun tirage actif pour l'instant — les concours démarreront avec les premières livraisons.</div>
     </div>
 
     <div class="section-title">Derniers gagnants</div>
     <div id="public-winners" class="public-list">
-      <div class="panel empty">Chargement des gagnants...</div>
+      <div class="panel empty">🏆 Aucun gagnant à afficher pour l'instant — les premiers tirages n'ont pas encore eu lieu.</div>
     </div>
 
     <section class="panel request-panel">
@@ -172,6 +200,26 @@
         document.getElementById('impact-rate').textContent=`${impact.totals.donation_rate_percent}% de la commission plateforme`;
         document.getElementById('impact-note').textContent=impact.note;
         const orgs=impact.allocations||[];
+        // Show beta notice if no deliveries yet
+        if(!impact.totals.deliveries_count){
+          document.getElementById('beta-notice').style.display='block';
+        }
+        // Compteur jours sans réclamation plateforme
+        if(out.protection_fund !== undefined){
+          // On récupère via RPC séparément
+        }
+        (async()=>{
+          try{
+            const pfRes = await fetch('/api/platform', {
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({endpoint:'platform-claim-free'})
+            });
+            const pfOut = pfRes.ok ? await pfRes.json() : {};
+            const el = document.getElementById('platform-claim-free');
+            if(el) el.textContent = (pfOut.days !== undefined ? pfOut.days : '—') + (pfOut.days !== undefined ? 'j' : '');
+          }catch(_){}
+        })();
         document.getElementById('impact-orgs').innerHTML=orgs.length?orgs.map(org=>`
           <article class="org-card">
             <div class="org-name">${org.name}</div>
@@ -202,9 +250,16 @@
           </article>
         `).join(''):'<div class="panel empty">Aucun gagnant publie pour le moment.</div>';
       }catch(err){
-        document.getElementById('impact-orgs').innerHTML='<div class="panel empty">Impossible de charger la transparence pour le moment.</div>';
-        document.getElementById('public-draws').innerHTML='<div class="panel empty">Impossible de charger les tirages.</div>';
-        document.getElementById('public-winners').innerHTML='<div class="panel empty">Impossible de charger les gagnants.</div>';
+        document.getElementById('beta-notice').style.display='block';
+        document.getElementById('impact-orgs').innerHTML='<div class="panel empty">Données non disponibles — les organismes seront affichés dès les premières livraisons.</div>';
+        document.getElementById('public-draws').innerHTML='<div class="panel empty">Aucun tirage disponible pour le moment.</div>';
+        document.getElementById('public-winners').innerHTML='<div class="panel empty">Aucun gagnant à afficher pour le moment.</div>';
+        // Reset metrics to beta-friendly state
+        document.getElementById('impact-month').textContent='Bêta';
+        document.getElementById('impact-generated').textContent='Données disponibles après les premières livraisons.';
+        document.getElementById('impact-pool').textContent='0,00 $';
+        document.getElementById('impact-deliveries').textContent='0';
+        document.getElementById('impact-rate').textContent='5% de la commission plateforme reversés aux organismes';
       }
     }
     document.getElementById('impact-application-form').addEventListener('submit',async(event)=>{

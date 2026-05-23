@@ -106,6 +106,34 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  /* ── identity.verification_session.verified ────────────── */
+  /* KYC réussi : auto-promote driver_status à verified       */
+  if (type === 'identity.verification_session.verified') {
+    const userId = obj.metadata?.user_id;
+    if (userId) {
+      await sbPatch(sbUrl, sbKey, 'profiles',
+        `id=eq.${encodeURIComponent(userId)}`,
+        {
+          driver_status: 'verified',
+          verification_status: 'verified',
+          stripe_identity_status: 'verified',
+          email_verified: true
+        });
+      console.log('[stripe-webhook] KYC verified pour user', userId);
+    }
+  }
+
+  /* ── identity.verification_session.requires_input ──────── */
+  /* KYC échec ou doc invalide : repasse en rejected         */
+  if (type === 'identity.verification_session.requires_input' || type === 'identity.verification_session.canceled') {
+    const userId = obj.metadata?.user_id;
+    if (userId) {
+      await sbPatch(sbUrl, sbKey, 'profiles',
+        `id=eq.${encodeURIComponent(userId)}`,
+        { stripe_identity_status: obj.status });
+    }
+  }
+
   /* ── transfer.created ──────────────────────────────────── */
   /* Virement créé vers le compte connecté livreur            */
   if (type === 'transfer.created') {

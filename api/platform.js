@@ -237,6 +237,50 @@ async function assignDriver(req, res, ctx, body) {
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 
+// ── STRIPE IDENTITY (KYC automatique) ──
+async function stripeIdentityCreate(req, res, ctx, body) {
+  const stripeKey = ctx.stripeKey;
+  if (!stripeKey) return res.status(503).json({ error: 'Stripe non configuré' });
+  const userId = ctx.session.id;
+  const userEmail = ctx.session.email || '';
+
+  // Créer un VerificationSession Stripe
+  const params = new URLSearchParams();
+  params.append('type', 'document');
+  params.append('options[document][require_matching_selfie]', 'true');
+  params.append('options[document][require_live_capture]', 'true');
+  params.append('options[document][allowed_types][]', 'driving_license');
+  params.append('options[document][allowed_types][]', 'passport');
+  params.append('options[document][allowed_types][]', 'id_card');
+  params.append('metadata[user_id]', userId);
+  params.append('metadata[user_email]', userEmail);
+  const returnUrl = `${siteOrigin()}/kyc.html?identity_session_complete=1`;
+  params.append('return_url', returnUrl);
+
+  const r = await stripeRequest('POST', '/v1/identity/verification_sessions', stripeKey, params.toString());
+  if (!r.ok) {
+    return res.status(400).json({ error: 'Création VerificationSession impossible', details: r.data });
+  }
+  const session = r.data;
+
+  // Stocker la référence dans profiles
+  await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      stripe_identity_session_id: session.id,
+      stripe_identity_status: session.status
+    })
+  }).catch(() => {});
+
+  return res.status(200).json({
+    success: true,
+    verification_url: session.url,
+    client_secret: session.client_secret,
+    session_id: session.id
+  });
+}
+
 // ── INTELLIGENCE ADRESSES (notes communautaires livreurs) ──
 function normalizeAddress(addr) {
   return String(addr || '').toLowerCase()
@@ -3215,6 +3259,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'address-intel-admin') return await addressIntelAdmin(req, res, ctx, body);
     if (endpoint === 'destinataire-claim-account') return await destinataireClaimAccount(req, res, ctx, body);
     if (endpoint === 'destinataire-livraisons') return await destinataireLivraisons(req, res, ctx, body);
+    if (endpoint === 'stripe-identity-create') return await stripeIdentityCreate(req, res, ctx, body);
     if (endpoint === 'manquement-signaler') return await manquementSignaler(req, res, ctx, body);
     if (endpoint === 'manquement-contester') return await manquementContester(req, res, ctx, body);
     if (endpoint === 'manquement-list') return await manquementList(req, res, ctx, body);

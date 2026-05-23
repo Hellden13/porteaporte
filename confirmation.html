@@ -3,45 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmation - PorteàPorte</title>
+  <title>Paiement confirmé - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
-    body{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .box{max-width:680px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px;text-align:center}
-    .amount{font-size:2rem;font-weight:900;color:var(--brand-lime);margin:18px 0}
-    .muted{line-height:1.6}
-    .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
-    .btn{display:inline-flex;width:auto;text-decoration:none}
+    body { min-height:100vh; display:grid; place-items:center; padding:24px; }
+    .box {
+      max-width:620px; width:100%;
+      background:var(--brand-bg-surface);
+      border:1px solid rgba(0,255,159,.2);
+      border-radius:16px; padding:40px 36px;
+      text-align:center;
+      box-shadow:0 0 60px rgba(0,255,159,.06);
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .success-icon { font-size:64px; margin-bottom:16px; animation:pop .6s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    h1 { font-size:clamp(1.6rem,4vw,2.2rem); margin:0 0 10px; color:var(--brand-lime); }
+    .sub { color:var(--brand-muted); line-height:1.65; margin:0 0 22px; font-size:.95rem; }
+    .amount-box {
+      background:rgba(0,255,159,.07); border:1px solid rgba(0,255,159,.2);
+      border-radius:12px; padding:18px; margin:20px 0;
+    }
+    .amount { font-size:2.4rem; font-weight:900; color:var(--brand-lime); line-height:1; }
+    .amount-label { color:var(--brand-muted); font-size:.82rem; margin-top:6px; }
+    .ref { font-size:.78rem; color:var(--brand-muted); margin:8px 0 22px; word-break:break-all; }
+    .code-panel {
+      background:rgba(0,217,255,.07); border:1px solid rgba(0,217,255,.25);
+      border-radius:12px; padding:16px 20px; margin:16px 0; text-align:left;
+    }
+    .code-panel strong { color:var(--brand-cyan); display:block; margin-bottom:6px; }
+    .code-value {
+      font-size:1.6rem; font-weight:900; color:var(--brand-text);
+      letter-spacing:.18em; background:rgba(0,0,0,.3);
+      border-radius:8px; padding:10px 16px; margin:8px 0;
+      font-family:monospace; text-align:center;
+    }
+    .code-note { font-size:.8rem; color:var(--brand-muted); line-height:1.5; }
+    .steps {
+      display:flex; flex-direction:column; gap:10px;
+      margin:22px 0; text-align:left;
+    }
+    .step {
+      display:flex; gap:12px; align-items:flex-start;
+      padding:12px 14px; background:var(--brand-bg-dark);
+      border:1px solid var(--brand-border); border-radius:10px;
+    }
+    .step-num {
+      width:22px; height:22px; border-radius:50%;
+      background:var(--brand-lime); color:#071008;
+      font-weight:900; font-size:.75rem;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; margin-top:1px;
+    }
+    .step-text { font-size:.84rem; color:var(--brand-muted); line-height:1.5; }
+    .step-text strong { color:var(--brand-text); }
+    .actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
+    .btn { display:inline-flex; width:auto; text-decoration:none; min-width:140px; justify-content:center; }
+    .countdown { font-size:.78rem; color:var(--brand-muted); margin-top:16px; }
+    @media(max-width:540px) {
+      .box { padding:28px 20px; }
+      .actions { flex-direction:column; }
+      .btn { width:100%; }
+    }
   </style>
 </head>
 <body>
   <main class="box">
-    <h1>Livraison créée</h1>
-    <p class="muted">Ton paiement est protégé. Le livreur est payé seulement après confirmation de livraison.</p>
-    <div id="amount" class="amount"></div>
-    <p id="reference" class="muted"></p>
-    <div class="actions">
-      <a id="trackingLink" class="btn" href="/dashboard-expediteur.html">Voir le suivi</a>
-      <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expéditeur</a>
-      <a class="btn secondary" href="/index.html">Accueil</a>
+    <div class="success-icon">✅</div>
+    <h1>Paiement sécurisé !</h1>
+    <p class="sub">Ton paiement est protégé en escrow. Il ne sera libéré au livreur qu'après confirmation de réception.</p>
+
+    <div class="amount-box">
+      <div class="amount" id="amount">—</div>
+      <div class="amount-label">Montant sécurisé en escrow Stripe</div>
     </div>
+    <div class="ref" id="reference"></div>
+
+    <div id="code-panel" class="code-panel" style="display:none">
+      <strong>📬 Code de réception destinataire</strong>
+      <div class="code-value" id="code-value">—</div>
+      <p class="code-note">Transmets ce code <strong>uniquement</strong> au destinataire. Il le saisira sur la page de confirmation pour libérer le paiement au livreur.</p>
+      <button onclick="copyCode()" style="margin-top:10px;padding:8px 16px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;cursor:pointer;font-size:.82rem">📋 Copier le code</button>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Livreurs notifiés</strong> — Les livreurs vérifiés dans ta région voient maintenant ton annonce.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Suivi GPS</strong> — Dès qu'un livreur accepte, le suivi en temps réel s'active.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Confirmation</strong> — Le destinataire confirme avec le code. Le paiement est libéré au livreur.</div></div>
+    </div>
+
+    <div class="actions">
+      <a id="trackingLink" class="btn" href="/dashboard-expediteur.html">📦 Voir ma livraison</a>
+      <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard →</a>
+    </div>
+    <div class="countdown" id="countdown"></div>
   </main>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
+    const params     = new URLSearchParams(window.location.search);
     const livraisonId = params.get('livraison_id');
-    const montant = params.get('montant');
-    const pi = params.get('pi');
+    const montant    = params.get('montant');
+    const pi         = params.get('pi');
+
+    // Montant
     if (montant) {
       const raw = Number(montant);
       const dollars = Number.isInteger(raw) && raw >= 100 && !montant.includes('.') ? raw / 100 : raw;
       document.getElementById('amount').textContent = dollars.toFixed(2) + ' $';
     }
+
+    // Référence
     if (livraisonId) {
       document.getElementById('trackingLink').href = '/suivi-livraison.html?id=' + encodeURIComponent(livraisonId);
-      document.getElementById('reference').textContent = 'Référence livraison : ' + livraisonId + (pi ? ' | Paiement : ' + pi : '');
+      document.getElementById('reference').textContent = '🔑 Réf : ' + livraisonId + (pi ? ' · Stripe : ' + pi.slice(0, 24) + '…' : '');
     }
+
+    // Code destinataire depuis localStorage
+    if (livraisonId) {
+      const code = localStorage.getItem('pap_reception_code_' + livraisonId);
+      if (code) {
+        document.getElementById('code-panel').style.display = 'block';
+        document.getElementById('code-value').textContent = code;
+      }
+    }
+
+    function copyCode() {
+      const code = document.getElementById('code-value').textContent;
+      const link = livraisonId ? window.location.origin + '/confirmation-destinataire.html?livraison_id=' + encodeURIComponent(livraisonId) : '';
+      const text = 'Code de réception PorteàPorte : ' + code + (link ? '\n\nLien de confirmation : ' + link : '');
+      navigator.clipboard?.writeText(text).then(() => alert('✅ Code et lien copiés !')).catch(() => {});
+    }
+
+    // Countdown redirect
+    let secs = 12;
+    const countEl = document.getElementById('countdown');
+    const timer = setInterval(() => {
+      secs--;
+      countEl.textContent = 'Redirection vers ton dashboard dans ' + secs + ' secondes…';
+      if (secs <= 0) {
+        clearInterval(timer);
+        window.location.href = '/dashboard-expediteur.html';
+      }
+    }, 1000);
   </script>
   <script src="/js/support-widget.js"></script>
 </body>

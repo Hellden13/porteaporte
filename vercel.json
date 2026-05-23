@@ -387,6 +387,10 @@
                      {
                          "source":  "/api/destinataire-livraisons",
                          "destination":  "/api/platform?endpoint=destinataire-livraisons"
+                     },
+                     {
+                         "source":  "/api/stripe-identity-create",
+                         "destination":  "/api/platform?endpoint=stripe-identity-create"
                      }
                  ],
     "headers":  [

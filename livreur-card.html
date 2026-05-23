@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carte d'identité livreur - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, #0a0e14 0%, #001828 100%); }
+    .card {
+      max-width: 380px; width: 100%;
+      background: linear-gradient(160deg, #0e1620 0%, #061018 100%);
+      border-radius: 22px;
+      border: 2px solid rgba(184,245,62,.3);
+      padding: 30px 26px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 60px rgba(184,245,62,.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(184,245,62,.04) 0%, transparent 50%, rgba(0,217,255,.04) 100%);
+      pointer-events: none;
+    }
+    .brand-label { color: #b8f53e; font-weight: 900; font-size: .72rem; letter-spacing: .18em; text-align: center; margin-bottom: 4px; }
+    .id-label { text-align: center; color: #a8b0ba; font-size: .78rem; text-transform: uppercase; letter-spacing: .15em; margin-bottom: 18px; }
+    .photo-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+    .photo {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(184,245,62,.5);
+      box-shadow: 0 0 0 8px rgba(184,245,62,.1);
+    }
+    .photo-placeholder {
+      width: 160px; height: 160px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d9ff, #b8f53e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 70px; color: #001828;
+      border: 4px solid rgba(184,245,62,.5);
+    }
+    .name { text-align: center; font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0 0 8px; }
+    .role { text-align: center; color: #b8f53e; font-weight: 700; font-size: .85rem; margin-bottom: 18px; }
+    .verified-banner {
+      background: rgba(125,255,193,.1);
+      border: 1px solid rgba(125,255,193,.35);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      color: #7dffc1;
+      font-weight: 800;
+      font-size: .85rem;
+    }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .stat { background: rgba(255,255,255,.04); border-radius: 10px; padding: 10px 8px; text-align: center; }
+    .stat-val { font-size: 1.1rem; font-weight: 900; color: #b8f53e; }
+    .stat-lbl { font-size: .68rem; color: #a8b0ba; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #a8b0ba; }
+    .info-val { color: #fff; font-weight: 700; }
+    .qr-section { text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(255,255,255,.1); }
+    .footer-note { text-align: center; margin-top: 16px; font-size: .72rem; color: #6d7886; line-height: 1.5; }
+    .err { text-align: center; color: #ffb0b0; padding: 30px; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="brand-label">PORTEÀPORTE</div>
+    <div class="id-label">Carte d'identité livreur vérifié</div>
+    <div id="content"><div class="err">Chargement…</div></div>
+  </div>
+
+  <script>
+    async function load() {
+      const id = new URLSearchParams(location.search).get('id');
+      if (!id) { document.getElementById('content').innerHTML = '<div class="err">❌ Lien invalide</div>'; return; }
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: p, error } = await db
+        .from('profiles')
+        .select('id,prenom,nom,photo_url,score_confiance,driver_status,verification_status,xp,role,ville,transport_mode,vehicule,cree_le,created_at,mis_a_jour_le')
+        .eq('id', id)
+        .single();
+      if (error || !p) { document.getElementById('content').innerHTML = '<div class="err">❌ Profil introuvable</div>'; return; }
+      if (!['livreur','les deux','admin'].includes(p.role)) {
+        document.getElementById('content').innerHTML = '<div class="err">❌ Ce profil n\'est pas un livreur</div>'; return;
+      }
+      const verified = p.driver_status === 'verified';
+      const photo = p.photo_url
+        ? `<img src="${p.photo_url}" class="photo" alt="Photo livreur">`
+        : `<div class="photo-placeholder">🚚</div>`;
+      const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || 'Livreur';
+      const since = p.cree_le ? new Date(p.cree_le).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long' }) : '—';
+      const transport = p.transport_mode === 'car' ? '🚗 Voiture' : p.transport_mode === 'truck' ? '🚛 Camion' : p.transport_mode === 'bike' ? '🚴 Vélo' : p.transport_mode === 'walking' ? '🚶 À pied' : p.transport_mode || '—';
+      const idCourt = (p.id || '').slice(0,4).toUpperCase() + '-' + (p.id || '').slice(4,8).toUpperCase();
+
+      // Charger fiabilité
+      let fiabilite = null;
+      try {
+        const { data: fr } = await db.from('v_user_fiabilite').select('score,manquements_valides').eq('id', p.id).single();
+        if (fr) fiabilite = fr;
+      } catch (e) {}
+
+      // Charger nombre de livraisons complétées
+      let livraisonsCount = 0;
+      try {
+        const { count } = await db.from('livraisons').select('id', { count: 'exact', head: true }).eq('livreur_id', p.id).in('statut', ['payee','paid']);
+        livraisonsCount = count || 0;
+      } catch (e) {}
+
+      const stars = p.score_confiance ? '★'.repeat(Math.round(p.score_confiance / 20)) + '☆'.repeat(5 - Math.round(p.score_confiance / 20)) : '—';
+
+      document.getElementById('content').innerHTML = `
+        <div class="photo-wrap">${photo}</div>
+        <h1 class="name">${nom}</h1>
+        <div class="role">${transport}</div>
+        ${verified ? `<div class="verified-banner">✓ IDENTITÉ VÉRIFIÉE PAR PORTEÀPORTE</div>` : `<div class="verified-banner" style="background:rgba(255,200,0,.1);border-color:rgba(255,200,0,.35);color:#ffd700">⏳ Vérification en cours</div>`}
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-val">${livraisonsCount}</div>
+            <div class="stat-lbl">Livraisons</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" style="color:#ffd700;font-size:.95rem">${stars}</div>
+            <div class="stat-lbl">Score</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" style="color:${fiabilite && fiabilite.score >= 90 ? '#b8f53e' : fiabilite && fiabilite.score >= 70 ? '#ffd700' : '#ffb0b0'}">${fiabilite ? fiabilite.score : 100}</div>
+            <div class="stat-lbl">Fiabilité</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px 16px;margin-bottom:12px">
+          <div class="info-row"><span class="info-label">ID Livreur</span><span class="info-val" style="font-family:monospace">${idCourt}</span></div>
+          <div class="info-row"><span class="info-label">Membre depuis</span><span class="info-val">${since}</span></div>
+          <div class="info-row"><span class="info-label">Région</span><span class="info-val">${p.ville || '—'}</span></div>
+          <div class="info-row"><span class="info-label">Véhicule</span><span class="info-val">${p.vehicule || transport}</span></div>
+        </div>
+
+        <div class="footer-note">
+          🔒 Carte authentique générée par PorteàPorte<br>
+          Compare le visage de la personne à cette photo<br>
+          En cas de doute, n'ouvre pas et contacte-nous immédiatement
+        </div>
+      `;
+    }
+    load();
+  </script>
+</body>
+</html>

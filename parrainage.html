@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Parrainage · PorteÀPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -109,6 +111,18 @@
     #login-prompt { text-align: center; padding: 40px 20px; }
     @media (max-width: 560px) { .stats-row { grid-template-columns: 1fr 1fr; } .code-input-row { flex-direction: column; } }
   </style>
+
+  <meta name="description" content="Parrainez vos amis sur PorteÀPorte et gagnez des Points Impact. Partagez votre code unique et recevez des récompenses dès leur première action.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Parrainage · PorteÀPorte">
+  <meta property="og:description" content="Parrainez vos amis sur PorteÀPorte et gagnez des Points Impact. Partagez votre code unique et recevez des récompenses dès leur première action.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/parrainage.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Parrainage · PorteÀPorte">
+  <meta name="twitter:description" content="Parrainez vos amis sur PorteÀPorte et gagnez des Points Impact. Partagez votre code unique et recevez des récompenses dès leur première action.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
@@ -305,14 +319,26 @@
       });
     }
 
+    function flashBtn(btn, msg) {
+      const orig = btn.textContent;
+      btn.textContent = msg;
+      btn.style.background = 'var(--brand-lime)';
+      btn.style.color = 'var(--brand-bg-dark)';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 1800);
+    }
+
     function copyCode() {
       if (!_myCode) return;
-      navigator.clipboard.writeText(_myCode).then(() => alert('Code copié : ' + _myCode));
+      navigator.clipboard.writeText(_myCode).then(() => {
+        flashBtn(document.querySelector('.code-display button'), '✓ Copié !');
+      });
     }
 
     function copyLink() {
       const link = window.location.origin + '/parrainage.html?code=' + _myCode;
-      navigator.clipboard.writeText(link).then(() => alert('Lien copié !'));
+      navigator.clipboard.writeText(link).then(() => {
+        flashBtn(document.querySelector('.share-btn:last-child'), '✓ Lien copié !');
+      });
     }
 
     function shareWhatsApp() {

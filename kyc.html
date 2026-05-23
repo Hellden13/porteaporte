@@ -329,6 +329,13 @@
         <button class="btn-back" onclick="goStep(4)">← Retour</button>
         <button class="btn-next" id="submitBtn" onclick="submitKyc()" disabled>Soumettre mon dossier ✓</button>
       </div>
+
+      <div style="margin-top:24px;padding:20px;background:rgba(184,245,62,.06);border:2px solid rgba(184,245,62,.3);border-radius:14px">
+        <div style="text-align:center;color:#b8f53e;font-weight:900;font-size:1rem;margin-bottom:8px">⚡ NOUVEAU : Vérification instantanée</div>
+        <p style="color:#a8b0ba;font-size:.88rem;line-height:1.6;text-align:center;margin:0 0 14px">Plutôt que d'attendre 24-48h la vérification manuelle, fais ta vérification d'identité <strong style="color:#fff">en 30 secondes</strong> via Stripe Identity (carte + selfie + détection vivant).</p>
+        <button onclick="startStripeIdentity()" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:1rem;cursor:pointer">⚡ Lancer la vérification instantanée Stripe</button>
+        <div id="identity-msg" style="margin-top:10px;font-size:.82rem;text-align:center"></div>
+      </div>
     </div>
 
   </div><!-- /kycForm -->
@@ -772,6 +779,35 @@
       btn.disabled = false;
       btn.textContent = 'Soumettre mon dossier ✓';
     }
+  }
+
+  /* ================================================================
+     STRIPE IDENTITY (KYC instantané)
+  ================================================================ */
+  async function startStripeIdentity() {
+    const msgEl = document.getElementById('identity-msg');
+    msgEl.style.color = '#a8b0ba';
+    msgEl.textContent = '⏳ Création de la session...';
+    try {
+      const res = await fetch('/api/platform?endpoint=stripe-identity-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({})
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur Stripe Identity');
+      msgEl.style.color = '#b8f53e';
+      msgEl.textContent = '✅ Redirection vers Stripe...';
+      window.location.href = out.verification_url;
+    } catch (err) {
+      msgEl.style.color = '#ffb0b0';
+      msgEl.textContent = '❌ ' + err.message;
+    }
+  }
+
+  // Si retour de Stripe Identity (avec ?identity_session_complete=1)
+  if (new URLSearchParams(window.location.search).get('identity_session_complete') === '1') {
+    setTimeout(() => alert('✅ Vérification Stripe terminée ! Ton statut sera mis à jour automatiquement dans quelques secondes.'), 500);
   }
 
   /* ================================================================

@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PorteaPorte - Livraison collaborative locale</title>
-  <meta name="description" content="PorteaPorte connecte expediteurs et livreurs locaux pour des livraisons plus simples, suivies et humaines.">
+  <meta name="description" content="PorteàPorte connecte tes colis aux gens qui passent déjà dans ta direction. Pas de camion de livraison — juste des Québécois ordinaires qui font déjà le trajet.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -57,6 +59,87 @@
       color: var(--brand-text);
     }
 
+    /* ── Mode Simple/Impact ─────────────────────────────── */
+    /* Par défaut : mode simple — les éléments [data-impact] sont cachés */
+    body.mode-simple [data-impact] { display: none !important; }
+
+    #impact-toggle {
+      background: none;
+      border: 1px solid var(--brand-border);
+      border-radius: 999px;
+      color: var(--brand-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+    #impact-toggle:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+    /* Cacher le bouton du nav quand Mode Impact est actif — la pilule en bas prend le relai */
+    body:not(.mode-simple) #impact-toggle { display: none; }
+
+    /* Bandeau Mode Impact actif — discret en bas de page */
+    #impact-banner {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: rgba(10,15,30,.92);
+      border: 1px solid rgba(184,245,62,.3);
+      border-radius: 50px;
+      font-size: 0.78rem;
+      color: var(--brand-lime);
+      font-weight: 700;
+      white-space: nowrap;
+      z-index: 800;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    body:not(.mode-simple) #impact-banner { display: flex; }
+    #impact-banner span { color: var(--brand-muted); font-weight: 400; display: none; }
+    #impact-banner button {
+      background: none; border: 1px solid rgba(184,245,62,.3);
+      border-radius: 20px; color: var(--brand-lime);
+      font-size: 0.72rem; padding: 3px 10px; cursor: pointer;
+    }
+
+    /* Feedback popup */
+    #feedback-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); z-index: 9999;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #feedback-overlay.open { display: flex; }
+    #feedback-box {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 32px;
+      max-width: 460px; width: 100%;
+    }
+    #feedback-box h3 { font-size: 1.1rem; margin-bottom: 6px; }
+    #feedback-box p { color: var(--brand-muted); font-size: .88rem; margin-bottom: 22px; line-height: 1.6; }
+    .fb-question { margin-bottom: 18px; }
+    .fb-question label { display: block; font-size: .88rem; font-weight: 700; margin-bottom: 8px; }
+    .fb-options { display: flex; gap: 8px; }
+    .fb-options button {
+      flex: 1; padding: 9px; border-radius: 8px;
+      border: 1px solid var(--brand-border); background: var(--brand-bg-dark);
+      color: var(--brand-muted); font-size: .85rem; cursor: pointer; transition: all .2s;
+    }
+    .fb-options button.selected { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(184,245,62,.08); }
+    #fb-submit {
+      width: 100%; padding: 12px; border-radius: 8px; border: none;
+      background: var(--brand-lime); color: #0A0C10;
+      font-weight: 800; font-size: .95rem; cursor: pointer; margin-top: 8px;
+    }
+    #fb-submit:disabled { opacity: .5; cursor: not-allowed; }
+
     .header-actions {
       display: flex;
       align-items: center;
@@ -66,11 +149,11 @@
     .hero {
       min-height: calc(100vh - 74px);
       display: grid;
-      grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+      grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr);
       align-items: center;
-      gap: clamp(32px, 6vw, 76px);
+      gap: clamp(24px, 4vw, 56px);
       padding: clamp(42px, 8vw, 88px) clamp(18px, 4vw, 48px) 48px;
-      max-width: 1220px;
+      max-width: 1400px;
       margin: 0 auto;
     }
 
@@ -154,7 +237,6 @@
 
     .hero-panel {
       position: relative;
-      min-height: 520px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
       box-shadow: 0 26px 80px rgba(0, 0, 0, 0.5);
@@ -163,12 +245,9 @@
     }
 
     .hero-panel img.hero-photo {
-      position: absolute;
-      inset: 0;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
+      height: auto;
+      object-fit: unset;
       display: block;
     }
 
@@ -751,6 +830,18 @@
       }
     }
   </style>
+
+  <meta name="description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="PorteaPorte - Livraison collaborative locale">
+  <meta property="og:description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/index.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PorteaPorte - Livraison collaborative locale">
+  <meta name="twitter:description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
@@ -763,21 +854,59 @@
       <a href="devenir-livreur.html">Devenir livreur</a>
       <a href="covoiturage.html">Covoiturage</a>
       <a href="faq.html">FAQ</a>
-      <a id="admin-nav-link" href="/admin/dashboard-admin.html" style="display:none;color:var(--brand-lime);font-weight:800">⚡ Admin</a>
+      <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalités">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
-      <a class="btn btn-ghost" href="login.html">Connexion</a>
-      <a class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
-      <a id="admin-nav-link-mobile" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800" class="btn">⚡ Admin</a>
+      <a id="nav-connexion" class="btn btn-ghost" href="login.html">Connexion</a>
+      <a id="nav-commencer" class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
     </div>
   </header>
+
+  <!-- Bandeau Mode Impact -->
+  <div id="impact-banner">
+    <div>✦ Mode Impact activé — <span>Tu vois toutes les fonctionnalités avancées : covoiturage, points, transparence, éco.</span></div>
+    <button onclick="toggleImpactMode()">Revenir au mode simple</button>
+  </div>
+
+  <!-- Popup feedback (affiché après 7 jours en mode Impact) -->
+  <div id="feedback-overlay">
+    <div id="feedback-box">
+      <h3>✦ Ton avis sur le Mode Impact</h3>
+      <p>Tu utilises le mode Impact depuis 7 jours. 3 questions rapides pour nous aider à décider si ces fonctionnalités font partie du grand lancement.</p>
+      <div class="fb-question">
+        <label>Les Points Impact t'ont-ils motivé à utiliser la plateforme plus souvent ?</label>
+        <div class="fb-options" data-q="points">
+          <button onclick="fbSelect(this,'points','oui')">Oui</button>
+          <button onclick="fbSelect(this,'points','non')">Non</button>
+          <button onclick="fbSelect(this,'points','indifferent')">Indifférent</button>
+        </div>
+      </div>
+      <div class="fb-question">
+        <label>La section Transparence/Impact humanitaire influence-t-elle ton choix de plateforme ?</label>
+        <div class="fb-options" data-q="transparence">
+          <button onclick="fbSelect(this,'transparence','oui')">Oui</button>
+          <button onclick="fbSelect(this,'transparence','non')">Non</button>
+          <button onclick="fbSelect(this,'transparence','indifferent')">Indifférent</button>
+        </div>
+      </div>
+      <div class="fb-question">
+        <label>Sans ces fonctionnalités avancées, utiliserais-tu quand même PorteàPorte ?</label>
+        <div class="fb-options" data-q="sans_impact">
+          <button onclick="fbSelect(this,'sans_impact','oui')">Oui</button>
+          <button onclick="fbSelect(this,'sans_impact','non')">Non</button>
+          <button onclick="fbSelect(this,'sans_impact','peut_etre')">Peut-être</button>
+        </div>
+      </div>
+      <button id="fb-submit" onclick="submitFeedback()" disabled>Envoyer mon avis</button>
+    </div>
+  </div>
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
         <div class="eyebrow">Livraison collaborative au Quebec</div>
         <h1 id="hero-title">Quelqu'un passe deja <span>dans ta direction.</span></h1>
-        <p>PorteaPorte connecte les expediteurs avec des livreurs locaux pour envoyer des colis autrement : prix clair, suivi en temps reel et service plus humain.</p>
+        <p>Ton voisin va déjà à Québec ce matin. Ton collègue rentre à Lévis ce soir. PorteàPorte connecte tes colis aux gens qui passent déjà par là — pas à des livreurs professionnels, à madame et monsieur tout le monde.</p>
         <div class="cta-buttons">
           <a class="btn" href="role-choice.html">Choisir mon role</a>
           <a class="btn btn-secondary" href="browse-missions.html">Voir les missions</a>
@@ -799,27 +928,7 @@
       </div>
 
       <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
-        <img class="hero-photo" src="/assets/hero-left.jpg" alt="Livreur PorteàPorte remettant un colis à une cliente" loading="eager">
-        <article class="delivery-card" style="z-index:2;">
-          <header>
-            <h2>Mission Montreal -> Laval</h2>
-            <span class="status-pill">En cours</span>
-          </header>
-          <div class="delivery-grid">
-            <div>
-              <span>Distance</span>
-              <strong>18 km</strong>
-            </div>
-            <div>
-              <span>Gain livreur</span>
-              <strong>24,50 $</strong>
-            </div>
-            <div>
-              <span>Arrivee</span>
-              <strong>14:35</strong>
-            </div>
-          </div>
-        </article>
+        <img class="hero-photo" src="/assets/hero-ete.png" alt="Livraison collaborative entre voisins — PorteàPorte" loading="eager">
       </div>
     </section>
 
@@ -827,33 +936,38 @@
     <div class="proof-bar" aria-label="Statistiques PorteàPorte — données bêta">
       <div class="proof-bar-inner">
         <div class="proof-stat">
-          <span class="ps-val">1 847</span>
-          <span class="ps-lbl">Livraisons bêta complétées</span>
+          <span class="ps-val">Bêta</span>
+          <span class="ps-lbl">Ouverte au Québec · Lévis · Montréal</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
-          <span class="ps-val">4,9 ★</span>
-          <span class="ps-lbl">Note moy. (bêta)</span>
+          <span class="ps-val">Gratuit</span>
+          <span class="ps-lbl">Inscription sans engagement</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
-          <span class="ps-val">143</span>
-          <span class="ps-lbl">Livreurs inscrits (bêta)</span>
+          <span class="ps-val">Stripe</span>
+          <span class="ps-lbl">Paiement escrow sécurisé</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
-          <span class="ps-val">0</span>
-          <span class="ps-lbl">Colis perdus en bêta</span>
+          <span class="ps-val">KYC</span>
+          <span class="ps-lbl">Livreurs vérifiés</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-stat">
           <span class="ps-val">~60 %</span>
           <span class="ps-lbl">Moins cher qu'UPS (estimé)</span>
         </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">5 %</span>
+          <span class="ps-lbl">De chaque livraison reversé à des <a href="/transparence.html" style="color:var(--brand-lime);text-decoration:none">causes locales</a></span>
+        </div>
       </div>
     </div>
     <div style="text-align:center;padding:8px clamp(18px,4vw,48px);font-size:0.72rem;color:var(--brand-muted)">
-      ⚡ PorteàPorte est en bêta ouverte au Québec. Toutes les statistiques sont basées sur les données réelles de la bêta.
+      ⚡ PorteàPorte est en bêta ouverte à Lévis, Québec et Montréal. Les économies affichées sont des estimations comparatives. Aucune donnée n'est fabriquée — si une zone affiche zéro, c'est l'état réel de la bêta.
     </div>
 
     <!-- ===== POURQUOI PORTEAPORTE ===== -->
@@ -893,14 +1007,14 @@
           <span class="pq-icon">🤝</span>
           <h3>Profondément humain</h3>
           <p>Ton colis est confié à une vraie personne vérifiée de ta région, pas à une chaîne anonyme. Elle te texte, elle arrive à l'heure, elle connaît le coin.</p>
-          <span class="pq-stat">4,9 ★</span>
-          <span class="pq-sub">note moy. bêta · basée sur 1 847 livraisons</span>
+          <span class="pq-stat">🤝</span>
+          <span class="pq-sub">livreurs vérifiés, adresses masquées, escrow Stripe</span>
         </div>
 
       </div>
     </section>
 
-    <section class="features-section" aria-labelledby="impact-title">
+    <section class="features-section" aria-labelledby="impact-title" data-impact>
       <div class="section-inner">
         <div class="section-heading">
           <h2 id="impact-title">Transparence, gagnants et impact.</h2>
@@ -976,9 +1090,9 @@
     <!-- ===== TÉMOIGNAGES ===== -->
     <section class="temoignages-section" aria-labelledby="temo-title">
       <div style="max-width:1120px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">Ce que disent nos membres</div>
-        <h2 id="temo-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Ils ont essayé. Ils reviennent.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des vraies personnes, des vraies livraisons, des vrais résultats.</p>
+        <div class="eyebrow" style="justify-content:center">Scénarios illustratifs</div>
+        <h2 id="temo-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">À quoi ça ressemble, concrètement.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Exemples fictifs inspirés de cas réels — nous sommes en bêta. <a href="/transparence.html" style="color:var(--brand-lime);font-size:0.85rem">Voir les vraies données →</a></p>
       </div>
       <div class="temoignages-grid">
 
@@ -991,7 +1105,7 @@
               <div class="temo-name">Marie-Claude B.</div>
               <div class="temo-role">Expéditrice · Québec</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1004,7 +1118,7 @@
               <div class="temo-name">David T.</div>
               <div class="temo-role">Livreur actif · Montréal</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1017,7 +1131,7 @@
               <div class="temo-name">Sophie L.</div>
               <div class="temo-role">Expéditrice · Sherbrooke</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1030,7 +1144,7 @@
               <div class="temo-name">Kevin M.</div>
               <div class="temo-role">Passager covoiturage · Trois-Rivières</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1043,7 +1157,7 @@
               <div class="temo-name">Amélie R.</div>
               <div class="temo-role">Expéditrice · Laval</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifiée</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1056,7 +1170,7 @@
               <div class="temo-name">Robert G.</div>
               <div class="temo-role">Chauffeur covoiturage · Québec</div>
             </div>
-            <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
           </div>
         </article>
 
@@ -1079,7 +1193,7 @@
           </div>
           <div class="histoire-body">
             <h3 class="histoire-headline">« J'ai arrêté d'utiliser Purolator du jour au lendemain »</h3>
-            <p class="histoire-text">Marie-Claude gère une boutique Etsy depuis Québec. Elle envoyait 8 à 12 colis par semaine via les grands transporteurs. Depuis PorteàPorte, elle coordonne avec des livreurs locaux qui passent déjà par les villes de ses clients.</p>
+            <p class="histoire-text">Marie-Claude gère une boutique Etsy depuis Québec. Elle envoyait 8 à 12 colis par semaine via les grands transporteurs. Depuis PorteàPorte, ses colis voyagent avec des gens ordinaires qui passaient déjà dans la direction de ses clients — sans camion supplémentaire sur la route.</p>
             <div class="histoire-person">
               <img class="histoire-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude B." loading="lazy">
               <div>
@@ -1110,7 +1224,7 @@
           </div>
         </article>
 
-        <article class="histoire-card">
+        <article class="histoire-card" data-impact>
           <div class="histoire-img-wrap">
             <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop&crop=top" alt="Groupe de covoiturage PorteàPorte" loading="lazy">
             <span class="histoire-tag">Covoiturage</span>
@@ -1163,7 +1277,7 @@
                 <span class="cs2-val">0 $</span>
                 <span class="cs2-lbl">Frais d'inscription</span>
               </div>
-              <div class="cs2-card">
+              <div class="cs2-card" data-impact>
                 <span class="cs2-val">5 %</span>
                 <span class="cs2-lbl">Des revenus reversés<br>à des causes locales</span>
               </div>
@@ -1199,7 +1313,7 @@
                 <div class="martin-name">Martin L.</div>
                 <div class="martin-role">Livreur occasionnel · Québec → Montréal</div>
               </div>
-              <span class="temo-badge" style="margin-left:auto">✔ Vérifié</span>
+              <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
             </div>
           </div>
 
@@ -1233,7 +1347,7 @@
           <div class="tb-icon">🛡️</div>
           <div>
             <div class="tb-title">Couverture assurance</div>
-            <div class="tb-desc">Un programme d'assurance couvre les colis en transit. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Assurance</a> pour les détails et limites.</div>
+            <div class="tb-desc">Un fonds de protection communautaire (bêta) couvre les colis en transit. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Protection colis</a> pour les détails.</div>
           </div>
         </div>
         <div class="trust-badge">
@@ -1250,7 +1364,7 @@
             <div class="tb-desc">Ponctualité, fiabilité, comportement — chaque livreur et chauffeur est noté sur 3 dimensions visibles avant de réserver.</div>
           </div>
         </div>
-        <div class="trust-badge">
+        <div class="trust-badge" data-impact>
           <div class="tb-icon">🤝</div>
           <div>
             <div class="tb-title">Points sécuritaires covoiturage</div>
@@ -1268,7 +1382,7 @@
           <div class="tb-icon">🔍</div>
           <div>
             <div class="tb-title">Transparence totale</div>
-            <div class="tb-desc">Les frais, la répartition des revenus et les concours sont publiés publiquement sur notre <a href="/transparence.html" style="color:var(--brand-cyan)">page Transparence</a>.</div>
+            <div class="tb-desc">Les frais et la répartition des revenus sont publiés publiquement. <a href="/transparence.html" style="color:var(--brand-cyan)">Voir la page Transparence</a>.</div>
           </div>
         </div>
       </div>
@@ -1295,7 +1409,7 @@
             </div>
           </a>
 
-          <a href="/covoiturage.html">
+          <a href="/covoiturage.html" data-impact>
             <img src="/assets/hero-center.jpg" alt="Application covoiturage PorteàPorte sur mobile" loading="lazy">
             <div class="triptych-caption">
               <div class="triptych-kicker">Covoiturage</div>
@@ -1303,7 +1417,7 @@
             </div>
           </a>
 
-          <a href="/programme-points.html">
+          <a href="/programme-points.html" data-impact>
             <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et Points Impact" loading="lazy">
             <div class="triptych-caption">
               <div class="triptych-kicker">Récompenses</div>
@@ -1379,7 +1493,7 @@
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
           <a class="btn" href="/role-choice.html" style="font-size:1rem;padding:14px 28px">📦 Envoyer un colis</a>
           <a class="btn btn-ghost" href="/devenir-livreur.html" style="font-size:1rem;padding:14px 28px">🚗 Devenir livreur</a>
-          <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px">🛣️ Covoiturage</a>
+          <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px" data-impact>🛣️ Covoiturage</a>
         </div>
         <p style="font-size:0.8rem;color:var(--brand-muted)">
           ✓ Inscription en 2 minutes &nbsp;·&nbsp; ✓ Suivi GPS inclus &nbsp;·&nbsp; ✓ Paiement sécurisé Stripe &nbsp;·&nbsp; ✓ Bêta ouverte au Québec
@@ -1467,6 +1581,81 @@
     }
     loadHomeImpact();
 
+    /* ════════════════════════════════════════════════
+       MODE SIMPLE / MODE IMPACT
+    ════════════════════════════════════════════════ */
+    const IMPACT_KEY     = 'pap_mode';
+    const IMPACT_DATE_KEY= 'pap_impact_since';
+    const FEEDBACK_KEY   = 'pap_feedback_done';
+    const fbAnswers      = {};
+
+    function isImpactMode() {
+      return localStorage.getItem(IMPACT_KEY) === 'impact';
+    }
+
+    function applyMode() {
+      const impact = isImpactMode();
+      document.body.classList.toggle('mode-simple', !impact);
+      const btn = document.getElementById('impact-toggle');
+      if (btn) btn.textContent = impact ? '✦ Mode Impact ON' : '✦ Mode Impact';
+    }
+
+    function toggleImpactMode() {
+      if (isImpactMode()) {
+        localStorage.setItem(IMPACT_KEY, 'simple');
+        localStorage.removeItem(IMPACT_DATE_KEY);
+      } else {
+        localStorage.setItem(IMPACT_KEY, 'impact');
+        localStorage.setItem(IMPACT_DATE_KEY, Date.now().toString());
+      }
+      applyMode();
+    }
+
+    // Feedback popup
+    function fbSelect(btn, question, answer) {
+      btn.closest('.fb-options').querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      fbAnswers[question] = answer;
+      const allAnswered = ['points','transparence','sans_impact'].every(q => fbAnswers[q]);
+      document.getElementById('fb-submit').disabled = !allAnswered;
+    }
+
+    async function submitFeedback() {
+      const btn = document.getElementById('fb-submit');
+      btn.disabled = true;
+      btn.textContent = 'Envoi...';
+      try {
+        await fetch('/api/platform', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'impact-feedback', ...fbAnswers, source: 'mode_impact_popup' })
+        });
+      } catch(_) {}
+      localStorage.setItem(FEEDBACK_KEY, '1');
+      document.getElementById('feedback-overlay').classList.remove('open');
+      btn.textContent = 'Merci ! 🙏';
+    }
+
+    function checkFeedbackTrigger() {
+      if (!isImpactMode()) return;
+      if (localStorage.getItem(FEEDBACK_KEY)) return;
+      const since = parseInt(localStorage.getItem(IMPACT_DATE_KEY) || '0', 10);
+      if (!since) return;
+      const days = (Date.now() - since) / 86400000;
+      if (days >= 7) {
+        document.getElementById('feedback-overlay').classList.add('open');
+      }
+    }
+
+    // Init
+    applyMode();
+    checkFeedbackTrigger();
+
+    // Fermer popup en cliquant outside
+    document.getElementById('feedback-overlay').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
     /* ---- Mini map ---- */
     const miniMap = L.map('miniMap', { zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false })
       .setView([46.8, -71.5], 7);
@@ -1498,7 +1687,7 @@
 
         <div class="footer-brand">
           <h3>PorteàPorte</h3>
-          <p>La plateforme de livraison collaborative et de covoiturage du Québec. Quelqu'un passe déjà dans ta direction.</p>
+          <p>Le réseau de gens ordinaires qui partagent leurs trajets quotidiens pour livrer des colis au Québec. Quelqu'un passe déjà dans ta direction.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <a class="btn btn-ghost" href="/role-choice.html" style="font-size:0.8rem;padding:7px 14px">Commencer</a>
             <a class="btn btn-ghost" href="/contact.html" style="font-size:0.8rem;padding:7px 14px">Nous écrire</a>
@@ -1511,7 +1700,7 @@
           <a href="/devenir-livreur.html">Devenir livreur</a>
           <a href="/covoiturage.html">Covoiturage</a>
           <a href="/browse-missions.html">Voir les missions</a>
-          <a href="/assurance.html">Assurance colis</a>
+          <a href="/assurance.html">Protection colis (bêta)</a>
           <a href="/map.html">Carte des trajets</a>
         </div>
 
@@ -1556,10 +1745,11 @@
         if (!data?.session) return;
         const { data: profile } = await db.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
         if (profile?.role !== 'admin') return;
-        const l1 = document.getElementById('admin-nav-link');
-        const l2 = document.getElementById('admin-nav-link-mobile');
-        if (l1) l1.style.display = '';
-        if (l2) l2.style.display = '';
+        // Admin connecté : cacher Connexion + Commencer (accès admin via URL directe /admin)
+        const connexion = document.getElementById('nav-connexion');
+        const commencer = document.getElementById('nav-commencer');
+        if (connexion) connexion.style.display = 'none';
+        if (commencer) commencer.style.display = 'none';
       } catch (_) {}
     })();
   </script>

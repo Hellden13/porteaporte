@@ -273,19 +273,18 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/api/platform.js"></script>
+<script src="/js/supabase-config.js"></script>
 <script>
-const SUPABASE_URL = window.APP_CONFIG?.supabaseUrl || '';
-const SUPABASE_KEY = window.APP_CONFIG?.supabaseKey || '';
-const db  = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
 
 let currentRide  = null;
 let currentUser  = null;
+let currentSession = null;
 let activeTab    = 'passenger';
 let rideSettings = null;
 
 const params = new URLSearchParams(location.search);
-const rideId = params.get('id');
+const rideId = params.get('id') || params.get('ride_id');
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
@@ -368,7 +367,7 @@ function renderRide(r) {
   document.getElementById('city-to').textContent   = r.destination_city || r.to_city  || '?';
   document.getElementById('ride-date-line').textContent = formatDate(r.departure_time || r.date);
 
-  const seats = r.available_seats ? r.seats_available ? 0;
+  const seats = r.available_seats ?? r.seats_available ?? 0;
   const dist  = r.distance_km ? r.distance_km + ' km' : '--';
   const trunk = r.trunk_size === 'large' ? 'Grand coffre' : r.trunk_size === 'medium' ? 'Coffre moyen' : r.trunk_size === 'small' ? 'Petit coffre' : '--';
   const flex  = r.flexibility === 'flexible' ? 'Flexible' : r.flexibility === 'on_demand' ? 'Sur demande' : 'Fixe';
@@ -547,9 +546,20 @@ async function loadRide() {
     var rideData     = await rideRes.json();
     var settingsData = await settingsRes.json();
     if (!rideRes.ok || rideData.error) throw new Error(rideData.error || 'Trajet introuvable');
-    currentRide  = rideData;
-    rideSettings = settingsData;
-    renderRide(rideData);
+    const ridePayload = rideData.ride ? {
+      ...rideData.ride,
+      departure_city: rideData.ride.departure_city || rideData.ride.start_city,
+      destination_city: rideData.ride.destination_city || rideData.ride.end_city,
+      distance_km: rideData.ride.distance_km || rideData.ride.total_distance_km,
+      stop_points: rideData.stops || rideData.ride.stop_points || [],
+      driver_info: rideData.driver || rideData.ride.driver_info || {},
+      driver_profile: rideData.driver || rideData.ride.driver_profile || {},
+      recent_reviews: rideData.driver?.recent_reviews || [],
+      price_breakdown: rideData.price_breakdown || null
+    } : rideData;
+    currentRide  = ridePayload;
+    rideSettings = settingsData.settings || settingsData || {};
+    renderRide(ridePayload);
   } catch(e) {
     showToast('Erreur de chargement : ' + e.message, 'error');
   }
@@ -587,13 +597,13 @@ async function bookPassenger() {
   var dropoff = document.getElementById('pax-dropoff').value;
   var res = await fetch('/api/platform?endpoint=ride-book', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
     body: JSON.stringify({ ride_id: rideId, user_id: currentUser.id, seats_booked: seats, has_luggage: luggage, has_pet: pet, special_requests: note, pickup_city: pickup, dropoff_city: dropoff })
   });
   var data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || 'Erreur reservation');
   showToast('Reservation confirmee !', 'success');
-  setTimeout(function() { location.href = '/dashboard-passager.html'; }, 2000);
+  setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 2000);
 }
 
 async function bookPackage() {
@@ -604,7 +614,7 @@ async function bookPackage() {
   if (weight <= 0) { showToast('Entrez le poids du colis.', 'error'); return; }
   var res = await fetch('/api/platform?endpoint=ride-package-book', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
     body: JSON.stringify({ ride_id: rideId, user_id: currentUser.id, package_weight_kg: weight, package_description: desc, pickup_city: pickup, dropoff_city: dropoff })
   });
   var data = await res.json();
@@ -614,8 +624,15 @@ async function bookPackage() {
 }
 
 (async function() {
+  if (!db || !db.auth) {
+    showToast('Connexion Supabase indisponible.', 'error');
+    return;
+  }
   var sessionData = await db.auth.getSession();
-  if (sessionData.data && sessionData.data.session) currentUser = sessionData.data.session.user;
+  if (sessionData.data && sessionData.data.session) {
+    currentSession = sessionData.data.session;
+    currentUser = currentSession.user;
+  }
   await loadRide();
 })();
 </script>

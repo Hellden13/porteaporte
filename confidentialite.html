@@ -8,45 +8,72 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      line-height: 1.75;
       margin: 0;
       padding: 0;
-      background: #f5f7fa;
-      color: #1a1a1a;
+      background: var(--brand-bg-dark);
+      color: var(--brand-text);
     }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px clamp(18px,4vw,48px);
+      background: rgba(10,12,16,0.92);
+      border-bottom: 1px solid var(--brand-border);
+      backdrop-filter: blur(16px);
+    }
+    .brand-mark { display: flex; align-items: center; gap: 10px; font-weight: 900; text-decoration: none; color: var(--brand-text); }
+    .brand-mark img { width: 30px; height: 30px; }
     .container {
-      max-width: 900px;
+      max-width: 860px;
       margin: 40px auto;
-      background: white;
-      padding: 40px;
+      background: var(--brand-bg-surface);
+      padding: 40px 48px;
       border-radius: 14px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      border: 1px solid var(--brand-border);
     }
-    h1 { color: #0f172a; margin-bottom: 10px; }
-    h2 { margin-top: 35px; color: #1e293b; }
-    p, li { color: #334155; }
+    h1 { color: var(--brand-lime); margin-bottom: 8px; font-size: 2rem; }
+    h2 { margin-top: 36px; color: var(--brand-text); font-size: 1.15rem; border-bottom: 1px solid var(--brand-border); padding-bottom: 8px; }
+    p { color: var(--brand-muted); margin: 10px 0; }
+    li { color: var(--brand-muted); margin-bottom: 4px; }
     ul { padding-left: 20px; }
     .highlight {
-      background: #eef6ff;
-      padding: 15px;
-      border-left: 4px solid #2563eb;
+      background: rgba(0,217,255,0.06);
+      padding: 16px 20px;
+      border-left: 4px solid var(--brand-cyan);
       border-radius: 8px;
-      margin: 20px 0;
+      margin: 22px 0;
+      color: var(--brand-text);
     }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a { color: var(--brand-cyan); text-decoration: none; }
+    a:hover { color: var(--brand-lime); text-decoration: underline; }
     footer {
       margin-top: 50px;
       padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 14px;
-      color: #64748b;
+      border-top: 1px solid var(--brand-border);
+      font-size: 13px;
+      color: var(--brand-muted);
     }
+    .btn { display: inline-flex; align-items: center; padding: 9px 18px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.9rem; }
+    .btn-ghost { border: 1px solid var(--brand-border); color: var(--brand-muted); background: transparent; }
+    .btn-primary { background: var(--brand-lime); color: #071008; border: none; }
     @media (max-width: 768px) {
-      .container { margin: 0; border-radius: 0; padding: 24px; }
+      .container { margin: 0; border-radius: 0; padding: 24px 20px; }
     }
   </style>
+
+  <meta name="description" content="Politique de confidentialité PorteÀPorte — Comment nous collectons, utilisons et protégeons vos données personnelles.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Politique de confidentialité - PorteàPorte">
+  <meta property="og:description" content="Politique de confidentialité PorteÀPorte — Comment nous collectons, utilisons et protégeons vos données personnelles.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/confidentialite.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Politique de confidentialité - PorteàPorte">
+  <meta name="twitter:description" content="Politique de confidentialité PorteÀPorte — Comment nous collectons, utilisons et protégeons vos données personnelles.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <div class="container">

@@ -2,6 +2,14 @@
   "name": "porteaporte",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "test": "node --test tests/lib.test.js tests/rides.test.js tests/growth.test.js tests/handlers.test.js",
+    "test:lib": "node --test tests/lib.test.js",
+    "test:rides": "node --test tests/rides.test.js",
+    "test:growth": "node --test tests/growth.test.js",
+    "test:handlers": "node --test tests/handlers.test.js",
+    "test:watch": "node --test --watch tests/**/*.test.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "web-push": "^3.6.7"

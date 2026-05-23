@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historique des paiements · PorteÀPorte</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px clamp(18px,4vw,48px);
+      backdrop-filter: blur(18px); background: rgba(10,12,16,0.88);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .brand-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--brand-text); font-weight: 900; text-decoration: none; }
+    .brand-mark img { width: 28px; height: 28px; }
+
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 48px clamp(18px,4vw,48px) 100px; }
+
+    .page-title { font-size: clamp(1.5rem,3vw,2rem); margin: 0 0 6px; }
+    .page-sub { color: var(--brand-muted); font-size: 0.9rem; margin: 0 0 36px; }
+
+    /* Résumé */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 14px; margin-bottom: 36px; }
+    .summary-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .summary-card .val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
+    .summary-card .lbl { font-size: 0.78rem; color: var(--brand-muted); margin-top: 4px; }
+
+    /* Filtres */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 999px; border: 1px solid var(--brand-border);
+      background: transparent; color: var(--brand-muted); cursor: pointer; font-size: 0.82rem;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .filter-btn.active, .filter-btn:hover { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(184,245,62,0.08); }
+
+    /* Liste */
+    .payment-list { display: flex; flex-direction: column; gap: 10px; }
+    .payment-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 16px 20px; text-decoration: none; color: inherit;
+      transition: border-color 0.15s;
+    }
+    .payment-row:hover { border-color: var(--brand-lime); }
+    .payment-row .left { flex: 1; min-width: 0; }
+    .payment-row .code { font-family: monospace; font-size: 0.85rem; color: var(--brand-lime); font-weight: 700; margin-bottom: 4px; }
+    .payment-row .route { font-weight: 700; font-size: 0.92rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .payment-row .date-type { font-size: 0.78rem; color: var(--brand-muted); }
+    .payment-row .right { text-align: right; flex-shrink: 0; }
+    .payment-row .amount { font-size: 1.1rem; font-weight: 900; }
+    .status-pill {
+      display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 999px; margin-top: 4px;
+    }
+    .status-pill.payee     { background: rgba(184,245,62,0.15); color: var(--brand-lime); }
+    .status-pill.confirmee { background: rgba(0,217,255,0.12); color: #00D9FF; }
+    .status-pill.en_attente { background: rgba(251,191,36,0.15); color: #FBBF24; }
+    .status-pill.annulee   { background: rgba(239,68,68,0.12); color: #EF4444; }
+    .status-pill.other     { background: rgba(156,163,175,0.12); color: #9CA3AF; }
+
+    .empty-state { text-align: center; color: var(--brand-muted); padding: 48px 24px; font-size: 0.9rem; }
+    .loading { text-align: center; color: var(--brand-muted); padding: 32px; }
+
+    @media (max-width: 560px) { .payment-row { flex-direction: column; align-items: flex-start; } .payment-row .right { text-align: left; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteÀPorte</span></a>
+    <a class="btn btn-ghost" href="/dashboard-expediteur.html">← Dashboard</a>
+  </header>
+
+  <main class="page-wrap">
+    <h1 class="page-title">Historique des paiements</h1>
+    <p class="page-sub">Toutes vos livraisons et leur statut de paiement.</p>
+
+    <div class="summary-grid">
+      <div class="summary-card"><div class="val" id="stat-total">—</div><div class="lbl">Total dépensé</div></div>
+      <div class="summary-card"><div class="val" id="stat-count">—</div><div class="lbl">Livraisons</div></div>
+      <div class="summary-card"><div class="val" id="stat-avg">—</div><div class="lbl">Montant moyen</div></div>
+      <div class="summary-card"><div class="val" id="stat-pending">—</div><div class="lbl">En attente</div></div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Toutes</button>
+      <button class="filter-btn" onclick="setFilter('payee', this)">Payées</button>
+      <button class="filter-btn" onclick="setFilter('confirmee', this)">Confirmées</button>
+      <button class="filter-btn" onclick="setFilter('en_attente', this)">En attente</button>
+      <button class="filter-btn" onclick="setFilter('annulee', this)">Annulées</button>
+    </div>
+
+    <div class="payment-list" id="payment-list">
+      <div class="loading">Chargement de votre historique...</div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    let _token = null;
+    let _livraisons = [];
+    let _filter = 'all';
+
+    const STATUS_LABELS = {
+      payee:      { label: 'Payée',       cls: 'payee' },
+      confirmee:  { label: 'Confirmée',   cls: 'confirmee' },
+      livree:     { label: 'Livrée',      cls: 'confirmee' },
+      en_attente: { label: 'En attente',  cls: 'en_attente' },
+      acceptee:   { label: 'En cours',    cls: 'en_attente' },
+      en_route:   { label: 'En route',    cls: 'en_attente' },
+      annulee:    { label: 'Annulée',     cls: 'annulee' },
+    };
+
+    async function init() {
+      const db = window.getSupabaseClient?.();
+      if (!db) return;
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { window.location.href = '/login.html'; return; }
+      _token = data.session.access_token;
+      await load();
+    }
+
+    async function load() {
+      try {
+        const r = await fetch('/api/my-livraisons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _token },
+          body: JSON.stringify({}),
+        });
+        if (!r.ok) throw new Error('Erreur API');
+        const d = await r.json();
+        _livraisons = (d.livraisons || d || []).sort((a, b) =>
+          new Date(b.created_at || b.cree_le || 0) - new Date(a.created_at || a.cree_le || 0)
+        );
+        renderStats();
+        renderList();
+      } catch {
+        document.getElementById('payment-list').innerHTML = '<div class="empty-state">Impossible de charger l\'historique.</div>';
+      }
+    }
+
+    function renderStats() {
+      const paid = _livraisons.filter(l => ['payee','confirmee','livree'].includes(l.statut));
+      const total = paid.reduce((s, l) => s + Number(l.prix_total || 0), 0);
+      const pending = _livraisons.filter(l => ['en_attente','acceptee','en_route'].includes(l.statut)).length;
+
+      document.getElementById('stat-total').textContent   = total > 0 ? '$' + total.toFixed(2) : '—';
+      document.getElementById('stat-count').textContent   = _livraisons.length;
+      document.getElementById('stat-avg').textContent     = paid.length > 0 ? '$' + (total / paid.length).toFixed(2) : '—';
+      document.getElementById('stat-pending').textContent = pending;
+    }
+
+    function renderList() {
+      const filtered = _filter === 'all' ? _livraisons : _livraisons.filter(l => l.statut === _filter);
+      const list = document.getElementById('payment-list');
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty-state">Aucune livraison pour ce filtre.</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(l => {
+        const s = STATUS_LABELS[l.statut] || { label: l.statut, cls: 'other' };
+        const date = l.created_at || l.cree_le
+          ? new Date(l.created_at || l.cree_le).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '—';
+        const amount = Number(l.prix_total || 0);
+        const route = [l.ville_depart, l.ville_arrivee].filter(Boolean).join(' → ') || 'Route inconnue';
+        const trackUrl = '/suivi.html?code=' + encodeURIComponent(l.code || l.id);
+
+        return `<a class="payment-row" href="${trackUrl}">
+          <div class="left">
+            <div class="code">${esc(l.code || l.id?.slice(0,8) || '—')}</div>
+            <div class="route">${esc(route)}</div>
+            <div class="date-type">${date} · ${esc(l.type || l.type_colis || 'Colis')}</div>
+          </div>
+          <div class="right">
+            <div class="amount">${amount > 0 ? '$' + amount.toFixed(2) : '—'}</div>
+            <span class="status-pill ${s.cls}">${s.label}</span>
+          </div>
+        </a>`;
+      }).join('');
+    }
+
+    function setFilter(f, btn) {
+      _filter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderList();
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    init();
+  </script>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>

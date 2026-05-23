@@ -2,8 +2,10 @@
 <html lang="fr-CA">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Assurance colis — PorteàPorte</title>
+  <title>Protection colis (bêta) — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
@@ -182,6 +184,17 @@
     .faq-item.open .faq-a { display: block; }
     .faq-item.open .arrow { transform: rotate(180deg); }
 
+    /* Beta disclaimer */
+    .beta-disclaimer{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:16px 22px;margin-bottom:32px;font-size:.88rem;line-height:1.65;color:#fbbf24}
+    .beta-disclaimer strong{display:block;margin-bottom:4px;font-size:.95rem}
+    .beta-disclaimer span{color:rgba(251,191,36,.75)}
+    /* Fonds de protection */
+    .fund-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25);border-radius:12px;padding:18px 24px;margin:0 2rem 0}
+    .fund-banner-left{font-size:.88rem;color:var(--brand-muted);line-height:1.6}
+    .fund-banner-left strong{display:block;color:var(--brand-lime);font-size:1rem;margin-bottom:2px}
+    .fund-amount{font-size:2rem;font-weight:900;color:var(--brand-lime);white-space:nowrap}
+    .fund-sub{font-size:.75rem;color:var(--brand-muted);margin-top:2px;text-align:right}
+
     /* CTA */
     .cta-section {
       text-align: center; padding: 6rem 2rem;
@@ -196,6 +209,18 @@
     .footer-links a:hover { color: var(--brand-text); }
     .footer-copy { font-size: 0.78rem; color: var(--brand-muted); }
   </style>
+
+  <meta name="description" content="Protection colis bêta — PorteÀPorte. Un fonds communautaire alimenté par les livraisons confirmées. Pas une assurance formelle.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="Protection colis (bêta) — PorteàPorte">
+  <meta property="og:description" content="Protection colis bêta — PorteÀPorte. Un fonds communautaire alimenté par les livraisons confirmées. Pas une assurance formelle.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/assurance.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Protection colis (bêta) — PorteàPorte">
+  <meta name="twitter:description" content="Protection colis bêta — PorteÀPorte. Un fonds communautaire alimenté par les livraisons confirmées. Pas une assurance formelle.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
 
@@ -216,15 +241,39 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-badge">🛡️ Couverture optionnelle — Choisissez votre niveau</div>
-    <h1>Ton colis est entre<br>de <em>bonnes mains</em>.</h1>
-    <p>Notre réseau de livreurs vérifiés prend soin de chaque envoi. Et pour une tranquillité d'esprit totale, une assurance optionnelle est disponible à chaque livraison — dès 1 $.</p>
+    <div class="hero-badge">🛡️ Programme bêta — Fonds de protection communautaire</div>
+    <h1>La communauté protège<br><em>ses colis</em>.</h1>
+    <p>2% de chaque livraison confirmée alimente un fonds commun. En cas de problème admissible, une compensation peut être accordée. Ce n'est pas une assurance formelle — c'est la communauté qui se protège elle-même.</p>
     <div class="hero-shield">
       <div class="shield-icon">🛡️</div>
       <div>
         <strong style="display:block; font-size:0.95rem;">Protection disponible de 0 $ à 5,99 $ par envoi</strong>
         <span style="font-size:0.82rem; color: var(--brand-muted);">Couverture de 0 $ à 1 000 $ de valeur déclarée</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- BETA DISCLAIMER -->
+<section style="padding:2rem 2rem 0">
+  <div class="container">
+    <div class="beta-disclaimer">
+      <strong>⚠️ Programme de protection en bêta — pas une assurance formelle</strong>
+      PorteàPorte est en phase bêta. Le « programme de protection » décrit ci-dessous est une politique de compensation volontaire de notre part, <em>pas un contrat d'assurance</em> réglementé. Les remboursements sont traités manuellement, au cas par cas, selon nos capacités. <span>Aucun assureur tiers n'est impliqué. Les montants et délais indiqués sont indicatifs et non garantis.</span>
+    </div>
+  </div>
+</section>
+
+<!-- FONDS DE PROTECTION -->
+<section style="padding:1.5rem 0 0">
+  <div class="fund-banner" id="fund-banner">
+    <div class="fund-banner-left">
+      <strong>🛡️ Fonds de protection disponible</strong>
+      Alimenté par 2% de chaque livraison confirmée. Les compensations sont limitées au solde de ce fonds.
+    </div>
+    <div style="text-align:right">
+      <div class="fund-amount" id="fund-amount">— $</div>
+      <div class="fund-sub">Max par demande : <span id="fund-max-claim">—</span></div>
     </div>
   </div>
 </section>
@@ -255,7 +304,7 @@
       <div class="level-card base">
         <div class="level-name lime">Base</div>
         <div class="level-price lime">1 $<span>/envoi</span></div>
-        <div class="level-max">Couverture max : 50 $</div>
+        <div class="level-max" id="cap-base">Couverture max : 50 $</div>
         <ul class="level-list">
           <li><span class="icon-ok">✓</span><span>Dommages en transit</span></li>
           <li><span class="icon-ok">✓</span><span>Perte totale du colis</span></li>
@@ -271,7 +320,7 @@
         <div class="level-rec">Recommandé</div>
         <div class="level-name cyan">Standard</div>
         <div class="level-price cyan">2,99 $<span>/envoi</span></div>
-        <div class="level-max" style="background: rgba(0,217,255,0.06); color: var(--brand-cyan);">Couverture max : 250 $</div>
+        <div class="level-max" id="cap-standard" style="background: rgba(0,217,255,0.06); color: var(--brand-cyan);">Couverture max : 250 $</div>
         <ul class="level-list">
           <li><span class="icon-ok">✓</span><span>Dommages en transit</span></li>
           <li><span class="icon-ok">✓</span><span>Perte totale <em>et</em> partielle</span></li>
@@ -286,7 +335,7 @@
       <div class="level-card plus">
         <div class="level-name orange">Plus</div>
         <div class="level-price orange">5,99 $<span>/envoi</span></div>
-        <div class="level-max" style="background: rgba(255,165,0,0.06); color: #FFA500;">Couverture max : 1 000 $</div>
+        <div class="level-max" id="cap-plus" style="background: rgba(255,165,0,0.06); color: #FFA500;">Couverture max : 1 000 $</div>
         <ul class="level-list">
           <li><span class="icon-ok">✓</span><span>Couverture maximale tous risques</span></li>
           <li><span class="icon-ok">✓</span><span>Objets fragiles et électroniques</span></li>
@@ -303,12 +352,12 @@
 <!-- COUVERT / PAS COUVERT -->
 <section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
   <div class="container">
-    <div class="section-label">Détails de la couverture</div>
-    <h2 class="section-title">Ce qui est couvert — et ce qui ne l'est pas</h2>
-    <p class="section-sub">La transparence, c'est notre valeur fondamentale. Voici exactement ce que l'assurance PorteàPorte couvre.</p>
+    <div class="section-label">Détails de la protection</div>
+    <h2 class="section-title">Ce qui est admissible — et ce qui ne l'est pas</h2>
+    <p class="section-sub">La transparence, c'est notre valeur fondamentale. Voici les situations où une compensation peut être accordée dans le cadre de notre programme bêta.</p>
     <div class="coverage-grid">
       <div class="coverage-box yes">
-        <h3><span>✅</span> Ce qui est couvert</h3>
+        <h3><span>✅</span> Situations admissibles à compensation</h3>
         <ul>
           <li><span class="ok">✓</span>Dommages physiques survenus pendant le transport (chocs, écrasement, mouillure)</li>
           <li><span class="ok">✓</span>Perte totale du colis (non livré, disparu sans trace)</li>
@@ -320,7 +369,7 @@
         </ul>
       </div>
       <div class="coverage-box no">
-        <h3><span>❌</span> Ce qui n'est PAS couvert</h3>
+        <h3><span>❌</span> Situations non admissibles</h3>
         <ul>
           <li><span class="no">✗</span>Valeur non déclarée ou sous-déclarée au moment de la mission</li>
           <li><span class="no">✗</span>Colis interdits par nos conditions d'utilisation (matières dangereuses, denrées périssables non emballées...)</li>
@@ -338,9 +387,9 @@
 <!-- COMMENT DÉPOSER UNE RÉCLAMATION -->
 <section>
   <div class="container">
-    <div class="section-label">Processus de réclamation</div>
-    <h2 class="section-title">Comment déposer une réclamation</h2>
-    <p class="section-sub">Si quelque chose se passe mal, voici comment obtenir ton remboursement rapidement et sans tracas.</p>
+    <div class="section-label">Processus de demande</div>
+    <h2 class="section-title">Comment déposer une demande de compensation</h2>
+    <p class="section-sub">Si quelque chose se passe mal, voici la marche à suivre pour soumettre ta demande. Les compensations sont étudiées manuellement par notre équipe bêta.</p>
     <div class="claim-steps">
       <div class="claim-step">
         <div class="claim-step-num">01</div>
@@ -357,14 +406,14 @@
       <div class="claim-step">
         <div class="claim-step-num">03</div>
         <div class="claim-step-icon">🔍</div>
-        <h3>Notre équipe évalue</h3>
-        <p>Un agent humain examine ton dossier en 3 à 5 jours ouvrables (24h pour le niveau Plus). Tu reçois une décision motivée par courriel.</p>
+        <h3>Notre équipe examine</h3>
+        <p>Un membre de l'équipe examine ton dossier (délais variables en bêta — quelques jours à quelques semaines). Tu reçois une réponse par courriel.</p>
       </div>
       <div class="claim-step">
         <div class="claim-step-num">04</div>
         <div class="claim-step-icon">💳</div>
-        <h3>Remboursement via Stripe</h3>
-        <p>Si la réclamation est approuvée, le montant est remboursé directement sur ta méthode de paiement Stripe dans les 2 à 5 jours ouvrables.</p>
+        <h3>Compensation si accordée</h3>
+        <p>Si ta demande est accordée, une compensation est versée via Stripe. En bêta, les délais et montants exacts dépendent du cas. Aucun montant n'est garanti à l'avance.</p>
       </div>
     </div>
   </div>
@@ -373,9 +422,9 @@
 <!-- SCÉNARIOS RÉELS -->
 <section style="background: var(--brand-bg-surface); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border);">
   <div class="container">
-    <div class="section-label">Cas concrets</div>
-    <h2 class="section-title">Scénarios réels — ce qui s'est passé</h2>
-    <p class="section-sub">Des exemples tirés de vraies réclamations pour comprendre comment l'assurance fonctionne en pratique.</p>
+    <div class="section-label">Exemples illustratifs</div>
+    <h2 class="section-title">Scénarios exemples — comment ça fonctionnerait</h2>
+    <p class="section-sub">Ces scénarios sont fictifs et illustratifs. Ils montrent comment notre programme de protection bêta pourrait s'appliquer selon le cas. Les résultats réels varient.</p>
     <div class="scenarios">
       <div class="scenario-card success">
         <div class="scenario-tag success">✓ Remboursé</div>
@@ -474,6 +523,36 @@
       if (!wasOpen) item.classList.add('open');
     });
   });
+
+  // Fonds de protection dynamique
+  (async () => {
+    try {
+      const res = await fetch('/api/impact-public');
+      const out = await res.json();
+      const fund = out.protection_fund;
+      if (!fund) return;
+      const fmt = (cents) => (cents / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+      document.getElementById('fund-amount').textContent = fmt(fund.total_cents);
+      document.getElementById('fund-max-claim').textContent = fmt(fund.max_claim_cents);
+
+      // Mettre à jour les plafonds des niveaux selon le fonds réel
+      const caps = [
+        { id: 'cap-base',     declared: 5000,   label: 'Base' },
+        { id: 'cap-standard', declared: 25000,  label: 'Standard' },
+        { id: 'cap-plus',     declared: 100000, label: 'Plus' },
+      ];
+      caps.forEach(({ id, declared }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const effective = Math.min(declared, fund.max_claim_cents);
+        el.textContent = 'Couverture max : ' + fmt(effective);
+        if (effective < declared) {
+          el.title = 'Limité par le fonds disponible actuellement';
+          el.style.color = '#fbbf24';
+        }
+      });
+    } catch (_) { /* silencieux */ }
+  })();
 </script>
 <script src="/js/support-widget.js"></script>
 </body>
