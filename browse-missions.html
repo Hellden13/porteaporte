@@ -263,10 +263,16 @@
              </div>`
           : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
 
+        const onRouteBadge = m.on_route
+          ? `<span style="display:inline-block;padding:2px 8px;background:rgba(0,255,159,.15);color:#7dffc1;border:1px solid rgba(0,255,159,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`
+          : '';
+        const detourBadge = (m.detour_km != null && m.detour_km > 0)
+          ? `<span style="display:inline-block;padding:2px 8px;background:rgba(255,200,0,.12);color:#ffd700;border-radius:999px;font-size:.72rem;font-weight:700;margin-left:4px">+${m.detour_km} km détour</span>`
+          : '';
         return `
-        <article class="mission-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <span class="pill">${esc(text(m.code, 'Mission'))}</span>
+        <article class="mission-card"${m.on_route ? ' style="border-color:rgba(0,255,159,.4);box-shadow:0 0 0 1px rgba(0,255,159,.2)"' : ''}>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <div><span class="pill">${esc(text(m.code, 'Mission'))}</span>${onRouteBadge}${detourBadge}</div>
             <span class="match-score">${score}% · ${matchLabel(score)}</span>
           </div>
           <div class="match-bar"><div class="match-fill" style="width:${score}%;background:${fillColor}"></div></div>

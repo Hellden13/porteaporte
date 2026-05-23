@@ -6,7 +6,7 @@ const {
   signStorageUrl, getSession, getProfile, roleIn, mergeUserRole,
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
-  driverTransportMode, estimateRouteKm, siteOrigin, internalHeaders,
+  driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, siteOrigin, internalHeaders,
   callNotifier, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
 } = require('../lib/_lib');
@@ -1042,32 +1042,54 @@ async function availableLivraisons(req, res, ctx) {
     .map((row) => ({ row, eligibility: deliveryEligibility(ctx.profile, row) }))
     .filter((item) => item.eligibility.allowed);
 
-  // IA matching : prioriser missions sur la route du livreur
+  // IA matching Haversine : prioriser missions sur la route du livreur
   const profile = ctx.profile || {};
   const hasRoute = profile.route_origine && profile.route_destination;
+  const deviation = Math.max(2, Number(profile.route_deviation_km) || 5);
   if (hasRoute) {
-    const normalize = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
-    const orig = normalize(profile.route_origine);
-    const dest = normalize(profile.route_destination);
     filtered.forEach(item => {
-      const villeD = normalize(item.row.ville_depart);
-      const villeA = normalize(item.row.ville_arrivee);
       let routeScore = 0;
-      // Mission départ matches livreur origine OU sur la route
-      if (villeD === orig || villeD === dest) routeScore += 50;
-      if (villeA === orig || villeA === dest) routeScore += 30;
-      // Bonus si dispo horaires correspondent
+      // Vérif si mission est SUR la route (Haversine + distance perpendiculaire)
+      const onRoute = isMissionOnRoute(
+        item.row.ville_depart, item.row.ville_arrivee,
+        profile.route_origine, profile.route_destination,
+        deviation
+      );
+      if (onRoute) routeScore += 80;
+
+      // Calcul distance précise du détour
+      const cD = cityCoords(item.row.ville_depart);
+      const cA = cityCoords(item.row.ville_arrivee);
+      const rO = cityCoords(profile.route_origine);
+      const rD = cityCoords(profile.route_destination);
+      let detourKm = null;
+      if (cD && cA && rO && rD) {
+        // Distance totale de la route directe livreur
+        const directKm = haversineKm(rO[0], rO[1], rD[0], rD[1]);
+        // Distance avec détour par mission : origin → mission_start → mission_end → destination
+        const withDetour = haversineKm(rO[0], rO[1], cD[0], cD[1])
+                         + haversineKm(cD[0], cD[1], cA[0], cA[1])
+                         + haversineKm(cA[0], cA[1], rD[0], rD[1]);
+        detourKm = Math.max(0, Math.round(withDetour - directKm));
+        // Bonus si détour minime
+        if (detourKm <= deviation) routeScore += 20;
+        else if (detourKm <= deviation * 2) routeScore += 10;
+      }
+
+      // Bonus horaires compatibles avec destinataire
       if (profile.route_heure_debut && profile.route_heure_fin && item.row.destinataire_dispo_debut) {
         const livDeb = profile.route_heure_debut;
         const livFin = profile.route_heure_fin;
         const dDeb = item.row.destinataire_dispo_debut;
         const dFin = item.row.destinataire_dispo_fin;
-        if (livDeb <= dFin && livFin >= dDeb) routeScore += 20;
+        if (livDeb <= dFin && livFin >= dDeb) routeScore += 15;
       }
+
       item.routeScore = routeScore;
-      item.onRoute = routeScore >= 50;
+      item.onRoute = onRoute;
+      item.detourKm = detourKm;
     });
-    // Trier : missions sur la route en premier
+    // Trier : missions sur la route en premier, puis par score décroissant
     filtered.sort((a, b) => (b.routeScore || 0) - (a.routeScore || 0));
   }
 
@@ -1106,6 +1128,7 @@ async function availableLivraisons(req, res, ctx) {
       compatibilite: eligibility.reason,
       route_score: filtered.find(f => f.row.id === row.id)?.routeScore || 0,
       on_route: filtered.find(f => f.row.id === row.id)?.onRoute || false,
+      detour_km: filtered.find(f => f.row.id === row.id)?.detourKm,
       cree_le: row.cree_le || row.created_at,
       expediteur_profile: row.expediteur_id ? (expProfiles[row.expediteur_id] || null) : null
     }))
