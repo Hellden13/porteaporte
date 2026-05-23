@@ -334,6 +334,9 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       const reschedule = data.relivraison_date
         ? `<div style="margin-top:8px"><strong>Nouveau créneau :</strong> ${data.relivraison_date} de ${(data.relivraison_heure_debut||'').slice(0,5)} à ${(data.relivraison_heure_fin||'').slice(0,5)}</div>`
         : '';
+      const compMsg = (data.compensation_amount && Number(data.compensation_amount) > 0)
+        ? `<div style="margin-top:14px;padding:12px;background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);border-radius:8px"><strong style="color:#ffb0b0">⚠️ Compensation livreur :</strong> Comme le destinataire est à l'origine de l'imprévu, le livreur reçoit <strong>${Number(data.compensation_amount).toFixed(2)} $</strong> pour son déplacement. Ce montant sera déduit du remboursement éventuel.</div>`
+        : '';
       emails.push({
         to: data.expediteur_email,
         from: { email: fromEmail, name: fromName },
@@ -346,8 +349,10 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             <div style="background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.3);border-radius:10px;padding:16px;margin:18px 0">
               <div style="font-weight:800;color:#ffd700;margin-bottom:6px">${actionLabel}</div>
               ${data.raison ? `<div style="color:#a8b0ba;font-size:.9rem">Raison : ${data.raison}</div>` : ''}
+              ${data.fautif ? `<div style="color:#a8b0ba;font-size:.85rem;margin-top:6px">Cause attribuée : <strong>${data.fautif}</strong></div>` : ''}
               ${reschedule}
             </div>
+            ${compMsg}
             <p style="color:#a8b0ba;font-size:.9rem">Tu peux suivre l'évolution et contacter le support depuis ton dashboard.</p>
             <div style="text-align:center;margin:20px 0">
               <a href="https://porteaporte.site/dashboard-expediteur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Mon dashboard</a>

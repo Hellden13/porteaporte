@@ -273,6 +273,12 @@ async function livraisonImprevu(req, res, ctx, body) {
     newStatut = 'retour_expediteur';
   }
 
+  // Calcul compensation livreur si destinataire fautif
+  const fautif = body.fautif || 'inconnu'; // 'destinataire' | 'livreur' | 'inconnu'
+  let compensationPct = 0;
+  if (action === 'retour_expediteur' && fautif === 'destinataire') compensationPct = 0.50;
+  if (action === 'relivraison' && fautif === 'destinataire') compensationPct = 0.25;
+
   const patch = {
     statut: newStatut,
     imprevu_raison: raison,
@@ -289,6 +295,31 @@ async function livraisonImprevu(req, res, ctx, body) {
     return res.status(400).json({ error: 'Mise à jour impossible', details: errData });
   }
 
+  // Crédit compensation livreur si destinataire fautif
+  let compensationAmount = 0;
+  if (compensationPct > 0 && livraison.livreur_id && Number(livraison.prix_total) > 0) {
+    const grossCad = Number(livraison.prix_total) * compensationPct;
+    const netCad = grossCad * 0.60; // 60% au livreur (même règle que livraison normale)
+    compensationAmount = Number(netCad.toFixed(2));
+    await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
+      method: 'POST',
+      headers: { apikey: ctx.sbKey, Authorization: `Bearer ${ctx.sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: livraison.livreur_id,
+        livraison_id: livraisonId,
+        gross_amount: Number(grossCad.toFixed(2)),
+        platform_fee: Number((grossCad - netCad).toFixed(2)),
+        net_amount: compensationAmount,
+        currency: 'cad',
+        status: 'available',
+        available_after: new Date().toISOString(),
+        type: 'compensation_imprevu',
+        notes: `Compensation ${Math.round(compensationPct * 100)}% suite à imprévu destinataire: ${raison || action}`,
+        created_at: new Date().toISOString()
+      })
+    }).catch(err => console.error('[compensation livreur]', err.message));
+  }
+
   // Notifier expéditeur
   const expRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.expediteur_id)}&select=email,prenom`, {
     headers: sbHeaders(ctx.sbKey)
@@ -301,6 +332,8 @@ async function livraisonImprevu(req, res, ctx, body) {
       code: livraison.code || livraisonId.slice(0, 8),
       action,
       raison,
+      fautif,
+      compensation_amount: compensationAmount,
       ville_depart: livraison.ville_depart,
       ville_arrivee: livraison.ville_arrivee,
       relivraison_date: patch.relivraison_date,
@@ -309,7 +342,7 @@ async function livraisonImprevu(req, res, ctx, body) {
     }).catch(err => console.error('[notifier livraison_imprevu]', err.message));
   }
 
-  return res.status(200).json({ success: true, statut: newStatut });
+  return res.status(200).json({ success: true, statut: newStatut, compensation_amount: compensationAmount });
 }
 
 async function confirmDelivery(req, res, ctx, body) {

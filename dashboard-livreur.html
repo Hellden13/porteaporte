@@ -1156,6 +1156,17 @@
             <div id="imprevu-${row.id}" style="display:none;margin-top:12px;padding:14px;background:rgba(255,150,0,.08);border:1px solid rgba(255,150,0,.3);border-radius:10px">
               <div style="font-weight:800;color:#ffb74d;margin-bottom:10px">🚨 Que s'est-il passé ?</div>
               <textarea id="imprevu-raison-${row.id}" rows="2" placeholder="Ex: destinataire absent, refus du colis, code porte erroné…" style="width:100%;box-sizing:border-box;background:#0a0e14;border:1px solid #1E2535;color:#fff;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:10px"></textarea>
+              <label style="font-size:.8rem;color:#ffb74d;font-weight:700;display:block;margin-bottom:4px">À qui la faute ?</label>
+              <select id="imprevu-fautif-${row.id}" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:10px">
+                <option value="destinataire">Destinataire (absent, refus, mauvaise info…)</option>
+                <option value="livreur">Moi (problème personnel, oubli…)</option>
+                <option value="inconnu">Cause inconnue / autre</option>
+              </select>
+              <div style="font-size:.75rem;color:#a8b0ba;margin-bottom:10px;padding:8px;background:rgba(0,255,159,.05);border-radius:6px">
+                💡 Si le destinataire est fautif, tu reçois une <strong>compensation</strong> :<br>
+                • Retour expéditeur : <strong>50%</strong> du gain<br>
+                • Re-livraison : <strong>25%</strong> immédiatement + reste à la livraison
+              </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
                 <button class="btn-sm" style="background:rgba(0,255,159,.12);border:1px solid rgba(0,255,159,.4);color:#7dffc1;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
                 <button class="btn-sm" style="background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);color:#7de4ff;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="planRelivraison('${row.id}')">🔄 Re-<br>livraison</button>
@@ -1211,7 +1222,8 @@
     async function actionImprevu(id, action) {
       const msgEl = document.getElementById('imprevu-msg-' + id);
       const raison = document.getElementById('imprevu-raison-' + id)?.value.trim() || '';
-      const payload = { livraison_id: id, action, raison };
+      const fautif = document.getElementById('imprevu-fautif-' + id)?.value || 'inconnu';
+      const payload = { livraison_id: id, action, raison, fautif };
       if (action === 'relivraison') {
         payload.relivraison_date = document.getElementById('reli-date-' + id)?.value || null;
         payload.relivraison_heure_debut = document.getElementById('reli-debut-' + id)?.value || null;
@@ -1233,8 +1245,9 @@
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
         msgEl.style.color = '#7dffc1';
-        msgEl.textContent = '✅ Action enregistrée. L\'expéditeur a été notifié.';
-        setTimeout(() => loadMyDeliveries(), 1500);
+        const compMsg = out.compensation_amount > 0 ? ` Compensation créditée : ${out.compensation_amount.toFixed(2)} $` : '';
+        msgEl.innerHTML = '✅ Action enregistrée. L\'expéditeur a été notifié.' + (compMsg ? `<br><strong style="color:#b8f53e">💰${compMsg}</strong>` : '');
+        setTimeout(() => loadMyDeliveries(), 2500);
       } catch (err) {
         msgEl.style.color = '#ffb0b0';
         msgEl.textContent = '❌ ' + err.message;
