@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 1280px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    h1 { margin: 0; }
+    .grid { display: grid; gap: 14px; }
+    .stats { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 18px; }
+    .stat { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; position: relative; overflow: hidden; }
+    .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime)); }
+    .stat-lbl { font-size: .72rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .stat-val { font-size: 1.9rem; font-weight: 900; color: var(--brand-lime); margin-top: 4px; line-height: 1; }
+    .stat-sub { font-size: .76rem; color: var(--brand-muted); margin-top: 6px; }
+    .stat-sub.up { color: #7dffc1; }
+    .stat-sub.down { color: #ffb0b0; }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; }
+    .panel h3 { margin: 0 0 14px; font-size: 1.05rem; color: var(--brand-text); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: .85rem; }
+    .bar-row .label { min-width: 100px; color: var(--brand-muted); }
+    .bar-row .bar { flex: 1; height: 18px; background: rgba(255,255,255,.04); border-radius: 6px; overflow: hidden; }
+    .bar-row .fill { height: 100%; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime)); }
+    .bar-row .val { min-width: 50px; text-align: right; color: var(--brand-text); font-weight: 700; }
+    .list-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+    .list-row:last-child { border-bottom: none; }
+    .empty { text-align: center; color: var(--brand-muted); padding: 30px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>📊 Analytics</h1>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select id="period" onchange="load()" style="background:var(--brand-bg-surface);border:1px solid var(--brand-border);color:#fff;padding:8px 12px;border-radius:8px">
+          <option value="7">7 derniers jours</option>
+          <option value="30" selected>30 derniers jours</option>
+          <option value="90">90 derniers jours</option>
+          <option value="365">1 an</option>
+          <option value="all">Tout</option>
+        </select>
+        <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+      </div>
+    </div>
+
+    <div id="stats-grid" class="grid stats"><div class="empty">Chargement…</div></div>
+
+    <div class="two-col" style="margin-top:18px">
+      <div class="panel">
+        <h3>📦 Livraisons par statut</h3>
+        <div id="by-status"></div>
+      </div>
+      <div class="panel">
+        <h3>🏙️ Top trajets</h3>
+        <div id="top-routes"></div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:18px">
+      <div class="panel">
+        <h3>💰 Revenus par jour (60% livreur)</h3>
+        <canvas id="revChart" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🚗 Top livreurs (gains)</h3>
+        <div id="top-livreurs"></div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:18px">
+      <div class="panel">
+        <h3>⚖️ Manquements</h3>
+        <div id="manquements-stats"></div>
+      </div>
+      <div class="panel">
+        <h3>🚨 Intelligence adresses</h3>
+        <div id="intel-stats"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      await load();
+    }
+
+    function dateCutoff() {
+      const days = document.getElementById('period').value;
+      if (days === 'all') return null;
+      return new Date(Date.now() - Number(days) * 86400000).toISOString();
+    }
+
+    async function load() {
+      const cutoff = dateCutoff();
+      const livQ = db.from('livraisons').select('id,statut,ville_depart,ville_arrivee,prix_total,livreur_id,cree_le');
+      if (cutoff) livQ.gte('cree_le', cutoff);
+      const { data: livs } = await livQ;
+      const all = livs || [];
+
+      // Stats globales
+      const total = all.length;
+      const payees = all.filter(l => ['payee','paid'].includes(l.statut)).length;
+      const annulees = all.filter(l => ['annule','rembourse'].includes(l.statut)).length;
+      const enCours = all.filter(l => !['payee','paid','annule','rembourse'].includes(l.statut)).length;
+      const revenusTotal = all.filter(l => ['payee','paid'].includes(l.statut)).reduce((s,l) => s + (Number(l.prix_total)||0), 0);
+      const commissionPF = revenusTotal * 0.12;
+      const gainsLivreurs = revenusTotal * 0.60;
+      const tauxCompletion = total ? Math.round(payees / total * 100) : 0;
+
+      // Profiles count
+      const { count: usersTotal } = await db.from('profiles').select('id', { count: 'exact', head: true });
+      const { count: livreursVerifies } = await db.from('profiles').select('id', { count: 'exact', head: true }).eq('driver_status', 'verified');
+
+      document.getElementById('stats-grid').innerHTML = `
+        <div class="stat"><div class="stat-lbl">Livraisons totales</div><div class="stat-val">${total}</div><div class="stat-sub">Période sélectionnée</div></div>
+        <div class="stat"><div class="stat-lbl">Payées</div><div class="stat-val" style="color:#7dffc1">${payees}</div><div class="stat-sub up">Taux ${tauxCompletion}%</div></div>
+        <div class="stat"><div class="stat-lbl">En cours</div><div class="stat-val" style="color:#7de4ff">${enCours}</div></div>
+        <div class="stat"><div class="stat-lbl">Annulées</div><div class="stat-val" style="color:#ffb0b0">${annulees}</div></div>
+        <div class="stat"><div class="stat-lbl">Revenus bruts</div><div class="stat-val">${revenusTotal.toFixed(0)} $</div><div class="stat-sub">CAD</div></div>
+        <div class="stat"><div class="stat-lbl">Commission plateforme (12%)</div><div class="stat-val" style="color:#00d9ff">${commissionPF.toFixed(0)} $</div></div>
+        <div class="stat"><div class="stat-lbl">Gains livreurs (60%)</div><div class="stat-val">${gainsLivreurs.toFixed(0)} $</div></div>
+        <div class="stat"><div class="stat-lbl">Utilisateurs total</div><div class="stat-val">${usersTotal||0}</div><div class="stat-sub">${livreursVerifies||0} livreurs vérifiés</div></div>
+      `;
+
+      // Par statut
+      const statuts = {};
+      for (const l of all) statuts[l.statut] = (statuts[l.statut] || 0) + 1;
+      const maxStatut = Math.max(...Object.values(statuts), 1);
+      document.getElementById('by-status').innerHTML = Object.entries(statuts)
+        .sort((a,b) => b[1] - a[1])
+        .map(([s, n]) => `
+          <div class="bar-row">
+            <span class="label">${s}</span>
+            <div class="bar"><div class="fill" style="width:${(n/maxStatut*100).toFixed(1)}%"></div></div>
+            <span class="val">${n}</span>
+          </div>
+        `).join('') || '<div class="empty">Aucune livraison</div>';
+
+      // Top trajets
+      const routes = {};
+      for (const l of all) {
+        const key = `${l.ville_depart || '?'} → ${l.ville_arrivee || '?'}`;
+        routes[key] = (routes[key] || 0) + 1;
+      }
+      const topRoutes = Object.entries(routes).sort((a,b) => b[1] - a[1]).slice(0, 8);
+      const maxRoute = Math.max(...topRoutes.map(r => r[1]), 1);
+      document.getElementById('top-routes').innerHTML = topRoutes.map(([r, n]) => `
+        <div class="bar-row">
+          <span class="label" style="min-width:160px;font-size:.78rem">${r}</span>
+          <div class="bar"><div class="fill" style="width:${(n/maxRoute*100).toFixed(1)}%"></div></div>
+          <span class="val">${n}</span>
+        </div>
+      `).join('') || '<div class="empty">Aucun trajet</div>';
+
+      // Revenus par jour
+      const days = {};
+      for (const l of all.filter(x => ['payee','paid'].includes(x.statut))) {
+        const d = (l.cree_le || '').slice(0, 10);
+        days[d] = (days[d] || 0) + Number(l.prix_total || 0) * 0.60;
+      }
+      const sortedDays = Object.entries(days).sort();
+      drawChart(sortedDays);
+
+      // Top livreurs
+      const livreurGains = {};
+      for (const l of all.filter(x => ['payee','paid'].includes(x.statut) && x.livreur_id)) {
+        livreurGains[l.livreur_id] = (livreurGains[l.livreur_id] || 0) + Number(l.prix_total) * 0.60;
+      }
+      const topLivIds = Object.entries(livreurGains).sort((a,b) => b[1] - a[1]).slice(0, 8);
+      if (topLivIds.length) {
+        const { data: profs } = await db.from('profiles').select('id,prenom,nom').in('id', topLivIds.map(x => x[0]));
+        const profMap = {};
+        for (const p of profs || []) profMap[p.id] = [p.prenom, p.nom].filter(Boolean).join(' ');
+        document.getElementById('top-livreurs').innerHTML = topLivIds.map(([id, gain]) => `
+          <div class="list-row"><span>${profMap[id] || id.slice(0,8)}</span><strong style="color:#b8f53e">${gain.toFixed(2)} $</strong></div>
+        `).join('');
+      } else {
+        document.getElementById('top-livreurs').innerHTML = '<div class="empty">Aucun gain livreur</div>';
+      }
+
+      // Manquements
+      const { data: manq } = await db.from('manquements').select('statut');
+      const m = manq || [];
+      document.getElementById('manquements-stats').innerHTML = `
+        <div class="list-row"><span>Total signalements</span><strong>${m.length}</strong></div>
+        <div class="list-row"><span>En attente</span><strong style="color:#ffd700">${m.filter(x => x.statut === 'signale').length}</strong></div>
+        <div class="list-row"><span>Contestés</span><strong style="color:#7de4ff">${m.filter(x => x.statut === 'conteste').length}</strong></div>
+        <div class="list-row"><span>Validés</span><strong style="color:#ffb0b0">${m.filter(x => x.statut === 'valide').length}</strong></div>
+        <div class="list-row"><span>Rejetés</span><strong style="color:#7dffc1">${m.filter(x => x.statut === 'rejete').length}</strong></div>
+      `;
+
+      // Intelligence adresses
+      const { data: intel } = await db.from('address_intelligence').select('category,severity,admin_blocked');
+      const i = intel || [];
+      const byCat = {};
+      for (const n of i) byCat[n.category] = (byCat[n.category] || 0) + 1;
+      document.getElementById('intel-stats').innerHTML = `
+        <div class="list-row"><span>Notes totales</span><strong>${i.length}</strong></div>
+        <div class="list-row"><span>Sévérité haute (4-5)</span><strong style="color:#ffb0b0">${i.filter(x => x.severity >= 4).length}</strong></div>
+        <div class="list-row"><span>Adresses bloquées</span><strong style="color:#ff4444">${i.filter(x => x.admin_blocked).length}</strong></div>
+        ${Object.entries(byCat).sort((a,b) => b[1]-a[1]).slice(0,5).map(([c, n]) => `<div class="list-row"><span style="text-transform:capitalize">${c}</span><strong>${n}</strong></div>`).join('')}
+      `;
+    }
+
+    function drawChart(data) {
+      const canvas = document.getElementById('revChart');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.offsetWidth;
+      const h = canvas.height = 200;
+      ctx.clearRect(0, 0, w, h);
+      if (!data.length) {
+        ctx.fillStyle = '#6d7886';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pas de données', w/2, h/2);
+        return;
+      }
+      const max = Math.max(...data.map(d => d[1]), 1);
+      const padding = 30;
+      const chartW = w - padding * 2;
+      const chartH = h - padding * 2;
+      const stepX = chartW / Math.max(data.length - 1, 1);
+      ctx.strokeStyle = '#b8f53e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach(([day, val], i) => {
+        const x = padding + i * stepX;
+        const y = padding + chartH - (val / max) * chartH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      // Points
+      ctx.fillStyle = '#b8f53e';
+      data.forEach(([day, val], i) => {
+        const x = padding + i * stepX;
+        const y = padding + chartH - (val / max) * chartH;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // Axe Y
+      ctx.fillStyle = '#a8b0ba';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText(max.toFixed(0) + '$', padding - 5, padding + 4);
+      ctx.fillText('0', padding - 5, padding + chartH + 4);
+    }
+
+    init();
+  </script>
+</body>
+</html>
