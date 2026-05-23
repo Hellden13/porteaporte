@@ -1150,7 +1150,28 @@
               <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
                 ${delivered ? 'Livre ✓' : 'Marquer livre'}
               </button>
+              ${canMark ? `<button class="btn-sm" style="background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.4);color:#ffb74d" onclick="toggleImprevu('${row.id}')">🚨 Imprévu</button>` : ''}
               ${delivered ? `<button class="btn-sm" onclick="toggleLivreurReview('${row.id}')">⭐ Évaluer expéditeur</button>` : ''}
+            </div>
+            <div id="imprevu-${row.id}" style="display:none;margin-top:12px;padding:14px;background:rgba(255,150,0,.08);border:1px solid rgba(255,150,0,.3);border-radius:10px">
+              <div style="font-weight:800;color:#ffb74d;margin-bottom:10px">🚨 Que s'est-il passé ?</div>
+              <textarea id="imprevu-raison-${row.id}" rows="2" placeholder="Ex: destinataire absent, refus du colis, code porte erroné…" style="width:100%;box-sizing:border-box;background:#0a0e14;border:1px solid #1E2535;color:#fff;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:10px"></textarea>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                <button class="btn-sm" style="background:rgba(0,255,159,.12);border:1px solid rgba(0,255,159,.4);color:#7dffc1;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
+                <button class="btn-sm" style="background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);color:#7de4ff;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="planRelivraison('${row.id}')">🔄 Re-<br>livraison</button>
+                <button class="btn-sm" style="background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.4);color:#ffb0b0;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','retour_expediteur')">↩️ Retour<br>expéditeur</button>
+              </div>
+              <div id="reli-form-${row.id}" style="display:none;margin-top:10px;padding:10px;background:rgba(0,217,255,.05);border-radius:8px">
+                <label style="font-size:.78rem;color:#7de4ff;font-weight:700;display:block;margin-bottom:4px">Date</label>
+                <input id="reli-date-${row.id}" type="date" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:6px;padding:8px;margin-bottom:6px">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <input id="reli-debut-${row.id}" type="time" value="13:00" style="flex:1;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:6px;padding:8px">
+                  <span style="color:#a8b0ba">à</span>
+                  <input id="reli-fin-${row.id}" type="time" value="18:00" style="flex:1;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:6px;padding:8px">
+                </div>
+                <button class="btn-sm primary" style="margin-top:8px;width:100%" onclick="actionImprevu('${row.id}','relivraison')">✅ Confirmer re-livraison</button>
+              </div>
+              <div id="imprevu-msg-${row.id}" style="margin-top:8px;font-size:.82rem"></div>
             </div>
             ${delivered ? `
             <div id="livreur-review-${row.id}" style="display:none;margin-top:12px;background:rgba(184,245,62,0.05);border:1px solid rgba(184,245,62,0.15);border-radius:10px;padding:14px;">
@@ -1176,6 +1197,48 @@
             </div>` : ''}
           </div>`;
       }).join('');
+    }
+
+    function toggleImprevu(id) {
+      const box = document.getElementById('imprevu-' + id);
+      if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function planRelivraison(id) {
+      document.getElementById('reli-form-' + id).style.display = 'block';
+    }
+
+    async function actionImprevu(id, action) {
+      const msgEl = document.getElementById('imprevu-msg-' + id);
+      const raison = document.getElementById('imprevu-raison-' + id)?.value.trim() || '';
+      const payload = { livraison_id: id, action, raison };
+      if (action === 'relivraison') {
+        payload.relivraison_date = document.getElementById('reli-date-' + id)?.value || null;
+        payload.relivraison_heure_debut = document.getElementById('reli-debut-' + id)?.value || null;
+        payload.relivraison_heure_fin = document.getElementById('reli-fin-' + id)?.value || null;
+        if (!payload.relivraison_date) {
+          msgEl.style.color = '#ffb0b0';
+          msgEl.textContent = '❌ Choisis une date pour la re-livraison';
+          return;
+        }
+      }
+      msgEl.style.color = '#a8b0ba';
+      msgEl.textContent = '⏳ Envoi en cours…';
+      try {
+        const res = await fetch('/api/livraison-imprevu', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify(payload)
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msgEl.style.color = '#7dffc1';
+        msgEl.textContent = '✅ Action enregistrée. L\'expéditeur a été notifié.';
+        setTimeout(() => loadMyDeliveries(), 1500);
+      } catch (err) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '❌ ' + err.message;
+      }
     }
 
     function toggleLivreurReview(id) {

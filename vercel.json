@@ -327,6 +327,10 @@
                      {
                          "source":  "/api/recipient-preferences",
                          "destination":  "/api/platform?endpoint=recipient-preferences"
+                     },
+                     {
+                         "source":  "/api/livraison-imprevu",
+                         "destination":  "/api/platform?endpoint=livraison-imprevu"
                      }
                  ],
     "headers":  [

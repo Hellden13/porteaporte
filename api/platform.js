@@ -233,6 +233,85 @@ async function assignDriver(req, res, ctx, body) {
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 
+// ── Imprévu réception (3 actions livreur) ──
+async function livraisonImprevu(req, res, ctx, body) {
+  const livraisonId = body.livraison_id;
+  const action = body.action; // 'depot_securise' | 'relivraison' | 'retour_expediteur'
+  const raison = body.raison || '';
+  if (!livraisonId || !action) return res.status(400).json({ error: 'livraison_id et action requis' });
+  if (!['depot_securise', 'relivraison', 'retour_expediteur'].includes(action)) {
+    return res.status(400).json({ error: 'Action invalide' });
+  }
+
+  // Charger livraison
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,statut,livreur_id,expediteur_id,ville_depart,ville_arrivee,prix_total`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = lr.ok ? await lr.json() : [];
+  const livraison = rows[0];
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  // Vérifier que c'est le livreur assigné ou un admin
+  const admin = roleIn(ctx.profile, ['admin']);
+  if (!admin && livraison.livreur_id !== ctx.session.id) {
+    return res.status(403).json({ error: 'Livreur assigné requis' });
+  }
+  if (!['confirme', 'en_route', 'ramasse'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Action impossible dans l\'état actuel de la livraison' });
+  }
+
+  let newStatut, patchExtra = {};
+  if (action === 'depot_securise') {
+    newStatut = 'livre'; // déposé → en attente confirmation/photo dans depot-preuve.html
+    patchExtra.delivery_confirmation_mode = 'depot_securise';
+  } else if (action === 'relivraison') {
+    newStatut = 'relivraison_demandee';
+    patchExtra.relivraison_date = body.relivraison_date || null;
+    patchExtra.relivraison_heure_debut = body.relivraison_heure_debut || null;
+    patchExtra.relivraison_heure_fin = body.relivraison_heure_fin || null;
+  } else if (action === 'retour_expediteur') {
+    newStatut = 'retour_expediteur';
+  }
+
+  const patch = {
+    statut: newStatut,
+    imprevu_raison: raison,
+    imprevu_demande_le: new Date().toISOString(),
+    ...patchExtra
+  };
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(patch)
+  });
+  if (!pr.ok) {
+    const errData = await pr.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Mise à jour impossible', details: errData });
+  }
+
+  // Notifier expéditeur
+  const expRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.expediteur_id)}&select=email,prenom`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const expProfile = expRes.ok ? (await expRes.json())[0] : null;
+  if (expProfile?.email) {
+    callNotifier('livraison_imprevu', {
+      expediteur_email: expProfile.email,
+      prenom: expProfile.prenom || '',
+      code: livraison.code || livraisonId.slice(0, 8),
+      action,
+      raison,
+      ville_depart: livraison.ville_depart,
+      ville_arrivee: livraison.ville_arrivee,
+      relivraison_date: patch.relivraison_date,
+      relivraison_heure_debut: patch.relivraison_heure_debut,
+      relivraison_heure_fin: patch.relivraison_heure_fin
+    }).catch(err => console.error('[notifier livraison_imprevu]', err.message));
+  }
+
+  return res.status(200).json({ success: true, statut: newStatut });
+}
+
 async function confirmDelivery(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
@@ -2475,6 +2554,7 @@ module.exports = async function handler(req, res) {
 
     if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
+    if (endpoint === 'livraison-imprevu') return await livraisonImprevu(req, res, ctx, body);
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
     if (endpoint === 'delivery-proof') return await submitDeliveryProof(req, res, ctx, body);

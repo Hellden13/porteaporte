@@ -323,6 +323,40 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── IMPRÉVU LIVRAISON — notif expéditeur ──
+    case 'livraison_imprevu': {
+      const actionLabels = {
+        depot_securise: '📸 Dépôt sécurisé (photo + GPS)',
+        relivraison: '🔄 Re-livraison demandée',
+        retour_expediteur: '↩️ Retour à l\'expéditeur'
+      };
+      const actionLabel = actionLabels[data.action] || data.action;
+      const reschedule = data.relivraison_date
+        ? `<div style="margin-top:8px"><strong>Nouveau créneau :</strong> ${data.relivraison_date} de ${(data.relivraison_heure_debut||'').slice(0,5)} à ${(data.relivraison_heure_fin||'').slice(0,5)}</div>`
+        : '';
+      emails.push({
+        to: data.expediteur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `⚠️ Imprévu sur ta livraison #${data.code} — ${actionLabel}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">⚠️ Imprévu sur ta livraison</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.prenom || ''},<br><br>Le livreur a signalé un imprévu pour ta livraison <strong style="color:#fff">#${data.code}</strong> (${data.ville_depart} → ${data.ville_arrivee}).</p>
+            <div style="background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.3);border-radius:10px;padding:16px;margin:18px 0">
+              <div style="font-weight:800;color:#ffd700;margin-bottom:6px">${actionLabel}</div>
+              ${data.raison ? `<div style="color:#a8b0ba;font-size:.9rem">Raison : ${data.raison}</div>` : ''}
+              ${reschedule}
+            </div>
+            <p style="color:#a8b0ba;font-size:.9rem">Tu peux suivre l'évolution et contacter le support depuis ton dashboard.</p>
+            <div style="text-align:center;margin:20px 0">
+              <a href="https://porteaporte.site/dashboard-expediteur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Mon dashboard</a>
+            </div>
+          </div>`
+      });
+      break;
+    }
+
     // ── CODE DESTINATAIRE — email auto au destinataire ──
     case 'code_destinataire': {
       if (!data.destinataire_email) break;
