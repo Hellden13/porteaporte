@@ -2410,6 +2410,41 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── Préférences de réception destinataire (public, identifié par livraison_id) ──
+    if (endpoint === 'recipient-preferences') {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+      const livId = body.livraison_id;
+      if (!livId) return res.status(400).json({ error: 'livraison_id requis' });
+      // Vérifier que la livraison existe et n'est pas finale
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,statut`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const lrows = lr.ok ? await lr.json().catch(() => []) : [];
+      if (!lrows[0]) return res.status(404).json({ error: 'Livraison introuvable' });
+      if (['payee', 'paid', 'annule', 'rembourse'].includes(lrows[0].statut)) {
+        return res.status(409).json({ error: 'Livraison cloturee — modifications impossibles' });
+      }
+      const patch = {
+        reception_mode: body.reception_mode || null,
+        reception_heure_debut: body.reception_heure_debut || null,
+        reception_heure_fin: body.reception_heure_fin || null,
+        reception_photo_obligatoire: Boolean(body.reception_photo_obligatoire),
+        reception_lieu_repli: body.reception_lieu_repli || null,
+        reception_note_livreur: body.reception_note_livreur || null,
+        reception_preferences_set_at: new Date().toISOString()
+      };
+      const pr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}`, {
+        method: 'PATCH',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(patch)
+      });
+      if (!pr.ok) {
+        const errData = await pr.json().catch(() => ({}));
+        return res.status(400).json({ error: 'Sauvegarde impossible', details: errData });
+      }
+      return res.status(200).json({ success: true });
+    }
+
     if (endpoint === 'push-send' && internal) {
       const ctx = {
         sbUrl,

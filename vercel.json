@@ -323,6 +323,10 @@
                      {
                          "source":  "/api/admin-push-broadcast",
                          "destination":  "/api/platform?endpoint=admin-push-broadcast"
+                     },
+                     {
+                         "source":  "/api/recipient-preferences",
+                         "destination":  "/api/platform?endpoint=recipient-preferences"
                      }
                  ],
     "headers":  [

@@ -103,14 +103,82 @@
       font-size: .82rem;
       color: #6d7886;
     }
+    .review-section {
+      display: none;
+      margin-top: 22px;
+      border-top: 1px solid rgba(184,245,62,.15);
+      padding-top: 20px;
+    }
+    .review-section h2 { font-size: 1.15rem; margin: 0 0 6px; color: #fff; }
+    .review-section p  { font-size: .88rem; color: #8A9BB0; margin: 0 0 14px; }
+    .stars { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+    .stars button {
+      width: auto; margin: 0; padding: 10px 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; font-size: 1.5rem;
+      color: #fff; cursor: pointer; transition: all .15s;
+    }
+    .stars button.selected, .stars button:hover {
+      background: rgba(184,245,62,.15);
+      border-color: #B8F53E;
+    }
+    .review-section textarea {
+      width: 100%; box-sizing: border-box;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px; padding: 12px;
+      color: #E8EDF5; font-size: .9rem;
+      resize: vertical; min-height: 70px;
+      margin-bottom: 12px;
+    }
+    #review-result { font-size: .88rem; margin-top: 8px; }
   </style>
 </head>
 <body>
   <main class="confirm-card">
     <div class="brand">PorteaPorte</div>
-    <h1>Confirmer la reception</h1>
-    <p>Entre le code de reception remis pour cette livraison. Cette confirmation peut liberer le paiement protege au livreur.</p>
+    <h1>Ta livraison</h1>
+    <p>Configure tes préférences de réception ci-dessous, puis reviens entrer ton code dès que ton colis arrive.</p>
 
+    <!-- ── Préférences de réception (visible avant livraison) ── -->
+    <details id="prefs-panel" open style="border:1px solid rgba(0,217,255,.22);background:rgba(0,217,255,.05);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <summary style="cursor:pointer;color:#00d9ff;font-weight:900;font-size:.95rem">⚙️ Mes préférences de réception</summary>
+      <div style="margin-top:14px;text-align:left">
+        <label style="margin-top:0">Mode de réception</label>
+        <select id="pref-mode" style="width:100%;padding:12px;border-radius:10px;background:#05080c;color:#fff;border:1px solid rgba(255,255,255,.16);font-size:.95rem;letter-spacing:normal;text-align:left;font-weight:600">
+          <option value="">— Choisir —</option>
+          <option value="signature">✍️ Signature obligatoire à la porte</option>
+          <option value="depot_porte">📦 Dépôt à la porte (photo)</option>
+          <option value="concierge">🛎️ Laisser au concierge</option>
+          <option value="voisin">🏘️ Laisser au voisin</option>
+          <option value="boite_securisee">🔐 Boîte sécurisée (préciser ci-dessous)</option>
+        </select>
+
+        <label>Plage horaire acceptée</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input id="pref-debut" type="time" value="09:00" style="font-size:.95rem;letter-spacing:normal;text-align:left;padding:10px">
+          <span style="color:#a8b0ba">à</span>
+          <input id="pref-fin" type="time" value="21:00" style="font-size:.95rem;letter-spacing:normal;text-align:left;padding:10px">
+        </div>
+
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input id="pref-photo" type="checkbox" style="width:auto;margin:0">
+          <span>📸 Photo de dépôt obligatoire</span>
+        </label>
+
+        <label>Lieu de repli si absent</label>
+        <input id="pref-repli" type="text" placeholder="Ex: chez le voisin 102, sous le tapis…" style="font-size:.9rem;letter-spacing:normal;text-align:left;padding:12px;font-weight:500">
+
+        <label>Note au livreur</label>
+        <textarea id="pref-note" rows="2" placeholder="Sonner 2x, code porte 1234, allergique chien…" style="width:100%;box-sizing:border-box;background:#05080c;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:12px;font-size:.9rem;resize:vertical"></textarea>
+
+        <button type="button" id="save-prefs-btn" onclick="savePrefs()" style="margin-top:14px;background:linear-gradient(135deg,#00d9ff,#0096cc);color:#001828">💾 Enregistrer mes préférences</button>
+        <div id="prefs-status" style="margin-top:10px;font-size:.85rem;color:#a8b0ba;text-align:center"></div>
+      </div>
+    </details>
+
+    <h2 style="font-size:1.1rem;margin:24px 0 10px;color:#fff">🔑 Confirmer la réception du colis</h2>
     <form id="confirm-form">
       <label for="recipient-code">Code destinataire</label>
       <input id="recipient-code" name="recipient-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" required>
@@ -119,6 +187,23 @@
 
     <div class="notice">Confirme seulement si le colis est bien arrive. En cas de probleme, n'entre pas le code et contacte PorteaPorte.</div>
     <div id="result" class="result"></div>
+
+    <!-- Section avis destinataire — visible après confirmation réussie -->
+    <div class="review-section" id="review-section">
+      <h2>⭐ Comment s'est passée la livraison ?</h2>
+      <p>Votre avis aide la communauté PorteàPorte. Anonyme et facultatif.</p>
+      <div class="stars" id="stars-row">
+        <button type="button" data-val="1" onclick="selectStar(1)">😞</button>
+        <button type="button" data-val="2" onclick="selectStar(2)">😐</button>
+        <button type="button" data-val="3" onclick="selectStar(3)">🙂</button>
+        <button type="button" data-val="4" onclick="selectStar(4)">😊</button>
+        <button type="button" data-val="5" onclick="selectStar(5)">🤩</button>
+      </div>
+      <textarea id="review-comment" placeholder="Ponctuel ? Colis en bon état ? Sympathique ? (facultatif)"></textarea>
+      <button id="review-btn" onclick="submitRecipientReview()">Envoyer mon avis</button>
+      <div id="review-result"></div>
+    </div>
+
     <p class="small">Les preuves de livraison, messages, photos et donnees GPS peuvent etre utilisees en cas de litige.</p>
   </main>
 
@@ -128,23 +213,75 @@
     const form = document.getElementById('confirm-form');
     const btn = document.getElementById('confirm-btn');
     const result = document.getElementById('result');
+    const codeInput = document.getElementById('recipient-code');
 
     function show(type, message) {
       result.className = 'result ' + type;
-      result.textContent = message;
+      result.innerHTML = message;
+      result.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    if (!livraisonId) {
-      show('err', 'Lien de confirmation invalide: livraison_id manquant.');
+    // Pré-remplir le code depuis localStorage si disponible
+    if (livraisonId) {
+      const savedCode = localStorage.getItem('pap_reception_code_' + livraisonId);
+      if (savedCode) {
+        codeInput.value = savedCode;
+        codeInput.style.borderColor = 'rgba(184,245,62,.5)';
+      }
+    } else {
+      show('err', 'Lien de confirmation invalide — livraison_id manquant.');
       btn.disabled = true;
+    }
+
+    // Formater le code en majuscules automatiquement
+    codeInput.addEventListener('input', () => {
+      codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // ── Sauvegarde des préférences de réception ──
+    async function savePrefs() {
+      const btn = document.getElementById('save-prefs-btn');
+      const status = document.getElementById('prefs-status');
+      if (!livraisonId) { status.textContent = '❌ Lien invalide'; return; }
+      btn.disabled = true;
+      btn.textContent = '⏳ Enregistrement...';
+      try {
+        const res = await fetch('/api/recipient-preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            livraison_id: livraisonId,
+            reception_mode: document.getElementById('pref-mode').value || null,
+            reception_heure_debut: document.getElementById('pref-debut').value || null,
+            reception_heure_fin: document.getElementById('pref-fin').value || null,
+            reception_photo_obligatoire: document.getElementById('pref-photo').checked,
+            reception_lieu_repli: document.getElementById('pref-repli').value.trim() || null,
+            reception_note_livreur: document.getElementById('pref-note').value.trim() || null
+          })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur enregistrement');
+        status.textContent = '✅ Préférences enregistrées — le livreur sera informé.';
+        status.style.color = '#b8f53e';
+      } catch (err) {
+        status.textContent = '❌ ' + (err.message || 'Erreur');
+        status.style.color = '#ffb0b0';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Enregistrer mes préférences';
+      }
     }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const code = document.getElementById('recipient-code').value.trim();
+      const code = codeInput.value.trim();
       if (!code || !livraisonId) return;
+      if (code.length < 6) {
+        show('err', '⚠️ Le code doit avoir au moins 6 caractères.');
+        return;
+      }
       btn.disabled = true;
-      btn.textContent = 'Confirmation...';
+      btn.textContent = '⏳ Confirmation en cours...';
       try {
         const res = await fetch('/api/capture-livraison', {
           method: 'POST',
@@ -153,15 +290,56 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Confirmation impossible');
-        show('ok', 'Reception confirmee. Le paiement protege peut maintenant etre libere au livreur.');
+        show('ok', '✅ <strong>Réception confirmée !</strong><br>Le paiement est libéré au livreur. Merci d\'utiliser PorteàPorte !');
         form.style.display = 'none';
+        // Nettoyer localStorage
+        localStorage.removeItem('pap_reception_code_' + livraisonId);
+        localStorage.removeItem('pap_reception_link_' + livraisonId);
+        setTimeout(() => {
+          document.getElementById('review-section').style.display = 'block';
+        }, 800);
       } catch (err) {
-        show('err', err.message || 'Confirmation impossible');
+        show('err', '❌ ' + (err.message || 'Confirmation impossible'));
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Confirmer la reception';
+        btn.textContent = 'Confirmer la réception';
       }
     });
+  let selectedStar = 0;
+  function selectStar(val) {
+    selectedStar = val;
+    document.querySelectorAll('#stars-row button').forEach(b => {
+      b.classList.toggle('selected', Number(b.dataset.val) <= val);
+    });
+  }
+
+  async function submitRecipientReview() {
+    const btn = document.getElementById('review-btn');
+    const comment = document.getElementById('review-comment').value.trim();
+    const resEl = document.getElementById('review-result');
+    if (!selectedStar) { resEl.style.color='#FF6B6B'; resEl.textContent = 'Choisissez une note svp.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Envoi...';
+    try {
+      const res = await fetch('/api/recipient-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ livraison_id: livraisonId, rating: selectedStar, comment })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur');
+      resEl.style.color = '#B8F53E';
+      resEl.textContent = '✅ Merci pour votre avis !';
+      btn.style.display = 'none';
+      document.getElementById('review-comment').style.display = 'none';
+      document.getElementById('stars-row').style.pointerEvents = 'none';
+    } catch (err) {
+      resEl.style.color = '#FF6B6B';
+      resEl.textContent = '❌ ' + err.message;
+      btn.disabled = false;
+      btn.textContent = 'Envoyer mon avis';
+    }
+  }
   </script>
   <script src="/js/support-widget.js"></script>
 </body>
