@@ -24,7 +24,16 @@
     .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--brand-muted-dark);margin-right:8px}
     .live-dot.on{background:var(--brand-lime);box-shadow:0 0 0 5px rgba(0,255,159,.12)}
     .map-preview{min-height:190px;border:1px solid var(--brand-border);border-radius:10px;background:var(--brand-bg-dark);display:grid;place-items:center;color:var(--brand-muted);margin-top:14px;text-align:center;padding:18px}
-    .map-preview.has-location{background:linear-gradient(135deg,rgba(0,217,255,.08),rgba(0,255,159,.08))}
+    .map-preview.has-location{background:linear-gradient(135deg,rgba(0,217,255,.08),rgba(0,255,159,.08));padding:0;overflow:hidden}
+    .progress-wrap{margin:16px 0;padding:14px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:10px}
+    .progress-label{display:flex;justify-content:space-between;font-size:.85rem;font-weight:700;margin-bottom:8px}
+    .progress-label .eta{color:var(--brand-lime)}
+    .progress-bar{height:10px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden;position:relative}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));border-radius:999px;transition:width 1s ease}
+    .progress-fill::after{content:'';position:absolute;top:-3px;width:16px;height:16px;border-radius:50%;background:var(--brand-lime);box-shadow:0 0 8px var(--brand-lime),0 0 16px rgba(184,245,62,.5);transition:left 1s ease}
+    .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--brand-lime);animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    .live-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:999px;font-size:.75rem;font-weight:800;color:var(--brand-lime);margin-top:6px}
   </style>
 </head>
 <body>
@@ -48,8 +57,19 @@
     </section>
 
     <section class="panel">
-      <h2>Position live</h2>
+      <h2>📍 Position live</h2>
       <div id="gpsState" class="note">Aucune position GPS reçue pour le moment.</div>
+
+      <!-- Progress bar du trajet -->
+      <div id="progressWrap" class="progress-wrap" style="display:none">
+        <div class="progress-label">
+          <span><strong id="progressPct">0%</strong> du trajet · <span id="distanceLeft">—</span></span>
+          <span class="eta" id="etaLabel">ETA : —</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div style="text-align:center;margin-top:8px"><span class="live-badge"><span class="pulse-dot"></span>Position mise à jour il y a <span id="lastUpdateLabel">—</span></span></div>
+      </div>
+
       <div id="gpsDetails" class="grid" style="display:none"></div>
       <div id="mapPreview" class="map-preview">La carte s'activera dès qu'une position GPS valide sera reçue.</div>
     </section>
@@ -124,12 +144,21 @@
       mapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
       mapsLink.style.display = 'inline-flex';
       mapPreview.classList.add('has-location');
-      // Essayer Google Maps embed
+      // Essayer Google Maps embed avec route entre départ et position actuelle
       const gmKey = window._mapsKey || '';
-      if (gmKey) {
+      const villeArr = window._currentLivraison?.ville_arrivee || '';
+      if (gmKey && villeArr) {
+        // Affiche les directions du livreur vers destination
         mapPreview.innerHTML = `<iframe
-          width="100%" height="300"
-          style="border:0;border-radius:10px"
+          width="100%" height="320"
+          style="border:0;display:block"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps/embed/v1/directions?key=${gmKey}&origin=${lat},${lng}&destination=${encodeURIComponent(villeArr)}&mode=driving">
+        </iframe>`;
+      } else if (gmKey) {
+        mapPreview.innerHTML = `<iframe
+          width="100%" height="320"
+          style="border:0;display:block"
           loading="lazy" referrerpolicy="no-referrer-when-downgrade"
           src="https://www.google.com/maps/embed/v1/place?key=${gmKey}&q=${lat},${lng}&zoom=15">
         </iframe>`;
@@ -137,11 +166,57 @@
         mapPreview.innerHTML = `
           <strong style="color:var(--brand-lime)">📍 Position GPS active</strong><br>
           <span style="font-size:.9rem">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
-          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener"
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(villeArr)}&origin=${lat},${lng}" target="_blank" rel="noopener"
              style="color:var(--brand-cyan);font-weight:700;margin-top:8px;display:inline-block">
-            🗺️ Ouvrir dans Google Maps →
+            🗺️ Voir l'itinéraire dans Google Maps →
           </a>`;
       }
+
+      // Calcul ETA + progress
+      updateProgressAndEta(lat, lng);
+    }
+
+    // Distance Haversine
+    function haversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const rad = x => x * Math.PI / 180;
+      const dLat = rad(lat2 - lat1);
+      const dLon = rad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon/2)**2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    // Coordonnées approximatives des villes (à étendre)
+    const VILLE_COORDS = {
+      montreal: [45.5017, -73.5673], laval: [45.5781, -73.7124], longueuil: [45.5371, -73.5111],
+      brossard: [45.4583, -73.4665], quebec: [46.8139, -71.2080], levis: [46.8033, -71.1779],
+      stnicolas: [46.7064, -71.3625], 'saintnicolas': [46.7064, -71.3625], 'st-nicolas': [46.7064, -71.3625],
+      troisrivieres: [46.3432, -72.5432], sherbrooke: [45.4042, -71.8929],
+      drummondville: [45.8833, -72.4833], saguenay: [48.4283, -71.0688], gatineau: [45.4765, -75.7013]
+    };
+    function cityCoords(name) {
+      const n = String(name||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+      return VILLE_COORDS[n] || null;
+    }
+
+    function updateProgressAndEta(curLat, curLng) {
+      const liv = window._currentLivraison;
+      if (!liv) return;
+      const dep = cityCoords(liv.ville_depart);
+      const arr = cityCoords(liv.ville_arrivee);
+      if (!dep || !arr) return;
+      const totalKm = haversineKm(dep[0], dep[1], arr[0], arr[1]);
+      const doneKm = haversineKm(dep[0], dep[1], curLat, curLng);
+      const remainKm = Math.max(0, haversineKm(curLat, curLng, arr[0], arr[1]));
+      const pct = Math.min(100, Math.max(0, Math.round((doneKm / totalKm) * 100)));
+      // ETA basé sur 50 km/h moyenne ville/route
+      const etaMin = Math.round(remainKm / 50 * 60);
+      document.getElementById('progressWrap').style.display = 'block';
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('distanceLeft').textContent = remainKm.toFixed(1) + ' km restants';
+      const eta = etaMin < 1 ? '< 1 min' : etaMin < 60 ? etaMin + ' min' : Math.floor(etaMin/60) + 'h ' + (etaMin%60) + 'min';
+      document.getElementById('etaLabel').textContent = 'ETA : ~' + eta;
     }
 
     async function loadTracking(manual) {
@@ -177,6 +252,8 @@
         return;
       }
       const l = result.livraison || {};
+      window._currentLivraison = l;
+      window._lastUpdateAt = Date.now();
 
       // Labels de statut lisibles
       const statusLabels = {
@@ -254,7 +331,15 @@
     }).catch(() => {});
 
     loadTracking(false);
-    refreshTimer = setInterval(() => loadTracking(false), 10000);
+    refreshTimer = setInterval(() => loadTracking(false), 15000);
+    // Update du label "il y a X sec" en continu
+    setInterval(() => {
+      const el = document.getElementById('lastUpdateLabel');
+      if (el && window._lastUpdateAt) {
+        const sec = Math.floor((Date.now() - window._lastUpdateAt) / 1000);
+        el.textContent = sec < 60 ? sec + ' sec' : Math.floor(sec/60) + ' min';
+      }
+    }, 1000);
     window.addEventListener('beforeunload', () => {
       if (refreshTimer) clearInterval(refreshTimer);
     });
