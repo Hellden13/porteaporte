@@ -126,7 +126,7 @@
             <div class="chat-header-name" id="chatPartnerName">—</div>
             <div class="chat-header-sub" id="chatLivraisonInfo">—</div>
           </div>
-          <a class="chat-header-link" id="chatTrackLink" href="#" target="_blank">Suivi →</a>
+          <a class="chat-header-link" id="chatTrackLink" href="/suivi-livraison.html" target="_blank">Suivi →</a>
         </div>
         <div class="messages-area" id="messagesArea"></div>
         <div class="chat-input-area">
@@ -164,58 +164,72 @@
     }
 
     async function loadConversations() {
-      const { data: msgs, error } = await db
-        .from('messages')
-        .select('id, livraison_id, expediteur_id, destinataire_id, contenu, lu, cree_le')
-        .or(`expediteur_id.eq.${session.user.id},destinataire_id.eq.${session.user.id}`)
-        .order('cree_le', { ascending: false });
-
-      if (error) { console.error('[msg]', error); return; }
-
-      // Grouper par livraison_id
-      const convMap = {};
-      for (const m of msgs || []) {
-        if (!convMap[m.livraison_id]) convMap[m.livraison_id] = { lastMsg: m, unread: 0 };
-        if (!m.lu && m.destinataire_id === session.user.id) convMap[m.livraison_id].unread++;
+      // Charger toutes les livraisons où l'user est expediteur OU livreur (= conv de groupe)
+      const isAdmin = profile?.role === 'admin';
+      let livQuery = db.from('livraisons').select('id, code, adresse_depart, adresse_arrivee, livreur_id, expediteur_id, destinataire_email, destinataire_nom, statut');
+      if (!isAdmin) {
+        livQuery = livQuery.or(`expediteur_id.eq.${session.user.id},livreur_id.eq.${session.user.id}`);
       }
-
-      if (!Object.keys(convMap).length) {
-        document.getElementById('convItems').innerHTML = '<div class="conv-empty">Aucune conversation pour l\'instant</div>';
+      const { data: livs, error: livError } = await livQuery.limit(200);
+      if (livError) { console.error('[msg]', livError); return; }
+      if (!livs?.length) {
+        document.getElementById('convItems').innerHTML = '<div class="conv-empty">Aucune livraison en cours. Crée ou accepte une mission pour démarrer une conversation.</div>';
         document.getElementById('convCount').textContent = '0 conversation';
         conversations = [];
         return;
       }
 
-      const livraisonIds = Object.keys(convMap);
-      const { data: livs } = await db
-        .from('livraisons')
-        .select('id, adresse_depart, adresse_arrivee, livreur_id, expediteur_id')
-        .in('id', livraisonIds);
+      // Charger derniers messages par livraison
+      const livIds = livs.map(l => l.id);
+      const { data: msgs } = await db
+        .from('messages')
+        .select('id, livraison_id, expediteur_id, expediteur_role, contenu, cree_le, lu_par')
+        .in('livraison_id', livIds)
+        .order('cree_le', { ascending: false })
+        .limit(500);
 
-      const partnerIds = new Set();
-      for (const l of livs || []) {
-        const pid = l.livreur_id === session.user.id ? l.expediteur_id : l.livreur_id;
-        if (pid) partnerIds.add(pid);
+      const lastByConv = {};
+      const unreadByConv = {};
+      for (const m of msgs || []) {
+        if (!lastByConv[m.livraison_id]) lastByConv[m.livraison_id] = m;
+        const lu = (m.lu_par && m.lu_par[session.user.id]) || m.expediteur_id === session.user.id;
+        if (!lu) unreadByConv[m.livraison_id] = (unreadByConv[m.livraison_id] || 0) + 1;
       }
 
-      const { data: profs } = await db.from('profiles').select('id, nom').in('id', [...partnerIds]);
+      // Charger profils participants
+      const allUserIds = new Set();
+      for (const l of livs) {
+        if (l.expediteur_id) allUserIds.add(l.expediteur_id);
+        if (l.livreur_id) allUserIds.add(l.livreur_id);
+      }
+      const { data: profs } = await db.from('profiles').select('id, prenom, nom').in('id', [...allUserIds]);
       const profMap = {};
       for (const pr of profs || []) profMap[pr.id] = pr;
 
-      conversations = (livs || []).map(l => {
-        const partnerId = l.livreur_id === session.user.id ? l.expediteur_id : l.livreur_id;
-        const conv = convMap[l.id] || {};
+      conversations = livs.map(l => {
+        const lastMsg = lastByConv[l.id];
+        const participants = [];
+        if (l.expediteur_id) participants.push({ id: l.expediteur_id, role: 'expediteur', name: profMap[l.expediteur_id]?.prenom || 'Expéditeur' });
+        if (l.livreur_id) participants.push({ id: l.livreur_id, role: 'livreur', name: profMap[l.livreur_id]?.prenom || 'Livreur' });
+        if (l.destinataire_email || l.destinataire_nom) participants.push({ id: null, role: 'destinataire', name: l.destinataire_nom || 'Destinataire' });
         return {
           livraisonId: l.id,
-          partnerId,
-          partnerName: profMap[partnerId]?.nom || 'Utilisateur',
-          lastMsg: conv.lastMsg,
-          unread: conv.unread || 0,
+          code: l.code || l.id.slice(0,8),
+          participants,
+          partnerName: participants.filter(p => p.id !== session.user.id).map(p => p.name).join(' · '),
+          partnerId: null, // groupe, pas de partenaire unique
+          lastMsg,
+          unread: unreadByConv[l.id] || 0,
           pickup: l.adresse_depart || '',
           destination: l.adresse_arrivee || '',
+          statut: l.statut
         };
-      }).filter(c => c.lastMsg)
-        .sort((a, b) => new Date(b.lastMsg.cree_le) - new Date(a.lastMsg.cree_le));
+      })
+        .sort((a, b) => {
+          const ta = a.lastMsg ? new Date(a.lastMsg.cree_le) : new Date(0);
+          const tb = b.lastMsg ? new Date(b.lastMsg.cree_le) : new Date(0);
+          return tb - ta;
+        });
 
       renderConvList();
     }
@@ -231,18 +245,19 @@
       }
 
       el.innerHTML = conversations.map(c => {
-        const init = (c.partnerName || '?')[0].toUpperCase();
-        const time = fmtTime(c.lastMsg.cree_le);
-        const preview = c.lastMsg.expediteur_id === session.user.id
-          ? 'Vous : ' + c.lastMsg.contenu
-          : c.lastMsg.contenu;
+        const init = c.code.slice(0,2).toUpperCase();
+        const time = c.lastMsg ? fmtTime(c.lastMsg.cree_le) : '';
+        const preview = c.lastMsg
+          ? (c.lastMsg.expediteur_id === session.user.id ? 'Vous : ' : ((c.lastMsg.expediteur_role ? c.lastMsg.expediteur_role + ' : ' : ''))) + c.lastMsg.contenu
+          : 'Démarrer la conversation';
         const active = c.livraisonId === activeConvId ? 'active' : '';
+        const participantCount = c.participants.length;
         return `
-          <div class="conv-item ${active}" onclick="openConv('${c.livraisonId}','${c.partnerId}')">
+          <div class="conv-item ${active}" onclick="openConv('${c.livraisonId}')">
             <div class="conv-avatar">${esc(init)}</div>
             <div class="conv-info">
-              <div class="conv-name">${esc(c.partnerName)}</div>
-              <div class="conv-preview">${esc(preview.slice(0,60))}</div>
+              <div class="conv-name">${esc(c.partnerName || 'Livraison')} <span style="font-size:.7rem;color:var(--brand-muted);font-weight:600">· ${participantCount} pers.</span></div>
+              <div class="conv-preview">#${c.code} — ${esc(preview.slice(0,60))}</div>
             </div>
             <div class="conv-meta">
               <div class="conv-time">${time}</div>
@@ -252,35 +267,43 @@
       }).join('');
     }
 
-    async function openConv(livraisonId, partnerId) {
+    async function openConv(livraisonId) {
       activeConvId = livraisonId;
-      activePartnerId = partnerId;
+      activePartnerId = null;
 
       document.getElementById('chatEmpty').style.display = 'none';
       document.getElementById('chatActive').style.display = 'flex';
       document.getElementById('chatLayout').classList.add('chat-open');
 
       const conv = conversations.find(c => c.livraisonId === livraisonId);
-      document.getElementById('chatPartnerName').textContent = conv?.partnerName || '—';
+      const partLabels = conv ? conv.participants.map(p => {
+        const icon = { expediteur: '📦', livreur: '🚗', destinataire: '🏠' }[p.role] || '';
+        return `${icon} ${p.name}`;
+      }).join(' · ') : '—';
+      document.getElementById('chatPartnerName').textContent = '#' + (conv?.code || '') + ' — ' + partLabels;
       document.getElementById('chatLivraisonInfo').textContent =
-        conv ? `${conv.pickup.slice(0,30)} → ${conv.destination.slice(0,30)}` : '—';
-      document.getElementById('chatTrackLink').href = `/gps-tracker.html?id=${livraisonId}`;
+        conv ? `${(conv.pickup||'').slice(0,30)} → ${(conv.destination||'').slice(0,30)}` : '—';
+      document.getElementById('chatTrackLink').href = `/suivi-livraison.html?id=${livraisonId}`;
 
       renderConvList();
       await loadMessages(livraisonId);
 
-      // Marquer lus
-      await db.from('messages').update({ lu: true })
-        .eq('livraison_id', livraisonId)
-        .eq('destinataire_id', session.user.id)
-        .eq('lu', false);
+      // Marquer lus (via lu_par JSON)
+      const { data: msgs } = await db.from('messages').select('id, lu_par').eq('livraison_id', livraisonId);
+      for (const m of msgs || []) {
+        const luPar = m.lu_par || {};
+        if (!luPar[session.user.id]) {
+          luPar[session.user.id] = new Date().toISOString();
+          await db.from('messages').update({ lu_par: luPar }).eq('id', m.id);
+        }
+      }
       if (conv) { conv.unread = 0; renderConvList(); }
     }
 
     async function loadMessages(livraisonId) {
       const { data: msgs } = await db
         .from('messages')
-        .select('id, expediteur_id, contenu, cree_le')
+        .select('id, expediteur_id, expediteur_role, contenu, cree_le')
         .eq('livraison_id', livraisonId)
         .order('cree_le', { ascending: true });
 
@@ -289,6 +312,14 @@
         area.innerHTML = '<div style="text-align:center;color:var(--brand-muted);font-size:.82rem;margin-top:24px">Commencez la conversation</div>';
         return;
       }
+
+      const roleColors = {
+        expediteur: '#00d9ff',
+        livreur: '#b8f53e',
+        destinataire: '#ffb74d',
+        admin: '#ff6b6b'
+      };
+      const roleIcons = { expediteur: '📦', livreur: '🚗', destinataire: '🏠', admin: '👮' };
 
       let html = '';
       let lastDate = '';
@@ -301,8 +332,12 @@
         }
         const mine = m.expediteur_id === session.user.id;
         const time = d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+        const role = m.expediteur_role || 'autre';
+        const color = roleColors[role] || '#9BA1A9';
+        const icon = roleIcons[role] || '';
         html += `<div class="msg-row ${mine ? 'mine' : 'theirs'}">
-          <div class="msg-bubble">${esc(m.contenu)}</div>
+          ${!mine ? `<div style="font-size:.7rem;color:${color};font-weight:800;margin-bottom:2px">${icon} ${role}</div>` : ''}
+          <div class="msg-bubble" style="${!mine ? `border-left:3px solid ${color}` : ''}">${esc(m.contenu)}</div>
           <div class="msg-time">${time}</div>
         </div>`;
       }
@@ -311,7 +346,7 @@
     }
 
     async function sendMessage() {
-      if (!activeConvId || !activePartnerId) return;
+      if (!activeConvId) return;
       const input = document.getElementById('chatInput');
       const contenu = input.value.trim();
       if (!contenu) return;
@@ -320,12 +355,22 @@
       input.value = '';
       autoResize(input);
 
+      // Déterminer rôle de l'expéditeur dans cette livraison
+      const conv = conversations.find(c => c.livraisonId === activeConvId);
+      let myRole = profile?.role === 'admin' ? 'admin' : 'autre';
+      if (conv) {
+        const me = conv.participants.find(p => p.id === session.user.id);
+        if (me) myRole = me.role;
+      }
+
+      const luPar = {};
+      luPar[session.user.id] = new Date().toISOString();
       const { error } = await db.from('messages').insert({
         livraison_id: activeConvId,
         expediteur_id: session.user.id,
-        destinataire_id: activePartnerId,
+        expediteur_role: myRole,
         contenu,
-        lu: false,
+        lu_par: luPar,
         cree_le: new Date().toISOString()
       });
 
@@ -346,7 +391,9 @@
       db.channel('msg-live')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
           const m = payload.new;
-          if (m.expediteur_id !== session.user.id && m.destinataire_id !== session.user.id) return;
+          // Filtre: l'user fait-il partie de la livraison concernée ?
+          const conv = conversations.find(c => c.livraisonId === m.livraison_id);
+          if (!conv && profile?.role !== 'admin') return;
 
           if (m.livraison_id === activeConvId) {
             const area = document.getElementById('messagesArea');
