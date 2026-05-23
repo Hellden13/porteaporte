@@ -323,6 +323,38 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── CODE DESTINATAIRE — email auto au destinataire ──
+    case 'code_destinataire': {
+      if (!data.destinataire_email) break;
+      emails.push({
+        to: data.destinataire_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `📦 Un colis arrive pour toi — Code de réception : ${data.recipient_code}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">📦 Un colis arrive pour toi !</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.destinataire_nom || ''},<br><br><strong style="color:#fff">${data.expediteur_nom || 'Un expéditeur'}</strong> t'envoie un colis via PorteàPorte. Voici tes infos pour confirmer la réception.</p>
+            <div style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:10px;padding:16px;margin:20px 0">
+              <div style="font-size:.75rem;color:#6d7886;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Livraison</div>
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">📦 Depuis ${data.ville_depart}</div>
+              <div style="font-weight:700;color:#b8f53e">🏠 Vers ${data.adresse_arrivee || data.ville_arrivee}</div>
+              <div style="margin-top:8px;font-size:.85rem;color:#a8b0ba">${data.type_colis || 'Colis'}</div>
+            </div>
+            <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">🔑 TON CODE DE RÉCEPTION</div>
+              <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.recipient_code}</div>
+              <div style="font-size:.82rem;color:#a8b0ba">Garde ce code. Tu le saisiras à la réception du colis pour confirmer la livraison.</div>
+            </div>
+            <div style="text-align:center;margin:24px 0">
+              <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">✅ Confirmer la réception</a>
+            </div>
+            <p style="color:#6d7886;font-size:.8rem;margin-top:20px;text-align:center">Tu peux aussi suivre la livraison en temps réel via ce lien.<br>PorteàPorte · Livraison sécurisée au Québec</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── PREUVE SOUMISE — alerte admin action requise ──
     case 'preuve_soumise_admin': {
       emails.push({

@@ -108,6 +108,21 @@ async function createLivraison(req, res, ctx, body) {
     }).catch((err) => console.error('[notifier livraison_creee_expediteur]', err.message));
   }
 
+  // Email automatique au destinataire avec son code + lien confirmation
+  if (receptionCode && payload.email_destinataire) {
+    callNotifier('code_destinataire', {
+      destinataire_email: payload.email_destinataire,
+      destinataire_nom:   payload.nom_destinataire || '',
+      expediteur_nom:     ctx.profile?.prenom || '',
+      recipient_code:     receptionCode,
+      ville_depart:       livraison?.ville_depart || payload.ville_depart || '',
+      ville_arrivee:      livraison?.ville_arrivee || payload.ville_arrivee || '',
+      adresse_arrivee:    payload.adresse_arrivee || '',
+      type_colis:         payload.type_colis || 'Colis',
+      confirm_link:       `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}`
+    }).catch((err) => console.error('[notifier code_destinataire]', err.message));
+  }
+
   return res.status(200).json({ success: true, livraison, recipient_confirmation_code: receptionCode });
 }
 
