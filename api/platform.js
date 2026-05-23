@@ -345,6 +345,145 @@ async function livraisonImprevu(req, res, ctx, body) {
   return res.status(200).json({ success: true, statut: newStatut, compensation_amount: compensationAmount });
 }
 
+// ── Système de manquements bidirectionnel (juste pour les 3 parties) ──
+async function manquementSignaler(req, res, ctx, body) {
+  const { livraison_id, accuse_role, categorie, description, preuves_urls } = body;
+  if (!livraison_id || !accuse_role || !categorie) {
+    return res.status(400).json({ error: 'livraison_id, accuse_role et categorie requis' });
+  }
+  if (!['expediteur','livreur','destinataire'].includes(accuse_role)) {
+    return res.status(400).json({ error: 'accuse_role invalide' });
+  }
+
+  // Charger la livraison pour valider les rôles
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,expediteur_id,livreur_id`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  // Déterminer le rôle du signaleur
+  let signaleur_role = 'admin';
+  if (livraison.expediteur_id === ctx.session.id) signaleur_role = 'expediteur';
+  else if (livraison.livreur_id === ctx.session.id) signaleur_role = 'livreur';
+  else if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Tu n\'es pas partie à cette livraison' });
+  }
+
+  // Trouver l'ID de l'accusé selon son rôle
+  let accuse_id = null;
+  if (accuse_role === 'expediteur') accuse_id = livraison.expediteur_id;
+  else if (accuse_role === 'livreur') accuse_id = livraison.livreur_id;
+  // destinataire: pas d'ID (souvent pas de compte), on stocke null
+
+  const insert = await fetch(`${ctx.sbUrl}/rest/v1/manquements`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      livraison_id,
+      signaleur_id: ctx.session.id,
+      signaleur_role,
+      accuse_id,
+      accuse_role,
+      categorie,
+      description: description || '',
+      preuves_urls: Array.isArray(preuves_urls) ? preuves_urls : []
+    })
+  });
+  const inserted = await insert.json().catch(() => ({}));
+  if (!insert.ok) return res.status(400).json({ error: 'Création signalement impossible', details: inserted });
+  const m = Array.isArray(inserted) ? inserted[0] : inserted;
+
+  // Notifier l'accusé par email
+  if (accuse_id) {
+    const accRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(accuse_id)}&select=email,prenom`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    const accProfile = accRes.ok ? (await accRes.json())[0] : null;
+    if (accProfile?.email) {
+      callNotifier('manquement_signale', {
+        accuse_email: accProfile.email,
+        prenom: accProfile.prenom || '',
+        code: livraison.code || livraison_id.slice(0, 8),
+        categorie,
+        description: description || '',
+        signaleur_role,
+        manquement_id: m.id,
+        conteste_avant: m.conteste_avant
+      }).catch(err => console.error('[notifier manquement_signale]', err.message));
+    }
+  }
+
+  return res.status(200).json({ success: true, manquement: m });
+}
+
+async function manquementContester(req, res, ctx, body) {
+  const { manquement_id, contestation, contestation_preuves } = body;
+  if (!manquement_id || !contestation) return res.status(400).json({ error: 'manquement_id et contestation requis' });
+
+  // Vérifier que l'utilisateur est bien l'accusé
+  const mr = await fetch(`${ctx.sbUrl}/rest/v1/manquements?id=eq.${encodeURIComponent(manquement_id)}&select=*`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const m = mr.ok ? (await mr.json())[0] : null;
+  if (!m) return res.status(404).json({ error: 'Manquement introuvable' });
+  if (m.accuse_id !== ctx.session.id && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Tu n\'es pas l\'accusé de ce signalement' });
+  }
+  if (m.statut !== 'signale') return res.status(409).json({ error: 'Manquement déjà traité' });
+  if (new Date(m.conteste_avant) < new Date()) {
+    return res.status(409).json({ error: 'Délai de contestation dépassé (48h)' });
+  }
+
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/manquements?id=eq.${encodeURIComponent(manquement_id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      statut: 'conteste',
+      contestation,
+      contestation_preuves: Array.isArray(contestation_preuves) ? contestation_preuves : []
+    })
+  });
+  if (!pr.ok) {
+    const err = await pr.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Contestation impossible', details: err });
+  }
+  return res.status(200).json({ success: true });
+}
+
+async function manquementList(req, res, ctx, body) {
+  const userId = ctx.session.id;
+  const livraisonId = body.livraison_id;
+  let filter = `or=(signaleur_id.eq.${userId},accuse_id.eq.${userId})`;
+  if (livraisonId) filter = `livraison_id=eq.${encodeURIComponent(livraisonId)}`;
+  if (roleIn(ctx.profile, ['admin']) && body.all) filter = 'select=*';
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/manquements?${filter}&select=*&order=signale_at.desc&limit=100`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = r.ok ? await r.json() : [];
+  return res.status(200).json({ success: true, manquements: rows });
+}
+
+async function manquementAdminDecision(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const { manquement_id, decision, note } = body;
+  if (!manquement_id || !['valide','rejete','partage'].includes(decision)) {
+    return res.status(400).json({ error: 'manquement_id et decision (valide|rejete|partage) requis' });
+  }
+  const pr = await fetch(`${ctx.sbUrl}/rest/v1/manquements?id=eq.${encodeURIComponent(manquement_id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({
+      statut: decision,
+      decision_admin: note || '',
+      decision_at: new Date().toISOString()
+    })
+  });
+  if (!pr.ok) return res.status(400).json({ error: 'Décision impossible' });
+  return res.status(200).json({ success: true });
+}
+
 async function confirmDelivery(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
@@ -2588,6 +2727,10 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
     if (endpoint === 'livraison-imprevu') return await livraisonImprevu(req, res, ctx, body);
+    if (endpoint === 'manquement-signaler') return await manquementSignaler(req, res, ctx, body);
+    if (endpoint === 'manquement-contester') return await manquementContester(req, res, ctx, body);
+    if (endpoint === 'manquement-list') return await manquementList(req, res, ctx, body);
+    if (endpoint === 'manquement-admin-decision') return await manquementAdminDecision(req, res, ctx, body);
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
     if (endpoint === 'delivery-proof') return await submitDeliveryProof(req, res, ctx, body);

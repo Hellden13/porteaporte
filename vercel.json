@@ -331,6 +331,22 @@
                      {
                          "source":  "/api/livraison-imprevu",
                          "destination":  "/api/platform?endpoint=livraison-imprevu"
+                     },
+                     {
+                         "source":  "/api/manquement-signaler",
+                         "destination":  "/api/platform?endpoint=manquement-signaler"
+                     },
+                     {
+                         "source":  "/api/manquement-contester",
+                         "destination":  "/api/platform?endpoint=manquement-contester"
+                     },
+                     {
+                         "source":  "/api/manquement-list",
+                         "destination":  "/api/platform?endpoint=manquement-list"
+                     },
+                     {
+                         "source":  "/api/manquement-admin-decision",
+                         "destination":  "/api/platform?endpoint=manquement-admin-decision"
                      }
                  ],
     "headers":  [

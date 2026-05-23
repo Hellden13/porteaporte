@@ -323,6 +323,36 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── MANQUEMENT SIGNALÉ — notif accusé avec lien contestation ──
+    case 'manquement_signale': {
+      const contesteLink = `https://porteaporte.site/contester-manquement.html?id=${encodeURIComponent(data.manquement_id || '')}`;
+      const roleLabels = { expediteur: 'L\'expéditeur', livreur: 'Le livreur', destinataire: 'Le destinataire', admin: 'L\'administration' };
+      emails.push({
+        to: data.accuse_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `⚠️ Signalement à ton encontre — Livraison #${data.code}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 16px;color:#fff">⚠️ Un signalement a été déposé contre toi</h2>
+            <p style="color:#a8b0ba">Bonjour ${data.prenom || ''},<br><br>${roleLabels[data.signaleur_role] || 'Une partie'} a déposé un signalement concernant la livraison <strong style="color:#fff">#${data.code}</strong>.</p>
+            <div style="background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);border-radius:10px;padding:16px;margin:18px 0">
+              <div style="font-weight:800;color:#ffb0b0;margin-bottom:6px">Catégorie : ${data.categorie}</div>
+              ${data.description ? `<div style="color:#a8b0ba;font-size:.9rem">Description : ${data.description}</div>` : ''}
+            </div>
+            <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:16px;margin:18px 0">
+              <strong style="color:#00d9ff">⏱️ Tu as 48h pour contester</strong><br>
+              <span style="color:#a8b0ba;font-size:.9rem">Délai jusqu'au ${data.conteste_avant ? new Date(data.conteste_avant).toLocaleString('fr-CA') : '48h'}. Sans réponse, le signalement sera validé automatiquement.</span>
+            </div>
+            <div style="text-align:center;margin:20px 0">
+              <a href="${contesteLink}" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Voir et contester</a>
+            </div>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:20px">Les signalements répétés affectent ton score de fiabilité. Un score bas peut suspendre temporairement ton accès à la plateforme.</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── IMPRÉVU LIVRAISON — notif expéditeur ──
     case 'livraison_imprevu': {
       const actionLabels = {

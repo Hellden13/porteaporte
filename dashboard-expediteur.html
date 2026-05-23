@@ -459,6 +459,7 @@
                 </div>
                 <div class="header-actions">
                     <a href="/create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
+                    <a href="/historique-paiements.html" class="btn btn-ghost" style="font-size:0.85rem">💳 Historique paiements</a>
                 </div>
                 <div class="header-stats">
                     <div class="stat-badge">
@@ -802,9 +803,9 @@
                 in_transit: 'En route',
                 ramasse: 'Ramassee',
                 picked_up: 'Ramassee',
-                livre: 'Livree - confirmation requise',
-                livree: 'Livree - confirmation requise',
-                delivered: 'Livree - confirmation requise',
+                livre: 'Livree - attente confirmation destinataire',
+                livree: 'Livree - attente confirmation destinataire',
+                delivered: 'Livree - attente confirmation destinataire',
                 payee: 'Payee',
                 annule: 'Annulee',
                 annulee: 'Annulee',
@@ -834,8 +835,8 @@
         }
 
         function updateStats(livraisons) {
-            const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(l.statut)).length;
-            const completed = livraisons.filter(l => ['livre', 'payee', 'paid', 'succeeded'].includes(l.statut)).length;
+            const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up', 'livre', 'livree', 'delivered'].includes(l.statut)).length;
+            const completed = livraisons.filter(l => ['payee', 'paid', 'succeeded'].includes(l.statut)).length;
             const spent = livraisons.reduce((sum, l) => sum + Number(l.prix_total || 0), 0);
 
             document.getElementById('stat-total').textContent = livraisons.length;
@@ -850,7 +851,7 @@
             if (['confirme','en_route','ramasse'].includes(mission.statut)) {
                 buttons.push(`<a class="btn btn-ghost" href="/map.html?id=${id}">Suivi GPS</a>`);
             }
-            if (mission.livreur_id && ['confirme','en_route','ramasse','livre'].includes(mission.statut)) {
+            if (mission.livreur_id && ['confirme','en_route','ramasse','livre','livree','delivered'].includes(mission.statut)) {
                 buttons.push(`<a class="btn btn-ghost" href="/messagerie.html?livraison=${id}">💬 Livreur</a>`);
             }
 
@@ -878,13 +879,87 @@
                 buttons.push(`<button class="btn btn-ghost" type="button" onclick="cancelLivraison('${mission.id}')">Annuler</button>`);
             }
 
-            return buttons.join('') + '<div class="mission-note">Le destinataire doit confirmer la reception avec son code. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+            if (mission.livreur_id) {
+                buttons.push(`<button class="btn btn-ghost" style="color:#ffb0b0;border-color:rgba(255,90,90,.3)" type="button" onclick="toggleManquementExp('${mission.id}')">⚖️ Signaler</button>`);
+            }
+
+            const manqForm = mission.livreur_id ? `
+              <div id="manq-exp-${mission.id}" style="display:none;margin-top:12px;padding:14px;background:rgba(255,90,90,.06);border:1px solid rgba(255,90,90,.25);border-radius:10px">
+                <div style="font-weight:800;color:#ffb0b0;margin-bottom:10px">⚖️ Signaler un manquement</div>
+                <select id="manq-exp-accuse-${mission.id}" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:8px" onchange="updateCategoriesExp('${mission.id}')">
+                  <option value="livreur">Le livreur</option>
+                  <option value="destinataire">Le destinataire</option>
+                </select>
+                <select id="manq-exp-cat-${mission.id}" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:8px"></select>
+                <textarea id="manq-exp-desc-${mission.id}" rows="3" placeholder="Décris ce qui s'est passé..." style="width:100%;box-sizing:border-box;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem"></textarea>
+                <button class="btn btn-primary" style="margin-top:8px;width:100%" onclick="submitManquementExp('${mission.id}')">📨 Envoyer le signalement</button>
+                <div id="manq-exp-msg-${mission.id}" style="margin-top:8px;font-size:.82rem"></div>
+              </div>` : '';
+            return buttons.join('') + manqForm + '<div class="mission-note">Le destinataire doit confirmer la reception avec son code. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+        }
+
+        // ── Signalement de manquements (expéditeur) ──
+        const CAT_LIVREUR_EXP = ['Retard non justifié','Colis endommagé','Abandon de mission','Conduite dangereuse','Comportement inapproprié','Ne répond pas aux contacts','Autre'];
+        const CAT_DESTINATAIRE_EXP = ['Absent au rendez-vous','Refus injustifié','Mauvaise information donnée','Hors plage horaire','Ne répond pas','Autre'];
+
+        function toggleManquementExp(id) {
+          const box = document.getElementById('manq-exp-' + id);
+          if (box) {
+            const showing = box.style.display !== 'none';
+            box.style.display = showing ? 'none' : 'block';
+            if (!showing) updateCategoriesExp(id);
+          }
+        }
+
+        function updateCategoriesExp(id) {
+          const accuse = document.getElementById('manq-exp-accuse-' + id)?.value || 'livreur';
+          const cats = accuse === 'livreur' ? CAT_LIVREUR_EXP : CAT_DESTINATAIRE_EXP;
+          const sel = document.getElementById('manq-exp-cat-' + id);
+          if (sel) sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        async function submitManquementExp(id) {
+          const msgEl = document.getElementById('manq-exp-msg-' + id);
+          const accuse_role = document.getElementById('manq-exp-accuse-' + id)?.value;
+          const categorie = document.getElementById('manq-exp-cat-' + id)?.value;
+          const description = document.getElementById('manq-exp-desc-' + id)?.value.trim();
+          if (!description || description.length < 10) {
+            msgEl.style.color = '#ffb0b0';
+            msgEl.textContent = '⚠️ Décris ce qui s\'est passé (10 caractères min.)';
+            return;
+          }
+          msgEl.style.color = '#8A9BB0';
+          msgEl.textContent = '⏳ Envoi…';
+          try {
+            const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: sess } = await db.auth.getSession();
+            const res = await fetch('/api/manquement-signaler', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.session.access_token },
+              body: JSON.stringify({ livraison_id: id, accuse_role, categorie, description })
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(out.error || 'Erreur');
+            msgEl.style.color = '#7dffc1';
+            msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48h pour contester.';
+            setTimeout(() => toggleManquementExp(id), 2500);
+          } catch (err) {
+            msgEl.style.color = '#ffb0b0';
+            msgEl.textContent = '❌ ' + err.message;
+          }
         }
 
         function openRecipientConfirmation(livraisonId) {
             const link = `${window.location.origin}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}`;
-            navigator.clipboard?.writeText(link).catch(() => {});
-            window.open(link, '_blank', 'noopener,noreferrer');
+            const savedCode = localStorage.getItem('pap_reception_code_' + livraisonId);
+            if (savedCode) {
+                const msg = `Lien de confirmation:\n${link}\n\nCode destinataire: ${savedCode}\n\nTransmets ce code UNIQUEMENT au destinataire.`;
+                navigator.clipboard?.writeText(msg).catch(() => {});
+                alert('📋 Code et lien copiés!\n\nCode: ' + savedCode + '\nLien: ' + link + '\n\nTransmets ce code UNIQUEMENT au destinataire pour qu\'il confirme la réception.');
+            } else {
+                navigator.clipboard?.writeText(link).catch(() => {});
+                window.open(link, '_blank', 'noopener,noreferrer');
+            }
         }
 
         function reviewBox(mission) {
@@ -1008,8 +1083,8 @@
             const container = document.getElementById('missions-container');
             const filtered = missions.filter(m => {
                 if (currentTab === 'all') return true;
-                if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse'].includes(m.statut);
-                if (currentTab === 'completed') return ['livre', 'payee', 'paid', 'succeeded'].includes(m.statut);
+                if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up', 'livre', 'livree', 'delivered'].includes(m.statut);
+                if (currentTab === 'completed') return ['payee', 'paid', 'succeeded'].includes(m.statut);
                 if (currentTab === 'disputes') return ['litige', 'rembourse'].includes(m.statut);
                 return false;
             });

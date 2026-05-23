@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contester un signalement - PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 28px; margin-bottom: 16px; }
+    h1 { margin: 0 0 14px; }
+    .label { font-weight: 800; color: #ffb0b0; margin-bottom: 6px; }
+    .info-row { background: rgba(255,90,90,.08); border: 1px solid rgba(255,90,90,.3); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .timer { background: rgba(0,217,255,.08); border: 1px solid rgba(0,217,255,.3); border-radius: 10px; padding: 14px; margin-bottom: 18px; text-align: center; font-weight: 800; color: #00d9ff; }
+    textarea { width: 100%; box-sizing: border-box; background: #05080c; color: #fff; border: 1px solid #1E2535; border-radius: 10px; padding: 14px; min-height: 130px; font-family: inherit; resize: vertical; margin-bottom: 14px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .result { margin-top: 14px; padding: 14px; border-radius: 10px; font-weight: 700; display: none; }
+    .result.ok { display: block; background: rgba(0,255,159,.08); border: 1px solid rgba(0,255,159,.3); color: #7dffc1; }
+    .result.err { display: block; background: rgba(255,90,90,.08); border: 1px solid rgba(255,90,90,.3); color: #ffb0b0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <a href="/" style="display:inline-block;margin-bottom:12px;color:var(--brand-cyan);text-decoration:none">← Accueil</a>
+    <div class="panel">
+      <h1>⚠️ Contester un signalement</h1>
+      <div id="loading">Chargement du signalement…</div>
+      <div id="content" style="display:none">
+        <div class="timer" id="timerBox">⏱️ Délai de contestation</div>
+        <div class="label">Catégorie</div>
+        <div class="info-row" id="categorieBox"></div>
+        <div class="label">Description du signalement</div>
+        <div class="info-row" id="descBox"></div>
+
+        <div class="label" style="margin-top:18px;color:#b8f53e">Ta version des faits</div>
+        <textarea id="contestation" placeholder="Explique ta version, fournis des détails, contredis si nécessaire..."></textarea>
+
+        <div class="btn-row">
+          <button class="btn" type="button" onclick="submitContestation()">📨 Envoyer ma contestation</button>
+          <a class="btn secondary" href="/dashboard-livreur.html">Annuler</a>
+        </div>
+        <div id="result" class="result"></div>
+      </div>
+      <div id="errBox" style="display:none;color:#ffb0b0;padding:14px;background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);border-radius:10px"></div>
+    </div>
+    <p style="text-align:center;color:var(--brand-muted);font-size:.82rem">
+      Sans contestation dans les 48h, le signalement sera validé automatiquement et impactera ton score de fiabilité.<br>
+      Si tu contestes, un admin tranchera dans les 48h suivantes.
+    </p>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const manquementId = params.get('id');
+    let manquement = null;
+
+    async function load() {
+      if (!manquementId) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errBox').style.display = 'block';
+        document.getElementById('errBox').textContent = 'Identifiant de signalement manquant.';
+        return;
+      }
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html?next=' + encodeURIComponent(window.location.href); return; }
+
+      const res = await fetch('/api/manquement-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.session.access_token },
+        body: JSON.stringify({})
+      });
+      const out = await res.json().catch(() => ({}));
+      manquement = (out.manquements || []).find(m => m.id === manquementId);
+      document.getElementById('loading').style.display = 'none';
+
+      if (!manquement) {
+        document.getElementById('errBox').style.display = 'block';
+        document.getElementById('errBox').textContent = 'Signalement introuvable ou tu n\'es pas l\'accusé.';
+        return;
+      }
+      if (manquement.statut !== 'signale') {
+        document.getElementById('errBox').style.display = 'block';
+        document.getElementById('errBox').textContent = 'Ce signalement a déjà été traité (statut : ' + manquement.statut + ').';
+        return;
+      }
+
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('categorieBox').textContent = manquement.categorie;
+      document.getElementById('descBox').textContent = manquement.description || '(Aucune description fournie)';
+      const remaining = Math.max(0, new Date(manquement.conteste_avant) - Date.now());
+      const hours = Math.floor(remaining / 3600000);
+      const mins = Math.floor((remaining % 3600000) / 60000);
+      document.getElementById('timerBox').textContent = '⏱️ Délai restant : ' + hours + 'h ' + mins + 'min';
+    }
+
+    async function submitContestation() {
+      const txt = document.getElementById('contestation').value.trim();
+      const result = document.getElementById('result');
+      if (!txt || txt.length < 10) {
+        result.className = 'result err';
+        result.textContent = '⚠️ Ta contestation doit faire au moins 10 caractères.';
+        return;
+      }
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      const res = await fetch('/api/manquement-contester', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.session.access_token },
+        body: JSON.stringify({ manquement_id: manquementId, contestation: txt })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        result.className = 'result err';
+        result.textContent = '❌ ' + (out.error || 'Erreur');
+        return;
+      }
+      result.className = 'result ok';
+      result.textContent = '✅ Contestation envoyée. Un administrateur va trancher dans les 48h. Tu seras notifié par courriel.';
+      setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 3000);
+    }
+
+    load();
+  </script>
+</body>
+</html>

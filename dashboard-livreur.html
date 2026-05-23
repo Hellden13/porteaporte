@@ -1151,7 +1151,21 @@
                 ${delivered ? 'Livre ✓' : 'Marquer livre'}
               </button>
               ${canMark ? `<button class="btn-sm" style="background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.4);color:#ffb74d" onclick="toggleImprevu('${row.id}')">🚨 Imprévu</button>` : ''}
+              <button class="btn-sm" style="background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.3);color:#ffb0b0" onclick="toggleManquement('${row.id}')">⚖️ Signaler</button>
               ${delivered ? `<button class="btn-sm" onclick="toggleLivreurReview('${row.id}')">⭐ Évaluer expéditeur</button>` : ''}
+            </div>
+            <div id="manquement-${row.id}" style="display:none;margin-top:12px;padding:14px;background:rgba(255,90,90,.06);border:1px solid rgba(255,90,90,.25);border-radius:10px">
+              <div style="font-weight:800;color:#ffb0b0;margin-bottom:10px">⚖️ Signaler un manquement</div>
+              <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">Qui ?</label>
+              <select id="manq-accuse-${row.id}" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:8px" onchange="updateCategories('${row.id}')">
+                <option value="expediteur">L'expéditeur</option>
+                <option value="destinataire">Le destinataire</option>
+              </select>
+              <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">Catégorie</label>
+              <select id="manq-cat-${row.id}" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:8px"></select>
+              <textarea id="manq-desc-${row.id}" rows="3" placeholder="Décris ce qui s'est passé (joindre photos via support)..." style="width:100%;box-sizing:border-box;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:10px;font-size:.85rem"></textarea>
+              <button class="btn-sm primary" style="margin-top:8px;width:100%" onclick="submitManquement('${row.id}')">📨 Envoyer le signalement</button>
+              <div id="manq-msg-${row.id}" style="margin-top:8px;font-size:.82rem"></div>
             </div>
             <div id="imprevu-${row.id}" style="display:none;margin-top:12px;padding:14px;background:rgba(255,150,0,.08);border:1px solid rgba(255,150,0,.3);border-radius:10px">
               <div style="font-weight:800;color:#ffb74d;margin-bottom:10px">🚨 Que s'est-il passé ?</div>
@@ -1208,6 +1222,55 @@
             </div>` : ''}
           </div>`;
       }).join('');
+    }
+
+    // ── Signalement de manquements (bidirectionnel) ──
+    const CAT_EXPEDITEUR = ['Adresse incomplète/erronée','Colis non préparé','Description fausse (poids/taille)','Article interdit','Ne répond pas aux contacts','Autre'];
+    const CAT_DESTINATAIRE = ['Absent au rendez-vous','Refus injustifié du colis','Mauvaise information donnée','Hors plage horaire annoncée','Ne répond pas aux contacts','Autre'];
+
+    function toggleManquement(id) {
+      const box = document.getElementById('manquement-' + id);
+      if (box) {
+        const showing = box.style.display !== 'none';
+        box.style.display = showing ? 'none' : 'block';
+        if (!showing) updateCategories(id);
+      }
+    }
+
+    function updateCategories(id) {
+      const accuse = document.getElementById('manq-accuse-' + id)?.value || 'expediteur';
+      const cats = accuse === 'expediteur' ? CAT_EXPEDITEUR : CAT_DESTINATAIRE;
+      const sel = document.getElementById('manq-cat-' + id);
+      if (sel) sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    async function submitManquement(id) {
+      const msgEl = document.getElementById('manq-msg-' + id);
+      const accuse_role = document.getElementById('manq-accuse-' + id)?.value;
+      const categorie = document.getElementById('manq-cat-' + id)?.value;
+      const description = document.getElementById('manq-desc-' + id)?.value.trim();
+      if (!description || description.length < 10) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '⚠️ Décris ce qui s\'est passé (10 caractères min.)';
+        return;
+      }
+      msgEl.style.color = '#a8b0ba';
+      msgEl.textContent = '⏳ Envoi…';
+      try {
+        const res = await fetch('/api/manquement-signaler', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id, accuse_role, categorie, description })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msgEl.style.color = '#7dffc1';
+        msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48h pour contester.';
+        setTimeout(() => toggleManquement(id), 2500);
+      } catch (err) {
+        msgEl.style.color = '#ffb0b0';
+        msgEl.textContent = '❌ ' + err.message;
+      }
     }
 
     function toggleImprevu(id) {
