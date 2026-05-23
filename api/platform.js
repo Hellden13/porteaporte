@@ -892,6 +892,7 @@ async function tracking(req, res, ctx, body) {
   const isUuid = /^[0-9a-f-]{36}$/i.test(code);
   const filter = isUuid ? `id=eq.${encodeURIComponent(code)}` : `code=eq.${encodeURIComponent(code.toUpperCase())}`;
   const trackingSelects = [
+    'id,code,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,taille_colis,type,poids_kg,valeur_declaree,assurance_plan,prix_total,reception_mode,reception_heure_debut,reception_heure_fin,reception_photo_obligatoire,reception_lieu_repli,reception_note_livreur,created_at,cree_le',
     'id,code,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,type,poids_kg,valeur_declaree,assurance_plan,prix_total,created_at,cree_le',
     'id,expediteur_id,livreur_id,statut,adresse_depart,adresse_arrivee,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,created_at',
     'id,expediteur_id,statut,ville_depart,ville_arrivee,prix_total,created_at',

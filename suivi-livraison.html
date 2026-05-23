@@ -41,7 +41,7 @@
       <div id="details" class="grid" style="display:none"></div>
       <div class="actions">
         <a id="gpsLink" class="btn" href="/gps-tracker.html">Ouvrir le GPS</a>
-        <a id="mapsLink" class="btn secondary" href="#" target="_blank" rel="noopener" style="display:none">Ouvrir la carte</a>
+        <a id="mapsLink" class="btn secondary" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:none">Ouvrir la carte</a>
         <button class="btn secondary" type="button" onclick="loadTracking(true)">Rafraîchir</button>
         <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expéditeur</a>
       </div>
@@ -58,6 +58,7 @@
       <h2>Confirmation</h2>
       <p class="note">Une fois la réception confirmée par le destinataire, le paiement peut être libéré au livreur selon les règles Stripe et l'état du dossier.</p>
       <p class="note">Si aucun humain n'est présent, le livreur peut déposer une preuve photo + GPS. Le paiement reste protégé jusqu'au code destinataire ou une validation admin.</p>
+      <div id="confirm-section"></div>
     </section>
   </main>
 
@@ -123,7 +124,24 @@
       mapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
       mapsLink.style.display = 'inline-flex';
       mapPreview.classList.add('has-location');
-      mapPreview.innerHTML = `<strong>Position GPS active</strong><br>${lat.toFixed(6)}, ${lng.toFixed(6)}<br><span class="note">Clique sur "Ouvrir la carte" pour voir l'emplacement.</span>`;
+      // Essayer Google Maps embed
+      const gmKey = window._mapsKey || '';
+      if (gmKey) {
+        mapPreview.innerHTML = `<iframe
+          width="100%" height="300"
+          style="border:0;border-radius:10px"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps/embed/v1/place?key=${gmKey}&q=${lat},${lng}&zoom=15">
+        </iframe>`;
+      } else {
+        mapPreview.innerHTML = `
+          <strong style="color:var(--brand-lime)">📍 Position GPS active</strong><br>
+          <span style="font-size:.9rem">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener"
+             style="color:var(--brand-cyan);font-weight:700;margin-top:8px;display:inline-block">
+            🗺️ Ouvrir dans Google Maps →
+          </a>`;
+      }
     }
 
     async function loadTracking(manual) {
@@ -159,18 +177,81 @@
         return;
       }
       const l = result.livraison || {};
-      statusEl.innerHTML = '<span id="liveDot" class="live-dot on"></span>Suivi sécurisé chargé' + (manual ? ' à l’instant.' : '.');
+
+      // Labels de statut lisibles
+      const statusLabels = {
+        en_attente: '⏳ En attente de livreur',
+        publie: '📢 Publiée — en attente de livreur',
+        paiement_autorise: '💳 Paiement sécurisé — en attente d\'assignation',
+        confirme: '✅ Livreur assigné',
+        en_route: '🚗 En route',
+        ramasse: '📦 Colis ramassé',
+        livre: '🏠 Livré — attente confirmation',
+        livree: '🏠 Livré — attente confirmation',
+        delivered: '🏠 Livré — attente confirmation',
+        payee: '✅ Livraison complète — payée',
+        paid: '✅ Livraison complète — payée'
+      };
+
+      statusEl.innerHTML = '<span id="liveDot" class="live-dot on"></span>Suivi sécurisé chargé' + (manual ? ' à l\'instant.' : '.');
       detailsEl.style.display = 'grid';
       detailsEl.innerHTML = [
-        item('Statut', l.statut),
+        item('Statut', statusLabels[l.statut] || l.statut),
         item('Code', l.code),
         item('Départ', l.ville_depart),
         item('Arrivée', l.ville_arrivee),
-        item('Colis', l.type_colis || l.type),
+        item('Colis', (l.type_colis || l.type || '') + (l.taille_colis ? ' (' + l.taille_colis + ')' : '')),
         item('Montant', l.prix_total ? Number(l.prix_total).toFixed(2) + ' $' : '-')
       ].join('');
+
+      // ── Préférences de réception destinataire (visible pour livreur+expéditeur+admin) ──
+      const prefsSection = document.getElementById('prefs-display') || (() => {
+        const div = document.createElement('div');
+        div.id = 'prefs-display';
+        document.querySelector('.panel').appendChild(div);
+        return div;
+      })();
+      const modeLabels = {
+        signature: '✍️ Signature obligatoire',
+        depot_porte: '📦 Dépôt à la porte (photo)',
+        concierge: '🛎️ Laisser au concierge',
+        voisin: '🏘️ Laisser au voisin',
+        boite_securisee: '🔐 Boîte sécurisée'
+      };
+      const hasPrefs = l.reception_mode || l.reception_heure_debut || l.reception_lieu_repli || l.reception_note_livreur;
+      if (hasPrefs) {
+        prefsSection.innerHTML = '<div style="margin-top:16px;padding:14px 16px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.22);border-radius:10px;font-size:.9rem;line-height:1.6">'
+          + '<div style="color:#00d9ff;font-weight:800;margin-bottom:8px">📋 Préférences du destinataire</div>'
+          + (l.reception_mode ? '<div>• ' + (modeLabels[l.reception_mode] || l.reception_mode) + '</div>' : '')
+          + (l.reception_heure_debut ? '<div>• 🕐 Disponible de <strong>' + l.reception_heure_debut.slice(0,5) + '</strong> à <strong>' + (l.reception_heure_fin || '').slice(0,5) + '</strong></div>' : '')
+          + (l.reception_photo_obligatoire ? '<div>• 📸 <strong>Photo de dépôt obligatoire</strong></div>' : '')
+          + (l.reception_lieu_repli ? '<div>• 🏠 Si absent : <strong>' + l.reception_lieu_repli + '</strong></div>' : '')
+          + (l.reception_note_livreur ? '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,200,0,.08);border-left:3px solid #ffd700;border-radius:4px">💬 <em>' + l.reception_note_livreur + '</em></div>' : '')
+          + '</div>';
+      } else {
+        prefsSection.innerHTML = '';
+      }
+
+      // Bouton confirmation destinataire si livré
+      const confirmSection = document.getElementById('confirm-section');
+      if (['livre', 'livree', 'delivered'].includes(l.statut)) {
+        const confirmLink = '/confirmation-destinataire.html?livraison_id=' + encodeURIComponent(id);
+        confirmSection.innerHTML = '<div style="margin-top:16px;padding:16px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25);border-radius:10px">'
+          + '<div style="font-weight:800;color:var(--brand-lime);margin-bottom:8px">📬 Ton colis est arrivé !</div>'
+          + '<p class="note" style="margin:0 0 14px">Entre le code de réception reçu de l\'expéditeur pour confirmer et libérer le paiement au livreur.</p>'
+          + '<a href="' + confirmLink + '" class="btn" style="text-decoration:none">Confirmer la réception →</a>'
+          + '</div>';
+      } else {
+        confirmSection.innerHTML = '';
+      }
+
       renderLocation(result.latest_location);
     }
+
+    // Charger la clé Google Maps
+    fetch('/api/maps-config').then(r => r.ok ? r.json() : {}).then(d => {
+      if (d.key) window._mapsKey = d.key;
+    }).catch(() => {});
 
     loadTracking(false);
     refreshTimer = setInterval(() => loadTracking(false), 10000);

@@ -429,7 +429,7 @@
   <main class="page" id="mainPage" style="display:none">
 
     <!-- Eco bonus banner -->
-    <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);align-items:center;gap:14px;flex-wrap:wrap">
       <span style="font-size:24px" id="ecoIcon">🌱</span>
       <div style="flex:1;min-width:0">
         <div style="font-weight:800;color:var(--brand-lime)" id="ecoBannerTitle">Bonus écologique actif</div>
@@ -478,7 +478,10 @@
 
     <div class="section-header">
       <span class="section-title">Points Impact &amp; Missions</span>
-      <a class="section-link" href="/programme-points.html">Comment gagner des points →</a>
+      <div style="display:flex;gap:14px;align-items:center">
+        <a class="section-link" href="/programme-points.html">Comment gagner des points →</a>
+        <a class="section-link" href="/parrainage.html">🤝 Parrainer un ami →</a>
+      </div>
     </div>
     <div class="rewards-grid">
       <div class="reward-card">
@@ -487,7 +490,7 @@
         <div id="bonusMissionsList"><p class="loading-msg">Chargement des missions bonus...</p></div>
       </div>
       <div class="reward-card">
-        <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(184,245,62,0.08);border:1px solid rgba(184,245,62,0.3);border-radius:10px;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:12px">
+        <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(184,245,62,0.08);border:1px solid rgba(184,245,62,0.3);border-radius:10px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px">
           <div>
             <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--brand-lime);font-weight:800;margin-bottom:2px">Abonnement actif</div>
             <div id="sub-pro-name" style="font-weight:800;font-size:0.95rem"></div>
@@ -513,6 +516,24 @@
           </div>
         </details>
       </div>
+    </div>
+
+    <!-- 🛡️ Jours sans réclamation -->
+    <div class="section-header">
+      <span class="section-title">🛡️ Jours sans réclamation</span>
+      <a class="section-link" href="/assurance.html">Fonds de protection →</a>
+    </div>
+    <div id="claimFreeWidget" style="background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:20px;margin-bottom:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+        <div>
+          <div style="font-size:3rem;font-weight:900;color:var(--brand-lime);line-height:1" id="cfDays">—</div>
+          <div style="font-size:.82rem;color:var(--brand-muted);margin-top:4px">jours consécutifs sans réclamation</div>
+        </div>
+        <div id="cfNextBox" style="background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:10px;padding:12px 16px;font-size:.84rem;color:var(--brand-muted);min-width:180px">
+          Chargement...
+        </div>
+      </div>
+      <div id="cfMilestones" style="display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
 
     <!-- 2-col grid -->
@@ -564,7 +585,27 @@
     </div>
 
     <!-- ── Section Paiements & Retraits ────────────────────── -->
+    <!-- ── Graphe revenus mensuels ────────────────────────────── -->
     <div class="section-header" style="margin-top:24px">
+      <span class="section-title">📊 Revenus mensuels</span>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div>
+          <div class="card-title" style="margin:0 0 2px">Tes gains mois par mois</div>
+          <div style="font-size:0.78rem;color:var(--brand-muted)">Part livreur (60% du prix de la livraison)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.4rem;font-weight:900;color:var(--brand-lime)" id="chart-month-total">—</div>
+          <div style="font-size:0.72rem;color:var(--brand-muted)">ce mois-ci</div>
+        </div>
+      </div>
+      <div id="revenue-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:24px;position:relative">
+        <div style="color:var(--brand-muted);font-size:0.8rem;padding:16px 0">Chargement…</div>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:8px">
       <span class="section-title">💳 Paiements &amp; Retraits</span>
     </div>
 
@@ -622,12 +663,12 @@
   <!-- Loading / suspended banners (shown instead of main) -->
   <div id="bannerArea" style="padding:24px"></div>
 
-  <!-- ===== Biometric modal ===== -->
+  <!-- ===== Confirmation modal ===== -->
   <div class="bio-modal-overlay" id="bioModal">
     <div class="bio-modal">
-      <div class="bio-icon" id="bioIcon">👆</div>
-      <h2 id="bioTitle">Confirmation biométrique</h2>
-      <p id="bioDesc">Utilise ton empreinte digitale ou Face ID pour confirmer l'acceptation de cette mission.</p>
+      <div class="bio-icon" id="bioIcon">🚚</div>
+      <h2 id="bioTitle">Confirmer l'acceptation</h2>
+      <p id="bioDesc">Confirme que tu veux accepter cette mission. Les détails complets seront débloqués après assignation.</p>
       <div class="bio-btns">
         <button class="bio-cancel" onclick="closeBioModal()">Annuler</button>
         <button class="bio-confirm" id="bioConfirmBtn" onclick="confirmBiometric()">Confirmer</button>
@@ -930,6 +971,7 @@
         renderDriverLevel(out.level);
         renderBadges(out.badges_earned || []);
         renderDraws(out);
+        renderClaimFree(out.claim_free);
       } catch (err) {
         document.getElementById('bonusMissionsList').innerHTML = `<div class="empty-msg">${esc(err.message)}</div>`;
         document.getElementById('drawsList').innerHTML = '<div class="empty-msg">Tirages indisponibles pour le moment.</div>';
@@ -993,6 +1035,40 @@
       `;
     }
 
+    function renderClaimFree(cf) {
+      if (!cf) return;
+      const days = cf.days || 0;
+      document.getElementById('cfDays').textContent = days;
+
+      // Couleur selon palier
+      const color = days >= 90 ? 'var(--brand-cyan)' : days >= 30 ? 'var(--brand-lime)' : '#fbbf24';
+      document.getElementById('cfDays').style.color = color;
+
+      // Prochain palier
+      const nextBox = document.getElementById('cfNextBox');
+      if (cf.next) {
+        nextBox.innerHTML = `<div style="font-weight:800;color:var(--brand-text);margin-bottom:4px">${cf.next.emoji} Prochain : ${cf.next.label}</div>
+          <div>Dans <strong style="color:${color}">${cf.next.days_remaining}j</strong> · +${cf.next.points} pts</div>`;
+      } else {
+        nextBox.innerHTML = `<div style="font-weight:800;color:var(--brand-lime)">🚀 Tous les jalons atteints !</div>`;
+      }
+
+      // Jalons
+      const ms = document.getElementById('cfMilestones');
+      ms.innerHTML = (cf.milestones || []).map(m => {
+        const done = m.reached;
+        const active = m.current && !done;
+        const bg = done ? 'rgba(0,255,159,.12)' : active ? 'rgba(251,191,36,.08)' : 'rgba(255,255,255,.03)';
+        const border = done ? 'rgba(0,255,159,.3)' : active ? 'rgba(251,191,36,.25)' : 'var(--brand-border)';
+        const textColor = done ? 'var(--brand-lime)' : active ? '#fbbf24' : 'var(--brand-muted)';
+        return `<div style="flex:1;min-width:90px;background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px;text-align:center">
+          <div style="font-size:1.4rem">${m.emoji}</div>
+          <div style="font-size:.75rem;font-weight:800;color:${textColor};margin:4px 0 2px">${m.days}j</div>
+          <div style="font-size:.7rem;color:var(--brand-muted)">${done ? '✓ Obtenu' : '+' + m.points + ' pts'}</div>
+        </div>`;
+      }).join('');
+    }
+
     function renderDraws(out) {
       const entries = Object.fromEntries((out.entries || []).map(e => [e.draw_id, e.entries]));
       const draws = out.draws || [];
@@ -1030,7 +1106,7 @@
     async function loadMyDeliveries() {
       const { data, error } = await db
         .from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,type_colis,prix_total,statut')
+        .select('id,code,ville_depart,ville_arrivee,type_colis,taille_colis,prix_total,statut,reception_mode,reception_heure_debut,reception_heure_fin,reception_photo_obligatoire,reception_lieu_repli,reception_note_livreur')
         .eq('livreur_id', session.user.id)
         .not('statut', 'in', '(livre,annule,payee,livre_confirme,payee_livreur)')
         .order('created_at', { ascending: false })
@@ -1041,24 +1117,92 @@
         el.innerHTML = '<div class="empty-msg">Aucune livraison en cours. Accepte une mission ci-dessus !</div>';
         return;
       }
+      const modeLabels = {
+        signature: '✍️ Signature obligatoire',
+        depot_porte: '📦 Dépôt à la porte (photo)',
+        concierge: '🛎️ Laisser au concierge',
+        voisin: '🏘️ Laisser au voisin',
+        boite_securisee: '🔐 Boîte sécurisée'
+      };
       el.innerHTML = data.map(row => {
         const canMark = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
-        const delivered = ['livre','livree','delivered'].includes(row.statut);
+        const delivered = ['livre','livree','delivered','confirmee','payee','succeeded'].includes(row.statut);
+        const hasPrefs = row.reception_mode || row.reception_heure_debut || row.reception_lieu_repli || row.reception_note_livreur;
+        const prefsHtml = hasPrefs ? `
+          <div style="margin-top:10px;padding:10px 12px;background:rgba(0,217,255,0.06);border:1px solid rgba(0,217,255,0.22);border-radius:8px;font-size:.82rem;line-height:1.5">
+            <div style="color:#00d9ff;font-weight:800;margin-bottom:6px">📋 Préférences du destinataire</div>
+            ${row.reception_mode ? `<div>• ${modeLabels[row.reception_mode] || row.reception_mode}</div>` : ''}
+            ${row.reception_heure_debut ? `<div>• 🕐 Disponible de <strong>${row.reception_heure_debut.slice(0,5)}</strong> à <strong>${(row.reception_heure_fin||'').slice(0,5)}</strong></div>` : ''}
+            ${row.reception_photo_obligatoire ? `<div>• 📸 <strong>Photo de dépôt obligatoire</strong></div>` : ''}
+            ${row.reception_lieu_repli ? `<div>• 🏠 Si absent : <strong>${row.reception_lieu_repli}</strong></div>` : ''}
+            ${row.reception_note_livreur ? `<div style="margin-top:6px;padding:6px 8px;background:rgba(255,200,0,.08);border-left:3px solid #ffd700;border-radius:4px">💬 <em>${row.reception_note_livreur}</em></div>` : ''}
+          </div>` : '';
         return `
           <div class="delivery-row">
             <div>
-              <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+              <div class="delivery-route">${row.type_colis || 'Colis'}${row.taille_colis ? ` (${row.taille_colis})` : ''} · ${row.code || row.id.slice(0,8)}</div>
               <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+              ${prefsHtml}
             </div>
             <div class="delivery-actions">
               <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
               <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
               <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
-                ${delivered ? 'Livre - attente confirmation' : 'Marquer livre'}
+                ${delivered ? 'Livre ✓' : 'Marquer livre'}
               </button>
+              ${delivered ? `<button class="btn-sm" onclick="toggleLivreurReview('${row.id}')">⭐ Évaluer expéditeur</button>` : ''}
             </div>
+            ${delivered ? `
+            <div id="livreur-review-${row.id}" style="display:none;margin-top:12px;background:rgba(184,245,62,0.05);border:1px solid rgba(184,245,62,0.15);border-radius:10px;padding:14px;">
+              <div style="font-size:.85rem;font-weight:700;color:#B8F53E;margin-bottom:10px;">Évaluer l'expéditeur</div>
+              <form onsubmit="submitLivreurReview(event,'${row.id}')">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                  <label style="font-size:.82rem;color:#8A9BB0;">Note :</label>
+                  <select id="lrev-note-${row.id}" style="background:#111520;border:1px solid #1E2535;border-radius:8px;color:#E8EDF5;padding:6px 10px;font-size:.9rem;">
+                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                    <option value="4">⭐⭐⭐⭐ Bien</option>
+                    <option value="3">⭐⭐⭐ Correct</option>
+                    <option value="2">⭐⭐ Décevant</option>
+                    <option value="1">⭐ Mauvais</option>
+                  </select>
+                </div>
+                <textarea id="lrev-comment-${row.id}" placeholder="Instructions claires ? Emballage soigné ? Disponible à la remise ?" style="width:100%;background:#111520;border:1px solid #1E2535;border-radius:8px;color:#E8EDF5;padding:10px;font-size:.85rem;resize:vertical;min-height:70px;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <button type="submit" class="btn-sm primary">Envoyer</button>
+                  <button type="button" class="btn-sm" onclick="toggleLivreurReview('${row.id}')">Annuler</button>
+                </div>
+                <div id="lrev-msg-${row.id}" style="margin-top:8px;font-size:.82rem;"></div>
+              </form>
+            </div>` : ''}
           </div>`;
       }).join('');
+    }
+
+    function toggleLivreurReview(id) {
+      const box = document.getElementById('livreur-review-' + id);
+      if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function submitLivreurReview(event, livraisonId) {
+      event.preventDefault();
+      const rating  = Number(document.getElementById('lrev-note-' + livraisonId)?.value || 5);
+      const comment = document.getElementById('lrev-comment-' + livraisonId)?.value.trim() || '';
+      const msgEl   = document.getElementById('lrev-msg-' + livraisonId);
+      try {
+        const res = await fetch('/api/create-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: livraisonId, rating, comment, reviewer_role: 'livreur' })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Avis impossible');
+        msgEl.style.color = '#B8F53E';
+        msgEl.textContent = '✅ Avis envoyé. Merci !';
+        setTimeout(() => toggleLivreurReview(livraisonId), 1800);
+      } catch (err) {
+        msgEl.style.color = '#FF6B6B';
+        msgEl.textContent = '❌ ' + err.message;
+      }
     }
 
     async function markDelivered(id) {
@@ -1087,17 +1231,10 @@
         .limit(6);
 
       const el = document.getElementById('commentsSection');
-
-      /* Fallback mock data si aucun avis encore */
-      const MOCK = [
-        { rating: 5, comment: 'Super livreur, très ponctuel et souriant !', reviewer_id: null, _nom: 'Marie L.' },
-        { rating: 5, comment: 'Colis livré en parfait état, merci !',        reviewer_id: null, _nom: 'Jean-P.'  },
-        { rating: 4, comment: 'Rapide et efficace, je recommande.',           reviewer_id: null, _nom: 'Sophie B.' }
-      ];
-      const reviews = data?.length ? data : MOCK;
+      const reviews = data || [];
 
       if (!reviews.length) {
-        el.innerHTML = '<p class="no-comments">Aucun commentaire pour l\'instant. Complète ta première livraison !</p>';
+        el.innerHTML = '<p class="no-comments">Aucun avis reçu pour l\'instant. Complète ta première livraison pour en obtenir !</p>';
         return;
       }
 
@@ -1123,17 +1260,10 @@
     ============================= */
     function openBioModal(missionId) {
       pendingMissionId = missionId;
+      document.getElementById('bioIcon').textContent = '🚚';
+      document.getElementById('bioTitle').textContent = 'Confirmer l\'acceptation';
+      document.getElementById('bioDesc').textContent = 'Confirme que tu veux accepter cette mission. Les détails complets seront débloqués après assignation.';
       document.getElementById('bioModal').classList.add('open');
-      /* Try WebAuthn if available */
-      if (window.PublicKeyCredential) {
-        document.getElementById('bioIcon').textContent = '👆';
-        document.getElementById('bioTitle').textContent = 'Confirmation biométrique';
-        document.getElementById('bioDesc').textContent = 'Utilise ton empreinte digitale ou Face ID pour confirmer l\'acceptation de cette mission.';
-      } else {
-        document.getElementById('bioIcon').textContent = '🔒';
-        document.getElementById('bioTitle').textContent = 'Confirmer l\'acceptation';
-        document.getElementById('bioDesc').textContent = 'Confirme que tu veux accepter cette mission. Les détails complets seront débloqués après assignation.';
-      }
     }
 
     function closeBioModal() {
@@ -1143,22 +1273,9 @@
 
     async function confirmBiometric() {
       const btn = document.getElementById('bioConfirmBtn');
-      btn.textContent = 'Vérification…';
+      btn.textContent = 'Acceptation…';
       btn.disabled = true;
-
       try {
-        /* Attempt WebAuthn fingerprint/FaceID */
-        if (window.PublicKeyCredential) {
-          await navigator.credentials.get({
-            publicKey: {
-              challenge: crypto.getRandomValues(new Uint8Array(32)),
-              timeout: 30000,
-              userVerification: 'required',
-              rpId: window.location.hostname
-            }
-          }).catch(() => null); /* graceful fallback if no key registered */
-        }
-        /* Proceed with mission acceptance */
         await acceptMission(pendingMissionId);
       } finally {
         btn.textContent = 'Confirmer';
@@ -1219,14 +1336,24 @@
           const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
           return `
-          <div class="mission-card">
-            <div class="mission-info">
-              <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
-              <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
-              ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
+          <div class="mission-card" style="flex-direction:column;align-items:stretch;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="mission-route">📦 ${m.ville_depart || '?'} → 🏠 ${m.ville_arrivee || '?'}</div>
+                <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
+                ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
+              </div>
+              <span class="mission-price">${money(m.prix_total)}</span>
             </div>
-            <span class="mission-price">${money(m.prix_total)}</span>
-            <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
+            ${m.adresse_masquees ? `
+            <div style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.22);border-radius:8px;padding:10px;font-size:.82rem;color:#d9f99d">
+              Adresses complètes masquées jusqu'à acceptation de la mission.
+            </div>` : (m.adresse_depart || m.adresse_arrivee ? `
+            <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;font-size:.82rem;display:grid;gap:5px">
+              ${m.adresse_depart ? `<div><span style="color:#6d7886">📦 Départ :</span> <span style="color:#e0e6f0">${esc(m.adresse_depart)}</span></div>` : ''}
+              ${m.adresse_arrivee ? `<div><span style="color:#6d7886">🏠 Livraison :</span> <span style="color:#B8F53E;font-weight:700">${esc(m.adresse_arrivee)}</span></div>` : ''}
+            </div>` : '')}
+            <button class="accept-btn" style="width:100%" onclick="openBioModal('${m.id}')">Accepter cette mission</button>
           </div>`;
         }).join('');
       } catch (error) {
@@ -1257,18 +1384,48 @@
           const exp = row.expediteur_profile;
           const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expediteur' : null;
           const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const adresseDepart = row.adresse_depart || '';
+          const adresseArrivee = row.adresse_arrivee || '';
+          const notes = row.notes || row.description || '';
+          const telDestinataire = row.telephone_destinataire || row.tel_destinataire || '';
+          const nomDestinataire = row.nom_destinataire || '';
           return `
-            <div class="delivery-row">
-              <div>
-                <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
-                <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
-                ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}</div>` : ''}
+            <div class="delivery-row" style="flex-direction:column;align-items:stretch;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                <div>
+                  <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
+                  <div class="delivery-meta" style="margin-top:2px">${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+                  ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}Expéditeur : ${expName}</div>` : ''}
+                </div>
               </div>
+
+              <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.15);border-radius:10px;padding:12px;display:grid;gap:8px">
+                <div style="display:flex;gap:8px;align-items:flex-start">
+                  <span style="font-size:1rem;flex-shrink:0">📦</span>
+                  <div>
+                    <div style="font-size:.72rem;color:#6d7886;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Ramasser ici</div>
+                    <div style="font-weight:700;color:#fff;font-size:.93rem">${esc(adresseDepart || row.ville_depart || '?')}</div>
+                    ${adresseDepart && row.ville_depart ? `<div style="font-size:.8rem;color:#8A9BB0">${esc(row.ville_depart)}</div>` : ''}
+                  </div>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;display:flex;gap:8px;align-items:flex-start">
+                  <span style="font-size:1rem;flex-shrink:0">🏠</span>
+                  <div>
+                    <div style="font-size:.72rem;color:#6d7886;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Livrer ici</div>
+                    <div style="font-weight:700;color:#B8F53E;font-size:.93rem">${esc(adresseArrivee || row.ville_arrivee || '?')}</div>
+                    ${adresseArrivee && row.ville_arrivee ? `<div style="font-size:.8rem;color:#8A9BB0">${esc(row.ville_arrivee)}</div>` : ''}
+                    ${nomDestinataire ? `<div style="font-size:.8rem;color:#8A9BB0;margin-top:2px">👤 ${esc(nomDestinataire)}</div>` : ''}
+                    ${telDestinataire ? `<div style="margin-top:3px"><a href="tel:${esc(telDestinataire)}" style="font-size:.85rem;color:#00d9ff;font-weight:700;text-decoration:none">📞 ${esc(telDestinataire)}</a></div>` : ''}
+                  </div>
+                </div>
+                ${notes ? `<div style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;font-size:.82rem;color:#a8b0ba">💬 <em>${esc(notes)}</em></div>` : ''}
+              </div>
+
               <div class="delivery-actions">
                 <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
                 <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
                 <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
-                  ${delivered ? 'Livre - attente confirmation' : 'Marquer livre'}
+                  ${delivered ? 'Livré — attente confirmation' : 'Marquer livré'}
                 </button>
               </div>
             </div>`;
@@ -1354,6 +1511,12 @@
           document.getElementById('balTotal').textContent        = money(bal.total_earned);
           document.getElementById('balTransferred').textContent  = money(bal.transferred);
           document.getElementById('btnPayout').disabled = (bal.available || 0) < 10;
+
+          // Mettre à jour le stat card "Gains" avec les vrais gains depuis livreur_earnings
+          if (bal.total_earned > 0) {
+            document.getElementById('statEarnings').textContent = money(bal.total_earned);
+            document.getElementById('statEarningsSub').textContent = money(bal.available) + ' disponible';
+          }
 
           // Historique
           const hist = document.getElementById('payoutHistory');
@@ -1448,6 +1611,81 @@
         tryLoadStripe();
       }
     }, 200);
+  })();
+  </script>
+
+  <!-- Graphe revenus mensuels -->
+  <script>
+  (function initRevenueChart() {
+    const LIVREUR_SHARE = 0.60;
+    const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+    async function loadChart() {
+      const db = window.getSupabaseClient?.();
+      if (!db) return;
+      const { data: sessionData } = await db.auth.getSession();
+      if (!sessionData?.session) return;
+      const token = sessionData.session.access_token;
+
+      try {
+        // Charger toutes les livraisons terminées du livreur
+        const r = await fetch('/api/my-driver-livraisons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ include_completed: true, limit: 200 }),
+        });
+        const d = await r.json().catch(() => ({}));
+        const livraisons = (d.livraisons || []).filter(l =>
+          ['livree', 'livre', 'confirmee', 'payee', 'succeeded'].includes(l.statut) && Number(l.prix_total) > 0
+        );
+
+        // Agréger par mois (12 derniers mois)
+        const now = new Date();
+        const months = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          return { key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: MONTHS_FR[d.getMonth()], total: 0 };
+        });
+
+        livraisons.forEach(l => {
+          const date = new Date(l.created_at || l.cree_le || 0);
+          const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+          const m = months.find(m => m.key === key);
+          if (m) m.total += Number(l.prix_total) * LIVREUR_SHARE;
+        });
+
+        renderChart(months);
+      } catch { /* silencieux */ }
+    }
+
+    function renderChart(months) {
+      const el = document.getElementById('revenue-chart');
+      if (!el) return;
+
+      const max = Math.max(...months.map(m => m.total), 0.01);
+      const thisMonth = months[months.length - 1]?.total || 0;
+      const totalEl = document.getElementById('chart-month-total');
+      if (totalEl) totalEl.textContent = '$' + thisMonth.toFixed(2);
+
+      el.innerHTML = months.map((m, i) => {
+        const pct = Math.round((m.total / max) * 100);
+        const isLast = i === months.length - 1;
+        const color = isLast ? 'var(--brand-lime)' : 'rgba(184,245,62,0.35)';
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
+          <div style="font-size:0.68rem;color:var(--brand-muted);white-space:nowrap">${m.total > 0 ? '$' + Math.round(m.total) : ''}</div>
+          <div style="flex:1;width:100%;display:flex;align-items:flex-end">
+            <div style="width:100%;height:${Math.max(pct,2)}%;background:${color};border-radius:4px 4px 0 0;transition:height 0.4s ease;min-height:3px"></div>
+          </div>
+          <div style="font-size:0.7rem;color:${isLast ? 'var(--brand-lime)' : 'var(--brand-muted)'};font-weight:${isLast ? '800' : '400'}">${m.label}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Charger après l'init principale
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(loadChart, 1200));
+    } else {
+      setTimeout(loadChart, 1200);
+    }
   })();
   </script>
 
