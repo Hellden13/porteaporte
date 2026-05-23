@@ -1,6 +1,14 @@
 {
     "cleanUrls":  false,
     "trailingSlash":  false,
+    "functions": {
+        "api/**/*.js": {
+            "includeFiles": "api/_*.js"
+        }
+    },
+    "crons": [
+        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
+    ],
     "redirects": [
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.bat)",    "destination": "/404.html", "permanent": false },
@@ -95,6 +103,10 @@
                          "destination":  "/api/platform?endpoint=my-driver-livraisons"
                      },
                      {
+                         "source":  "/api/admin-dashboard",
+                         "destination":  "/api/platform?endpoint=admin-dashboard"
+                     },
+                     {
                          "source":  "/api/notifications",
                          "destination":  "/api/platform?endpoint=notifications"
                      },
@@ -109,6 +121,10 @@
                      {
                          "source":  "/api/tracking",
                          "destination":  "/api/platform?endpoint=tracking"
+                     },
+                     {
+                         "source":  "/api/tracking-public",
+                         "destination":  "/api/tracking-public"
                      },
                      {
                          "source":  "/api/confirm-delivery",
@@ -133,6 +149,10 @@
                      {
                          "source":  "/api/create-review",
                          "destination":  "/api/platform?endpoint=create-review"
+                     },
+                     {
+                         "source":  "/api/recipient-review",
+                         "destination":  "/api/platform?endpoint=recipient-review"
                      },
                      {
                          "source":  "/api/impact-public",
@@ -171,8 +191,16 @@
                          "destination":  "/api/platform?endpoint=ride-detail"
                      },
                      {
+                         "source":  "/api/ride-settings",
+                         "destination":  "/api/platform?endpoint=ride-settings"
+                     },
+                     {
                          "source":  "/api/ride-book",
                          "destination":  "/api/platform?endpoint=ride-book"
+                     },
+                     {
+                         "source":  "/api/ride-package-book",
+                         "destination":  "/api/platform?endpoint=ride-package-book"
                      },
                      {
                          "source":  "/api/ride-cancel",
@@ -189,6 +217,10 @@
                      {
                          "source":  "/api/ride-report",
                          "destination":  "/api/platform?endpoint=ride-report"
+                     },
+                     {
+                         "source":  "/api/safe-meeting-points",
+                         "destination":  "/api/platform?endpoint=safe-meeting-points"
                      },
                      {
                          "source":  "/api/cov-dashboard",
@@ -277,6 +309,18 @@
                      {
                          "source":  "/api/subscription-status",
                          "destination":  "/api/platform?endpoint=subscription-status"
+                     },
+                     {
+                         "source":  "/api/maps-config",
+                         "destination":  "/api/platform?endpoint=maps-config"
+                     },
+                     {
+                         "source":  "/api/tracking-public",
+                         "destination":  "/api/platform?endpoint=tracking-public"
+                     },
+                     {
+                         "source":  "/api/admin-push-broadcast",
+                         "destination":  "/api/platform?endpoint=admin-push-broadcast"
                      }
                  ],
     "headers":  [
@@ -302,7 +346,7 @@
                         "headers":  [
                                         {
                                             "key":  "Content-Security-Policy",
-                                            "value":  "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'"
+                                            "value":  "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://cdn.jsdelivr.net; frame-src https://js.stripe.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'"
                                         },
                                         {
                                             "key":  "X-Content-Type-Options",
