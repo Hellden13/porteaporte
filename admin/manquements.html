@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitrage manquements - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    h1 { margin: 0; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab { padding: 10px 16px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 8px; cursor: pointer; font-weight: 700; color: var(--brand-muted); font-size: .9rem; }
+    .tab.active { background: var(--brand-lime); color: #071008; border-color: var(--brand-lime); }
+    .tab .count { background: rgba(0,0,0,.15); padding: 2px 8px; border-radius: 999px; font-size: .75rem; margin-left: 6px; }
+    .manq-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .manq-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+    .pill.signale { background: rgba(255,200,0,.15); color: #ffd700; }
+    .pill.conteste { background: rgba(0,217,255,.15); color: #00d9ff; }
+    .pill.valide { background: rgba(255,90,90,.15); color: #ffb0b0; }
+    .pill.rejete { background: rgba(0,255,159,.15); color: #7dffc1; }
+    .pill.partage { background: rgba(255,150,0,.15); color: #ffb74d; }
+    .meta { color: var(--brand-muted); font-size: .82rem; line-height: 1.6; }
+    .quote { background: rgba(0,0,0,.25); border-left: 3px solid var(--brand-cyan); padding: 10px 14px; border-radius: 6px; margin: 10px 0; font-style: italic; line-height: 1.5; }
+    .quote.contest { border-left-color: var(--brand-lime); }
+    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .btn-decision { padding: 10px 16px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; font-size: .88rem; }
+    .btn-valide { background: rgba(255,90,90,.15); color: #ffb0b0; border: 1px solid rgba(255,90,90,.4); }
+    .btn-rejete { background: rgba(0,255,159,.15); color: #7dffc1; border: 1px solid rgba(0,255,159,.4); }
+    .btn-partage { background: rgba(255,150,0,.15); color: #ffb74d; border: 1px solid rgba(255,150,0,.4); }
+    .note-input { width: 100%; box-sizing: border-box; margin-top: 8px; background: #05080c; color: #fff; border: 1px solid #1E2535; border-radius: 8px; padding: 10px; font-size: .9rem; }
+    .empty { text-align: center; color: var(--brand-muted); padding: 40px 20px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>⚖️ Arbitrage des manquements</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="conteste" onclick="setTab('conteste')">🔥 À arbitrer <span class="count" id="cnt-conteste">0</span></div>
+      <div class="tab" data-tab="signale" onclick="setTab('signale')">⏳ En attente <span class="count" id="cnt-signale">0</span></div>
+      <div class="tab" data-tab="valide" onclick="setTab('valide')">✅ Validés <span class="count" id="cnt-valide">0</span></div>
+      <div class="tab" data-tab="rejete" onclick="setTab('rejete')">❌ Rejetés <span class="count" id="cnt-rejete">0</span></div>
+      <div class="tab" data-tab="partage" onclick="setTab('partage')">⚖️ Partagés <span class="count" id="cnt-partage">0</span></div>
+    </div>
+
+    <div id="list"><p class="empty">Chargement…</p></div>
+  </main>
+
+  <script>
+    let allManquements = [];
+    let currentTab = 'conteste';
+    let session = null;
+
+    async function init() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+
+      await loadManquements();
+    }
+
+    async function loadManquements() {
+      const res = await fetch('/api/manquement-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ all: true })
+      });
+      const out = await res.json().catch(() => ({}));
+      allManquements = out.manquements || [];
+      updateCounts();
+      render();
+    }
+
+    function updateCounts() {
+      ['conteste','signale','valide','rejete','partage'].forEach(s => {
+        const el = document.getElementById('cnt-' + s);
+        if (el) el.textContent = allManquements.filter(m => m.statut === s).length;
+      });
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      render();
+    }
+
+    function roleLabel(r) {
+      return { expediteur: '📦 Expéditeur', livreur: '🚗 Livreur', destinataire: '🏠 Destinataire', admin: '👮 Admin' }[r] || r;
+    }
+
+    function render() {
+      const list = document.getElementById('list');
+      const filtered = allManquements.filter(m => m.statut === currentTab);
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty">Aucun manquement dans cette catégorie.</div>';
+        return;
+      }
+      list.innerHTML = filtered.map(m => {
+        const d = new Date(m.signale_at).toLocaleString('fr-CA');
+        const deadline = m.conteste_avant ? new Date(m.conteste_avant) : null;
+        const deadlineMs = deadline ? deadline - Date.now() : 0;
+        const deadlineLabel = deadline
+          ? (deadlineMs > 0 ? `⏱️ Reste ${Math.floor(deadlineMs/3600000)}h pour contester` : '⏱️ Délai dépassé')
+          : '';
+        const showActions = m.statut === 'conteste' || m.statut === 'signale';
+        return `
+          <div class="manq-card">
+            <div class="manq-head">
+              <div>
+                <span class="pill ${m.statut}">${m.statut}</span>
+                <strong style="margin-left:10px">${m.categorie}</strong>
+              </div>
+              <div class="meta">Livraison : <code>${(m.livraison_id||'').slice(0,8)}</code> · ${d}</div>
+            </div>
+            <div class="meta">
+              <strong>${roleLabel(m.signaleur_role)}</strong> signale <strong>${roleLabel(m.accuse_role)}</strong>
+              ${m.statut === 'signale' ? ' · ' + deadlineLabel : ''}
+            </div>
+            <div class="quote">📝 ${m.description || '(Aucune description)'}</div>
+            ${m.contestation ? `<div class="quote contest">🛡️ <strong>Contestation :</strong> ${m.contestation}</div>` : ''}
+            ${m.decision_admin ? `<div class="meta" style="margin-top:10px">⚖️ <strong>Décision admin :</strong> ${m.decision_admin}</div>` : ''}
+            ${showActions ? `
+              <textarea class="note-input" id="note-${m.id}" rows="2" placeholder="Note d'arbitrage (raison de ta décision)..."></textarea>
+              <div class="actions">
+                <button class="btn-decision btn-valide" onclick="decide('${m.id}','valide')">⚠️ Valider (faute confirmée)</button>
+                <button class="btn-decision btn-rejete" onclick="decide('${m.id}','rejete')">✅ Rejeter (signalement abusif)</button>
+                <button class="btn-decision btn-partage" onclick="decide('${m.id}','partage')">⚖️ Partagé (50/50)</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function decide(id, decision) {
+      const note = document.getElementById('note-' + id)?.value.trim() || '';
+      if (!confirm('Confirmer la décision « ' + decision.toUpperCase() + ' » ?')) return;
+      const res = await fetch('/api/manquement-admin-decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ manquement_id: id, decision, note })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { alert('Erreur : ' + (out.error || 'inconnue')); return; }
+      await loadManquements();
+    }
+
+    init();
+  </script>
+</body>
+</html>

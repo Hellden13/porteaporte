@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -314,19 +314,21 @@
     <a href="#section-livraisons"   class="nav-link"><span class="icon">📦</span> Livraisons</a>
     <a href="#section-revenus"      class="nav-link"><span class="icon">💰</span> Revenus</a>
     <a href="#section-litiges"      class="nav-link"><span class="icon">⚠️</span> Litiges</a>
-    <a href="#section-rewards"      class="nav-link"><span class="icon">★</span> Missions & tirages</a>
+    <a href="#section-avis"         class="nav-link"><span class="icon">⭐</span> Avis utilisateurs</a>
+    <a href="#section-rewards"      class="nav-link"><span class="icon">?</span> Missions & tirages</a>
     <a href="#section-gamification" class="nav-link"><span class="icon">🎮</span> Gamification</a>
     <a href="#section-impact"       class="nav-link"><span class="icon">♥</span> Transparence</a>
-    <a href="#section-covoiturage"  class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
+    <a href="#section-covoiturage"  class="nav-link"><span class="icon">??</span> Covoiturage</a>
     <a href="#section-parrainage"   class="nav-link"><span class="icon">🤝</span> Parrainage</a>
     <a href="#section-notifications"class="nav-link"><span class="icon">🔔</span> Notifications push</a>
     <div class="sidebar-label" style="margin-top:16px">Outils admin</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
-    <a href="/transparence.html"     class="nav-link"><span class="icon">↗</span> Page transparence</a>
+    <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Arbitrage manquements</a>
+    <a href="/transparence.html"     class="nav-link"><span class="icon">?</span> Page transparence</a>
     <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
     <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
     <a href="/dashboard-livreur.html"     class="nav-link"><span class="icon">🚚</span> Espace livreur</a>
-    <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">🚗</span> Espace covoiturage</a>
+    <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">??</span> Espace covoiturage</a>
     <a href="/compte.html"               class="nav-link"><span class="icon">👤</span> Mon profil</a>
     <div class="sidebar-bottom">
       <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
@@ -342,10 +344,11 @@
       <a href="#section-livraisons">📦 Livraisons</a>
       <a href="#section-revenus">💰 Revenus</a>
       <a href="#section-litiges">⚠️ Litiges</a>
-      <a href="#section-rewards">★ Missions</a>
+      <a href="#section-avis">⭐ Avis</a>
+      <a href="#section-rewards">? Missions</a>
       <a href="#section-gamification">🎮 Gamification</a>
       <a href="#section-impact">♥ Transparence</a>
-      <a href="#section-covoiturage">🚗 Covoiturage</a>
+      <a href="#section-covoiturage">?? Covoiturage</a>
       <a href="#section-parrainage">🤝 Parrainage</a>
       <a href="#section-notifications">🔔 Notifs</a>
     </nav>
@@ -495,6 +498,51 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════ AVIS ═══ -->
+    <div id="section-avis" class="section">
+      <div class="section-title">Avis utilisateurs</div>
+
+      <!-- Stats rapides -->
+      <div class="stats-grid" style="margin-bottom:20px" id="avis-stats">
+        <div class="stat-card"><div class="stat-value" id="avis-total-livraison">—</div><div class="stat-label">Avis livraisons</div></div>
+        <div class="stat-card"><div class="stat-value" id="avis-moy-livraison">—</div><div class="stat-label">Note moyenne livraisons</div></div>
+        <div class="stat-card"><div class="stat-value" id="avis-total-cov">—</div><div class="stat-label">Avis covoiturage</div></div>
+        <div class="stat-card"><div class="stat-value" id="avis-moy-cov">—</div><div class="stat-label">Note moyenne covoiturage</div></div>
+      </div>
+
+      <!-- Onglets -->
+      <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="filter-tab active" id="tab-avis-livraison" onclick="switchAvisTab('livraison')">📦 Livraisons</button>
+        <button class="filter-tab" id="tab-avis-cov" onclick="switchAvisTab('cov')">?? Covoiturage</button>
+        <select id="avis-filter-note" onchange="renderAvis()" style="padding:7px 12px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:12px;margin-left:auto;">
+          <option value="">Toutes les notes</option>
+          <option value="5">⭐⭐⭐⭐⭐ 5 étoiles</option>
+          <option value="4">⭐⭐⭐⭐ 4 étoiles</option>
+          <option value="3">⭐⭐⭐ 3 étoiles</option>
+          <option value="2">⭐⭐ 2 étoiles</option>
+          <option value="1">⭐ 1 étoile</option>
+        </select>
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Note</th>
+              <th>Commentaire</th>
+              <th>Évalué</th>
+              <th>Par</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="avis-tbody">
+            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="section-rewards" class="section">
       <div class="section-title">Missions, PorteCoins & tirages</div>
       <div class="impact-summary">
@@ -582,8 +630,8 @@
         <div style="font-size:.8rem;color:var(--brand-lime);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">⚡ Lancer une campagne saisonnière rapide</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn-action" style="background:rgba(0,200,83,.12);border:1px solid rgba(0,200,83,.3);color:#00c853" onclick="quickCampaign('launch')">🚀 Lancement (100 premiers)</button>
-          <button class="btn-action" style="background:rgba(220,20,60,.1);border:1px solid rgba(220,20,60,.3);color:#ff6b6b" onclick="quickCampaign('halloween')">🎃 Halloween (octobre)</button>
-          <button class="btn-action" style="background:rgba(0,150,255,.1);border:1px solid rgba(0,150,255,.3);color:#4fc3f7" onclick="quickCampaign('noel')">🎄 Noël (décembre)</button>
+          <button class="btn-action" style="background:rgba(220,20,60,.1);border:1px solid rgba(220,20,60,.3);color:#ff6b6b" onclick="quickCampaign('halloween')">?? Halloween (octobre)</button>
+          <button class="btn-action" style="background:rgba(0,150,255,.1);border:1px solid rgba(0,150,255,.3);color:#4fc3f7" onclick="quickCampaign('noel')">?? Noël (décembre)</button>
           <button class="btn-action" style="background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.3);color:#ffb300" onclick="quickCampaign('anniversaire')">🎂 Anniversaire plateforme</button>
         </div>
       </div>
@@ -623,7 +671,7 @@
             </div>
             <div>
               <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Icône</label>
-              <input id="cf-icon" class="form-input" placeholder="🎄" value="🏅" style="width:100%">
+              <input id="cf-icon" class="form-input" placeholder="??" value="🏅" style="width:100%">
             </div>
           </div>
           <div style="margin-bottom:12px">
@@ -663,7 +711,7 @@
             </div>
           </div>
           <div style="background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.15);border-radius:8px;padding:14px;margin-bottom:12px">
-            <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">🔄 Bénéfice saisonnier (se réactive automatiquement)</div>
+            <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">?? Bénéfice saisonnier (se réactive automatiquement)</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
               <div>
                 <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Bénéfice actif à partir de</label>
@@ -1252,7 +1300,7 @@
               <td style="color:#A8B0BA;font-size:.8rem">${r.driver_prenom || r.driver_id?.slice(0,8) || '—'}</td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}</td>
               <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
-              <td style="color:#A8B0BA">${r.available_seats ? '—'} place(s)</td>
+              <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
             </tr>`;
           }).join('');
 
@@ -1370,7 +1418,7 @@
             <td>${driverBadge(p.driver_status)}</td>
             <td><div class="action-cell">
               <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
-              <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">✗ Refuser</button>
+              <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">? Refuser</button>
             </div></td>
           </tr>`).join('');
     }
@@ -1392,7 +1440,7 @@
               <td>${livBadge(l.statut)}</td>
               <td style="color:#B8F53E;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
               <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
-              <td><div class="action-cell">${proofBtn}${canManualCapture ? `<button class="action-btn" onclick="adminCaptureLegacy('${l.id}')">Validation admin</button>` : '<span style="color:#5A6A7A;font-size:.78rem">-</span>'}</div></td>
+              <td><div class="action-cell">${proofBtn}${canManualCapture ? `<button class="action-btn" onclick="adminCaptureLegacy('${l.id}')">Liberer paiement manuellement</button>` : '<span style="color:#5A6A7A;font-size:.78rem">-</span>'}</div></td>
             </tr>`;
           }).join('');
     }
@@ -1594,8 +1642,8 @@
     try {
       loadBadgeSelector();
       const out = await rewardsRequest(null, 'GET');
-      document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ? 0;
-      document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ? 0;
+      document.getElementById('reward-admin-coins').textContent = out.stats?.coins_issued_net ?? 0;
+      document.getElementById('reward-admin-tx').textContent = out.stats?.transactions_count ?? 0;
       document.getElementById('reward-admin-draws').textContent = (out.draws || []).filter(d => d.status === 'active').length;
       document.getElementById('reward-missions-body').innerHTML = (out.missions || []).length ? out.missions.map(m => `
         <tr>
@@ -1945,7 +1993,7 @@
             <button class="btn-action btn-approve" onclick="editCampaign(${JSON.stringify(b).replace(/"/g,'&quot;')})" style="font-size:.75rem;padding:5px 10px">✏️ Éditer</button>
             ${b.campaign_status === 'active' || b.campaign_status === 'scheduled'
               ? `<button class="btn-action btn-suspend" onclick="toggleCampaign('${b.id}','pause')" style="font-size:.75rem;padding:5px 10px">⏸ Pause</button>`
-              : `<button class="btn-action btn-approve" onclick="toggleCampaign('${b.id}','activate')" style="font-size:.75rem;padding:5px 10px">▶ Activer</button>`}
+              : `<button class="btn-action btn-approve" onclick="toggleCampaign('${b.id}','activate')" style="font-size:.75rem;padding:5px 10px">? Activer</button>`}
             <button class="btn-action" onclick="batchGrantCampaign('${b.id}','${b.slug}')" style="font-size:.75rem;padding:5px 10px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.2);color:var(--brand-cyan)">🚀 Batch</button>
           </td>
         </tr>`;
@@ -2061,7 +2109,7 @@
         points_reward: 200, xp_reward: 500
       },
       halloween: {
-        slug: 'citrouille_solidaire_' + now.getFullYear(), icon: '🎃',
+        slug: 'citrouille_solidaire_' + now.getFullYear(), icon: '??',
         name: 'Citrouille solidaire ' + now.getFullYear(),
         description: 'Badge Halloween pour les membres actifs en octobre.',
         campaign_name: 'Halloween ' + now.getFullYear(),
@@ -2073,7 +2121,7 @@
         points_reward: 30, xp_reward: 100
       },
       noel: {
-        slug: 'esprit_noel_' + now.getFullYear(), icon: '🎄',
+        slug: 'esprit_noel_' + now.getFullYear(), icon: '??',
         name: 'Esprit de Noël ' + now.getFullYear(),
         description: 'Badge spécial Noël. Son bénéfice revient chaque décembre.',
         campaign_name: 'Noël ' + now.getFullYear(),
@@ -2210,7 +2258,7 @@
         ? '<div style="color:var(--brand-muted);padding:12px 0">Aucun abonné pour l\'instant.</div>'
         : list.slice(0, 10).map(s => {
             const ua = s.user_agent || '';
-            const icon = /iphone|ipad/i.test(ua) ? '🍎' : /android/i.test(ua) ? '🤖' : '💻';
+            const icon = /iphone|ipad/i.test(ua) ? '🍎' : /android/i.test(ua) ? '??' : '💻';
             const date = new Date(s.created_at).toLocaleDateString('fr-CA', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brand-border)">
               <span>${icon} ${s.user_id ? s.user_id.slice(0,8) + '…' : 'Anonyme'}</span>
@@ -2300,6 +2348,100 @@
     }
   });
 
+  // ── AVIS UTILISATEURS ────────────────────────────────────────────
+  let _avisData = { livraison: [], cov: [] };
+  let _avisTab  = 'livraison';
+
+  async function loadAvis() {
+    const db = window.db;
+    if (!db) return;
+    try {
+      const [{ data: livAvis, error: e1 }, { data: covAvis, error: e2 }] = await Promise.all([
+        db.from('reviews')
+          .select('id, note, commentaire, cree_le, livreur_id, expediteur_id, livraison_id')
+          .order('cree_le', { ascending: false })
+          .limit(200),
+        db.from('cov_reviews')
+          .select('id, rating, commentaire, created_at, reviewer_id, reviewed_id, ride_id')
+          .order('created_at', { ascending: false })
+          .limit(200)
+      ]);
+
+      _avisData.livraison = livAvis || [];
+      _avisData.cov       = covAvis || [];
+
+      // Stats
+      const livNotes = _avisData.livraison.map(r => r.note).filter(Boolean);
+      const covNotes = _avisData.cov.map(r => r.rating).filter(Boolean);
+      const avg = arr => arr.length ? (arr.reduce((a,b) => a+b, 0) / arr.length).toFixed(1) : '—';
+      const star = n => n !== '—' ? '⭐ ' + n + '/5' : '—';
+
+      document.getElementById('avis-total-livraison').textContent = livNotes.length;
+      document.getElementById('avis-moy-livraison').textContent   = star(avg(livNotes));
+      document.getElementById('avis-total-cov').textContent       = covNotes.length;
+      document.getElementById('avis-moy-cov').textContent         = star(avg(covNotes));
+
+      renderAvis();
+    } catch (err) {
+      document.getElementById('avis-tbody').innerHTML =
+        `<tr><td colspan="6" class="empty-msg" style="color:#ff8a8a">${err.message}</td></tr>`;
+    }
+  }
+
+  function switchAvisTab(tab) {
+    _avisTab = tab;
+    document.getElementById('tab-avis-livraison').classList.toggle('active', tab === 'livraison');
+    document.getElementById('tab-avis-cov').classList.toggle('active', tab === 'cov');
+    renderAvis();
+  }
+
+  function renderAvis() {
+    const filterNote = document.getElementById('avis-filter-note')?.value;
+    const data = _avisData[_avisTab] || [];
+    const filtered = filterNote
+      ? data.filter(r => String(_avisTab === 'livraison' ? r.note : r.rating) === filterNote)
+      : data;
+
+    const stars = n => n ? '⭐'.repeat(Math.min(n,5)) + ' ' + n + '/5' : '—';
+    const shortId = id => id ? id.slice(0,8) + '…' : '🕶️ Anonyme';
+    const fmt = d => d ? new Date(d).toLocaleDateString('fr-CA', { year:'numeric', month:'short', day:'numeric' }) : '—';
+    const roleLabel = { expediteur:'📦 Expéditeur', livreur:'🚚 Livreur', destinataire:'🏠 Destinataire', passager:'🧳 Passager', chauffeur:'?? Chauffeur' };
+
+    if (filtered.length === 0) {
+      document.getElementById('avis-tbody').innerHTML =
+        '<tr><td colspan="6" class="empty-msg">Aucun avis pour l\'instant.</td></tr>';
+      return;
+    }
+
+    document.getElementById('avis-tbody').innerHTML = filtered.map(r => {
+      const note      = _avisTab === 'livraison' ? (r.rating || r.note) : r.rating;
+      const date      = _avisTab === 'livraison' ? (r.cree_le || r.created_at) : r.created_at;
+      const evalue    = r.reviewed_id || r.livreur_id;
+      const evalueur  = r.reviewer_id || r.expediteur_id;
+      const comment   = r.commentaire || r.comment || '';
+      const rRole     = r.reviewer_role ? (roleLabel[r.reviewer_role] || r.reviewer_role) : (r.livreur_id ? '📦 Expéditeur' : '—');
+      const dRole     = r.reviewed_role ? (roleLabel[r.reviewed_role] || r.reviewed_role) : '🚚 Livreur';
+      const noteColor = note >= 4 ? '#B8F53E' : note >= 3 ? '#FFB347' : '#FF6B6B';
+      return `<tr>
+        <td style="color:${noteColor};font-weight:800;font-size:1rem">${stars(note)}</td>
+        <td style="color:var(--brand-muted);font-size:.85rem;max-width:240px">${comment || '<em style="color:#5A6A7A">Sans commentaire</em>'}</td>
+        <td style="font-size:.78rem"><div style="color:#00D9FF">${dRole}</div><div style="font-family:monospace;color:#5A6A7A">${shortId(evalue)}</div></td>
+        <td style="font-size:.78rem"><div style="color:#A8B0BA">${rRole}</div><div style="font-family:monospace;color:#5A6A7A">${shortId(evalueur)}</div></td>
+        <td style="color:#5A6A7A;font-size:.8rem">${fmt(date)}</td>
+        <td><button class="action-btn danger" onclick="deleteAvis('${r.id}','${_avisTab}')">Supprimer</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function deleteAvis(id, table) {
+    if (!confirm('Supprimer cet avis ? Cette action est irréversible.')) return;
+    const db = window.db;
+    const tbl = table === 'livraison' ? 'reviews' : 'cov_reviews';
+    const { error } = await db.from(tbl).delete().eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    await loadAvis();
+  }
+
   // ── INIT ─────────────────────────────────────────────────────────
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
@@ -2314,6 +2456,7 @@
     loadParrainage();
     loadNotifications();
     loadEmailDiagnostics();
+    loadAvis();
   }
 
   init();
