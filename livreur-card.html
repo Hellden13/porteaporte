@@ -143,6 +143,7 @@
           <h4>📲 Vérifier l'authenticité</h4>
           <div class="qr-wrap" id="qrWrap"></div>
           <div class="qr-note">Scanne ce QR code pour vérifier que la carte vient bien de PorteàPorte</div>
+          <button onclick="shareCard()" style="margin-top:10px;padding:8px 16px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:700;cursor:pointer;font-size:.82rem">📤 Partager ma carte</button>
         </div>
 
         <div class="footer-note">
@@ -152,12 +153,31 @@
         </div>
       `;
 
+      // Stocker globalement pour le partage
+      window._cardUrl = window.location.origin + '/livreur-card.html?id=' + encodeURIComponent(p.id);
+      window._cardName = nom;
+
       // QR code via service externe (pas de dépendance JS)
-      const cardUrl = window.location.origin + '/livreur-card.html?id=' + encodeURIComponent(p.id);
+      const cardUrl = window._cardUrl;
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=' + encodeURIComponent(cardUrl);
       const wrap = document.getElementById('qrWrap');
       if (wrap) wrap.innerHTML = `<img src="${qrUrl}" alt="QR code" width="140" height="140">`;
     }
+    async function shareCard() {
+      const url = window._cardUrl || window.location.href;
+      const text = 'Voici ma carte d\'identité livreur PorteàPorte vérifiée — ' + (window._cardName || '');
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Carte d\'identité PorteàPorte', text, url });
+        } catch (e) {}
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        alert('✅ Lien copié dans le presse-papiers !');
+      } else {
+        prompt('Copie ce lien :', url);
+      }
+    }
+
     load();
   </script>
 </body>

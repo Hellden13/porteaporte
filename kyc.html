@@ -235,7 +235,7 @@
         <div class="field"><label>Nom de famille</label><input type="text" id="lastName" placeholder="Tremblay" autocomplete="family-name"></div>
         <div class="field"><label>Date de naissance</label><input type="date" id="dob" max="2006-01-01"></div>
         <div class="field"><label>Téléphone</label><input type="tel" id="phone" placeholder="+1 514 123 4567" autocomplete="tel"></div>
-        <div class="field form-full"><label>Adresse complète</label><input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address"></div>
+        <div class="field form-full"><label>Adresse complète <button type="button" onclick="autoDetectCity()" style="margin-left:8px;padding:3px 9px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:6px;color:#7de4ff;font-size:.72rem;font-weight:700;cursor:pointer">📍 Auto-détecter</button></label><input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address"></div>
       </div>
 
       <div class="nav-btns">
@@ -789,6 +789,31 @@
       showStatus('Erreur : ' + err.message, 'error');
       btn.disabled = false;
       btn.textContent = 'Soumettre mon dossier ✓';
+    }
+  }
+
+  /* ================================================================
+     AUTO-DÉTECTION VILLE (GPS + Nominatim OpenStreetMap)
+  ================================================================ */
+  async function autoDetectCity() {
+    if (!navigator.geolocation) { alert('GPS non supporté'); return; }
+    const addrInput = document.getElementById('address');
+    addrInput.placeholder = '⏳ Détection en cours...';
+    try {
+      const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 }));
+      const { latitude, longitude } = pos.coords;
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=fr`);
+      const data = await r.json();
+      if (data.display_name) {
+        addrInput.value = data.display_name.split(',').slice(0,4).join(',').trim();
+        addrInput.style.borderColor = '#b8f53e';
+      } else {
+        addrInput.placeholder = '123 rue Principale, Montréal, QC H2T 1V6';
+        alert('Adresse non trouvée');
+      }
+    } catch (e) {
+      addrInput.placeholder = '123 rue Principale, Montréal, QC H2T 1V6';
+      alert('Erreur GPS : ' + e.message);
     }
   }
 
