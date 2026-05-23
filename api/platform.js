@@ -257,11 +257,12 @@ async function stripeIdentityCreate(req, res, ctx, body) {
   const returnUrl = `${siteOrigin()}/kyc.html?identity_session_complete=1`;
   params.append('return_url', returnUrl);
 
-  const r = await stripeRequest('POST', '/v1/identity/verification_sessions', stripeKey, params.toString());
-  if (!r.ok) {
-    return res.status(400).json({ error: 'Création VerificationSession impossible', details: r.data });
+  let session;
+  try {
+    session = await stripeRequest('POST', '/v1/identity/verification_sessions', params.toString(), stripeKey);
+  } catch (e) {
+    return res.status(400).json({ error: 'Création VerificationSession impossible', details: e.message });
   }
-  const session = r.data;
 
   // Stocker la référence dans profiles
   await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
