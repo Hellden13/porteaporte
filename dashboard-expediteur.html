@@ -454,7 +454,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="header-title">
-                    <div id="header-welcome" style="font-size:.85rem;color:#9BA1A9;margin-bottom:4px">Bonjour,</div>
+                    <div id="header-welcome" style="font-size:.85rem;color:#9BA1A9;margin-bottom:4px">Bonjour, <span id="fiabiliteBadgeExp" style="margin-left:8px;padding:3px 8px;border-radius:999px;font-size:.72rem;font-weight:800;display:none"></span></div>
                     <h1>Mes Expéditions</h1>
                 </div>
                 <div class="header-actions">
@@ -633,7 +633,8 @@
 
             // Accueil personnalisé
             const prenom = user.prenom || user.email?.split('@')[0] || '';
-            document.getElementById('header-welcome').textContent = 'Bonjour, ' + prenom + ' 👋';
+            document.getElementById('header-welcome').innerHTML = 'Bonjour, ' + prenom + ' 👋 <span id="fiabiliteBadgeExp" style="margin-left:8px;padding:3px 8px;border-radius:999px;font-size:.72rem;font-weight:800;display:none"></span>';
+            loadFiabiliteExp();
 
             // Stats profil sidebar
             const profile = user.profile || {};
@@ -896,6 +897,32 @@
                 <div id="manq-exp-msg-${mission.id}" style="margin-top:8px;font-size:.82rem"></div>
               </div>` : '';
             return buttons.join('') + manqForm + '<div class="mission-note">Le destinataire doit confirmer la reception avec son code. Les demandes de remboursement sont analysees avec les preuves disponibles.</div>';
+        }
+
+        // ── Badge fiabilité expéditeur ──
+        async function loadFiabiliteExp() {
+          try {
+            const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: sess } = await db.auth.getSession();
+            if (!sess?.session) return;
+            const res = await fetch('/api/fiabilite-get', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.session.access_token },
+              body: JSON.stringify({})
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!out.fiabilite) return;
+            const f = out.fiabilite;
+            const badge = document.getElementById('fiabiliteBadgeExp');
+            if (badge) {
+              badge.style.display = 'inline-block';
+              badge.style.background = f.color + '22';
+              badge.style.color = f.color;
+              badge.style.border = '1px solid ' + f.color + '66';
+              badge.innerHTML = `${f.badge} · ${f.score}/100${f.manquements_en_attente > 0 ? ` · ⚠️ ${f.manquements_en_attente}` : ''}`;
+              badge.title = `Manquements validés: ${f.manquements_valides} · Partagés: ${f.manquements_partages} · En attente: ${f.manquements_en_attente}`;
+            }
+          } catch (e) { console.warn('[fiabilite]', e.message); }
         }
 
         // ── Signalement de manquements (expéditeur) ──

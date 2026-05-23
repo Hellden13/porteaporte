@@ -415,7 +415,7 @@
 
   <!-- Toggle En ligne / Hors ligne -->
   <div class="online-bar" id="onlineBar" style="display:none">
-    <p class="online-label">Bonjour, <span id="greetName">livreur</span> — tu es prêt à livrer ?</p>
+    <p class="online-label">Bonjour, <span id="greetName">livreur</span> — tu es prêt à livrer ? <span id="fiabiliteBadge" style="margin-left:10px;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:800;display:none"></span></p>
     <div class="toggle-wrap">
       <span class="toggle-status" id="toggleLabel">Hors ligne</span>
       <label class="toggle" aria-label="Statut en ligne">
@@ -740,7 +740,7 @@
       updateToggleLabel(isOnline);
 
       renderStats();
-      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards()]);
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite()]);
 
       if (window.NotifBell) NotifBell.init(db, session.user.id);
     }
@@ -1227,6 +1227,29 @@
     // ── Signalement de manquements (bidirectionnel) ──
     const CAT_EXPEDITEUR = ['Adresse incomplète/erronée','Colis non préparé','Description fausse (poids/taille)','Article interdit','Ne répond pas aux contacts','Autre'];
     const CAT_DESTINATAIRE = ['Absent au rendez-vous','Refus injustifié du colis','Mauvaise information donnée','Hors plage horaire annoncée','Ne répond pas aux contacts','Autre'];
+
+    // ── Charger badge fiabilité ──
+    async function loadFiabilite() {
+      try {
+        const res = await fetch('/api/fiabilite-get', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({})
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!out.fiabilite) return;
+        const f = out.fiabilite;
+        const badge = document.getElementById('fiabiliteBadge');
+        if (badge) {
+          badge.style.display = 'inline-block';
+          badge.style.background = f.color + '22';
+          badge.style.color = f.color;
+          badge.style.border = '1px solid ' + f.color + '66';
+          badge.innerHTML = `${f.badge} · ${f.score}/100${f.manquements_en_attente > 0 ? ` · ⚠️ ${f.manquements_en_attente} en attente` : ''}`;
+          badge.title = `Manquements validés: ${f.manquements_valides} · Partagés: ${f.manquements_partages} · En attente: ${f.manquements_en_attente}`;
+        }
+      } catch (e) { console.warn('[fiabilite]', e.message); }
+    }
 
     function toggleManquement(id) {
       const box = document.getElementById('manquement-' + id);

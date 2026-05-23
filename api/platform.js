@@ -465,6 +465,20 @@ async function manquementList(req, res, ctx, body) {
   return res.status(200).json({ success: true, manquements: rows });
 }
 
+async function fiabiliteGet(req, res, ctx, body) {
+  const userId = body.user_id || ctx.session.id;
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/v_user_fiabilite?id=eq.${encodeURIComponent(userId)}&select=*`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = r.ok ? await r.json() : [];
+  const row = rows[0] || { id: userId, score: 100, manquements_valides: 0, manquements_partages: 0, manquements_en_attente: 0 };
+  let badge = '🏆 Top membre', color = '#b8f53e';
+  if (row.score < 90) { badge = '🟢 Fiable'; color = '#7dffc1'; }
+  if (row.score < 70) { badge = '🟡 Avertissement'; color = '#ffd700'; }
+  if (row.score < 50) { badge = '🔴 Risqué'; color = '#ffb0b0'; }
+  return res.status(200).json({ success: true, fiabilite: { ...row, badge, color } });
+}
+
 async function manquementAdminDecision(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
   const { manquement_id, decision, note } = body;
@@ -2731,6 +2745,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'manquement-contester') return await manquementContester(req, res, ctx, body);
     if (endpoint === 'manquement-list') return await manquementList(req, res, ctx, body);
     if (endpoint === 'manquement-admin-decision') return await manquementAdminDecision(req, res, ctx, body);
+    if (endpoint === 'fiabilite-get') return await fiabiliteGet(req, res, ctx, body);
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
     if (endpoint === 'delivery-proof') return await submitDeliveryProof(req, res, ctx, body);

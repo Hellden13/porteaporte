@@ -347,6 +347,10 @@
                      {
                          "source":  "/api/manquement-admin-decision",
                          "destination":  "/api/platform?endpoint=manquement-admin-decision"
+                     },
+                     {
+                         "source":  "/api/fiabilite-get",
+                         "destination":  "/api/platform?endpoint=fiabilite-get"
                      }
                  ],
     "headers":  [
