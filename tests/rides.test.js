@@ -15,7 +15,7 @@ const {
   RIDE_FEE_PET,
   RIDE_FEE_PACKAGE_BASE,
   RIDE_FEE_PACKAGE_PER_KG,
-} = require('../api/_rides');
+} = require('../lib/_rides');
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 describe('Constantes tarifaires', () => {

@@ -45,6 +45,7 @@ async function createLivraison(req, res, ctx, body) {
     ville_arrivee: body.ville_arrivee || '',
     poids_kg: body.poids_kg === undefined && body.poids === undefined ? null : toNumber(body.poids_kg || body.poids),
     valeur_declaree: body.valeur_declaree === undefined ? null : toNumber(body.valeur_declaree),
+    date_souhaitee: body.date_souhaitee || body.date_livraison || null,
     prix_total: toNumber(body.prix_total || body.prix, 0),
     assurance_plan: body.assurance_plan || null,
     notes: body.notes || null,
@@ -65,7 +66,7 @@ async function createLivraison(req, res, ctx, body) {
     `${ctx.sbUrl}/rest/v1/livraisons`,
     sbHeaders(ctx.sbKey),
     payload,
-    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
+    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'date_souhaitee', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
   );
 
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
@@ -3626,4 +3627,3 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
   }
 };
-

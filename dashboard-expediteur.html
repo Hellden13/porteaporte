@@ -483,10 +483,17 @@
         </div>
     </section>
 
+    <!-- TABS NAVIGATION -->
+    <nav id="expTabs" style="position:sticky;top:60px;z-index:50;display:flex;gap:4px;padding:8px 20px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border);overflow-x:auto;backdrop-filter:blur(12px)">
+      <button class="exp-tab active" data-tab="missions" onclick="switchExpTab('missions')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#00ff9f,#b8f53e);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Mes expéditions</button>
+      <button class="exp-tab" data-tab="creer" onclick="switchExpTab('creer')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">➕ Nouvelle livraison</button>
+      <button class="exp-tab" data-tab="paiements" onclick="window.location.href='/historique-paiements.html'" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">💳 Paiements</button>
+    </nav>
+
     <!-- MAIN CONTENT -->
     <div class="container dashboard">
         <div class="missions-section">
-            <section class="quick-create">
+            <section class="quick-create" data-exp-section="creer" style="display:none">
                 <div class="quick-create-header">
                     <div>
                         <h2 class="quick-create-title">Créer une livraison rapide</h2>
@@ -531,6 +538,10 @@
                         <input id="qc-valeur" type="number" min="0" step="1" value="0">
                     </div>
                     <div class="form-field">
+                        <label for="qc-date">Date souhaitée</label>
+                        <input id="qc-date" type="date">
+                    </div>
+                    <div class="form-field">
                         <label for="qc-prix">Prix livraison ($)</label>
                         <input id="qc-prix" type="number" min="1" step="0.01" value="5">
                     </div>
@@ -544,12 +555,13 @@
                 </form>
             </section>
 
+            <div data-exp-section="missions">
             <!-- TABS -->
             <div class="missions-tabs">
-                <button class="tab-button active" onclick="switchTab('all')">Toutes</button>
-                <button class="tab-button" onclick="switchTab('pending')">En attente</button>
-                <button class="tab-button" onclick="switchTab('completed')">Complétées</button>
-                <button class="tab-button" onclick="switchTab('disputes')">Litiges</button>
+                <button class="tab-button active" onclick="switchTab('all', event)">Toutes</button>
+                <button class="tab-button" onclick="switchTab('pending', event)">En attente</button>
+                <button class="tab-button" onclick="switchTab('completed', event)">Complétées</button>
+                <button class="tab-button" onclick="switchTab('disputes', event)">Litiges</button>
             </div>
 
             <!-- MISSIONS GRID -->
@@ -561,6 +573,7 @@
                     <a href="/create-mission.html" class="btn btn-primary">Créer une livraison</a>
                 </div>
             </div>
+            </div><!-- /missions section -->
         </div>
 
         <!-- SIDEBAR -->
@@ -665,6 +678,7 @@
                 type_colis: document.getElementById('qc-type').value,
                 poids_kg: Number(document.getElementById('qc-poids').value || 1),
                 valeur_declaree: Number(document.getElementById('qc-valeur').value || 0),
+                date_souhaitee: document.getElementById('qc-date').value || null,
                 prix_total: Number(document.getElementById('qc-prix').value || 0),
                 notes: document.getElementById('qc-notes').value.trim()
             };
@@ -813,13 +827,14 @@
                 canceled: 'Annulee',
                 litige: 'Litige',
                 rembourse: 'Remboursee',
-                refunded: 'Remboursee'
+                refunded: 'Remboursee',
+                confirmee: 'Confirmee par destinataire'
             };
             return labels[status] || status || 'En attente';
         }
 
         function statusClass(status) {
-            if (['payee', 'paid', 'succeeded'].includes(status)) return 'completed';
+            if (['payee', 'paid', 'succeeded', 'confirmee'].includes(status)) return 'completed';
             if (['livre', 'livree', 'delivered', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up'].includes(status)) return 'active';
             if (['litige', 'rembourse', 'refunded', 'annule', 'annulee', 'canceled'].includes(status)) return 'problem';
             return 'pending';
@@ -837,7 +852,7 @@
 
         function updateStats(livraisons) {
             const pending = livraisons.filter(l => ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up', 'livre', 'livree', 'delivered'].includes(l.statut)).length;
-            const completed = livraisons.filter(l => ['payee', 'paid', 'succeeded'].includes(l.statut)).length;
+            const completed = livraisons.filter(l => ['payee', 'paid', 'succeeded', 'confirmee'].includes(l.statut)).length;
             const spent = livraisons.reduce((sum, l) => sum + Number(l.prix_total || 0), 0);
 
             document.getElementById('stat-total').textContent = livraisons.length;
@@ -900,6 +915,31 @@
         }
 
         // ── Badge fiabilité expéditeur ──
+        // ── Tabs navigation ──
+        function switchExpTab(tab) {
+          document.querySelectorAll('.exp-tab').forEach(btn => {
+            const isActive = btn.dataset.tab === tab;
+            if (isActive) {
+              btn.style.background = 'linear-gradient(135deg,#00ff9f,#b8f53e)';
+              btn.style.color = '#071006';
+              btn.style.border = 'none';
+            } else {
+              btn.style.background = 'rgba(255,255,255,.04)';
+              btn.style.color = '#a8b0ba';
+              btn.style.border = '1px solid #1E2535';
+            }
+          });
+          document.querySelectorAll('[data-exp-section]').forEach(sec => {
+            sec.style.display = (sec.dataset.expSection === tab) ? '' : 'none';
+          });
+          try { localStorage.setItem('pap_exp_tab', tab); } catch (e) {}
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+          const saved = localStorage.getItem('pap_exp_tab') || 'missions';
+          setTimeout(() => switchExpTab(saved), 200);
+        });
+
         async function loadFiabiliteExp() {
           try {
             const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
@@ -1111,7 +1151,7 @@
             const filtered = missions.filter(m => {
                 if (currentTab === 'all') return true;
                 if (currentTab === 'pending') return ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up', 'livre', 'livree', 'delivered'].includes(m.statut);
-                if (currentTab === 'completed') return ['payee', 'paid', 'succeeded'].includes(m.statut);
+                if (currentTab === 'completed') return ['payee', 'paid', 'succeeded', 'confirmee'].includes(m.statut);
                 if (currentTab === 'disputes') return ['litige', 'rembourse'].includes(m.statut);
                 return false;
             });
@@ -1176,6 +1216,7 @@
                         <div class="detail-row"><span class="detail-label">De</span><span class="detail-value">${esc(mission.ville_depart || 'Depart')}</span></div>
                         <div class="detail-row"><span class="detail-label">A</span><span class="detail-value">${esc(mission.ville_arrivee || 'Arrivee')}</span></div>
                         <div class="detail-row"><span class="detail-label">Colis</span><span class="detail-value">${esc(mission.type_colis || 'Colis')}${mission.poids_kg ? ' - ' + esc(String(mission.poids_kg)) + ' kg' : ''}</span></div>
+                        ${mission.date_souhaitee ? `<div class="detail-row"><span class="detail-label">Date souhaitee</span><span class="detail-value">${dateLabel(mission.date_souhaitee)}</span></div>` : ''}
                         <div class="detail-row"><span class="detail-label">Creee</span><span class="detail-value">${dateLabel(mission.cree_le || mission.created_at)}</span></div>
                     </div>
                     <div class="mission-footer">
@@ -1188,10 +1229,11 @@
             }).join('');
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, ev) {
             currentTab = tab;
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
+            const target = ev?.target || window.event?.target;
+            if (target) target.classList.add('active');
             displayMissions(cachedLivraisons);
         }
 

@@ -46,7 +46,7 @@ function makeRes() {
 
 // ─── Tests _lib.js: insertWithSchemaFallback ──────────────────────────────────
 describe('insertWithSchemaFallback', () => {
-  const { insertWithSchemaFallback, sbHeaders } = require('../api/_lib');
+  const { insertWithSchemaFallback, sbHeaders } = require('../lib/_lib');
 
   test('succès au premier essai', async () => {
     global.fetch = makeFetchMock({

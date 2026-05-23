@@ -23,7 +23,7 @@ const {
   roleIn,
   sbHeaders,
   parseDataUrl,
-} = require('../api/_lib');
+} = require('../lib/_lib');
 
 // ─── sanitizeEnv ──────────────────────────────────────────────────────────────
 describe('sanitizeEnv', () => {
@@ -119,13 +119,13 @@ describe('normalizeCity', () => {
 
 // ─── estimateRouteKm ─────────────────────────────────────────────────────────
 describe('estimateRouteKm', () => {
-  test('paire connue Québec-Montréal → 265 km', () => {
-    assert.equal(estimateRouteKm('québec', 'montréal'), 265);
-    assert.equal(estimateRouteKm('Quebec', 'Montreal'), 265);
+  test('paire connue Québec-Montréal → distance directe', () => {
+    assert.equal(estimateRouteKm('québec', 'montréal'), 233);
+    assert.equal(estimateRouteKm('Quebec', 'Montreal'), 233);
   });
 
   test('paire inversée symétrique', () => {
-    assert.equal(estimateRouteKm('montréal', 'québec'), 265);
+    assert.equal(estimateRouteKm('montréal', 'québec'), 233);
   });
 
   test('même ville → 5 km', () => {
@@ -133,7 +133,7 @@ describe('estimateRouteKm', () => {
   });
 
   test('paire inconnue → 200 km (fallback)', () => {
-    assert.equal(estimateRouteKm('Alma', 'Rimouski'), 200);
+    assert.equal(estimateRouteKm('VilleInventeeA', 'VilleInventeeB'), 200);
   });
 
   test('valeur manquante → null', () => {
@@ -142,20 +142,20 @@ describe('estimateRouteKm', () => {
     assert.equal(estimateRouteKm(null, null), null);
   });
 
-  test('Lévis-Québec → 8 km', () => {
-    assert.equal(estimateRouteKm('Lévis', 'Québec'), 8);
+  test('Lévis-Québec → distance directe', () => {
+    assert.equal(estimateRouteKm('Lévis', 'Québec'), 3);
   });
 
-  test('Montréal-Laval → 18 km', () => {
-    assert.equal(estimateRouteKm('Montréal', 'Laval'), 18);
+  test('Montréal-Laval → distance directe', () => {
+    assert.equal(estimateRouteKm('Montréal', 'Laval'), 14);
   });
 });
 
 // ─── driverTransportMode ─────────────────────────────────────────────────────
 describe('driverTransportMode', () => {
-  test('voiture → motor', () => {
-    assert.equal(driverTransportMode({ mode_livraison: 'voiture' }), 'motor');
-    assert.equal(driverTransportMode({ vehicule: 'auto' }), 'motor');
+  test('voiture → car', () => {
+    assert.equal(driverTransportMode({ mode_livraison: 'voiture' }), 'car');
+    assert.equal(driverTransportMode({ vehicule: 'auto' }), 'car');
   });
 
   test('vélo → bike', () => {
@@ -177,8 +177,8 @@ describe('driverTransportMode', () => {
     assert.equal(driverTransportMode(null), 'unknown');
   });
 
-  test('camion → motor', () => {
-    assert.equal(driverTransportMode({ vehicule: 'camion' }), 'motor');
+  test('camion → truck', () => {
+    assert.equal(driverTransportMode({ vehicule: 'camion' }), 'truck');
   });
 });
 

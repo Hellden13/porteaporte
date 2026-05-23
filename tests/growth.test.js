@@ -4,7 +4,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { computeLevel, generateReferralCode } = require('../api/_growth');
+const { computeLevel, generateReferralCode } = require('../lib/_growth');
 
 // ─── computeLevel ─────────────────────────────────────────────────────────────
 describe('computeLevel', () => {
