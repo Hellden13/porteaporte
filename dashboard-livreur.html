@@ -2053,7 +2053,7 @@
         el.innerHTML = data.map(m => {
           const exp = m.expediteur_profile;
           const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
-          const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
           return `
           <div class="mission-card" style="flex-direction:column;align-items:stretch;gap:10px">
@@ -2103,7 +2103,7 @@
           const delivered = ['livre','livree','delivered'].includes(row.statut);
           const exp = row.expediteur_profile;
           const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expediteur' : null;
-          const expPhoto = exp && exp.photo_url ? `<img src="${exp.photo_url}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           const adresseDepart = row.adresse_depart || '';
           const adresseArrivee = row.adresse_arrivee || '';
           const notes = row.notes || row.description || '';
@@ -2178,7 +2178,7 @@
                 <div id="selfie-zone-${row.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:#05080c;border:1px dashed #1E2535;border-radius:10px;margin-bottom:12px">
                   <video id="selfie-video-${row.id}" autoplay playsinline style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(184,245,62,.5)"></video>
                   <canvas id="selfie-canvas-${row.id}" style="display:none"></canvas>
-                  <img id="selfie-preview-${row.id}" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #b8f53e">
+                  <img loading="lazy" decoding="async" id="selfie-preview-${row.id}" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #b8f53e">
                   <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);color:#b8f53e">📷 Activer la caméra</button>
                   <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006">📸 Capturer ma selfie</button>
                   <button class="btn-sm" type="button" onclick="retakeSelfie('${row.id}')" id="selfie-retake-${row.id}" style="display:none;background:#1E2535;color:#fff">🔄 Reprendre</button>
@@ -2501,5 +2501,6 @@
   <script src="/js/gps-tracker.js"></script>
   <script src="/js/face-match.js"></script>
   <script src="/js/pwa-install.js"></script>
+  <script src="/js/onboarding.js"></script>
 </body>
 </html>

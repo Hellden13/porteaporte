@@ -102,6 +102,88 @@ if (!window.__PIA_LOADED__) {
       response: 'Plus vous êtes nombreux, moins chacun paie !\n\n👤 1 passager → prix normal\n👥 2 passagers → −5% chacun\n👥👥 3 passagers → −10% chacun\n🚗 Auto pleine → −15% chacun + badge "Auto pleine"\n\nLe bonus est calculé automatiquement. Il s\'applique sur la part de base de chaque passager.\n\nCe n\'est pas un profit conducteur — c\'est une optimisation collective !'
     },
 
+    // ── NOUVELLES FEATURES (sécurité, IA, rescue) ──
+    {
+      keys: ['rescue','sauveur','depanner','livreur stuck','transfert mission','aider livreur'],
+      title: '🆘 Missions Rescue (entraide)',
+      response: 'Le système Rescue permet à un livreur en difficulté d\'être aidé par un autre :\n\n🚨 Comment ça marche :\n1. Livreur A a un imprévu pendant qu\'il a déjà le colis\n2. Il clique "🆘 Demander rescue" depuis son dashboard\n3. La mission est diffusée comme RESCUE avec bonus +20%\n4. Un livreur B proche accepte et vient chercher le colis chez A\n5. B finit la livraison et gagne 80% (60% + 20% bonus)\n\n💰 Répartition :\n• Livreur A (original) : 30% de sa part pour le trajet partiel\n• Livreur B (rescue) : 80% (bonus inclus)\n\nLes rescue missions ont un badge ROUGE clignotant dans les missions disponibles !'
+    },
+    {
+      keys: ['face match','reconnaissance faciale','selfie verification','ia visage','identite ia'],
+      title: '🤖 Vérification faciale IA',
+      response: 'À chaque pickup, l\'IA compare automatiquement la selfie du livreur avec celle de son KYC :\n\n✓ 100% client-side (face-api.js TensorFlow)\n✓ Privé : photos ne quittent pas ton navigateur\n✓ Instantané : 1-2 secondes\n✓ Score 0-100% + distance euclidienne\n\nSi visages différents → ALERTE + pickup bloqué + signalement admin.\n\nC\'est la garantie ultime que c\'est bien le livreur vérifié qui prend ton colis.'
+    },
+    {
+      keys: ['carte identite','carte livreur','qr code livreur','verifier livreur','authenticite livreur'],
+      title: '🆔 Carte d\'identité numérique livreur',
+      response: 'Chaque livreur a une carte virtuelle vérifiée :\n\n📲 Au pickup, demande au livreur d\'ouvrir sa carte sur son téléphone\n🔍 Scanne le QR code avec ta caméra\n✅ Tu arrives sur la page officielle PorteàPorte avec :\n• Sa photo\n• Son nom\n• Son ID livreur\n• Score étoiles + fiabilité\n• Nombre de livraisons\n\n⚠️ Compare le visage de la personne à la photo avant d\'ouvrir !\n\n➡️ Le livreur trouve sa carte sur son dashboard avec le bouton "📲 Ouvrir ma carte"'
+    },
+    {
+      keys: ['mode actif','plusieurs vehicules','changer vehicule','multi mode','vehicule du jour'],
+      title: '🚦 Multi-modes transport',
+      response: 'Un livreur peut avoir PLUSIEURS véhicules et choisir lequel il utilise aujourd\'hui :\n\nExemple :\n• Lundi : 🚴 Vélo (petites courses)\n• Mardi : 🚗 Voiture (livraisons moyennes)\n• Samedi : 🚛 Camion (gros électroménager)\n\nLes missions affichées s\'adaptent automatiquement selon le mode actif. Tu peux ajouter/retirer des modes depuis ton dashboard > Profil.'
+    },
+    {
+      keys: ['preferences destinataire','reception','signature','depot porte','dispo destinataire'],
+      title: '⚙️ Préférences de réception',
+      response: 'Le destinataire peut configurer ses préférences via le lien email reçu :\n\n📦 Mode de réception :\n• ✍️ Signature obligatoire\n• 📦 Dépôt à la porte (photo)\n• 🛎️ Concierge\n• 🏘️ Voisin\n• 🔐 Boîte sécurisée\n\n🕐 Plage horaire acceptée\n📸 Photo obligatoire ou non\n🏠 Lieu de repli si absent\n💬 Note spéciale pour le livreur\n\nLe livreur reçoit ces infos par email + sur son dashboard avant la livraison.'
+    },
+    {
+      keys: ['intelligence adresses','note adresse','chien dangereux','code porte','communaute livreurs'],
+      title: '💡 Intelligence d\'adresses',
+      response: 'Les livreurs partagent des notes utiles sur les adresses (anonymisées) :\n\n🐕 Animal (chien dangereux, chat)\n🪜 Accès (étages, ascenseur)\n🚪 Code/Sonnette\n🅿️ Stationnement\n⚠️ Sécurité\n😡 Comportement\n🚫 NE PAS LIVRER (validé admin)\n⏰ Horaires (ne pas avant 10h)\n🏢 Réception (laisser concierge)\n💸 Pourboire\n\nLes notes s\'affichent automatiquement sur chaque mission avant départ. Solidarité livreurs !'
+    },
+    {
+      keys: ['gps obligatoire','tracking gps','consent gps','position partagee'],
+      title: '🛰️ GPS obligatoire pendant livraison',
+      response: 'Quand un livreur accepte une mission, il s\'engage à garder son GPS activé :\n\n✓ Modal de consentement obligatoire à l\'acceptation\n✓ Tracker auto en background (position toutes les 30 sec)\n✓ Visible expéditeur + destinataire avec ETA temps réel\n✓ Si GPS désactivé → alerte rouge immédiate\n✓ S\'arrête automatiquement à la fin de la livraison\n\nC\'est la base de la confiance + utile comme preuve en cas de litige.'
+    },
+    {
+      keys: ['xl','colis xl','electromenager','frigidaire','gros colis','meuble'],
+      title: '📦 Colis XL / Électroménager',
+      response: 'Pour les gros colis (XL, électroménager, meubles) :\n\n✅ Seuls les livreurs avec camion/van peuvent les voir et accepter\n📞 Avant départ : pré-confirmation obligatoire du destinataire (15 min de délai)\n✅ Si destinataire confirme sa présence → pickup OK\n❌ Si pas de réponse en 15 min → annulation auto + livreur compensé 30%\n\nCela évite que le livreur se déplace pour rien avec un gros colis.'
+    },
+    {
+      keys: ['signalement','signaler','manquement','contester','plainte'],
+      title: '⚖️ Signalement bidirectionnel',
+      response: 'Expéditeur, livreur et destinataire peuvent se signaler mutuellement :\n\n1. Clique "⚖️ Signaler" sur la livraison\n2. Choisis la partie + catégorie + description\n3. L\'accusé reçoit un email avec lien contestation\n4. 48h pour contester avec ses preuves\n5. Sans réponse = signalement validé auto\n6. Si contesté = un admin tranche\n\n📊 Impact : chaque manquement validé baisse le score de fiabilité (sur 100). En dessous de 50 = suspension.'
+    },
+    {
+      keys: ['fiabilite','score','reputation','reliability','badge top'],
+      title: '⭐ Score de fiabilité',
+      response: 'Chaque utilisateur a un score 0-100 visible sur son profil :\n\n🏆 90-100 : Top membre (vert)\n🟢 70-89 : Fiable\n🟡 50-69 : Avertissement (paiement avancé exigé)\n🔴 < 50 : Suspension temporaire\n\nLe score baisse à chaque manquement validé. Il remonte avec des livraisons réussies et le temps. Visible publiquement sur la carte d\'identité.'
+    },
+    {
+      keys: ['installer app','pwa','app mobile','telecharger app','installer sur telephone'],
+      title: '📲 Installer comme app',
+      response: 'PorteàPorte s\'installe comme une vraie app sur ton téléphone !\n\n📱 Une bannière "📲 Installer PorteàPorte" apparaît automatiquement après quelques visites\n👆 Clique "Installer" — c\'est ajouté à ton écran d\'accueil\n⚡ Avantages : accès rapide, notifications push, mode hors-ligne\n\nAucun téléchargement App Store / Play Store nécessaire — c\'est une PWA moderne.'
+    },
+    {
+      keys: ['stripe identity','verification rapide','kyc rapide','30 secondes','identity'],
+      title: '⚡ Vérification instantanée (Stripe Identity)',
+      response: 'Plutôt que d\'attendre 24-48h la vérification manuelle KYC, fais ta vérification en 30 secondes via Stripe Identity :\n\n1. Sur /kyc.html → bouton "⚡ Vérifier mon identité maintenant"\n2. Redirection vers page Stripe sécurisée\n3. Photo permis + selfie + détection de vie\n4. Approbation auto en 30 secondes\n\n✅ Ton statut passe à "verified" automatiquement !'
+    },
+    {
+      keys: ['imprevu','depot securise','retour expediteur','relivraison','livraison ratee'],
+      title: '🚨 3 boutons imprévu livreur',
+      response: 'Si le livreur a un problème pendant la livraison, il a 3 options sécurisées :\n\n📸 Dépôt sécurisé : laisse le colis quelque part avec photo + GPS = preuve\n🔄 Re-livraison : programme un nouveau créneau (date + heure)\n↩️ Retour expéditeur : rapporte le colis\n\n💰 Compensation auto si destinataire fautif :\n• Retour : +50% pour le livreur\n• Re-livraison : +25% immédiatement\n\nL\'expéditeur est notifié par email avec les détails.'
+    },
+    {
+      keys: ['route ia','matching ia','covoiturage colis','sur ma route','deviation km'],
+      title: '🗺️ Matching IA & Covoiturage colis',
+      response: 'Sur ton dashboard livreur, configure ta route prévue :\n\n📍 Ville origine + destination\n🛣️ Déviation max acceptée (km)\n📅 Date du trajet\n🕐 Plage horaire\n\nL\'IA (algo Haversine) trouve les missions SUR ta route et les affiche en premier avec :\n• 🗺️ Badge "Sur ta route"\n• +X km détour calculé\n• Score de matching %\n\nParfait pour le covoiturage de colis — tu cumules plusieurs missions sur 1 trajet !'
+    },
+    {
+      keys: ['compte destinataire','dashboard destinataire','suivi colis recus','historique colis'],
+      title: '📦 Compte destinataire (optionnel)',
+      response: 'Le destinataire peut créer un compte pour suivre tous ses colis reçus :\n\n📋 Historique complet (tous les colis reçus)\n📊 Stats : total, en cours, valeur\n⚙️ Préférences pré-remplies pour futures livraisons\n⭐ Score de fiabilité\n💬 Messagerie avec les livreurs\n\nC\'est optionnel — un destinataire peut continuer à utiliser PorteàPorte juste avec l\'email à chaque livraison.\n\n➡️ <a href="/dashboard-destinataire.html" style="color:#B8F53E">Mon dashboard destinataire</a>'
+    },
+    {
+      keys: ['fonctionnalites','nouveautes','features','toutes les options'],
+      title: '✨ Toutes les fonctionnalités',
+      response: 'Découvre toutes les features de PorteàPorte :\n\n🔒 Sécurité : carte ID virtuelle, IA face matching, KYC Stripe instant\n🛰️ Tracking : GPS obligatoire, ETA live, position temps réel\n🤖 IA : matching route, covoiturage colis, distance Haversine précise\n💬 Confiance : signalement bidirectionnel, score fiabilité, intelligence adresses\n🚨 Imprévus : 3 options + compensation auto + système RESCUE\n💳 Paiement : Stripe escrow, Connect Express livreurs\n📱 Mobile : PWA installable, notifications push\n\n➡️ <a href="/fonctionnalites.html" style="color:#B8F53E">Voir la page complète</a>'
+    },
+
     // ── COMPTE & COMMUNAUTÉ ──
     {
       keys: ['communaute','reward','recompense','tirage','organisme','entraide'],
