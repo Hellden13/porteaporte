@@ -38,6 +38,7 @@
     <p class="hint">Les adresses completes restent masquees jusqu'a l'acceptation de la livraison.</p>
 
     <div id="success-message" class="msg ok">Livraison creee. Ouverture du paiement escrow...</div>
+    <div id="recipient-code-panel" class="msg ok" style="display:none"></div>
     <div id="error-message" class="msg err">Erreur.</div>
 
     <form id="create-mission-form" novalidate>
@@ -62,6 +63,32 @@
           <div class="full"><label for="delivery-address">Adresse de livraison *</label><input id="delivery-address" required placeholder="456 rue Exemple, Montreal"></div>
           <div><label for="delivery-city">Ville livraison *</label><input id="delivery-city" required placeholder="Montreal"></div>
           <div><label for="delivery-postal">Code postal livraison *</label><input id="delivery-postal" required placeholder="H1A 1A1"></div>
+          <div><label for="recipient-name">Nom du destinataire</label><input id="recipient-name" placeholder="Marie Tremblay" autocomplete="off"></div>
+          <div><label for="recipient-email">Courriel du destinataire <span style="font-weight:400;color:#6d7886">(facultatif — pour notif automatique)</span></label><input id="recipient-email" type="email" placeholder="destinataire@exemple.com" autocomplete="off"></div>
+          <div><label for="recipient-phone">Téléphone destinataire <span style="font-weight:400;color:#6d7886">(facultatif)</span></label><input id="recipient-phone" type="tel" placeholder="418-555-0000" autocomplete="off"></div>
+          <div class="full"><label>Disponibilités du destinataire <span style="font-weight:400;color:#6d7886">(pour un meilleur jumelage)</span></label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">
+              <label class="check"><input type="checkbox" class="dispo-jour" value="lun"> Lun</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="mar"> Mar</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="mer"> Mer</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="jeu"> Jeu</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="ven"> Ven</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="sam"> Sam</label>
+              <label class="check"><input type="checkbox" class="dispo-jour" value="dim"> Dim</label>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <label style="font-size:.85rem;color:#a8b0ba">De <input id="dispo-debut" type="time" value="09:00" style="width:110px;margin-left:6px"></label>
+              <label style="font-size:.85rem;color:#a8b0ba">À <input id="dispo-fin" type="time" value="18:00" style="width:110px;margin-left:6px"></label>
+            </div>
+          </div>
+          <div class="full"><label for="taille-colis">Taille du colis *</label>
+            <select id="taille-colis" required>
+              <option value="petit">Petit (enveloppe, livre, < 2 kg) — vélo OK</option>
+              <option value="moyen">Moyen (boîte chaussures, < 10 kg) — vélo possible</option>
+              <option value="gros">Gros (boîte, < 25 kg) — voiture requise</option>
+              <option value="xl">XL / Électroménager (lave-vaisselle, meuble) — camionnette requise</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -89,7 +116,22 @@
   <script>
     function el(id){return document.getElementById(id)}
     function showError(message){const box=el('error-message'); box.textContent='ERREUR: '+message; box.classList.add('show'); box.scrollIntoView({behavior:'smooth',block:'center'})}
-    function hideMessages(){el('error-message').classList.remove('show'); el('success-message').classList.remove('show')}
+    function hideMessages(){
+      el('error-message').classList.remove('show');
+      el('success-message').classList.remove('show');
+      const codePanel=el('recipient-code-panel');
+      codePanel.classList.remove('show');
+      codePanel.style.display='none';
+      codePanel.textContent='';
+    }
+    function showRecipientCode(id, code, confirmLink){
+      const panel=el('recipient-code-panel');
+      panel.innerHTML='<strong>Code destinataire : '+code+'</strong><br><span>À transmettre uniquement au destinataire. Il confirme lui-même la réception après livraison.</span><br><a href="'+confirmLink+'" target="_blank" rel="noopener noreferrer" style="color:#B8F53E;font-weight:800">Ouvrir la page de confirmation</a>';
+      panel.style.display='block';
+      panel.classList.add('show');
+      localStorage.setItem('pap_reception_code_'+id,code);
+      localStorage.setItem('pap_reception_link_'+id,confirmLink);
+    }
     const INSURANCE_PLANS={none:{premium:0,coverage:0,label:'Aucune protection'},base:{premium:1,coverage:50,label:'Base'},standard:{premium:2.99,coverage:250,label:'Standard'},plus:{premium:5.99,coverage:1000,label:'Plus'}};
     function selectedInsurance(){const key=el('insurance-plan').value||'none'; const plan=INSURANCE_PLANS[key]||INSURANCE_PLANS.none; const declared=parseFloat(el('declared-value').value)||0; return {...plan,key,covered:Math.min(declared,plan.coverage)}}
     function updatePrice(){const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=base+platFee+priority+insurance.premium; el('total-price').textContent='$'+total.toFixed(2)}
@@ -105,18 +147,20 @@
         const {data,error}=await client.auth.getSession(); if(error) throw new Error(error.message); if(!data.session) throw new Error('Session expiree. Reconnecte-toi.');
         const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=Math.round((base+platFee+priority+insurance.premium)*100)/100;
         const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',el('deadline').value?'Delai: '+el('deadline').value:'','Assurance: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | couverture max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
-        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_total:total,notes,assurance_plan:insurance.key};
+        const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
+        const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen';
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_total:total,notes,assurance_plan:insurance.key,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison creee, mais ID introuvable.');
         if(out.recipient_confirmation_code){
-          localStorage.setItem('pap_reception_code_'+id,out.recipient_confirmation_code);
           const confirmLink=window.location.origin+'/confirmation-destinataire.html?livraison_id='+encodeURIComponent(id);
-          localStorage.setItem('pap_reception_link_'+id,confirmLink);
-          alert('Code de reception destinataire: '+out.recipient_confirmation_code+'\\n\\nLien destinataire: '+confirmLink+'\\n\\nDonne ce code et ce lien uniquement au destinataire. Il confirmera lui-meme la reception pour liberer le paiement apres livraison.');
+          showRecipientCode(id,out.recipient_confirmation_code,confirmLink);
         }
         const payParams=new URLSearchParams({livraison_id:id,montant:String(total),dep:payload.ville_depart,arr:payload.ville_arrivee,type:payload.type_colis,poids:String(payload.poids_kg),assurance:payload.assurance_plan});
-        el('success-message').classList.add('show'); setTimeout(()=>{window.location.href='/paiement.html?'+payParams.toString()},500);
+        el('success-message').textContent='Livraison creee. Code destinataire affiche ci-dessous. Ouverture du paiement escrow...';
+        el('success-message').classList.add('show');
+        setTimeout(()=>{window.location.href='/paiement.html?'+payParams.toString()},out.recipient_confirmation_code?4500:900);
       }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Creer la livraison'}
       return false;
     }
