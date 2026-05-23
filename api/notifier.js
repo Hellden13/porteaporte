@@ -20,6 +20,15 @@ const PUBLIC_TYPES = new Set([
   'contact_support',
   'contact_partenariat',
   'contact_investisseur',
+  // Types appelés en interne par platform.js (server-to-server)
+  'livraison_creee_expediteur',
+  'code_destinataire',
+  'colis_livre_expediteur',
+  'colis_livre_destinataire',
+  'livraison_complete',
+  'livraison_imprevu',
+  'manquement_signale',
+  'preuve_soumise_admin',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -49,6 +58,8 @@ function validatePublicCaller(req) {
   const origin = String(req.headers.origin || '');
   const referer = String(req.headers.referer || '');
   if (allowed === '*' || allowed === '') return true;
+  // Server-to-server call (no Origin/Referer) → trust (Vercel internal)
+  if (!origin && !referer) return true;
   const base = allowed.replace(/\/$/, '');
   if (origin && (origin === base || origin.startsWith(base + '/'))) return true;
   if (referer && (referer === base || referer.startsWith(base + '/'))) return true;
