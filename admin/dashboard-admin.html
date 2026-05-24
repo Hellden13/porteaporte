@@ -1383,12 +1383,12 @@
     const POSTES_LIVE = [
       { icon: '🚗', name: 'Livreur québécois',                key: 'pct_livreur',      def: 60, color: '#B8F53E' },
       { icon: '💚', name: 'Communauté (Fonds → organismes)',  key: 'pct_communaute',   def: 5,  color: '#ff6b9d' },
-      { icon: '🛡️', name: 'Protection colis bêta',             key: 'pct_protection',   def: 3,  color: '#00D9FF' },
-      { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'pct_urgence',      def: 2,  color: '#ffa500' },
-      { icon: '🔧', name: 'Maintenance + développement',       key: 'pct_developpement',def: 4,  color: '#A8B0BA' },
-      { icon: '📢', name: 'Marketing & croissance',            key: 'pct_marketing',    def: 4.6,color: '#A8B0BA' },
-      { icon: '🏛️', name: 'Opérations (support, équipe)',      key: 'pct_operations',   def: 13, color: '#A8B0BA' },
-      { icon: '💰', name: 'Profit net (réinvest. plateforme)', key: 'pct_profit',       def: 8.4,color: '#A8B0BA' }
+      { icon: '🛡️', name: 'Protection colis bêta',             key: 'pct_protection',   def: 8,  color: '#00D9FF' },
+      { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'pct_urgence',      def: 5,  color: '#ffa500' },
+      { icon: '🔧', name: 'Maintenance + développement',       key: 'pct_developpement',def: 5,  color: '#A8B0BA' },
+      { icon: '📢', name: 'Marketing & croissance',            key: 'pct_marketing',    def: 3,  color: '#A8B0BA' },
+      { icon: '🏛️', name: 'Opérations (support, équipe)',      key: 'pct_operations',   def: 4,  color: '#A8B0BA' },
+      { icon: '💰', name: 'Profit net (réinvest. plateforme)', key: 'pct_profit',       def: 10, color: '#A8B0BA' }
     ];
     const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 5);
     let repartHtml = POSTES_LIVE.map(p => {

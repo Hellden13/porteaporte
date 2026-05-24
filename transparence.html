@@ -206,12 +206,12 @@
         const POSTES = [
           { icon: '🚗', name: 'Le livreur québécois', key: 'pct_livreur', def: 60, hl: true },
           { icon: '💚', name: 'Causes communautaires (Fonds PorteàPorte)', key: 'pct_communaute', def: 5, cause: true },
-          { icon: '🛡️', name: 'Protection colis bêta', key: 'pct_protection', def: 3 },
-          { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', def: 2 },
-          { icon: '🔧', name: 'Maintenance + développement', key: 'pct_developpement', def: 4 },
-          { icon: '📢', name: 'Marketing & croissance', key: 'pct_marketing', def: 4.6 },
-          { icon: '🏛️', name: 'Opérations (support, équipe)', key: 'pct_operations', def: 13 },
-          { icon: '💰', name: 'Profit net (réinvest. + fondateur)', key: 'pct_profit', def: 8.4 }
+          { icon: '🛡️', name: 'Protection colis bêta', key: 'pct_protection', def: 8 },
+          { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', def: 5 },
+          { icon: '🔧', name: 'Maintenance + développement', key: 'pct_developpement', def: 5 },
+          { icon: '📢', name: 'Marketing & croissance', key: 'pct_marketing', def: 3 },
+          { icon: '🏛️', name: 'Opérations (support, équipe)', key: 'pct_operations', def: 4 },
+          { icon: '💰', name: 'Profit net (réinvest. plateforme)', key: 'pct_profit', def: 10 }
         ];
         const ticket = Number(s.ticket_moyen_cad) || 15;
         const html = POSTES.map(p => {

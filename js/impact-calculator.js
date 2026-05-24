@@ -8,9 +8,9 @@
   window.__papCalc = true;
 
   let settings = {
-    pct_livreur: 60, pct_communaute: 5, pct_protection: 3, pct_urgence: 2,
-    pct_developpement: 4, pct_marketing: 4.6, pct_operations: 13, pct_profit: 5,
-    pct_stripe: 3.4, ticket_moyen_cad: 15
+    pct_livreur: 60, pct_communaute: 5, pct_protection: 8, pct_urgence: 5,
+    pct_developpement: 5, pct_marketing: 3, pct_operations: 4, pct_profit: 10,
+    pct_stripe: 3.4, founder_revenue_pct: 0.05, ticket_moyen_cad: 15
   };
 
   function injectStyles() {

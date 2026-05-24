@@ -174,9 +174,12 @@
       { key: 'pct_profit', icon: '💰', name: 'Profit net', desc: 'Réinvest ou bonus', min: 0, max: 20 }
     ];
     const PRESETS = {
-      lancement:   { livreur:65, communaute:5, protection:3, urgence:2, developpement:3.5, marketing:4, operations:14, profit:3.5 },
-      equilibre:   { livreur:60, communaute:5, protection:3, urgence:2, developpement:4, marketing:4.6, operations:13, profit:8.4 },
-      rentable:    { livreur:58, communaute:5, protection:3, urgence:2, developpement:3, marketing:3.6, operations:15, profit:10.4 }
+      // Config officielle Denis (lancement bêta Québec/Lévis 2026)
+      lancement:   { livreur:60, communaute:5, protection:8, urgence:5, developpement:5, marketing:3, operations:4, profit:10 },
+      // Equilibre: plus de marketing/dev quand traction
+      equilibre:   { livreur:60, communaute:5, protection:6, urgence:3, developpement:5, marketing:5, operations:8, profit:8 },
+      // Rentable: plus de profit, moins protection (quand fonds bien rempli)
+      rentable:    { livreur:60, communaute:5, protection:3, urgence:2, developpement:4, marketing:4, operations:10, profit:12 }
     };
     let current = {};
     let ticket = 15;

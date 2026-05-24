@@ -2605,22 +2605,22 @@ async function fetchImpactState(sbUrl, sbKey) {
   let slices;
   if (hasNewModel) {
     slices = {
-      // Nouveaux noms officiels
+      // Nouveaux noms officiels (défauts = configuration prod actuelle)
       livreur:       Math.max(0, toNumber(settings.pct_livreur, 60)),
       communaute:    Math.max(0, toNumber(settings.pct_communaute, 5)),
-      protection:    Math.max(0, toNumber(settings.pct_protection, 3)),
-      urgence:       Math.max(0, toNumber(settings.pct_urgence, 2)),
-      developpement: Math.max(0, toNumber(settings.pct_developpement, 4)),
-      marketing:     Math.max(0, toNumber(settings.pct_marketing, 4.6)),
-      operations:    Math.max(0, toNumber(settings.pct_operations, 13)),
-      profit:        Math.max(0, toNumber(settings.pct_profit, 8.4)),
+      protection:    Math.max(0, toNumber(settings.pct_protection, 8)),
+      urgence:       Math.max(0, toNumber(settings.pct_urgence, 5)),
+      developpement: Math.max(0, toNumber(settings.pct_developpement, 5)),
+      marketing:     Math.max(0, toNumber(settings.pct_marketing, 3)),
+      operations:    Math.max(0, toNumber(settings.pct_operations, 4)),
+      profit:        Math.max(0, toNumber(settings.pct_profit, 10)),
       // Alias retro-compat (clients qui lisent les anciens noms ne cassent pas)
-      plateforme:    Math.max(0, toNumber(settings.pct_operations, 13)) + Math.max(0, toNumber(settings.pct_developpement, 4)),
+      plateforme:    Math.max(0, toNumber(settings.pct_operations, 4)) + Math.max(0, toNumber(settings.pct_developpement, 5)),
       don:           Math.max(0, toNumber(settings.pct_communaute, 5)),
       tirage:        0,
-      developpeur:   Math.max(0, toNumber(settings.pct_developpement, 4)),
-      securite:      Math.max(0, toNumber(settings.pct_protection, 3)),
-      assurance:     Math.max(0, toNumber(settings.pct_protection, 3))
+      developpeur:   Math.max(0, toNumber(settings.pct_developpement, 5)),
+      securite:      Math.max(0, toNumber(settings.pct_protection, 8)),
+      assurance:     Math.max(0, toNumber(settings.pct_protection, 8))
     };
   } else {
     slices = {
