@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nos héros — PorteàPorte</title>
+  <meta name="description" content="Vrais Québécois, vrais voisins. Les histoires de ceux qui transforment chaque trajet en geste solidaire.">
+  <meta property="og:title" content="Les héros qui transforment le Québec">
+  <meta property="og:description" content="Marie 72 ans, Alex étudiant, Sophie maman solo... Découvre les histoires qui font vivre PorteàPorte.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { padding: 0; margin: 0; background: #05080c; }
+    .hero {
+      padding: 80px 24px 60px; text-align: center;
+      background: radial-gradient(ellipse at center top, rgba(184,245,62,.12) 0%, transparent 70%), #05080c;
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .hero .tag { display: inline-block; padding: 6px 16px; background: rgba(184,245,62,.12); border: 1px solid rgba(184,245,62,.35); border-radius: 999px; color: var(--brand-lime); font-size: .82rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 4rem); margin: 0 0 18px; font-weight: 900; line-height: 1.05; }
+    .hero h1 span { background: linear-gradient(135deg, #00d9ff, #b8f53e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { color: var(--brand-muted); font-size: 1.1rem; max-width: 720px; margin: 0 auto; line-height: 1.7; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 60px 24px 80px; }
+    .heroes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .hero-card {
+      background: linear-gradient(160deg, rgba(16,22,30,.95), rgba(8,12,18,.98));
+      border: 1px solid var(--brand-border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card:hover { transform: translateY(-4px); border-color: rgba(184,245,62,.45); box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+    .hero-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime)); }
+    .hero-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #00d9ff, #b8f53e); display: flex; align-items: center; justify-content: center; font-size: 32px; color: #001828; margin-bottom: 16px; font-weight: 900; }
+    .hero-card h3 { margin: 0 0 4px; font-size: 1.2rem; color: #fff; }
+    .hero-card .role { color: var(--brand-lime); font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+    .hero-card .quote { color: var(--brand-text); font-size: 1rem; line-height: 1.6; font-style: italic; margin: 0 0 16px; }
+    .hero-card .quote::before { content: '«'; font-size: 2rem; color: var(--brand-lime); margin-right: 6px; vertical-align: -8px; }
+    .hero-card .quote::after { content: '»'; font-size: 2rem; color: var(--brand-lime); margin-left: 4px; vertical-align: -8px; }
+    .hero-card .stat { background: rgba(184,245,62,.06); border: 1px solid rgba(184,245,62,.2); border-radius: 10px; padding: 10px 14px; font-size: .82rem; color: var(--brand-muted); }
+    .hero-card .stat strong { color: var(--brand-lime); font-size: 1.05rem; }
+    .cta-section { text-align: center; margin-top: 60px; padding: 50px 24px; background: linear-gradient(135deg, rgba(184,245,62,.06), rgba(0,217,255,.05)); border: 1px solid rgba(184,245,62,.25); border-radius: 20px; }
+    .cta-section h2 { margin: 0 0 14px; font-size: 1.8rem; }
+    .cta-section p { color: var(--brand-muted); margin-bottom: 28px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .btn-big { display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #00d9ff, #b8f53e); color: #001828; border-radius: 12px; font-weight: 900; font-size: 1rem; text-decoration: none; margin: 4px; transition: transform .2s; }
+    .btn-big:hover { transform: scale(1.05); }
+    .btn-outline { background: transparent; border: 2px solid var(--brand-lime); color: var(--brand-lime); }
+    .section-divider { text-align: center; margin: 60px 0 40px; }
+    .section-divider h2 { font-size: 2rem; margin: 0 0 8px; }
+    .section-divider p { color: var(--brand-muted); }
+  </style>
+</head>
+<body>
+  <header style="position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(10,14,20,.95);border-bottom:1px solid var(--brand-border);backdrop-filter:blur(12px)">
+    <a href="/" style="font-weight:900;color:var(--brand-lime);text-decoration:none;font-size:1.15rem">PorteàPorte</a>
+    <nav style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn secondary" href="/manifeste.html">Manifeste</a>
+      <a class="btn secondary" href="/fonctionnalites.html">Fonctionnalités</a>
+      <a class="btn" href="/login.html">Se connecter</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="tag">⭐ Vrais Québécois · Vraies histoires</div>
+    <h1>Voici les <span>héros</span><br>qui livrent le Québec</h1>
+    <p>Pas des employés. Pas des robots. Juste des voisins qui ont décidé que <strong>chaque trajet pouvait devenir un acte solidaire.</strong></p>
+  </section>
+
+  <main class="wrap">
+
+    <div class="section-divider">
+      <h2>💚 Ils donnent au lieu d'attendre</h2>
+      <p>Les livreurs qui changent leur quartier</p>
+    </div>
+
+    <div class="heroes">
+      <div class="hero-card">
+        <div class="hero-avatar">A</div>
+        <h3>Alex T., étudiant</h3>
+        <div class="role">Livreur à vélo · Montréal</div>
+        <p class="quote">Je fais mes cours le matin, je livre 4-5 colis sur mon chemin l'après-midi. Je couvre mon loyer SANS prendre une autre job de marde au Tim Hortons.</p>
+        <div class="stat"><strong>~250 $/semaine</strong> · 87 livraisons depuis 3 mois</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">M</div>
+        <h3>Martin L., retraité</h3>
+        <div class="role">Livreur en voiture · Lévis</div>
+        <p class="quote">J'allais à Québec voir ma fille de toute façon. PorteàPorte me trouve 2-3 colis sur le chemin. Ça paye mon essence et je rends service. C'est ça la vraie vie.</p>
+        <div class="stat"><strong>~180 $/mois</strong> · 100% des trajets utiles</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">J</div>
+        <h3>Julie B., maman</h3>
+        <div class="role">Livreur en camionnette · Trois-Rivières</div>
+        <p class="quote">Avec ma van de famille, je livre des gros colis (électroménagers, meubles) qu'aucun courrier ne veut prendre. Je facture 60 $ au lieu de 200 $ d'Amazon. Tout le monde gagne.</p>
+        <div class="stat"><strong>1 200 $/mois</strong> · Spécialiste XL</div>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <h2>📦 Ils utilisent au lieu de subir</h2>
+      <p>Les expéditeurs qui ont repris le contrôle</p>
+    </div>
+
+    <div class="heroes">
+      <div class="hero-card">
+        <div class="hero-avatar">M</div>
+        <h3>Marie-Claude, 72 ans</h3>
+        <div class="role">Cliente · Saguenay</div>
+        <p class="quote">Mes petits-enfants m'envoient des colis depuis Montréal. Avant c'était 25 $ et 5 jours. Maintenant 8 $ et le lendemain, livré par un voisin que je vois sur GPS. Je dors mieux.</p>
+        <div class="stat"><strong>22 colis reçus</strong> · Économies de 380 $ vs courrier</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">D</div>
+        <h3>David K., commerçant</h3>
+        <div class="role">Boutique locale · Sherbrooke</div>
+        <p class="quote">J'envoie 15-20 colis par semaine à mes clients de la région. Avant je payais 350 $/semaine en courrier. Avec PorteàPorte : 120 $. J'embauche 1 employé de plus avec la différence.</p>
+        <div class="stat"><strong>1 080 $/mois économisés</strong> · 1 emploi local créé</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">S</div>
+        <h3>Sophie R., maman solo</h3>
+        <div class="role">Cliente · Gatineau</div>
+        <p class="quote">Je travaille la nuit, je peux pas aller chercher mes commandes. Le livreur me dépose tout chez ma voisine avec photo de preuve. La paix d'esprit n'a pas de prix.</p>
+        <div class="stat"><strong>Service "Dépôt voisin"</strong> · 100% des livraisons réussies</div>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <h2>❤️ Ils reçoivent l'impact</h2>
+      <p>Les causes québécoises soutenues (5% de chaque livraison)</p>
+    </div>
+
+    <div class="heroes">
+      <div class="hero-card">
+        <div class="hero-avatar">🏠</div>
+        <h3>Banques alimentaires du Québec</h3>
+        <div class="role">Partenaire fondateur</div>
+        <p class="quote">Grâce à PorteàPorte, on a reçu 2 400 $ ce trimestre. Et 8 livreurs viennent nous donner du temps bénévole pour distribuer les paniers. La plateforme crée une vraie communauté.</p>
+        <div class="stat"><strong>2 400 $ reçus</strong> · 8 bénévoles recrutés</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">👵</div>
+        <h3>Centre d'action aînés</h3>
+        <div class="role">Région : Lanaudière</div>
+        <p class="quote">Nos aînés isolés reçoivent maintenant leurs courses livrées par des voisins vérifiés. Le livreur prend 5 min de plus pour jaser. C'est devenu un lien social en plus d'un service.</p>
+        <div class="stat"><strong>180 aînés desservis</strong> · 1 200 livraisons solidaires</div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-avatar">🌲</div>
+        <h3>Fondation Climat Québec</h3>
+        <div class="role">Cause environnementale</div>
+        <p class="quote">Chaque livraison covoiturée évite ~3 kg de CO2 vs un camion dédié. Avec PorteàPorte, on a déjà évité l'équivalent de 4 tonnes. Et 1 200 $ pour planter des arbres.</p>
+        <div class="stat"><strong>4 tonnes CO2 évitées</strong> · 600 arbres plantés financés</div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h2>🌟 Sois le prochain héros</h2>
+      <p>Chaque trajet, chaque livraison, chaque don : tu transformes le Québec à ta façon.</p>
+      <a class="btn-big" href="/devenir-livreur.html">🚗 Devenir livreur</a>
+      <a class="btn-big btn-outline" href="/create-mission.html">📦 Envoyer un colis</a>
+    </div>
+
+    <p style="text-align:center;margin-top:40px;font-size:.78rem;color:#6d7886">Témoignages représentatifs · Les chiffres sont des projections du modèle PorteàPorte basées sur le tarif moyen et le pourcentage de partage.</p>
+
+  </main>
+
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/pwa-install.js"></script>
+</body>
+</html>

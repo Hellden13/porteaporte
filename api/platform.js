@@ -1582,7 +1582,7 @@ async function adminDashboard(req, res, ctx) {
   const profiles = profilesRes.ok ? await profilesRes.json() : [];
 
   let livraisonsRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,created_at,cree_le,livreur_id,expediteur_id&order=created_at.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,created_at,cree_le,livreur_id,expediteur_id,stripe_payment_intent,payment_intent_id,recipient_confirmed_at,recipient_confirmation_method,delivery_confirmation_mode,delivery_proof_required_admin_review&order=created_at.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   let livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
@@ -3531,6 +3531,31 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
     if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);
+    if (endpoint === 'public-impact-stats') {
+      // Stats publiques (pas d'auth requise) - pour compteur live
+      const stats = { livraisons: 0, livreurs: 0, dons_cause: 0, co2_evite_kg: 0, communautes: 0 };
+      try {
+        const lr = await fetch(`${sbUrl}/rest/v1/livraisons?statut=in.(payee,paid)&select=prix_total`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const livs = lr.ok ? await lr.json() : [];
+        stats.livraisons = livs.length;
+        const totalCAD = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
+        stats.dons_cause = Math.round(totalCAD * 0.05);
+        // Hypothèse : chaque livraison covoiturée évite ~3kg CO2 (vs courier dédié)
+        stats.co2_evite_kg = Math.round(stats.livraisons * 3);
+      } catch (e) {}
+      try {
+        const pr = await fetch(`${sbUrl}/rest/v1/profiles?driver_status=eq.verified&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        const profs = pr.ok ? await pr.json() : [];
+        stats.livreurs = profs.length;
+      } catch (e) {}
+      stats.communautes = 12; // partenaires actuels
+      stats.updated_at = new Date().toISOString();
+      return res.status(200).json(stats);
+    }
     if (endpoint === 'expediteur-blocked-list') return await expediteurBlockedList(req, res, ctx, body);
     if (endpoint === 'address-intel-list') return await addressIntelList(req, res, ctx, body);
     if (endpoint === 'address-intel-add') return await addressIntelAdd(req, res, ctx, body);
