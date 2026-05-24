@@ -485,6 +485,24 @@ describe('platform.js dispatcher', () => {
     assert.match(res._body?.error || '', /Livreur verifie/i);
   });
 
+  test('paiements livreur: stripe-connect-status bloque un livreur non verifie', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
+      '/rest/v1/profiles': {
+        ok: true,
+        data: [{ id: 'u1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'pending_review' }]
+      }
+    });
+    const req = makeReq({
+      body: { endpoint: 'stripe-connect-status' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.match(res._body?.error || '', /Verification livreur/i);
+  });
+
   test('dashboard livreur: my-driver-livraisons retourne les livraisons assignees au livreur verifie', async () => {
     const driverId = '11111111-1111-4111-8111-111111111111';
     const expediteurId = '22222222-2222-4222-8222-222222222222';
