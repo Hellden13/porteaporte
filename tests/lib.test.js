@@ -394,25 +394,9 @@ describe('generateReceptionCode', () => {
 
 // ─── defaultRewardMissions ────────────────────────────────────────────────────
 describe('defaultRewardMissions', () => {
-  test('retourne exactement 3 missions', () => {
+  test('ne cree pas de missions fictives en production', () => {
     const missions = defaultRewardMissions();
-    assert.equal(missions.length, 3);
-  });
-
-  test('chaque mission a les champs requis', () => {
-    for (const m of defaultRewardMissions()) {
-      assert.ok(m.id, 'mission doit avoir un id');
-      assert.ok(m.title, 'mission doit avoir un title');
-      assert.ok(m.reward_coins > 0, 'reward_coins doit être positif');
-      assert.equal(m.status, 'active');
-    }
-  });
-
-  test('la deadline est dans le futur', () => {
-    const now = new Date();
-    for (const m of defaultRewardMissions()) {
-      assert.ok(new Date(m.deadline) > now, 'deadline doit être future');
-    }
+    assert.equal(missions.length, 0);
   });
 });
 
