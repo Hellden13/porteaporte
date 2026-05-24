@@ -5,6 +5,8 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+const { normalizeRole } = require('../lib/_lib');
+
 const RETENTION_MS = 7 * 365 * 24 * 60 * 60 * 1000;
 
 function hashCode(value, salt) {
@@ -31,7 +33,7 @@ async function isAdmin(userId, sbUrl, sbKey) {
     headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
   });
   const rows = r.ok ? await r.json() : [];
-  return rows[0]?.role === 'admin' && !rows[0]?.suspendu;
+  return normalizeRole(rows[0]?.role) === 'admin' && !rows[0]?.suspendu;
 }
 
 async function stripeRequest(method, path, stripeKey, body, idempotencyKey) {
@@ -205,7 +207,33 @@ module.exports = async function handler(req, res) {
 
   let tx = await getPaymentTransaction(SB_URL, SB_KEY, livraison_id);
   const paymentIntentId = tx?.stripe_payment_intent || livraison.stripe_payment_intent || livraison.payment_intent_id || null;
-  if (!paymentIntentId) return res.status(404).json({ error: 'PaymentIntent introuvable' });
+
+  // FALLBACK : si pas de PI mais admin valide → confirmation manuelle sans capture Stripe (ex: paiement raté/test)
+  if (!paymentIntentId) {
+    if (admin) {
+      const livraisonUpdated = await safePatchLivraisonPaid(SB_URL, SB_KEY, livraison_id, recipientConfirmationPatch);
+      await insertAudit(SB_URL, SB_KEY, {
+        livraison_id,
+        user_id: livraison.expediteur_id,
+        actor_id: session?.id || null,
+        event_type: 'manual_confirmation_no_stripe',
+        amount_cents: 0,
+        currency: 'cad',
+        evidence: { source: 'api/capture-livraison', reason: 'No PaymentIntent found, admin manual override' }
+      });
+      return res.status(200).json({
+        success: true,
+        manual_no_stripe: true,
+        livraison_id,
+        db_updated: livraisonUpdated,
+        warning: 'Confirmation manuelle sans capture Stripe (PI absent)'
+      });
+    }
+    return res.status(404).json({
+      error: 'PaymentIntent introuvable. Cette livraison n\'a pas de paiement enregistré. Contacte le support pour validation manuelle.',
+      contact: 'denismorneaubtc@gmail.com'
+    });
+  }
 
   const piPath = `/v1/payment_intents/${encodeURIComponent(paymentIntentId)}`;
   const existing = await stripeRequest('GET', piPath, STRIPE_KEY);

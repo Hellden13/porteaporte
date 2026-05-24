@@ -254,20 +254,33 @@ module.exports = async function handler(req, res) {
     }).catch((err) => console.error('[paiement-livraison] audit:', err.message));
 
     // Sauvegarder le PaymentIntent directement sur la livraison (critique pour capture)
-    await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison.id}`, {
-      method: 'PATCH',
-      headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
+    // Try with both columns first, fallback to stripe_payment_intent only
+    const headers = {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    };
+    let patchRes = await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison.id}`, {
+      method: 'PATCH', headers,
       body: JSON.stringify({
         statut: 'paiement_autorise',
         stripe_payment_intent: intent.id,
         payment_intent_id: intent.id
       })
-    }).catch((err) => console.error('[paiement-livraison] statut:', err.message));
+    }).catch(() => ({ ok: false }));
+    // Fallback si payment_intent_id n'existe pas
+    if (!patchRes.ok) {
+      patchRes = await fetch(`${SB_URL}/rest/v1/livraisons?id=eq.${livraison.id}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({
+          statut: 'paiement_autorise',
+          stripe_payment_intent: intent.id
+        })
+      }).catch(() => ({ ok: false }));
+    }
+    if (!patchRes.ok) console.error('[paiement-livraison] CRITICAL: livraison status not updated for', livraison.id);
+    else console.log('[paiement-livraison] livraison', livraison.id, '→ paiement_autorise + PI=' + intent.id);
 
     return res.status(200).json({
       success: true,
