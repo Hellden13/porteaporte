@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres financiers — Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; background: #05080c; }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+    .total-bar { padding: 14px 18px; background: rgba(0,217,255,.06); border: 2px solid rgba(0,217,255,.3); border-radius: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .total-bar.ok { background: rgba(0,255,159,.08); border-color: rgba(0,255,159,.4); }
+    .total-bar.err { background: rgba(255,90,90,.08); border-color: rgba(255,90,90,.4); }
+    .total-bar .label { font-weight: 800; color: #fff; }
+    .total-bar .val { font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); }
+    .total-bar.err .val { color: #ffb0b0; }
+
+    .slider-row { display: grid; grid-template-columns: 50px 1fr 80px 80px; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .slider-row:last-child { border-bottom: none; }
+    .slider-row .icon { font-size: 1.4rem; text-align: center; }
+    .slider-row .name { font-weight: 700; color: #fff; }
+    .slider-row .desc { font-size: .75rem; color: var(--brand-muted); margin-top: 2px; }
+    .slider-row input[type=range] { width: 100%; accent-color: var(--brand-lime); }
+    .slider-row .pct-input { width: 70px; padding: 6px 10px; background: #05080c; color: var(--brand-lime); border: 1px solid #1E2535; border-radius: 6px; font-weight: 900; text-align: center; font-size: 1rem; font-variant-numeric: tabular-nums; }
+    .slider-row .dollar { font-weight: 700; color: var(--brand-cyan); text-align: right; font-variant-numeric: tabular-nums; }
+
+    .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .btn-primary { padding: 14px 28px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); color: #001828; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: .95rem; }
+    .btn-secondary { padding: 12px 22px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); color: #fff; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .msg { padding: 12px 16px; border-radius: 10px; font-weight: 700; margin-top: 14px; display: none; }
+    .msg.ok { display: block; background: rgba(0,255,159,.1); color: #7dffc1; border: 1px solid rgba(0,255,159,.3); }
+    .msg.err { display: block; background: rgba(255,90,90,.1); color: #ffb0b0; border: 1px solid rgba(255,90,90,.3); }
+
+    .preset-bar { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+    .preset { padding: 8px 14px; background: rgba(255,255,255,.04); border: 1px solid #1E2535; color: var(--brand-muted); border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 700; }
+    .preset:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+
+    .info-tip { background: rgba(255,200,0,.06); border-left: 3px solid #ffd700; padding: 12px 16px; border-radius: 6px; color: #ffd700; font-size: .85rem; line-height: 1.6; margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>⚙️ Paramètres financiers</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Admin</a>
+    </div>
+
+    <div class="info-tip">
+      💡 <strong>Ces % s'appliquent au montant NET (après Stripe).</strong> La somme des 8 postes distribuables doit faire 100%. Tu peux ajuster en temps réel selon ta stratégie. La home et l'admin se mettent à jour automatiquement.
+    </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 8px">💸 Répartition des fonds</h2>
+      <div style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">Sur un ticket de <strong style="color:#fff" id="ticketDisplay">15 $</strong>, voici où va chaque dollar :</div>
+
+      <div class="preset-bar">
+        <span style="color:var(--brand-muted);font-size:.85rem">📋 Presets :</span>
+        <button class="preset" onclick="applyPreset('lancement')">🥚 Lancement agressif</button>
+        <button class="preset" onclick="applyPreset('equilibre')">⚖️ Équilibré (recommandé)</button>
+        <button class="preset" onclick="applyPreset('rentable')">💰 Rentable long terme</button>
+      </div>
+
+      <div id="totalBar" class="total-bar ok">
+        <span class="label">📐 Total distribuable</span>
+        <span class="val" id="totalVal">100.0%</span>
+      </div>
+
+      <div id="sliders"></div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="save()">💾 Sauvegarder</button>
+        <button class="btn-secondary" onclick="load()">↩️ Annuler / Recharger</button>
+      </div>
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 14px">🎫 Ticket moyen</h2>
+      <p style="color:var(--brand-muted);margin-bottom:12px">Utilisé pour les projections, le calculateur public et le dashboard fondateur.</p>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <input id="ticket" type="number" min="1" step="0.5" style="width:140px;padding:14px;background:#05080c;color:var(--brand-lime);border:1px solid #1E2535;border-radius:8px;font-weight:900;font-size:1.3rem;text-align:center">
+        <span style="color:#fff;font-weight:700">$</span>
+        <span style="color:var(--brand-muted);font-size:.85rem">par livraison en moyenne</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    const POSTES = [
+      { key: 'pct_livreur', icon: '🚗', name: 'Livreur', desc: 'Part versée au livreur via Stripe Connect', min: 40, max: 75 },
+      { key: 'pct_communaute', icon: '💚', name: 'Communauté', desc: 'Fonds PorteàPorte → organismes québécois', min: 1, max: 15 },
+      { key: 'pct_protection', icon: '🛡️', name: 'Protection colis', desc: 'Provision pour dommages/pertes', min: 0, max: 10 },
+      { key: 'pct_urgence', icon: '🆘', name: 'Urgence', desc: 'Litiges majeurs, cas extrêmes', min: 0, max: 10 },
+      { key: 'pct_developpement', icon: '🔧', name: 'Développement', desc: 'Maintenance, futurs développeurs', min: 0, max: 15 },
+      { key: 'pct_marketing', icon: '📢', name: 'Marketing', desc: 'Croissance, publicités, partenariats', min: 0, max: 15 },
+      { key: 'pct_operations', icon: '🏛️', name: 'Opérations', desc: 'Support, équipe, salaire fondateur', min: 0, max: 30 },
+      { key: 'pct_profit', icon: '💰', name: 'Profit net', desc: 'Réinvest ou bonus', min: 0, max: 20 }
+    ];
+    const PRESETS = {
+      lancement:   { livreur:65, communaute:5, protection:3, urgence:2, developpement:3.5, marketing:4, operations:14, profit:3.5 },
+      equilibre:   { livreur:60, communaute:5, protection:3, urgence:2, developpement:4, marketing:4.6, operations:13, profit:8.4 },
+      rentable:    { livreur:58, communaute:5, protection:3, urgence:2, developpement:3, marketing:3.6, operations:15, profit:10.4 }
+    };
+    let current = {};
+    let ticket = 15;
+
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      await load();
+    }
+
+    async function load() {
+      const res = await fetch('/api/platform?endpoint=platform-settings-get');
+      const data = await res.json();
+      const s = data.settings || {};
+      current = {};
+      POSTES.forEach(p => current[p.key] = Number(s[p.key]) || 0);
+      ticket = Number(s.ticket_moyen_cad) || 15;
+      document.getElementById('ticket').value = ticket;
+      render();
+    }
+
+    function render() {
+      document.getElementById('ticketDisplay').textContent = ticket.toFixed(2) + ' $';
+      const html = POSTES.map(p => {
+        const pct = current[p.key] || 0;
+        const dollars = (ticket * pct / 100).toFixed(2);
+        return `
+          <div class="slider-row">
+            <div class="icon">${p.icon}</div>
+            <div>
+              <div class="name">${p.name}</div>
+              <div class="desc">${p.desc}</div>
+              <input type="range" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" oninput="updatePct('${p.key}', this.value)">
+            </div>
+            <input class="pct-input" type="number" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" oninput="updatePct('${p.key}', this.value)">
+            <div class="dollar" id="dollar-${p.key}">${dollars} $</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('sliders').innerHTML = html;
+      updateTotal();
+    }
+
+    function updatePct(key, val) {
+      current[key] = Number(val) || 0;
+      // Update both inputs
+      document.querySelectorAll(`[oninput*="${key}"]`).forEach(el => el.value = val);
+      document.getElementById('dollar-' + key).textContent = (ticket * current[key] / 100).toFixed(2) + ' $';
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const sum = Object.values(current).reduce((s,v) => s + Number(v), 0);
+      const bar = document.getElementById('totalBar');
+      const val = document.getElementById('totalVal');
+      val.textContent = sum.toFixed(1) + '%';
+      if (Math.abs(sum - 100) < 0.5) {
+        bar.className = 'total-bar ok';
+      } else {
+        bar.className = 'total-bar err';
+        val.textContent = sum.toFixed(1) + '% ⚠️ doit faire 100%';
+      }
+    }
+
+    function applyPreset(name) {
+      const p = PRESETS[name];
+      if (!p) return;
+      POSTES.forEach(post => {
+        const key = post.key.replace('pct_', '');
+        current[post.key] = p[key] || 0;
+      });
+      render();
+    }
+
+    async function save() {
+      const msg = document.getElementById('msg');
+      ticket = Number(document.getElementById('ticket').value) || 15;
+      const sum = Object.values(current).reduce((s,v) => s + Number(v), 0);
+      if (Math.abs(sum - 100) > 0.5) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ La somme doit faire 100% (actuel: ' + sum.toFixed(1) + '%)';
+        return;
+      }
+      const payload = { ...current, ticket_moyen_cad: ticket };
+      const res = await fetch('/api/platform?endpoint=admin-settings-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ ' + (out.error || 'Erreur sauvegarde');
+        return;
+      }
+      msg.className = 'msg ok';
+      msg.textContent = '✅ Paramètres sauvegardés. Les calculs sur le site sont mis à jour.';
+      setTimeout(() => { msg.style.display = 'none'; }, 3000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

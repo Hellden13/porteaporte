@@ -3531,6 +3531,31 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
     if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);
+    if (endpoint === 'admin-settings-update') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+      const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad'];
+      const patch = { updated_at: new Date().toISOString() };
+      for (const f of fields) if (body[f] != null) patch[f] = Number(body[f]);
+      // Validation : somme des % distribuables = 100% (hors Stripe et ticket)
+      const sum = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit']
+        .reduce((s,f) => s + Number(patch[f] != null ? patch[f] : 0), 0);
+      if (Math.abs(sum - 100) > 0.5) {
+        return res.status(400).json({ error: `Somme des % doit faire 100% (actuel: ${sum.toFixed(1)}%)` });
+      }
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default`, {
+        method: 'PATCH', headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify(patch)
+      });
+      if (!r.ok) return res.status(400).json({ error: 'Mise à jour impossible' });
+      return res.status(200).json({ success: true });
+    }
+    if (endpoint === 'platform-settings-get') {
+      const r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=*`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const rows = r.ok ? await r.json() : [];
+      return res.status(200).json({ success: true, settings: rows[0] || null });
+    }
     if (endpoint === 'organismes-list') {
       const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
