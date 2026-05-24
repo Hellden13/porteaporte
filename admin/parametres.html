@@ -93,6 +93,16 @@
       <h2 style="margin:0 0 14px">🛡️ Fonds Assurance &amp; Plafond colis</h2>
       <p style="color:var(--brand-muted);margin-bottom:18px">Ces 3 leviers protègent la plateforme pendant la bêta. Ajuste selon ta tolérance au risque.</p>
 
+      <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:10px;font-weight:700;color:#00d9ff;cursor:pointer;font-size:.95rem">
+          <input type="checkbox" id="profit-to-insurance" checked style="width:22px;height:22px;accent-color:#00d9ff">
+          🛡️ Mode bêta : rediriger le profit vers le fonds litige/réclamation
+        </label>
+        <small style="display:block;margin-top:8px;color:var(--brand-muted);font-size:.78rem;line-height:1.5">
+          Quand activé, le <strong style="color:#00d9ff">% Profit net (10% par défaut)</strong> alimente automatiquement le fonds d'assurance/réclamation en plus du <strong style="color:#00d9ff">% Protection (8%)</strong>. Soit <strong>~18% du CA</strong> qui protège la communauté. À désactiver quand prêt à prendre du profit personnel.
+        </small>
+      </div>
+
       <div style="background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
         <label style="display:block;font-weight:700;color:#ffd700;margin-bottom:6px">💰 Ta part fondateur (% du chiffre d'affaires)</label>
         <div style="display:flex;align-items:center;gap:8px;max-width:200px">
@@ -207,6 +217,7 @@
       document.getElementById('ins-pct').value = ((Number(s.insurance_pct != null ? s.insurance_pct : 0.02)) * 100).toFixed(1).replace(/\.0$/, '');
       document.getElementById('topup').value = Number(s.insurance_fund_topup_cents || 0) / 100;
       document.getElementById('founder-pct').value = ((Number(s.founder_revenue_pct != null ? s.founder_revenue_pct : 0.05)) * 100).toFixed(1).replace(/\.0$/, '');
+      document.getElementById('profit-to-insurance').checked = s.profit_to_insurance !== false;
       // Beta cities
       const cities = Array.isArray(s.beta_cities) && s.beta_cities.length ? s.beta_cities : ['Québec', 'Lévis'];
       document.getElementById('beta-cities').value = cities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
@@ -220,13 +231,14 @@
       const pct = (Number(document.getElementById('ins-pct').value) || 0) / 100;
       const topup = Math.round((Number(document.getElementById('topup').value) || 0) * 100);
       const founderPct = (Number(document.getElementById('founder-pct').value) || 0) / 100;
+      const profitToInsurance = document.getElementById('profit-to-insurance').checked;
       if (cap < 5000 || cap > 200000) { msg.className = 'msg err'; msg.textContent = '❌ Plafond doit être entre 50 $ et 2000 $'; return; }
       if (pct < 0 || pct > 0.1) { msg.className = 'msg err'; msg.textContent = '❌ % assurance doit être entre 0 et 10 %'; return; }
       if (founderPct < 0 || founderPct > 0.2) { msg.className = 'msg err'; msg.textContent = '❌ % fondateur doit être entre 0 et 20 %'; return; }
       const res = await fetch('/api/platform?endpoint=admin-settings-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ max_colis_value_cents: cap, insurance_pct: pct, insurance_fund_topup_cents: topup, founder_revenue_pct: founderPct })
+        body: JSON.stringify({ max_colis_value_cents: cap, insurance_pct: pct, insurance_fund_topup_cents: topup, founder_revenue_pct: founderPct, profit_to_insurance: profitToInsurance })
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) { msg.className = 'msg err'; msg.textContent = '❌ ' + (out.error || 'Erreur sauvegarde'); return; }

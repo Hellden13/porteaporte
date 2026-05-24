@@ -2677,20 +2677,32 @@ async function impactPublic(req, res, ctx) {
   let fundTopupCents = 0;
   let maxColisValueCents = 25000;
   let founderRevenuePct = 0.05;
+  let profitToInsurance = true; // Bêta mode : profit redirigé vers fonds litige (par défaut ON)
+  let allSettings = {};
   try {
-    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=insurance_pct,insurance_fund_topup_cents,max_colis_value_cents,founder_revenue_pct`, {
+    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=*`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (sr.ok) {
       const rows = await sr.json();
       if (rows[0]) {
+        allSettings = rows[0];
         if (Number.isFinite(Number(rows[0].insurance_pct))) insurancePct = Number(rows[0].insurance_pct);
         if (Number.isFinite(Number(rows[0].insurance_fund_topup_cents))) fundTopupCents = Number(rows[0].insurance_fund_topup_cents);
         if (Number.isFinite(Number(rows[0].max_colis_value_cents))) maxColisValueCents = Number(rows[0].max_colis_value_cents);
         if (Number.isFinite(Number(rows[0].founder_revenue_pct))) founderRevenuePct = Number(rows[0].founder_revenue_pct);
+        if (typeof rows[0].profit_to_insurance === 'boolean') profitToInsurance = rows[0].profit_to_insurance;
       }
     }
   } catch (_) {}
+
+  // ─── BÊTA MODE : si profitToInsurance ON, le pct_profit ET pct_protection alimentent le fonds ───
+  // Insurance effective = pct_protection (toujours) + pct_profit (si toggle ON)
+  const pctProtection = Number(allSettings.pct_protection != null ? allSettings.pct_protection : 8);
+  const pctProfit = Number(allSettings.pct_profit != null ? allSettings.pct_profit : 10);
+  const effectiveInsurancePct = profitToInsurance
+    ? (pctProtection + pctProfit) / 100  // ex: 8% + 10% = 18%
+    : insurancePct;
   // Fonds public: compter seulement les montants réellement payés/capturés.
   // Une livraison simplement "livre" reste en attente de confirmation destinataire.
   const fundRes = await fetch(
@@ -2701,7 +2713,8 @@ async function impactPublic(req, res, ctx) {
   const totalRevenueCents = Math.round(
     fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0)
   );
-  const fundFromDeliveriesCents = Math.round(totalRevenueCents * insurancePct);
+  // Utilise effectiveInsurancePct (qui inclut profit si toggle ON)
+  const fundFromDeliveriesCents = Math.round(totalRevenueCents * effectiveInsurancePct);
   const founderRevenueCents = Math.round(totalRevenueCents * founderRevenuePct);
   const fundTotalCents = fundFromDeliveriesCents + fundTopupCents;
   const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundTotalCents * 0.5));
@@ -2736,13 +2749,19 @@ async function impactPublic(req, res, ctx) {
     topup_cents: fundTopupCents,
     max_claim_cents: fundMaxClaimCents,
     max_colis_value_cents: maxColisValueCents,
-    insurance_pct: insurancePct,
+    insurance_pct: effectiveInsurancePct,
+    insurance_pct_base: insurancePct,
+    profit_to_insurance: profitToInsurance,
     total_revenue_cents: totalRevenueCents,
     deliveries_paid_count: fundRows.length,
     founder_revenue_pct: founderRevenuePct,
     founder_revenue_cents: founderRevenueCents,
-    funded_by: `${(insurancePct * 100).toFixed(1)}% de chaque livraison confirmée + apports directs PorteàPorte`,
-    note: 'Fonds volontaire bêta — pas un contrat d\'assurance.'
+    funded_by: profitToInsurance
+      ? `${pctProtection}% protection + ${pctProfit}% profit (redirigé bêta) = ${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison + apports directs PorteàPorte`
+      : `${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison confirmée + apports directs PorteàPorte`,
+    note: profitToInsurance
+      ? 'Mode bêta : 100% du profit est redirigé vers le fonds litige/réclamation pour protéger la communauté. Plus de fonds = plus de sécurité.'
+      : 'Fonds volontaire bêta — pas un contrat d\'assurance.'
   };
 
   return res.status(200).json({ success: true, impact: publicState, draws, winners, protection_fund: protectionFund });
@@ -3977,6 +3996,7 @@ module.exports = async function handler(req, res) {
       for (const f of fields) if (body[f] != null) patch[f] = Number(body[f]);
       if (Array.isArray(body.beta_cities)) patch.beta_cities = body.beta_cities.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
       if (typeof body.beta_cities_active === 'boolean') patch.beta_cities_active = body.beta_cities_active;
+      if (typeof body.profit_to_insurance === 'boolean') patch.profit_to_insurance = body.profit_to_insurance;
       // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
       const distribFields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit'];
       const hasAnyDistrib = distribFields.some(f => patch[f] != null);

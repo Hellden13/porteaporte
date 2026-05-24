@@ -9,7 +9,8 @@ ALTER TABLE platform_settings
   ADD COLUMN IF NOT EXISTS insurance_fund_topup_cents INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS founder_revenue_pct NUMERIC(5,4) DEFAULT 0.05,
   ADD COLUMN IF NOT EXISTS beta_cities JSONB DEFAULT '["Québec", "Lévis"]'::jsonb,
-  ADD COLUMN IF NOT EXISTS beta_cities_active BOOLEAN DEFAULT true;
+  ADD COLUMN IF NOT EXISTS beta_cities_active BOOLEAN DEFAULT true,
+  ADD COLUMN IF NOT EXISTS profit_to_insurance BOOLEAN DEFAULT true;
 
 -- 2. Initialise les valeurs sur la ligne 'default' si vides
 UPDATE platform_settings

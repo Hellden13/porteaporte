@@ -1388,15 +1388,21 @@
       { icon: '🔧', name: 'Maintenance + développement',       key: 'pct_developpement',def: 5,  color: '#A8B0BA' },
       { icon: '📢', name: 'Marketing & croissance',            key: 'pct_marketing',    def: 3,  color: '#A8B0BA' },
       { icon: '🏛️', name: 'Opérations (support, équipe)',      key: 'pct_operations',   def: 4,  color: '#A8B0BA' },
-      { icon: '💰', name: 'Profit net (réinvest. plateforme)', key: 'pct_profit',       def: 10, color: '#A8B0BA' }
+      { icon: '💰', name: 'Profit net', key: 'pct_profit', def: 10, color: '#A8B0BA', isProfit: true }
     ];
     const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 5);
+    const profitToInsurance = s.profit_to_insurance !== false;
     let repartHtml = POSTES_LIVE.map(p => {
       const pct = Number(s[p.key]) || p.def;
       const montant = total * pct / 100;
-      return `<tr>
-        <td><span style="font-size:1.1rem;margin-right:8px">${p.icon}</span><strong style="color:#fff">${p.name}</strong></td>
-        <td style="text-align:right;color:${p.color};font-weight:800;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</td>
+      // Si profit redirige vers fonds, indique-le visuellement
+      const redirected = p.isProfit && profitToInsurance;
+      const nameDisplay = redirected
+        ? `${p.name} <span style="color:#00d9ff;font-size:.75rem;background:rgba(0,217,255,.12);padding:2px 8px;border-radius:99px;margin-left:6px">🛡️ → Fonds litige (bêta)</span>`
+        : p.name;
+      return `<tr ${redirected ? 'style="background:rgba(0,217,255,.04)"' : ''}>
+        <td><span style="font-size:1.1rem;margin-right:8px">${p.icon}</span><strong style="color:#fff">${nameDisplay}</strong></td>
+        <td style="text-align:right;color:${redirected ? '#00d9ff' : p.color};font-weight:800;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</td>
         <td style="text-align:right;color:#fff;font-weight:900;font-variant-numeric:tabular-nums">${$m(montant)}</td>
       </tr>`;
     }).join('');
