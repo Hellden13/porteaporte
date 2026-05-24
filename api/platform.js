@@ -2428,13 +2428,13 @@ async function fetchImpactState(sbUrl, sbKey) {
   const month = monthStart.toISOString().slice(0, 10);
 
   const livRes = await fetch(
-    `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at,cree_le&statut=in.(payee,livre)&cree_le=gte.${monthStart.toISOString()}&cree_le=lt.${nextMonth.toISOString()}&limit=1000`,
+    `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at,cree_le&statut=in.(payee,paid,succeeded,confirmee)&cree_le=gte.${monthStart.toISOString()}&cree_le=lt.${nextMonth.toISOString()}&limit=1000`,
     { headers: sbHeaders(sbKey) }
   );
   let livraisons = livRes.ok ? await livRes.json() : [];
   if (!livRes.ok) {
     const fallback = await fetch(
-      `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at&statut=in.(payee,livre)&created_at=gte.${monthStart.toISOString()}&created_at=lt.${nextMonth.toISOString()}&limit=1000`,
+      `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at&statut=in.(payee,paid,succeeded,confirmee)&created_at=gte.${monthStart.toISOString()}&created_at=lt.${nextMonth.toISOString()}&limit=1000`,
       { headers: sbHeaders(sbKey) }
     );
     livraisons = fallback.ok ? await fallback.json() : [];
@@ -3839,6 +3839,80 @@ module.exports = async function handler(req, res) {
             transactions.length === 0 ? '⚠️ Aucune transaction dans la table transactions - le webhook Stripe n\'enregistre peut-etre pas correctement' : null,
             auditEvents.filter(e => e.event_type?.includes('webhook')).length === 0 ? '⚠️ Aucun audit event webhook - vérifier que le webhook Stripe est bien configuré et signé' : null
           ].filter(Boolean)
+        }
+      });
+    }
+    if (endpoint === 'admin-operations-pulse') {
+      // Pulse temps réel pour la page operations - retourne TOUT ce qu'un admin doit voir maintenant
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const since7d = new Date(Date.now() - 7 * 86400 * 1000).toISOString();
+      const h = { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' };
+
+      async function count(path) {
+        try { const r = await fetch(`${sbUrl}/rest/v1/${path}`, { headers: h }); const cr = r.headers.get('content-range') || '0-0/0'; return Number(cr.split('/')[1]) || 0; }
+        catch (_) { return 0; }
+      }
+      async function rows(path, limit = 5) {
+        try { const r = await fetch(`${sbUrl}/rest/v1/${path}&limit=${limit}`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }); return r.ok ? await r.json() : []; }
+        catch (_) { return []; }
+      }
+
+      const [
+        kycPending, manquementsOpen, livreursTotal, expediteursTotal,
+        livraisons24h, livraisonsActives, inscriptions24h, webhookEvents24h,
+        recentLivraisons, recentInscriptions, recentManquements, recentWebhooks
+      ] = await Promise.all([
+        count(`profiles?select=id&kyc_status=eq.pending`),
+        count(`manquements?select=id&statut=eq.signale`),
+        count(`profiles?select=id&role=in.(livreur,les%20deux)&suspendu=eq.false`),
+        count(`profiles?select=id&role=in.(expediteur,les%20deux)&suspendu=eq.false`),
+        count(`livraisons?select=id&cree_le=gte.${since24h}`),
+        count(`livraisons?select=id&statut=in.(paiement_autorise,confirme,en_route)`),
+        count(`profiles?select=id&created_at=gte.${since24h}`),
+        count(`transaction_audit_events?select=id&event_type=like.*webhook*&created_at=gte.${since24h}`),
+        rows(`livraisons?select=id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le&order=cree_le.desc`, 8),
+        rows(`profiles?select=id,email,prenom,nom,role,created_at,kyc_status&order=created_at.desc`, 6),
+        rows(`manquements?select=*&order=created_at.desc&statut=eq.signale`, 5),
+        rows(`transaction_audit_events?select=created_at,event_type,amount_cents,stripe_payment_intent&order=created_at.desc`, 8)
+      ]);
+
+      // Health score (0-100) basé sur l'absence d'alertes
+      let healthScore = 100;
+      if (kycPending > 0) healthScore -= Math.min(20, kycPending * 5);
+      if (manquementsOpen > 0) healthScore -= Math.min(30, manquementsOpen * 10);
+      if (webhookEvents24h === 0 && livraisons24h > 0) healthScore -= 25; // suspect: livraisons mais aucun webhook
+
+      return res.status(200).json({
+        success: true,
+        pulse: {
+          generated_at: new Date().toISOString(),
+          health_score: Math.max(0, healthScore),
+          alerts: {
+            kyc_pending: kycPending,
+            manquements_open: manquementsOpen,
+            webhook_silent: webhookEvents24h === 0 && livraisons24h > 0
+          },
+          stats_24h: {
+            livraisons: livraisons24h,
+            inscriptions: inscriptions24h,
+            webhook_events: webhookEvents24h
+          },
+          totals: {
+            livreurs: livreursTotal,
+            expediteurs: expediteursTotal,
+            livraisons_actives: livraisonsActives
+          },
+          recent: {
+            livraisons: recentLivraisons,
+            inscriptions: recentInscriptions,
+            manquements: recentManquements,
+            webhooks: recentWebhooks
+          }
         }
       });
     }

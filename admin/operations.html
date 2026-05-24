@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚨 Centre Opérations — PorteàPorte Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 20px; min-height: 100vh; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 1280px; margin: 0 auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; gap:12px; flex-wrap:wrap; }
+    h1 { margin:0; font-size:1.4rem; }
+    .live-dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:#7dffc1; box-shadow:0 0 12px #7dffc1; animation:pulse 1.5s infinite; vertical-align:middle; margin-right:8px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .last-update { font-size:.78rem; color:var(--brand-muted); }
+    .btn-sm { padding:6px 14px; font-size:.78rem; }
+
+    /* Health hero */
+    .health-card { background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.05)); border: 1px solid rgba(184,245,62,.3); border-radius: 16px; padding: 22px 26px; margin-bottom: 18px; display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center; }
+    .health-card.warn { background: linear-gradient(135deg, rgba(255,200,0,.08), rgba(255,200,0,.03)); border-color: rgba(255,200,0,.4); }
+    .health-card.danger { background: linear-gradient(135deg, rgba(255,90,90,.08), rgba(255,90,90,.03)); border-color: rgba(255,90,90,.4); }
+    .health-score { font-size: 3.6rem; font-weight: 900; color: var(--brand-lime); line-height:1; min-width:120px; text-align:center; }
+    .health-card.warn .health-score { color: #ffd700; }
+    .health-card.danger .health-score { color: #ff7a7a; }
+    .health-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--brand-muted); margin-bottom: 4px; }
+    .health-message { font-size: 1.1rem; font-weight: 700; }
+    .health-actions { display:flex; flex-direction:column; gap:8px; }
+
+    /* Stats grid */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .stat { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px 18px; }
+    .stat .lbl { font-size: .72rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat .val { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
+    .stat.alert .val { color: #ffd700; }
+    .stat.alert.high .val { color: #ff7a7a; }
+    .stat a { color: var(--brand-lime); font-size: .72rem; margin-top: 6px; display: inline-block; text-decoration: none; font-weight: 700; }
+    .stat a:hover { text-decoration: underline; }
+
+    /* Panels */
+    .panels { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+    @media (max-width: 920px) { .panels { grid-template-columns: 1fr; } }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .panel h3 { margin: 0 0 12px; font-size: .95rem; color: var(--brand-lime); display:flex; justify-content:space-between; align-items:center; }
+    .panel .badge { background: rgba(255,200,0,.15); color: #ffd700; font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
+    .panel .badge.high { background: rgba(255,90,90,.15); color: #ff9999; }
+
+    .row { display: grid; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+    .row:last-child { border:none; }
+    .row .meta { color: var(--brand-muted); font-size: .72rem; }
+    .row .pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:.7rem; font-weight:700; margin-left:6px; }
+    .pill.paid, .pill.payee, .pill.livre, .pill.confirmee { background: rgba(0,255,159,.15); color: #7dffc1; }
+    .pill.paiement_autorise, .pill.en_route, .pill.confirme { background: rgba(255,200,0,.12); color: #ffd700; }
+    .pill.annulee, .pill.litige { background: rgba(255,90,90,.12); color: #ff9999; }
+    .pill.pending { background: rgba(255,200,0,.12); color: #ffd700; }
+    .pill.verified, .pill.approved { background: rgba(0,255,159,.15); color: #7dffc1; }
+
+    .empty { text-align:center; color:var(--brand-muted); padding: 20px; font-size:.85rem; }
+
+    /* Tools sidebar */
+    .tools { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .tool { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); padding: 12px; border-radius: 10px; text-decoration: none; color: var(--brand-text); font-size: .82rem; font-weight: 600; text-align: center; transition: all .15s; }
+    .tool:hover { border-color: var(--brand-lime); color: var(--brand-lime); transform: translateY(-1px); }
+    .tool .ico { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1><span class="live-dot"></span>Centre Opérations</h1>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="last-update" id="last-update">—</span>
+        <label style="font-size:.78rem;color:var(--brand-muted);display:flex;gap:6px;align-items:center"><input type="checkbox" id="autorefresh" checked> Auto-refresh 30s</label>
+        <button class="btn btn-sm" onclick="loadPulse()">🔄</button>
+        <a class="btn btn-sm secondary" href="/admin/dashboard-admin.html">← Admin</a>
+      </div>
+    </div>
+
+    <div id="health" class="health-card">
+      <div class="health-score" id="health-score">—</div>
+      <div>
+        <div class="health-label">Santé plateforme</div>
+        <div class="health-message" id="health-msg">Chargement du pulse...</div>
+      </div>
+      <div class="health-actions" id="health-actions"></div>
+    </div>
+
+    <div class="stats-row" id="stats-row"></div>
+
+    <!-- Outils admin rapides -->
+    <div class="panel">
+      <h3>🔧 Outils admin</h3>
+      <div class="tools">
+        <a class="tool" href="/admin/diagnostic.html"><span class="ico">🔍</span>Diagnostic</a>
+        <a class="tool" href="/admin/go-live.html"><span class="ico">🚀</span>Go-Live</a>
+        <a class="tool" href="/admin/parametres.html"><span class="ico">⚙️</span>Paramètres</a>
+        <a class="tool" href="/admin/kyc-review.html"><span class="ico">🪪</span>KYC</a>
+        <a class="tool" href="/admin/face-verify.html"><span class="ico">📷</span>Face Verify</a>
+        <a class="tool" href="/admin/manquements.html"><span class="ico">⚠️</span>Manquements</a>
+        <a class="tool" href="/admin/users.html"><span class="ico">👥</span>Users</a>
+        <a class="tool" href="/admin/organismes.html"><span class="ico">❤️</span>Organismes</a>
+        <a class="tool" href="/admin/votes.html"><span class="ico">🗳️</span>Votes</a>
+        <a class="tool" href="/admin/fondateur.html"><span class="ico">💰</span>Fondateur</a>
+        <a class="tool" href="/admin/backup.html"><span class="ico">💾</span>Backup</a>
+        <a class="tool" href="/admin/address-intel.html"><span class="ico">📍</span>Adresses</a>
+        <a class="tool" href="/admin/analytics.html"><span class="ico">📊</span>Analytics</a>
+        <a class="tool" href="https://dashboard.stripe.com/" target="_blank"><span class="ico">💳</span>Stripe</a>
+        <a class="tool" href="https://supabase.com/dashboard/" target="_blank"><span class="ico">🗄️</span>Supabase</a>
+        <a class="tool" href="https://vercel.com/dashboard" target="_blank"><span class="ico">▲</span>Vercel</a>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div>
+        <div class="panel">
+          <h3>📦 Livraisons récentes <span class="badge" id="badge-liv">—</span></h3>
+          <div id="liv-list" class="empty">Chargement…</div>
+        </div>
+        <div class="panel">
+          <h3>⚠️ Manquements en attente <span class="badge" id="badge-mq">—</span></h3>
+          <div id="mq-list" class="empty">Chargement…</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h3>👤 Inscriptions récentes <span class="badge" id="badge-ins">—</span></h3>
+          <div id="ins-list" class="empty">Chargement…</div>
+        </div>
+        <div class="panel">
+          <h3>🔔 Webhooks Stripe <span class="badge" id="badge-wh">—</span></h3>
+          <div id="wh-list" class="empty">Chargement…</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null, timer = null, lastKnownCount = 0;
+
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      document.getElementById('autorefresh').addEventListener('change', toggleAutorefresh);
+      await loadPulse();
+      toggleAutorefresh();
+    }
+
+    function toggleAutorefresh() {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (document.getElementById('autorefresh').checked) {
+        timer = setInterval(loadPulse, 30000);
+      }
+    }
+
+    function fmt(cents) { return ((cents || 0) / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD' }); }
+    function fmtCad(cad) { return Number(cad || 0).toLocaleString('fr-CA', { style:'currency', currency:'CAD' }); }
+    function fmtRelative(date) {
+      if (!date) return '—';
+      const diff = (Date.now() - new Date(date).getTime()) / 1000;
+      if (diff < 60) return `il y a ${Math.floor(diff)}s`;
+      if (diff < 3600) return `il y a ${Math.floor(diff/60)}min`;
+      if (diff < 86400) return `il y a ${Math.floor(diff/3600)}h`;
+      return new Date(date).toLocaleDateString('fr-CA');
+    }
+
+    async function loadPulse() {
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-operations-pulse', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Erreur');
+        render(out.pulse);
+      } catch (e) {
+        document.getElementById('health-msg').textContent = '❌ ' + e.message;
+      }
+    }
+
+    function render(p) {
+      // Health
+      const card = document.getElementById('health');
+      const score = p.health_score;
+      card.className = 'health-card' + (score >= 80 ? '' : score >= 50 ? ' warn' : ' danger');
+      document.getElementById('health-score').textContent = score + '%';
+      const msgs = [];
+      if (p.alerts.kyc_pending > 0) msgs.push(`${p.alerts.kyc_pending} KYC à approuver`);
+      if (p.alerts.manquements_open > 0) msgs.push(`${p.alerts.manquements_open} manquement(s) à traiter`);
+      if (p.alerts.webhook_silent) msgs.push('Aucun webhook Stripe reçu dans les 24h alors qu\'il y a des livraisons');
+      document.getElementById('health-msg').textContent = msgs.length ? '⚠️ ' + msgs.join(' · ') : '✅ Tout va bien — aucune action requise';
+
+      // Actions
+      const actEl = document.getElementById('health-actions');
+      const acts = [];
+      if (p.alerts.kyc_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/kyc-review.html">Voir KYC</a>`);
+      if (p.alerts.manquements_open > 0) acts.push(`<a class="btn btn-sm" href="/admin/manquements.html">Voir manquements</a>`);
+      if (p.alerts.webhook_silent) acts.push(`<a class="btn btn-sm" href="/admin/diagnostic.html">Diagnostic</a>`);
+      actEl.innerHTML = acts.join('');
+
+      // Stats
+      document.getElementById('stats-row').innerHTML = `
+        <div class="stat ${p.alerts.kyc_pending > 0 ? 'alert' : ''} ${p.alerts.kyc_pending > 5 ? 'high' : ''}">
+          <div class="lbl">KYC en attente</div>
+          <div class="val">${p.alerts.kyc_pending}</div>
+          <a href="/admin/kyc-review.html">Vérifier →</a>
+        </div>
+        <div class="stat ${p.alerts.manquements_open > 0 ? 'alert' : ''} ${p.alerts.manquements_open > 2 ? 'high' : ''}">
+          <div class="lbl">Manquements ouverts</div>
+          <div class="val">${p.alerts.manquements_open}</div>
+          <a href="/admin/manquements.html">Traiter →</a>
+        </div>
+        <div class="stat">
+          <div class="lbl">Livraisons 24h</div>
+          <div class="val">${p.stats_24h.livraisons}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Livraisons actives</div>
+          <div class="val">${p.totals.livraisons_actives}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Inscriptions 24h</div>
+          <div class="val">${p.stats_24h.inscriptions}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Webhooks 24h</div>
+          <div class="val">${p.stats_24h.webhook_events}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Livreurs actifs</div>
+          <div class="val">${p.totals.livreurs}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Expéditeurs actifs</div>
+          <div class="val">${p.totals.expediteurs}</div>
+        </div>
+      `;
+
+      // Livraisons
+      document.getElementById('badge-liv').textContent = p.recent.livraisons.length;
+      const livHtml = p.recent.livraisons.length
+        ? p.recent.livraisons.map(l => `<div class="row">
+            <div><strong>${l.code || l.id?.slice(0,8)}</strong> · ${fmtCad(l.prix_total)} <span class="pill ${l.statut}">${l.statut}</span></div>
+            <div class="meta">${l.ville_depart || '?'} → ${l.ville_arrivee || '?'} · ${fmtRelative(l.cree_le)}</div>
+          </div>`).join('')
+        : '<div class="empty">Aucune livraison récente.</div>';
+      document.getElementById('liv-list').innerHTML = livHtml;
+
+      // Manquements
+      document.getElementById('badge-mq').textContent = p.recent.manquements.length;
+      document.getElementById('badge-mq').className = 'badge' + (p.recent.manquements.length > 0 ? ' high' : '');
+      const mqHtml = p.recent.manquements.length
+        ? p.recent.manquements.map(m => `<div class="row">
+            <div><strong>${(m.type_manquement || m.type || 'manquement')}</strong> <span class="pill annulee">${m.statut}</span></div>
+            <div class="meta">${m.description?.slice(0, 80) || ''} · ${fmtRelative(m.created_at)}</div>
+          </div>`).join('')
+        : '<div class="empty" style="color:#7dffc1">✅ Aucun manquement ouvert</div>';
+      document.getElementById('mq-list').innerHTML = mqHtml;
+
+      // Inscriptions
+      document.getElementById('badge-ins').textContent = p.recent.inscriptions.length;
+      const insHtml = p.recent.inscriptions.length
+        ? p.recent.inscriptions.map(u => `<div class="row">
+            <div><strong>${u.prenom || ''} ${u.nom || ''}</strong> <span class="pill ${u.kyc_status || 'pending'}">${u.role || '?'}</span></div>
+            <div class="meta">${u.email} · ${fmtRelative(u.created_at)}</div>
+          </div>`).join('')
+        : '<div class="empty">Aucune inscription récente.</div>';
+      document.getElementById('ins-list').innerHTML = insHtml;
+
+      // Webhooks
+      document.getElementById('badge-wh').textContent = p.recent.webhooks.length;
+      document.getElementById('badge-wh').className = 'badge' + (p.alerts.webhook_silent ? ' high' : '');
+      const whHtml = p.recent.webhooks.length
+        ? p.recent.webhooks.map(w => `<div class="row">
+            <div><strong style="font-family:monospace;font-size:.78rem">${w.event_type || '?'}</strong> ${w.amount_cents ? fmt(w.amount_cents) : ''}</div>
+            <div class="meta">${fmtRelative(w.created_at)}</div>
+          </div>`).join('')
+        : '<div class="empty" style="color:#ff9999">⚠️ Aucun webhook Stripe enregistré. Vérifier la config.</div>';
+      document.getElementById('wh-list').innerHTML = whHtml;
+
+      document.getElementById('last-update').textContent = '🔄 ' + new Date().toLocaleTimeString('fr-CA');
+    }
+
+    init();
+  </script>
+</body>
+</html>
