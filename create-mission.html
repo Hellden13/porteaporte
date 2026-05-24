@@ -48,7 +48,7 @@
           <div class="full"><label for="title">Titre de la livraison *</label><input id="title" required placeholder="Ex: Lettre importante"></div>
           <div class="full"><label for="description">Description *</label><textarea id="description" required placeholder="Contenu, dimensions, precautions speciales"></textarea></div>
           <div><label for="weight">Poids estime (kg) *</label><input id="weight" type="number" min="0.1" step="0.1" required placeholder="0.5"></div>
-          <div><label for="declared-value">Valeur declaree (CAD)</label><input id="declared-value" type="number" min="0" step="0.01" placeholder="50"></div>
+          <div><label for="declared-value">Valeur declaree (CAD) <span style="font-size:.75rem;color:#888;font-weight:400">— max 250 $ en bêta</span></label><input id="declared-value" type="number" min="0" max="250" step="0.01" placeholder="50"><small style="display:block;margin-top:4px;font-size:.72rem;color:#888">Pour les colis de plus grande valeur, écrivez à bonjour@porteaporte.site</small></div>
           <div><label for="category">Categorie *</label><select id="category" required><option value="">Choisir</option><option value="colis">Colis</option><option value="document">Document</option><option value="nourriture">Nourriture</option><option value="meuble">Meuble</option><option value="electronique">Electronique</option><option value="autre">Autre</option></select></div>
           <div><label for="deadline">Delai souhaite *</label><select id="deadline" required><option value="">Choisir</option><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="3-7days">3 a 7 jours</option><option value="flexible">Flexible</option></select></div>
         </div>

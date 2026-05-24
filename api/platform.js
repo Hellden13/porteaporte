@@ -62,6 +62,28 @@ async function createLivraison(req, res, ctx, body) {
     return res.status(400).json({ error: 'adresses depart/arrivee requises' });
   }
 
+  // ─── Plafond valeur déclarée (sécurité bêta — protège le fonds d'assurance) ───
+  // Lit la limite depuis platform_settings (max_colis_value_cents), défaut 25000 = 250$
+  let maxColisValueCents = 25000;
+  try {
+    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=max_colis_value_cents`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    if (sr.ok) {
+      const rows = await sr.json();
+      if (rows[0] && Number.isFinite(Number(rows[0].max_colis_value_cents))) {
+        maxColisValueCents = Number(rows[0].max_colis_value_cents);
+      }
+    }
+  } catch (_) {}
+  const declaredCents = Math.round(toNumber(payload.valeur_declaree, 0) * 100);
+  if (declaredCents > maxColisValueCents) {
+    return res.status(400).json({
+      error: `Valeur déclarée trop élevée. Plafond actuel : ${(maxColisValueCents / 100).toFixed(0)} $. Pour les colis de plus grande valeur, contactez bonjour@porteaporte.site.`,
+      max_value_cad: maxColisValueCents / 100
+    });
+  }
+
   const insert = await insertWithSchemaFallback(
     `${ctx.sbUrl}/rest/v1/livraisons`,
     sbHeaders(ctx.sbKey),
@@ -2469,16 +2491,33 @@ async function fetchImpactState(sbUrl, sbKey) {
 async function impactPublic(req, res, ctx) {
   const state = await fetchImpactState(ctx.sbUrl, ctx.sbKey);
 
-  // Fonds de protection : 2% de toutes les livraisons confirmées depuis le début
+  // ─── Fonds de protection : % configurable des livraisons + topup admin ───
+  let insurancePct = 0.02;
+  let fundTopupCents = 0;
+  let maxColisValueCents = 25000;
+  try {
+    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=insurance_pct,insurance_fund_topup_cents,max_colis_value_cents`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    if (sr.ok) {
+      const rows = await sr.json();
+      if (rows[0]) {
+        if (Number.isFinite(Number(rows[0].insurance_pct))) insurancePct = Number(rows[0].insurance_pct);
+        if (Number.isFinite(Number(rows[0].insurance_fund_topup_cents))) fundTopupCents = Number(rows[0].insurance_fund_topup_cents);
+        if (Number.isFinite(Number(rows[0].max_colis_value_cents))) maxColisValueCents = Number(rows[0].max_colis_value_cents);
+      }
+    }
+  } catch (_) {}
   const fundRes = await fetch(
     `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total&statut=eq.confirmee&limit=10000`,
     { headers: sbHeaders(ctx.sbKey) }
   ).catch(() => null);
   const fundRows = fundRes?.ok ? await fundRes.json().catch(() => []) : [];
-  const fundTotalCents = Math.round(
-    fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0) * 0.02
+  const fundFromDeliveriesCents = Math.round(
+    fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0) * insurancePct
   );
-  const fundMaxClaimCents = Math.floor(fundTotalCents * 0.5); // max 50% du fonds par réclamation
+  const fundTotalCents = fundFromDeliveriesCents + fundTopupCents;
+  const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundTotalCents * 0.5));
 
   const [drawsRes, winnersRes] = await Promise.all([
     fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
@@ -2506,8 +2545,12 @@ async function impactPublic(req, res, ctx) {
   };
   const protectionFund = {
     total_cents: fundTotalCents,
+    from_deliveries_cents: fundFromDeliveriesCents,
+    topup_cents: fundTopupCents,
     max_claim_cents: fundMaxClaimCents,
-    funded_by: '2% de chaque livraison confirmée',
+    max_colis_value_cents: maxColisValueCents,
+    insurance_pct: insurancePct,
+    funded_by: `${(insurancePct * 100).toFixed(1)}% de chaque livraison confirmée + apports directs PorteàPorte`,
     note: 'Fonds volontaire bêta — pas un contrat d\'assurance.'
   };
 
@@ -3579,14 +3622,17 @@ module.exports = async function handler(req, res) {
     }
     if (endpoint === 'admin-settings-update') {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-      const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad'];
+      const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad','max_colis_value_cents','insurance_pct','insurance_fund_topup_cents'];
       const patch = { updated_at: new Date().toISOString() };
       for (const f of fields) if (body[f] != null) patch[f] = Number(body[f]);
-      // Validation : somme des % distribuables = 100% (hors Stripe et ticket)
-      const sum = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit']
-        .reduce((s,f) => s + Number(patch[f] != null ? patch[f] : 0), 0);
-      if (Math.abs(sum - 100) > 0.5) {
-        return res.status(400).json({ error: `Somme des % doit faire 100% (actuel: ${sum.toFixed(1)}%)` });
+      // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
+      const distribFields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit'];
+      const hasAnyDistrib = distribFields.some(f => patch[f] != null);
+      if (hasAnyDistrib) {
+        const sum = distribFields.reduce((s,f) => s + Number(patch[f] != null ? patch[f] : 0), 0);
+        if (Math.abs(sum - 100) > 0.5) {
+          return res.status(400).json({ error: `Somme des % doit faire 100% (actuel: ${sum.toFixed(1)}%)` });
+        }
       }
       const r = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default`, {
         method: 'PATCH', headers: sbHeaders(ctx.sbKey),

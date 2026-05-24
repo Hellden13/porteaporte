@@ -269,11 +269,16 @@
   <div class="fund-banner" id="fund-banner">
     <div class="fund-banner-left">
       <strong>🛡️ Fonds de protection disponible</strong>
-      Alimenté par 2% de chaque livraison confirmée. Les compensations sont limitées au solde de ce fonds.
+      Alimenté par un <span id="fund-pct">2 %</span> de chaque livraison confirmée + des <strong>apports directs PorteàPorte</strong>. Les compensations sont limitées au solde du fonds.
+      <div style="margin-top:10px;font-size:.85rem;color:var(--brand-muted)">
+        Plafond par colis (valeur déclarée max) : <strong id="fund-cap" style="color:var(--brand-lime)">250 $</strong>.
+        Au-delà, écrivez à <a href="mailto:bonjour@porteaporte.site" style="color:var(--brand-lime)">bonjour@porteaporte.site</a>.
+      </div>
     </div>
     <div style="text-align:right">
       <div class="fund-amount" id="fund-amount">— $</div>
       <div class="fund-sub">Max par demande : <span id="fund-max-claim">—</span></div>
+      <div class="fund-sub" style="margin-top:4px;font-size:.75rem;opacity:.7">dont apport direct : <span id="fund-topup">—</span></div>
     </div>
   </div>
 </section>
@@ -534,6 +539,12 @@
       const fmt = (cents) => (cents / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
       document.getElementById('fund-amount').textContent = fmt(fund.total_cents);
       document.getElementById('fund-max-claim').textContent = fmt(fund.max_claim_cents);
+      const topupEl = document.getElementById('fund-topup');
+      if (topupEl) topupEl.textContent = fmt(fund.topup_cents || 0);
+      const pctEl = document.getElementById('fund-pct');
+      if (pctEl && fund.insurance_pct != null) pctEl.textContent = (fund.insurance_pct * 100).toFixed(1).replace('.0','') + ' %';
+      const capEl = document.getElementById('fund-cap');
+      if (capEl && fund.max_colis_value_cents) capEl.textContent = fmt(fund.max_colis_value_cents);
 
       // Mettre à jour les plafonds des niveaux selon le fonds réel
       const caps = [

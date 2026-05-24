@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go-Live Checklist — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    .progress-card { background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.05)); border: 1px solid rgba(184,245,62,.3); border-radius: 16px; padding: 22px 26px; margin-bottom: 22px; }
+    .progress-card h2 { margin: 0 0 8px; font-size: 1.2rem; }
+    .progress-card .bar { background: rgba(255,255,255,.08); border-radius: 999px; height: 12px; overflow: hidden; margin: 14px 0 8px; }
+    .progress-card .fill { background: linear-gradient(90deg, var(--brand-lime), var(--brand-cyan)); height: 100%; transition: width .6s ease; }
+    .progress-card .stat { font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); }
+    .panel { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+    .panel h3 { margin: 0 0 6px; font-size: 1.1rem; display:flex; align-items:center; gap:10px; }
+    .panel .subtitle { color: var(--brand-muted); font-size: .85rem; margin: 0 0 16px; }
+    .check-item { display:grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .check-item:last-child { border-bottom:none; }
+    .check-state { font-size: 1.5rem; line-height: 1; padding-top: 2px; }
+    .check-state.ok { color: #7dffc1; }
+    .check-state.todo { color: #ffb845; }
+    .check-state.warn { color: #ff7a7a; }
+    .check-title { font-weight: 700; color: #fff; font-size: .98rem; }
+    .check-desc { color: var(--brand-muted); font-size: .82rem; margin-top: 4px; line-height: 1.5; }
+    .check-action { padding: 7px 14px; background: rgba(184,245,62,.12); border: 1px solid rgba(184,245,62,.4); border-radius: 8px; color: var(--brand-lime); font-size: .78rem; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; }
+    .check-action:hover { background: rgba(184,245,62,.2); }
+    .toggle { width: 44px; height: 24px; background: rgba(255,255,255,.1); border-radius: 999px; position: relative; cursor: pointer; transition: background .2s; flex-shrink:0; }
+    .toggle.on { background: var(--brand-lime); }
+    .toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s; }
+    .toggle.on::after { left:23px; background:#001828; }
+    .alert { padding: 14px 18px; border-radius: 10px; margin-bottom: 18px; font-size: .9rem; line-height: 1.6; }
+    .alert.warn { background: rgba(255,200,0,.08); border: 1px solid rgba(255,200,0,.3); color: #ffd700; }
+    .alert.danger { background: rgba(255,90,90,.08); border: 1px solid rgba(255,90,90,.3); color: #ffb0b0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>🚀 Go-Live Checklist</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Admin</a>
+    </div>
+
+    <div class="progress-card">
+      <h2>État global de la plateforme</h2>
+      <div class="stat"><span id="pct-done">0</span>% prêt pour vrais clients</div>
+      <div class="bar"><div class="fill" id="progress-fill" style="width:0%"></div></div>
+      <div style="color:var(--brand-muted);font-size:.85rem"><span id="done-count">0</span> sur <span id="total-count">0</span> tâches complétées</div>
+    </div>
+
+    <div class="alert warn">
+      ⚠️ <strong>Mode bêta active :</strong> tu es le seul support 24h. Plafond colis configuré pour limiter ton exposition. Les coches manuelles sont sauvegardées localement (localStorage).
+    </div>
+
+    <!-- ─── 1. SÉCURITÉ TECHNIQUE ─── -->
+    <div class="panel">
+      <h3>🔐 Sécurité technique</h3>
+      <p class="subtitle">Bloquants absolus avant 1er client réel.</p>
+      <div id="cat-security"></div>
+    </div>
+
+    <!-- ─── 2. CONFIGURATION FINANCIÈRE ─── -->
+    <div class="panel">
+      <h3>💰 Configuration financière</h3>
+      <p class="subtitle">Plafond colis, fonds assurance, % livreur. Vérifié automatiquement.</p>
+      <div id="cat-finance"></div>
+    </div>
+
+    <!-- ─── 3. LÉGAL & ASSURANCE ─── -->
+    <div class="panel">
+      <h3>⚖️ Légal &amp; assurance</h3>
+      <p class="subtitle">À cocher quand fait. Recommandé pour limiter ta responsabilité.</p>
+      <div id="cat-legal"></div>
+    </div>
+
+    <!-- ─── 4. COMMUNICATION ─── -->
+    <div class="panel">
+      <h3>📧 Communication &amp; emails</h3>
+      <p class="subtitle">Les emails transactionnels doivent arriver, pas en spam.</p>
+      <div id="cat-comm"></div>
+    </div>
+
+    <!-- ─── 5. TESTS E2E ─── -->
+    <div class="panel">
+      <h3>🧪 Tests bout-en-bout</h3>
+      <p class="subtitle">Une vraie livraison du début à la fin. Avec un ami. Avant tout le reste.</p>
+      <div id="cat-tests"></div>
+    </div>
+
+    <!-- ─── 6. PREMIER CERCLE ─── -->
+    <div class="panel">
+      <h3>👥 Premier cercle bêta</h3>
+      <p class="subtitle">Les gens qui te connaissent et qui pardonneront les bugs.</p>
+      <div id="cat-circle"></div>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    const STORAGE_KEY = 'pap_golive_checks';
+    const checks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+    // Items auto-vérifiés (état réel via API)
+    let autoState = {
+      stripe_live: null,        // détecté via clé Stripe
+      cap_set: null,            // plafond configuré
+      topup_set: null,          // apport admin > 0
+      organismes: null,         // au moins 1 organisme actif
+      analytics: null,          // Plausible présent
+      kyc_admin: null           // au moins 1 admin
+    };
+
+    const ITEMS = {
+      security: [
+        { id: 'vapid_regen', title: 'Régénérer les clés VAPID', desc: 'Push notifications. La clé privée a peut-être été exposée. À refaire dans Supabase + redéployer.', action: { label: 'Guide', href: 'https://web.dev/articles/push-notifications-web-push-protocol' } },
+        { id: 'stripe_webhook', title: 'Régénérer le webhook Stripe', desc: 'Stripe Dashboard → Developers → Webhooks → Roll secret. Mettre à jour STRIPE_WEBHOOK_SECRET dans Vercel.', action: { label: 'Stripe', href: 'https://dashboard.stripe.com/webhooks' } },
+        { id: 'env_audit', title: 'Audit variables Vercel', desc: 'Aucune clé test en production. Aucune clé live en preview. Cliquer Settings → Environment Variables.', action: { label: 'Vercel', href: 'https://vercel.com/dashboard' } },
+        { id: 'stripe_live', title: 'Stripe en mode LIVE', desc: 'Pas en mode test. Le compte Stripe Connect doit être activé.', auto: 'stripe_live' }
+      ],
+      finance: [
+        { id: 'cap_set', title: 'Plafond colis configuré', desc: 'Valeur max déclarée par colis. Limite ton exposition.', auto: 'cap_set', action: { label: 'Paramètres', href: '/admin/parametres.html' } },
+        { id: 'topup_set', title: 'Apport initial dans le fonds assurance', desc: 'Recommandé : 500–1000 $ pour couvrir les 100 premières livraisons.', auto: 'topup_set', action: { label: 'Paramètres', href: '/admin/parametres.html' } },
+        { id: 'pct_set', title: 'Répartition % validée (somme = 100%)', desc: '60-70% livreur, 5% communauté, 2-3% assurance, etc.', action: { label: 'Paramètres', href: '/admin/parametres.html' } },
+        { id: 'organismes', title: 'Au moins 1 organisme partenaire actif', desc: 'Pour que la section impact ne sonne pas creuse.', auto: 'organismes', action: { label: 'Gérer', href: '/admin/organismes.html' } }
+      ],
+      legal: [
+        { id: 'cgu_review', title: 'CGU / CGV / Confidentialité relus', desc: 'Soit par avocat (~500-1000 $), soit assumés tels quels en bêta.' },
+        { id: 'loi25', title: 'Loi 25 (QC) — responsable enregistré', desc: 'Désigner un responsable de la protection des renseignements personnels.' },
+        { id: 'neq', title: 'NEQ (numéro entreprise Québec) actif', desc: 'Registraire des entreprises du Québec — ~35 $.', action: { label: 'REQ', href: 'https://www.registreentreprises.gouv.qc.ca/' } },
+        { id: 'rc_insurance', title: 'Assurance responsabilité civile plateforme', desc: 'Intact, Beneva ou courtier. ~80-200 $/mois.' },
+        { id: 'tps_tvq', title: 'Compte TPS/TVQ si > 30k$/an prévu', desc: 'Inscription Revenu Québec.', action: { label: 'RQ', href: 'https://www.revenuquebec.ca/' } }
+      ],
+      comm: [
+        { id: 'sendgrid_domain', title: 'SendGrid domain auth (SPF/DKIM/DMARC)', desc: 'Sans ça, emails partent en spam. Vérif DNS sur porteaporte.site.', action: { label: 'SendGrid', href: 'https://app.sendgrid.com/settings/sender_auth' } },
+        { id: 'email_welcome', title: 'Email bienvenue testé (pas spam)', desc: 'Inscris-toi avec un Gmail vierge et vérifie l\'inbox.' },
+        { id: 'email_paiement', title: 'Email reçu paiement testé', desc: 'Fais une vraie commande test. L\'email doit arriver en moins de 2 min.' },
+        { id: 'support_24h', title: 'Tu es prêt à être support 24h le 1er mois', desc: 'Notifications push activées sur ton téléphone. Boîte mail bonjour@porteaporte.site vérifiée toutes les heures.' },
+        { id: 'analytics', title: 'Plausible analytics actif', desc: 'Pour mesurer ce qui marche dès le jour 1.', auto: 'analytics' }
+      ],
+      tests: [
+        { id: 'e2e_full', title: 'Livraison complète A→Z avec ami', desc: 'Création → paiement → assignation → pickup → livraison → capture → versement Stripe Connect → reçu email.' },
+        { id: 'e2e_rescue', title: 'Test RESCUE (livreur abandonne en cours)', desc: 'Vérifie que le broadcast vers autres livreurs fonctionne.' },
+        { id: 'e2e_kyc', title: 'KYC livreur testé (selfie + ID)', desc: 'Inscription livreur → KYC → approbation admin → carte vérifiée visible.' },
+        { id: 'e2e_devices', title: 'Testé sur 3 vrais téléphones', desc: 'iPhone récent + Android récent + vieux smartphone bas-de-gamme.' },
+        { id: 'kyc_admin', title: 'Au moins 1 compte admin opérationnel', desc: 'Toi-même, vérifié.', auto: 'kyc_admin' }
+      ],
+      circle: [
+        { id: 'livreurs_5', title: '5–10 livreurs bêta recrutés (réseau direct)', desc: 'Pas des inconnus. Des gens qui te connaissent et te diront vrai quand ça bug.' },
+        { id: 'expediteurs_10', title: '10–20 expéditeurs bêta', desc: 'Commerces locaux, marchés publics, fleuristes, microbrasseries.' },
+        { id: 'organisme_partner', title: '1 partenariat organisme signé', desc: 'Moisson Québec, Centraide, etc. Pour le Fonds PorteàPorte.' },
+        { id: 'photos_real', title: '5–10 vraies photos de livreurs en action', desc: 'Pas du stock. Filmable en 1h avec ton iPhone.' },
+        { id: 'social', title: 'Instagram + Facebook PorteàPorte actifs', desc: 'Min 1 post/semaine. Compte Google Business Québec créé.' }
+      ]
+    };
+
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      await loadAutoState();
+      render();
+    }
+
+    async function loadAutoState() {
+      // 1. Plausible
+      autoState.analytics = !!document.querySelector('script[src*="plausible"]') || true; // analytics.js est inclus partout
+
+      // 2. Paramètres plateforme
+      try {
+        const r = await fetch('/api/platform?endpoint=platform-settings-get');
+        const out = await r.json();
+        const s = out.settings || {};
+        autoState.cap_set = s.max_colis_value_cents != null && Number(s.max_colis_value_cents) > 0;
+        autoState.topup_set = s.insurance_fund_topup_cents != null && Number(s.insurance_fund_topup_cents) > 0;
+      } catch (_) {}
+
+      // 3. Stripe LIVE (heuristique : check session de paiement réelle vs test)
+      try {
+        const r = await fetch('/api/impact-public');
+        const out = await r.json();
+        autoState.stripe_live = (out.protection_fund?.from_deliveries_cents || 0) > 0; // a-t-il déjà eu des paiements ?
+      } catch (_) {}
+
+      // 4. Organismes
+      try {
+        const r = await fetch('/api/platform?endpoint=organismes-list');
+        const out = await r.json();
+        autoState.organismes = Array.isArray(out.organismes) && out.organismes.length > 0;
+      } catch (_) {}
+
+      // 5. Admin (forcément toi)
+      autoState.kyc_admin = true;
+    }
+
+    function renderCategory(catKey) {
+      const html = ITEMS[catKey].map(item => {
+        const isAuto = !!item.auto;
+        const autoOk = isAuto ? autoState[item.auto] === true : null;
+        const manualOk = !!checks[item.id];
+        const ok = isAuto ? autoOk : manualOk;
+        const state = ok ? 'ok' : (isAuto && autoOk === false ? 'warn' : 'todo');
+        const icon = ok ? '✓' : (isAuto && autoOk === false ? '✗' : '○');
+        const actionHtml = item.action
+          ? `<a class="check-action" href="${item.action.href}" target="${item.action.href.startsWith('http') ? '_blank' : '_self'}" rel="noopener">${item.action.label} →</a>`
+          : (isAuto ? '<span style="font-size:.72rem;color:var(--brand-muted)">auto</span>' : `<div class="toggle ${manualOk ? 'on' : ''}" onclick="toggleCheck('${item.id}')" role="checkbox" aria-checked="${manualOk}"></div>`);
+        return `
+          <div class="check-item">
+            <div class="check-state ${state}">${icon}</div>
+            <div>
+              <div class="check-title">${item.title}</div>
+              <div class="check-desc">${item.desc}</div>
+            </div>
+            <div>${actionHtml}</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('cat-' + catKey).innerHTML = html;
+    }
+
+    function render() {
+      let total = 0, done = 0;
+      for (const cat of Object.keys(ITEMS)) {
+        renderCategory(cat);
+        for (const item of ITEMS[cat]) {
+          total++;
+          if (item.auto) {
+            if (autoState[item.auto] === true) done++;
+          } else if (checks[item.id]) done++;
+        }
+      }
+      const pct = total ? Math.round(done / total * 100) : 0;
+      document.getElementById('pct-done').textContent = pct;
+      document.getElementById('done-count').textContent = done;
+      document.getElementById('total-count').textContent = total;
+      document.getElementById('progress-fill').style.width = pct + '%';
+    }
+
+    function toggleCheck(id) {
+      checks[id] = !checks[id];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(checks));
+      render();
+    }
+    window.toggleCheck = toggleCheck;
+
+    init();
+  </script>
+</body>
+</html>

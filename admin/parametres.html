@@ -88,6 +88,47 @@
         <span style="color:var(--brand-muted);font-size:.85rem">par livraison en moyenne</span>
       </div>
     </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 14px">🛡️ Fonds Assurance &amp; Plafond colis</h2>
+      <p style="color:var(--brand-muted);margin-bottom:18px">Ces 3 leviers protègent la plateforme pendant la bêta. Ajuste selon ta tolérance au risque.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Plafond colis (valeur déclarée max)</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="cap" type="number" min="50" max="2000" step="10" style="width:100%;padding:12px;background:#05080c;color:var(--brand-lime);border:1px solid #1E2535;border-radius:8px;font-weight:900;font-size:1.1rem;text-align:center" value="250">
+            <span style="color:#fff;font-weight:700">$</span>
+          </div>
+          <small style="display:block;margin-top:6px;color:var(--brand-muted);font-size:.75rem">Au-delà : refus serveur + redirection email.</small>
+        </div>
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">% auto-alimentation du fonds</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="ins-pct" type="number" min="0" max="10" step="0.1" style="width:100%;padding:12px;background:#05080c;color:var(--brand-lime);border:1px solid #1E2535;border-radius:8px;font-weight:900;font-size:1.1rem;text-align:center" value="2">
+            <span style="color:#fff;font-weight:700">%</span>
+          </div>
+          <small style="display:block;margin-top:6px;color:var(--brand-muted);font-size:.75rem">Sur chaque livraison confirmée.</small>
+        </div>
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">💉 Apport direct PorteàPorte</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="topup" type="number" min="0" step="50" style="width:100%;padding:12px;background:#05080c;color:#7dffc1;border:1px solid #1E2535;border-radius:8px;font-weight:900;font-size:1.1rem;text-align:center" value="0">
+            <span style="color:#fff;font-weight:700">$</span>
+          </div>
+          <small style="display:block;margin-top:6px;color:var(--brand-muted);font-size:.75rem">Cash que tu injectes manuellement dans le fonds.</small>
+        </div>
+      </div>
+
+      <div style="background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.3);border-radius:8px;padding:14px 16px;font-size:.85rem;color:#7dffc1;line-height:1.6">
+        💡 <strong>Recommandation lancement bêta :</strong> plafond <strong>250 $</strong>, % auto <strong>2 %</strong>, apport initial <strong>500–1000 $</strong>. Tu peux augmenter le plafond progressivement quand le fonds se renfloue (vise <strong>fonds &gt; 10× ton plafond</strong>).
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="saveInsurance()">💾 Sauvegarder le fonds</button>
+      </div>
+      <div id="msg-ins" class="msg"></div>
+    </div>
   </main>
 
   <script>
@@ -128,7 +169,29 @@
       POSTES.forEach(p => current[p.key] = Number(s[p.key]) || 0);
       ticket = Number(s.ticket_moyen_cad) || 15;
       document.getElementById('ticket').value = ticket;
+      // Assurance
+      document.getElementById('cap').value = Number(s.max_colis_value_cents != null ? s.max_colis_value_cents : 25000) / 100;
+      document.getElementById('ins-pct').value = ((Number(s.insurance_pct != null ? s.insurance_pct : 0.02)) * 100).toFixed(1).replace(/\.0$/, '');
+      document.getElementById('topup').value = Number(s.insurance_fund_topup_cents || 0) / 100;
       render();
+    }
+
+    async function saveInsurance() {
+      const msg = document.getElementById('msg-ins');
+      const cap = Math.round((Number(document.getElementById('cap').value) || 0) * 100);
+      const pct = (Number(document.getElementById('ins-pct').value) || 0) / 100;
+      const topup = Math.round((Number(document.getElementById('topup').value) || 0) * 100);
+      if (cap < 5000 || cap > 200000) { msg.className = 'msg err'; msg.textContent = '❌ Plafond doit être entre 50 $ et 2000 $'; return; }
+      if (pct < 0 || pct > 0.1) { msg.className = 'msg err'; msg.textContent = '❌ % doit être entre 0 et 10 %'; return; }
+      const res = await fetch('/api/platform?endpoint=admin-settings-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ max_colis_value_cents: cap, insurance_pct: pct, insurance_fund_topup_cents: topup })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.className = 'msg err'; msg.textContent = '❌ ' + (out.error || 'Erreur sauvegarde'); return; }
+      msg.className = 'msg ok';
+      msg.textContent = '✅ Fonds assurance mis à jour. Visible immédiatement sur /assurance.html.';
     }
 
     function render() {
