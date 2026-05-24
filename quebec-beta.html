@@ -3,158 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bêta Québec/Lévis - PorteàPorte</title>
+  <title>Beta Quebec/Levis - PorteaPorte</title>
   <meta name="description" content="Page de depart rapide pour tester PorteaPorte a Quebec et Levis avec les premiers utilisateurs beta.">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0A0C10">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
-    .beta-page {
-      min-height: 100vh;
-      padding: 24px clamp(16px, 4vw, 48px) 64px;
-    }
-    .beta-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: clamp(32px, 7vw, 76px);
-    }
-    .beta-brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--brand-text);
-      font-weight: 950;
-      text-decoration: none;
-    }
-    .beta-brand img { width: 34px; height: 34px; }
-    .beta-hero {
-      max-width: 1120px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
-      gap: clamp(22px, 4vw, 48px);
-      align-items: center;
-    }
-    .beta-kicker {
-      display: inline-flex;
-      margin-bottom: 16px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: rgba(184,245,62,.1);
-      border: 1px solid rgba(184,245,62,.28);
-      color: var(--brand-lime);
-      font-weight: 900;
-      font-size: .78rem;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-    .beta-hero h1 {
-      margin: 0 0 18px;
-      font-size: clamp(2.2rem, 6vw, 4.4rem);
-      line-height: 1.02;
-      letter-spacing: 0;
-    }
-    .beta-hero p {
-      margin: 0 0 26px;
-      color: var(--brand-muted);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      max-width: 680px;
-    }
-    .beta-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .beta-note {
-      color: var(--brand-muted);
-      font-size: .86rem;
-      line-height: 1.6;
-    }
-    .beta-card {
-      padding: 22px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.1);
-      background: linear-gradient(180deg, rgba(26,31,40,.96), rgba(17,19,24,.96));
-      box-shadow: 0 24px 70px rgba(0,0,0,.38);
-    }
-    .beta-card h2 {
-      margin: 0 0 12px;
-      font-size: 1.25rem;
-    }
-    .beta-steps {
-      display: grid;
-      gap: 12px;
-      margin: 18px 0 0;
-    }
-    .beta-step {
-      display: grid;
-      grid-template-columns: 36px 1fr;
-      gap: 10px;
-      align-items: start;
-      padding: 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.045);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-    .beta-num {
-      width: 32px;
-      height: 32px;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime));
-      color: #071006;
-      font-weight: 950;
-    }
-    .beta-step strong {
-      display: block;
-      margin-bottom: 3px;
-    }
-    .beta-step span {
-      color: var(--brand-muted);
-      font-size: .86rem;
-      line-height: 1.45;
-    }
-    .beta-grid {
-      max-width: 1120px;
-      margin: 48px auto 0;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .beta-mini {
-      padding: 18px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      background: rgba(255,255,255,.035);
-    }
-    .beta-mini h3 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-    }
-    .beta-mini p {
-      margin: 0;
-      color: var(--brand-muted);
-      line-height: 1.6;
-      font-size: .9rem;
-    }
+    .beta-page { min-height: 100vh; padding: 24px clamp(16px, 4vw, 48px) 64px; }
+    .beta-nav { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:clamp(32px,7vw,76px); }
+    .beta-brand { display:inline-flex;align-items:center;gap:10px;color:var(--brand-text);font-weight:950;text-decoration:none; }
+    .beta-brand img { width:34px;height:34px; }
+    .beta-hero { max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:clamp(22px,4vw,48px);align-items:center; }
+    .beta-kicker { display:inline-flex;margin-bottom:16px;padding:7px 12px;border-radius:999px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.28);color:var(--brand-lime);font-weight:900;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em; }
+    .beta-hero h1 { margin:0 0 18px;font-size:clamp(2.2rem,6vw,4.4rem);line-height:1.02;letter-spacing:0; }
+    .beta-hero p { margin:0 0 26px;color:var(--brand-muted);font-size:1.05rem;line-height:1.75;max-width:680px; }
+    .beta-actions { display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px; }
+    .beta-note { color:var(--brand-muted);font-size:.86rem;line-height:1.6; }
+    .beta-card { padding:22px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(26,31,40,.96),rgba(17,19,24,.96));box-shadow:0 24px 70px rgba(0,0,0,.38); }
+    .beta-card h2 { margin:0 0 12px;font-size:1.25rem; }
+    .beta-steps { display:grid;gap:12px;margin:18px 0 0; }
+    .beta-step { display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:start;padding:12px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08); }
+    .beta-num { width:32px;height:32px;display:grid;place-items:center;border-radius:999px;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:#071006;font-weight:950; }
+    .beta-step strong { display:block;margin-bottom:3px; }
+    .beta-step span { color:var(--brand-muted);font-size:.86rem;line-height:1.45; }
+    .beta-grid { max-width:1120px;margin:48px auto 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
+    .beta-mini { padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035); }
+    .beta-mini h3 { margin:0 0 8px;font-size:1rem; }
+    .beta-mini p { margin:0;color:var(--brand-muted);line-height:1.6;font-size:.9rem; }
     @media (max-width: 860px) {
-      .beta-hero,
-      .beta-grid {
-        grid-template-columns: 1fr;
-      }
-      .beta-nav {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-      .beta-actions .btn {
-        width: 100%;
-      }
+      .beta-hero, .beta-grid { grid-template-columns:1fr; }
+      .beta-nav { align-items:flex-start;flex-direction:column; }
+      .beta-actions .btn { width:100%; }
     }
   </style>
 </head>
@@ -163,25 +43,25 @@
     <nav class="beta-nav">
       <a class="beta-brand" href="/index.html">
         <img src="/logo.svg" alt="">
-        <span>PorteàPorte</span>
+        <span>PorteaPorte</span>
       </a>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <a class="btn btn-ghost" href="/index.html">Accueil</a>
-        <button class="btn" type="button" onclick="window.Pia ? window.Pia.open('beta quebec') : null">Pia me guide</button>
+        <button class="btn" type="button" onclick="window.Pia ? window.Pia.open('beta quebec') : location.href='/contact.html'">Pia me guide</button>
       </div>
     </nav>
 
     <section class="beta-hero">
       <div>
-        <div class="beta-kicker">Test terrain Québec / Lévis</div>
+        <div class="beta-kicker">Test terrain Quebec / Levis</div>
         <h1>On cherche les premiers vrais utilisateurs.</h1>
-        <p>PorteàPorte est prêt pour une bêta locale contrôlée. Le but est simple : tester avec des personnes de Québec et Lévis qui veulent envoyer un colis, livrer sur leur route, ou comprendre le service avec Pia.</p>
+        <p>PorteaPorte est pret pour une beta locale controlee. Le but est simple : tester avec des personnes de Quebec et Levis qui veulent envoyer un colis, livrer sur leur route, ou comprendre le service avec Pia.</p>
         <div class="beta-actions">
           <a class="btn" href="/create-mission.html">Envoyer un colis</a>
           <a class="btn btn-secondary" href="/devenir-livreur.html">Devenir livreur</a>
-          <button class="btn btn-ghost" type="button" onclick="window.Pia ? window.Pia.open('je suis perdu') : location.href='/contact.html'">Pia m aide</button>
+          <button class="btn btn-ghost" type="button" onclick="window.Pia ? window.Pia.open('je suis perdu') : location.href='/contact.html'">Pia m'aide</button>
         </div>
-        <div class="beta-note">Bêta locale : certaines données peuvent être limitées au début. Les paiements, profils, preuves et confirmations doivent rester traités avec prudence.</div>
+        <div class="beta-note">Beta locale : certaines donnees peuvent etre limitees au debut. Les paiements, profils, preuves et confirmations doivent rester traites avec prudence.</div>
       </div>
 
       <aside class="beta-card">
@@ -189,11 +69,11 @@
         <div class="beta-steps">
           <div class="beta-step">
             <div class="beta-num">1</div>
-            <div><strong>Choisis ton besoin</strong><span>Envoyer, livrer, suivre ou poser une question à Pia.</span></div>
+            <div><strong>Choisis ton besoin</strong><span>Envoyer, livrer, suivre ou poser une question a Pia.</span></div>
           </div>
           <div class="beta-step">
             <div class="beta-num">2</div>
-            <div><strong>Crée ton compte</strong><span>Courriel confirmé, rôle clair, vérification livreur si nécessaire.</span></div>
+            <div><strong>Cree ton compte</strong><span>Courriel confirme, role clair, verification livreur si necessaire.</span></div>
           </div>
           <div class="beta-step">
             <div class="beta-num">3</div>
@@ -205,16 +85,16 @@
 
     <section class="beta-grid" aria-label="Points importants de la beta">
       <article class="beta-mini">
-        <h3>Pour expéditeurs</h3>
-        <p>Commence avec un colis simple : lettre, petit objet, trajet Québec/Lévis. Garde le code destinataire.</p>
+        <h3>Pour expediteurs</h3>
+        <p>Commence avec un colis simple : lettre, petit objet, trajet Quebec/Levis. Garde le code destinataire.</p>
       </article>
       <article class="beta-mini">
         <h3>Pour livreurs</h3>
-        <p>La vérification est obligatoire avant les vraies missions. À pied et à vélo, les missions doivent rester proches et logiques.</p>
+        <p>La verification est obligatoire avant les vraies missions. A pied et a velo, les missions doivent rester proches et logiques.</p>
       </article>
       <article class="beta-mini">
         <h3>Pour tous</h3>
-        <p>Si quelque chose bloque, demande à Pia ou contacte l'équipe avec une capture. La bêta sert justement à solidifier le terrain.</p>
+        <p>Si quelque chose bloque, demande a Pia ou contacte l'equipe avec une capture. La beta sert justement a solidifier le terrain.</p>
       </article>
     </section>
   </main>

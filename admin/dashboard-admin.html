@@ -417,7 +417,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Dashboard Administrateur</h1>
-        <div class="page-sub" id="admin-welcome">Chargement...</div>
+        <div class="page-sub" id="admin-welcome">Les donnees admin apparaissent ici quand la session est valide.</div>
       </div>
     </div>
 
@@ -454,7 +454,7 @@
             </tr>
           </thead>
           <tbody id="users-body">
-            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="6" class="empty-msg">Les utilisateurs apparaitront ici pendant la beta.</td></tr>
           </tbody>
         </table>
       </div>
@@ -494,7 +494,7 @@
             </tr>
           </thead>
           <tbody id="livreurs-body">
-            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="6" class="empty-msg">Les dossiers livreurs apparaitront ici.</td></tr>
           </tbody>
         </table>
       </div>
@@ -510,7 +510,7 @@
             </tr>
           </thead>
           <tbody id="livraisons-body">
-            <tr><td colspan="7" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="7" class="empty-msg">Les livraisons apparaitront ici quand elles seront creees.</td></tr>
           </tbody>
         </table>
       </div>
@@ -544,7 +544,7 @@
       <div class="table-card">
         <table>
           <thead><tr><th>Code</th><th>Trajet</th><th>Prix</th><th>Commission</th><th>Livreur (60%)</th><th>Date</th></tr></thead>
-          <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Les revenus apparaitront ici apres les premieres transactions.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -555,7 +555,7 @@
       <div class="table-card">
         <table>
           <thead><tr><th>Code</th><th>Trajet</th><th>Statut</th><th>Prix</th><th>Date</th><th>Actions</th></tr></thead>
-          <tbody id="litiges-body"><tr><td colspan="6" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="litiges-body"><tr><td colspan="6" class="empty-msg">Les litiges apparaitront ici quand un dossier sera ouvert.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -599,7 +599,7 @@
             </tr>
           </thead>
           <tbody id="avis-tbody">
-            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="6" class="empty-msg">Les avis apparaitront ici apres les premieres evaluations.</td></tr>
           </tbody>
         </table>
       </div>
@@ -655,19 +655,19 @@
       <div class="table-card" style="margin-top:16px">
         <table>
           <thead><tr><th>Mission</th><th>Objectif</th><th>Récompense</th><th>Statut</th></tr></thead>
-          <tbody id="reward-missions-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="reward-missions-body"><tr><td colspan="4" class="empty-msg">Les missions de recompense apparaitront ici.</td></tr></tbody>
         </table>
       </div>
       <div class="table-card" style="margin-top:16px">
         <table>
           <thead><tr><th>Tirage</th><th>Date</th><th>Admissibles</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="reward-draws-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="reward-draws-body"><tr><td colspan="5" class="empty-msg">Les tirages apparaitront ici quand ils seront crees.</td></tr></tbody>
         </table>
       </div>
       <div class="table-card" style="margin-top:16px">
         <table>
           <thead><tr><th>Gagnant</th><th>Lot</th><th>Role</th><th>Date</th></tr></thead>
-          <tbody id="reward-winners-body"><tr><td colspan="4" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="reward-winners-body"><tr><td colspan="4" class="empty-msg">Les gagnants publies apparaitront ici.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -713,7 +713,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="gami-tbody"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Chargement...</td></tr></tbody>
+            <tbody id="gami-tbody"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Les donnees de gamification apparaitront ici.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -843,7 +843,7 @@
               <div style="display:flex;align-items:center;gap:6px"><input id="pct-developpeur" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
               <label for="pct-securite">🛡 Fond de sécurité</label>
               <div style="display:flex;align-items:center;gap:6px"><input id="pct-securite" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-assurance">🔒 Assurance</label>
+              <label for="pct-assurance">🔒 Protection colis beta</label>
               <div style="display:flex;align-items:center;gap:6px"><input id="pct-assurance" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
             </div>
             <button type="button" onclick="autoBalancePct()" style="margin-top:4px;background:rgba(184,245,62,.08);border:1px solid var(--brand-lime);color:var(--brand-lime);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
@@ -887,7 +887,7 @@
       <div class="table-card" style="margin-top:16px">
         <table>
           <thead><tr><th>Organisme</th><th>Répartition</th><th>Montant estimé</th><th>Actif</th><th>Actions</th></tr></thead>
-          <tbody id="impact-orgs-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="impact-orgs-body"><tr><td colspan="5" class="empty-msg">Les organismes approuves apparaitront ici.</td></tr></tbody>
         </table>
       </div>
       <div style="margin-top:10px;color:var(--brand-muted-dark);font-size:.82rem">Règle recommandée : maximum 3 organismes actifs, total actif = 100 %.</div>
@@ -896,7 +896,7 @@
       <div class="table-card">
         <table>
           <thead><tr><th>Organisme</th><th>Contact</th><th>Mission</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="impact-applications-body"><tr><td colspan="5" class="empty-msg">Chargement...</td></tr></tbody>
+          <tbody id="impact-applications-body"><tr><td colspan="5" class="empty-msg">Les demandes d'organismes apparaitront ici.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -916,7 +916,7 @@
       <div class="table-card">
         <table id="cov-rides-table">
           <thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Prix/km</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="cov-rides-body"><tr><td colspan="6" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+          <tbody id="cov-rides-body"><tr><td colspan="6" style="text-align:center;color:var(--brand-muted)">Les trajets covoiturage apparaitront ici.</td></tr></tbody>
         </table>
       </div>
 
@@ -924,7 +924,7 @@
       <div class="table-card">
         <table id="cov-bookings-table">
           <thead><tr><th>ID</th><th>Trajet</th><th>Passager</th><th>Places</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="cov-bookings-body"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+          <tbody id="cov-bookings-body"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted)">Les reservations apparaitront ici.</td></tr></tbody>
         </table>
       </div>
 
@@ -932,7 +932,7 @@
       <div class="table-card">
         <table id="cov-reports-table">
           <thead><tr><th>Date</th><th>Raison</th><th>Trajet</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="cov-reports-body"><tr><td colspan="5" style="text-align:center;color:var(--brand-muted)">Chargement...</td></tr></tbody>
+          <tbody id="cov-reports-body"><tr><td colspan="5" style="text-align:center;color:var(--brand-muted)">Les signalements covoiturage apparaitront ici.</td></tr></tbody>
         </table>
       </div>
 
@@ -980,7 +980,7 @@
       <div class="table-card">
         <table>
           <thead><tr><th>Code</th><th>Parrain</th><th>Filleuls</th><th>Créé le</th><th>Actif</th></tr></thead>
-          <tbody id="par-codes-body"><tr><td colspan="5" class="empty-msg">Chargement…</td></tr></tbody>
+          <tbody id="par-codes-body"><tr><td colspan="5" class="empty-msg">Les codes de parrainage apparaitront ici.</td></tr></tbody>
         </table>
       </div>
 
@@ -988,7 +988,7 @@
       <div class="table-card">
         <table>
           <thead><tr><th>Parrain</th><th>Filleul</th><th>Code utilisé</th><th>Récompensé</th><th>Date</th></tr></thead>
-          <tbody id="par-referrals-body"><tr><td colspan="5" class="empty-msg">Chargement…</td></tr></tbody>
+          <tbody id="par-referrals-body"><tr><td colspan="5" class="empty-msg">Les parrainages apparaitront ici.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1026,11 +1026,11 @@
         </div>
         <div class="form-card">
           <div style="font-size:.8rem;color:var(--brand-muted);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">📋 Abonnés récents</div>
-          <div id="notif-subs-list" style="font-size:.82rem;color:var(--brand-muted)">Chargement…</div>
+          <div id="notif-subs-list" style="font-size:.82rem;color:var(--brand-muted)">Les inscriptions push apparaitront ici.</div>
         </div>
         <div class="form-card">
           <div style="font-size:.8rem;color:var(--brand-cyan);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">Courriel transactionnel</div>
-          <div id="email-diagnostics" style="font-size:.82rem;color:var(--brand-muted);line-height:1.6;margin-bottom:12px">Chargement...</div>
+          <div id="email-diagnostics" style="font-size:.82rem;color:var(--brand-muted);line-height:1.6;margin-bottom:12px">Les diagnostics courriel apparaitront ici.</div>
           <form id="email-test-form" class="form-grid">
             <label for="email-test-to">Envoyer un test a</label>
             <input id="email-test-to" type="email" placeholder="toi@exemple.com" required>
@@ -1048,12 +1048,12 @@
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px">
       <div>
         <div style="color:var(--brand-lime);font-size:.8rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em">Preuve de depot</div>
-        <h3 id="proof-title" style="margin:4px 0 0;font-size:1.25rem">Chargement...</h3>
+        <h3 id="proof-title" style="margin:4px 0 0;font-size:1.25rem">Preuve de livraison</h3>
       </div>
       <button class="action-btn" type="button" onclick="closeProofModal()">Fermer</button>
     </div>
     <div id="proof-content" class="proof-grid">
-      <div class="empty-msg">Chargement...</div>
+      <div class="empty-msg">Selectionne une livraison pour voir la preuve disponible.</div>
     </div>
   </div>
 </div>
@@ -1681,8 +1681,8 @@
     const content = document.getElementById('proof-content');
     const title = document.getElementById('proof-title');
     modal.style.display = 'flex';
-    title.textContent = 'Chargement...';
-    content.innerHTML = '<div class="empty-msg">Chargement de la preuve...</div>';
+    title.textContent = 'Preuve de livraison';
+    content.innerHTML = '<div class="empty-msg">La preuve apparaitra ici si elle est disponible.</div>';
 
     try {
       const session = AUTH_API.getUser()?.session;

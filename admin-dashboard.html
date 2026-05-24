@@ -242,7 +242,7 @@
         <!-- UTILISATEURS -->
         <div class="section">
             <h2>👥 Utilisateurs (Profiles)</h2>
-            <div class="loading">Chargement...</div>
+            <div class="loading">Les donnees admin apparaitront ici des qu'elles seront disponibles.</div>
             <table id="users-table" style="display: none;">
                 <thead>
                     <tr>
@@ -261,7 +261,7 @@
         <!-- LIVRAISONS -->
         <div class="section">
             <h2>📦 Livraisons (Missions)</h2>
-            <div class="loading">Chargement...</div>
+            <div class="loading">Aucune livraison a afficher pour le moment.</div>
             <table id="deliveries-table" style="display: none;">
                 <thead>
                     <tr>
@@ -280,7 +280,7 @@
         <!-- LIVREURS -->
         <div class="section">
             <h2>🚗 Livreurs</h2>
-            <div class="loading">Chargement...</div>
+            <div class="loading">Aucun livreur a afficher pour le moment.</div>
             <table id="drivers-table" style="display: none;">
                 <thead>
                     <tr>
@@ -300,7 +300,7 @@
         <!-- TRANSACTIONS -->
         <div class="section">
             <h2>💰 Transactions (Paiements)</h2>
-            <div class="loading">Chargement...</div>
+            <div class="loading">Aucune transaction a afficher pour le moment.</div>
             <table id="transactions-table" style="display: none;">
                 <thead>
                     <tr>
@@ -344,7 +344,7 @@
                     // Afficher la table si elle a des données
                     if (table.querySelector('tbody tr')) {
                         table.style.display = 'table';
-                        table.previousElementSibling.style.display = 'none'; // Cacher "Chargement..."
+                        table.previousElementSibling.style.display = 'none'; // Cacher l'etat d'attente initial
                     }
                 });
             }, 2000);

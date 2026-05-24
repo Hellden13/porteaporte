@@ -529,13 +529,13 @@
         <div class="stat-icon">📦</div>
         <div class="stat-label">Livraisons ce mois</div>
         <div class="stat-value" id="statDeliveries">—</div>
-        <div class="stat-sub" id="statDeliveriesSub">chargement…</div>
+        <div class="stat-sub" id="statDeliveriesSub">Les premieres donnees arriveront pendant la beta.</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">💰</div>
         <div class="stat-label">Revenus ce mois</div>
         <div class="stat-value" id="statEarnings">—</div>
-        <div class="stat-sub" id="statEarningsSub">chargement…</div>
+        <div class="stat-sub" id="statEarningsSub">Les gains apparaitront apres les missions confirmees.</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">⭐</div>
@@ -561,7 +561,7 @@
       <a class="section-link" href="/browse-missions.html">Voir toutes →</a>
     </div>
     <div class="missions-list" id="missionsList">
-      <p class="loading-msg">Chargement des missions…</p>
+      <p class="loading-msg">Les missions compatibles apparaitront ici quand ton profil sera pret.</p>
     </div>
     </div><!-- /missions -->
 
@@ -578,7 +578,7 @@
       <div class="reward-card">
         <div class="reward-title">Missions bonus</div>
         <div class="reward-muted">Chaque mission complétée rapporte des XP et des Points Impact. Prendre le minimum. Redonner le maximum.</div>
-        <div id="bonusMissionsList"><p class="loading-msg">Chargement des missions bonus...</p></div>
+        <div id="bonusMissionsList"><p class="loading-msg">Les missions bonus apparaitront ici pendant la beta.</p></div>
       </div>
       <div class="reward-card">
         <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(184,245,62,0.08);border:1px solid rgba(184,245,62,0.3);border-radius:10px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px">
@@ -593,14 +593,14 @@
         <div class="coins-balance" id="porteCoinsBalance">—</div>
         <div class="reward-muted">Les Points Impact n'ont aucune valeur monétaire. Ils servent aux tirages, badges et avantages plateforme.</div>
         <div class="reward-title" style="margin-top:18px">Progression &amp; niveau</div>
-        <div id="driverLevelBox" class="reward-muted">Chargement...</div>
+        <div id="driverLevelBox" class="reward-muted">Ta progression apparaitra ici apres tes premieres missions.</div>
         <div class="reward-title" style="margin-top:18px">Mes badges</div>
-        <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Chargement...</p></div>
+        <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Tes badges apparaitront ici avec ton activite.</p></div>
         <details style="margin-top:14px">
           <summary style="cursor:pointer;font-size:0.8rem;color:var(--brand-muted);letter-spacing:0.04em;list-style:none;display:flex;align-items:center;gap:6px">
             <span>▸</span> Tirages mensuels
           </summary>
-          <div id="drawsList" style="margin-top:10px"><p class="loading-msg">Chargement...</p></div>
+          <div id="drawsList" style="margin-top:10px"><p class="loading-msg">Les tirages actifs apparaitront ici.</p></div>
           <div class="legal-note" style="margin-top:8px">
             Les tirages sont soumis aux <a href="/reglements-concours.html" style="color:var(--brand-lime)">règlements officiels</a>.
             Aucun achat requis lorsque requis par la loi.
@@ -612,7 +612,7 @@
     <!-- 🛡️ Jours sans réclamation -->
     <div class="section-header">
       <span class="section-title">🛡️ Jours sans réclamation</span>
-      <a class="section-link" href="/assurance.html">Fonds de protection →</a>
+      <a class="section-link" href="/assurance.html">Protection colis beta →</a>
     </div>
     <div id="claimFreeWidget" style="background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:20px;margin-bottom:28px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
@@ -621,7 +621,7 @@
           <div style="font-size:.82rem;color:var(--brand-muted);margin-top:4px">jours consécutifs sans réclamation</div>
         </div>
         <div id="cfNextBox" style="background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:10px;padding:12px 16px;font-size:.84rem;color:var(--brand-muted);min-width:180px">
-          Chargement...
+          Ton niveau apparaitra ici apres tes premieres donnees.
         </div>
       </div>
       <div id="cfMilestones" style="display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -635,7 +635,7 @@
       <!-- Mes livraisons en cours -->
       <div class="card">
         <div class="card-title">📋 Mes livraisons en cours</div>
-        <div id="myDeliveries"><p class="loading-msg">Chargement…</p></div>
+        <div id="myDeliveries"><p class="loading-msg">Tes livraisons actives apparaitront ici.</p></div>
 
         <!-- Répartition revenus -->
         <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
@@ -672,7 +672,7 @@
       <div class="card">
         <div class="card-title">💬 Commentaires clients</div>
         <div class="comments-section" id="commentsSection">
-          <p class="loading-msg">Chargement…</p>
+          <p class="loading-msg">Les commentaires clients apparaitront ici apres les livraisons.</p>
         </div>
       </div>
     </div>
@@ -698,7 +698,7 @@
         </div>
       </div>
       <div id="revenue-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:24px;position:relative">
-        <div style="color:var(--brand-muted);font-size:0.8rem;padding:16px 0">Chargement…</div>
+        <div style="color:var(--brand-muted);font-size:0.8rem;padding:16px 0">Les revenus beta apparaitront ici apres les missions confirmees.</div>
       </div>
     </div>
 
@@ -710,7 +710,7 @@
     <div class="card" id="stripeCard" style="margin-bottom:16px">
       <div class="card-title" style="margin-bottom:14px">Compte de paiement</div>
       <div id="stripeStatusArea">
-        <p class="loading-msg">Chargement…</p>
+        <p class="loading-msg">Les paiements et retraits apparaitront ici quand Stripe sera connecte.</p>
       </div>
     </div>
 

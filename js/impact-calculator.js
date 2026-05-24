@@ -113,7 +113,7 @@
     const posts = [
       { icon: '🚗', name: 'Le livreur québécois', pct: settings.pct_livreur, highlight: true },
       { icon: '💚', name: 'Causes communautaires (Fonds PorteàPorte)', pct: settings.pct_communaute, cause: true },
-      { icon: '🛡️', name: 'Protection colis (assurance)', pct: settings.pct_protection },
+      { icon: '🛡️', name: 'Protection colis beta', pct: settings.pct_protection },
       { icon: '🆘', name: 'Fonds d\'urgence', pct: settings.pct_urgence },
       { icon: '🔧', name: 'Maintenance + développeurs', pct: settings.pct_developpement },
       { icon: '📢', name: 'Marketing & croissance', pct: settings.pct_marketing },

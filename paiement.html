@@ -188,7 +188,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
       </div>
       <div class="fr">
         <div>
-          <label class="fl">Plan d'assurance</label>
+          <label class="fl">Protection colis beta</label>
           <select class="fi" id="assurance" onchange="updatePrix()">
             <option value="0">Aucune protection - 0 $ - couverture 0 $</option>
             <option value="1">Base - 1 $ - couverture max 50 $</option>
@@ -242,7 +242,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
       <div class="os-item"><span class="os-label">Trajet</span><span class="os-val" id="sum-trajet">?</span></div>
       <div class="os-item"><span class="os-label">Type</span><span class="os-val" id="sum-type">Petit colis</span></div>
       <div class="os-item"><span class="os-label">Prix de livraison</span><span class="os-val" id="sum-livraison">?</span></div>
-      <div class="os-item"><span class="os-label">Assurance</span><span class="os-val" id="sum-assurance">Gratuit</span></div>
+      <div class="os-item"><span class="os-label">Protection colis beta</span><span class="os-val" id="sum-assurance">Gratuit</span></div>
       <div class="os-item"><span class="os-label">Commission (15%, min 2,00 $)</span><span class="os-val" id="sum-comm">?</span></div>
       <div class="os-item"><span class="os-label">TPS (5%)</span><span class="os-val" id="sum-tps">?</span></div>
       <div class="os-item"><span class="os-label">TVQ (9,975%)</span><span class="os-val" id="sum-tvq">?</span></div>
@@ -484,9 +484,9 @@ function applyUrlLivraisonFallback() {
   }
 
   paiementLivraisonExistante = true;
-  document.getElementById('sum-trajet').textContent = 'Chargement...';
-  document.getElementById('sum-livraison').textContent = 'Chargement...';
-  document.getElementById('sum-total').textContent = 'Chargement...';
+  document.getElementById('sum-trajet').textContent = 'Calcul en cours';
+  document.getElementById('sum-livraison').textContent = 'Calcul en cours';
+  document.getElementById('sum-total').textContent = 'Calcul en cours';
   lockMissionFields();
 }
 
