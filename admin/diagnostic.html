@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnostic plateforme — Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+    h1 { margin:0; font-size:1.5rem; }
+    .panel { background: var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:14px; padding:22px; margin-bottom:18px; }
+    h2 { margin:0 0 12px; font-size:1.1rem; color:var(--brand-lime); }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    th, td { padding:8px 10px; text-align:left; border-bottom:1px solid rgba(255,255,255,.06); }
+    th { color:var(--brand-muted); font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    tr:hover { background:rgba(255,255,255,.02); }
+    .status-pill { display:inline-block; padding:3px 10px; border-radius:99px; font-size:.75rem; font-weight:700; }
+    .status-pill.payee, .status-pill.paid, .status-pill.confirmee, .status-pill.livre, .status-pill.succeeded { background:rgba(0,255,159,.15); color:#7dffc1; border:1px solid rgba(0,255,159,.3); }
+    .status-pill.en_attente, .status-pill.paiement_autorise, .status-pill.processing { background:rgba(255,200,0,.12); color:#ffd700; border:1px solid rgba(255,200,0,.3); }
+    .status-pill.annulee, .status-pill.refunded, .status-pill.failed { background:rgba(255,90,90,.12); color:#ff9999; border:1px solid rgba(255,90,90,.3); }
+    .big { font-size:2rem; font-weight:900; color:var(--brand-lime); }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:18px; }
+    .stat-card { background:rgba(255,255,255,.03); border:1px solid var(--brand-border); border-radius:10px; padding:16px; }
+    .stat-card .label { font-size:.78rem; color:var(--brand-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+    .stat-card .val { font-size:1.6rem; font-weight:900; color:#fff; }
+    .reco { background:rgba(255,200,0,.08); border-left:3px solid #ffd700; padding:12px 16px; border-radius:6px; color:#ffd700; font-size:.88rem; line-height:1.5; margin-bottom:10px; }
+    .pre { background:#05080c; padding:12px; border-radius:8px; font-family:Consolas,Monaco,monospace; font-size:.78rem; color:#7dffc1; white-space:pre-wrap; word-break:break-all; max-height:300px; overflow:auto; }
+    .empty { padding:30px; text-align:center; color:var(--brand-muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>🔍 Diagnostic plateforme</h1>
+      <div>
+        <button id="refresh" class="btn">🔄 Recharger</button>
+        <a class="btn secondary" href="/admin/dashboard-admin.html">← Admin</a>
+      </div>
+    </div>
+
+    <div id="content"><div class="panel empty">Chargement du diagnostic...</div></div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      document.getElementById('refresh').onclick = load;
+      await load();
+    }
+
+    function fmt(cents) { return ((cents || 0) / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD' }); }
+    function fmtCad(cad) { return Number(cad || 0).toLocaleString('fr-CA', { style:'currency', currency:'CAD' }); }
+    function fmtDate(d) { return d ? new Date(d).toLocaleString('fr-CA') : '—'; }
+
+    async function load() {
+      const cnt = document.getElementById('content');
+      cnt.innerHTML = '<div class="panel empty">Chargement...</div>';
+      const r = await fetch('/api/platform?endpoint=admin-diagnostic', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const out = await r.json();
+      if (!r.ok) { cnt.innerHTML = '<div class="panel" style="color:#ff9999">❌ ' + (out.error || 'Erreur') + '</div>'; return; }
+      const d = out.diagnostic;
+      const settings = d.settings || {};
+
+      // Calcul fonds attendu
+      const insPct = Number(settings.insurance_pct || 0.02);
+      const founderPct = Number(settings.founder_revenue_pct || 0.05);
+      const topup = Number(settings.insurance_fund_topup_cents || 0);
+      const totalRevCad = d.grand_total_cad || 0;
+      // Total uniquement sur statuts post-paiement
+      const payedStatuses = ['payee','paid','livre','confirmee'];
+      let payedRevCad = 0, payedCount = 0;
+      for (const [s, info] of Object.entries(d.livraisons_by_status)) {
+        if (payedStatuses.includes(s)) { payedRevCad += info.total_cad; payedCount += info.count; }
+      }
+      const expectedFundCents = Math.round(payedRevCad * 100 * insPct) + topup;
+      const expectedFounderCents = Math.round(payedRevCad * 100 * founderPct);
+
+      let html = '';
+
+      // Recommandations en haut
+      if (d.recommendations.length) {
+        html += '<div class="panel"><h2>⚠️ Diagnostic automatique</h2>';
+        for (const reco of d.recommendations) html += `<div class="reco">${reco}</div>`;
+        html += '</div>';
+      }
+
+      // Stats globales
+      html += `
+        <div class="panel">
+          <h2>📊 Vue d'ensemble</h2>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="label">Total livraisons (toutes)</div><div class="val">${d.total_livraisons}</div></div>
+            <div class="stat-card"><div class="label">Livraisons payées</div><div class="val">${payedCount}</div></div>
+            <div class="stat-card"><div class="label">Revenu total (payées)</div><div class="val">${fmtCad(payedRevCad)}</div></div>
+            <div class="stat-card"><div class="label">Fonds attendu (${(insPct*100).toFixed(1)}% + ${fmt(topup)})</div><div class="val" style="color:#7dffc1">${fmt(expectedFundCents)}</div></div>
+            <div class="stat-card"><div class="label">💰 Ta part fondateur (${(founderPct*100).toFixed(1)}%)</div><div class="val" style="color:#ffd700">${fmt(expectedFounderCents)}</div></div>
+          </div>
+        </div>
+      `;
+
+      // Répartition par statut
+      html += '<div class="panel"><h2>📦 Livraisons par statut</h2>';
+      const entries = Object.entries(d.livraisons_by_status).sort((a,b) => b[1].count - a[1].count);
+      if (!entries.length) {
+        html += '<div class="empty">Aucune livraison dans la base.</div>';
+      } else {
+        html += '<table><thead><tr><th>Statut</th><th>Nombre</th><th>Total CAD</th><th>Exemples (3 dernières)</th></tr></thead><tbody>';
+        for (const [s, info] of entries) {
+          const isPaid = payedStatuses.includes(s);
+          html += `<tr>
+            <td><span class="status-pill ${s}">${s}</span> ${isPaid ? '✓ compté' : ''}</td>
+            <td>${info.count}</td>
+            <td>${fmtCad(info.total_cad)}</td>
+            <td style="font-size:.75rem;color:var(--brand-muted)">${info.samples.map(x => `${x.code || x.id?.slice(0,8) || '?'}: ${fmtCad(x.prix)}`).join('<br>')}</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // Transactions Stripe
+      html += '<div class="panel"><h2>💳 Transactions Stripe enregistrées (20 dernières)</h2>';
+      if (!d.recent_transactions.length) {
+        html += `<div class="reco">⚠️ <strong>Aucune transaction dans la table transactions.</strong> Si tu as eu des paiements réels par carte, c'est que le webhook Stripe n'enregistre pas correctement. Vérifie : <br>1. STRIPE_WEBHOOK_SECRET dans Vercel<br>2. URL webhook dans Stripe Dashboard pointe sur https://porteaporte.site/api/stripe-webhook<br>3. Events activés : payment_intent.succeeded, payment_intent.amount_capturable_updated, payout.paid</div>`;
+      } else {
+        html += '<table><thead><tr><th>Date</th><th>PI / ID</th><th>Statut</th><th>Montant</th><th>Livraison</th></tr></thead><tbody>';
+        for (const t of d.recent_transactions) {
+          html += `<tr>
+            <td style="font-size:.78rem">${fmtDate(t.created_at)}</td>
+            <td style="font-family:monospace;font-size:.72rem">${(t.stripe_payment_intent || t.id || '').slice(0,30)}</td>
+            <td><span class="status-pill ${t.statut || t.status}">${t.statut || t.status || '?'}</span></td>
+            <td>${fmt(t.amount_cents || t.montant_cents || 0)}</td>
+            <td style="font-family:monospace;font-size:.72rem">${(t.livraison_id || '').slice(0,8)}</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // Audit events
+      html += '<div class="panel"><h2>🔔 Events Stripe webhook (20 derniers)</h2>';
+      if (!d.recent_audit_events.length) {
+        html += `<div class="reco">⚠️ <strong>Aucun event webhook enregistré.</strong> Le webhook Stripe ne s'exécute peut-être pas. Va dans Stripe Dashboard → Webhooks → vérifie les "récentes tentatives" et le code retour.</div>`;
+      } else {
+        html += '<table><thead><tr><th>Date</th><th>Event</th><th>Montant</th><th>PI</th></tr></thead><tbody>';
+        for (const e of d.recent_audit_events) {
+          html += `<tr>
+            <td style="font-size:.78rem">${fmtDate(e.created_at)}</td>
+            <td style="font-family:monospace;font-size:.78rem">${e.event_type || '?'}</td>
+            <td>${fmt(e.amount_cents || 0)}</td>
+            <td style="font-family:monospace;font-size:.7rem">${(e.stripe_payment_intent || '').slice(0,28)}</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // Settings raw
+      html += `<div class="panel"><h2>⚙️ Settings actuels (raw)</h2><div class="pre">${JSON.stringify(settings, null, 2)}</div></div>`;
+
+      cnt.innerHTML = html;
+    }
+
+    init();
+  </script>
+</body>
+</html>

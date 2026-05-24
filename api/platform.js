@@ -2495,8 +2495,9 @@ async function impactPublic(req, res, ctx) {
   let insurancePct = 0.02;
   let fundTopupCents = 0;
   let maxColisValueCents = 25000;
+  let founderRevenuePct = 0.05;
   try {
-    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=insurance_pct,insurance_fund_topup_cents,max_colis_value_cents`, {
+    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=insurance_pct,insurance_fund_topup_cents,max_colis_value_cents,founder_revenue_pct`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (sr.ok) {
@@ -2505,17 +2506,22 @@ async function impactPublic(req, res, ctx) {
         if (Number.isFinite(Number(rows[0].insurance_pct))) insurancePct = Number(rows[0].insurance_pct);
         if (Number.isFinite(Number(rows[0].insurance_fund_topup_cents))) fundTopupCents = Number(rows[0].insurance_fund_topup_cents);
         if (Number.isFinite(Number(rows[0].max_colis_value_cents))) maxColisValueCents = Number(rows[0].max_colis_value_cents);
+        if (Number.isFinite(Number(rows[0].founder_revenue_pct))) founderRevenuePct = Number(rows[0].founder_revenue_pct);
       }
     }
   } catch (_) {}
+  // ⚠️ FIX CRITIQUE : on accepte tous les statuts post-paiement (payee, paid, livre, confirmee)
+  //    Avant : seulement 'confirmee' (jamais utilisé) -> fonds toujours 0 $
   const fundRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total&statut=eq.confirmee&limit=10000`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total,statut&statut=in.(payee,paid,livre,confirmee)&limit=10000`,
     { headers: sbHeaders(ctx.sbKey) }
   ).catch(() => null);
   const fundRows = fundRes?.ok ? await fundRes.json().catch(() => []) : [];
-  const fundFromDeliveriesCents = Math.round(
-    fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0) * insurancePct
+  const totalRevenueCents = Math.round(
+    fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0)
   );
+  const fundFromDeliveriesCents = Math.round(totalRevenueCents * insurancePct);
+  const founderRevenueCents = Math.round(totalRevenueCents * founderRevenuePct);
   const fundTotalCents = fundFromDeliveriesCents + fundTopupCents;
   const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundTotalCents * 0.5));
 
@@ -2550,6 +2556,10 @@ async function impactPublic(req, res, ctx) {
     max_claim_cents: fundMaxClaimCents,
     max_colis_value_cents: maxColisValueCents,
     insurance_pct: insurancePct,
+    total_revenue_cents: totalRevenueCents,
+    deliveries_paid_count: fundRows.length,
+    founder_revenue_pct: founderRevenuePct,
+    founder_revenue_cents: founderRevenueCents,
     funded_by: `${(insurancePct * 100).toFixed(1)}% de chaque livraison confirmée + apports directs PorteàPorte`,
     note: 'Fonds volontaire bêta — pas un contrat d\'assurance.'
   };
@@ -3622,7 +3632,7 @@ module.exports = async function handler(req, res) {
     }
     if (endpoint === 'admin-settings-update') {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-      const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad','max_colis_value_cents','insurance_pct','insurance_fund_topup_cents'];
+      const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad','max_colis_value_cents','insurance_pct','insurance_fund_topup_cents','founder_revenue_pct'];
       const patch = { updated_at: new Date().toISOString() };
       for (const f of fields) if (body[f] != null) patch[f] = Number(body[f]);
       // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
@@ -3764,6 +3774,73 @@ module.exports = async function handler(req, res) {
       });
       const rows = r.ok ? await r.json() : [];
       return res.status(200).json({ success: true, settings: rows[0] || null });
+    }
+    if (endpoint === 'admin-diagnostic') {
+      // Diagnostic complet pour debug : montre TOUS les statuts et TOUS les montants
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      // 1. Toutes les livraisons groupées par statut (avec montants)
+      const livRes = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,prix_total,created_at,cree_le,stripe_payment_intent_id&order=created_at.desc&limit=200`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const livs = livRes.ok ? await livRes.json() : [];
+      const byStatus = {};
+      let grandTotal = 0;
+      for (const l of livs) {
+        const s = l.statut || 'null';
+        if (!byStatus[s]) byStatus[s] = { count: 0, total_cad: 0, samples: [] };
+        byStatus[s].count++;
+        byStatus[s].total_cad += Number(l.prix_total) || 0;
+        if (byStatus[s].samples.length < 3) byStatus[s].samples.push({ id: l.id, code: l.code, prix: l.prix_total, pi: l.stripe_payment_intent_id, date: l.created_at || l.cree_le });
+        grandTotal += Number(l.prix_total) || 0;
+      }
+
+      // 2. Toutes les transactions Stripe enregistrées
+      let transactions = [];
+      try {
+        const tr = await fetch(`${sbUrl}/rest/v1/transactions?select=*&order=created_at.desc&limit=100`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        if (tr.ok) transactions = await tr.json();
+      } catch (_) {}
+
+      // 3. Audit events
+      let auditEvents = [];
+      try {
+        const ar = await fetch(`${sbUrl}/rest/v1/transaction_audit_events?select=*&order=created_at.desc&limit=50`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        if (ar.ok) auditEvents = await ar.json();
+      } catch (_) {}
+
+      // 4. Settings actuels
+      let settings = null;
+      try {
+        const sr = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=*`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        if (sr.ok) settings = (await sr.json())[0] || null;
+      } catch (_) {}
+
+      return res.status(200).json({
+        success: true,
+        diagnostic: {
+          total_livraisons: livs.length,
+          grand_total_cad: grandTotal,
+          livraisons_by_status: byStatus,
+          recent_transactions: transactions.slice(0, 20),
+          recent_audit_events: auditEvents.slice(0, 20),
+          settings,
+          recommendations: [
+            byStatus['confirmee'] ? null : '⚠️ Aucune livraison avec statut "confirmee" - le filtre du fonds historique ne match jamais (FIX applique : on accepte payee/paid/livre/confirmee maintenant)',
+            transactions.length === 0 ? '⚠️ Aucune transaction dans la table transactions - le webhook Stripe n\'enregistre peut-etre pas correctement' : null,
+            auditEvents.filter(e => e.event_type?.includes('webhook')).length === 0 ? '⚠️ Aucun audit event webhook - vérifier que le webhook Stripe est bien configuré et signé' : null
+          ].filter(Boolean)
+        }
+      });
     }
     if (endpoint === 'organismes-list') {
       const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
