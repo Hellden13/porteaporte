@@ -3,17 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Espace presse — PorteàPorte</title>
-  <meta name="description" content="Kit média PorteàPorte : logo, photos, pitch, citations du fondateur. Pour journalistes et médias québécois.">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PorteàPorte">
-  <meta property="og:title" content="📰 Espace presse — PorteàPorte">
-  <meta property="og:description" content="La startup québécoise qui veut redéfinir la livraison locale. Tout ce dont les médias ont besoin en un seul endroit.">
-  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
-  <meta property="og:url" content="https://porteaporte.site/presse.html">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kit média (Admin) — PorteàPorte</title>
+  <meta name="description" content="Kit média PorteàPorte — accès restreint admin.">
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script>
+    // ─── PROTECTION ADMIN ─── (avant rendu)
+    (async function () {
+      try {
+        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (!db) return;
+        const { data: sess } = await db.auth.getSession();
+        if (!sess?.session) { window.location.href = '/login.html?return=/presse.html'; return; }
+        const { data: profile } = await db.from('profiles').select('role').eq('id', sess.session.user.id).maybeSingle();
+        if (profile?.role !== 'admin') {
+          document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#05080c;color:#fff;font-family:sans-serif;text-align:center;padding:40px"><div><h1 style="color:#ff7a7a">🔒 Accès restreint</h1><p style="color:#a8b0ba">Cette page est réservée aux administrateurs.</p><a href="/" style="color:#b8f53e;font-weight:700">← Retour à l\'accueil</a></div></div>';
+        }
+      } catch (_) {}
+    })();
+  </script>
   <style>
     body { background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
     .wrap { max-width:920px; margin:0 auto; padding:50px 24px 80px; }

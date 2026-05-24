@@ -26,6 +26,7 @@
         { "source": "/lib/(.*)",       "destination": "/404.html", "permanent": false },
         { "source": "/BACKEND-(.*\\.md)",  "destination": "/404.html", "permanent": false },
         { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },
+        { "source": "/presse.html", "destination": "/admin/presse-kit.html", "permanent": false },
         { "source": "/admin/admin-legacy.html", "destination": "/404.html", "permanent": false },
         { "source": "/admin-dashboard.html",    "destination": "/404.html", "permanent": false },
         { "source": "/test-login.html",         "destination": "/404.html", "permanent": false }
