@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote communautaire — PorteàPorte</title>
+  <meta name="description" content="Vote pour répartir le fonds communautaire entre les organismes québécois. 1 vote par membre. Résultats publics.">
+  <meta property="og:title" content="🗳️ Vote communautaire PorteàPorte">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 0; margin: 0; background: #05080c; color: #fff; }
+    .hero {
+      padding: 60px 24px 40px; text-align: center;
+      background: radial-gradient(ellipse at center top, rgba(184,245,62,.15) 0%, transparent 70%);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .hero .tag { display: inline-block; padding: 6px 16px; background: rgba(184,245,62,.15); border: 1px solid rgba(184,245,62,.4); border-radius: 999px; color: var(--brand-lime); font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0 0 16px; font-weight: 900; }
+    .hero h1 span { background: linear-gradient(135deg, #00d9ff, #b8f53e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: var(--brand-muted); max-width: 700px; margin: 0 auto; line-height: 1.7; font-size: 1.05rem; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 50px 24px 80px; }
+
+    .info-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 30px; }
+    .info { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px; text-align: center; }
+    .info .val { font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); }
+    .info .lbl { font-size: .78rem; color: var(--brand-muted); text-transform: uppercase; margin-top: 4px; letter-spacing: .05em; }
+
+    .timer-box { background: linear-gradient(135deg, rgba(255,200,0,.06), rgba(255,150,0,.04)); border: 1px solid rgba(255,200,0,.4); border-radius: 14px; padding: 18px; margin-bottom: 24px; text-align: center; }
+    .timer-box .val { font-size: 1.8rem; font-weight: 900; color: #ffd700; font-variant-numeric: tabular-nums; }
+    .timer-box .lbl { color: var(--brand-muted); font-size: .85rem; }
+
+    .org-vote { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+    .org-vote .head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .org-vote h3 { margin: 0; font-size: 1.05rem; }
+    .org-vote .cause { color: var(--brand-lime); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+    .org-vote .desc { color: var(--brand-muted); font-size: .88rem; line-height: 1.5; margin-bottom: 14px; }
+    .org-vote .slider-row { display: flex; gap: 12px; align-items: center; }
+    .org-vote input[type=range] { flex: 1; accent-color: var(--brand-lime); }
+    .org-vote .pct-display { font-size: 1.3rem; font-weight: 900; color: var(--brand-lime); min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+    .org-vote .live-bar { height: 6px; background: rgba(0,0,0,.3); border-radius: 999px; overflow: hidden; margin-top: 12px; }
+    .org-vote .live-fill { height: 100%; background: linear-gradient(90deg, #00d9ff, #b8f53e); transition: width .8s ease; }
+    .org-vote .live-pct { font-size: .8rem; color: var(--brand-muted); margin-top: 4px; }
+
+    .total-bar { background: rgba(0,0,0,.3); border-radius: 10px; padding: 14px 18px; margin: 20px 0; text-align: center; }
+    .total-bar.ok { background: rgba(0,255,159,.1); border: 1px solid rgba(0,255,159,.4); }
+    .total-bar.err { background: rgba(255,90,90,.1); border: 1px solid rgba(255,90,90,.4); }
+    .total-bar .val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
+    .total-bar.err .val { color: #ffb0b0; }
+
+    .submit-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); color: #001828; border: none; border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--brand-muted); }
+    .empty-state h2 { color: #fff; }
+
+    .result-msg { padding: 16px; border-radius: 10px; text-align: center; font-weight: 700; margin-top: 14px; }
+    .result-msg.ok { background: rgba(0,255,159,.1); color: #7dffc1; border: 1px solid rgba(0,255,159,.4); }
+    .result-msg.err { background: rgba(255,90,90,.1); color: #ffb0b0; border: 1px solid rgba(255,90,90,.4); }
+  </style>
+</head>
+<body>
+  <header style="position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(10,14,20,.95);border-bottom:1px solid var(--brand-border);backdrop-filter:blur(12px)">
+    <a href="/" style="font-weight:900;color:var(--brand-lime);text-decoration:none;font-size:1.15rem">PorteàPorte</a>
+    <nav style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn secondary" href="/organismes.html">Organismes</a>
+      <a class="btn" href="/login.html">Se connecter</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="tag">🗳️ Vote trimestriel ouvert</div>
+    <h1>Tu décides où va<br>le <span>fonds communautaire</span></h1>
+    <p>Chaque trimestre, on collecte 5% de chaque livraison. Cette saison, c'est <strong style="color:#fff" id="montantTotal">— $</strong> à répartir. <strong style="color:#fff">Ton vote compte autant que le nôtre.</strong></p>
+  </section>
+
+  <main class="wrap">
+    <div id="loading" class="empty-state">Chargement du vote en cours…</div>
+
+    <div id="vote-content" style="display:none">
+      <div class="info-bar">
+        <div class="info"><div class="val" id="nbVotants">0</div><div class="lbl">Votants</div></div>
+        <div class="info"><div class="val" id="montantInfo">— $</div><div class="lbl">À répartir</div></div>
+        <div class="info"><div class="val" id="periode">—</div><div class="lbl">Période</div></div>
+      </div>
+
+      <div class="timer-box">
+        <div class="val" id="timer">— jours</div>
+        <div class="lbl">avant la fermeture du vote</div>
+      </div>
+
+      <p style="color:var(--brand-muted);margin-bottom:18px;line-height:1.6">📊 Glisse les curseurs pour <strong style="color:#fff">répartir 100 points</strong> entre les organismes. Tes points = la part qu'ils recevront. Tu peux modifier ton vote jusqu'à la fermeture.</p>
+
+      <div id="orgs-list"></div>
+
+      <div id="totalBar" class="total-bar"><div class="val" id="totalVal">0 / 100</div></div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submit()">🗳️ Voter / Modifier mon vote</button>
+      <div id="resultMsg" style="display:none" class="result-msg"></div>
+    </div>
+
+    <div id="empty-state" class="empty-state" style="display:none">
+      <h2>🗳️ Aucun vote en cours</h2>
+      <p>Le prochain vote trimestriel s'ouvrira bientôt. <a href="/organismes.html" style="color:var(--brand-lime)">Voir nos organismes partenaires →</a></p>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null, currentVote = null, allocations = {};
+
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) {
+        document.getElementById('loading').innerHTML = '<h2>Connexion requise</h2><p>Tu dois être connecté pour voter.</p><a class="btn" href="/login.html?next=/vote-communautaire.html">Se connecter</a>';
+        return;
+      }
+      session = sess.session;
+      await loadVote();
+    }
+
+    async function loadVote() {
+      const res = await fetch('/api/platform?endpoint=vote-current');
+      const data = await res.json();
+      document.getElementById('loading').style.display = 'none';
+      if (!data.vote) {
+        document.getElementById('empty-state').style.display = 'block';
+        return;
+      }
+      currentVote = data.vote;
+      document.getElementById('vote-content').style.display = 'block';
+      document.getElementById('nbVotants').textContent = currentVote.nb_votants || 0;
+      document.getElementById('montantInfo').textContent = (Number(currentVote.montant_total_cad)||0).toFixed(0) + ' $';
+      document.getElementById('montantTotal').textContent = (Number(currentVote.montant_total_cad)||0).toFixed(0) + ' $';
+      document.getElementById('periode').textContent = currentVote.periode || '—';
+
+      // Timer
+      const updateTimer = () => {
+        const ms = new Date(currentVote.fin).getTime() - Date.now();
+        if (ms <= 0) { document.getElementById('timer').textContent = '⏱️ Vote fermé'; return; }
+        const days = Math.floor(ms / 86400000);
+        const hours = Math.floor((ms % 86400000) / 3600000);
+        document.getElementById('timer').textContent = days > 0 ? days + ' jours ' + hours + 'h' : hours + 'h';
+      };
+      updateTimer();
+      setInterval(updateTimer, 60000);
+
+      const orgs = currentVote.organismes || [];
+      const liveTotals = currentVote.resultats_live || {};
+      const liveSum = Object.values(liveTotals).reduce((s,v) => s + Number(v), 0) || 1;
+
+      // Init allocations égales par défaut
+      orgs.forEach(o => allocations[o.id] = Math.floor(100 / orgs.length));
+      // Ajuster pour totaliser 100
+      const diff = 100 - Object.values(allocations).reduce((s,v) => s + v, 0);
+      if (diff !== 0 && orgs[0]) allocations[orgs[0].id] += diff;
+
+      document.getElementById('orgs-list').innerHTML = orgs.map(o => {
+        const livePct = liveSum > 0 ? (Number(liveTotals[o.id]||0) / liveSum * 100) : 0;
+        return `
+          <div class="org-vote" id="ov-${o.id}">
+            <div class="head">
+              <div>
+                ${o.cause ? `<div class="cause">${o.cause}</div>` : ''}
+                <h3>${o.nom}</h3>
+              </div>
+              <div class="pct-display" id="pct-${o.id}">${allocations[o.id]} pts</div>
+            </div>
+            <div class="desc">${o.description || ''}</div>
+            <div class="slider-row">
+              <input type="range" min="0" max="100" step="1" value="${allocations[o.id]}" oninput="updateAlloc('${o.id}', this.value)">
+            </div>
+            <div class="live-bar"><div class="live-fill" style="width:${livePct.toFixed(1)}%"></div></div>
+            <div class="live-pct">📊 Tendance actuelle de la communauté : <strong style="color:var(--brand-lime)">${livePct.toFixed(0)}%</strong></div>
+          </div>
+        `;
+      }).join('');
+
+      updateTotal();
+    }
+
+    function updateAlloc(id, val) {
+      allocations[id] = Number(val);
+      document.getElementById('pct-' + id).textContent = allocations[id] + ' pts';
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const sum = Object.values(allocations).reduce((s,v) => s + Number(v), 0);
+      const bar = document.getElementById('totalBar');
+      const val = document.getElementById('totalVal');
+      val.textContent = sum + ' / 100';
+      bar.className = 'total-bar ' + (sum === 100 ? 'ok' : 'err');
+      document.getElementById('submitBtn').disabled = (sum !== 100);
+    }
+
+    async function submit() {
+      const msg = document.getElementById('resultMsg');
+      msg.style.display = 'block';
+      msg.className = 'result-msg';
+      msg.textContent = '⏳ Envoi…';
+      try {
+        const res = await fetch('/api/platform?endpoint=vote-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ vote_id: currentVote.id, allocations })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Erreur');
+        msg.className = 'result-msg ok';
+        msg.innerHTML = '✅ Ton vote a été enregistré ! Merci. <br><small>Tu peux le modifier jusqu\'à la fin du vote.</small>';
+        loadVote();
+      } catch (e) {
+        msg.className = 'result-msg err';
+        msg.textContent = '❌ ' + e.message;
+      }
+    }
+
+    init();
+  </script>
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/pwa-install.js"></script>
+</body>
+</html>

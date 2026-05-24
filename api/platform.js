@@ -3531,6 +3531,52 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
     if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);
+    if (endpoint === 'admin-vote-create') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+      const { titre, description, periode, montant_total_cad, fin, organismes_ids } = body;
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/community_votes`, {
+        method: 'POST',
+        headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+        body: JSON.stringify({ titre, description, periode, montant_total_cad: Number(montant_total_cad)||0, fin, organismes_ids: organismes_ids || [], statut: 'ouvert' })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) return res.status(400).json({ error: 'Création vote impossible', details: data });
+      const vote = Array.isArray(data) ? data[0] : data;
+      // Notifier tous les profils via push (et email plus tard)
+      try {
+        await deliverPush(ctx, {
+          type: 'nouveau_vote_communautaire',
+          data: { vote_id: vote.id, titre: vote.titre, fin: vote.fin }
+        });
+      } catch (e) {}
+      return res.status(200).json({ success: true, vote });
+    }
+    if (endpoint === 'admin-vote-close') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+      const { vote_id } = body;
+      const respRes = await fetch(`${ctx.sbUrl}/rest/v1/community_vote_responses?vote_id=eq.${vote_id}&select=allocations`, {
+        headers: sbHeaders(ctx.sbKey)
+      });
+      const responses = respRes.ok ? await respRes.json() : [];
+      const totals = {};
+      let totalPoints = 0;
+      for (const r of responses) {
+        for (const [orgId, pct] of Object.entries(r.allocations || {})) {
+          totals[orgId] = (totals[orgId] || 0) + Number(pct);
+          totalPoints += Number(pct);
+        }
+      }
+      // Normaliser en %
+      const finalPcts = {};
+      for (const [orgId, pts] of Object.entries(totals)) {
+        finalPcts[orgId] = totalPoints > 0 ? (pts / totalPoints * 100) : 0;
+      }
+      await fetch(`${ctx.sbUrl}/rest/v1/community_votes?id=eq.${vote_id}`, {
+        method: 'PATCH', headers: sbHeaders(ctx.sbKey),
+        body: JSON.stringify({ statut: 'ferme', resultats: { allocations_pct: finalPcts, nb_votants: responses.length, ferme_le: new Date().toISOString() } })
+      });
+      return res.status(200).json({ success: true, resultats: finalPcts, nb_votants: responses.length });
+    }
     if (endpoint === 'admin-settings-update') {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
       const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad'];
@@ -3547,6 +3593,52 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify(patch)
       });
       if (!r.ok) return res.status(400).json({ error: 'Mise à jour impossible' });
+      return res.status(200).json({ success: true });
+    }
+    if (endpoint === 'vote-current') {
+      // Public: récupérer le vote actif
+      const r = await fetch(`${sbUrl}/rest/v1/community_votes?statut=eq.ouvert&fin=gte.${new Date().toISOString()}&select=*&order=cree_le.desc&limit=1`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const rows = r.ok ? await r.json() : [];
+      const vote = rows[0];
+      if (!vote) return res.status(200).json({ success: true, vote: null });
+      // Joindre les organismes
+      if (vote.organismes_ids?.length) {
+        const orgIds = vote.organismes_ids.map(id => `"${id}"`).join(',');
+        const orgRes = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?id=in.(${orgIds})&select=id,nom,description,cause,region,logo_url`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        vote.organismes = orgRes.ok ? await orgRes.json() : [];
+      }
+      // Total des votes
+      const respRes = await fetch(`${sbUrl}/rest/v1/community_vote_responses?vote_id=eq.${vote.id}&select=allocations`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const responses = respRes.ok ? await respRes.json() : [];
+      vote.nb_votants = responses.length;
+      const totals = {};
+      for (const r of responses) {
+        for (const [orgId, pct] of Object.entries(r.allocations || {})) {
+          totals[orgId] = (totals[orgId] || 0) + Number(pct);
+        }
+      }
+      vote.resultats_live = totals;
+      return res.status(200).json({ success: true, vote });
+    }
+    if (endpoint === 'vote-submit') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const { vote_id, allocations } = body;
+      if (!vote_id || !allocations || typeof allocations !== 'object') return res.status(400).json({ error: 'vote_id + allocations requis' });
+      const sum = Object.values(allocations).reduce((s,v) => s + Number(v), 0);
+      if (Math.abs(sum - 100) > 1) return res.status(400).json({ error: `Allocations doivent totaliser 100% (actuel: ${sum})` });
+      // Upsert (1 vote par user)
+      await fetch(`${sbUrl}/rest/v1/community_vote_responses?on_conflict=vote_id,user_id`, {
+        method: 'POST',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ vote_id, user_id: session.id, allocations, voted_at: new Date().toISOString() })
+      });
       return res.status(200).json({ success: true });
     }
     if (endpoint === 'platform-settings-get') {
