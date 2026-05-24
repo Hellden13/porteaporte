@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node --test tests/lib.test.js tests/rides.test.js tests/growth.test.js tests/handlers.test.js",
+    "test": "node --test tests/lib.test.js tests/rides.test.js tests/ride-create.test.js tests/growth.test.js tests/handlers.test.js",
     "test:lib": "node --test tests/lib.test.js",
     "test:rides": "node --test tests/rides.test.js",
     "test:growth": "node --test tests/growth.test.js",
