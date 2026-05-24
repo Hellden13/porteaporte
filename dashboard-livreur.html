@@ -2388,9 +2388,15 @@
               ? 'Tu n\'as pas terminé la configuration Stripe. Clique pour continuer.'
               : 'Lance la configuration pour recevoir des virements bancaires.'}
           </p>
-          <button onclick="startOnboarding(event)" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%">
+          <button onclick="startOnboarding(event)" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px">
             ${acct.status === 'onboarding' ? '⚙️ Continuer la configuration' : '⚡ Configurer mes paiements'}
-          </button>` : ''}`;
+          </button>
+          <button onclick="openStripeDashboard()" style="background:transparent;color:var(--brand-cyan);border:1px solid rgba(0,217,255,.4);border-radius:10px;padding:11px 18px;font-size:.83rem;font-weight:700;cursor:pointer;width:100%">
+            🔗 Ouvrir directement Stripe
+          </button>` : `
+          <button onclick="openStripeDashboard()" style="background:rgba(0,217,255,.1);color:var(--brand-cyan);border:1px solid rgba(0,217,255,.4);border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;margin-top:10px">
+            🔗 Ouvrir mon dashboard Stripe (gérer compte bancaire, etc.)
+          </button>`}`;
 
         if (isActive) {
           document.getElementById('balanceCard').style.display = '';
