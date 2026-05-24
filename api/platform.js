@@ -2675,6 +2675,24 @@ async function impactPublic(req, res, ctx) {
 }
 
 async function platformSettingsPublic(req, res, sbUrl, sbKey) {
+  const defaults = {
+    pct_livreur: 60,
+    pct_communaute: 5,
+    pct_protection: 3,
+    pct_urgence: 2,
+    pct_developpement: 4,
+    pct_marketing: 4.6,
+    pct_operations: 13,
+    pct_profit: 8.4,
+    pct_stripe: 0,
+    ticket_moyen_cad: 15,
+    max_colis_value_cents: 25000,
+    insurance_pct: 0.02,
+    insurance_fund_topup_cents: 0,
+    founder_revenue_pct: 0.05,
+    beta_cities: ['quebec', 'levis'],
+    beta_cities_active: false
+  };
   const safeFields = [
     'pct_livreur','pct_communaute','pct_protection','pct_urgence',
     'pct_developpement','pct_marketing','pct_operations','pct_profit',
@@ -2699,7 +2717,7 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     }
   }
   const rows = r.ok ? await r.json() : [];
-  return res.status(200).json({ success: true, settings: rows[0] || null });
+  return res.status(200).json({ success: true, settings: { ...defaults, ...(rows[0] || {}) } });
 }
 
 async function impactApplicationPublic(req, res, ctx, body) {
@@ -3984,6 +4002,116 @@ module.exports = async function handler(req, res) {
           ].filter(Boolean)
         }
       });
+    }
+    if (endpoint === 'admin-stripe-health') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      const checks = [];
+      const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+      checks.push({
+        name: 'STRIPE_SECRET_KEY',
+        ok: !!stripeKey,
+        detail: stripeKey ? `${stripeKey.startsWith('sk_live_') ? '🟢 LIVE' : (stripeKey.startsWith('sk_test_') ? '🟡 TEST' : '❓ Format inconnu')} · ${stripeKey.slice(0,7)}...${stripeKey.slice(-4)}` : '❌ Manquante dans Vercel'
+      });
+      checks.push({
+        name: 'STRIPE_WEBHOOK_SECRET',
+        ok: !!webhookSecret,
+        detail: webhookSecret ? `🟢 Configurée · ${webhookSecret.slice(0,7)}...${webhookSecret.slice(-4)}` : '❌ Manquante dans Vercel'
+      });
+      try {
+        const r = await fetch('https://api.stripe.com/v1/balance', {
+          headers: { 'Authorization': `Bearer ${stripeKey}`, 'Stripe-Version': '2024-06-20' }
+        });
+        const data = r.ok ? await r.json() : null;
+        checks.push({
+          name: 'Stripe API ping',
+          ok: r.ok,
+          detail: r.ok ? `🟢 Connexion OK · Solde dispo: ${((data?.available?.[0]?.amount || 0) / 100).toFixed(2)} ${(data?.available?.[0]?.currency || 'cad').toUpperCase()}` : `❌ HTTP ${r.status}`
+        });
+      } catch (e) {
+        checks.push({ name: 'Stripe API ping', ok: false, detail: '❌ ' + e.message });
+      }
+      try {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const r = await fetch(`${sbUrl}/rest/v1/transaction_audit_events?event_type=like.*webhook*&created_at=gte.${since}&select=event_type,created_at&order=created_at.desc&limit=10`, {
+          headers: sbHeaders(sbKey)
+        });
+        const events = r.ok ? await r.json() : [];
+        checks.push({
+          name: 'Webhook events 24h',
+          ok: events.length > 0,
+          detail: events.length > 0 ? `🟢 ${events.length} events reçus · Dernier: ${events[0].event_type}` : '⚠️ Aucun event en 24h (normal si pas de transactions)',
+          events
+        });
+      } catch (e) {
+        checks.push({ name: 'Webhook events 24h', ok: false, detail: '❌ ' + e.message });
+      }
+      try {
+        const r = await fetch('https://api.stripe.com/v1/webhook_endpoints', {
+          headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (r.ok) {
+          const data = await r.json();
+          const ours = (data.data || []).filter(w => (w.url || '').includes('porteaporte.site'));
+          checks.push({
+            name: 'Webhook URL Stripe',
+            ok: ours.length > 0,
+            detail: ours.length > 0
+              ? `🟢 ${ours.length} webhook(s) configuré(s) · ${ours[0].url} · ${ours[0].enabled_events.length} events`
+              : '❌ Aucun webhook pointant sur porteaporte.site - va dans Stripe Dashboard pour créer',
+            webhooks: ours.map(w => ({ url: w.url, status: w.status, events: w.enabled_events }))
+          });
+        }
+      } catch (_) {}
+      const allOk = checks.every(c => c.ok);
+      return res.status(200).json({ success: true, all_ok: allOk, checks });
+    }
+    if (endpoint === 'user-data-export') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const tables = ['profiles', 'user_badges', 'push_subscriptions', 'community_vote_responses'];
+      const data = { generated_at: new Date().toISOString(), user_id: session.id, user_email: session.email };
+      for (const t of tables) {
+        try {
+          const r = await fetch(`${sbUrl}/rest/v1/${t}?select=*&${t === 'profiles' ? 'id' : 'user_id'}=eq.${session.id}&limit=500`, { headers: sbHeaders(sbKey) });
+          data[t] = r.ok ? await r.json() : [];
+        } catch (_) { data[t] = []; }
+      }
+      try {
+        const r1 = await fetch(`${sbUrl}/rest/v1/livraisons?select=*&expediteur_id=eq.${session.id}&limit=500`, { headers: sbHeaders(sbKey) });
+        data.livraisons_envoyees = r1.ok ? await r1.json() : [];
+        const r2 = await fetch(`${sbUrl}/rest/v1/livraisons?select=*&livreur_id=eq.${session.id}&limit=500`, { headers: sbHeaders(sbKey) });
+        data.livraisons_livrees = r2.ok ? await r2.json() : [];
+      } catch (_) {}
+      return res.status(200).json({ success: true, data });
+    }
+    if (endpoint === 'user-data-delete-request') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const reason = String(body.reason || '').trim().slice(0, 500);
+      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${session.id}`, {
+        method: 'PATCH', headers: sbHeaders(sbKey),
+        body: JSON.stringify({ deletion_requested_at: new Date().toISOString(), deletion_reason: reason })
+      }).catch(() => {});
+      alertAdmin(
+        `Demande de suppression compte`,
+        `Un utilisateur a demandé la suppression de son compte (Loi 25 / RGPD). À traiter sous 30 jours.`,
+        {
+          severity: 'critical',
+          details: {
+            'Utilisateur': session.email || session.id,
+            'Raison': reason || '(non précisée)',
+            'Demandé le': new Date().toLocaleString('fr-CA')
+          },
+          cta_url: 'https://porteaporte.site/admin/users.html',
+          cta_label: '🗑️ Traiter la demande →'
+        }
+      );
+      return res.status(200).json({ success: true, message: 'Demande enregistrée. L\'équipe la traitera sous 30 jours conformément à la Loi 25.' });
     }
     if (endpoint === 'admin-operations-pulse') {
       // Pulse temps réel pour la page operations - retourne TOUT ce qu'un admin doit voir maintenant

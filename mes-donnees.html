@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes données personnelles — PorteàPorte</title>
+  <meta name="description" content="Télécharge tes données ou demande la suppression de ton compte (Loi 25 / RGPD).">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="🔒 Mes données personnelles — PorteàPorte">
+  <meta property="og:description" content="Contrôle total sur tes données. Conforme Loi 25 Québec et RGPD.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
+    .wrap { max-width:780px; margin:0 auto; padding:48px 24px 80px; }
+    h1 { font-size:clamp(1.8rem,4vw,2.6rem); margin:0 0 12px; }
+    .sub { color:var(--brand-muted); font-size:1.02rem; margin:0 0 32px; line-height:1.6; }
+    .card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:16px; padding:28px; margin-bottom:18px; }
+    .card h2 { margin:0 0 8px; font-size:1.2rem; color:#fff; display:flex;align-items:center;gap:10px }
+    .card p { color:var(--brand-muted); line-height:1.6; margin:0 0 18px; font-size:.95rem; }
+    .card .badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; background:rgba(184,245,62,.15); color:var(--brand-lime); margin-left:6px; }
+    .btn-action { padding:12px 22px; background:var(--brand-lime); color:#071006; border:none; border-radius:10px; font-weight:900; cursor:pointer; font-size:.92rem; text-decoration:none; display:inline-block; }
+    .btn-action:hover { background:#cffe5a; }
+    .btn-danger { padding:12px 22px; background:rgba(255,90,90,.12); color:#ff9999; border:1px solid rgba(255,90,90,.4); border-radius:10px; font-weight:900; cursor:pointer; font-size:.92rem; }
+    .btn-danger:hover { background:rgba(255,90,90,.2); }
+    .msg { padding:14px 18px; border-radius:10px; margin-top:14px; display:none; font-size:.9rem; }
+    .msg.ok { display:block; background:rgba(0,255,159,.1); color:#7dffc1; border:1px solid rgba(0,255,159,.3); }
+    .msg.err { display:block; background:rgba(255,90,90,.1); color:#ff9999; border:1px solid rgba(255,90,90,.3); }
+    .danger-zone { border-color:rgba(255,90,90,.3); }
+    textarea { width:100%; box-sizing:border-box; padding:12px; background:#05080c; border:1px solid var(--brand-border); border-radius:8px; color:#fff; font:inherit; min-height:80px; resize:vertical; margin-bottom:12px; }
+    .need-login { background:rgba(255,200,0,.08); border:1px solid rgba(255,200,0,.3); padding:14px 18px; border-radius:10px; color:#ffd700; margin-bottom:20px; }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.05)">
+    <a href="/" style="color:#fff;font-weight:900;text-decoration:none;display:flex;gap:10px;align-items:center"><img src="/logo.svg" width="32" height="32" alt=""> PorteàPorte</a>
+    <a class="btn btn-ghost" href="/" style="font-size:.85rem;padding:8px 16px">← Accueil</a>
+  </header>
+
+  <main class="wrap">
+    <h1>🔒 Mes données personnelles</h1>
+    <p class="sub">Conformément à la <strong>Loi 25 (Québec)</strong> et au <strong>RGPD</strong>, tu as un contrôle total sur tes données. Télécharge-les ou demande leur suppression en un clic.</p>
+
+    <div id="need-login" class="need-login" style="display:none">
+      ⚠️ Tu dois être connecté pour gérer tes données. <a href="/login.html?return=/mes-donnees.html" style="color:var(--brand-lime);font-weight:700">Se connecter →</a>
+    </div>
+
+    <div id="logged-content" style="display:none">
+
+      <div class="card">
+        <h2>📥 Télécharger mes données <span class="badge">Loi 25</span></h2>
+        <p>Reçois un fichier JSON contenant <strong>toutes</strong> tes données : profil, livraisons envoyées, livraisons livrées, badges, votes, notifications push. Idéal pour archives personnelles ou transfert vers une autre plateforme.</p>
+        <button class="btn-action" onclick="exportData()">📥 Télécharger mes données (JSON)</button>
+        <div id="export-msg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>✏️ Modifier mes informations</h2>
+        <p>Mets à jour ton nom, ton email, ton téléphone, ta ville et tes préférences de notification directement depuis ton profil.</p>
+        <a class="btn-action" href="/profile.html">✏️ Modifier mon profil</a>
+      </div>
+
+      <div class="card">
+        <h2>🔑 Changer mon mot de passe</h2>
+        <p>Si tu penses que quelqu'un connaît ton mot de passe, change-le maintenant.</p>
+        <a class="btn-action" href="/login.html?action=reset">🔑 Réinitialiser mon mot de passe</a>
+      </div>
+
+      <div class="card danger-zone">
+        <h2>🗑️ Supprimer définitivement mon compte <span class="badge" style="background:rgba(255,90,90,.15);color:#ff9999">Irréversible</span></h2>
+        <p>Cette action va :</p>
+        <ul style="color:var(--brand-muted);font-size:.92rem;margin:0 0 14px;padding-left:22px;line-height:1.7">
+          <li>Marquer ton compte pour suppression définitive (traitée sous 30 jours conformément à la Loi 25)</li>
+          <li>Anonymiser tes livraisons passées (les statistiques restent pour la comptabilité légale)</li>
+          <li>Supprimer ton profil, ton email, tes notifications, tes badges, tes votes</li>
+          <li><strong>Les remboursements ou litiges en cours doivent être réglés avant</strong></li>
+        </ul>
+        <textarea id="del-reason" placeholder="Raison de la suppression (optionnel) - ça nous aide à améliorer le service"></textarea>
+        <button class="btn-danger" onclick="requestDelete()">🗑️ Demander la suppression définitive</button>
+        <div id="del-msg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>📧 Une question sur tes données ?</h2>
+        <p>Tu peux contacter le responsable de la protection des renseignements personnels à <a href="mailto:bonjour@porteaporte.site?subject=Loi%2025%20-%20Question%20donnees" style="color:var(--brand-lime);font-weight:700">bonjour@porteaporte.site</a> ou consulter notre <a href="/confidentialite.html" style="color:var(--brand-lime);font-weight:700">politique de confidentialité</a>.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) {
+        document.getElementById('need-login').style.display = 'block';
+        return;
+      }
+      session = sess.session;
+      document.getElementById('logged-content').style.display = 'block';
+    }
+
+    async function exportData() {
+      const msg = document.getElementById('export-msg');
+      msg.className = 'msg';
+      msg.textContent = '';
+      try {
+        const r = await fetch('/api/platform?endpoint=user-data-export', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Export impossible');
+        const blob = new Blob([JSON.stringify(out.data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'porteaporte-mes-donnees-' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        msg.className = 'msg ok';
+        msg.textContent = '✅ Téléchargement lancé. Fichier JSON avec toutes tes données.';
+      } catch (e) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ ' + e.message;
+      }
+    }
+
+    async function requestDelete() {
+      if (!confirm('Es-tu CERTAIN(E) de vouloir supprimer ton compte ?\n\nCette action est irréversible et sera traitée sous 30 jours.')) return;
+      const msg = document.getElementById('del-msg');
+      const reason = document.getElementById('del-reason').value.trim();
+      try {
+        const r = await fetch('/api/platform?endpoint=user-data-delete-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ reason })
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Demande impossible');
+        msg.className = 'msg ok';
+        msg.textContent = '✅ ' + (out.message || 'Demande enregistrée');
+        document.getElementById('del-reason').disabled = true;
+      } catch (e) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ ' + e.message;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

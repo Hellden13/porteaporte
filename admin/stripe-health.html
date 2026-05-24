@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stripe Health — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 940px; margin: 0 auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; }
+    h1 { margin:0; font-size:1.5rem; }
+    .global { padding:24px 28px; border-radius:14px; margin-bottom:22px; }
+    .global.ok { background:linear-gradient(135deg,rgba(0,255,159,.1),rgba(184,245,62,.05)); border:2px solid rgba(0,255,159,.4); }
+    .global.err { background:linear-gradient(135deg,rgba(255,90,90,.1),rgba(255,90,90,.03)); border:2px solid rgba(255,90,90,.4); }
+    .global .icon { font-size:2.5rem; line-height:1; margin-bottom:8px; }
+    .global h2 { margin:0; color:#fff; font-size:1.3rem; }
+    .check-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:12px; padding:18px 22px; margin-bottom:12px; }
+    .check-card.ok { border-left:4px solid #7dffc1; }
+    .check-card.err { border-left:4px solid #ff7a7a; }
+    .check-name { font-weight:800; color:#fff; font-size:1rem; margin-bottom:4px; }
+    .check-detail { color:var(--brand-muted); font-size:.88rem; line-height:1.5; }
+    .check-extra { margin-top:10px; padding:10px 14px; background:#05080c; border-radius:6px; font-family:monospace; font-size:.78rem; max-height:200px; overflow:auto; }
+    .help-box { background:rgba(0,217,255,.06); border:1px solid rgba(0,217,255,.3); border-radius:10px; padding:18px 22px; margin-top:20px; font-size:.9rem; line-height:1.7; }
+    .help-box h3 { margin:0 0 10px; color:var(--brand-cyan); font-size:1rem; }
+    .help-box code { background:rgba(0,0,0,.4); padding:2px 8px; border-radius:4px; color:var(--brand-lime); font-size:.85rem; }
+    .help-box a { color:var(--brand-lime); font-weight:700; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>💳 Stripe Health Check</h1>
+      <div style="display:flex;gap:10px">
+        <button class="btn" onclick="check()">🔄 Re-tester</button>
+        <a class="btn secondary" href="/admin/operations.html">← Operations</a>
+      </div>
+    </div>
+
+    <div id="global" class="global ok">
+      <div class="icon">⏳</div>
+      <h2>Test en cours…</h2>
+    </div>
+
+    <div id="checks"></div>
+
+    <div class="help-box">
+      <h3>🛠️ Si un test échoue</h3>
+      <p><strong>STRIPE_SECRET_KEY manquante</strong> → va dans <a href="https://vercel.com/dashboard" target="_blank">Vercel Settings → Environment Variables</a>, ajoute <code>STRIPE_SECRET_KEY</code> = ta clé (commence par <code>sk_live_</code> en prod), puis <strong>Redeploy</strong>.</p>
+      <p><strong>STRIPE_WEBHOOK_SECRET manquante</strong> → va dans <a href="https://dashboard.stripe.com/webhooks" target="_blank">Stripe Dashboard → Webhooks</a>, clique sur ton webhook (ou crée-le pointant sur <code>https://porteaporte.site/api/stripe-webhook</code>), copie le "Signing secret" (commence par <code>whsec_</code>) et mets-le dans Vercel.</p>
+      <p><strong>Aucun webhook URL Stripe</strong> → Stripe Dashboard → Webhooks → "Add endpoint" → URL = <code>https://porteaporte.site/api/stripe-webhook</code> → Events à activer : <code>payment_intent.succeeded</code>, <code>payment_intent.amount_capturable_updated</code>, <code>payment_intent.payment_failed</code>, <code>payout.paid</code>, <code>charge.refunded</code>.</p>
+      <p><strong>Webhook events 24h = 0</strong> → soit pas de transactions hier (normal au début), soit le webhook ne marche pas. Va dans Stripe Dashboard → ton webhook → "Recent attempts" pour voir le code HTTP retour. Si 401 → ton WEBHOOK_SECRET est mal collé. Si 500 → bug dans <code>/api/stripe-webhook.js</code>.</p>
+    </div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      await check();
+    }
+    async function check() {
+      document.getElementById('global').innerHTML = '<div class="icon">⏳</div><h2>Test en cours…</h2>';
+      document.getElementById('checks').innerHTML = '';
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-stripe-health', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error);
+        render(out);
+      } catch (e) {
+        document.getElementById('global').className = 'global err';
+        document.getElementById('global').innerHTML = '<div class="icon">❌</div><h2>Erreur : ' + e.message + '</h2>';
+      }
+    }
+    function render(out) {
+      const g = document.getElementById('global');
+      g.className = 'global ' + (out.all_ok ? 'ok' : 'err');
+      g.innerHTML = out.all_ok
+        ? '<div class="icon">✅</div><h2>Stripe est entièrement opérationnel</h2><div style="color:var(--brand-muted);margin-top:6px">' + out.checks.length + ' / ' + out.checks.length + ' tests OK</div>'
+        : '<div class="icon">⚠️</div><h2>' + out.checks.filter(c => !c.ok).length + ' test(s) en échec</h2><div style="color:var(--brand-muted);margin-top:6px">Voir les détails ci-dessous + l\'aide en bas de page</div>';
+
+      const html = out.checks.map(c => {
+        let extra = '';
+        if (c.events && c.events.length) extra = '<div class="check-extra">' + c.events.map(e => e.event_type + ' · ' + new Date(e.created_at).toLocaleString('fr-CA')).join('<br>') + '</div>';
+        if (c.webhooks && c.webhooks.length) extra = '<div class="check-extra">' + c.webhooks.map(w => 'URL: ' + w.url + ' · Status: ' + w.status + ' · Events: ' + w.events.join(', ')).join('<br><br>') + '</div>';
+        return `<div class="check-card ${c.ok ? 'ok' : 'err'}">
+          <div class="check-name">${c.ok ? '✅' : '❌'} ${c.name}</div>
+          <div class="check-detail">${c.detail}</div>
+          ${extra}
+        </div>`;
+      }).join('');
+      document.getElementById('checks').innerHTML = html;
+    }
+    init();
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 // Appelé par Vercel Cron (voir vercel.json) — toutes les heures
 'use strict';
 
-const { sanitizeEnv, sbHeaders } = require('../lib/_lib');
+const { sanitizeEnv, sbHeaders, alertAdmin } = require('../lib/_lib');
 
 module.exports = async function handler(req, res) {
   // Sécurité : seulement Vercel Cron ou secret interne
@@ -89,6 +89,65 @@ module.exports = async function handler(req, res) {
     results.xl_auto_cancel = `${cancelled} livraisons annulées`;
   } catch (e) {
     results.xl_auto_cancel = 'exception: ' + e.message;
+  }
+
+  // ─── 4. RÉSUMÉ QUOTIDIEN ENVOYÉ À L'ADMIN ───
+  try {
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000);
+    const since24h = yesterday.toISOString();
+    const h = { ...sbHeaders(sbKey), Prefer: 'count=exact' };
+
+    async function countSince(table, dateCol = 'created_at', extra = '') {
+      try {
+        const r = await fetch(`${sbUrl}/rest/v1/${table}?select=id&${dateCol}=gte.${since24h}${extra}`, { headers: h });
+        const cr = r.headers.get('content-range') || '0-0/0';
+        return Number(cr.split('/')[1]) || 0;
+      } catch (_) { return 0; }
+    }
+
+    const [newLivraisons, newInscriptions, paidLivraisons, openManquements] = await Promise.all([
+      countSince('livraisons', 'cree_le'),
+      countSince('profiles', 'created_at'),
+      countSince('livraisons', 'cree_le', '&statut=in.(payee,paid,livre,confirmee)'),
+      countSince('manquements', 'created_at', '&statut=eq.signale')
+    ]);
+
+    // Revenu de la journée
+    let revenueCad = 0;
+    try {
+      const r = await fetch(`${sbUrl}/rest/v1/livraisons?select=prix_total&statut=in.(payee,paid,livre,confirmee)&cree_le=gte.${since24h}`, { headers: sbHeaders(sbKey) });
+      const livs = r.ok ? await r.json() : [];
+      revenueCad = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
+    } catch (_) {}
+
+    const founderShare = revenueCad * 0.05;
+    const hasActivity = newLivraisons > 0 || newInscriptions > 0 || openManquements > 0;
+
+    if (hasActivity || (new Date().getDay() === 1)) { // Activité OU lundi matin (récap silencieux)
+      const severity = openManquements > 0 ? 'warning' : (paidLivraisons > 0 ? 'success' : 'info');
+      alertAdmin(
+        `Résumé quotidien — ${yesterday.toLocaleDateString('fr-CA')}`,
+        `Voici ce qui s'est passé sur PorteàPorte depuis 24 heures.`,
+        {
+          severity,
+          details: {
+            '📦 Nouvelles livraisons': newLivraisons,
+            '✅ Livraisons payées': paidLivraisons,
+            '👤 Nouvelles inscriptions': newInscriptions,
+            '⚠️ Manquements ouverts': openManquements,
+            '💰 Revenu 24h': revenueCad.toFixed(2) + ' $',
+            '👑 Ta part fondateur (5%)': founderShare.toFixed(2) + ' $'
+          },
+          cta_url: 'https://porteaporte.site/admin/operations.html',
+          cta_label: '📊 Centre Opérations →'
+        }
+      );
+      results.daily_summary = 'envoyé';
+    } else {
+      results.daily_summary = 'aucune activité — pas d\'email';
+    }
+  } catch (e) {
+    results.daily_summary = 'exception: ' + e.message;
   }
 
   console.log('[cron-cleanup]', results);
