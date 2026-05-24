@@ -1,37 +1,34 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page introuvable — PorteàPorte</title>
   <meta name="robots" content="noindex">
-  <title>Page introuvable - PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
-  <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
-    .box{width:min(620px,100%);background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:30px}
-    .code{font-size:86px;font-weight:950;color:var(--brand-lime);line-height:1}
-    h1{font-size:32px;margin:10px 0}
-    p{max-width:480px;margin:0 auto 20px;line-height:1.6}
-    .links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-    .btn{width:auto;text-decoration:none}
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:radial-gradient(ellipse at center, rgba(184,245,62,.08) 0%, #05080c 70%); color:#fff; padding:20px; font-family:Inter,Arial,sans-serif; }
+    .card { max-width:520px; text-align:center; padding:40px 30px; }
+    .num { font-size:clamp(5rem, 18vw, 9rem); font-weight:900; line-height:1; margin:0 0 10px; background:linear-gradient(135deg,#00d9ff,#b8f53e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    h1 { margin:0 0 14px; font-size:1.8rem; }
+    p { color:#a8b0ba; line-height:1.7; margin:0 0 28px; }
+    .btn-grid { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .btn { padding:14px 26px; border-radius:12px; text-decoration:none; font-weight:900; }
+    .primary { background:linear-gradient(135deg,#00d9ff,#b8f53e); color:#001828; }
+    .ghost { border:1px solid #1E2535; color:#fff; background:transparent; }
   </style>
 </head>
 <body>
-  <main class="box">
-    <div class="code">404</div>
-    <h1>Page introuvable</h1>
-    <p>Le lien a peut-etre change pendant la beta. Utilise les raccourcis ci-dessous pour revenir au bon endroit.</p>
-    <div class="links">
-      <a class="btn" href="/index.html">Accueil</a>
-      <a class="btn secondary" href="/create-mission.html">Creer une livraison</a>
-      <a class="btn secondary" href="/livreur.html">Devenir livreur</a>
-      <a class="btn secondary" href="/profile.html">Mon profil</a>
-      <a class="btn secondary" href="/assurance.html">Protection</a>
-      <a class="btn secondary" href="/cgu.html">CGU</a>
+  <div class="card">
+    <div class="num">404</div>
+    <h1>🧭 Page introuvable</h1>
+    <p>Cette page a peut-être déménagé, ou n'a jamais existé. Pas de panique — on te ramène au bon endroit.</p>
+    <div class="btn-grid">
+      <a href="/" class="btn primary">🏠 Accueil</a>
+      <a href="/faq.html" class="btn ghost">❓ FAQ</a>
+      <a href="/contact.html" class="btn ghost">📧 Contact</a>
     </div>
-  </main>
+    <p style="margin-top:32px;font-size:.78rem;color:#6d7886">Bêta — PorteàPorte construit avec 🤍 au Québec</p>
+  </div>
 </body>
 </html>
-
