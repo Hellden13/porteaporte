@@ -3525,6 +3525,60 @@ module.exports = async function handler(req, res) {
         },
       });
     }
+    if (endpoint === 'admin-purge-test-data') {
+      // Purge des données de test (livraisons fictives, comptes test, etc.) - admin seulement
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      const dryRun = body.dry_run !== false; // par défaut dry run, pour preview avant action
+      const stats = { dry_run: dryRun };
+
+      // 1. Identifier les livraisons de test (sans expediteur réel OU sans payment_intent OU avec mots-clés)
+      const testKeywords = ['test', 'demo', 'fictif', 'fake', 'exemple', 'sample'];
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,description,titre,prix_total,stripe_payment_intent,cree_le,expediteur_id`, {
+        headers: sbHeaders(sbKey)
+      });
+      const allLivs = lr.ok ? await lr.json() : [];
+
+      const fakeLivs = allLivs.filter(l => {
+        // Statut payé/livré = jamais touchable (vrai argent en jeu)
+        if (['payee','paid','livre','livree','confirmee'].includes(l.statut)) return false;
+        // Mot-clé test dans description ou titre
+        const text = `${l.description || ''} ${l.titre || ''}`.toLowerCase();
+        if (testKeywords.some(k => text.includes(k))) return true;
+        // Pas de stripe_payment_intent = jamais payée, probablement test
+        if (!l.stripe_payment_intent && ['en_attente','publie'].includes(l.statut)) return true;
+        return false;
+      });
+      stats.fake_livraisons_count = fakeLivs.length;
+      stats.fake_livraisons_sample = fakeLivs.slice(0, 5).map(l => ({ id: l.id, code: l.code, statut: l.statut, titre: (l.titre || '').slice(0, 50) }));
+
+      if (!dryRun && fakeLivs.length > 0) {
+        const ids = fakeLivs.map(l => l.id);
+        // Suppression livraisons fictives (cascade RLS supprime aussi review/manquement liés)
+        const ch = ids.length;
+        for (let i = 0; i < ids.length; i += 50) {
+          const chunk = ids.slice(i, i + 50);
+          await fetch(`${sbUrl}/rest/v1/livraisons?id=in.(${chunk.map(encodeURIComponent).join(',')})`, {
+            method: 'DELETE', headers: sbHeaders(sbKey)
+          }).catch(() => {});
+        }
+        stats.deleted_livraisons = ch;
+        alertAdmin(
+          `Purge données de test exécutée`,
+          `Admin a purgé ${ch} livraisons de test (statuts non-payés, avec mot-clé test/demo/exemple ou sans payment_intent).`,
+          {
+            severity: 'warning',
+            details: { 'Livraisons supprimées': ch, 'Exécuté par': profile.email || session.id },
+            cta_url: 'https://porteaporte.site/admin/operations.html'
+          }
+        );
+      }
+
+      return res.status(200).json({ success: true, ...stats });
+    }
     if (endpoint === 'cancel-policy-preview') {
       const session = await getSession(req, sbUrl, sbKey);
       if (!session) return res.status(401).json({ error: 'Connexion requise' });

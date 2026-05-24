@@ -541,9 +541,26 @@
           <div class="stat-card-sub">ce mois-ci</div>
         </div>
       </div>
-      <div class="table-card">
+      <!-- ─── TABLEAU COMPLET RÉPARTITION (avec % founder) ─── -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div style="padding:14px 18px;background:rgba(184,245,62,.06);border-bottom:1px solid var(--brand-border)">
+          <strong style="color:#fff">📊 Répartition de chaque dollar (live)</strong>
+          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Calculée sur le CA du mois ci-dessus · ajuste les % dans <a href="/admin/parametres.html" style="color:#B8F53E">Paramètres</a></span>
+        </div>
         <table>
-          <thead><tr><th>Code</th><th>Trajet</th><th>Prix</th><th>Commission</th><th>Livreur (60%)</th><th>Date</th></tr></thead>
+          <thead><tr><th>Poste</th><th style="text-align:right">% configuré</th><th style="text-align:right">Montant ce mois</th></tr></thead>
+          <tbody id="repartition-complet-body">
+            <tr><td colspan="3" class="empty-msg">Chargement de la répartition...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-card">
+        <div style="padding:14px 18px;background:rgba(0,217,255,.04);border-bottom:1px solid var(--brand-border)">
+          <strong style="color:#fff">📦 Détail livraison par livraison</strong>
+        </div>
+        <table>
+          <thead><tr><th>Code</th><th>Trajet</th><th>Prix</th><th>Commission</th><th>Livreur</th><th>Date</th></tr></thead>
           <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Les revenus apparaitront ici apres les premieres transactions.</td></tr></tbody>
         </table>
       </div>
@@ -1361,6 +1378,42 @@
     const pctEl = document.getElementById('rev-commission-pct');
     if (pctEl) pctEl.textContent = pctPlateforme;
     document.getElementById('rev-count').textContent      = rows.length;
+
+    // ─── Tableau complet répartition (avec fondateur 5%) ───
+    const POSTES_LIVE = [
+      { icon: '🚗', name: 'Livreur québécois',                key: 'pct_livreur',      def: 60, color: '#B8F53E' },
+      { icon: '💚', name: 'Communauté (Fonds → organismes)',  key: 'pct_communaute',   def: 5,  color: '#ff6b9d' },
+      { icon: '🛡️', name: 'Protection colis bêta',             key: 'pct_protection',   def: 3,  color: '#00D9FF' },
+      { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'pct_urgence',      def: 2,  color: '#ffa500' },
+      { icon: '🔧', name: 'Maintenance + développement',       key: 'pct_developpement',def: 4,  color: '#A8B0BA' },
+      { icon: '📢', name: 'Marketing & croissance',            key: 'pct_marketing',    def: 4.6,color: '#A8B0BA' },
+      { icon: '🏛️', name: 'Opérations (support, équipe)',      key: 'pct_operations',   def: 13, color: '#A8B0BA' },
+      { icon: '💰', name: 'Profit net (réinvest. plateforme)', key: 'pct_profit',       def: 8.4,color: '#A8B0BA' }
+    ];
+    const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 5);
+    let repartHtml = POSTES_LIVE.map(p => {
+      const pct = Number(s[p.key]) || p.def;
+      const montant = total * pct / 100;
+      return `<tr>
+        <td><span style="font-size:1.1rem;margin-right:8px">${p.icon}</span><strong style="color:#fff">${p.name}</strong></td>
+        <td style="text-align:right;color:${p.color};font-weight:800;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</td>
+        <td style="text-align:right;color:#fff;font-weight:900;font-variant-numeric:tabular-nums">${$m(montant)}</td>
+      </tr>`;
+    }).join('');
+    // Total des 8 postes
+    const sumPostes = POSTES_LIVE.reduce((s2, p) => s2 + (Number(s[p.key]) || p.def), 0);
+    repartHtml += `<tr style="background:rgba(255,255,255,.04);border-top:2px solid var(--brand-border)">
+      <td><strong style="color:#A8B0BA">Total répartition (doit = 100%)</strong></td>
+      <td style="text-align:right;color:${Math.abs(sumPostes-100) < 0.5 ? '#7dffc1' : '#ffb0b0'};font-weight:900">${sumPostes.toFixed(1)} %</td>
+      <td style="text-align:right;color:#fff;font-weight:900">${$m(total)}</td>
+    </tr>`;
+    // Part fondateur (en plus, sur CA brut)
+    repartHtml += `<tr style="background:linear-gradient(90deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border-top:2px solid rgba(255,215,0,.3)">
+      <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (sur CA brut)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">S'ajoute au-dessus des 100%. Configurable dans Paramètres → Fonds Assurance.</div></td>
+      <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${founderPct.toFixed(1)} %</td>
+      <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${$m(total * founderPct / 100)}</td>
+    </tr>`;
+    document.getElementById('repartition-complet-body').innerHTML = repartHtml;
 
     document.getElementById('rev-body').innerHTML = rows.length === 0
       ? '<tr><td colspan="6" class="empty-msg">Aucune livraison payée ce mois</td></tr>'

@@ -77,6 +77,17 @@
       </div>
     </div>
 
+    <div style="background:rgba(255,90,90,.06);border:1px solid rgba(255,90,90,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+      <div>
+        <strong style="color:#ff9999">🧹 Préparer le lancement public</strong>
+        <div style="color:var(--brand-muted);font-size:.85rem;margin-top:3px">Purge les livraisons fictives (test, demo, sans paiement) avant que les vrais clients arrivent.</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="previewPurge()">👁️ Prévisualiser</button>
+        <button class="btn btn-sm" style="background:rgba(255,90,90,.15);border-color:rgba(255,90,90,.4);color:#ff9999" onclick="executePurge()">🗑️ Purger</button>
+      </div>
+    </div>
+
     <div id="health" class="health-card">
       <div class="health-score" id="health-score">—</div>
       <div>
@@ -283,6 +294,33 @@
       document.getElementById('last-update').textContent = '🔄 ' + new Date().toLocaleTimeString('fr-CA');
     }
 
+    async function previewPurge() {
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-purge-test-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'admin-purge-test-data', dry_run: true })
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error);
+        const samples = (out.fake_livraisons_sample || []).map(l => `• ${l.code || l.id.slice(0,8)} — ${l.statut} — "${l.titre || '(sans titre)'}"`).join('\n');
+        alert(`🔍 ${out.fake_livraisons_count} livraison(s) seront supprimées.\n\nExemples (5 premiers):\n${samples || '(aucun)'}\n\nLes livraisons PAYÉES sont JAMAIS touchées.\n\nClique "🗑️ Purger" pour exécuter pour de vrai.`);
+      } catch (e) { alert('❌ ' + e.message); }
+    }
+    async function executePurge() {
+      if (!confirm('CERTAIN ? Cette action supprime définitivement les livraisons fictives.\n\nLes livraisons PAYÉES ne sont PAS touchées (vrai argent en jeu).')) return;
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-purge-test-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'admin-purge-test-data', dry_run: false })
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error);
+        alert(`✅ ${out.deleted_livraisons || 0} livraisons de test supprimées.\nLa plateforme est prête pour les vrais clients !`);
+        loadPulse();
+      } catch (e) { alert('❌ ' + e.message); }
+    }
     init();
   </script>
 </body>
