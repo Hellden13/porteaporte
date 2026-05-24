@@ -2510,10 +2510,10 @@ async function impactPublic(req, res, ctx) {
       }
     }
   } catch (_) {}
-  // ⚠️ FIX CRITIQUE : on accepte tous les statuts post-paiement (payee, paid, livre, confirmee)
-  //    Avant : seulement 'confirmee' (jamais utilisé) -> fonds toujours 0 $
+  // Fonds public: compter seulement les montants réellement payés/capturés.
+  // Une livraison simplement "livre" reste en attente de confirmation destinataire.
   const fundRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total,statut&statut=in.(payee,paid,livre,confirmee)&limit=10000`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=prix_total,statut&statut=in.(payee,paid,succeeded,confirmee)&limit=10000`,
     { headers: sbHeaders(ctx.sbKey) }
   ).catch(() => null);
   const fundRows = fundRes?.ok ? await fundRes.json().catch(() => []) : [];
