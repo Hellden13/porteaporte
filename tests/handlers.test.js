@@ -358,6 +358,29 @@ describe('platform.js dispatcher', () => {
     assert.notEqual(res._status, 401);
   });
 
+  test('platform-settings-get est public mais limite les champs exposes', async () => {
+    let requestedUrl = '';
+    global.fetch = async (url) => {
+      requestedUrl = url;
+      if (url.includes('/rest/v1/platform_settings')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{ pct_livreur: 60, pct_communaute: 5, ticket_moyen_cad: 15 }]
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+    const req = makeReq({ method: 'GET', body: { endpoint: 'platform-settings-get' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.settings?.pct_livreur, 60);
+    assert.ok(requestedUrl.includes('select='));
+    assert.ok(!requestedUrl.includes('select=*'));
+  });
+
   test('create-livraison exige le rôle expediteur', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user':    { ok: true, data: { id: 'u1' } },
