@@ -6,7 +6,7 @@ const {
   signStorageUrl, getSession, getProfile, normalizeRole, roleIn, mergeUserRole,
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
-  driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, siteOrigin, internalHeaders,
+  driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
   callNotifier, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
 } = require('../lib/_lib');
@@ -3701,6 +3701,15 @@ module.exports = async function handler(req, res) {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
         body: JSON.stringify({ vote_id, user_id: session.id, allocations, voted_at: new Date().toISOString() })
       });
+      // Auto-grant badge "citoyen_actif" (1er vote)
+      await grantBadgeBySlug(sbUrl, sbKey, session.id, 'citoyen_actif');
+      // Si 5 votes au total → engage_5_votes
+      const cr = await fetch(`${sbUrl}/rest/v1/community_vote_responses?user_id=eq.${session.id}&select=id`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+      });
+      const range = cr.headers.get('content-range') || '0-0/0';
+      const total = Number(range.split('/')[1]) || 0;
+      if (total >= 5) await grantBadgeBySlug(sbUrl, sbKey, session.id, 'engage_5_votes');
       return res.status(200).json({ success: true });
     }
     if (endpoint === 'platform-settings-get') {
