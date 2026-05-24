@@ -127,6 +127,68 @@ async function insertTransactionIfMissing(sbUrl, sbKey, payload) {
   return { ok: r.ok, data: Array.isArray(data) ? data[0] : data };
 }
 
+async function autoGrantBadges(sbUrl, sbKey, livreurId, livraison) {
+  // Compter livraisons totales du livreur
+  let totalLivs = 0;
+  try {
+    const r = await fetch(`${sbUrl}/rest/v1/livraisons?livreur_id=eq.${livreurId}&statut=in.(payee,paid)&select=id,taille_colis`, {
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+    });
+    const livs = r.ok ? await r.json() : [];
+    totalLivs = livs.length;
+    var xlCount = livs.filter(l => l.taille_colis === 'xl').length;
+  } catch (e) { return; }
+
+  // Liste des badges à attribuer selon seuils
+  const slugsToGrant = [];
+  if (totalLivs >= 1) slugsToGrant.push('premier_pas');
+  if (totalLivs >= 10) slugsToGrant.push('regulier_10');
+  if (totalLivs >= 50) slugsToGrant.push('pro_50');
+  if (totalLivs >= 100) slugsToGrant.push('centurion_100');
+  if (totalLivs >= 500) slugsToGrant.push('legende_500');
+  if (totalLivs >= 1000) slugsToGrant.push('maitre_1000');
+  if (livraison.taille_colis === 'xl') slugsToGrant.push('costaud');
+  if (xlCount >= 10) slugsToGrant.push('specialiste_xl');
+  if (livraison.rescue_livreur_original) slugsToGrant.push('sauveur');
+
+  // Récupérer IDs des badges
+  if (!slugsToGrant.length) return;
+  const slugList = slugsToGrant.map(s => `"${s}"`).join(',');
+  const bRes = await fetch(`${sbUrl}/rest/v1/badges?slug=in.(${slugList})&select=id,slug,xp_reward`, {
+    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+  });
+  const badges = bRes.ok ? await bRes.json() : [];
+  if (!badges.length) return;
+
+  // Insérer dans user_badges (avec ON CONFLICT pour éviter doublons)
+  for (const badge of badges) {
+    await fetch(`${sbUrl}/rest/v1/user_badges?on_conflict=user_id,badge_id`, {
+      method: 'POST',
+      headers: {
+        apikey: sbKey, Authorization: `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=ignore-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ user_id: livreurId, badge_id: badge.id, granted_at: new Date().toISOString(), granted_by: 'system_auto' })
+    }).catch(() => {});
+  }
+
+  // Ajouter XP cumulé des badges
+  const totalXp = badges.reduce((s, b) => s + (b.xp_reward || 0), 0);
+  if (totalXp > 0) {
+    const pr = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${livreurId}&select=xp`, {
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+    });
+    const profData = pr.ok ? await pr.json() : [];
+    const currentXp = Number(profData[0]?.xp || 0);
+    await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${livreurId}`, {
+      method: 'PATCH',
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ xp: currentXp + totalXp })
+    }).catch(() => {});
+  }
+}
+
 function sanitizeEnv(s) {
   let v = (s || '').trim();
   while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1);
@@ -416,6 +478,13 @@ module.exports = async function handler(req, res) {
     }).catch(e => console.error('[notifier livraison_complete fetch]', e.message));
   } catch (e) {
     console.error('[livraison_complete notify error]', e.message);
+  }
+
+  // ── AUTO-ATTRIBUTION DES BADGES ──
+  if (livraison.livreur_id) {
+    try {
+      await autoGrantBadges(SB_URL, SB_KEY, livraison.livreur_id, livraison);
+    } catch (e) { console.error('[badges auto-grant]', e.message); }
   }
 
   return res.status(200).json({
