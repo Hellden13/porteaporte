@@ -2437,13 +2437,27 @@ async function fetchImpactState(sbUrl, sbKey) {
     headers: sbHeaders(sbKey)
   });
   const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
-  const settings = settingsRows[0] || {
+  const impactSettings = settingsRows[0] || {
     id: 'default',
     pct_livreur: 85, pct_plateforme: 15, pct_don: 0,
     pct_tirage: 0, pct_developpeur: 0, pct_securite: 0, pct_assurance: 0,
     ride_platform_fee: 1.50, ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
     public_note: 'Montants estimes en direct, confirmes mensuellement.'
   };
+  let settings = impactSettings;
+  try {
+    const platformFields = [
+      'pct_livreur','pct_communaute','pct_protection','pct_urgence',
+      'pct_developpement','pct_marketing','pct_operations','pct_profit',
+      'pct_stripe','ticket_moyen_cad','max_colis_value_cents',
+      'insurance_pct','insurance_fund_topup_cents','founder_revenue_pct'
+    ].join(',');
+    const platformRes = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${platformFields}&limit=1`, {
+      headers: sbHeaders(sbKey)
+    });
+    const platformRows = platformRes.ok ? await platformRes.json() : [];
+    if (platformRows[0]) settings = { ...impactSettings, ...platformRows[0] };
+  } catch (_) {}
 
   const orgRes = await fetch(`${sbUrl}/rest/v1/impact_organisations?select=*&order=sort_order.asc,name.asc`, {
     headers: sbHeaders(sbKey)
@@ -2474,16 +2488,44 @@ async function fetchImpactState(sbUrl, sbKey) {
     return sum + Math.round(amount * 100);
   }, 0);
 
-  const slices = {
-    livreur:     Math.max(0, toNumber(settings.pct_livreur, 85)),
-    plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 15)),
-    don:         Math.max(0, toNumber(settings.pct_don, 0)),
-    tirage:      Math.max(0, toNumber(settings.pct_tirage, 0)),
-    developpeur: Math.max(0, toNumber(settings.pct_developpeur, 0)),
-    securite:    Math.max(0, toNumber(settings.pct_securite, 0)),
-    assurance:   Math.max(0, toNumber(settings.pct_assurance, 0)),
-  };
-  const donationPoolCents = Math.round(revenueCents * slices.don / 100);
+  // ─── Slices nouveau modèle (synchronisé avec /admin/parametres.html) ───
+  // Si les nouveaux champs (pct_communaute, pct_operations...) existent, on les utilise.
+  // Sinon fallback vers anciens (pct_plateforme, pct_don...).
+  const hasNewModel = settings.pct_communaute != null || settings.pct_operations != null;
+  let slices;
+  if (hasNewModel) {
+    slices = {
+      // Nouveaux noms officiels
+      livreur:       Math.max(0, toNumber(settings.pct_livreur, 60)),
+      communaute:    Math.max(0, toNumber(settings.pct_communaute, 5)),
+      protection:    Math.max(0, toNumber(settings.pct_protection, 3)),
+      urgence:       Math.max(0, toNumber(settings.pct_urgence, 2)),
+      developpement: Math.max(0, toNumber(settings.pct_developpement, 4)),
+      marketing:     Math.max(0, toNumber(settings.pct_marketing, 4.6)),
+      operations:    Math.max(0, toNumber(settings.pct_operations, 13)),
+      profit:        Math.max(0, toNumber(settings.pct_profit, 8.4)),
+      // Alias retro-compat (clients qui lisent les anciens noms ne cassent pas)
+      plateforme:    Math.max(0, toNumber(settings.pct_operations, 13)) + Math.max(0, toNumber(settings.pct_developpement, 4)),
+      don:           Math.max(0, toNumber(settings.pct_communaute, 5)),
+      tirage:        0,
+      developpeur:   Math.max(0, toNumber(settings.pct_developpement, 4)),
+      securite:      Math.max(0, toNumber(settings.pct_protection, 3)),
+      assurance:     Math.max(0, toNumber(settings.pct_protection, 3))
+    };
+  } else {
+    slices = {
+      livreur:     Math.max(0, toNumber(settings.pct_livreur, 85)),
+      plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 15)),
+      don:         Math.max(0, toNumber(settings.pct_don, 0)),
+      tirage:      Math.max(0, toNumber(settings.pct_tirage, 0)),
+      developpeur: Math.max(0, toNumber(settings.pct_developpeur, 0)),
+      securite:    Math.max(0, toNumber(settings.pct_securite, 0)),
+      assurance:   Math.max(0, toNumber(settings.pct_assurance, 0)),
+      communaute:  Math.max(0, toNumber(settings.pct_don, 0))
+    };
+  }
+  // donationPoolCents = part communauté (Fonds PorteàPorte → organismes)
+  const donationPoolCents = Math.round(revenueCents * (slices.communaute || slices.don || 0) / 100);
   const allocationTotal = activeOrgs.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
 
   const allocations = activeOrgs.map((org) => {
@@ -3675,11 +3717,21 @@ module.exports = async function handler(req, res) {
           return res.status(400).json({ error: `Somme des % doit faire 100% (actuel: ${sum.toFixed(1)}%)` });
         }
       }
-      const r = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default`, {
+      let r = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default`, {
         method: 'PATCH', headers: sbHeaders(ctx.sbKey),
         body: JSON.stringify(patch)
       });
-      if (!r.ok) return res.status(400).json({ error: 'Mise à jour impossible' });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        const missing = missingColumn(data);
+        if (missing && ['beta_cities', 'beta_cities_active'].includes(missing)) {
+          return res.status(409).json({
+            error: 'Migration Supabase requise avant de gerer les zones beta',
+            missing_column: missing
+          });
+        }
+        return res.status(400).json({ error: 'Mise à jour impossible' });
+      }
       return res.status(200).json({ success: true });
     }
     if (endpoint === 'loyalty-bonus-get') {
@@ -3800,9 +3852,29 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
     if (endpoint === 'platform-settings-get') {
-      const r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=*`, {
+      const safeFields = [
+        'pct_livreur','pct_communaute','pct_protection','pct_urgence',
+        'pct_developpement','pct_marketing','pct_operations','pct_profit',
+        'pct_stripe','ticket_moyen_cad','max_colis_value_cents',
+        'insurance_pct','insurance_fund_topup_cents','founder_revenue_pct',
+        'beta_cities','beta_cities_active'
+      ].join(',');
+      let r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${safeFields}`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
       });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        const missing = missingColumn(data);
+        if (missing && ['beta_cities', 'beta_cities_active'].includes(missing)) {
+          const legacyFields = safeFields
+            .split(',')
+            .filter((field) => !['beta_cities', 'beta_cities_active'].includes(field))
+            .join(',');
+          r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${legacyFields}`, {
+            headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+          });
+        }
+      }
       const rows = r.ok ? await r.json() : [];
       return res.status(200).json({ success: true, settings: rows[0] || null });
     }

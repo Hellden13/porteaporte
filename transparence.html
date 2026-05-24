@@ -114,6 +114,17 @@
       Les données de transparence seront disponibles dès les premières livraisons complétées. Les organismes partenaires sont en cours de sélection par l'administration.
     </div>
 
+    <div class="section-title">📊 Répartition de chaque dollar payé</div>
+    <div class="panel" style="padding:24px">
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Voici exactement où va chaque dollar — données <strong>en direct depuis l'admin</strong>. Si on ajuste la répartition, cette section change automatiquement.</p>
+      <div id="repartition-table" style="display:grid;gap:8px">
+        <div style="text-align:center;color:var(--brand-muted);padding:20px">La répartition apparaîtra ici dès que les données seront disponibles.</div>
+      </div>
+      <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)">
+        💡 La part livreur est <strong>nette</strong> (après frais Stripe). Le profit reste au Québec.
+      </p>
+    </div>
+
     <div class="section-title">Organismes sélectionnés</div>
     <div id="impact-orgs" class="orgs">
       <div class="panel empty" style="grid-column:1/-1">🌱 Les organismes partenaires seront affichés ici dès les premières livraisons confirmées. Nous sommes en bêta.</div>
@@ -187,6 +198,41 @@
       const d=new Date(value+'T00:00:00Z');
       return d.toLocaleDateString('fr-CA',{month:'long',year:'numeric',timeZone:'UTC'});
     }
+    async function loadRepartition() {
+      try {
+        const r = await fetch('/api/platform?endpoint=platform-settings-get');
+        const out = await r.json();
+        const s = out.settings || {};
+        const POSTES = [
+          { icon: '🚗', name: 'Le livreur québécois', key: 'pct_livreur', def: 60, hl: true },
+          { icon: '💚', name: 'Causes communautaires (Fonds PorteàPorte)', key: 'pct_communaute', def: 5, cause: true },
+          { icon: '🛡️', name: 'Protection colis bêta', key: 'pct_protection', def: 3 },
+          { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', def: 2 },
+          { icon: '🔧', name: 'Maintenance + développement', key: 'pct_developpement', def: 4 },
+          { icon: '📢', name: 'Marketing & croissance', key: 'pct_marketing', def: 4.6 },
+          { icon: '🏛️', name: 'Opérations (support, équipe)', key: 'pct_operations', def: 13 },
+          { icon: '💰', name: 'Profit net (réinvest. + fondateur)', key: 'pct_profit', def: 8.4 }
+        ];
+        const ticket = Number(s.ticket_moyen_cad) || 15;
+        const html = POSTES.map(p => {
+          const pct = Number(s[p.key] != null ? s[p.key] : p.def);
+          const dollars = (ticket * pct / 100).toFixed(2);
+          const bg = p.hl ? 'rgba(184,245,62,.12)' : p.cause ? 'rgba(255,107,157,.08)' : 'rgba(255,255,255,.03)';
+          const border = p.hl ? '#b8f53e' : p.cause ? '#ff6b9d' : 'transparent';
+          return `<div style="display:grid;grid-template-columns:36px 1fr 70px 90px;gap:12px;align-items:center;padding:12px 16px;background:${bg};border-radius:8px;border-left:3px solid ${border}">
+            <div style="font-size:1.3rem">${p.icon}</div>
+            <div style="font-weight:700;color:#fff;font-size:.92rem">${p.name}</div>
+            <div style="color:var(--brand-muted);font-size:.88rem;text-align:right;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</div>
+            <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${dollars} $</div>
+          </div>`;
+        }).join('');
+        document.getElementById('repartition-table').innerHTML = html + `<div style="padding:14px 16px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;color:#fff;font-weight:800"><span>📦 Total sur ticket moyen ${ticket} $</span><span style="color:var(--brand-cyan)">${ticket.toFixed(2)} $</span></div>`;
+      } catch (e) {
+        document.getElementById('repartition-table').innerHTML = `<div style="color:#ff9999;text-align:center;padding:20px">Répartition temporairement indisponible.</div>`;
+      }
+    }
+    loadRepartition();
+
     async function loadImpact(){
       try{
         const res=await fetch('/api/impact-public');

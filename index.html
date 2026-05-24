@@ -1129,7 +1129,7 @@
             <div class="label">Livraisons collaboratives effectuées</div>
           </div>
           <div class="impact-hero-stat">
-            <div class="big">60–70 %</div>
+            <div class="big" id="ihz-livreur-pct">60 %</div>
             <div class="label">Du prix versé directement au livreur</div>
           </div>
         </div>
@@ -1803,18 +1803,30 @@
     // ─── Stats live de la nouvelle Mode Impact hero zone ───
     (async function loadIhz() {
       try {
-        const res = await fetch('/api/impact-public');
-        if (!res.ok) throw new Error();
-        const out = await res.json();
-        const totals = (out.impact || {}).totals || {};
-        const cents = Number(totals.donation_pool_cents || 0);
-        const deliv = Number(totals.deliveries_count || 0);
-        const poolEl = document.getElementById('ihz-pool');
-        const delivEl = document.getElementById('ihz-deliveries');
-        if (poolEl) poolEl.textContent = cents > 0
-          ? (cents / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 })
-          : 'Bêta';
-        if (delivEl) delivEl.textContent = deliv > 0 ? deliv.toLocaleString('fr-CA') : 'En cours';
+        const [resImpact, resSettings] = await Promise.all([
+          fetch('/api/impact-public'),
+          fetch('/api/platform?endpoint=platform-settings-get')
+        ]);
+        if (resImpact.ok) {
+          const out = await resImpact.json();
+          const totals = (out.impact || {}).totals || {};
+          const cents = Number(totals.donation_pool_cents || 0);
+          const deliv = Number(totals.deliveries_count || 0);
+          const poolEl = document.getElementById('ihz-pool');
+          const delivEl = document.getElementById('ihz-deliveries');
+          if (poolEl) poolEl.textContent = cents > 0
+            ? (cents / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 })
+            : 'Bêta';
+          if (delivEl) delivEl.textContent = deliv > 0 ? deliv.toLocaleString('fr-CA') : 'En cours';
+        }
+        if (resSettings.ok) {
+          const out = await resSettings.json();
+          const pct = Number(out.settings?.pct_livreur);
+          if (Number.isFinite(pct) && pct > 0) {
+            const el = document.getElementById('ihz-livreur-pct');
+            if (el) el.textContent = pct.toFixed(0) + ' %';
+          }
+        }
       } catch (_) {
         const p = document.getElementById('ihz-pool'); if (p) p.textContent = 'Bêta';
         const d = document.getElementById('ihz-deliveries'); if (d) d.textContent = 'En cours';
