@@ -35,7 +35,7 @@
       <h1>👤 Vérification faciale (IA)</h1>
       <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
     </div>
-    <p class="meta" style="margin-bottom:16px">Compare automatiquement la selfie du pickup avec la selfie KYC pour détecter les usurpations d'identité. La détection se fait <strong style="color:#fff">100% dans ton navigateur</strong> (privé, gratuit, instantané).</p>
+    <p class="meta" style="margin-bottom:16px">Compare la selfie du pickup avec la selfie KYC pour aider la vérification d'identité. Le résultat reste une aide à la décision et doit être confirmé par un admin.</p>
     <div id="loading" class="empty">Chargement des modèles IA (~7 MB)…</div>
     <div id="list"></div>
   </main>
@@ -94,7 +94,7 @@
             </div>
             <div class="photo-box">
               <div class="label">📷 Selfie pickup (livraison)</div>
-              <img src="${l.pickup_selfie_url}" alt="Pickup selfie" onerror="this.parentNode.innerHTML='<div class=missing>❌ Image inaccessible</div>'">
+              <img loading="lazy" decoding="async" src="${l.pickup_selfie_url}" alt="Pickup selfie" onerror="this.parentNode.innerHTML='<div class=missing>❌ Image inaccessible</div>'">
             </div>
           </div>
           <div id="result-${l.id}" class="result unknown" style="margin-top:14px">⏳ Analyse en cours…</div>
@@ -114,7 +114,7 @@
             document.getElementById('kyc-' + l.id).innerHTML = '<div class="missing">⚠️ KYC inaccessible</div>';
             continue;
           }
-          document.getElementById('kyc-' + l.id).innerHTML = `<img src="${signed.signedUrl}" alt="KYC selfie">`;
+          document.getElementById('kyc-' + l.id).innerHTML = `<img loading="lazy" decoding="async" src="${signed.signedUrl}" alt="KYC selfie">`;
           // Comparer
           const result = await PapFace.compare(signed.signedUrl, l.pickup_selfie_url, 0.55);
           const resEl = document.getElementById('result-' + l.id);

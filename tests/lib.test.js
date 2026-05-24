@@ -20,6 +20,7 @@ const {
   hashReceptionCode,
   generateReceptionCode,
   defaultRewardMissions,
+  normalizeRole,
   roleIn,
   sbHeaders,
   parseDataUrl,
@@ -416,6 +417,18 @@ describe('defaultRewardMissions', () => {
 
 // ─── roleIn ──────────────────────────────────────────────────────────────────
 describe('roleIn', () => {
+  test('normalise les variantes du role double', () => {
+    assert.equal(normalizeRole('both'), 'les deux');
+    assert.equal(normalizeRole('les_deux'), 'les deux');
+    assert.equal(normalizeRole('livreur-expediteur'), 'les deux');
+  });
+
+  test('accepte les roles normalises', () => {
+    assert.equal(roleIn({ role: 'both', suspendu: false }, ['les deux']), true);
+    assert.equal(roleIn({ role: 'expéditeur', suspendu: false }, ['expediteur']), true);
+    assert.equal(roleIn({ role: 'les_deux', suspendu: true }, ['les deux']), false);
+  });
+
   test('accepte un rôle autorisé', () => {
     assert.equal(roleIn({ role: 'admin', suspendu: false }, ['admin', 'livreur']), true);
   });

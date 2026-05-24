@@ -1,34 +1,43 @@
 /**
- * PorteàPorte — Analytics privacy-friendly
- * Plausible (RGPD-compliant, sans cookies, libre)
- * À injecter dans toutes les pages publiques via <script defer src="/js/analytics.js"></script>
+ * PorteàPorte — Analytics Plausible (privacy-friendly, RGPD-compliant)
+ * Compte officiel : porteaporte.site
  */
 (function() {
   if (window.__papAnalytics) return;
   window.__papAnalytics = true;
 
-  // Charger Plausible (gratuit jusqu'à 10k pageviews/mois, après ~10$/mo)
+  // Charger Plausible officiel (avec ton site ID unique)
   const s = document.createElement('script');
-  s.defer = true;
-  s.dataset.domain = 'porteaporte.site';
-  s.src = 'https://plausible.io/js/script.tagged-events.outbound-links.js';
+  s.async = true;
+  s.src = 'https://plausible.io/js/pa-4AvYQwYZ3JIrAJUeOaezl.js';
   document.head.appendChild(s);
 
-  // Helper pour track events custom
+  // Init queue (avant chargement du script)
+  window.plausible = window.plausible || function() {
+    (window.plausible.q = window.plausible.q || []).push(arguments);
+  };
+  window.plausible.init = window.plausible.init || function(i) {
+    window.plausible.o = i || {};
+  };
+  window.plausible.init();
+
+  // Helper pour tracker des événements custom
   window.papTrack = function(eventName, props) {
     if (window.plausible) {
       window.plausible(eventName, { props: props || {} });
     }
   };
 
-  // Auto-track des évenements clé
+  // Auto-track des éléments avec [data-track]
   document.addEventListener('click', (e) => {
     const target = e.target.closest('[data-track]');
     if (target) {
       const evt = target.dataset.track;
       const data = {};
       Object.keys(target.dataset).forEach(k => {
-        if (k.startsWith('trackProp')) data[k.replace('trackProp', '').toLowerCase()] = target.dataset[k];
+        if (k.startsWith('trackProp')) {
+          data[k.replace('trackProp', '').toLowerCase()] = target.dataset[k];
+        }
       });
       window.papTrack(evt, data);
     }

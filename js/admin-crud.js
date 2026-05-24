@@ -36,6 +36,21 @@
     return text([row.prenom, row.nom].filter(Boolean).join(' '), row.full_name || row.nom_complet || row.email);
   }
 
+  function normalizeRole(role) {
+    const value = String(role || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+    if (['admin', 'administrator', 'administrateur'].includes(value)) return 'admin';
+    if (['livreur', 'driver'].includes(value)) return 'livreur';
+    if (['expediteur', 'sender'].includes(value)) return 'expediteur';
+    if (['les deux', 'both', 'livreur expediteur', 'expediteur livreur'].includes(value)) return 'les deux';
+    return value;
+  }
+
   function date(value) {
     if (!value) return '-';
     const parsed = new Date(value);
@@ -111,8 +126,8 @@
     if (error) return reportError('loadUsers', error);
 
     state.users = data || [];
-    state.drivers = state.users.filter((user) => user.role === 'livreur' || user.role === 'les deux');
-    state.expediteurs = state.users.filter((user) => user.role === 'expediteur' || user.role === 'les deux');
+    state.drivers = state.users.filter((user) => ['livreur', 'les deux'].includes(normalizeRole(user.role)));
+    state.expediteurs = state.users.filter((user) => ['expediteur', 'les deux'].includes(normalizeRole(user.role)));
 
     setText('users-badge', state.users.length);
     setText('drivers-badge', state.drivers.length);
@@ -125,7 +140,7 @@
       <tr>
         <td>${html(fullName(user))}</td>
         <td>${html(user.email)}</td>
-        <td><span class="badge ${user.role === 'livreur' ? 'badge-livreur' : 'badge-expediteur'}">${html(user.role, 'expediteur')}</span></td>
+        <td><span class="badge ${normalizeRole(user.role) === 'livreur' ? 'badge-livreur' : 'badge-expediteur'}">${html(user.role, 'expediteur')}</span></td>
         <td>${html(user.coins || 0)}</td>
         <td>${html(user.xp || 0)}</td>
         <td><button class="btn" type="button" onclick="adminCRUD.viewProfile('${html(user.id)}')">Details</button></td>

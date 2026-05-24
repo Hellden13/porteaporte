@@ -1,5 +1,6 @@
 // api/cancel-livraison.js - WITH AUDIT LOGGING
 const { log } = require('../lib/logger');
+const { normalizeRole } = require('../lib/_lib');
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
@@ -92,7 +93,7 @@ module.exports = async function handler(req, res) {
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
     });
     const profileRows = profileRes.ok ? await profileRes.json() : [];
-    const isAdmin = profileRows[0]?.role === 'admin';
+    const isAdmin = normalizeRole(profileRows[0]?.role) === 'admin';
 
     if (!isExpeditor && !isDriver && !isAdmin) {
       log('WARN', 'cancel_livraison_unauthorized_user', session.id, { livraison_id });

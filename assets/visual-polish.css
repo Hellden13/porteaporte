@@ -5,6 +5,16 @@ body {
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
 }
 
+* {
+  min-width: 0;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 h1, h2, h3, .page-title, .section-title, .card-title, .hero-title {
   letter-spacing: 0 !important;
   text-wrap: balance;
@@ -12,6 +22,7 @@ h1, h2, h3, .page-title, .section-title, .card-title, .hero-title {
 
 p, li, .note, .hint, .muted, .mission-note {
   line-height: 1.58;
+  overflow-wrap: anywhere;
 }
 
 button,
@@ -23,10 +34,26 @@ button,
 input[type="submit"],
 a.btn,
 a.btn-sm {
-  min-height: 40px;
+  min-height: 44px;
   border-radius: 10px !important;
   font-weight: 850 !important;
   letter-spacing: 0 !important;
+}
+
+button,
+.btn,
+.btn-sm,
+.btn-action,
+.action-btn,
+.accept-btn,
+a.btn,
+a.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  text-align: center;
+  white-space: normal;
 }
 
 .btn,
@@ -59,7 +86,7 @@ a.btn-sm {
 }
 
 input, select, textarea {
-  min-height: 42px;
+  min-height: 44px;
   font-size: 16px;
 }
 
@@ -79,6 +106,27 @@ table {
 
 @media (max-width: 720px) {
   body { font-size: 15px; }
-  .btn, .btn-sm, .action-btn, .btn-action { width: auto; }
-  .action-cell, .actions, .delivery-actions { gap: 8px !important; }
+  .header-actions,
+  .mission-actions,
+  .action-cell,
+  .actions,
+  .delivery-actions,
+  .quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+  .mission-actions .btn,
+  .mission-actions .btn-ghost,
+  .mission-actions .btn-primary,
+  .delivery-actions .btn,
+  .actions .btn,
+  .quick-actions .quick-action-btn {
+    width: 100%;
+  }
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }

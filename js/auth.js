@@ -7,11 +7,28 @@
   }
 
   function roleMatches(actual, expected) {
+    actual = normalizeRole(actual);
+    expected = Array.isArray(expected) ? expected.map(normalizeRole) : normalizeRole(expected);
     if (!expected) return true;
     if (Array.isArray(expected)) return expected.some((role) => roleMatches(actual, role));
     if (expected === 'livreur') return actual === 'livreur' || actual === 'les deux' || actual === 'admin';
     if (expected === 'expediteur') return actual === 'expediteur' || actual === 'les deux' || actual === 'admin';
     return actual === expected;
+  }
+
+  function normalizeRole(role) {
+    const value = String(role || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+    if (['admin', 'administrator', 'administrateur'].includes(value)) return 'admin';
+    if (['livreur', 'driver'].includes(value)) return 'livreur';
+    if (['expediteur', 'sender'].includes(value)) return 'expediteur';
+    if (['les deux', 'both', 'livreur expediteur', 'expediteur livreur'].includes(value)) return 'les deux';
+    return value;
   }
 
   function isEmailVerified(session, profile) {
@@ -122,7 +139,7 @@
       return null;
     }
 
-    if (ctx.profile.driver_status !== 'verified' && ctx.profile.role !== 'admin') {
+    if (ctx.profile.driver_status !== 'verified' && normalizeRole(ctx.profile.role) !== 'admin') {
       console.error('ERREUR livreur: verification requise');
       showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
       window.location.href = redirectTo || '/livreur.html';
@@ -158,5 +175,4 @@
 
   if (!window.logout) window.logout = logout;
 })();
-
 

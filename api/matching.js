@@ -1,5 +1,7 @@
 // api/matching.js - Matching et publication livraison, schema Supabase production.
 
+const { normalizeRole, roleIn } = require('../lib/_lib');
+
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -54,12 +56,13 @@ function isEmailVerified(session, profile) {
 }
 
 function isVerifiedDriver(session, profile) {
+  const role = normalizeRole(profile?.role);
   return Boolean(
     profile &&
     !profile.suspendu &&
     isEmailVerified(session, profile) &&
-    (profile.role === 'admin' || (
-      ['livreur', 'les deux'].includes(profile.role) &&
+    (role === 'admin' || (
+      ['livreur', 'les deux'].includes(role) &&
       profile.driver_status === 'verified'
     ))
   );
@@ -180,7 +183,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'publier_colis') {
       if (!session) return res.status(401).json({ error: 'Session requise' });
-      if (!profile || profile.suspendu || !['expediteur', 'les deux', 'admin'].includes(profile.role)) {
+      if (!roleIn(profile, ['expediteur', 'les deux', 'admin'])) {
         return res.status(403).json({ error: 'Role expediteur requis' });
       }
 
@@ -261,5 +264,3 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
   }
 };
-
-

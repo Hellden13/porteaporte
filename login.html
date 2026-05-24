@@ -366,6 +366,21 @@
       el.style.display = 'block';
     }
 
+    function normalizeRole(role) {
+      const value = String(role || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ');
+      if (['admin', 'administrator', 'administrateur'].includes(value)) return 'admin';
+      if (['livreur', 'driver'].includes(value)) return 'livreur';
+      if (['expediteur', 'sender'].includes(value)) return 'expediteur';
+      if (['les deux', 'both', 'livreur expediteur', 'expediteur livreur'].includes(value)) return 'les deux';
+      return value;
+    }
+
     /* ---- Admin portal choice overlay ---- */
     function showAdminPortalChoice() {
       const overlay = document.getElementById('admin-portal-overlay');
@@ -428,7 +443,7 @@
         return;
       }
 
-      const role = profile?.role || 'expediteur';
+      const role = normalizeRole(profile?.role || 'expediteur');
       const driverStatus = profile?.driver_status || 'not_started';
 
       if (role === 'admin') {

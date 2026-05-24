@@ -472,7 +472,7 @@ function renderRide(r) {
   var photos = p.vehicle_photos || [];
   var vHTML = '';
   if (photos.length) {
-    vHTML += '<div class="vehicle-photos">' + photos.map(function(u) { return '<img src="' + u + '" alt="vehicule"/>'; }).join('') + '</div>';
+    vHTML += '<div class="vehicle-photos">' + photos.map(function(u) { return '<img loading="lazy" decoding="async" src="' + u + '" alt="vehicule"/>'; }).join('') + '</div>';
   }
   if (p.vehicle_make || r.vehicle_make) {
     var make  = p.vehicle_make  || r.vehicle_make  || '';

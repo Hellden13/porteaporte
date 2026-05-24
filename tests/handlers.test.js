@@ -309,6 +309,98 @@ describe('platform.js dispatcher', () => {
     assert.equal(res._status, 403);
   });
 
+  test('available-livraisons bloque un livreur non verifie', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
+      '/rest/v1/profiles': {
+        ok: true,
+        data: [{ id: 'u1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'pending_review' }]
+      }
+    });
+    const req = makeReq({
+      body: { endpoint: 'available-livraisons' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.ok(String(res._body?.error || '').includes('verifie') || String(res._body?.error || '').includes('vérifié'));
+  });
+
+  test('dashboard expediteur: my-livraisons refuse un compte livreur seulement', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
+      '/rest/v1/profiles': {
+        ok: true,
+        data: [{ id: 'u1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'verified' }]
+      }
+    });
+    const req = makeReq({
+      body: { endpoint: 'my-livraisons' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.match(res._body?.error || '', /expediteur/i);
+  });
+
+  test('dashboard livreur: my-driver-livraisons bloque un livreur non verifie', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
+      '/rest/v1/profiles': {
+        ok: true,
+        data: [{ id: 'u1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'pending_review' }]
+      }
+    });
+    const req = makeReq({
+      body: { endpoint: 'my-driver-livraisons' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.match(res._body?.error || '', /Livreur verifie/i);
+  });
+
+  test('dashboard livreur: my-driver-livraisons retourne les livraisons assignees au livreur verifie', async () => {
+    const driverId = '11111111-1111-4111-8111-111111111111';
+    const expediteurId = '22222222-2222-4222-8222-222222222222';
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: driverId, email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
+      [`/rest/v1/profiles?id=eq.${driverId}`]: {
+        ok: true,
+        data: [{ id: driverId, role: 'livreur', suspendu: false, email_verified: true, driver_status: 'verified' }]
+      },
+      [`/rest/v1/livraisons?livreur_id=eq.${driverId}`]: {
+        ok: true,
+        data: [{
+          id: 'liv-1',
+          expediteur_id: expediteurId,
+          livreur_id: driverId,
+          statut: 'confirme',
+          adresse_depart: '123 rue A',
+          adresse_arrivee: '456 rue B',
+          prix_total: 5.60
+        }]
+      },
+      '/rest/v1/profiles?id=in.': {
+        ok: true,
+        data: [{ id: expediteurId, prenom: 'Alice', nom: 'Test' }]
+      }
+    });
+    const req = makeReq({
+      body: { endpoint: 'my-driver-livraisons' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.livraisons?.[0]?.id, 'liv-1');
+    assert.equal(res._body?.livraisons?.[0]?.adresse_depart, '123 rue A');
+    assert.equal(res._body?.livraisons?.[0]?.expediteur_profile?.prenom, 'Alice');
+  });
+
   test('ride-search accessible sans auth', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user':    { ok: true, data: { id: 'u1' } },
@@ -403,6 +495,160 @@ describe('cancel-livraison handler', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 400);
+  });
+});
+
+// ─── Tests capture-livraison.js ───────────────────────────────────────────────
+describe('capture-livraison handler — confirmation destinataire + escrow', () => {
+  const handler = require('../api/capture-livraison');
+
+  before(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_fake123';
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key-fake';
+  });
+
+  function receptionHash(code, livraisonId) {
+    return require('crypto')
+      .createHash('sha256')
+      .update(`${String(code).trim()}|${String(livraisonId).trim()}`)
+      .digest('hex');
+  }
+
+  test('sans session et sans code destinataire → 401', async () => {
+    const req = makeReq({ body: { livraison_id: 'liv-1' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 401);
+  });
+
+  test('code destinataire valide mais livraison pas livrée → capture bloquée', async () => {
+    const code = '123456';
+    global.fetch = makeFetchMock({
+      '/rest/v1/livraisons': {
+        ok: true,
+        data: [{
+          id: 'liv-1',
+          statut: 'confirme',
+          expediteur_id: 'exp-1',
+          recipient_confirmation_hash: receptionHash(code, 'liv-1')
+        }]
+      }
+    });
+
+    const req = makeReq({ body: { livraison_id: 'liv-1', recipient_code: code } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 409);
+    assert.match(res._body?.error || '', /non livree|bloquee/i);
+  });
+
+  test('mauvais code destinataire → paiement reste protégé', async () => {
+    global.fetch = makeFetchMock({
+      '/rest/v1/livraisons': {
+        ok: true,
+        data: [{
+          id: 'liv-1',
+          statut: 'livre',
+          expediteur_id: 'exp-1',
+          recipient_confirmation_hash: receptionHash('123456', 'liv-1')
+        }]
+      }
+    });
+
+    const req = makeReq({ body: { livraison_id: 'liv-1', recipient_code: '654321' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.match(res._body?.error || '', /invalide|prot|requis|liberer/i);
+  });
+
+  test('code destinataire valide + Stripe requires_capture → capture et audit', async () => {
+    const calls = [];
+    const code = '123456';
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+
+      if (url.includes('/rest/v1/livraisons') && (opts.method || 'GET') === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{
+            id: 'liv-1',
+            statut: 'livre',
+            expediteur_id: 'exp-1',
+            recipient_confirmation_hash: receptionHash(code, 'liv-1')
+          }]
+        };
+      }
+
+      if (url.includes('/rest/v1/transactions?livraison_id=eq.liv-1')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{
+            id: 'tx-1',
+            livraison_id: 'liv-1',
+            stripe_payment_intent: 'pi_test_123',
+            montant: 5.60,
+            statut: 'requires_capture',
+            metadata: {}
+          }]
+        };
+      }
+
+      if (url.includes('api.stripe.com/v1/payment_intents/pi_test_123/capture')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'pi_test_123',
+            status: 'succeeded',
+            amount_received: 560,
+            currency: 'cad'
+          })
+        };
+      }
+
+      if (url.includes('api.stripe.com/v1/payment_intents/pi_test_123')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'pi_test_123',
+            status: 'requires_capture',
+            amount_capturable: 560,
+            amount: 560,
+            currency: 'cad',
+            metadata: { livraison_id: 'liv-1', expediteur_id: 'exp-1' }
+          })
+        };
+      }
+
+      if (url.includes('/rest/v1/livraisons') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, text: async () => '', json: async () => ({}) };
+      }
+
+      if (url.includes('/rest/v1/transactions?id=eq.tx-1') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, text: async () => '', json: async () => ({}) };
+      }
+
+      if (url.includes('/rest/v1/transaction_audit_events') && opts.method === 'POST') {
+        return { ok: true, status: 201, text: async () => '', json: async () => ({}) };
+      }
+
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+
+    const req = makeReq({ body: { livraison_id: 'liv-1', recipient_code: code } });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.status, 'succeeded');
+    assert.ok(calls.some(c => c.url.includes('/capture')), 'Stripe capture doit être appelée');
+    assert.ok(calls.some(c => c.url.includes('/transaction_audit_events')), 'Audit transaction doit être enregistré');
   });
 });
 

@@ -12,11 +12,28 @@
   }
 
   function roleMatches(actual, expected) {
+    actual = normalizeRole(actual);
+    expected = Array.isArray(expected) ? expected.map(normalizeRole) : normalizeRole(expected);
     if (!expected) return true;
     if (Array.isArray(expected)) return expected.some((role) => roleMatches(actual, role));
     if (expected === 'livreur') return actual === 'livreur' || actual === 'les deux' || actual === 'admin';
     if (expected === 'expediteur') return actual === 'expediteur' || actual === 'les deux' || actual === 'admin';
     return actual === expected;
+  }
+
+  function normalizeRole(role) {
+    const value = String(role || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+    if (['admin', 'administrator', 'administrateur'].includes(value)) return 'admin';
+    if (['livreur', 'driver'].includes(value)) return 'livreur';
+    if (['expediteur', 'sender'].includes(value)) return 'expediteur';
+    if (['les deux', 'both', 'livreur expediteur', 'expediteur livreur'].includes(value)) return 'les deux';
+    return value;
   }
 
   function isEmailVerified(session, profile) {
@@ -30,7 +47,7 @@
       email: session.user.email || '',
       prenom: profile?.prenom || profile?.first_name || meta.prenom || meta.first_name || '',
       nom: profile?.nom || profile?.last_name || meta.nom || meta.last_name || '',
-      role: profile?.role || meta.role || '',
+      role: normalizeRole(profile?.role || meta.role || ''),
       email_verified: Boolean(profile?.email_verified || session.user.email_confirmed_at || session.user.confirmed_at),
       verification_status: profile?.verification_status || 'pending',
       driver_status: profile?.driver_status || 'not_started',
@@ -106,7 +123,7 @@
   async function requireVerifiedDriver() {
     if (!await requireAuth('livreur')) return false;
 
-    if (currentUser.role !== 'admin' && currentUser.driver_status !== 'verified') {
+    if (normalizeRole(currentUser.role) !== 'admin' && currentUser.driver_status !== 'verified') {
       console.error('ERREUR livreur: verification requise');
       showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
       window.location.href = '/livreur.html';
@@ -142,4 +159,3 @@
     logout
   };
 })();
-

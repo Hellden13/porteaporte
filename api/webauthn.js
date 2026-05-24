@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { normalizeRole } = require('../lib/_lib');
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
@@ -54,7 +55,7 @@ async function getProfile(userId, sbUrl, sbKey) {
 }
 
 function canUseBiometric(profile) {
-  return ['livreur', 'les deux', 'admin'].includes(profile?.role);
+  return ['livreur', 'les deux', 'admin'].includes(normalizeRole(profile?.role));
 }
 
 async function saveChallenge(userId, challengeType, challenge, sbUrl, sbKey) {

@@ -94,17 +94,24 @@
       }
 
       if (data.session) {
+        const emailConfirmed = Boolean(data.user.email_confirmed_at || data.user.confirmed_at);
         await db.from('profiles').upsert({
           id: data.user.id,
           email,
           prenom,
           nom,
           role,
-          email_verified: Boolean(data.user.email_confirmed_at || data.user.confirmed_at),
+          email_verified: emailConfirmed,
           verification_status: 'pending',
           driver_status: 'not_started',
           mis_a_jour_le: new Date().toISOString()
         }, { onConflict: 'id' }).catch(() => {});
+        if (!emailConfirmed) {
+          await db.auth.signOut().catch(() => {});
+          showSuccess('Compte créé. Vérifie ton email avant d’ouvrir un dashboard.');
+          btn.textContent = 'Email de confirmation envoyé';
+          return;
+        }
         window.location.href = role === 'expediteur' ? '/dashboard-expediteur.html' : '/livreur.html';
         return;
       }

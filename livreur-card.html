@@ -102,7 +102,7 @@
       const fiabilite = out.fiabilite;
       const verified = p.driver_status === 'verified';
       const photo = p.photo_url
-        ? `<img src="${p.photo_url}" class="photo" alt="Photo livreur">`
+        ? `<img loading="lazy" decoding="async" src="${p.photo_url}" class="photo" alt="Photo livreur">`
         : `<div class="photo-placeholder">🚚</div>`;
       const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || 'Livreur';
       const since = p.cree_le ? new Date(p.cree_le).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long' }) : '—';
@@ -161,7 +161,7 @@
       const cardUrl = window._cardUrl;
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=' + encodeURIComponent(cardUrl);
       const wrap = document.getElementById('qrWrap');
-      if (wrap) wrap.innerHTML = `<img src="${qrUrl}" alt="QR code" width="140" height="140">`;
+      if (wrap) wrap.innerHTML = `<img loading="lazy" decoding="async" src="${qrUrl}" alt="QR code" width="140" height="140">`;
     }
     async function shareCard() {
       const url = window._cardUrl || window.location.href;

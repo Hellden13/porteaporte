@@ -55,6 +55,17 @@
       statusEl.className = 'status ' + type;
     }
 
+    function normalizeRole(role) {
+      const value = String(role || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ');
+      return ['admin', 'administrator', 'administrateur'].includes(value) ? 'admin' : value;
+    }
+
     async function checkAdminAndRedirect(session) {
       const { data: profile, error } = await db
         .from('profiles')
@@ -70,7 +81,7 @@
         status('Compte suspendu. Accès admin bloqué.');
         return false;
       }
-      if (profile.role !== 'admin') {
+      if (normalizeRole(profile.role) !== 'admin') {
         status('Cette session n’est pas admin. Déconnecte-la, puis connecte-toi avec le compte admin.');
         return false;
       }

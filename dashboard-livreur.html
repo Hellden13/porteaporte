@@ -793,6 +793,25 @@
       }, 3500);
     }
 
+    function normalizeRoleValue(role) {
+      const value = String(role || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ');
+      if (['admin', 'administrator', 'administrateur'].includes(value)) return 'admin';
+      if (['livreur', 'driver'].includes(value)) return 'livreur';
+      if (['expediteur', 'sender'].includes(value)) return 'expediteur';
+      if (['les deux', 'both', 'livreur expediteur', 'expediteur livreur'].includes(value)) return 'les deux';
+      return value;
+    }
+
+    function isEmailConfirmed(session, p) {
+      return Boolean(p?.email_verified || session?.user?.email_confirmed_at || session?.user?.confirmed_at);
+    }
+
     /* ============================
        INIT
     ============================= */
@@ -809,13 +828,18 @@
         showBanner('Compte suspendu. Contacte le support.', '#EF4444', 'mailto:support@porteaporte.site', 'Contacter le support');
         return;
       }
-      if (p.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
-      const roleOk = ['livreur', 'les deux', 'admin'].includes(p.role);
+      const normalizedRole = normalizeRoleValue(p.role);
+      if (!isEmailConfirmed(session, p)) {
+        showBanner('Confirme ton courriel avant d acceder au dashboard livreur. Les missions restent bloquees tant que le courriel n est pas confirme.', '#F59E0B', '/login.html', 'Retour connexion', 'Courriel a confirmer');
+        return;
+      }
+      if (normalizedRole === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
+      const roleOk = ['livreur', 'les deux', 'admin'].includes(normalizedRole);
       if (!roleOk) {
         showBanner('Ton compte est enregistré comme expéditeur. Ajoute le rôle livreur pour commencer la vérification.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
         return;
       }
-      const driverVerified = p.role === 'admin' || p.driver_status === 'verified';
+      const driverVerified = normalizedRole === 'admin' || p.driver_status === 'verified';
       if (!driverVerified) {
         const msgs = {
           pending_review: { title: 'Vérification en cours', msg: 'Ta demande est en révision. Tu peux ouvrir ton dossier, mettre tes informations à jour ou revenir au profil. Les vraies missions restent bloquées jusqu’à l’approbation admin.', color: '#F59E0B', link: '/livreur.html', linkText: 'Voir ma vérification' },
