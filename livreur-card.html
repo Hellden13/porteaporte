@@ -123,8 +123,8 @@
             <div class="stat-lbl">Livraisons</div>
           </div>
           <div class="stat">
-            <div class="stat-val" style="color:#ffd700;font-size:.95rem">${stars}</div>
-            <div class="stat-lbl">Score</div>
+            <div class="stat-val" style="color:#ffd700;font-size:.95rem" data-livreur-rating="${id}"></div>
+            <div class="stat-lbl">Avis clients</div>
           </div>
           <div class="stat">
             <div class="stat-val" style="color:${fiabilite && fiabilite.score >= 90 ? '#b8f53e' : fiabilite && fiabilite.score >= 70 ? '#ffd700' : '#ffb0b0'}">${fiabilite ? fiabilite.score : 100}</div>
@@ -180,5 +180,6 @@
 
     load();
   </script>
+  <script src="/js/rating.js"></script>
 </body>
 </html>
