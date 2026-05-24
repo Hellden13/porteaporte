@@ -28,6 +28,21 @@ INSERT INTO platform_settings (id, max_colis_value_cents, insurance_pct, insuran
 VALUES ('default', 25000, 0.02, 0, 0.05, '["Québec", "Lévis"]'::jsonb, true)
 ON CONFLICT (id) DO NOTHING;
 
+-- ─── Liste d'attente autres villes ───
+CREATE TABLE IF NOT EXISTS waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  ville TEXT NOT NULL,
+  role TEXT DEFAULT 'expediteur',
+  message TEXT,
+  contacted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_waitlist_ville ON waitlist(LOWER(ville));
+CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at DESC);
+-- RLS : personne ne peut lire la table sauf via API service key
+ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+
 -- 4. PROMOUVOIR ADMIN denismorneaubtc@gmail.com
 INSERT INTO profiles (id, email, role, suspendu, created_at)
 SELECT id, email, 'admin', false, NOW()

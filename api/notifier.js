@@ -1002,10 +1002,25 @@ const LOGO_HTML = `
 `;
 const BODY_WRAP = `padding: 32px; color: #1a1a1a;`;
 const FOOTER_HTML = `
-  <div style="padding:20px 32px;background:#f4f4f0;text-align:center;font-size:11px;color:#888;border-top:1px solid #e0e0da;">
-    © 2026 PorteàPorte · porteaporte.site · Lévis, Québec 🍁<br>
-    <a href="https://porteaporte.site" style="color:#0A1628;">Visiter le site</a> ·
-    <a href="https://porteaporte.site/compte.html" style="color:#0A1628;">Mon compte</a>
+  <div style="padding:24px 32px;background:#0A1628;text-align:center;border-top:3px solid #B8F53E;">
+    <div style="font-size:13px;color:#ffffff;font-weight:700;margin-bottom:10px;">
+      Porte<span style="color:#B8F53E">à</span>Porte 🍁
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;margin-bottom:12px;">
+      Le réseau québécois de livraison entre voisins<br>
+      Lévis · Québec · Canada
+    </div>
+    <div style="margin:14px 0 10px;">
+      <a href="https://porteaporte.site" style="color:#B8F53E;text-decoration:none;font-size:11px;font-weight:700;margin:0 8px;">Site</a>
+      <a href="https://porteaporte.site/comparatif.html" style="color:#B8F53E;text-decoration:none;font-size:11px;font-weight:700;margin:0 8px;">Comparatif</a>
+      <a href="https://porteaporte.site/transparence.html" style="color:#B8F53E;text-decoration:none;font-size:11px;font-weight:700;margin:0 8px;">Transparence</a>
+      <a href="https://www.facebook.com/profile.php?id=61568025027918" style="color:#B8F53E;text-decoration:none;font-size:11px;font-weight:700;margin:0 8px;">Facebook</a>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:14px;line-height:1.6;">
+      © 2026 PorteàPorte · Conforme Loi 25 (QC) · Paiement sécurisé Stripe<br>
+      <a href="https://porteaporte.site/mes-donnees.html" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Gérer mes données</a> ·
+      <a href="https://porteaporte.site/confidentialite.html" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Confidentialité</a>
+    </div>
   </div>
 `;
 

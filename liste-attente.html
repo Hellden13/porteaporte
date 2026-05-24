@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liste d'attente — PorteàPorte arrive dans ta ville</title>
+  <meta name="description" content="PorteàPorte arrive bientôt à Montréal, Sherbrooke, Trois-Rivières et partout au Québec. Inscris-toi pour être notifié le jour du lancement.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteàPorte">
+  <meta property="og:title" content="🍁 Liste d'attente — PorteàPorte arrive dans ta ville">
+  <meta property="og:description" content="On lance progressivement partout au Québec. Inscris-toi gratuitement pour être notifié le jour du lancement chez toi.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/liste-attente.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
+    .wrap { max-width:640px; margin:0 auto; padding:60px 24px 80px; }
+    .hero { text-align:center; margin-bottom:36px; }
+    .eyebrow { display:inline-block; padding:6px 14px; font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--brand-lime); border:1px solid rgba(184,245,62,.3); border-radius:99px; margin-bottom:20px; }
+    h1 { font-size:clamp(2rem,5vw,3.2rem); font-weight:900; line-height:1.1; margin:0 0 16px; letter-spacing:-.02em; }
+    h1 span { color:var(--brand-lime); }
+    .lede { color:var(--brand-muted); font-size:1.05rem; line-height:1.6; margin:0 0 12px; }
+    .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:30px 0; }
+    .stat { padding:16px 14px; background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:12px; text-align:center; }
+    .stat .big { font-size:1.4rem; font-weight:900; color:var(--brand-lime); line-height:1; margin-bottom:6px; }
+    .stat .lbl { font-size:.72rem; color:var(--brand-muted); text-transform:uppercase; letter-spacing:.06em; }
+    .form-card { background:linear-gradient(160deg,rgba(184,245,62,.06),rgba(0,217,255,.04)); border:1px solid rgba(184,245,62,.3); border-radius:18px; padding:28px; }
+    .field { display:grid; gap:6px; margin-bottom:16px; }
+    .field label { font-size:.85rem; color:#d8dde6; font-weight:700; }
+    .field label .req { color:#ff9999; }
+    .field input, .field select, .field textarea { box-sizing:border-box; width:100%; padding:13px 14px; background:#05080c; border:1px solid var(--brand-border); border-radius:10px; color:#fff; font:inherit; }
+    .field textarea { min-height:80px; resize:vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--brand-lime); }
+    .radio-group { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .radio-card { padding:14px; background:rgba(255,255,255,.03); border:1px solid var(--brand-border); border-radius:10px; cursor:pointer; text-align:center; transition:all .15s; }
+    .radio-card input { display:none; }
+    .radio-card.active, .radio-card:has(input:checked) { border-color:var(--brand-lime); background:rgba(184,245,62,.08); color:var(--brand-lime); }
+    .submit-btn { width:100%; padding:16px; background:var(--brand-lime); color:#071006; border:none; border-radius:10px; font-weight:900; font-size:1rem; cursor:pointer; transition:background .15s; }
+    .submit-btn:hover:not(:disabled) { background:#cffe5a; }
+    .submit-btn:disabled { opacity:.6; cursor:wait; }
+    .msg { padding:14px 18px; border-radius:10px; margin-top:14px; font-size:.92rem; display:none; line-height:1.5; }
+    .msg.ok { display:block; background:rgba(0,255,159,.1); color:#7dffc1; border:1px solid rgba(0,255,159,.3); }
+    .msg.err { display:block; background:rgba(255,90,90,.1); color:#ff9999; border:1px solid rgba(255,90,90,.3); }
+    .legal { font-size:.78rem; color:var(--brand-muted); text-align:center; margin-top:16px; line-height:1.5; }
+    .legal a { color:var(--brand-lime); }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.05)">
+    <a href="/" style="color:#fff;font-weight:900;text-decoration:none;display:flex;gap:10px;align-items:center"><img src="/logo.svg" width="32" height="32" alt=""> PorteàPorte</a>
+    <a class="btn btn-ghost" href="/" style="font-size:.85rem;padding:8px 16px">← Accueil</a>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <div class="eyebrow">🍁 On lance partout au Québec</div>
+      <h1>On arrive bientôt<br><span>dans ta ville.</span></h1>
+      <p class="lede">PorteàPorte démarre à <strong>Québec et Lévis</strong>. Mais on étend rapidement selon la demande de chaque ville. Plus on est nombreux dans ta région, plus vite on arrive.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="big">3</div><div class="lbl">Villes actives</div></div>
+      <div class="stat"><div class="big" id="stat-wait">—</div><div class="lbl">Sur liste d'attente</div></div>
+      <div class="stat"><div class="big">2026</div><div class="lbl">Expansion en cours</div></div>
+    </div>
+
+    <div class="form-card">
+      <form id="waitlist-form">
+        <div class="field">
+          <label for="email">Ton courriel <span class="req">*</span></label>
+          <input id="email" type="email" required placeholder="ton.email@exemple.com" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="ville">Ta ville <span class="req">*</span></label>
+          <input id="ville" type="text" required placeholder="Ex: Montréal, Sherbrooke, Trois-Rivières..." autocomplete="address-level2">
+        </div>
+
+        <div class="field">
+          <label>Tu veux faire quoi ?</label>
+          <div class="radio-group">
+            <label class="radio-card"><input type="radio" name="role" value="expediteur" checked>📦 Envoyer<br><span style="font-size:.75rem;color:var(--brand-muted)">des colis</span></label>
+            <label class="radio-card"><input type="radio" name="role" value="livreur">🚗 Livrer<br><span style="font-size:.75rem;color:var(--brand-muted)">des colis</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="message">Message (optionnel)</label>
+          <textarea id="message" placeholder="Dis-nous pourquoi tu veux PorteàPorte chez toi, combien de livraisons / mois tu prévois, etc."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">🔔 Me prévenir quand on lance dans ma ville</button>
+        <div id="msg" class="msg"></div>
+
+        <p class="legal">En t'inscrivant, tu acceptes notre <a href="/confidentialite.html">politique de confidentialité</a>. Pas de spam — juste 1 email quand on arrive chez toi.</p>
+      </form>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;font-size:.9rem;color:var(--brand-muted)">
+      💡 Tu es à <strong style="color:#fff">Québec ou Lévis</strong> ? <a href="/role-choice.html" style="color:var(--brand-lime);font-weight:700">Tu peux commencer tout de suite →</a>
+    </div>
+  </main>
+
+  <script>
+    // Radio cards visual
+    document.querySelectorAll('.radio-card input').forEach(r => {
+      r.addEventListener('change', () => {
+        document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('active'));
+        if (r.checked) r.parentElement.classList.add('active');
+      });
+    });
+    document.querySelector('.radio-card input:checked')?.parentElement?.classList.add('active');
+
+    // Submit
+    document.getElementById('waitlist-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const msg = document.getElementById('msg');
+      const email = document.getElementById('email').value.trim();
+      const ville = document.getElementById('ville').value.trim();
+      const role = document.querySelector('input[name="role"]:checked').value;
+      const message = document.getElementById('message').value.trim();
+      btn.disabled = true; btn.textContent = 'Inscription...';
+      msg.className = 'msg';
+      try {
+        const r = await fetch('/api/platform?endpoint=waitlist-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'waitlist-signup', email, ville, role, message })
+        });
+        const out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Erreur');
+        msg.className = 'msg ok';
+        msg.innerHTML = '✅ <strong>Inscription enregistrée !</strong><br>On te contactera à <strong>' + email + '</strong> dès qu\'on lance à <strong>' + ville + '</strong>. En attendant, partage avec tes voisins — plus on est, plus vite on arrive 🤝';
+        btn.textContent = '✅ Merci !';
+        setTimeout(() => { btn.disabled = false; btn.textContent = '🔔 M\'inscrire à nouveau'; }, 5000);
+      } catch (err) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ ' + err.message;
+        btn.disabled = false;
+        btn.textContent = '🔔 Me prévenir quand on lance dans ma ville';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -121,8 +121,9 @@ async function createLivraison(req, res, ctx, body) {
     if (!ok(normVilleDepart) || !ok(normVilleArrivee)) {
       const villesAffichage = betaCities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' ou ');
       return res.status(400).json({
-        error: `Bêta limitée à ${villesAffichage} pour le moment. Pour être notifié quand on arrive dans ta ville : bonjour@porteaporte.site`,
-        beta_cities: betaCities
+        error: `Bêta limitée à ${villesAffichage} pour le moment. Inscris-toi à la liste d'attente pour être notifié quand on arrive dans ta ville : ${siteOrigin()}/liste-attente.html`,
+        beta_cities: betaCities,
+        waitlist_url: `${siteOrigin()}/liste-attente.html`
       });
     }
   }
@@ -3597,6 +3598,42 @@ module.exports = async function handler(req, res) {
       }
 
       return res.status(200).json({ success: true, ...stats });
+    }
+    if (endpoint === 'waitlist-signup') {
+      // Liste d'attente pour autres villes - public, pas d'auth requise
+      const email = String(body.email || '').trim().toLowerCase().slice(0, 180);
+      const ville = String(body.ville || '').trim().slice(0, 80);
+      const role = String(body.role || 'expediteur').trim().slice(0, 20);
+      const message = String(body.message || '').trim().slice(0, 500);
+      if (!email || !email.includes('@') || !ville) {
+        return res.status(400).json({ error: 'Email + ville requis' });
+      }
+      const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || '').toString().split(',')[0].trim();
+      const rl = await checkRateLimit(`waitlist:${ip}`, 3, 3600);
+      if (!rl.allowed) return res.status(429).json({ error: 'Trop de demandes. Réessaie dans 1h.' });
+
+      // Upsert (on accepte que le même email s'inscrive pour mettre à jour sa ville/role)
+      const r = await fetch(`${sbUrl}/rest/v1/waitlist?on_conflict=email`, {
+        method: 'POST',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ email, ville, role, message, created_at: new Date().toISOString() })
+      });
+      const data = r.ok ? await r.json() : null;
+      if (!r.ok) {
+        // Si la table n'existe pas, fallback : juste alerter admin et stocker dans une autre forme
+        alertAdmin(
+          `Nouvelle inscription liste d'attente`,
+          `${role} de ${ville} veut PorteàPorte. Email: ${email}.`,
+          { severity: 'info', details: { 'Email': email, 'Ville': ville, 'Rôle': role, 'Message': message || '(aucun)' } }
+        );
+        return res.status(200).json({ success: true, message: 'Inscription enregistrée. On te contacte quand on arrive dans ta ville !' });
+      }
+      alertAdmin(
+        `Nouvelle inscription liste d'attente : ${ville}`,
+        `${role} de ${ville} veut PorteàPorte. Suivre ce signal pour prioriser l'expansion.`,
+        { severity: 'info', details: { 'Email': email, 'Ville': ville, 'Rôle': role, 'Message': message || '(aucun)' }, cta_url: 'https://porteaporte.site/admin/operations.html' }
+      );
+      return res.status(200).json({ success: true, waitlist: data, message: 'Inscription enregistrée. On te contacte quand on arrive dans ta ville !' });
     }
     if (endpoint === 'cancel-policy-preview') {
       const session = await getSession(req, sbUrl, sbKey);
