@@ -211,6 +211,24 @@ module.exports = async function handler(req, res) {
 // ============================================================
 // CONSTRUCTION DES COURRIELS PAR TYPE
 // ============================================================
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch]));
+}
+
+function safeHttpUrl(value, fallback = 'https://porteaporte.site/admin/operations.html') {
+  try {
+    const url = new URL(String(value || ''), 'https://porteaporte.site');
+    if (url.protocol === 'https:' || url.protocol === 'http:') return escapeHtml(url.toString());
+  } catch (_) {}
+  return escapeHtml(fallback);
+}
+
 function buildEmails(type, data, adminEmail, fromEmail, fromName) {
   const emails = [];
 
@@ -447,6 +465,39 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
     }
 
     // ── MANQUEMENT SIGNALÉ — notif accusé avec lien contestation ──
+    // ── ADMIN CRITICAL ALERT — événements qui demandent attention immédiate ──
+    case 'admin_critical_alert': {
+      const severityColors = {
+        critical: { bg: 'rgba(255,90,90,.1)', border: 'rgba(255,90,90,.4)', text: '#ff7a7a', label: '🚨 CRITIQUE' },
+        warning:  { bg: 'rgba(255,200,0,.08)', border: 'rgba(255,200,0,.4)', text: '#ffd700', label: '⚠️ ATTENTION' },
+        info:     { bg: 'rgba(0,217,255,.08)', border: 'rgba(0,217,255,.3)', text: '#00d9ff', label: 'ℹ️ INFO' },
+        success:  { bg: 'rgba(0,255,159,.08)', border: 'rgba(0,255,159,.3)', text: '#7dffc1', label: '✅ BONNE NOUVELLE' }
+      };
+      const sev = severityColors[data.severity || 'info'];
+      const ctaHtml = data.cta_url ? `<div style="text-align:center;margin:24px 0"><a href="${data.cta_url}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">${data.cta_label || 'Voir dans l\'admin →'}</a></div>` : '';
+      const detailsHtml = data.details && typeof data.details === 'object'
+        ? `<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:14px 18px;margin:14px 0">${Object.entries(data.details).map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.88rem"><span style="color:#a8b0ba">${k}</span><strong style="color:#fff">${v}</strong></div>`).join('')}</div>`
+        : '';
+      emails.push({
+        to: adminEmail,
+        from: { email: fromEmail, name: fromName },
+        subject: `${sev.label} ${data.subject || 'Événement plateforme'} — PorteàPorte`,
+        html: `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.78rem;letter-spacing:.12em;margin-bottom:14px">PORTEÀPORTE · ADMIN ALERT</div>
+            <div style="background:${sev.bg};border:1px solid ${sev.border};border-radius:10px;padding:14px 18px;margin-bottom:18px">
+              <div style="font-weight:900;color:${sev.text};font-size:.85rem;margin-bottom:6px;letter-spacing:.06em">${sev.label}</div>
+              <h2 style="margin:0;color:#fff;font-size:1.2rem;line-height:1.3">${data.title || data.subject || 'Action requise'}</h2>
+            </div>
+            ${data.message ? `<p style="color:#d8dde6;line-height:1.6;margin:0 0 14px">${data.message}</p>` : ''}
+            ${detailsHtml}
+            ${ctaHtml}
+            <p style="color:#6d7886;font-size:.74rem;margin-top:24px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px">Tu reçois cet email parce que tu es admin de PorteàPorte. Pour gérer les alertes : <a href="https://porteaporte.site/admin/operations.html" style="color:#b8f53e">Centre Opérations →</a></p>
+          </div>`
+      });
+      break;
+    }
+
     case 'manquement_signale': {
       const contesteLink = `https://porteaporte.site/contester-manquement.html?id=${encodeURIComponent(data.manquement_id || '')}`;
       const roleLabels = { expediteur: 'L\'expéditeur', livreur: 'Le livreur', destinataire: 'Le destinataire', admin: 'L\'administration' };

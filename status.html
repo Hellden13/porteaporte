@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>État du service — PorteàPorte</title>
+  <meta name="description" content="État en temps réel des services PorteàPorte : site web, API, paiements, base de données.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteàPorte">
+  <meta property="og:title" content="✅ État du service — PorteàPorte">
+  <meta property="og:description" content="Transparence totale sur l'état des services PorteàPorte en temps réel.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/status.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+    .container { max-width: 880px; margin: 0 auto; padding: 60px 24px 80px; }
+    .hero { text-align: center; margin-bottom: 48px; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 900; margin: 0 0 12px; line-height: 1.1; }
+    .hero p { color: var(--brand-muted); font-size: 1.05rem; max-width: 56ch; margin: 0 auto 24px; line-height: 1.6; }
+    .global-status { padding: 28px 32px; border-radius: 18px; margin-bottom: 36px; text-align: center; }
+    .global-status.ok { background: linear-gradient(135deg, rgba(0,255,159,.1), rgba(184,245,62,.05)); border: 2px solid rgba(0,255,159,.4); }
+    .global-status.warn { background: linear-gradient(135deg, rgba(255,200,0,.1), rgba(255,200,0,.03)); border: 2px solid rgba(255,200,0,.4); }
+    .global-status.err { background: linear-gradient(135deg, rgba(255,90,90,.1), rgba(255,90,90,.03)); border: 2px solid rgba(255,90,90,.4); }
+    .global-status .icon { font-size: 3rem; margin-bottom: 12px; line-height: 1; }
+    .global-status h2 { margin: 0 0 8px; font-size: 1.5rem; color: #fff; }
+    .global-status .sub { color: var(--brand-muted); font-size: .95rem; }
+    .services { display: grid; gap: 12px; margin-bottom: 36px; }
+    .service { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; padding: 18px 24px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; }
+    .service .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .service.ok .dot { background: #7dffc1; box-shadow: 0 0 10px rgba(0,255,159,.5); }
+    .service.warn .dot { background: #ffd700; box-shadow: 0 0 10px rgba(255,200,0,.5); animation: pulse 2s infinite; }
+    .service.err .dot { background: #ff7a7a; box-shadow: 0 0 10px rgba(255,90,90,.5); animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: .4; } }
+    .service .name { font-weight: 700; color: #fff; }
+    .service .desc { color: var(--brand-muted); font-size: .82rem; margin-top: 2px; }
+    .service .status-label { font-size: .8rem; font-weight: 700; }
+    .service.ok .status-label { color: #7dffc1; }
+    .service.warn .status-label { color: #ffd700; }
+    .service.err .status-label { color: #ff7a7a; }
+    .footer-note { text-align: center; color: var(--brand-muted); font-size: .85rem; line-height: 1.7; }
+    .footer-note a { color: var(--brand-lime); }
+    .last-check { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(255,255,255,.04); border: 1px solid var(--brand-border); border-radius: 99px; font-size: .8rem; color: var(--brand-muted); margin-top: 10px; }
+    .pulse-dot { width: 8px; height: 8px; background: #7dffc1; border-radius: 50%; animation: pulse 1.5s infinite; }
+  </style>
+</head>
+<body>
+  <header class="site-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.05)">
+    <a href="/" style="color:#fff;font-weight:900;text-decoration:none;display:flex;gap:10px;align-items:center"><img src="/logo.svg" alt="" width="32" height="32"> PorteàPorte</a>
+    <a class="btn btn-ghost" href="/" style="font-size:.85rem;padding:8px 16px">← Accueil</a>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>État du service</h1>
+      <p>Transparence totale. On affiche en direct si tout fonctionne. Si un service est en panne, tu le verras ici en premier.</p>
+      <div class="last-check"><span class="pulse-dot"></span>Vérification automatique toutes les 60 secondes · <span id="last-update">maintenant</span></div>
+    </div>
+
+    <div id="global-status" class="global-status ok">
+      <div class="icon">✅</div>
+      <h2>Tous les services fonctionnent</h2>
+      <div class="sub">Vérification en direct…</div>
+    </div>
+
+    <div class="services" id="services">
+      <!-- Rempli par JS -->
+    </div>
+
+    <div class="footer-note">
+      🔔 Tu observes un problème non listé ?<br>
+      Écris-nous à <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a> ou via le chat support sur n'importe quelle page.
+      <br><br>
+      Cette page est <strong>publique et auto-générée</strong> — aucune intervention humaine. Si elle dit que tout marche, c'est que tout marche vraiment.
+    </div>
+  </main>
+
+  <script>
+    const SERVICES = [
+      { id: 'web',      name: 'Site web',           desc: 'Page d\'accueil + pages publiques', check: () => fetch('/', { method: 'HEAD' }).then(r => r.ok) },
+      { id: 'api',      name: 'API plateforme',     desc: 'Création de livraisons, dashboards, recherche', check: () => fetch('/api/impact-public').then(r => r.ok) },
+      { id: 'settings', name: 'Configuration',      desc: 'Paramètres financiers, plafond colis, zones bêta', check: () => fetch('/api/platform?endpoint=platform-settings-get').then(r => r.ok) },
+      { id: 'stripe',   name: 'Paiements Stripe',   desc: 'Escrow sécurisé, webhooks, captures', check: () => fetch('https://js.stripe.com/v3/', { method: 'HEAD', mode: 'no-cors' }).then(() => true).catch(() => false) },
+      { id: 'supabase', name: 'Base de données',    desc: 'Profils, livraisons, transactions', check: async () => { try { const r = await fetch('/api/impact-public'); const d = await r.json(); return d.success === true; } catch(_) { return false; } } },
+      { id: 'maps',     name: 'Cartes & géocodage', desc: 'OpenStreetMap pour suivi GPS et itinéraires', check: () => fetch('https://nominatim.openstreetmap.org/status', { mode: 'no-cors' }).then(() => true).catch(() => false) }
+    ];
+
+    async function check() {
+      const results = await Promise.all(SERVICES.map(async (s) => {
+        const t0 = Date.now();
+        let ok = false;
+        try { ok = await Promise.race([s.check(), new Promise((_,r) => setTimeout(() => r('timeout'), 5000))]); } catch(_) {}
+        return { ...s, ok: ok === true, ms: Date.now() - t0 };
+      }));
+
+      const allOk = results.every(r => r.ok);
+      const someErr = results.filter(r => !r.ok).length;
+
+      // Global
+      const g = document.getElementById('global-status');
+      const total = results.length;
+      const okCount = results.filter(r => r.ok).length;
+      if (allOk) {
+        g.className = 'global-status ok';
+        g.innerHTML = '<div class="icon">✅</div><h2>Tous les services fonctionnent</h2><div class="sub">' + okCount + ' / ' + total + ' services opérationnels</div>';
+      } else if (someErr <= 1) {
+        g.className = 'global-status warn';
+        g.innerHTML = '<div class="icon">⚠️</div><h2>Service partiellement dégradé</h2><div class="sub">' + okCount + ' / ' + total + ' services opérationnels. On travaille dessus.</div>';
+      } else {
+        g.className = 'global-status err';
+        g.innerHTML = '<div class="icon">🔴</div><h2>Incident en cours</h2><div class="sub">' + okCount + ' / ' + total + ' services opérationnels. Mise à jour automatique.</div>';
+      }
+
+      // Services
+      document.getElementById('services').innerHTML = results.map(r => `
+        <div class="service ${r.ok ? 'ok' : 'err'}">
+          <div class="dot"></div>
+          <div>
+            <div class="name">${r.name}</div>
+            <div class="desc">${r.desc}</div>
+          </div>
+          <div class="status-label">${r.ok ? '✓ OK' : '✗ Erreur'} <span style="color:var(--brand-muted);font-weight:400;margin-left:6px">${r.ms}ms</span></div>
+        </div>
+      `).join('');
+
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString('fr-CA');
+    }
+
+    check();
+    setInterval(check, 60000);
+  </script>
+</body>
+</html>

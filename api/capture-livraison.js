@@ -5,7 +5,7 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-const { normalizeRole } = require('../lib/_lib');
+const { normalizeRole, alertAdmin } = require('../lib/_lib');
 
 const RETENTION_MS = 7 * 365 * 24 * 60 * 60 * 1000;
 
@@ -486,6 +486,23 @@ module.exports = async function handler(req, res) {
       await autoGrantBadges(SB_URL, SB_KEY, livraison.livreur_id, livraison);
     } catch (e) { console.error('[badges auto-grant]', e.message); }
   }
+
+  // 🎉 Alerte admin (Denis) : livraison capturée avec succès — bonne nouvelle
+  alertAdmin(
+    `Livraison capturée : ${livraison.code || livraison_id.slice(0,8)}`,
+    `Le paiement a été libéré. Le livreur recevra son virement Stripe Connect selon le calendrier configuré.`,
+    {
+      severity: 'success',
+      details: {
+        'Livraison': livraison.code || livraison_id.slice(0, 8),
+        'Trajet': `${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}`,
+        'Montant capturé': `${((captured.amount_received || captured.amount || 0) / 100).toFixed(2)} $`,
+        'Statut Stripe': captured.status || '?'
+      },
+      cta_url: 'https://porteaporte.site/admin/operations.html',
+      cta_label: '🎉 Voir l\'opération →'
+    }
+  );
 
   return res.status(200).json({
     success: true,

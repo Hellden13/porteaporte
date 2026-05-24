@@ -7,7 +7,7 @@ const {
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
   driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
-  callNotifier, deliveryEligibility, missingColumn, insertWithSchemaFallback,
+  callNotifier, alertAdmin, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
 } = require('../lib/_lib');
 
@@ -123,6 +123,24 @@ async function createLivraison(req, res, ctx, body) {
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
+
+  // 🚨 Alerte admin (Denis 24h support) : nouvelle livraison créée
+  alertAdmin(
+    `Nouvelle livraison #${livraison?.code || livraison?.id?.slice(0,8) || '?'}`,
+    `Un expéditeur vient de créer une livraison. Vérifie qu'elle est bien diffusée aux livreurs et que le paiement passe.`,
+    {
+      severity: 'info',
+      details: {
+        'Expéditeur': ctx.session?.email || 'inconnu',
+        'Trajet': `${payload.ville_depart || '?'} → ${payload.ville_arrivee || '?'}`,
+        'Type': payload.type_colis || 'colis',
+        'Valeur déclarée': payload.valeur_declaree ? `${payload.valeur_declaree} $` : 'non spécifiée',
+        'Prix total': payload.prix_total ? `${payload.prix_total} $` : 'non spécifié'
+      },
+      cta_url: `https://porteaporte.site/admin/operations.html`,
+      cta_label: '📦 Voir dans Operations →'
+    }
+  );
   let receptionCode = livraison?.id ? generateReceptionCode() : null;
   let pickupCode = livraison?.id ? generateReceptionCode() : null;
   if (receptionCode) {
@@ -1008,6 +1026,24 @@ async function manquementSignaler(req, res, ctx, body) {
       }).catch(err => console.error('[notifier manquement_signale]', err.message));
     }
   }
+
+  // 🚨 Alerte admin (Denis) : nouveau manquement à traiter (CRITIQUE)
+  alertAdmin(
+    `Manquement signalé sur #${livraison.code || livraison_id.slice(0,8)}`,
+    `${signaleur_role === 'expediteur' ? 'Un expéditeur' : signaleur_role === 'livreur' ? 'Un livreur' : 'Un destinataire'} vient de signaler un problème. À traiter sous 48h.`,
+    {
+      severity: 'critical',
+      details: {
+        'Livraison': livraison.code || livraison_id.slice(0, 8),
+        'Signaleur': signaleur_role,
+        'Accusé': accuse_role,
+        'Catégorie': categorie,
+        'Description': (description || '').slice(0, 200) || '(aucune)'
+      },
+      cta_url: 'https://porteaporte.site/admin/manquements.html',
+      cta_label: '⚠️ Traiter le manquement →'
+    }
+  );
 
   return res.status(200).json({ success: true, manquement: m });
 }
@@ -2638,6 +2674,34 @@ async function impactPublic(req, res, ctx) {
   return res.status(200).json({ success: true, impact: publicState, draws, winners, protection_fund: protectionFund });
 }
 
+async function platformSettingsPublic(req, res, sbUrl, sbKey) {
+  const safeFields = [
+    'pct_livreur','pct_communaute','pct_protection','pct_urgence',
+    'pct_developpement','pct_marketing','pct_operations','pct_profit',
+    'pct_stripe','ticket_moyen_cad','max_colis_value_cents',
+    'insurance_pct','insurance_fund_topup_cents','founder_revenue_pct',
+    'beta_cities','beta_cities_active'
+  ].join(',');
+  let r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${safeFields}`, {
+    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    const missing = missingColumn(data);
+    if (missing && ['beta_cities', 'beta_cities_active'].includes(missing)) {
+      const legacyFields = safeFields
+        .split(',')
+        .filter((field) => !['beta_cities', 'beta_cities_active'].includes(field))
+        .join(',');
+      r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${legacyFields}`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+    }
+  }
+  const rows = r.ok ? await r.json() : [];
+  return res.status(200).json({ success: true, settings: rows[0] || null });
+}
+
 async function impactApplicationPublic(req, res, ctx, body) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
   const organisationName = String(body.organisation_name || body.name || '').trim().slice(0, 160);
@@ -3291,6 +3355,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'impact-public') {
       return await impactPublic(req, res, { sbUrl, sbKey });
     }
+    if (endpoint === 'platform-settings-get') {
+      return await platformSettingsPublic(req, res, sbUrl, sbKey);
+    }
     if (endpoint === 'impact-feedback') {
       try {
         const payload = {
@@ -3850,33 +3917,6 @@ module.exports = async function handler(req, res) {
       const total = Number(range.split('/')[1]) || 0;
       if (total >= 5) await grantBadgeBySlug(sbUrl, sbKey, session.id, 'engage_5_votes');
       return res.status(200).json({ success: true });
-    }
-    if (endpoint === 'platform-settings-get') {
-      const safeFields = [
-        'pct_livreur','pct_communaute','pct_protection','pct_urgence',
-        'pct_developpement','pct_marketing','pct_operations','pct_profit',
-        'pct_stripe','ticket_moyen_cad','max_colis_value_cents',
-        'insurance_pct','insurance_fund_topup_cents','founder_revenue_pct',
-        'beta_cities','beta_cities_active'
-      ].join(',');
-      let r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${safeFields}`, {
-        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-      });
-      if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        const missing = missingColumn(data);
-        if (missing && ['beta_cities', 'beta_cities_active'].includes(missing)) {
-          const legacyFields = safeFields
-            .split(',')
-            .filter((field) => !['beta_cities', 'beta_cities_active'].includes(field))
-            .join(',');
-          r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${legacyFields}`, {
-            headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-          });
-        }
-      }
-      const rows = r.ok ? await r.json() : [];
-      return res.status(200).json({ success: true, settings: rows[0] || null });
     }
     if (endpoint === 'admin-diagnostic') {
       // Diagnostic complet pour debug : montre TOUS les statuts et TOUS les montants
