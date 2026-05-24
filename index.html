@@ -192,21 +192,26 @@
     .cta-final .row { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px; }
     .cta-final .fine { font-size:.78rem; color:var(--brand-muted); }
 
-    /* ───── Mode Impact toggle (discret bottom) ───── */
+    /* ───── Mode Impact toggle (dans le header, discret) ───── */
     #impact-toggle {
-      position: fixed; bottom: 16px; right: 16px; z-index: 90;
-      background: rgba(10,15,30,.85);
+      background: none;
       border: 1px solid rgba(184,245,62,.35);
       border-radius: 999px;
       color: var(--brand-lime);
-      font-size: .78rem; font-weight: 700;
-      padding: 8px 16px; cursor: pointer;
-      backdrop-filter: blur(8px);
+      font-size: .75rem; font-weight: 700;
+      padding: 7px 14px; cursor: pointer;
       letter-spacing: .04em;
       transition: all .2s;
+      white-space: nowrap;
     }
     #impact-toggle:hover { border-color: var(--brand-lime); background: rgba(184,245,62,.1); }
     body.mode-impact #impact-toggle { background: rgba(184,245,62,.18); color:#fff; }
+    @media (max-width: 900px) {
+      #impact-toggle { display: none; }
+      body .impact-toggle-mobile { display: inline-flex; }
+    }
+    /* Version mobile : inline dans le menu burger */
+    .impact-toggle-mobile { display: none; margin: 14px 24px; }
 
     /* En mode simple, on cache les éléments [data-impact] (réservés au mode avancé) */
     body:not(.mode-impact) [data-impact] { display: none !important; }
@@ -224,8 +229,10 @@
       <a href="/devenir-livreur.html">Devenir livreur</a>
       <a href="/covoiturage.html">Covoiturage</a>
       <a href="/faq.html">FAQ</a>
+      <button class="impact-toggle-mobile btn btn-ghost" type="button" onclick="toggleImpactMode()">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
+      <button id="impact-toggle" type="button" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalites">✦ Mode Impact</button>
       <a id="nav-connexion" class="btn btn-ghost" href="/login.html">Connexion</a>
       <a id="cta-connect" class="btn" href="/role-choice.html">Commencer</a>
     </div>
@@ -349,9 +356,6 @@
     </section>
 
   </main>
-
-  <!-- Mode Impact toggle -->
-  <button id="impact-toggle" type="button" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir les fonctionnalités avancées">✦ Mode Impact</button>
 
   <footer class="footer-full">
     <div class="footer-full-inner">
