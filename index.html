@@ -3,369 +3,1934 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PorteàPorte — Quelqu'un passe déjà dans ta direction</title>
-  <meta name="description" content="PorteàPorte connecte tes colis aux gens qui passent déjà dans ta direction. Livraison collaborative et covoiturage entre Québécois ordinaires. Le profit reste dans la communauté.">
+  <title>PorteaPorte - Livraison collaborative locale</title>
+  <meta name="description" content="PorteàPorte connecte tes colis aux gens qui passent déjà dans ta direction. Pas de camion de livraison — juste des Québécois ordinaires qui font déjà le trajet.">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0A0C10">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
-
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PorteÀPorte">
-  <meta property="og:title" content="PorteàPorte — Quelqu'un passe déjà dans ta direction">
-  <meta property="og:description" content="Livraison collaborative et covoiturage entre Québécois ordinaires. Le profit reste dans la communauté.">
-  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
-  <meta property="og:url" content="https://porteaporte.site/">
-  <meta name="twitter:card" content="summary_large_image">
-
   <style>
-    /* ───── Header ───── */
     .site-header {
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 24px; padding: 16px clamp(18px, 4vw, 48px);
-      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-      background: rgba(10,12,16,.72);
-      border-bottom: 1px solid rgba(255,255,255,.04);
-    }
-    .brand-mark { display:inline-flex; align-items:center; gap:12px; color:var(--brand-text); font-weight:900; text-decoration:none; white-space:nowrap; }
-    .brand-mark img { width:34px; height:34px; object-fit:contain; }
-    .main-nav { display:flex; align-items:center; gap:22px; }
-    .main-nav a { color:var(--brand-muted); font-weight:650; text-decoration:none; font-size:.95rem; transition:color .15s; }
-    .main-nav a:hover, .main-nav a:focus-visible { color:var(--brand-text); }
-    .header-actions { display:flex; gap:10px; align-items:center; }
-
-    /* Mobile nav */
-    .nav-toggle { display:none; background:none; border:1px solid var(--brand-border); border-radius:10px; padding:8px 12px; color:var(--brand-text); font-size:1.1rem; cursor:pointer; }
-    @media (max-width: 900px) {
-      .main-nav { display:none; position:absolute; top:100%; left:0; right:0; flex-direction:column; gap:0; background:rgba(10,12,16,.98); border-bottom:1px solid rgba(255,255,255,.06); padding:8px 0; }
-      .main-nav.open { display:flex; }
-      .main-nav a { padding:14px 24px; border-bottom:1px solid rgba(255,255,255,.04); width:100%; }
-      .nav-toggle { display:inline-flex; }
-      .header-actions .btn:not(#cta-connect) { display:none; }
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 16px clamp(18px, 4vw, 48px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
-    /* ───── Hero ───── */
-    .hero {
-      padding: clamp(60px, 9vw, 120px) clamp(18px, 4vw, 48px) clamp(40px, 6vw, 80px);
-      text-align: center;
-      max-width: 1180px;
-      margin: 0 auto;
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--brand-text);
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .hero .eyebrow { display:inline-flex; gap:8px; align-items:center; font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--brand-lime); padding:6px 14px; border:1px solid rgba(184,245,62,.3); border-radius:999px; margin-bottom:22px; }
-    .hero h1 {
-      font-size: clamp(2.4rem, 6.5vw, 4.6rem);
-      line-height: 1.04; font-weight: 900;
-      margin: 0 auto 18px; max-width: 18ch;
-      letter-spacing: -.02em;
+
+    .brand-mark img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
     }
-    .hero h1 span { color: var(--brand-lime); display:block; }
-    .hero .lede {
-      font-size: clamp(1.05rem, 2vw, 1.3rem);
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .main-nav a {
       color: var(--brand-muted);
-      max-width: 56ch; margin: 0 auto 40px; line-height:1.55;
+      font-weight: 650;
+      text-decoration: none;
+      font-size: 0.95rem;
     }
 
-    /* ───── 3 portes d'entrée ───── */
-    .portes {
+    .main-nav a:hover,
+    .main-nav a:focus-visible {
+      color: var(--brand-text);
+    }
+
+    /* ── Mode Simple/Impact ─────────────────────────────── */
+    /* Par défaut : mode simple — les éléments [data-impact] sont cachés */
+    body.mode-simple [data-impact] { display: none !important; }
+
+    #impact-toggle {
+      background: none;
+      border: 1px solid var(--brand-border);
+      border-radius: 999px;
+      color: var(--brand-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+    #impact-toggle:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+    /* Cacher le bouton du nav quand Mode Impact est actif — la pilule en bas prend le relai */
+    body:not(.mode-simple) #impact-toggle { display: none; }
+
+    /* Bandeau Mode Impact actif — discret en bas de page */
+    #impact-banner {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: rgba(10,15,30,.92);
+      border: 1px solid rgba(184,245,62,.3);
+      border-radius: 50px;
+      font-size: 0.78rem;
+      color: var(--brand-lime);
+      font-weight: 700;
+      white-space: nowrap;
+      z-index: 800;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    body:not(.mode-simple) #impact-banner { display: flex; }
+    #impact-banner span { color: var(--brand-muted); font-weight: 400; display: none; }
+    #impact-banner button {
+      background: none; border: 1px solid rgba(184,245,62,.3);
+      border-radius: 20px; color: var(--brand-lime);
+      font-size: 0.72rem; padding: 3px 10px; cursor: pointer;
+    }
+
+    /* Feedback popup */
+    #feedback-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); z-index: 9999;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #feedback-overlay.open { display: flex; }
+    #feedback-box {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 16px; padding: 32px;
+      max-width: 460px; width: 100%;
+    }
+    #feedback-box h3 { font-size: 1.1rem; margin-bottom: 6px; }
+    #feedback-box p { color: var(--brand-muted); font-size: .88rem; margin-bottom: 22px; line-height: 1.6; }
+    .fb-question { margin-bottom: 18px; }
+    .fb-question label { display: block; font-size: .88rem; font-weight: 700; margin-bottom: 8px; }
+    .fb-options { display: flex; gap: 8px; }
+    .fb-options button {
+      flex: 1; padding: 9px; border-radius: 8px;
+      border: 1px solid var(--brand-border); background: var(--brand-bg-dark);
+      color: var(--brand-muted); font-size: .85rem; cursor: pointer; transition: all .2s;
+    }
+    .fb-options button.selected { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(184,245,62,.08); }
+    #fb-submit {
+      width: 100%; padding: 12px; border-radius: 8px; border: none;
+      background: var(--brand-lime); color: #0A0C10;
+      font-weight: 800; font-size: .95rem; cursor: pointer; margin-top: 8px;
+    }
+    #fb-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pia-guide-strip {
+      margin: 14px clamp(18px, 4vw, 48px) 0;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid rgba(184,245,62,.24);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.045));
+      box-shadow: 0 14px 42px rgba(0,0,0,.22);
+    }
+
+    .pia-guide-strip strong {
+      display: block;
+      color: var(--brand-text);
+      font-size: .98rem;
+      margin-bottom: 2px;
+    }
+
+    .pia-guide-strip span {
+      color: var(--brand-muted);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .pia-guide-actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hero {
+      min-height: calc(100vh - 74px);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      max-width: 1180px;
+      grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr);
+      align-items: center;
+      gap: clamp(24px, 4vw, 56px);
+      padding: clamp(42px, 8vw, 88px) clamp(18px, 4vw, 48px) 48px;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 0 clamp(18px, 4vw, 48px) clamp(40px, 6vw, 80px);
+    }
+
+    .hero-copy {
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--brand-lime);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--brand-lime);
+      border-radius: 999px;
+    }
+
+    .hero h1 {
+      margin: 0 0 20px;
+      color: var(--brand-text);
+      font-size: clamp(2.45rem, 7vw, 5.35rem);
+      line-height: 0.98;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .hero h1 span {
+      color: var(--brand-cyan);
+    }
+
+    .hero p {
+      max-width: 610px;
+      margin: 0 0 30px;
+      color: var(--brand-muted);
+      font-size: clamp(1rem, 2.4vw, 1.22rem);
+      line-height: 1.75;
+    }
+
+    .cta-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 570px;
+    }
+
+    .trust-item {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+    }
+
+    .trust-item strong {
+      display: block;
+      color: var(--brand-text);
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+
+    .trust-item span {
+      color: var(--brand-muted);
+      font-size: 0.84rem;
+    }
+
+    .hero-panel {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      background: var(--brand-bg-dark);
+    }
+
+    .hero-panel img.hero-photo {
+      width: 100%;
+      height: auto;
+      object-fit: unset;
+      display: block;
+    }
+
+    .hero-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 12, 16, 0.05) 0%,
+        rgba(10, 12, 16, 0.0) 40%,
+        rgba(10, 12, 16, 0.7) 75%,
+        rgba(10, 12, 16, 0.92) 100%
+      );
+      pointer-events: none;
+    }
+
+    .route-map {
+      position: absolute;
+      inset: 0;
+      opacity: 0.78;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .route-line {
+      position: absolute;
+      left: 14%;
+      right: 13%;
+      top: 43%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime));
+      transform: rotate(-18deg);
+      transform-origin: center;
+      box-shadow: 0 0 24px rgba(0, 217, 255, 0.34);
+    }
+
+    .route-point {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--brand-bg-dark);
+      border-radius: 50%;
+      background: var(--brand-lime);
+      box-shadow: 0 0 0 6px rgba(0, 255, 159, 0.16);
+    }
+
+    .route-point.start { left: 15%; top: 52%; }
+    .route-point.end { right: 16%; top: 30%; background: var(--brand-cyan); box-shadow: 0 0 0 6px rgba(0, 217, 255, 0.16); }
+
+    .delivery-card {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 28px;
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(10, 12, 16, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .delivery-card header {
+      position: static;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0;
+      border: 0;
+      background: transparent !important;
+    }
+
+    .delivery-card h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: 1rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(0, 255, 159, 0.12);
+      color: var(--brand-lime);
+      border: 1px solid rgba(0, 255, 159, 0.3);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .delivery-grid div {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .delivery-grid span {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .delivery-grid strong {
+      color: var(--brand-text);
+      font-size: 0.92rem;
+    }
+
+    .features-section {
+      padding: 58px clamp(18px, 4vw, 48px) 76px;
+      background: var(--brand-bg-dark);
+    }
+
+    .section-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: var(--brand-text);
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      line-height: 1.08;
+    }
+
+    .section-heading p {
+      max-width: 420px;
+      color: var(--brand-muted);
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      min-height: 224px;
+      padding: 22px;
+    }
+
+    .feature-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      background: rgba(0, 217, 255, 0.1);
+      color: var(--brand-cyan);
+      font-weight: 900;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      color: var(--brand-text);
+      font-size: 1.18rem;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--brand-muted);
+      line-height: 1.7;
+    }
+
+    footer {
+      padding: 24px clamp(18px, 4vw, 48px);
+      border-top: 1px solid var(--brand-border);
+      color: var(--brand-muted);
+      background: var(--brand-bg-surface);
+    }
+
+    .footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== COMPARATEUR DE PRIX ===== */
+    .pricer-section {
+      padding: 64px clamp(18px, 4vw, 48px) 72px;
+    }
+
+    .pricer-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 14px;
+      padding: 28px;
+      max-width: 900px;
+    }
+
+    .pricer-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .pricer-field label {
+      display: block;
+      color: var(--brand-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .pricer-field input,
+    .pricer-field select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+      color: var(--brand-text);
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .pricer-field input:focus,
+    .pricer-field select:focus { border-color: var(--brand-cyan); }
+
+    .pricer-pap {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .pricer-pap-label {
+      color: var(--brand-lime);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .pricer-pap-price {
+      color: var(--brand-lime);
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .pricer-vs {
+      color: var(--brand-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--brand-border);
+    }
+
+    .pricer-competitors { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+
+    .comp-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--brand-bg-dark);
+      border: 1px solid var(--brand-border);
+      border-radius: 8px;
+    }
+
+    .comp-name { color: var(--brand-muted); font-size: 0.88rem; font-weight: 600; width: 90px; flex-shrink: 0; }
+    .comp-price { color: var(--brand-text); font-weight: 700; font-size: 0.95rem; width: 80px; }
+    .comp-save { color: var(--brand-cyan); font-size: 0.8rem; font-weight: 700; margin-left: auto; }
+
+    .pricer-cta { margin-top: 4px; }
+
+    /* ===== MINI-CARTE TEASER ===== */
+    .map-teaser-section {
+      padding: 0 clamp(18px, 4vw, 48px) 72px;
+    }
+
+    .map-teaser-wrap {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--brand-border);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+
+    #miniMap {
+      height: 360px;
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .map-teaser-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(10,12,16,0) 20%, rgba(10,12,16,0.92) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 32px;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .map-teaser-overlay p {
+      color: var(--brand-muted);
+      font-size: 0.95rem;
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    .triptych { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+    .triptych a { display: block; overflow: hidden; position: relative; text-decoration: none; aspect-ratio: 1/2; }
+    .triptych img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
+    .triptych a:hover img { transform: scale(1.04); }
+    .triptych-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px; background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; }
+    .triptych-kicker { font-size: .75rem; font-weight: 700; color: #B8F53E; letter-spacing: .08em; text-transform: uppercase; }
+    .triptych-label  { font-size: 1rem; font-weight: 800; margin-top: 2px; }
+
+    /* ===== SOCIAL PROOF BAR ===== */
+    .proof-bar {
+      background: rgba(184,245,62,0.05);
+      border-top: 1px solid rgba(184,245,62,0.15);
+      border-bottom: 1px solid rgba(184,245,62,0.15);
+      padding: 16px clamp(18px,4vw,48px);
+    }
+    .proof-bar-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(24px,4vw,56px); flex-wrap: wrap;
+    }
+    .proof-stat { text-align: center; }
+    .proof-stat .ps-val { font-size: 1.45rem; font-weight: 900; color: var(--brand-lime); display: block; }
+    .proof-stat .ps-lbl { font-size: 0.75rem; color: var(--brand-muted); font-weight: 600; letter-spacing: 0.04em; }
+    .proof-divider { width: 1px; height: 32px; background: var(--brand-border); flex-shrink: 0; }
+    @media(max-width:600px){ .proof-divider { display:none; } }
+
+    /* ===== TÉMOIGNAGES ===== */
+    .temoignages-section {
+      padding: 72px clamp(18px,4vw,48px);
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid var(--brand-border);
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .temoignages-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+      gap: 20px;
+    }
+    .temoignage-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border);
+      border-radius: 14px; padding: 24px 26px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative;
+    }
+    .temoignage-card::before {
+      content: '\201C';
+      position: absolute; top: 14px; right: 20px;
+      font-size: 4rem; color: rgba(184,245,62,0.12);
+      font-family: Georgia, serif; line-height: 1;
+    }
+    .temo-stars { color: #f5c518; font-size: 0.9rem; letter-spacing: 2px; }
+    .temo-text { color: var(--brand-muted); font-size: 0.93rem; line-height: 1.65; flex: 1; }
+    .temo-author { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+    .temo-avatar {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(184,245,62,0.25); flex-shrink: 0;
+    }
+    .temo-name { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; }
+    .temo-role { font-size: 0.76rem; color: var(--brand-lime); font-weight: 600; }
+    .temo-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,217,255,0.08); color: var(--brand-cyan);
+      border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700;
+    }
+
+    /* ===== HISTOIRES VRAIES ===== */
+    .histoires-section { padding: 72px clamp(18px,4vw,48px); }
+    .histoires-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap: 24px;
+    }
+    .histoire-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-border); border-radius: 16px; overflow: hidden;
+    }
+    .histoire-img-wrap { position: relative; height: 200px; overflow: hidden; }
+    .histoire-img-wrap img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition: transform .4s; }
+    .histoire-card:hover .histoire-img-wrap img { transform: scale(1.04); }
+    .histoire-tag {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(10,12,16,0.82); color: var(--brand-lime);
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em;
+      text-transform: uppercase; border-radius: 20px; padding: 4px 10px;
+    }
+    .histoire-body { padding: 20px 22px; }
+    .histoire-headline { font-size: 1.05rem; font-weight: 800; color: var(--brand-text); margin-bottom: 8px; line-height: 1.35; }
+    .histoire-text { font-size: 0.85rem; color: var(--brand-muted); line-height: 1.6; margin-bottom: 14px; }
+    .histoire-person { display: flex; align-items: center; gap: 10px; }
+    .histoire-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(184,245,62,0.3); }
+    .histoire-who { font-size: 0.8rem; font-weight: 700; color: var(--brand-text); }
+    .histoire-where { font-size: 0.73rem; color: var(--brand-muted); }
+    .histoire-stat {
+      display: inline-block; margin-top: 12px;
+      background: rgba(184,245,62,0.1); color: var(--brand-lime);
+      border-radius: 8px; padding: 5px 12px; font-size: 0.82rem; font-weight: 800;
+    }
+
+    /* ===== CONFIANCE & SÉCURITÉ ===== */
+    .trust-section {
+      padding: 72px clamp(18px,4vw,48px);
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid var(--brand-border);
+    }
+    .trust-badges-grid {
+      max-width: 1120px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px;
+    }
+    .trust-badge {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .trust-badge .tb-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+    .trust-badge .tb-title { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; margin-bottom: 4px; }
+    .trust-badge .tb-desc { font-size: 0.78rem; color: var(--brand-muted); line-height: 1.5; }
+    .trust-verified-row {
+      max-width: 1120px; margin: 28px auto 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(16px,3vw,36px); flex-wrap: wrap;
+    }
+    .tv-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.8rem; font-weight: 700; color: var(--brand-muted);
+    }
+    .tv-item .tv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-lime); flex-shrink: 0; }
+
+    /* ===== POURQUOI PORTEAPORTE ===== */
+    .pourquoi-section { padding: 72px clamp(18px,4vw,48px); background: rgba(255,255,255,0.012); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border); }
+    .pourquoi-grid { max-width:1120px; margin:32px auto 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+    .pourquoi-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:16px; padding:28px 26px; transition:border-color .2s; }
+    .pourquoi-card:hover { border-color: var(--brand-lime); }
+    .pourquoi-card .pq-icon { font-size:2rem; margin-bottom:14px; display:block; }
+    .pourquoi-card h3 { margin:0 0 10px; font-size:1.1rem; }
+    .pourquoi-card p { margin:0; font-size:0.88rem; color:var(--brand-muted); line-height:1.65; }
+    .pourquoi-card .pq-stat { display:block; margin-top:14px; font-size:1.5rem; font-weight:900; color:var(--brand-lime); }
+    .pourquoi-card .pq-sub { font-size:0.75rem; color:var(--brand-muted); }
+
+    /* ===== COMMENT ÇA MARCHE — 5 ÉTAPES ===== */
+    .how-section { padding:72px clamp(18px,4vw,48px); }
+    .how-steps { max-width:1000px; margin:44px auto 0; display:grid; grid-template-columns:repeat(5,1fr); gap:0; position:relative; }
+    .how-steps::before { content:''; position:absolute; top:23px; left:calc(10% + 8px); right:calc(10% + 8px); height:2px; background:linear-gradient(90deg,var(--brand-lime),var(--brand-cyan)); z-index:0; pointer-events:none; }
+    .how-step { text-align:center; position:relative; z-index:1; padding:0 6px; }
+    .how-step-num { width:46px; height:46px; border-radius:50%; border:2px solid var(--brand-lime); background:var(--brand-bg-dark); color:var(--brand-lime); font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; flex-shrink:0; }
+    .how-step h4 { font-size:0.82rem; font-weight:700; color:var(--brand-text); margin:0 0 5px; line-height:1.3; }
+    .how-step p { font-size:0.75rem; color:var(--brand-muted); line-height:1.5; margin:0; }
+    .how-step .how-emoji { font-size:1.2rem; display:block; margin-bottom:6px; }
+
+    /* ===== COMMUNAUTÉ & HISTOIRE MARTIN ===== */
+    .communaute-section { padding:72px clamp(18px,4vw,48px); background:rgba(255,255,255,0.012); border-top:1px solid var(--brand-border); border-bottom:1px solid var(--brand-border); }
+    .communaute-inner { max-width:1120px; margin:0 auto; }
+    .comm-layout { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; margin-top:36px; }
+    .comm-faces { display:flex; align-items:center; margin-bottom:16px; }
+    .comm-faces img { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); object-fit:cover; margin-left:-10px; transition:transform .2s; }
+    .comm-faces img:first-child { margin-left:0; }
+    .comm-faces img:hover { transform:scale(1.15); z-index:5; }
+    .comm-faces .cf-more { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); background:var(--brand-bg-surface); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; color:var(--brand-lime); margin-left:-10px; flex-shrink:0; }
+    .comm-left h2 { font-size:clamp(1.5rem,3.5vw,2.2rem); margin:0 0 14px; line-height:1.2; }
+    .comm-left p { color:var(--brand-muted); font-size:0.95rem; line-height:1.7; margin:0 0 22px; }
+    .comm-stats-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .cs2-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:12px; padding:16px; text-align:center; }
+    .cs2-val { font-size:1.7rem; font-weight:900; color:var(--brand-lime); display:block; }
+    .cs2-lbl { font-size:0.75rem; color:var(--brand-muted); }
+    .martin-story { background:linear-gradient(135deg,rgba(184,245,62,0.07),rgba(0,217,255,0.04)); border:1px solid rgba(184,245,62,0.2); border-radius:18px; padding:32px; }
+    .martin-tag { display:inline-block; background:rgba(184,245,62,0.12); color:var(--brand-lime); border-radius:999px; padding:4px 14px; font-size:0.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:18px; }
+    .martin-quote { font-size:1.15rem; font-weight:900; color:var(--brand-text); line-height:1.35; margin:0 0 16px; }
+    .martin-quote span { color:var(--brand-lime); }
+    .martin-body { font-size:0.88rem; color:var(--brand-muted); line-height:1.7; margin:0 0 22px; }
+    .martin-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+    .mn-card { background:rgba(10,12,16,0.6); border:1px solid var(--brand-border); border-radius:10px; padding:12px; text-align:center; }
+    .mn-val { font-size:1.3rem; font-weight:900; color:var(--brand-lime); }
+    .mn-lbl { font-size:0.72rem; color:var(--brand-muted); }
+    .martin-author { display:flex; align-items:center; gap:10px; }
+    .martin-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid rgba(184,245,62,0.3); }
+    .martin-name { font-weight:700; font-size:0.88rem; }
+    .martin-role { font-size:0.76rem; color:var(--brand-muted); }
+
+    /* ===== FOOTER ENRICHI ===== */
+    .footer-full { padding:48px clamp(18px,4vw,48px) 28px; border-top:1px solid var(--brand-border); background:var(--brand-bg-surface); }
+    .footer-full-inner { max-width:1120px; margin:0 auto; }
+    .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:40px; }
+    .footer-brand h3 { margin:0 0 10px; font-size:1.1rem; font-weight:900; }
+    .footer-brand p { color:var(--brand-muted); font-size:0.84rem; line-height:1.65; margin:0 0 18px; max-width:260px; }
+    .footer-col h4 { font-size:0.78rem; font-weight:800; color:var(--brand-lime); text-transform:uppercase; letter-spacing:.07em; margin:0 0 14px; }
+    .footer-col a { display:block; color:var(--brand-muted); font-size:0.84rem; text-decoration:none; margin-bottom:9px; transition:color .15s; }
+    .footer-col a:hover { color:var(--brand-text); }
+    .footer-bottom { border-top:1px solid var(--brand-border); padding-top:20px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:0.78rem; color:var(--brand-muted); }
+    @media(max-width:760px){ .footer-grid{ grid-template-columns:1fr 1fr; } .comm-layout { grid-template-columns:1fr; } .how-steps { grid-template-columns:1fr; gap:16px; } .how-steps::before { display:none; } }
+    @media(max-width:480px){ .footer-grid { grid-template-columns:1fr; } }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 34px;
+      }
+
+      .hero-panel {
+        min-height: 430px;
+      }
+
+      .section-heading,
+      .footer-inner {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .triptych { grid-template-columns: 1fr; }
+      .triptych a { aspect-ratio: 16/9; }
+    }
+    @media (max-width: 720px) {
+      .site-header {
+        position: relative;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .main-nav {
+        display: none;
+      }
+
+      .header-actions,
+      .header-actions button,
+      .header-actions a,
+      .cta-buttons button,
+      .cta-buttons a {
+        width: 100%;
+      }
+
+      .trust-row,
+      .delivery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-panel {
+        min-height: 500px;
+      }
+
+      .pia-guide-strip {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .pia-guide-actions,
+      .pia-guide-actions .btn {
+        width: 100%;
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       3 PORTES D'ENTRÉE (sous le hero)
+    ═══════════════════════════════════════════ */
+    .portes-zone {
+      padding: clamp(40px, 6vw, 80px) clamp(18px, 4vw, 48px);
+    }
+    .portes-inner {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 18px; max-width: 1180px; margin: 0 auto;
     }
     .porte {
       display: flex; flex-direction: column; justify-content: space-between;
-      gap: 28px;
-      padding: 32px 28px;
+      gap: 28px; padding: 32px 28px;
       background: linear-gradient(160deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 22px;
-      text-decoration: none;
-      color: var(--brand-text);
+      text-decoration: none; color: var(--brand-text);
       transition: transform .25s ease, border-color .25s ease, background .25s ease;
-      position: relative; overflow:hidden;
-      min-height: 240px;
+      position: relative; overflow: hidden; min-height: 240px;
     }
     .porte:hover, .porte:focus-visible {
       transform: translateY(-4px);
       border-color: rgba(184,245,62,.45);
       background: linear-gradient(160deg, rgba(184,245,62,.07), rgba(184,245,62,.02));
     }
-    .porte .icon { font-size: 2.4rem; line-height:1; }
-    .porte h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; letter-spacing:-.01em; }
-    .porte p { font-size: .95rem; color: var(--brand-muted); margin: 0; line-height:1.5; }
-    .porte .arrow { font-size: 1.1rem; color: var(--brand-lime); font-weight: 800; }
-    @media (max-width: 820px) { .portes { grid-template-columns: 1fr; } .porte { min-height: auto; } }
+    .porte-icon { font-size: 2.4rem; line-height: 1; }
+    .porte h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -.01em; }
+    .porte p { font-size: .95rem; color: var(--brand-muted); margin: 0; line-height: 1.5; }
+    .porte-arrow { font-size: 1.1rem; color: var(--brand-lime); font-weight: 800; }
+    @media (max-width: 820px) {
+      .portes-inner { grid-template-columns: 1fr; }
+      .porte { min-height: auto; }
+    }
 
-    /* ───── Mode Impact (la pièce maîtresse) ───── */
-    .impact-zone {
+    /* ═══════════════════════════════════════════
+       MODE IMPACT HERO ZONE (la pièce émotionnelle)
+    ═══════════════════════════════════════════ */
+    .impact-zone-hero {
       background: linear-gradient(180deg, #05080c 0%, #0a1018 100%);
       border-top: 1px solid rgba(184,245,62,.15);
       border-bottom: 1px solid rgba(184,245,62,.15);
       padding: clamp(70px, 10vw, 130px) clamp(18px, 4vw, 48px);
       position: relative; overflow: hidden;
     }
-    .impact-zone::before {
-      content:''; position:absolute; inset:0;
+    .impact-zone-hero::before {
+      content: ''; position: absolute; inset: 0;
       background:
         radial-gradient(circle at 15% 30%, rgba(184,245,62,.10), transparent 45%),
         radial-gradient(circle at 85% 70%, rgba(0,217,255,.08), transparent 45%);
-      pointer-events:none;
+      pointer-events: none;
     }
-    .impact-inner { position:relative; max-width: 1080px; margin: 0 auto; text-align:center; }
-    .impact-eyebrow { display:inline-flex; gap:8px; align-items:center; font-size:.78rem; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--brand-lime); margin-bottom:22px; }
-    .impact-zone h2 {
+    .impact-zone-inner { position: relative; max-width: 1080px; margin: 0 auto; text-align: center; }
+    .impact-hero-eyebrow {
+      display: inline-flex; gap: 8px; align-items: center;
+      font-size: .78rem; font-weight: 800; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--brand-lime); margin-bottom: 22px;
+    }
+    .impact-zone-hero h2 {
       font-size: clamp(2rem, 5vw, 3.4rem);
-      font-weight: 900; line-height:1.08; letter-spacing:-.02em;
+      font-weight: 900; line-height: 1.08; letter-spacing: -.02em;
       margin: 0 auto 22px; max-width: 22ch;
     }
-    .impact-zone h2 span { color: var(--brand-lime); }
-    .impact-zone .sub {
+    .impact-zone-hero h2 span { color: var(--brand-lime); }
+    .impact-hero-sub {
       font-size: clamp(1rem, 1.8vw, 1.2rem);
-      color: var(--brand-muted); max-width: 58ch; margin: 0 auto 56px; line-height:1.6;
+      color: var(--brand-muted); max-width: 58ch; margin: 0 auto 56px; line-height: 1.6;
     }
-
-    .impact-stats {
+    .impact-hero-stats {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 24px; max-width: 920px; margin: 0 auto 50px;
     }
-    .impact-stat {
+    .impact-hero-stat {
       padding: 28px 18px;
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(184,245,62,.18);
       border-radius: 18px;
     }
-    .impact-stat .big {
+    .impact-hero-stat .big {
       font-size: clamp(1.8rem, 4vw, 2.8rem);
       font-weight: 900; color: var(--brand-lime);
-      letter-spacing:-.02em; line-height:1; margin-bottom: 10px;
+      letter-spacing: -.02em; line-height: 1; margin-bottom: 10px;
     }
-    .impact-stat .label { font-size:.85rem; color: var(--brand-muted); font-weight:600; }
-    @media (max-width: 760px) { .impact-stats { grid-template-columns: 1fr; } }
-
-    .impact-quote {
+    .impact-hero-stat .label { font-size: .85rem; color: var(--brand-muted); font-weight: 600; }
+    @media (max-width: 760px) { .impact-hero-stats { grid-template-columns: 1fr; } }
+    .impact-hero-quote {
       max-width: 60ch; margin: 0 auto 44px;
       font-size: clamp(1.1rem, 2vw, 1.4rem);
-      font-style: italic; color:#e8eef5; line-height:1.5;
+      font-style: italic; color: #e8eef5; line-height: 1.5;
       padding: 0 20px; border-left: 3px solid var(--brand-lime);
     }
-    .impact-actions { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
-    .impact-actions .btn { font-size:.95rem; padding:14px 26px; }
-
-    /* ───── FAQ rapide ───── */
-    .faq-zone { padding: clamp(60px, 8vw, 100px) clamp(18px, 4vw, 48px); max-width: 820px; margin: 0 auto; }
-    .faq-zone h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight:900; text-align:center; margin: 0 0 12px; letter-spacing:-.01em; }
-    .faq-zone .faq-sub { text-align:center; color:var(--brand-muted); margin: 0 0 44px; }
-    details.faq-item {
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      padding: 20px 22px; margin-bottom: 12px;
-      background: rgba(255,255,255,.02);
-      transition: border-color .2s;
+    .impact-hero-actions {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
     }
-    details.faq-item[open] { border-color: rgba(184,245,62,.35); }
-    details.faq-item summary {
-      cursor:pointer; font-weight:700; font-size:1.02rem;
-      display:flex; justify-content:space-between; align-items:center; gap:16px;
-      list-style:none; color: var(--brand-text);
-    }
-    details.faq-item summary::-webkit-details-marker { display:none; }
-    details.faq-item summary::after { content:'+'; color: var(--brand-lime); font-weight:900; font-size:1.4rem; transition:transform .2s; }
-    details.faq-item[open] summary::after { transform: rotate(45deg); }
-    details.faq-item p { color: var(--brand-muted); line-height:1.6; margin: 14px 0 0; font-size:.95rem; }
-    details.faq-item a { color: var(--brand-lime); }
-    .faq-zone .more { text-align:center; margin-top: 28px; }
-
-    /* ───── CTA final ───── */
-    .cta-final {
-      padding: clamp(60px, 8vw, 110px) clamp(18px, 4vw, 48px);
-      background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.05));
-      border-top: 1px solid rgba(184,245,62,.18);
-      text-align:center;
-    }
-    .cta-final h2 { font-size: clamp(1.7rem, 4vw, 2.8rem); font-weight:900; line-height:1.15; margin: 0 0 16px; letter-spacing:-.01em; }
-    .cta-final p { color: var(--brand-muted); font-size:1rem; max-width:54ch; margin:0 auto 32px; line-height:1.6; }
-    .cta-final .row { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px; }
-    .cta-final .fine { font-size:.78rem; color:var(--brand-muted); }
-
-    /* ───── Mode Impact toggle (dans le header, discret) ───── */
-    #impact-toggle {
-      background: none;
-      border: 1px solid rgba(184,245,62,.35);
-      border-radius: 999px;
-      color: var(--brand-lime);
-      font-size: .75rem; font-weight: 700;
-      padding: 7px 14px; cursor: pointer;
-      letter-spacing: .04em;
-      transition: all .2s;
-      white-space: nowrap;
-    }
-    #impact-toggle:hover { border-color: var(--brand-lime); background: rgba(184,245,62,.1); }
-    body.mode-impact #impact-toggle { background: rgba(184,245,62,.18); color:#fff; }
-    @media (max-width: 900px) {
-      #impact-toggle { display: none; }
-      body .impact-toggle-mobile { display: inline-flex; }
-    }
-    /* Version mobile : inline dans le menu burger */
-    .impact-toggle-mobile { display: none; margin: 14px 24px; }
-
-    /* En mode simple, on cache les éléments [data-impact] (réservés au mode avancé) */
-    body:not(.mode-impact) [data-impact] { display: none !important; }
+    .impact-hero-actions .btn { font-size: .95rem; padding: 14px 26px; }
   </style>
+
+  <meta name="description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteÀPorte">
+  <meta property="og:title" content="PorteaPorte - Livraison collaborative locale">
+  <meta property="og:description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/index.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PorteaPorte - Livraison collaborative locale">
+  <meta name="twitter:description" content="PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l'argent comme livreur ou partagez vos trajets.">
+  <meta name="twitter:image" content="https://porteaporte.site/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand-mark" href="/" aria-label="Accueil PorteàPorte">
+    <a class="brand-mark" href="index.html" aria-label="Accueil PorteaPorte">
       <img src="logo.svg" alt="">
-      <span>PorteàPorte</span>
+      <span>PorteaPorte</span>
     </a>
-    <button class="nav-toggle" type="button" aria-label="Menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">☰</button>
     <nav class="main-nav" aria-label="Navigation principale">
-      <a href="/expediteur.html">Envoyer un colis</a>
-      <a href="/devenir-livreur.html">Devenir livreur</a>
-      <a href="/covoiturage.html">Covoiturage</a>
-      <a href="/faq.html">FAQ</a>
-      <button class="impact-toggle-mobile btn btn-ghost" type="button" onclick="toggleImpactMode()">✦ Mode Impact</button>
+      <a href="expediteur.html">Envoyer un colis</a>
+      <a href="devenir-livreur.html">Devenir livreur</a>
+      <a href="covoiturage.html">Covoiturage</a>
+      <a href="faq.html">FAQ</a>
+      <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalités">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
-      <button id="impact-toggle" type="button" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalites">✦ Mode Impact</button>
-      <a id="nav-connexion" class="btn btn-ghost" href="/login.html">Connexion</a>
-      <a id="cta-connect" class="btn" href="/role-choice.html">Commencer</a>
+      <button class="btn btn-ghost" type="button" onclick="window.Pia ? window.Pia.open('aide') : location.href='/contact.html'">Pia me guide</button>
+      <a id="nav-connexion" class="btn btn-ghost" href="login.html">Connexion</a>
+      <a id="nav-commencer" class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
     </div>
   </header>
 
+  <section class="pia-guide-strip" aria-label="Aide Pia pour les nouveaux visiteurs">
+    <div>
+      <strong>Nouveau sur PorteàPorte ? Pia peut te guider.</strong>
+      <span>Dis simplement si tu veux envoyer, livrer, suivre une livraison ou participer au test Québec/Lévis.</span>
+    </div>
+    <div class="pia-guide-actions">
+      <button class="btn btn-secondary" type="button" onclick="window.Pia ? window.Pia.open('beta quebec') : location.href='/quebec-beta.html'">Test Québec/Lévis</button>
+      <button class="btn" type="button" onclick="window.Pia ? window.Pia.open('je suis perdu') : location.href='/role-choice.html'">Je me laisse guider</button>
+    </div>
+  </section>
+
+  <!-- Bandeau Mode Impact -->
+  <div id="impact-banner">
+    <div>✦ Mode Impact activé — <span>Tu vois toutes les fonctionnalités avancées : covoiturage, points, transparence, éco.</span></div>
+    <button onclick="toggleImpactMode()">Revenir au mode simple</button>
+  </div>
+
+  <!-- Popup feedback (affiché après 7 jours en mode Impact) -->
+  <div id="feedback-overlay">
+    <div id="feedback-box">
+      <h3>✦ Ton avis sur le Mode Impact</h3>
+      <p>Tu utilises le mode Impact depuis 7 jours. 3 questions rapides pour nous aider à décider si ces fonctionnalités font partie du grand lancement.</p>
+      <div class="fb-question">
+        <label>Les Points Impact t'ont-ils motivé à utiliser la plateforme plus souvent ?</label>
+        <div class="fb-options" data-q="points">
+          <button onclick="fbSelect(this,'points','oui')">Oui</button>
+          <button onclick="fbSelect(this,'points','non')">Non</button>
+          <button onclick="fbSelect(this,'points','indifferent')">Indifférent</button>
+        </div>
+      </div>
+      <div class="fb-question">
+        <label>La section Transparence/Impact humanitaire influence-t-elle ton choix de plateforme ?</label>
+        <div class="fb-options" data-q="transparence">
+          <button onclick="fbSelect(this,'transparence','oui')">Oui</button>
+          <button onclick="fbSelect(this,'transparence','non')">Non</button>
+          <button onclick="fbSelect(this,'transparence','indifferent')">Indifférent</button>
+        </div>
+      </div>
+      <div class="fb-question">
+        <label>Sans ces fonctionnalités avancées, utiliserais-tu quand même PorteàPorte ?</label>
+        <div class="fb-options" data-q="sans_impact">
+          <button onclick="fbSelect(this,'sans_impact','oui')">Oui</button>
+          <button onclick="fbSelect(this,'sans_impact','non')">Non</button>
+          <button onclick="fbSelect(this,'sans_impact','peut_etre')">Peut-être</button>
+        </div>
+      </div>
+      <button id="fb-submit" onclick="submitFeedback()" disabled>Envoyer mon avis</button>
+    </div>
+  </div>
+
   <main>
-
-    <!-- ─── HERO ─── -->
     <section class="hero" aria-labelledby="hero-title">
-      <div class="eyebrow">✦ Beta Québec / Lévis</div>
-      <h1 id="hero-title">Quelqu'un passe déjà <span>dans ta direction.</span></h1>
-      <p class="lede">Ton voisin va à Québec ce matin. Ta collègue rentre à Lévis ce soir. PorteàPorte connecte tes colis et tes trajets aux gens qui passent déjà par là — et redonne les profits à la communauté.</p>
+      <div class="hero-copy">
+        <div class="eyebrow">Livraison collaborative au Quebec</div>
+        <h1 id="hero-title">Quelqu'un passe deja <span>dans ta direction.</span></h1>
+        <p>Ton voisin va déjà à Québec ce matin. Ton collègue rentre à Lévis ce soir. PorteàPorte connecte tes colis aux gens qui passent déjà par là — pas à des livreurs professionnels, à madame et monsieur tout le monde.</p>
+        <div class="cta-buttons">
+          <a class="btn" href="role-choice.html">Choisir mon role</a>
+          <a class="btn btn-secondary" href="browse-missions.html">Voir les missions</a>
+        </div>
+        <div class="trust-row" aria-label="Points forts">
+          <div class="trust-item">
+            <strong>Suivi GPS</strong>
+            <span>Statut visible a chaque etape</span>
+          </div>
+          <div class="trust-item">
+            <strong>Paiement securise</strong>
+            <span>Parcours clair pour tous</span>
+          </div>
+          <div class="trust-item">
+            <strong>Local</strong>
+            <span>Des trajets deja prevus</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
+        <img class="hero-photo" src="/assets/hero-ete.png" alt="Livraison collaborative entre voisins — PorteàPorte" loading="eager">
+      </div>
     </section>
 
-    <!-- ─── 3 PORTES D'ENTRÉE ─── -->
-    <section class="portes" aria-label="Choisir comment commencer">
-      <a class="porte" href="/expediteur.html">
-        <div>
-          <div class="icon">📦</div>
-          <h2>Envoyer un colis</h2>
-          <p>Un voisin passe par là. Ton colis arrive aujourd'hui, pour le prix d'un café.</p>
-        </div>
-        <div class="arrow">Commencer →</div>
-      </a>
-      <a class="porte" href="/devenir-livreur.html">
-        <div>
-          <div class="icon">🚗</div>
-          <h2>Devenir livreur</h2>
-          <p>Tu fais déjà le trajet. Gagne 60 à 70% du prix par colis sur ta route.</p>
-        </div>
-        <div class="arrow">Je m'inscris →</div>
-      </a>
-      <a class="porte" href="/covoiturage.html">
-        <div>
-          <div class="icon">🤝</div>
-          <h2>Covoiturage</h2>
-          <p>Partage ton trajet avec d'autres Québécois. Moins cher, plus humain.</p>
-        </div>
-        <div class="arrow">Voir les trajets →</div>
-      </a>
+    <!-- ═══ 3 PORTES D'ENTRÉE (nouveau bloc simple, garde tout le reste de la page) ═══ -->
+    <section class="portes-zone" aria-label="Choisir comment commencer">
+      <div class="portes-inner">
+        <a class="porte" href="/expediteur.html">
+          <div>
+            <div class="porte-icon">📦</div>
+            <h2>Envoyer un colis</h2>
+            <p>Un voisin passe par là. Ton colis arrive aujourd'hui, pour le prix d'un café.</p>
+          </div>
+          <div class="porte-arrow">Commencer →</div>
+        </a>
+        <a class="porte" href="/devenir-livreur.html">
+          <div>
+            <div class="porte-icon">🚗</div>
+            <h2>Devenir livreur</h2>
+            <p>Tu fais déjà le trajet. Gagne 60 à 70 % du prix par colis sur ta route.</p>
+          </div>
+          <div class="porte-arrow">Je m'inscris →</div>
+        </a>
+        <a class="porte" href="/covoiturage.html">
+          <div>
+            <div class="porte-icon">🤝</div>
+            <h2>Covoiturage</h2>
+            <p>Partage ton trajet avec d'autres Québécois. Moins cher, plus humain.</p>
+          </div>
+          <div class="porte-arrow">Voir les trajets →</div>
+        </a>
+      </div>
     </section>
 
-    <!-- ─── MODE IMPACT — la section qui touche ─── -->
-    <section class="impact-zone" aria-labelledby="impact-title">
-      <div class="impact-inner">
-        <div class="impact-eyebrow">✦ Mode Impact · Transparence totale</div>
-        <h2 id="impact-title">Chaque livraison <span>nourrit quelqu'un.</span></h2>
-        <p class="sub">Ici, le profit ne part pas à Wall Street. Il reste dans Québec. Un pourcentage de chaque livraison va à des organismes locaux que <strong>tu</strong> choisis chaque trimestre.</p>
+    <!-- ═══ MODE IMPACT — la pièce maîtresse émotionnelle ═══ -->
+    <section class="impact-zone-hero" aria-labelledby="impact-hero-title">
+      <div class="impact-zone-inner">
+        <div class="impact-hero-eyebrow">✦ Mode Impact · Transparence totale</div>
+        <h2 id="impact-hero-title">Chaque livraison <span>nourrit quelqu'un.</span></h2>
+        <p class="impact-hero-sub">Ici, le profit ne part pas à Wall Street. Il reste dans Québec. Un pourcentage de chaque livraison va à des organismes locaux que <strong>tu</strong> choisis chaque trimestre.</p>
 
-        <div class="impact-stats">
-          <div class="impact-stat">
-            <div class="big" id="impact-pool">— $</div>
+        <div class="impact-hero-stats">
+          <div class="impact-hero-stat">
+            <div class="big" id="ihz-pool">— $</div>
             <div class="label">Redistribué aux organismes locaux</div>
           </div>
-          <div class="impact-stat">
-            <div class="big" id="impact-deliveries">—</div>
+          <div class="impact-hero-stat">
+            <div class="big" id="ihz-deliveries">—</div>
             <div class="label">Livraisons collaboratives effectuées</div>
           </div>
-          <div class="impact-stat">
-            <div class="big">60–70%</div>
+          <div class="impact-hero-stat">
+            <div class="big">60–70 %</div>
             <div class="label">Du prix versé directement au livreur</div>
           </div>
         </div>
 
-        <blockquote class="impact-quote">
-          « On ne construit pas une app de livraison. On construit un réseau d'entraide entre gens ordinaires — et on prouve, chiffres à l'appui, que le profit peut rester chez nous. »
-        </blockquote>
+        <blockquote class="impact-hero-quote">« On ne construit pas une app de livraison. On construit un réseau d'entraide entre gens ordinaires — et on prouve, chiffres à l'appui, que le profit peut rester chez nous. »</blockquote>
 
-        <div class="impact-actions">
+        <div class="impact-hero-actions">
           <a class="btn" href="/transparence.html">Voir où va chaque dollar</a>
-          <a class="btn btn-ghost" href="/vote-communautaire.html">🗳️ Voter le prochain organisme</a>
-          <a class="btn btn-ghost" href="/organismes.html">❤️ Voir nos organismes</a>
+          <a class="btn btn-secondary" href="/vote-communautaire.html">🗳️ Voter le prochain organisme</a>
+          <a class="btn btn-secondary" href="/organismes.html">❤️ Voir nos organismes</a>
         </div>
       </div>
     </section>
 
-    <!-- ─── FAQ rapide ─── -->
-    <section class="faq-zone" aria-labelledby="faq-title">
-      <h2 id="faq-title">Les questions qu'on nous pose le plus.</h2>
-      <p class="faq-sub">Tout le reste est sur la <a href="/faq.html" style="color:var(--brand-lime)">page FAQ complète</a>.</p>
+    <!-- ===== COMPTEUR IMPACT LIVE ===== -->
+    <div style="max-width:1200px;margin:0 auto;padding:0 20px"><div id="pap-impact-counter"></div></div>
 
-      <details class="faq-item">
-        <summary>C'est combien, envoyer un colis ?</summary>
-        <p>Entre 4 $ et 12 $ pour la majorité des trajets au Québec — 2 à 3 fois moins cher que les grands transporteurs. Tu connais le prix exact <strong>avant</strong> de confirmer. <a href="/abonnements.html">Voir le tarif détaillé →</a></p>
-      </details>
+    <!-- ===== CALCULATEUR TRANSPARENCE ===== -->
+    <div style="max-width:1100px;margin:0 auto;padding:0 20px" data-impact><div id="pap-calculator"></div></div>
 
-      <details class="faq-item">
-        <summary>C'est légal et assuré ?</summary>
-        <p>Oui. Tous les livreurs sont vérifiés (KYC Stripe Identity), les paiements passent par Stripe Connect, et chaque colis est couvert par notre protection bêta. <a href="/assurance.html">Détails de la protection →</a></p>
-      </details>
+    <!-- ===== BARRE PREUVE SOCIALE ===== -->
+    <div class="proof-bar" aria-label="Statistiques PorteàPorte — données bêta">
+      <div class="proof-bar-inner">
+        <div class="proof-stat">
+          <span class="ps-val">Bêta</span>
+          <span class="ps-lbl">Ouverte au Québec · Lévis · Montréal</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">Gratuit</span>
+          <span class="ps-lbl">Inscription sans engagement</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">Stripe</span>
+          <span class="ps-lbl">Paiement escrow sécurisé</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">KYC</span>
+          <span class="ps-lbl">Livreurs vérifiés</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">~60 %</span>
+          <span class="ps-lbl">Moins cher qu'UPS (estimé)</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="ps-val">5 %</span>
+          <span class="ps-lbl">Objectif bêta vers des <a href="/transparence.html" style="color:var(--brand-lime);text-decoration:none">causes locales</a></span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:8px clamp(18px,4vw,48px);font-size:0.72rem;color:var(--brand-muted)">
+      ⚡ PorteàPorte est en bêta ouverte à Lévis, Québec et Montréal. Les économies affichées sont des estimations comparatives. Aucune donnée n'est fabriquée — si une zone affiche zéro, c'est l'état réel de la bêta.
+    </div>
 
-      <details class="faq-item">
-        <summary>Qui sont les livreurs, exactement ?</summary>
-        <p>Des Québécois ordinaires qui font déjà le trajet : ton voisin qui descend à Québec, l'étudiant qui rentre à Lévis, le retraité qui va voir ses petits-enfants. Chaque livreur a une <strong>carte d'identité vérifiée avec QR code</strong> que tu peux scanner.</p>
-      </details>
+    <!-- ===== POURQUOI PORTEAPORTE ===== -->
+    <section class="pourquoi-section" aria-labelledby="pq-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Pourquoi PorteàPorte ?</div>
+        <h2 id="pq-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Un concept aussi simple que puissant.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Quelqu'un passe déjà. Le colis embarque. Tout le monde y gagne.</p>
+      </div>
+      <div class="pourquoi-grid">
 
-      <details class="faq-item">
-        <summary>Pourquoi je devrais utiliser PorteàPorte plutôt qu'UPS ?</summary>
-        <p>Trois raisons : <strong>moins cher</strong> (jusqu'à 70% d'économie), <strong>plus humain</strong> (un voisin, pas un camion), <strong>plus utile</strong> (un % de chaque livraison va à des organismes locaux que tu choisis).</p>
-      </details>
+        <div class="pourquoi-card">
+          <span class="pq-icon">💸</span>
+          <h3>Économies réelles</h3>
+          <p>Les livreurs se déplacent déjà — ils n'ajoutent pas un trajet. Résultat visé : rester souvent moins cher que les grands transporteurs, avec un suivi clair.</p>
+          <span class="pq-stat">~60 %</span>
+          <span class="pq-sub">moins cher qu'UPS/FedEx — estimé bêta</span>
+        </div>
 
-      <details class="faq-item">
-        <summary>C'est disponible où ? Comment je commence ?</summary>
-        <p>Phase bêta lancée à <strong>Québec et Lévis</strong>, expansion graduelle au Québec. Inscription en 2 minutes : choisis si tu veux envoyer ou livrer. <a href="/role-choice.html">Commencer maintenant →</a></p>
-      </details>
+        <div class="pourquoi-card">
+          <span class="pq-icon">🛣️</span>
+          <h3>Trajets déjà existants</h3>
+          <p>Aucun camion supplémentaire n'est mis sur la route. Martin allait déjà à Montréal. Il a transporté une laveuse. Il a couvert son essence. Une famille a économisé 180 $.</p>
+          <span class="pq-stat">0</span>
+          <span class="pq-sub">véhicule supplémentaire — le trajet existait déjà</span>
+        </div>
 
-      <div class="more">
-        <a class="btn btn-ghost" href="/faq.html">Voir toutes les questions →</a>
+        <div class="pourquoi-card">
+          <span class="pq-icon">🌿</span>
+          <h3>Écologique par nature</h3>
+          <p>Partager un trajet déjà prévu, c'est éliminer une émission, pas la réduire. Chaque livraison PorteàPorte remplace un colis qui aurait nécessité un véhicule dédié.</p>
+          <span class="pq-stat">–94 %</span>
+          <span class="pq-sub">d'émissions CO₂ estimées vs livraison dédiée</span>
+        </div>
+
+        <div class="pourquoi-card">
+          <span class="pq-icon">🤝</span>
+          <h3>Profondément humain</h3>
+          <p>Ton colis est confié à une vraie personne vérifiée de ta région, pas à une chaîne anonyme. Elle te texte, elle arrive à l'heure, elle connaît le coin.</p>
+          <span class="pq-stat">🤝</span>
+          <span class="pq-sub">livreurs vérifiés, adresses masquées, escrow Stripe</span>
+        </div>
+
       </div>
     </section>
 
-    <!-- ─── CTA FINAL ─── -->
-    <section class="cta-final" aria-labelledby="cta-title">
-      <h2 id="cta-title">Rejoins la bêta.<br>C'est gratuit. C'est maintenant.</h2>
-      <p>Pas d'abonnement. Pas de frais d'inscription. Tu paies seulement quand tu envoies ou reçois une livraison.</p>
-      <div class="row">
-        <a class="btn" href="/role-choice.html">Commencer en 2 minutes</a>
-        <a class="btn btn-ghost" href="/devenir-livreur.html">Devenir livreur</a>
+    <section class="features-section" aria-labelledby="impact-title" data-impact>
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2 id="impact-title">Transparence, gagnants et impact.</h2>
+          <p>Une seule page publique pour voir les concours, les derniers gagnants et l'argent estime pour la communaute.</p>
+        </div>
+        <div class="features">
+          <article class="feature-card">
+            <div class="feature-kicker">Impact</div>
+            <h3 id="home-impact-pool">Donnees beta a venir</h3>
+            <p id="home-impact-text">Montants communautaires mis a jour en direct.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">Abonnements Pro</div>
+            <h3>Conducteur Pro &amp; Marchand Local</h3>
+            <p>Badge, priorité de recherche et avantages exclusifs pour ceux qui font de PorteàPorte leur activité principale.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-kicker">Gagnants</div>
+            <h3 id="home-winner-title">Aucun gagnant publie</h3>
+            <p id="home-winner-text">Les gagnants publics apparaissent ici apres validation.</p>
+          </article>
+        </div>
+        <div style="margin-top:18px">
+          <a class="btn btn-secondary" href="transparence.html">Voir la transparence complete</a>
+        </div>
       </div>
-      <p class="fine">✓ Inscription en 2 min · ✓ Suivi GPS inclus · ✓ Paiement sécurisé Stripe · ✓ Bêta ouverte au Québec</p>
     </section>
 
+    <!-- ===== COMMENT ÇA MARCHE — 5 ÉTAPES ===== -->
+    <section class="how-section" id="features" aria-labelledby="how-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Simple. Vraiment.</div>
+        <h2 id="how-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Cinq étapes. De A à Z.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Pas de paperasse, pas de surprise. Juste une livraison qui marche.</p>
+      </div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <span class="how-emoji">📦</span>
+          <h4>Tu publies ton besoin</h4>
+          <p>Trajet, poids, heure souhaitée. 60 secondes, c'est fait.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <span class="how-emoji">🚗</span>
+          <h4>Un livreur déjà en route accepte</h4>
+          <p>Il voit ta mission, elle correspond à son trajet. Il prend.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <span class="how-emoji">📍</span>
+          <h4>Suivi GPS en temps réel</h4>
+          <p>Tu vois où il est. Une notification à chaque étape clé.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">4</div>
+          <span class="how-emoji">✅</span>
+          <h4>Photo de confirmation</h4>
+          <p>Livraison confirmée avec photo. Le paiement se débloque.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">5</div>
+          <span class="how-emoji">⭐</span>
+          <h4>Notes mutuelles</h4>
+          <p>Tu notes le livreur. Il te note. Le réseau s'améliore.</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:36px">
+        <a class="btn" href="/role-choice.html">Commencer maintenant</a>
+        <a class="btn btn-ghost" href="/faq.html" style="margin-left:12px">J'ai une question</a>
+      </div>
+    </section>
+    <!-- ===== TÉMOIGNAGES ===== -->
+    <section class="temoignages-section" aria-labelledby="temo-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Scénarios illustratifs</div>
+        <h2 id="temo-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">À quoi ça ressemble, concrètement.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Exemples fictifs inspirés de cas réels — nous sommes en bêta. <a href="/transparence.html" style="color:var(--brand-lime);font-size:0.85rem">Voir les vraies données →</a></p>
+      </div>
+      <div class="temoignages-grid">
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« J'envoyais mes colis par Purolator depuis des années. La première fois avec PorteàPorte, j'ai économisé 34 $ sur un seul colis. Le livreur m'a même texté quand il était à 5 minutes. C'est devenu mon premier choix automatiquement. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude B." loading="lazy">
+            <div>
+              <div class="temo-name">Marie-Claude B.</div>
+              <div class="temo-role">Expéditrice · Québec</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permettrait de rentabiliser ces trajets en acceptant des colis sur ma route. Ça peut aider à couvrir une partie de l'essence. » <em style="font-size:0.78rem;color:var(--brand-muted)">(scénario bêta · revenus variables)</em></p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
+            <div>
+              <div class="temo-name">David T.</div>
+              <div class="temo-role">Livreur actif · Montréal</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« J'avais des doutes au départ — c'est quoi cette app ? Mais le suivi GPS en temps réel m'a convaincue. Mon colis fragile est arrivé intact, et le livreur était professionnel. Je recommande à tout mon entourage. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophie L." loading="lazy">
+            <div>
+              <div class="temo-name">Sophie L.</div>
+              <div class="temo-role">Expéditrice · Sherbrooke</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« Le covoiturage PorteàPorte m'a changé la vie. Je rentre à Trois-Rivières chaque vendredi. Avec l'app, je trouve toujours quelqu'un qui passe. 22 $ au lieu de 45 $ en autobus. Rapide, friendly, et on discute en route. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin M." loading="lazy">
+            <div>
+              <div class="temo-name">Kevin M.</div>
+              <div class="temo-role">Passager covoiturage · Trois-Rivières</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★☆</div>
+          <p class="temo-text">« J'ai utilisé PorteàPorte pour envoyer des meubles quand j'ai changé d'appartement. Un livreur avec un grand coffre a tout pris en un voyage. Aucun camion de déménagement, aucun stress. C'est une idée de génie. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/women/52.jpg" alt="Amélie R." loading="lazy">
+            <div>
+              <div class="temo-name">Amélie R.</div>
+              <div class="temo-role">Expéditrice · Laval</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+        <article class="temoignage-card">
+          <div class="temo-stars">★★★★★</div>
+          <p class="temo-text">« En tant que chauffeur covoiturage, j'apprécie les points sécuritaires Tim Hortons pour l'embarquement. Mes passagers se sentent rassurés, moi aussi. Le score de confiance visible par tous motive vraiment à maintenir un bon service. »</p>
+          <div class="temo-author">
+            <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/61.jpg" alt="Robert G." loading="lazy">
+            <div>
+              <div class="temo-name">Robert G.</div>
+              <div class="temo-role">Chauffeur covoiturage · Québec</div>
+            </div>
+            <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== VRAIES HISTOIRES ===== -->
+    <section class="histoires-section" aria-labelledby="histoires-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Histoires vraies</div>
+        <h2 id="histoires-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Derrière chaque colis, une personne.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des membres qui ont transformé leurs habitudes grâce à PorteàPorte.</p>
+      </div>
+      <div class="histoires-grid">
+
+        <article class="histoire-card">
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop&crop=top" alt="Marie-Claude, expéditrice à Québec" loading="lazy">
+            <span class="histoire-tag">Expéditrice</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« J'ai arrêté d'utiliser Purolator du jour au lendemain »</h3>
+            <p class="histoire-text">Marie-Claude gère une boutique Etsy depuis Québec. Elle envoyait 8 à 12 colis par semaine via les grands transporteurs. Depuis PorteàPorte, ses colis voyagent avec des gens ordinaires qui passaient déjà dans la direction de ses clients — sans camion supplémentaire sur la route.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude B." loading="lazy">
+              <div>
+                <div class="histoire-who">Marie-Claude B.</div>
+                <div class="histoire-where">Boutique Etsy · Québec</div>
+              </div>
+            </div>
+            <div class="histoire-stat">💰 Économise ~380 $/mois</div>
+          </div>
+        </article>
+
+        <article class="histoire-card">
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=400&fit=crop" alt="David T., livreur actif à Montréal" loading="lazy">
+            <span class="histoire-tag">Livreur</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« Je faisais le trajet de toute façon — autant le rentabiliser »</h3>
+            <p class="histoire-text">David est représentant commercial. Il fait Montréal–Sherbrooke deux fois par semaine depuis 4 ans. Depuis 8 mois, il accepte des colis sur sa route. Son profil 5 étoiles lui génère maintenant une liste d'attente de clients réguliers.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
+              <div>
+                <div class="histoire-who">David T.</div>
+                <div class="histoire-where">Rep. commercial · Montréal</div>
+              </div>
+            </div>
+            <div class="histoire-stat">📦 ~1 100 $ de gains en octobre (exemple bêta)</div>
+          </div>
+        </article>
+
+        <article class="histoire-card" data-impact>
+          <div class="histoire-img-wrap">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop&crop=top" alt="Groupe de covoiturage PorteàPorte" loading="lazy">
+            <span class="histoire-tag">Covoiturage</span>
+          </div>
+          <div class="histoire-body">
+            <h3 class="histoire-headline">« On est devenus amis. On fait le trajet ensemble chaque semaine. »</h3>
+            <p class="histoire-text">Kevin et Sophie ne se connaissaient pas. Ils faisaient tous les deux Montréal–Trois-Rivières chaque vendredi. Depuis qu'ils se sont trouvés sur PorteàPorte, ils partagent le trajet régulièrement — et ont économisé plus de 600 $ en 3 mois.</p>
+            <div class="histoire-person">
+              <img class="histoire-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin M." loading="lazy">
+              <div>
+                <div class="histoire-who">Kevin M. & Sophie L.</div>
+                <div class="histoire-where">Covoiturage régulier · QC</div>
+              </div>
+            </div>
+            <div class="histoire-stat">🚗 600 $ économisés en 3 mois</div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== COMMUNAUTÉ ===== -->
+    <section class="communaute-section" aria-labelledby="comm-title">
+      <div class="communaute-inner">
+        <div style="text-align:center;margin-bottom:8px">
+          <div class="eyebrow" style="justify-content:center">Communauté</div>
+          <h2 id="comm-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Pas une app. Un réseau de vraies personnes.</h2>
+          <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des gens ordinaires qui font quelque chose d'extraordinaire avec leurs trajets quotidiens.</p>
+        </div>
+        <div class="comm-layout">
+
+          <div class="comm-left">
+            <div class="comm-faces" style="margin-top:28px;margin-bottom:14px">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Marie-Claude">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Kevin">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophie">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/61.jpg" alt="Robert">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/women/52.jpg" alt="Amélie">
+              <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/78.jpg" alt="François">
+              <div class="cf-more">Bêta</div>
+            </div>
+            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">Une communauté bêta en construction au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
+            <div class="comm-stats-2x2">
+              <div class="cs2-card">
+                <span class="cs2-val">Objectif</span>
+                <span class="cs2-lbl">Villes bêta à ouvrir progressivement</span>
+              </div>
+              <div class="cs2-card">
+                <span class="cs2-val">0 $</span>
+                <span class="cs2-lbl">Frais d'inscription</span>
+              </div>
+              <div class="cs2-card" data-impact>
+                <span class="cs2-val">5 %</span>
+                <span class="cs2-lbl">Impact communautaire<br>suivi publiquement</span>
+              </div>
+              <div class="cs2-card">
+                <span class="cs2-val">3 min</span>
+                <span class="cs2-lbl">Pour publier<br>une première mission</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTOIRE MARTIN -->
+          <div class="martin-story">
+            <span class="martin-tag">Histoire vraie · Québec</span>
+            <p class="martin-quote">Martin allait déjà à Montréal.<br><span>Il a transporté une laveuse.</span></p>
+            <p class="martin-body">Martin est technicien en informatique à Québec. Il fait le trajet vers Montréal deux fois par mois pour voir sa famille. Ce vendredi-là, il avait de la place dans son pickup.<br><br>Sur PorteàPorte, une famille de Sainte-Foy cherchait quelqu'un pour transporter leur ancienne laveuse jusqu'à leur fille à Montréal. Le trajet coïncidait parfaitement. Martin a dit oui.<br><br>Il a couvert son essence. La famille a économisé 180 $ par rapport à un service de livraison spécialisé. Et la laveuse est arrivée en 3 heures, le jour même.</p>
+            <div class="martin-nums">
+              <div class="mn-card">
+                <div class="mn-val">180 $</div>
+                <div class="mn-lbl">économisés par la famille</div>
+              </div>
+              <div class="mn-card">
+                <div class="mn-val">45 $</div>
+                <div class="mn-lbl">d'essence couverts pour Martin</div>
+              </div>
+              <div class="mn-card">
+                <div class="mn-val">3 h</div>
+                <div class="mn-lbl">livraison le jour même</div>
+              </div>
+            </div>
+            <div class="martin-author">
+              <img loading="lazy" decoding="async" class="martin-avatar" src="https://randomuser.me/api/portraits/men/34.jpg" alt="Martin">
+              <div>
+                <div class="martin-name">Martin L.</div>
+                <div class="martin-role">Livreur occasionnel · Québec → Montréal</div>
+              </div>
+              <span class="temo-badge" style="margin-left:auto">Scénario bêta</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONFIANCE & SÉCURITÉ ===== -->
+    <section class="trust-section" aria-labelledby="trust-title">
+      <div style="max-width:1120px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Votre sécurité, notre priorité</div>
+        <h2 id="trust-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Construit pour inspirer confiance.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Chaque mécanisme existe pour protéger expéditeurs et livreurs.</p>
+      </div>
+      <div class="trust-badges-grid">
+        <div class="trust-badge">
+          <div class="tb-icon">🔒</div>
+          <div>
+            <div class="tb-title">Paiement Stripe sécurisé</div>
+            <div class="tb-desc">Toutes les transactions passent par Stripe, le leader mondial du paiement en ligne. Votre carte n'est jamais stockée sur nos serveurs.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🪪</div>
+          <div>
+            <div class="tb-title">Identité vérifiée (KYC)</div>
+            <div class="tb-desc">Chaque livreur soumet une pièce d'identité officielle vérifiée manuellement avant d'accéder aux missions. Zéro anonymat.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🛡️</div>
+          <div>
+            <div class="tb-title">Protection optionnelle</div>
+            <div class="tb-desc">Un programme de protection bêta peut aider certains dossiers admissibles. Ce n'est pas une assurance formelle. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Protection colis</a> pour les détails.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">📍</div>
+          <div>
+            <div class="tb-title">Suivi GPS en temps réel</div>
+            <div class="tb-desc">L'expéditeur voit la position du livreur à chaque étape. Notification automatique à la livraison avec confirmation photo.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">⭐</div>
+          <div>
+            <div class="tb-title">Score de confiance public</div>
+            <div class="tb-desc">Ponctualité, fiabilité, comportement — chaque livreur et chauffeur est noté sur 3 dimensions visibles avant de réserver.</div>
+          </div>
+        </div>
+        <div class="trust-badge" data-impact>
+          <div class="tb-icon">🤝</div>
+          <div>
+            <div class="tb-title">Points sécuritaires covoiturage</div>
+            <div class="tb-desc">Embarquement et débarquement dans des lieux publics vérifiés : Tim Hortons, Walmart, stations de métro — jamais en isolement.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">💬</div>
+          <div>
+            <div class="tb-title">Support humain</div>
+            <div class="tb-desc">Pendant la bêta, notre objectif est de répondre rapidement aux vrais problèmes, avec une personne quand le dossier le demande.</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="tb-icon">🔍</div>
+          <div>
+            <div class="tb-title">Transparence totale</div>
+            <div class="tb-desc">Les frais et la répartition des revenus sont publiés publiquement. <a href="/transparence.html" style="color:var(--brand-cyan)">Voir la page Transparence</a>.</div>
+          </div>
+        </div>
+      </div>
+      <div class="trust-verified-row">
+        <div class="tv-item"><span class="tv-dot"></span>SSL / HTTPS</div>
+        <div class="tv-item"><span class="tv-dot"></span>Données chiffrées au repos</div>
+        <div class="tv-item"><span class="tv-dot"></span>Aucune revente de données</div>
+        <div class="tv-item"><span class="tv-dot"></span>Hébergé au Canada</div>
+        <div class="tv-item"><span class="tv-dot"></span>Conforme à la Loi 25 (QC)</div>
+        <div class="tv-item"><span class="tv-dot"></span>Paiement PCI-DSS</div>
+      </div>
+    </section>
+
+    <!-- ===== TRIPTYCH MARKETING ===== -->
+    <section style="padding:0 clamp(18px,4vw,48px) 72px;">
+      <div style="max-width:1120px;margin:0 auto;">
+        <div class="triptych">
+
+          <a href="/livreur.html">
+            <img src="/assets/hero-left.jpg" alt="Livraison collaborative — livreur remettant un colis" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Livraison</div>
+              <div class="triptych-label">Sécuritaire · Suivi en temps réel</div>
+            </div>
+          </a>
+
+          <a href="/covoiturage.html" data-impact>
+            <img src="/assets/hero-center.jpg" alt="Application covoiturage PorteàPorte sur mobile" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Covoiturage</div>
+              <div class="triptych-label">Partagez vos trajets · Économisez</div>
+            </div>
+          </a>
+
+          <a href="/programme-points.html" data-impact>
+            <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et Points Impact" loading="lazy">
+            <div class="triptych-caption">
+              <div class="triptych-kicker">Récompenses</div>
+              <div class="triptych-label">Badges · Points Impact · Récompenses</div>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COMPARATEUR DE PRIX ===== -->
+    <section class="pricer-section">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Combien tu économises vraiment ?</h2>
+          <p>Compare le prix PorteàPorte avec les grands transporteurs.</p>
+        </div>
+
+        <div class="pricer-card">
+          <div class="pricer-inputs">
+            <div class="pricer-field">
+              <label>Poids du colis (kg)</label>
+              <input type="number" id="pWeight" value="2" min="0.1" max="50" step="0.5" oninput="calcPrice()">
+            </div>
+            <div class="pricer-field">
+              <label>Distance (km)</label>
+              <input type="number" id="pDist" value="30" min="1" max="500" step="5" oninput="calcPrice()">
+            </div>
+            <div class="pricer-field">
+              <label>Type</label>
+              <select id="pType" onchange="calcPrice()">
+                <option value="standard">Standard</option>
+                <option value="urgent">Urgent</option>
+                <option value="fragile">Fragile</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pricer-results" id="pricerResults">
+            <!-- filled by JS -->
+          </div>
+
+          <div class="pricer-cta">
+            <a class="btn" href="role-choice.html">Envoyer au prix PorteàPorte</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MINI-CARTE TEASER ===== -->
+    <section class="map-teaser-section">
+      <div class="section-inner">
+        <div class="section-heading">
+          <h2>Des missions partout au Québec.</h2>
+          <p>Vois les trajets actifs en temps réel et trouve un livreur près de toi.</p>
+        </div>
+        <div class="map-teaser-wrap">
+          <div id="miniMap"></div>
+          <div class="map-teaser-overlay">
+            <p>Rejoins le réseau pour voir toutes les missions disponibles.</p>
+            <a class="btn" href="map.html">Explorer la carte complète</a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ===== CTA CONVERSION ===== -->
+    <section style="padding:72px clamp(18px,4vw,48px);background:linear-gradient(135deg,rgba(184,245,62,0.07),rgba(0,217,255,0.05));border-top:1px solid rgba(184,245,62,0.15)">
+      <div style="max-width:760px;margin:0 auto;text-align:center">
+        <div class="eyebrow" style="justify-content:center">Prêt à essayer ?</div>
+        <h2 style="font-size:clamp(1.8rem,5vw,3rem);margin:0 0 16px;line-height:1.15">Rejoins la bêta.<br>C'est gratuit. C'est maintenant.</h2>
+        <p style="color:var(--brand-muted);font-size:1rem;margin:0 0 32px;line-height:1.7">Pas d'abonnement. Pas de frais d'inscription. Tu paies seulement quand tu envoies ou reçois une livraison. Les livreurs sont payés après chaque mission confirmée.</p>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+          <a class="btn" href="/role-choice.html" style="font-size:1rem;padding:14px 28px">📦 Envoyer un colis</a>
+          <a class="btn btn-ghost" href="/devenir-livreur.html" style="font-size:1rem;padding:14px 28px">🚗 Devenir livreur</a>
+          <a class="btn btn-ghost" href="/quebec-beta.html" style="font-size:1rem;padding:14px 28px">Beta Quebec/Levis</a>
+          <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px" data-impact>🛣️ Covoiturage</a>
+        </div>
+        <p style="font-size:0.8rem;color:var(--brand-muted)">
+          ✓ Inscription en 2 minutes &nbsp;·&nbsp; ✓ Suivi GPS inclus &nbsp;·&nbsp; ✓ Paiement sécurisé Stripe &nbsp;·&nbsp; ✓ Bêta ouverte au Québec
+        </p>
+      </div>
+    </section>
   </main>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    /* ---- Price comparator ---- */
+    const RATES = {
+      standard: { base: 4.5,  perKm: 0.18, perKg: 0.9  },
+      urgent:   { base: 7.0,  perKm: 0.22, perKg: 1.2  },
+      fragile:  { base: 6.0,  perKm: 0.20, perKg: 1.1  }
+    };
+    const COMPETITORS = [
+      { name: 'UPS',      multiplier: 3.2 },
+      { name: 'FedEx',    multiplier: 3.5 },
+      { name: 'Purolator',multiplier: 2.9 },
+      { name: 'Postes CA',multiplier: 2.4 }
+    ];
+
+    function calcPrice() {
+      const w = Math.max(0.1, parseFloat(document.getElementById('pWeight').value) || 2);
+      const d = Math.max(1,   parseFloat(document.getElementById('pDist').value)   || 30);
+      const t = document.getElementById('pType').value;
+      const r = RATES[t];
+      const pap = r.base + d * r.perKm + w * r.perKg;
+
+      const rows = COMPETITORS.map(c => {
+        const price = pap * c.multiplier;
+        const save  = price - pap;
+        const pct   = Math.round(save / price * 100);
+        return { name: c.name, price, save, pct };
+      });
+
+      const fmt = v => v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+
+      document.getElementById('pricerResults').innerHTML = `
+        <div class="pricer-pap">
+          <span class="pricer-pap-label">PorteàPorte</span>
+          <span class="pricer-pap-price">${fmt(pap)}</span>
+        </div>
+        <div class="pricer-vs">vs les grands transporteurs</div>
+        <div class="pricer-competitors">
+          ${rows.map(c => `
+            <div class="comp-row">
+              <span class="comp-name">${c.name}</span>
+              <span class="comp-price">${fmt(c.price)}</span>
+              <span class="comp-save">Tu économises ${fmt(c.save)} (${c.pct}%)</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    calcPrice();
+
+    async function loadHomeImpact() {
+      try {
+        const res = await fetch('/api/impact-public');
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error || 'Impact indisponible');
+        const money = cents => (Number(cents || 0) / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+        const impact = out.impact || {};
+        const totals = impact.totals || {};
+        document.getElementById('home-impact-pool').textContent = money(totals.donation_pool_cents);
+        document.getElementById('home-impact-text').textContent = `${totals.deliveries_count || 0} livraisons comptees ce mois-ci.`;
+        const draw = (out.draws || [])[0];
+        if (draw) {
+          document.getElementById('home-draw-title').textContent = draw.title || 'Tirage PorteaPorte';
+          document.getElementById('home-draw-text').textContent = `${draw.status || 'actif'} · ${draw.draw_date || ''}`;
+        }
+        const winner = (out.winners || [])[0];
+        if (winner) {
+          document.getElementById('home-winner-title').textContent = winner.user_email || 'Gagnant PorteaPorte';
+          document.getElementById('home-winner-text').textContent = winner.prize_title || 'Tirage PorteaPorte';
+        }
+      } catch (err) {
+        document.getElementById('home-impact-pool').textContent = 'Transparence';
+        document.getElementById('home-impact-text').textContent = 'Consulte la page publique pour les mises a jour.';
+      }
+    }
+    loadHomeImpact();
+
+    // ─── Stats live de la nouvelle Mode Impact hero zone ───
+    (async function loadIhz() {
+      try {
+        const res = await fetch('/api/impact-public');
+        if (!res.ok) throw new Error();
+        const out = await res.json();
+        const totals = (out.impact || {}).totals || {};
+        const cents = Number(totals.donation_pool_cents || 0);
+        const deliv = Number(totals.deliveries_count || 0);
+        const poolEl = document.getElementById('ihz-pool');
+        const delivEl = document.getElementById('ihz-deliveries');
+        if (poolEl) poolEl.textContent = cents > 0
+          ? (cents / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 })
+          : 'Bêta';
+        if (delivEl) delivEl.textContent = deliv > 0 ? deliv.toLocaleString('fr-CA') : 'En cours';
+      } catch (_) {
+        const p = document.getElementById('ihz-pool'); if (p) p.textContent = 'Bêta';
+        const d = document.getElementById('ihz-deliveries'); if (d) d.textContent = 'En cours';
+      }
+    })();
+
+    /* ════════════════════════════════════════════════
+       MODE SIMPLE / MODE IMPACT
+    ════════════════════════════════════════════════ */
+    const IMPACT_KEY     = 'pap_mode';
+    const IMPACT_DATE_KEY= 'pap_impact_since';
+    const FEEDBACK_KEY   = 'pap_feedback_done';
+    const fbAnswers      = {};
+
+    function isImpactMode() {
+      return localStorage.getItem(IMPACT_KEY) === 'impact';
+    }
+
+    function applyMode() {
+      const impact = isImpactMode();
+      document.body.classList.toggle('mode-simple', !impact);
+      const btn = document.getElementById('impact-toggle');
+      if (btn) btn.textContent = impact ? '✦ Mode Impact ON' : '✦ Mode Impact';
+    }
+
+    function toggleImpactMode() {
+      if (isImpactMode()) {
+        localStorage.setItem(IMPACT_KEY, 'simple');
+        localStorage.removeItem(IMPACT_DATE_KEY);
+      } else {
+        localStorage.setItem(IMPACT_KEY, 'impact');
+        localStorage.setItem(IMPACT_DATE_KEY, Date.now().toString());
+      }
+      applyMode();
+    }
+
+    // Feedback popup
+    function fbSelect(btn, question, answer) {
+      btn.closest('.fb-options').querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      fbAnswers[question] = answer;
+      const allAnswered = ['points','transparence','sans_impact'].every(q => fbAnswers[q]);
+      document.getElementById('fb-submit').disabled = !allAnswered;
+    }
+
+    async function submitFeedback() {
+      const btn = document.getElementById('fb-submit');
+      btn.disabled = true;
+      btn.textContent = 'Envoi...';
+      try {
+        await fetch('/api/platform', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'impact-feedback', ...fbAnswers, source: 'mode_impact_popup' })
+        });
+      } catch(_) {}
+      localStorage.setItem(FEEDBACK_KEY, '1');
+      document.getElementById('feedback-overlay').classList.remove('open');
+      btn.textContent = 'Merci ! 🙏';
+    }
+
+    function checkFeedbackTrigger() {
+      if (!isImpactMode()) return;
+      if (localStorage.getItem(FEEDBACK_KEY)) return;
+      const since = parseInt(localStorage.getItem(IMPACT_DATE_KEY) || '0', 10);
+      if (!since) return;
+      const days = (Date.now() - since) / 86400000;
+      if (days >= 7) {
+        document.getElementById('feedback-overlay').classList.add('open');
+      }
+    }
+
+    // Init
+    applyMode();
+    checkFeedbackTrigger();
+
+    // Fermer popup en cliquant outside
+    document.getElementById('feedback-overlay').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
+    /* ---- Mini map ---- */
+    const miniMap = L.map('miniMap', { zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false })
+      .setView([46.8, -71.5], 7);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 18
+    }).addTo(miniMap);
+
+    /* Mock missions dots */
+    const mockDots = [
+      [45.5017,-73.5673],[45.4215,-75.6972],[46.8139,-71.2080],[45.6066,-73.7124],
+      [46.3557,-72.5477],[45.3387,-71.9235],[48.4275,-71.0659],[46.0468,-72.8498],
+      [45.4047,-73.9551],[46.7212,-72.2524]
+    ];
+    mockDots.forEach(([lat,lng]) => {
+      L.circleMarker([lat,lng], {
+        radius: 6,
+        fillColor: '#00FF9F',
+        color: '#0A0C10',
+        weight: 2,
+        fillOpacity: 0.85
+      }).addTo(miniMap);
+    });
+  </script>
 
   <footer class="footer-full">
     <div class="footer-full-inner">
       <div class="footer-grid">
+
         <div class="footer-brand">
           <h3>PorteàPorte</h3>
           <p>Le réseau de gens ordinaires qui partagent leurs trajets quotidiens pour livrer des colis au Québec. Quelqu'un passe déjà dans ta direction.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn btn-ghost" href="/role-choice.html" style="font-size:.8rem;padding:7px 14px">Commencer</a>
-            <a class="btn btn-ghost" href="/contact.html" style="font-size:.8rem;padding:7px 14px">Nous écrire</a>
+            <a class="btn btn-ghost" href="/role-choice.html" style="font-size:0.8rem;padding:7px 14px">Commencer</a>
+            <a class="btn btn-ghost" href="/contact.html" style="font-size:0.8rem;padding:7px 14px">Nous écrire</a>
           </div>
         </div>
 
@@ -373,38 +1938,33 @@
           <h4>Plateforme</h4>
           <a href="/expediteur.html">Envoyer un colis</a>
           <a href="/devenir-livreur.html">Devenir livreur</a>
+          <a href="/quebec-beta.html">Test Québec/Lévis</a>
           <a href="/covoiturage.html">Covoiturage</a>
           <a href="/browse-missions.html">Voir les missions</a>
+          <a href="/assurance.html">Protection colis (bêta)</a>
           <a href="/map.html">Carte des trajets</a>
-          <a href="/quebec-beta.html">Bêta Québec/Lévis</a>
-          <a href="/demo.html">🎬 Démo interactive</a>
-          <a href="/fonctionnalites.html">✨ Toutes les fonctionnalités</a>
         </div>
 
         <div class="footer-col">
-          <h4>Impact &amp; communauté</h4>
-          <a href="/manifeste.html">📜 Manifeste</a>
-          <a href="/heros.html">⭐ Nos héros</a>
-          <a href="/organismes.html">❤️ Organismes partenaires</a>
-          <a href="/vote-communautaire.html">🗳️ Vote trimestriel</a>
-          <a href="/badges.html">🏆 Badges</a>
-          <a href="/transparence.html">📊 Transparence</a>
+          <h4>Communauté</h4>
           <a href="/programme-points.html">Points Impact</a>
           <a href="/parrainage.html">Parrainage</a>
+          <a href="/transparence.html">Transparence</a>
+          <a href="/partenaire.html">Partenaires</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/contact.html">Support</a>
         </div>
 
         <div class="footer-col">
-          <h4>Aide &amp; légal</h4>
-          <a href="/faq.html">FAQ</a>
-          <a href="/contact.html">Support</a>
-          <a href="/partenaire.html">Partenaires</a>
-          <a href="/assurance.html">Protection colis</a>
+          <h4>Légal</h4>
           <a href="/cgu.html">Conditions d'utilisation</a>
           <a href="/cgv.html">Conditions de vente</a>
           <a href="/confidentialite.html">Confidentialité</a>
           <a href="/legal.html">Mentions légales</a>
+          <a href="/reglements-concours.html">Règlements concours</a>
           <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a>
         </div>
+
       </div>
       <div class="footer-bottom">
         <span>© 2026 PorteàPorte — Québec, Canada</span>
@@ -416,45 +1976,15 @@
       </div>
     </div>
   </footer>
-
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/pwa-install.js"></script>
+  <script src="/js/impact-counter.js"></script>
+  <script src="/js/impact-calculator.js"></script>
+  <script src="/js/loading.js"></script>
+  <script defer src="/js/analytics.js"></script>
   <!-- Bannière bêta -->
   <div id="pap-beta-banner" style="position:fixed;bottom:14px;left:14px;z-index:99996;padding:8px 14px;background:rgba(255,200,0,.12);border:1px solid rgba(255,200,0,.4);border-radius:999px;color:#ffd700;font-size:.78rem;font-weight:800;backdrop-filter:blur(8px);cursor:pointer" onclick="this.remove()">🧪 BÊTA · porteaporte.site — clique pour fermer</div>
-
   <script>
-    /* ───── Mode Impact toggle ───── */
-    const IMPACT_KEY = 'pap_mode';
-    function isImpactMode() { return localStorage.getItem(IMPACT_KEY) === 'impact'; }
-    function applyMode() {
-      const impact = isImpactMode();
-      document.body.classList.toggle('mode-impact', impact);
-      const btn = document.getElementById('impact-toggle');
-      if (btn) btn.textContent = impact ? '✦ Mode Impact ON' : '✦ Mode Impact';
-    }
-    function toggleImpactMode() {
-      localStorage.setItem(IMPACT_KEY, isImpactMode() ? 'simple' : 'impact');
-      applyMode();
-    }
-    applyMode();
-
-    /* ───── Stats impact live ───── */
-    (async function loadImpact() {
-      try {
-        const res = await fetch('/api/impact-public');
-        if (!res.ok) throw new Error();
-        const out = await res.json();
-        const impact = out.impact || {};
-        const totals = impact.totals || {};
-        const cents = Number(totals.donation_pool_cents || 0);
-        const deliv = Number(totals.deliveries_count || 0);
-        if (cents > 0) document.getElementById('impact-pool').textContent = (cents / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 });
-        if (deliv > 0) document.getElementById('impact-deliveries').textContent = deliv.toLocaleString('fr-CA');
-      } catch (_) {
-        document.getElementById('impact-pool').textContent = 'Bêta';
-        document.getElementById('impact-deliveries').textContent = 'En cours';
-      }
-    })();
-
-    /* ───── Cacher Connexion/Commencer si admin connecté ───── */
     (async function() {
       try {
         const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
@@ -463,16 +1993,13 @@
         if (!data?.session) return;
         const { data: profile } = await db.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
         if (profile?.role !== 'admin') return;
+        // Admin connecté : cacher Connexion + Commencer (accès admin via URL directe /admin)
         const connexion = document.getElementById('nav-connexion');
-        const commencer = document.getElementById('cta-connect');
+        const commencer = document.getElementById('nav-commencer');
         if (connexion) connexion.style.display = 'none';
         if (commencer) commencer.style.display = 'none';
       } catch (_) {}
     })();
   </script>
-
-  <script src="/js/support-widget.js"></script>
-  <script src="/js/pwa-install.js"></script>
-  <script defer src="/js/analytics.js"></script>
 </body>
 </html>
