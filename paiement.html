@@ -596,7 +596,19 @@ async function handlePayment(){
       throw new Error(error.message);
     }
 
-    // 3. Les fonds restent proteges: capture uniquement apres confirmation reception.
+    // 3. Synchroniser le statut serveur seulement apres confirmation Stripe.
+    if (paymentIntent?.status === 'requires_capture') {
+      await fetch('/api/paiement-livraison', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ livraison_id: livraisonId, currency: 'cad' })
+      }).catch((syncErr) => console.warn('[paiement] sync requires_capture:', syncErr.message));
+    }
+
+    // 4. Les fonds restent proteges: capture uniquement apres confirmation reception.
     const montant = piData.montant_dollars || ((paymentIntent.amount || 0) / 100).toFixed(2);
     window.location.href = `/confirmation.html?type=livraison&livraison_id=${encodeURIComponent(livraisonId)}&montant=${montant}&pi=${paymentIntent.id}`;
 

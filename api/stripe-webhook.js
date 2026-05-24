@@ -155,6 +155,64 @@ module.exports = async function handler(req, res) {
       { status: 'available', stripe_transfer_id: null });
   }
 
+  /* ── payment_intent.amount_capturable_updated ──────────── */
+  /* Carte confirmée, fonds autorisés, capture manuelle prête */
+  if (type === 'payment_intent.amount_capturable_updated') {
+    const livraisonId = obj.metadata?.livraison_id;
+    if (livraisonId && obj.status === 'requires_capture') {
+      await sbPatch(sbUrl, sbKey, 'livraisons',
+        `id=eq.${encodeURIComponent(livraisonId)}`,
+        {
+          statut: 'paiement_autorise',
+          stripe_payment_intent: obj.id,
+          payment_intent_id: obj.id
+        }).catch(() => {});
+
+      await sbPatch(sbUrl, sbKey, 'transactions',
+        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
+        { statut: 'requires_capture' }).catch(() => {});
+
+      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        livraison_id: livraisonId,
+        user_id: obj.metadata?.expediteur_id || null,
+        actor_id: obj.metadata?.expediteur_id || null,
+        event_type: 'payment_authorized_requires_capture_webhook',
+        amount_cents: obj.amount_capturable || obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status,
+        evidence: { source: 'api/stripe-webhook', event_id: event.id }
+      }).catch(() => {});
+    }
+  }
+
+  /* ── payment_intent.succeeded ───────────────────────────── */
+  /* Capture complétée : garder Supabase aligné avec Stripe    */
+  if (type === 'payment_intent.succeeded') {
+    const livraisonId = obj.metadata?.livraison_id;
+    if (livraisonId) {
+      await sbPatch(sbUrl, sbKey, 'transactions',
+        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
+        { statut: 'succeeded' }).catch(() => {});
+
+      await sbPatch(sbUrl, sbKey, 'livraisons',
+        `id=eq.${encodeURIComponent(livraisonId)}`,
+        { statut: 'payee' }).catch(() => {});
+
+      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        livraison_id: livraisonId,
+        user_id: obj.metadata?.expediteur_id || null,
+        actor_id: null,
+        event_type: 'payment_intent_succeeded_webhook_reconciled',
+        amount_cents: obj.amount_received || obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status,
+        evidence: { source: 'api/stripe-webhook', event_id: event.id }
+      }).catch(() => {});
+    }
+  }
+
   /* ── payout.paid ────────────────────────────────────────── */
   /* Virement arrivé sur le compte bancaire du livreur        */
   if (type === 'payout.paid') {

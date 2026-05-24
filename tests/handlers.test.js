@@ -215,6 +215,84 @@ describe('paiement-livraison handler', () => {
     await handler(req, res);
     assert.equal(res._status, 400);
   });
+
+  test('nouveau PaymentIntent non confirme ne publie pas la livraison aux livreurs', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'user-123', email: 'e@test.com' }) };
+      }
+      if (url.includes('/rest/v1/livraisons') && (opts.method || 'GET') === 'GET') {
+        return { ok: true, status: 200, json: async () => [{ id: 'liv-1', code: 'L1', expediteur_id: 'user-123', prix_total: 5.60, statut: 'en_attente' }] };
+      }
+      if (url.includes('/rest/v1/transactions?livraison_id=eq.liv-1')) {
+        return { ok: true, status: 200, json: async () => [] };
+      }
+      if (url === 'https://api.stripe.com/v1/payment_intents' && opts.method === 'POST') {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_new', client_secret: 'cs_new', status: 'requires_payment_method', amount: 560, currency: 'cad' }) };
+      }
+      if (url.includes('/rest/v1/transactions') && opts.method === 'POST') {
+        return { ok: true, status: 201, json: async () => ({}) };
+      }
+      if (url.includes('/rest/v1/transaction_audit_events') && opts.method === 'POST') {
+        return { ok: true, status: 201, json: async () => ({}) };
+      }
+      if (url.includes('/rest/v1/livraisons') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, json: async () => ({}), text: async () => '' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+
+    const req = makeReq({ body: { livraison_id: 'liv-1' }, headers: { authorization: 'Bearer valid-token' } });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    const livraisonPatch = calls.find(c => c.url.includes('/rest/v1/livraisons') && c.method === 'PATCH');
+    assert.ok(livraisonPatch, 'PaymentIntent id doit etre sauvegarde sur la livraison');
+    const body = JSON.parse(livraisonPatch.body);
+    assert.equal(body.stripe_payment_intent, 'pi_new');
+    assert.equal(body.statut, undefined, 'statut paiement_autorise interdit avant confirmation carte');
+  });
+
+  test('PaymentIntent requires_capture synchronise la livraison en paiement_autorise', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'user-123', email: 'e@test.com' }) };
+      }
+      if (url.includes('/rest/v1/livraisons') && (opts.method || 'GET') === 'GET') {
+        return { ok: true, status: 200, json: async () => [{ id: 'liv-1', code: 'L1', expediteur_id: 'user-123', prix_total: 5.60, statut: 'en_attente' }] };
+      }
+      if (url.includes('/rest/v1/transactions?livraison_id=eq.liv-1')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'tx-1', stripe_payment_intent: 'pi_ready', created_at: '2026-01-01', statut: 'requires_payment_method' }] };
+      }
+      if (url.includes('api.stripe.com/v1/payment_intents/pi_ready')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_ready', client_secret: 'cs_ready', status: 'requires_capture', amount: 560, currency: 'cad' }) };
+      }
+      if (url.includes('/rest/v1/livraisons') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, json: async () => ({}), text: async () => '' };
+      }
+      if (url.includes('/rest/v1/transactions?id=eq.tx-1') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, json: async () => ({}), text: async () => '' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+
+    const req = makeReq({ body: { livraison_id: 'liv-1' }, headers: { authorization: 'Bearer valid-token' } });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.already_authorized, true);
+    const livraisonPatch = calls.find(c => c.url.includes('/rest/v1/livraisons') && c.method === 'PATCH');
+    assert.ok(livraisonPatch, 'livraison doit etre synchronisee');
+    const body = JSON.parse(livraisonPatch.body);
+    assert.equal(body.statut, 'paiement_autorise');
+    assert.equal(body.stripe_payment_intent, 'pi_ready');
+  });
 });
 
 // ─── Tests platform.js dispatcher ─────────────────────────────────────────────
