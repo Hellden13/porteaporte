@@ -2359,7 +2359,7 @@
       ]);
 
       if (codesErr || refErr) {
-        const msg = codesErr?.message || refErr?.message || 'Erreur chargement parrainage';
+        const msg = codesErr?.message || refErr?.message || 'Parrainage indisponible';
         document.getElementById('par-codes-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${msg}</td></tr>`;
         document.getElementById('par-referrals-body').innerHTML = `<tr><td colspan="5" class="empty-msg">${msg}</td></tr>`;
         return;

@@ -89,7 +89,7 @@
     </div>
 
     <div id="principal-zone"></div>
-    <div id="orgs-list" class="orgs-grid"><p style="color:var(--brand-muted);text-align:center;grid-column:1/-1">Chargement…</p></div>
+    <div id="orgs-list" class="orgs-grid"><p style="color:var(--brand-muted);text-align:center;grid-column:1/-1">Les organismes partenaires apparaitront ici pendant la beta.</p></div>
 
     <div class="info-section">
       <h2>🔍 Comment ça marche</h2>
@@ -148,7 +148,7 @@
           document.getElementById('orgs-list').innerHTML = '<p style="text-align:center;color:var(--brand-muted);grid-column:1/-1;padding:40px">Premier appel à partenaires en cours. Tu veux être le premier ? <a href="mailto:denismorneaubtc@gmail.com" style="color:var(--brand-lime)">Contacte-nous</a></p>';
         }
       } catch (e) {
-        document.getElementById('orgs-list').innerHTML = '<p style="color:#ffb0b0">Erreur de chargement</p>';
+        document.getElementById('orgs-list').innerHTML = '<p style="color:#ffb0b0">Organismes indisponibles pour le moment.</p>';
       }
     }
     load();

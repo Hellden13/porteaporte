@@ -561,7 +561,7 @@ async function loadRide() {
     rideSettings = settingsData.settings || settingsData || {};
     renderRide(ridePayload);
   } catch(e) {
-    showToast('Erreur de chargement : ' + e.message, 'error');
+    showToast('Trajet indisponible : ' + e.message, 'error');
   }
 }
 

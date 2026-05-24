@@ -36,7 +36,7 @@
       <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
     </div>
     <p class="meta" style="margin-bottom:16px">Compare la selfie du pickup avec la selfie KYC pour aider la vérification d'identité. Le résultat reste une aide à la décision et doit être confirmé par un admin.</p>
-    <div id="loading" class="empty">Chargement des modèles IA (~7 MB)…</div>
+    <div id="loading" class="empty">Preparation de l'aide IA de verification (~7 MB)...</div>
     <div id="list"></div>
   </main>
 
@@ -55,7 +55,7 @@
         document.getElementById('loading').textContent = '✅ Modèles IA chargés';
         await load();
       } catch (e) {
-        document.getElementById('loading').innerHTML = '❌ Erreur chargement IA : ' + e.message;
+        document.getElementById('loading').innerHTML = 'Erreur preparation IA : ' + e.message;
       }
     }
 
@@ -90,7 +90,7 @@
           <div class="compare">
             <div class="photo-box">
               <div class="label">📋 Selfie KYC (inscription)</div>
-              <div id="kyc-${l.id}">${kycMap[l.livreur_id] ? '<div class="missing">Chargement…</div>' : '<div class="missing">⚠️ Aucune selfie KYC</div>'}</div>
+              <div id="kyc-${l.id}">${kycMap[l.livreur_id] ? '<div class="missing">Preparation de la selfie KYC...</div>' : '<div class="missing">Aucune selfie KYC</div>'}</div>
             </div>
             <div class="photo-box">
               <div class="label">📷 Selfie pickup (livraison)</div>

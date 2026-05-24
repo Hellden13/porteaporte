@@ -113,8 +113,8 @@
           totalRows += n;
           return `  ${t}: ${n} rows`;
         }).join('\n');
-        progress.textContent = `✅ Backup généré (${totalRows} lignes au total)\n${stats}\n\n📥 Téléchargement...`;
-        // Téléchargement
+        progress.textContent = `Backup genere (${totalRows} lignes au total)\n${stats}\n\nPreparation du fichier...`;
+        // Preparation du telechargement
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         async function startClientTracking() {
             if (!livraisonId) { document.getElementById('client-status').textContent = "Aucune livraison dans l'URL."; return; }
-            document.getElementById('client-status').textContent = 'Chargement...';
+            document.getElementById('client-status').textContent = 'Recherche du suivi en cours...';
             await fetchLivreurPosition();
             clientPollInterval = setInterval(fetchLivreurPosition, 10000);
         }
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 updateStatus('active', '🟢 Livreur en route');
             } catch (err) {
                 console.error('fetchLivreurPosition:', err);
-                document.getElementById('client-status').textContent = 'Erreur de chargement.';
+                document.getElementById('client-status').textContent = 'Suivi indisponible pour le moment.';
             }
         }
 

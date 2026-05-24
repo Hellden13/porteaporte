@@ -191,7 +191,7 @@
       try{
         const res=await fetch('/api/impact-public');
         const out=await res.json();
-        if(!res.ok)throw new Error(out.error||'Chargement impossible');
+        if(!res.ok)throw new Error(out.error||'Donnees de transparence indisponibles');
         const impact=out.impact;
         document.getElementById('impact-month').textContent=monthLabel(impact.month);
         document.getElementById('impact-generated').textContent='Mise à jour '+new Date(impact.generated_at).toLocaleString('fr-CA');

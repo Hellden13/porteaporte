@@ -170,8 +170,8 @@
         missions = out.livraisons || [];
         renderMissions(out.transport_mode || 'unknown');
       } catch (err) {
-        console.error('Erreur chargement missions:', err);
-        setStatus(err.message || 'Erreur lors du chargement des missions', 'error');
+        console.error('Missions indisponibles:', err);
+        setStatus(err.message || 'Missions indisponibles pour le moment', 'error');
         document.getElementById('missions-list').innerHTML = '';
       }
     }
@@ -446,4 +446,3 @@
   <script src="/js/gps-tracker.js"></script>
 </body>
 </html>
-

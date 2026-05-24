@@ -787,7 +787,7 @@
                 console.error('ERREUR livraisons expediteur:', error.message);
                 document.getElementById('missions-container').innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-title">Erreur chargement</div>
+                        <div class="empty-state-title">Livraisons indisponibles</div>
                         <div class="empty-state-text">${error.message}</div>
                         <button class="btn btn-primary" type="button" onclick="loadMissions()">Réessayer</button>
                     </div>

@@ -1087,7 +1087,7 @@
           body: JSON.stringify({})
         });
         const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Chargement impossible');
+        if (!res.ok) throw new Error(out.error || 'Tableau de bord indisponible');
 
         // Points Impact (anciennement PorteCoins)
         document.getElementById('porteCoinsBalance').textContent = `${out.points_balance || 0} pts`;
@@ -1545,7 +1545,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Restaurer tab au chargement
+    // Restaurer l'onglet au demarrage
     window.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('pap_livreur_tab') || 'encours';
       setTimeout(() => switchTab(saved), 200);
@@ -1742,7 +1742,7 @@
       }
     }
 
-    // Pré-remplir la route depuis le profil au chargement
+    // Pre-remplir la route depuis le profil au demarrage
     async function loadRouteIntoForm() {
       const { data: p } = await db.from('profiles').select('route_origine,route_destination,route_deviation_km,route_date,route_heure_debut,route_heure_fin').eq('id', session.user.id).single();
       if (!p) return;
@@ -2116,7 +2116,7 @@
           body: JSON.stringify({})
         });
         const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Chargement des missions impossible');
+        if (!res.ok) throw new Error(out.error || 'Missions indisponibles');
         const data = (out.livraisons || []).slice(0, 5);
         if (!data.length) {
           el.innerHTML = '<div class="empty-msg">Aucune mission compatible en ce moment. Reviens plus tard !</div>';
@@ -2163,7 +2163,7 @@
           body: JSON.stringify({})
         });
         const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Chargement des livraisons impossible');
+        if (!res.ok) throw new Error(out.error || 'Livraisons indisponibles');
         const data = (out.livraisons || [])
           .filter(row => !['livre', 'annule', 'annulee', 'payee', 'paid', 'succeeded'].includes(row.statut))
           .slice(0, 10);
@@ -2414,13 +2414,13 @@
           }
         }
       } catch (e) {
-        area.innerHTML = `<p style="color:#ff4d4d;font-size:.83rem">Erreur chargement : ${e.message}</p>`;
+        area.innerHTML = `<p style="color:#ff4d4d;font-size:.83rem">Impossible d'afficher cette section : ${e.message}</p>`;
       }
     }
 
     window.startOnboarding = async function() {
       const btn = event.currentTarget || document.querySelector('[onclick="startOnboarding()"]');
-      if (btn) { btn.disabled = true; btn.textContent = 'Chargement…'; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Ouverture...'; }
       try {
         const data = await apiCall('stripe-connect-onboard', 'POST', {});
         if (data.onboarding_url) {
