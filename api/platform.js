@@ -3531,6 +3531,13 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
     if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);
+    if (endpoint === 'organismes-list') {
+      const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const orgs = r.ok ? await r.json() : [];
+      return res.status(200).json({ success: true, organismes: orgs });
+    }
     if (endpoint === 'public-impact-stats') {
       // Stats publiques (pas d'auth requise) - pour compteur live
       const stats = { livraisons: 0, livreurs: 0, dons_cause: 0, co2_evite_kg: 0, communautes: 0 };

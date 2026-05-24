@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organismes - Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; }
+    .org-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .org-card.principal { border-color: rgba(184,245,62,.5); background: rgba(184,245,62,.04); }
+    .org-card h3 { margin: 0 0 6px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
+    .badge.principal { background: rgba(184,245,62,.2); color: var(--brand-lime); }
+    .badge.inactif { background: rgba(168,176,186,.15); color: #a8b0ba; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+    .form-grid label { display: block; font-size: .78rem; color: var(--brand-muted); margin-bottom: 4px; font-weight: 700; }
+    .form-grid input, .form-grid textarea, .form-grid select { width: 100%; padding: 10px; background: #05080c; color: #fff; border: 1px solid #1E2535; border-radius: 8px; font-size: .9rem; box-sizing: border-box; }
+    .form-grid .span-2 { grid-column: span 2; }
+    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .btn-sm { padding: 8px 14px; border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer; border: none; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>❤️ Organismes partenaires</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+    </div>
+
+    <div class="org-card" style="border:1px dashed var(--brand-border)">
+      <h3>+ Ajouter un nouvel organisme</h3>
+      <div class="form-grid">
+        <div><label>Nom</label><input id="new-nom" type="text" placeholder="Banque alimentaire du Québec"></div>
+        <div><label>Slug (URL)</label><input id="new-slug" type="text" placeholder="banque-alimentaire-qc"></div>
+        <div class="span-2"><label>Description courte</label><input id="new-desc" type="text" placeholder="Distribue 30 000 paniers/mois aux familles du Québec"></div>
+        <div class="span-2"><label>Mission</label><textarea id="new-mission" rows="2" placeholder="Combattre l'insécurité alimentaire au Québec en distribuant..."></textarea></div>
+        <div><label>Région</label><input id="new-region" type="text" placeholder="Tout le Québec"></div>
+        <div><label>Cause</label><input id="new-cause" type="text" placeholder="Insécurité alimentaire"></div>
+        <div><label>Site web</label><input id="new-site" type="url" placeholder="https://..."></div>
+        <div><label>N° OBNL (NEQ)</label><input id="new-neq" type="text" placeholder="1234567890"></div>
+        <div><label>Logo URL</label><input id="new-logo" type="url" placeholder="https://..."></div>
+        <div><label>Ordre d'affichage</label><input id="new-ordre" type="number" value="10"></div>
+        <div class="span-2">
+          <label style="display:flex;gap:10px;align-items:center;font-weight:600;color:var(--brand-text)">
+            <input id="new-principal" type="checkbox"> Organisme principal (affiché en grand sur la page)
+          </label>
+        </div>
+      </div>
+      <button class="btn-sm" style="background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006" onclick="addOrg()">➕ Créer l'organisme</button>
+      <div id="add-msg" style="margin-top:10px;font-size:.85rem"></div>
+    </div>
+
+    <div id="list"><p style="text-align:center;color:var(--brand-muted)">Chargement…</p></div>
+  </main>
+
+  <script>
+    let session = null, db = null;
+    async function init() {
+      db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      const { data: sess } = await db.auth.getSession();
+      if (!sess?.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      await load();
+    }
+
+    async function load() {
+      const { data } = await db.from('organismes_partenaires').select('*').order('ordre', { ascending: true });
+      const list = document.getElementById('list');
+      if (!data?.length) { list.innerHTML = '<div style="text-align:center;color:var(--brand-muted);padding:30px">Aucun organisme</div>'; return; }
+      list.innerHTML = data.map(o => `
+        <div class="org-card ${o.est_principal ? 'principal' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap">
+            <div>
+              <h3>${o.nom} ${o.est_principal ? '<span class="badge principal">PRINCIPAL</span>' : ''} ${!o.actif ? '<span class="badge inactif">INACTIF</span>' : ''}</h3>
+              <div style="color:var(--brand-muted);font-size:.85rem">${o.cause || ''} · ${o.region || ''}</div>
+            </div>
+            <div style="font-weight:900;color:var(--brand-lime)">${Number(o.total_recu_cad||0).toFixed(0)} $ reçus</div>
+          </div>
+          ${o.description ? `<p style="color:#a8b0ba;font-size:.9rem;line-height:1.6;margin:10px 0">${o.description}</p>` : ''}
+          <div class="actions">
+            ${!o.est_principal ? `<button class="btn-sm" style="background:rgba(184,245,62,.15);color:var(--brand-lime);border:1px solid rgba(184,245,62,.4)" onclick="setPrincipal('${o.id}')">⭐ Faire principal</button>` : ''}
+            ${o.actif ? `<button class="btn-sm" style="background:rgba(168,176,186,.15);color:#a8b0ba;border:1px solid #444" onclick="toggleActif('${o.id}', false)">🚫 Désactiver</button>` : `<button class="btn-sm" style="background:rgba(0,255,159,.15);color:#7dffc1;border:1px solid rgba(0,255,159,.4)" onclick="toggleActif('${o.id}', true)">✅ Réactiver</button>`}
+            <button class="btn-sm" style="background:rgba(255,200,0,.12);color:#ffd700;border:1px solid rgba(255,200,0,.3)" onclick="addDon('${o.id}')">💰 Enregistrer don reçu</button>
+            <button class="btn-sm" style="background:rgba(255,90,90,.1);color:#ffb0b0;border:1px solid rgba(255,90,90,.3)" onclick="deleteOrg('${o.id}')">🗑️ Supprimer</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function addOrg() {
+      const msg = document.getElementById('add-msg');
+      const nom = document.getElementById('new-nom').value.trim();
+      if (!nom) { msg.style.color = '#ffb0b0'; msg.textContent = '⚠️ Nom requis'; return; }
+      const payload = {
+        nom,
+        slug: document.getElementById('new-slug').value.trim() || null,
+        description: document.getElementById('new-desc').value.trim(),
+        mission: document.getElementById('new-mission').value.trim(),
+        region: document.getElementById('new-region').value.trim() || null,
+        cause: document.getElementById('new-cause').value.trim() || null,
+        site_web: document.getElementById('new-site').value.trim() || null,
+        numero_obnl: document.getElementById('new-neq').value.trim() || null,
+        logo_url: document.getElementById('new-logo').value.trim() || null,
+        ordre: Number(document.getElementById('new-ordre').value) || 10,
+        est_principal: document.getElementById('new-principal').checked,
+        actif: true
+      };
+      const { error } = await db.from('organismes_partenaires').insert(payload);
+      if (error) { msg.style.color = '#ffb0b0'; msg.textContent = '❌ ' + error.message; return; }
+      msg.style.color = '#7dffc1';
+      msg.textContent = '✅ Organisme créé !';
+      ['new-nom','new-slug','new-desc','new-mission','new-region','new-cause','new-site','new-neq','new-logo'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('new-principal').checked = false;
+      load();
+    }
+
+    async function setPrincipal(id) {
+      await db.from('organismes_partenaires').update({ est_principal: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+      await db.from('organismes_partenaires').update({ est_principal: true }).eq('id', id);
+      load();
+    }
+
+    async function toggleActif(id, actif) {
+      await db.from('organismes_partenaires').update({ actif }).eq('id', id);
+      load();
+    }
+
+    async function addDon(id) {
+      const montant = Number(prompt('Montant du don reçu ($) :', '0'));
+      if (!montant || montant <= 0) return;
+      const { data } = await db.from('organismes_partenaires').select('total_recu_cad').eq('id', id).single();
+      const nouveau = (Number(data?.total_recu_cad) || 0) + montant;
+      await db.from('organismes_partenaires').update({
+        total_recu_cad: nouveau,
+        dernier_versement_at: new Date().toISOString()
+      }).eq('id', id);
+      load();
+    }
+
+    async function deleteOrg(id) {
+      if (!confirm('Supprimer cet organisme ?')) return;
+      await db.from('organismes_partenaires').delete().eq('id', id);
+      load();
+    }
+
+    init();
+  </script>
+</body>
+</html>

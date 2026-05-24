@@ -194,6 +194,59 @@
     .badge-livre     { background: rgba(16,185,129,.15);  color: var(--brand-success); }
     .badge-en-route  { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
     .badge-attente   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
+    .delivery-status-stack {
+      display: grid;
+      gap: 6px;
+      min-width: 220px;
+    }
+    .workflow-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .workflow-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .02em;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      color: var(--brand-muted);
+    }
+    .workflow-pill.ok {
+      border-color: rgba(16,185,129,.32);
+      background: rgba(16,185,129,.12);
+      color: var(--brand-success);
+    }
+    .workflow-pill.warn {
+      border-color: rgba(245,158,11,.34);
+      background: rgba(245,158,11,.12);
+      color: var(--brand-warning);
+    }
+    .workflow-pill.info {
+      border-color: rgba(0,217,255,.32);
+      background: rgba(0,217,255,.1);
+      color: var(--brand-cyan);
+    }
+    .workflow-pill.danger {
+      border-color: rgba(239,68,68,.34);
+      background: rgba(239,68,68,.12);
+      color: var(--brand-danger);
+    }
+    .workflow-next {
+      color: var(--brand-muted);
+      font-size: .76rem;
+      line-height: 1.35;
+      max-width: 260px;
+    }
+    .workflow-next strong {
+      color: var(--brand-text);
+      font-weight: 900;
+    }
     .admin-layout .action-btn {
       display: inline-flex;
       align-items: center;
@@ -329,6 +382,7 @@
     <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
     <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
     <a href="/admin/backup.html" class="nav-link"><span class="icon">💾</span> Backup &amp; Export</a>
+    <a href="/admin/organismes.html" class="nav-link"><span class="icon">❤️</span> Organismes partenaires</a>
     <a href="/transparence.html"     class="nav-link"><span class="icon">?</span> Page transparence</a>
     <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
     <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
@@ -449,11 +503,11 @@
         <table>
           <thead>
             <tr>
-              <th>Code</th><th>De → À</th><th>Statut</th><th>Prix</th><th>Date</th><th>Action</th>
+              <th>Code</th><th>De → À</th><th>Statut</th><th>Étape</th><th>Prix</th><th>Date</th><th>Action</th>
             </tr>
           </thead>
           <tbody id="livraisons-body">
-            <tr><td colspan="6" class="empty-msg">Chargement...</td></tr>
+            <tr><td colspan="7" class="empty-msg">Chargement...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1052,6 +1106,134 @@
     return `<span class="badge ${cls}">${label}</span>`;
   }
 
+  function normalizedLivraisonStatus(livraison) {
+    return String(livraison?.statut || livraison?.status || '').toLowerCase().trim();
+  }
+
+  function livraisonWorkflow(livraison) {
+    const status = normalizedLivraisonStatus(livraison);
+    const hasDriver = Boolean(livraison?.livreur_id || livraison?.driver_id);
+    const hasProof = Boolean(livraison?.delivery_proof);
+    const recipientConfirmed = Boolean(livraison?.recipient_confirmed_at);
+    const proofReview = Boolean(livraison?.delivery_proof_required_admin_review);
+
+    const paidFinal = ['payee', 'paid', 'succeeded', 'confirmee'].includes(status);
+    const cancelled = ['annule', 'annulee', 'canceled', 'cancelled'].includes(status);
+    const refunded = ['rembourse', 'refunded'].includes(status);
+    const dispute = ['litige', 'dispute'].includes(status);
+    const delivered = ['livre', 'livree', 'delivered'].includes(status);
+    const inTransit = ['ramasse', 'picked_up', 'en_route', 'in_transit'].includes(status);
+    const accepted = ['confirme', 'accepted'].includes(status);
+    const escrowReady = ['paiement_autorise', 'requires_capture', 'authorized'].includes(status);
+    const waitingPayment = ['en_attente', 'pending', 'publie', 'cree', 'created', 'draft'].includes(status) || !status;
+
+    if (paidFinal) {
+      return {
+        step: 'Argent libéré',
+        pill: 'ok',
+        payment: 'Capturé',
+        paymentClass: 'ok',
+        next: 'Dossier clôturé. La transaction doit rester dans Supabase pour audit/litige.'
+      };
+    }
+    if (refunded) {
+      return {
+        step: 'Remboursé',
+        pill: 'danger',
+        payment: 'Remboursé',
+        paymentClass: 'danger',
+        next: 'Dossier fermé côté remboursement. Conserver les preuves.'
+      };
+    }
+    if (cancelled) {
+      return {
+        step: 'Annulé',
+        pill: 'danger',
+        payment: 'À vérifier',
+        paymentClass: 'warn',
+        next: 'Vérifier si une autorisation Stripe doit être annulée ou remboursée.'
+      };
+    }
+    if (dispute) {
+      return {
+        step: 'Litige',
+        pill: 'danger',
+        payment: 'Bloqué',
+        paymentClass: 'danger',
+        next: 'Ne pas libérer sans analyse des preuves, GPS, photos et messages.'
+      };
+    }
+    if (delivered) {
+      return {
+        step: recipientConfirmed ? 'Confirmé destinataire' : hasProof ? 'Preuve déposée' : 'Livré déclaré',
+        pill: recipientConfirmed ? 'ok' : 'warn',
+        payment: 'À capturer',
+        paymentClass: 'warn',
+        next: recipientConfirmed
+          ? 'Le destinataire a confirmé. Le paiement peut être libéré.'
+          : hasProof || proofReview
+          ? 'Analyser la preuve. Libérer seulement si photo/GPS/note sont cohérents.'
+          : 'Attendre le code destinataire ou une preuve de dépôt.'
+      };
+    }
+    if (inTransit) {
+      return {
+        step: 'En livraison',
+        pill: 'info',
+        payment: 'Protégé',
+        paymentClass: 'info',
+        next: 'Surveiller le GPS/preuve. Aucun paiement à libérer maintenant.'
+      };
+    }
+    if (accepted || (escrowReady && hasDriver)) {
+      return {
+        step: 'Assignée au livreur',
+        pill: 'info',
+        payment: 'Escrow autorisé',
+        paymentClass: 'info',
+        next: 'Le livreur doit ramasser puis livrer le colis.'
+      };
+    }
+    if (escrowReady) {
+      return {
+        step: 'Prête à accepter',
+        pill: 'info',
+        payment: 'Escrow autorisé',
+        paymentClass: 'info',
+        next: 'Visible aux livreurs vérifiés seulement. En attente d’acceptation.'
+      };
+    }
+    if (waitingPayment) {
+      return {
+        step: 'Paiement requis',
+        pill: 'warn',
+        payment: 'Non autorisé',
+        paymentClass: 'warn',
+        next: 'L’expéditeur doit payer avant qu’un livreur voie/acepte la mission.'
+      };
+    }
+    return {
+      step: status || 'À vérifier',
+      pill: 'warn',
+      payment: 'À vérifier',
+      paymentClass: 'warn',
+      next: 'Statut non standard. Vérifier la livraison avant action.'
+    };
+  }
+
+  function renderLivraisonWorkflow(livraison) {
+    const wf = livraisonWorkflow(livraison);
+    return `
+      <div class="delivery-status-stack">
+        <div class="workflow-line">
+          <span class="workflow-pill ${wf.pill}">${wf.step}</span>
+          <span class="workflow-pill ${wf.paymentClass}">${wf.payment}</span>
+        </div>
+        <div class="workflow-next"><strong>Prochaine étape:</strong> ${wf.next}</div>
+      </div>
+    `;
+  }
+
   function apiUrl(path) {
     return window.location.protocol === 'file:' ? `https://porteaporte.site${path}` : path;
   }
@@ -1429,23 +1611,33 @@
     }
 
     if (livraisons) {
-      const delivered = livraisons.filter(l => ['livre', 'livree', 'delivered', 'payee', 'paid', 'succeeded'].includes(String(l.statut || '').toLowerCase())).length;
-      document.getElementById('stat-livraisons').textContent = delivered > 0 ? `${livraisons.length} (${delivered} livrees/payees)` : livraisons.length;
+      const delivered = livraisons.filter(l => ['livre', 'livree', 'delivered', 'payee', 'paid', 'succeeded', 'confirmee'].includes(normalizedLivraisonStatus(l))).length;
+      document.getElementById('stat-livraisons').textContent = delivered > 0 ? `${livraisons.length} (${delivered} livrées/payées)` : livraisons.length;
       document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
-        ? '<tr><td colspan="6" class="empty-msg">Aucune livraison</td></tr>'
+        ? '<tr><td colspan="7" class="empty-msg">Aucune livraison</td></tr>'
         : livraisons.map(l => {
             const date = l.cree_le || l.created_at;
-            const canManualCapture = ['livre', 'livree', 'delivered'].includes(String(l.statut || '').toLowerCase());
-            const proofNote = l.delivery_proof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve depot recue</div>' : '';
+            const status = normalizedLivraisonStatus(l);
+            const workflow = livraisonWorkflow(l);
+            const canManualCapture = ['livre', 'livree', 'delivered'].includes(status);
+            const proofNote = l.delivery_proof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve dépôt reçue</div>' : '';
+            const driverNote = l.livreur_id ? '<div style="color:#A8B0BA;font-size:.72rem;margin-top:4px">Livreur assigné</div>' : '<div style="color:#F59E0B;font-size:.72rem;margin-top:4px">Aucun livreur assigné</div>';
             const proofBtn = l.delivery_proof ? `<button class="action-btn" onclick="viewDeliveryProof('${l.id}')">Voir preuve</button>` : '';
+            const captureLabel = l.delivery_proof || workflow.step === 'Preuve déposée'
+              ? 'Valider preuve et libérer'
+              : 'Libérer avec preuve admin';
+            const actionHtml = canManualCapture
+              ? `<button class="action-btn" onclick="adminCaptureLegacy('${l.id}')">${captureLabel}</button>`
+              : '<span style="color:#5A6A7A;font-size:.78rem">Aucune action critique</span>';
             return `
             <tr>
               <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${l.code||'—'}</td>
-              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}${proofNote}</td>
+              <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}${driverNote}${proofNote}</td>
               <td>${livBadge(l.statut)}</td>
+              <td>${renderLivraisonWorkflow(l)}</td>
               <td style="color:#B8F53E;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
               <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
-              <td><div class="action-cell">${proofBtn}${canManualCapture ? `<button class="action-btn" onclick="adminCaptureLegacy('${l.id}')">Liberer paiement manuellement</button>` : '<span style="color:#5A6A7A;font-size:.78rem">-</span>'}</div></td>
+              <td><div class="action-cell">${proofBtn}${actionHtml}</div></td>
             </tr>`;
           }).join('');
     }
