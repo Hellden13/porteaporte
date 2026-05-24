@@ -7,7 +7,7 @@ const {
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
   driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
-  callNotifier, alertAdmin, deliveryEligibility, missingColumn, insertWithSchemaFallback,
+  callNotifier, alertAdmin, computeDeliveryPrice, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
 } = require('../lib/_lib');
 
@@ -92,6 +92,27 @@ async function createLivraison(req, res, ctx, body) {
     }
   } catch (_) {}
 
+  // ─── PRIX MINIMUM CALCULÉ (anti-abus "5$ pour un frigo") ───
+  if (ctx.profile?.role !== 'admin') {
+    const distKm = estimateRouteKm(payload.ville_depart, payload.ville_arrivee) || 5;
+    const priceInfo = computeDeliveryPrice({
+      distance_km: distKm,
+      weight_kg: payload.poids_kg,
+      size: payload.taille_colis,
+      type: payload.type_colis,
+      urgency: body.deadline || body.urgence || 'flexible'
+    });
+    const userPrice = Number(body.prix_base ?? body.base_price ?? payload.prix_total) || 0;
+    if (userPrice < priceInfo.min_price_cad) {
+      return res.status(400).json({
+        error: `Prix livreur trop bas pour cette livraison. Minimum: ${priceInfo.min_price_cad} $ (suggéré: ${priceInfo.price_cad} $). Détail: ${distKm} km · ${payload.poids_kg || '?'} kg · ${payload.type_colis || 'colis'} · ${payload.taille_colis || 'moyen'}.`,
+        suggested_price_cad: priceInfo.price_cad,
+        min_price_cad: priceInfo.min_price_cad,
+        breakdown: priceInfo.breakdown
+      });
+    }
+  }
+
   // Bypass admin pour tests et opérations manuelles.
   if (betaCitiesActive && ctx.profile?.role !== 'admin') {
     const normVilleDepart = normalizeCity(payload.ville_depart || '');
@@ -166,6 +187,39 @@ async function createLivraison(req, res, ctx, body) {
       prix_total: livraison?.prix_total ?? payload.prix_total
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
+
+  // ─── AUTO-MATCHING : alerter les livreurs dont la route enregistrée correspond ───
+  // Si livreur a configuré route_origine + route_destination + route_deviation_km, et que
+  // cette mission tombe sur son chemin, on lui envoie une notif push prioritaire.
+  (async () => {
+    try {
+      const matchRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id,route_origine,route_destination,route_deviation_km&role=in.(livreur,les%20deux)&driver_status=eq.verified&suspendu=eq.false&route_origine=not.is.null&route_destination=not.is.null`, {
+        headers: sbHeaders(ctx.sbKey)
+      });
+      const livreurs = matchRes.ok ? await matchRes.json() : [];
+      const matched = livreurs.filter(l => {
+        const dev = Number(l.route_deviation_km) || 5;
+        return isMissionOnRoute(payload.ville_depart, payload.ville_arrivee, l.route_origine, l.route_destination, dev);
+      });
+      for (const l of matched) {
+        await deliverPush(ctx, {
+          type: 'mission_sur_route',
+          user_id: l.id,
+          data: {
+            id: livraison?.id,
+            title: '🎯 Mission sur ton trajet !',
+            body: `${payload.ville_depart} → ${payload.ville_arrivee} · ${payload.prix_total} $`,
+            url: `/browse-missions.html?focus=${livraison?.id || ''}`
+          }
+        }).catch(() => {});
+      }
+      if (matched.length > 0) {
+        console.log(`[auto-match] ${matched.length} livreurs notifiés sur leur trajet pour livraison ${livraison?.id}`);
+      }
+    } catch (err) {
+      console.error('[auto-match route]', err.message);
+    }
+  })();
 
   // Email à l'expéditeur avec le code de réception destinataire + pickup code
   if (receptionCode && (ctx.session.email || ctx.profile?.email)) {
@@ -3469,6 +3523,23 @@ module.exports = async function handler(req, res) {
           ride_fee_package_per_kg: 1.5,
           ...settings,
         },
+      });
+    }
+    if (endpoint === 'price-estimate') {
+      const distKm = estimateRouteKm(body.ville_depart, body.ville_arrivee) || Number(body.distance_km) || 5;
+      const info = computeDeliveryPrice({
+        distance_km: distKm,
+        weight_kg: body.poids_kg,
+        size: body.taille_colis || body.size,
+        type: body.type_colis || body.type,
+        urgency: body.deadline || body.urgency || 'flexible'
+      });
+      return res.status(200).json({
+        success: true,
+        distance_km: distKm,
+        suggested_price_cad: info.price_cad,
+        min_price_cad: info.min_price_cad,
+        breakdown: info.breakdown
       });
     }
 
