@@ -36,6 +36,21 @@
     <h1>Creer une nouvelle livraison</h1>
     <p class="muted">Remplis les informations du colis. Les adresses completes restent protegees et ne seront affichees qu'au livreur assigne.</p>
     <p class="hint">Les adresses completes restent masquees jusqu'a l'acceptation de la livraison.</p>
+    <div id="beta-zone-notice" style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.3);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:.9rem;color:var(--brand-lime);display:none">
+      🍁 <strong>Bêta active à <span id="beta-zone-list">Québec / Lévis</span></strong> uniquement. Les villes de départ et d'arrivée doivent être dans la zone bêta. Pour une autre ville : <a href="mailto:bonjour@porteaporte.site" style="color:var(--brand-lime);text-decoration:underline">bonjour@porteaporte.site</a>
+    </div>
+    <script>
+      (async function loadBetaZone() {
+        try {
+          const r = await fetch('/api/impact-public');
+          if (!r.ok) return;
+          const out = await r.json();
+          // beta_cities est dans settings, exposé via platform-settings-get (besoin auth)
+          // Fallback: défaut affiché
+          document.getElementById('beta-zone-notice').style.display = 'block';
+        } catch (_) {}
+      })();
+    </script>
 
     <div id="success-message" class="msg ok">Livraison creee. Ouverture du paiement escrow...</div>
     <div id="recipient-code-panel" class="msg ok" style="display:none"></div>

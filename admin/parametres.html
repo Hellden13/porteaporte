@@ -138,6 +138,27 @@
       </div>
       <div id="msg-ins" class="msg"></div>
     </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 14px">🗺️ Restriction Bêta — Zones géographiques</h2>
+      <p style="color:var(--brand-muted);margin-bottom:14px">Limite les livraisons aux villes choisies. Les expéditeurs hors zone voient un message clair (avec ton email pour notification). <strong>Tu (admin) peux toujours créer des livraisons partout</strong>.</p>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <label class="switch" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="beta-active" checked>
+          <span style="font-weight:700;color:#fff">Restriction active</span>
+        </label>
+      </div>
+
+      <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Villes autorisées (séparées par des virgules)</label>
+      <input id="beta-cities" type="text" placeholder="Québec, Lévis" style="width:100%;padding:12px;background:#05080c;color:var(--brand-lime);border:1px solid #1E2535;border-radius:8px;font-weight:700;font-size:1rem" value="Québec, Lévis">
+      <small style="display:block;margin-top:6px;color:var(--brand-muted);font-size:.78rem">Matching insensible à la casse, aux accents et aux variations (ex: "quebec" matche "Québec", "Québec QC", "Quebec City"). Ajoute des villes au fur et à mesure : "Québec, Lévis, Montréal, Sherbrooke".</small>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="saveBetaCities()">💾 Sauvegarder zones</button>
+      </div>
+      <div id="msg-beta" class="msg"></div>
+    </div>
   </main>
 
   <script>
@@ -183,6 +204,10 @@
       document.getElementById('ins-pct').value = ((Number(s.insurance_pct != null ? s.insurance_pct : 0.02)) * 100).toFixed(1).replace(/\.0$/, '');
       document.getElementById('topup').value = Number(s.insurance_fund_topup_cents || 0) / 100;
       document.getElementById('founder-pct').value = ((Number(s.founder_revenue_pct != null ? s.founder_revenue_pct : 0.05)) * 100).toFixed(1).replace(/\.0$/, '');
+      // Beta cities
+      const cities = Array.isArray(s.beta_cities) && s.beta_cities.length ? s.beta_cities : ['Québec', 'Lévis'];
+      document.getElementById('beta-cities').value = cities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
+      document.getElementById('beta-active').checked = s.beta_cities_active !== false;
       render();
     }
 
@@ -204,6 +229,23 @@
       if (!res.ok) { msg.className = 'msg err'; msg.textContent = '❌ ' + (out.error || 'Erreur sauvegarde'); return; }
       msg.className = 'msg ok';
       msg.textContent = '✅ Fonds assurance mis à jour. Visible immédiatement sur /assurance.html.';
+    }
+
+    async function saveBetaCities() {
+      const msg = document.getElementById('msg-beta');
+      const raw = String(document.getElementById('beta-cities').value || '').trim();
+      const cities = raw.split(',').map(c => c.trim()).filter(Boolean);
+      const active = document.getElementById('beta-active').checked;
+      if (active && cities.length === 0) { msg.className = 'msg err'; msg.textContent = '❌ Au moins une ville requise si la restriction est active'; return; }
+      const res = await fetch('/api/platform?endpoint=admin-settings-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ beta_cities: cities, beta_cities_active: active })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.className = 'msg err'; msg.textContent = '❌ ' + (out.error || 'Erreur sauvegarde'); return; }
+      msg.className = 'msg ok';
+      msg.textContent = '✅ ' + (active ? `Restriction active — uniquement ${cities.join(', ')}` : 'Restriction désactivée — toutes villes acceptées');
     }
 
     function render() {

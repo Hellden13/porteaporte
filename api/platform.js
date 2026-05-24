@@ -62,20 +62,49 @@ async function createLivraison(req, res, ctx, body) {
     return res.status(400).json({ error: 'adresses depart/arrivee requises' });
   }
 
-  // ─── Plafond valeur déclarée (sécurité bêta — protège le fonds d'assurance) ───
-  // Lit la limite depuis platform_settings (max_colis_value_cents), défaut 25000 = 250$
+  // ─── Plafond valeur déclarée + restriction zone bêta (sécurité, rétrocompatible) ───
   let maxColisValueCents = 25000;
+  let betaCities = ['quebec', 'levis'];
+  let betaCitiesActive = false;
   try {
-    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=max_colis_value_cents`, {
+    const sr = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=max_colis_value_cents,beta_cities,beta_cities_active`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (sr.ok) {
       const rows = await sr.json();
-      if (rows[0] && Number.isFinite(Number(rows[0].max_colis_value_cents))) {
-        maxColisValueCents = Number(rows[0].max_colis_value_cents);
+      if (rows[0]) {
+        if (Number.isFinite(Number(rows[0].max_colis_value_cents))) maxColisValueCents = Number(rows[0].max_colis_value_cents);
+        if (Array.isArray(rows[0].beta_cities) && rows[0].beta_cities.length) {
+          betaCities = rows[0].beta_cities.map(c => normalizeCity(c)).filter(Boolean);
+        }
+        betaCitiesActive = rows[0].beta_cities_active === true;
+      }
+    } else {
+      const legacy = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=max_colis_value_cents`, {
+        headers: sbHeaders(ctx.sbKey)
+      });
+      if (legacy.ok) {
+        const rows = await legacy.json();
+        if (rows[0] && Number.isFinite(Number(rows[0].max_colis_value_cents))) {
+          maxColisValueCents = Number(rows[0].max_colis_value_cents);
+        }
       }
     }
   } catch (_) {}
+
+  // Bypass admin pour tests et opérations manuelles.
+  if (betaCitiesActive && ctx.profile?.role !== 'admin') {
+    const normVilleDepart = normalizeCity(payload.ville_depart || '');
+    const normVilleArrivee = normalizeCity(payload.ville_arrivee || '');
+    const ok = (city) => !city || betaCities.some(b => city.includes(b) || b.includes(city));
+    if (!ok(normVilleDepart) || !ok(normVilleArrivee)) {
+      const villesAffichage = betaCities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' ou ');
+      return res.status(400).json({
+        error: `Bêta limitée à ${villesAffichage} pour le moment. Pour être notifié quand on arrive dans ta ville : bonjour@porteaporte.site`,
+        beta_cities: betaCities
+      });
+    }
+  }
   const declaredCents = Math.round(toNumber(payload.valeur_declaree, 0) * 100);
   if (declaredCents > maxColisValueCents) {
     return res.status(400).json({
@@ -3635,6 +3664,8 @@ module.exports = async function handler(req, res) {
       const fields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit','pct_stripe','ticket_moyen_cad','max_colis_value_cents','insurance_pct','insurance_fund_topup_cents','founder_revenue_pct'];
       const patch = { updated_at: new Date().toISOString() };
       for (const f of fields) if (body[f] != null) patch[f] = Number(body[f]);
+      if (Array.isArray(body.beta_cities)) patch.beta_cities = body.beta_cities.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
+      if (typeof body.beta_cities_active === 'boolean') patch.beta_cities_active = body.beta_cities_active;
       // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
       const distribFields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit'];
       const hasAnyDistrib = distribFields.some(f => patch[f] != null);
