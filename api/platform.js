@@ -3599,6 +3599,36 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({ success: true, ...stats });
     }
+    if (endpoint === 'admin-reset-stripe-connect') {
+      // Admin tool: réinitialise le compte Stripe Connect d'un user (utile après migration TEST→LIVE)
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+      const targetEmail = String(body.email || '').trim().toLowerCase();
+      const targetUserId = body.user_id || null;
+      if (!targetEmail && !targetUserId) return res.status(400).json({ error: 'email ou user_id requis' });
+
+      let userId = targetUserId;
+      if (!userId && targetEmail) {
+        const pr = await fetch(`${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}&select=id&limit=1`, {
+          headers: sbHeaders(sbKey)
+        });
+        const ps = pr.ok ? await pr.json() : [];
+        if (!ps[0]) return res.status(404).json({ error: 'Utilisateur introuvable avec cet email' });
+        userId = ps[0].id;
+      }
+
+      const delRes = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(userId)}`, {
+        method: 'DELETE', headers: sbHeaders(sbKey)
+      });
+      alertAdmin(
+        `Reset Stripe Connect par admin`,
+        `Compte Stripe Connect réinitialisé pour user ${targetEmail || userId}. L'utilisateur devra re-onboarder.`,
+        { severity: 'info', details: { 'User': targetEmail || userId, 'Action': delRes.ok ? 'Reset OK' : 'Erreur' } }
+      );
+      return res.status(200).json({ success: delRes.ok, user_id: userId, message: 'Compte Stripe Connect réinitialisé. L\'utilisateur peut maintenant re-onboarder.' });
+    }
     if (endpoint === 'waitlist-signup') {
       // Liste d'attente pour autres villes - public, pas d'auth requise
       const email = String(body.email || '').trim().toLowerCase().slice(0, 180);
