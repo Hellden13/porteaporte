@@ -24,6 +24,7 @@ const {
   roleIn,
   sbHeaders,
   parseDataUrl,
+  computeDeliveryPrice,
 } = require('../lib/_lib');
 
 // ─── sanitizeEnv ──────────────────────────────────────────────────────────────
@@ -494,5 +495,33 @@ describe('parseDataUrl', () => {
     const data = 'data:image/jpg;base64,' + Buffer.from('x').toString('base64');
     const result = parseDataUrl(data);
     assert.equal(result.mimeType, 'image/jpeg');
+  });
+});
+
+describe('computeDeliveryPrice', () => {
+  test('garde un plancher juste pour une lettre locale', () => {
+    const p = computeDeliveryPrice({
+      distance_km: 6,
+      weight_kg: 0.1,
+      size: 'lettre',
+      type: 'lettre',
+      urgency: 'flexible',
+    });
+    assert.ok(p.price_cad >= 6);
+    assert.ok(p.min_price_cad >= 6);
+    assert.ok(p.min_price_cad <= p.price_cad);
+  });
+
+  test('bloque les gros colis a prix trop bas avec un minimum significatif', () => {
+    const p = computeDeliveryPrice({
+      distance_km: 20,
+      weight_kg: 40,
+      size: 'xl',
+      type: 'electromenager',
+      urgency: 'flexible',
+    });
+    assert.ok(p.price_cad >= 100);
+    assert.ok(p.price_cad <= 180);
+    assert.ok(p.min_price_cad >= 90);
   });
 });

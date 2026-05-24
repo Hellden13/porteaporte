@@ -381,6 +381,27 @@ describe('platform.js dispatcher', () => {
     assert.ok(!requestedUrl.includes('select=*'));
   });
 
+  test('price-estimate est public et retourne un minimum livreur', async () => {
+    global.fetch = makeFetchMock({});
+    const req = makeReq({
+      method: 'POST',
+      body: {
+        endpoint: 'price-estimate',
+        ville_depart: 'Québec',
+        ville_arrivee: 'Lévis',
+        poids_kg: 0.1,
+        taille_colis: 'lettre',
+        type_colis: 'lettre'
+      }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.ok(res._body?.min_price_cad >= 6);
+    assert.ok(res._body?.suggested_price_cad >= res._body?.min_price_cad);
+  });
+
   test('create-livraison exige le rôle expediteur', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user':    { ok: true, data: { id: 'u1' } },
