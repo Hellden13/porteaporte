@@ -376,13 +376,19 @@ function buildTrajets() {
     <div class="table-wrap">
       ${bookings.length === 0
         ? `<p class="empty-msg">Aucune réservation. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
-        : `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th></tr></thead><tbody>
-          ${bookings.map(b=>`<tr>
-            <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
-            <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
-            <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-            <td>${statusChip(b.status)}</td>
-          </tr>`).join('')}
+        : `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>
+          ${bookings.map(b=>{
+            const drvContact = [];
+            if (b.driver_email) drvContact.push(`<a href="mailto:${b.driver_email}?subject=PorteàPorte%20-%20Réservation%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
+            if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
+            return `<tr>
+              <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+              <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
+              <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+              <td>${statusChip(b.status)}</td>
+              <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
+            </tr>`;
+          }).join('')}
         </tbody></table>`}
     </div>
   </div>`;
@@ -394,18 +400,30 @@ function buildReservations() {
   const allBookings = (dashData.ride_bookings || []);
 
   return `
-  <div class="dash-header"><div><h1>Réservations reçues</h1><p>Passagers qui ont réservé vos trajets</p></div></div>
+  <div class="dash-header"><div><h1>Réservations reçues</h1><p>Passagers qui ont réservé vos trajets — contact direct par email/SMS</p></div></div>
+
+  <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
+    💡 <strong>Comment contacter tes passagers ?</strong><br>
+    Clique le bouton <strong>💬 Contacter</strong> sur chaque ligne ci-dessous pour envoyer un courriel direct (ou téléphoner). Si tu as 1 passager : 1 conversation. Si tu as 3 passagers : 3 conversations séparées (chacun reçoit ses propres messages). Une messagerie in-app intégrée arrive bientôt — en attendant, le courriel est le moyen le plus fiable.
+  </div>
+
   <div class="table-wrap">
     ${allBookings.length === 0
-      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant.</p>`
-      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Montant</th><th>Statut</th></tr></thead><tbody>
-        ${allBookings.map(b=>`<tr>
-          <td>${b.passenger_prenom||'—'}</td>
-          <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
-          <td>${b.seats_reserved} pl.</td>
-          <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-          <td>${statusChip(b.status)}</td>
-        </tr>`).join('')}
+      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son nom + contact apparaîtront ici.</p>`
+      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Montant</th><th>Statut</th><th>Contact</th></tr></thead><tbody>
+        ${allBookings.map(b=>{
+          const contactInfo = [];
+          if (b.passenger_email) contactInfo.push(`<a href="mailto:${b.passenger_email}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
+          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.passenger_phone}</a>`);
+          return `<tr>
+            <td><strong>${b.passenger_prenom||'—'}</strong>${b.passenger_email ? `<div style="font-size:.72rem;color:var(--muted)">${b.passenger_email}</div>` : ''}</td>
+            <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+            <td>${b.seats_reserved} pl.</td>
+            <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+            <td>${statusChip(b.status)}</td>
+            <td>${contactInfo.length ? contactInfo.join(' ') : '<span style="color:var(--muted);font-size:.78rem">—</span>'}</td>
+          </tr>`;
+        }).join('')}
       </tbody></table>`}
   </div>`;
 }

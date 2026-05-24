@@ -2352,6 +2352,16 @@
       const area = document.getElementById('stripeStatusArea');
       try {
         const data = await apiCall('stripe-connect-status');
+        if (data?.error) {
+          area.innerHTML = `
+            <p style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">
+              ${esc(data.error)}
+            </p>
+            <a href="/onboarding-livreur.html" style="display:block;text-align:center;background:linear-gradient(135deg,#00ff9f,#b8f53e);color:#071006;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:900;text-decoration:none">
+              Continuer ma vérification
+            </a>`;
+          return;
+        }
         const acct = data.account;
         const bal  = data.balance || {};
 
@@ -2360,7 +2370,7 @@
             <p style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">
               Configure ton compte pour recevoir tes gains directement sur ton compte bancaire.
             </p>
-            <button onclick="startOnboarding()" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%">
+            <button onclick="startOnboarding(event)" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%">
               ⚡ Configurer mes paiements Stripe
             </button>`;
           return;
@@ -2378,7 +2388,7 @@
               ? 'Tu n\'as pas terminé la configuration Stripe. Clique pour continuer.'
               : 'Lance la configuration pour recevoir des virements bancaires.'}
           </p>
-          <button onclick="startOnboarding()" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%">
+          <button onclick="startOnboarding(event)" style="background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%">
             ${acct.status === 'onboarding' ? '⚙️ Continuer la configuration' : '⚡ Configurer mes paiements'}
           </button>` : ''}`;
 
@@ -2418,8 +2428,8 @@
       }
     }
 
-    window.startOnboarding = async function() {
-      const btn = event.currentTarget || document.querySelector('[onclick="startOnboarding()"]');
+    window.startOnboarding = async function(evt) {
+      const btn = evt?.currentTarget || document.querySelector('[onclick^="startOnboarding"]');
       if (btn) { btn.disabled = true; btn.textContent = 'Ouverture...'; }
       try {
         const data = await apiCall('stripe-connect-onboard', 'POST', {});

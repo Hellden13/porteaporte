@@ -453,8 +453,12 @@
       <div class="error-msg" id="err-msg">⚠️ Veuillez corriger les erreurs avant de publier.</div>
       <div class="success-box" id="success-box">
         <h3>✅ Trajet publié avec succès !</h3>
-        <p>Votre trajet est maintenant visible par les passagers.</p>
-        <a class="btn" href="/covoiturage.html">Voir les trajets</a>
+        <p style="margin-bottom:20px">Votre trajet est maintenant visible par les passagers. Vous recevrez un email + notification dès qu'une réservation arrive.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <a class="btn" href="/dashboard-covoiturage.html#trajets" style="background:var(--green);color:#0A0F1E">📋 Voir mes trajets publiés</a>
+          <a class="btn" href="/covoiturage-publier.html" onclick="setTimeout(()=>location.reload(),100)" style="background:#0A0F1E;color:#fff;border:1px solid #1E2535">+ Publier un autre trajet</a>
+          <a class="btn" href="/covoiturage.html" style="background:transparent;color:var(--brand-muted);border:1px solid #1E2535">🔎 Voir les autres trajets publics</a>
+        </div>
       </div>
 
       <div class="step-actions" id="publish-actions">
