@@ -399,6 +399,7 @@ module.exports = async function handler(req, res) {
   });
 
   // Créditer les gains du livreur (60% + bonus rescue + bonus fidélité)
+  // + TRANSFER STRIPE INSTANTANÉ avec source_transaction (contourne l'attente settlement)
   if (livraison.livreur_id && captured.amount_received > 0) {
     const grossCents = captured.amount_received;
     // Lire bonus fidélité depuis profile
@@ -418,6 +419,60 @@ module.exports = async function handler(req, res) {
     const bonusCents = rescuePct > 0 ? Math.floor(baseNetCents * (rescuePct / 100)) : 0;
     const netCents = baseNetCents + bonusCents;
     const feeCents = grossCents - netCents;
+
+    // ─── TRANSFER STRIPE AUTO avec source_transaction ───
+    // Au lieu d'attendre la settlement (2j), on dit à Stripe "transfère depuis cette charge spécifique"
+    // -> fonds disponibles immédiatement sur le compte Connect du livreur
+    let earningStatus = 'available';
+    let stripeTransferId = null;
+    let transferError = null;
+    try {
+      const livAcctRes = await fetch(`${SB_URL}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(livraison.livreur_id)}&select=stripe_account_id,payouts_enabled,status&limit=1`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+      });
+      const acctRows = livAcctRes.ok ? await livAcctRes.json() : [];
+      const livAcct = acctRows[0];
+      const chargeId = captured.latest_charge || captured.charges?.data?.[0]?.id;
+
+      if (livAcct?.stripe_account_id && livAcct.status === 'active' && chargeId && STRIPE_KEY) {
+        const transferParams = new URLSearchParams({
+          amount: String(netCents),
+          currency: captured.currency || 'cad',
+          destination: livAcct.stripe_account_id,
+          source_transaction: chargeId, // CLEF : permet transfer même si pas encore settled
+          description: `PorteàPorte livraison ${livraison.code || livraison_id.slice(0,8)}`,
+          'metadata[livraison_id]': livraison_id,
+          'metadata[livreur_id]': livraison.livreur_id,
+          'metadata[payment_intent]': captured.id
+        });
+        const transferResp = await fetch('https://api.stripe.com/v1/transfers', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + STRIPE_KEY,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Idempotency-Key': `transfer-${livraison_id}-${netCents}`
+          },
+          body: transferParams.toString()
+        });
+        const transferData = await transferResp.json();
+        if (transferResp.ok) {
+          earningStatus = 'transferred';
+          stripeTransferId = transferData.id;
+          console.log('[capture-livraison] ✓ Transfer Stripe automatique vers livreur OK:', transferData.id);
+        } else {
+          transferError = transferData.error?.message || 'Transfer failed';
+          console.error('[capture-livraison] ⚠️ Transfer Stripe a échoué (earning marqué available pour payout manuel):', transferError);
+        }
+      } else {
+        console.log('[capture-livraison] Pas de transfer auto (compte Connect inactif ou pas de charge)', {
+          hasAcct: !!livAcct?.stripe_account_id, status: livAcct?.status, hasCharge: !!chargeId
+        });
+      }
+    } catch (e) {
+      console.error('[capture-livraison] Erreur transfer auto:', e.message);
+      transferError = e.message;
+    }
+
     await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
@@ -428,13 +483,16 @@ module.exports = async function handler(req, res) {
         platform_fee:          feeCents   / 100,
         net_amount:            netCents   / 100,
         currency:              captured.currency || 'cad',
-        status:                'available',
+        status:                earningStatus,
         available_after:       new Date().toISOString(),
         stripe_payment_intent: captured.id,
+        stripe_transfer_id:    stripeTransferId,
         type:                  rescuePct > 0 ? 'rescue_bonus' : (loyaltyBonus > 0 ? 'loyalty_bonus' : 'livraison'),
         notes:                 [
           rescuePct > 0 ? `Rescue +${rescuePct}%` : null,
-          loyaltyBonus > 0 ? `Fidélité +${loyaltyBonus}% (part ${basePct}%)` : null
+          loyaltyBonus > 0 ? `Fidélité +${loyaltyBonus}% (part ${basePct}%)` : null,
+          stripeTransferId ? `Auto-transfer Stripe ${stripeTransferId}` : null,
+          transferError ? `Auto-transfer FAILED: ${transferError} (payout manuel possible)` : null
         ].filter(Boolean).join(' · ') || null,
         created_at:            new Date().toISOString()
       })
