@@ -28,6 +28,7 @@ const PUBLIC_TYPES = new Set([
   'livraison_complete',
   'livraison_imprevu',
   'manquement_signale',
+  'livraison_annulee_livreur',
   'preuve_soumise_admin',
   'prefs_destinataire',
   'xl_confirmation_destinataire',
@@ -498,6 +499,31 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             ${detailsHtml}
             ${ctaHtml}
             <p style="color:#6d7886;font-size:.74rem;margin-top:24px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px">Tu reçois cet email parce que tu es admin de PorteàPorte. Pour gérer les alertes : <a href="https://porteaporte.site/admin/operations.html" style="color:#b8f53e">Centre Opérations →</a></p>
+          </div>`
+      });
+      break;
+    }
+
+    // ── LIVRAISON ANNULÉE — notif livreur ──
+    case 'livraison_annulee_livreur': {
+      const compensationLine = data.compensation_cad > 0
+        ? `<div style="background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.3);border-radius:10px;padding:14px 18px;margin:16px 0;color:#7dffc1"><strong>💰 Compensation versée : ${Number(data.compensation_cad).toFixed(2)} $</strong><br><span style="font-size:.85rem;opacity:.9">Pour compenser ton temps/déplacement. Visible dans tes paiements.</span></div>`
+        : '';
+      emails.push({
+        to: data.email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Livraison annulée — Récupère une nouvelle mission`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 14px;color:#fff">Une livraison a été annulée</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${data.prenom || ''},<br><br>${data.canceller || 'L\'expéditeur'} a annulé la livraison.</p>
+            ${data.raison ? `<p style="color:#a8b0ba;font-size:.9rem;margin:8px 0 16px">Raison : <em>"${data.raison}"</em></p>` : ''}
+            ${compensationLine}
+            <div style="text-align:center;margin:24px 0">
+              <a href="https://porteaporte.site/browse-missions.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">🚗 Voir d'autres missions</a>
+            </div>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Merci de ta flexibilité — ça arrive parfois et c'est normal.</p>
           </div>`
       });
       break;

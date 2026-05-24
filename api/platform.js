@@ -3525,6 +3525,45 @@ module.exports = async function handler(req, res) {
         },
       });
     }
+    if (endpoint === 'cancel-policy-preview') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const livraisonId = body.livraison_id;
+      if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,statut,prix_total,expediteur_id,livreur_id`, {
+        headers: sbHeaders(sbKey)
+      });
+      const liv = lr.ok ? (await lr.json())[0] : null;
+      if (!liv) return res.status(404).json({ error: 'Livraison introuvable' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      const isAdmin = profile?.role === 'admin';
+      if (liv.expediteur_id !== session.id && liv.livreur_id !== session.id && !isAdmin) {
+        return res.status(403).json({ error: 'Tu n\'as pas accès à cette livraison' });
+      }
+      let policy;
+      const s = liv.statut;
+      if (isAdmin) policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Admin override' };
+      else if (['en_attente','publie','paiement_autorise','requires_capture','pending'].includes(s))
+        policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation avant assignation - remboursement TOTAL' };
+      else if (['confirme','accepted'].includes(s))
+        policy = { refund_pct: 90, livreur_compensation_pct: 10, allowed: true, reason: 'Livreur assigné mais pas parti - 10% compensation livreur' };
+      else if (['in_transit','en_route'].includes(s))
+        policy = { refund_pct: 50, livreur_compensation_pct: 50, allowed: true, reason: 'Livreur en route - 50% compensation livreur' };
+      else if (['livre','livree','payee','paid','confirmee'].includes(s))
+        policy = { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement' };
+      else if (['annule','annulee'].includes(s))
+        policy = { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Déjà annulée' };
+      else policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation autorisée' };
+      const totalCents = Math.round(Number(liv.prix_total || 0) * 100);
+      return res.status(200).json({
+        success: true,
+        statut: s,
+        prix_total_cents: totalCents,
+        policy,
+        refund_cents: Math.round(totalCents * policy.refund_pct / 100),
+        livreur_compensation_cents: Math.round(totalCents * policy.livreur_compensation_pct / 100)
+      });
+    }
     if (endpoint === 'price-estimate') {
       const distKm = estimateRouteKm(body.ville_depart, body.ville_arrivee) || Number(body.distance_km) || 5;
       const info = computeDeliveryPrice({

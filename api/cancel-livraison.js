@@ -1,6 +1,37 @@
-// api/cancel-livraison.js - WITH AUDIT LOGGING
+// api/cancel-livraison.js - WITH AUDIT LOGGING + REFUND POLICY + ADMIN ALERT
 const { log } = require('../lib/logger');
-const { normalizeRole } = require('../lib/_lib');
+const { normalizeRole, alertAdmin, callNotifier } = require('../lib/_lib');
+
+// Politique de remboursement intelligente
+function computeRefundPolicy(statut, isAdmin) {
+  if (isAdmin) return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Admin override' };
+  switch (statut) {
+    case 'en_attente':
+    case 'publie':
+    case 'paiement_autorise':
+      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation avant assignation - remboursement total' };
+    case 'requires_capture':
+    case 'pending':
+      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Aucun livreur assigné encore - remboursement total' };
+    case 'confirme':
+    case 'accepted':
+      return { refund_pct: 90, livreur_compensation_pct: 10, allowed: true, reason: 'Livreur assigné mais pas encore parti - 10% compensation livreur (temps perdu)' };
+    case 'in_transit':
+    case 'en_route':
+      return { refund_pct: 50, livreur_compensation_pct: 50, allowed: true, reason: 'Livreur déjà parti - 50% compensation livreur (essence + temps)' };
+    case 'livre':
+    case 'livree':
+    case 'payee':
+    case 'paid':
+    case 'confirmee':
+      return { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement à la place' };
+    case 'annule':
+    case 'annulee':
+      return { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Déjà annulée' };
+    default:
+      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation autorisée' };
+  }
+}
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
@@ -100,37 +131,59 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Non autorisé' });
     }
 
-    // Vérifier statut — statuts français et anglais supportés
-    const cancellableStatuts = ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'pending', 'accepted', 'in_transit'];
-    if (!cancellableStatuts.includes(livraison.statut)) {
-      log('WARN', 'cancel_livraison_invalid_status', session.id, { livraison_id, currentStatus: livraison.statut });
-      return res.status(400).json({ error: `Impossible d'annuler une livraison avec le statut: ${livraison.statut}` });
+    // ─── POLITIQUE DE REMBOURSEMENT ───
+    const policy = computeRefundPolicy(livraison.statut, isAdmin);
+    if (!policy.allowed) {
+      log('WARN', 'cancel_livraison_not_allowed', session.id, { livraison_id, currentStatus: livraison.statut, reason: policy.reason });
+      return res.status(400).json({ error: `Annulation impossible : ${policy.reason}`, statut: livraison.statut, policy });
     }
 
-    // Rembourser via Stripe si nécessaire
-    if (livraison.stripe_payment_intent) {
+    // Rembourser via Stripe selon la politique
+    let refundCents = 0;
+    let livreurCompensationCents = 0;
+    const totalCents = Math.round(Number(livraison.prix_total || 0) * 100);
+    if (livraison.stripe_payment_intent && totalCents > 0) {
       if (!STRIPE_KEY) {
         log('ERROR', 'stripe_key_missing', session.id, { livraison_id });
         return res.status(503).json({ error: 'Remboursement impossible : Stripe non configuré' });
       }
-      const stripe = require('stripe')(STRIPE_KEY);
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: livraison.stripe_payment_intent,
-        });
+      refundCents = Math.round(totalCents * policy.refund_pct / 100);
+      livreurCompensationCents = Math.round(totalCents * policy.livreur_compensation_pct / 100);
 
-        log('AUDIT', 'delivery_refunded', session.id, {
-          livraison_id,
-          refundId: refund.id,
-          amount: livraison.prix_total,
-          raison,
-        });
-      } catch (e) {
-        log('ERROR', 'stripe_refund_failed', session.id, {
-          livraison_id,
-          error: e.message,
-        });
-        return res.status(500).json({ error: 'Erreur remboursement Stripe' });
+      if (refundCents > 0) {
+        const stripe = require('stripe')(STRIPE_KEY);
+        try {
+          const refund = await stripe.refunds.create({
+            payment_intent: livraison.stripe_payment_intent,
+            amount: refundCents
+          });
+          log('AUDIT', 'delivery_refunded', session.id, {
+            livraison_id, refundId: refund.id, amount_cents: refundCents,
+            total_cents: totalCents, refund_pct: policy.refund_pct, raison,
+          });
+        } catch (e) {
+          log('ERROR', 'stripe_refund_failed', session.id, { livraison_id, error: e.message });
+          return res.status(500).json({ error: 'Erreur remboursement Stripe : ' + e.message });
+        }
+      }
+
+      // Crédit compensation au livreur si applicable
+      if (livreurCompensationCents > 0 && livraison.livreur_id) {
+        await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            livreur_id: livraison.livreur_id,
+            livraison_id: livraison.id,
+            gross_amount: livreurCompensationCents / 100,
+            net_amount: livreurCompensationCents / 100,
+            currency: 'cad',
+            status: 'available',
+            type: 'compensation_annulation',
+            notes: `Compensation annulation (${policy.refund_pct}% remboursé) : ${raison || 'sans raison'}`,
+            created_at: new Date().toISOString()
+          })
+        }).catch(() => {});
       }
     }
 
@@ -160,15 +213,62 @@ module.exports = async function handler(req, res) {
 
     log('AUDIT', 'delivery_cancelled', session.id, {
       livraison_id,
-      canceller: isExpeditor ? 'expediteur' : 'livreur',
+      canceller: isExpeditor ? 'expediteur' : isAdmin ? 'admin' : 'livreur',
       raison: raison || 'no reason',
-      refunded: !!livraison.stripe_payment_intent,
+      refund_cents: refundCents,
+      livreur_compensation_cents: livreurCompensationCents
     });
+
+    // 🚨 Alerte admin (Denis) : annulation a eu lieu
+    const canceller = isExpeditor ? 'Expéditeur' : isAdmin ? 'Admin' : 'Livreur';
+    const sev = livreurCompensationCents > 0 ? 'warning' : 'info';
+    alertAdmin(
+      `Annulation livraison`,
+      `${canceller} a annulé une livraison. ${refundCents > 0 ? `Remboursement ${(refundCents/100).toFixed(2)} $ traité` : 'Pas de remboursement (pas encore payée).'}`,
+      {
+        severity: sev,
+        details: {
+          'Livraison': livraison.id?.slice(0, 8) || '?',
+          'Annulée par': canceller,
+          'Raison': raison || '(non précisée)',
+          'Statut au moment': livraison.statut,
+          'Prix total': `${Number(livraison.prix_total || 0).toFixed(2)} $`,
+          'Remboursement client': `${(refundCents/100).toFixed(2)} $ (${policy.refund_pct}%)`,
+          'Compensation livreur': `${(livreurCompensationCents/100).toFixed(2)} $ (${policy.livreur_compensation_pct}%)`
+        },
+        cta_url: 'https://porteaporte.site/admin/operations.html',
+        cta_label: '📋 Voir Operations →'
+      }
+    );
+
+    // Notifier le livreur si assigné
+    if (livraison.livreur_id && livraison.livreur_id !== session.id) {
+      try {
+        const lvr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${livraison.livreur_id}&select=email,prenom`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+        });
+        const lvrProfile = lvr.ok ? (await lvr.json())[0] : null;
+        if (lvrProfile?.email) {
+          callNotifier('livraison_annulee_livreur', {
+            email: lvrProfile.email,
+            prenom: lvrProfile.prenom || '',
+            livraison_id,
+            canceller,
+            raison: raison || '',
+            compensation_cad: livreurCompensationCents / 100
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
 
     return res.json({
       success: true,
       message: 'Livraison annulée',
       livraison_id,
+      refund_cents: refundCents,
+      refund_pct: policy.refund_pct,
+      livreur_compensation_cents: livreurCompensationCents,
+      policy_reason: policy.reason
     });
 
   } catch (error) {

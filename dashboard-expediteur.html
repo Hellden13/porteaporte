@@ -1087,8 +1087,18 @@
         }
 
         async function cancelLivraison(livraisonId) {
-            if (!confirm('Annuler cette livraison? Si le paiement escrow est seulement autorise, Stripe annulera la preautorisation.')) return;
+            // Nouveau modal avec preview politique de remboursement
             const user = AUTH_API.getUser();
+            if (window.PapCancel) {
+                window.PapCancel.openModal({
+                    livraisonId,
+                    accessToken: user.session.access_token,
+                    onSuccess: () => { loadMissions(); }
+                });
+                return;
+            }
+            // Fallback ancien comportement si script pas chargé
+            if (!confirm('Annuler cette livraison?')) return;
             const res = await fetch('/api/cancel-livraison', {
                 method: 'POST',
                 headers: {
@@ -1263,5 +1273,6 @@
   <script src="/js/pwa-install.js"></script>
   <script src="/js/onboarding.js"></script>
   <script src="/js/badge-celebration.js"></script>
+  <script src="/js/cancel-livraison.js"></script>
 </body>
 </html>
