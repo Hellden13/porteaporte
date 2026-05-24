@@ -2412,18 +2412,19 @@
           document.getElementById('balTotal').textContent        = money(bal.total_earned);
           document.getElementById('balTransferred').textContent  = money(bal.transferred);
           const availableCad = Number(bal.available || 0);
+          const PAYOUT_MIN = 5; // synchronisé avec lib/_connect.js
           const btnPay = document.getElementById('btnPayout');
           const msgEl  = document.getElementById('payoutDisabledMsg');
-          btnPay.disabled = availableCad < 10;
+          btnPay.disabled = availableCad < PAYOUT_MIN;
           btnPay.style.opacity = btnPay.disabled ? '.5' : '1';
           btnPay.style.cursor  = btnPay.disabled ? 'not-allowed' : 'pointer';
           if (msgEl) {
             if (availableCad <= 0) {
               msgEl.style.display = 'block';
               msgEl.innerHTML = '💡 <strong>Aucun gain disponible pour le moment.</strong><br>Tu pourras virer dès qu\'une livraison sera capturée (statut payée). Les gains apparaissent automatiquement ici.';
-            } else if (availableCad < 10) {
+            } else if (availableCad < PAYOUT_MIN) {
               msgEl.style.display = 'block';
-              msgEl.innerHTML = `💡 <strong>Minimum 10 $ pour un virement.</strong><br>Tu as ${availableCad.toFixed(2)} $ disponible. Il te manque ${(10 - availableCad).toFixed(2)} $ pour pouvoir virer.`;
+              msgEl.innerHTML = `💡 <strong>Minimum ${PAYOUT_MIN} $ pour un virement.</strong><br>Tu as ${availableCad.toFixed(2)} $ disponible. Il te manque ${(PAYOUT_MIN - availableCad).toFixed(2)} $ pour pouvoir virer. (Les petits virements coûtent cher en frais Stripe.)`;
             } else {
               msgEl.style.display = 'none';
             }
