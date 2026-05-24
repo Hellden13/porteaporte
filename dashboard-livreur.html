@@ -741,13 +741,20 @@
       </div>
 
       <button id="btnPayout" onclick="requestPayout()"
-        style="width:100%;background:linear-gradient(135deg,#00ff9f,#00cc7a);color:#0A0C10;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer;margin-bottom:12px">
+        style="width:100%;background:linear-gradient(135deg,#00ff9f,#00cc7a);color:#0A0C10;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer;margin-bottom:8px">
         💸 Virer mes gains maintenant
       </button>
-      <button onclick="openStripeDashboard()"
-        style="width:100%;background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer">
-        Voir mon tableau de bord Stripe →
-      </button>
+      <div id="payoutDisabledMsg" style="display:none;background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.3);border-radius:8px;padding:10px 14px;font-size:.8rem;color:#ffd700;margin-bottom:10px;line-height:1.5"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <button onclick="openStripeDashboard()"
+          style="background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);border-radius:10px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer">
+          🔗 Dashboard Stripe
+        </button>
+        <button onclick="loadStripeStatus()"
+          style="background:transparent;color:var(--brand-muted);border:1px solid var(--brand-border);border-radius:10px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer">
+          🔄 Resynchroniser
+        </button>
+      </div>
 
       <div style="margin-top:18px">
         <div style="font-size:.82rem;font-weight:700;color:var(--brand-muted);margin-bottom:10px">Historique des virements</div>
@@ -2404,7 +2411,23 @@
           document.getElementById('balPending').textContent      = money(bal.pending);
           document.getElementById('balTotal').textContent        = money(bal.total_earned);
           document.getElementById('balTransferred').textContent  = money(bal.transferred);
-          document.getElementById('btnPayout').disabled = (bal.available || 0) < 10;
+          const availableCad = Number(bal.available || 0);
+          const btnPay = document.getElementById('btnPayout');
+          const msgEl  = document.getElementById('payoutDisabledMsg');
+          btnPay.disabled = availableCad < 10;
+          btnPay.style.opacity = btnPay.disabled ? '.5' : '1';
+          btnPay.style.cursor  = btnPay.disabled ? 'not-allowed' : 'pointer';
+          if (msgEl) {
+            if (availableCad <= 0) {
+              msgEl.style.display = 'block';
+              msgEl.innerHTML = '💡 <strong>Aucun gain disponible pour le moment.</strong><br>Tu pourras virer dès qu\'une livraison sera capturée (statut payée). Les gains apparaissent automatiquement ici.';
+            } else if (availableCad < 10) {
+              msgEl.style.display = 'block';
+              msgEl.innerHTML = `💡 <strong>Minimum 10 $ pour un virement.</strong><br>Tu as ${availableCad.toFixed(2)} $ disponible. Il te manque ${(10 - availableCad).toFixed(2)} $ pour pouvoir virer.`;
+            } else {
+              msgEl.style.display = 'none';
+            }
+          }
 
           // Mettre à jour le stat card "Gains" avec les vrais gains depuis livreur_earnings
           if (bal.total_earned > 0) {
