@@ -15,7 +15,7 @@
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.bat)",    "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.ps1)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.txt)",    "destination": "/404.html", "permanent": false },
+        { "source": "/((?!robots$).+)\\.txt", "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.backup)", "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.env)",    "destination": "/404.html", "permanent": false },
         { "source": "/(.*\\.log)",    "destination": "/404.html", "permanent": false },
