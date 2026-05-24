@@ -87,9 +87,47 @@
 
       let html = '';
 
-      // Recommandations en haut
+      // ─── DIAGNOSTIC EXPLICITE "Pourquoi mes compteurs sont à 0" ───
+      const hasUnpaidWithStripe = Object.entries(d.livraisons_by_status).some(([s, info]) => {
+        return ['paiement_autorise','en_attente','publie','requires_capture'].includes(s) && info.count > 0;
+      });
+      const totalUnpaid = Object.entries(d.livraisons_by_status)
+        .filter(([s]) => ['paiement_autorise','en_attente','publie','requires_capture'].includes(s))
+        .reduce((sum, [, info]) => sum + info.total_cad, 0);
+
+      html += '<div class="panel" style="border-left:4px solid #ffd700"><h2>🔎 Pourquoi tes compteurs sont à 0 ?</h2>';
+
+      if (payedCount === 0 && d.total_livraisons === 0) {
+        html += `<div class="reco" style="background:rgba(0,217,255,.08);color:#7de4ff;border-color:#7de4ff"><strong>✅ Aucune livraison dans la base</strong> — c'est normal si tu n'as pas encore eu de vrais clients. Les compteurs vont monter dès la 1ère vraie livraison capturée.</div>`;
+      } else if (payedCount === 0 && totalUnpaid > 0) {
+        html += `<div class="reco" style="background:rgba(255,90,90,.08);color:#ff9999;border-color:#ff7a7a"><strong>🚨 PROBLÈME TROUVÉ : ${fmtCad(totalUnpaid)} en attente de capture</strong><br>
+          Tu as <strong>${Object.entries(d.livraisons_by_status).filter(([s]) => ['paiement_autorise','en_attente','publie','requires_capture'].includes(s)).reduce((s,[,i]) => s+i.count, 0)} livraison(s)</strong> avec statut "paiement_autorise" ou "publie" (= argent bloqué chez Stripe, pas encore dans ta poche).<br><br>
+          <strong>Cause probable :</strong> webhook Stripe pas configuré. Le paiement réussit chez Stripe mais notre système ne le sait jamais → statut reste "paiement_autorise" → compteurs à 0.<br><br>
+          <strong>Action immédiate :</strong>
+          <ol style="margin:10px 0 0 20px;padding:0">
+            <li>Va sur <a href="/admin/stripe-health.html" style="color:#b8f53e">/admin/stripe-health.html</a> et clique "Re-tester"</li>
+            <li>Vérifie que "Webhook URL Stripe" est ✅ et pointe sur <code style="background:#000;padding:2px 8px;border-radius:4px;color:#b8f53e">https://porteaporte.site/api/stripe-webhook</code></li>
+            <li>Vérifie les "Recent attempts" sur <a href="https://dashboard.stripe.com/webhooks" target="_blank" style="color:#b8f53e">Stripe Dashboard</a> pour voir si Stripe essaie d'envoyer et reçoit un 200 OK</li>
+            <li>Si webhook OK mais toujours rien → contacte-moi avec un screenshot du Stripe Dashboard "Recent attempts"</li>
+          </ol>
+        </div>`;
+      } else if (payedCount > 0) {
+        html += `<div class="reco" style="background:rgba(0,255,159,.08);color:#7dffc1;border-color:#7dffc1"><strong>✅ ${payedCount} livraison(s) payée(s) = ${fmtCad(payedRevCad)}</strong><br>Compteurs corrects. Fonds attendu : ${fmt(expectedFundCents)} · Ta part : ${fmt(expectedFounderCents)}.</div>`;
+      }
+
+      // Settings vides = migration SQL pas faite
+      if (!settings || Object.keys(settings).length === 0 || settings.max_colis_value_cents == null) {
+        html += `<div class="reco" style="background:rgba(255,90,90,.08);color:#ff9999;border-color:#ff7a7a;margin-top:10px"><strong>🚨 Migration SQL non exécutée</strong><br>
+          La table platform_settings est vide ou ne contient pas les colonnes (max_colis_value_cents, insurance_pct, etc.).<br>
+          <strong>Action :</strong> exécute <code style="background:#000;padding:2px 8px;border-radius:4px;color:#b8f53e">sql-migration-assurance.sql</code> dans <a href="https://supabase.com/dashboard/project/_/sql/new" target="_blank" style="color:#b8f53e">Supabase SQL Editor</a>.
+        </div>`;
+      }
+
+      html += '</div>';
+
+      // Recommandations système
       if (d.recommendations.length) {
-        html += '<div class="panel"><h2>⚠️ Diagnostic automatique</h2>';
+        html += '<div class="panel"><h2>⚠️ Autres alertes</h2>';
         for (const reco of d.recommendations) html += `<div class="reco">${reco}</div>`;
         html += '</div>';
       }

@@ -1916,20 +1916,19 @@
       subdomains: 'abcd', maxZoom: 18
     }).addTo(miniMap);
 
-    /* Mock missions dots */
-    const mockDots = [
-      [45.5017,-73.5673],[45.4215,-75.6972],[46.8139,-71.2080],[45.6066,-73.7124],
-      [46.3557,-72.5477],[45.3387,-71.9235],[48.4275,-71.0659],[46.0468,-72.8498],
-      [45.4047,-73.9551],[46.7212,-72.2524]
+    /* Points de la zone bêta Québec/Lévis uniquement (vraies villes de couverture) */
+    const betaCities = [
+      [46.8139, -71.2080, 'Québec'],
+      [46.8033, -71.1779, 'Lévis']
     ];
-    mockDots.forEach(([lat,lng]) => {
-      L.circleMarker([lat,lng], {
-        radius: 6,
-        fillColor: '#00FF9F',
+    betaCities.forEach(([lat, lng, name]) => {
+      L.circleMarker([lat, lng], {
+        radius: 9,
+        fillColor: '#B8F53E',
         color: '#0A0C10',
         weight: 2,
-        fillOpacity: 0.85
-      }).addTo(miniMap);
+        fillOpacity: 0.9
+      }).bindTooltip(name + ' (bêta active)', { permanent: false }).addTo(miniMap);
     });
   </script>
 
