@@ -3,7 +3,7 @@
 
 const {
   CORS, sanitizeEnv, safeIds, sbHeaders, parseDataUrl, uploadProofPhoto,
-  signStorageUrl, getSession, getProfile, roleIn, mergeUserRole,
+  signStorageUrl, getSession, getProfile, normalizeRole, roleIn, mergeUserRole,
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
   driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, siteOrigin, internalHeaders,
@@ -213,7 +213,7 @@ async function assignDriver(req, res, ctx, body) {
     return res.status(409).json({ error: 'Paiement escrow requis avant assignation' });
   }
   const targetProfile = livreurId === ctx.session.id ? ctx.profile : await getProfile(livreurId, ctx.sbUrl, ctx.sbKey);
-  const targetVerified = targetProfile && !targetProfile.suspendu && ['livreur', 'les deux', 'admin'].includes(targetProfile.role) && targetProfile.driver_status === 'verified' && targetProfile.email_verified !== false;
+  const targetVerified = roleIn(targetProfile, ['livreur', 'les deux', 'admin']) && targetProfile.driver_status === 'verified' && targetProfile.email_verified !== false;
   if (!admin && !targetVerified) return res.status(403).json({ error: 'Livreur cible non verifie' });
   if (!admin) {
     const eligibility = deliveryEligibility(targetProfile, livraison);
@@ -653,7 +653,7 @@ async function livreurRescueAccept(req, res, ctx, body) {
 async function livraisonPickup(req, res, ctx, body) {
   const { livraison_id, pickup_code, selfie_data_url, gps_lat, gps_lng } = body;
   if (!livraison_id || !pickup_code) return res.status(400).json({ error: 'livraison_id et pickup_code requis' });
-  if (!selfie_data_url) return res.status(400).json({ error: 'Selfie obligatoire pour preuve d\'identité au pickup' });
+  // Selfie recommandée (sera signalée admin si absente)
 
   const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,livreur_id,pickup_code_hash,taille_colis`, {
     headers: sbHeaders(ctx.sbKey)
@@ -684,13 +684,15 @@ async function livraisonPickup(req, res, ctx, body) {
     return res.status(403).json({ error: 'Code de récupération invalide' });
   }
 
-  // Upload selfie au storage Supabase
+  // Upload selfie au storage Supabase (optionnel)
   let selfieUrl = null;
-  try {
-    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, livraison_id + '-pickup-selfie', selfie_data_url);
-    selfieUrl = uploaded;
-  } catch (e) {
-    return res.status(400).json({ error: 'Upload selfie impossible: ' + e.message });
+  if (selfie_data_url) {
+    try {
+      const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, livraison_id + '-pickup-selfie', selfie_data_url);
+      selfieUrl = uploaded;
+    } catch (e) {
+      console.warn('[pickup] selfie upload failed:', e.message);
+    }
   }
 
   const patch = {
@@ -1859,7 +1861,7 @@ async function tracking(req, res, ctx, body) {
 }
 
 async function submitDriverVerification(req, res, ctx, body) {
-  if (!['livreur', 'les deux', 'admin'].includes(ctx.profile.role)) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
     return res.status(403).json({ error: 'Role livreur requis' });
   }
   // Rate limit : 3 soumissions KYC par utilisateur par 24h
@@ -1996,7 +1998,7 @@ async function submitDriverVerification(req, res, ctx, body) {
 }
 
 async function requestDriverCard(req, res, ctx) {
-  if (!['livreur', 'les deux', 'admin'].includes(ctx.profile.role)) {
+  if (!roleIn(ctx.profile, ['livreur', 'les deux', 'admin'])) {
     return res.status(403).json({ error: 'Role livreur requis' });
   }
   if (!isEmailVerified(ctx.session, ctx.profile)) {
@@ -2094,7 +2096,7 @@ async function adminSetUserAccess(req, res, ctx, body) {
   const target = targetRows[0];
   if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
-  if (target.role === 'admin' && body.confirmation !== 'RETIRER_ADMIN') {
+  if (normalizeRole(target.role) === 'admin' && body.confirmation !== 'RETIRER_ADMIN') {
     return res.status(403).json({ error: 'Protection admin: confirmation speciale requise pour retirer un autre admin' });
   }
 
@@ -3606,7 +3608,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'subscription-status')      return await subscriptionStatus(req, res, ctx);
     // ── admin-push-broadcast ────────────────────────────────────────
     if (endpoint === 'admin-push-broadcast') {
-      if (ctx.profile.role !== 'admin') return res.status(403).json({ error: 'Accès réservé aux admins' });
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
       const webpush = require('web-push');
       const vapidPublic  = (process.env.VAPID_PUBLIC_KEY  || '').trim();
       const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || '').trim();

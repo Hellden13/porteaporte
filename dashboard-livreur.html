@@ -1806,10 +1806,9 @@
         msgEl.textContent = '⚠️ Code invalide (4 caractères min.)';
         return;
       }
+      // Selfie recommandée mais pas bloquante
       if (!selfieData[id]) {
-        msgEl.style.color = '#ffb0b0';
-        msgEl.textContent = '⚠️ Selfie obligatoire — capture une photo';
-        return;
+        if (!confirm('⚠️ Pas de selfie capturée. Continuer sans selfie ? (admin sera notifié)')) return;
       }
       msgEl.style.color = '#a8b0ba';
       msgEl.textContent = '⏳ Récupération GPS + envoi…';
