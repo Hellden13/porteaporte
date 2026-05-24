@@ -440,6 +440,23 @@
     <!-- Section CONFIG (modes, carte, route) -->
     <div data-section="config">
 
+    <!-- Bonus fidélité (60% → 70% max) -->
+    <div id="loyaltyPanel" style="margin-bottom:18px;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(255,200,0,.08),rgba(184,245,62,.06));border:2px solid rgba(255,200,0,.35);display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+        <div style="flex:1;min-width:220px">
+          <div style="font-weight:900;color:#ffd700;font-size:.95rem;margin-bottom:4px">🏆 Bonus Fidélité actif</div>
+          <div style="color:#a8b0ba;font-size:.82rem">Plus tu es engagé, plus tu gagnes — jusqu'à <strong style="color:#fff">70% par livraison</strong>.</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:2rem;font-weight:900;color:var(--brand-lime);line-height:1" id="loyaltyPart">60%</div>
+          <div style="font-size:.78rem;color:#a8b0ba">part par livraison</div>
+        </div>
+      </div>
+      <div id="loyaltyBreakdown" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
+      <div id="loyaltyProgress" style="margin-top:14px;height:8px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden"><div id="loyaltyFill" style="height:100%;background:linear-gradient(90deg,#ffd700,#b8f53e);width:0%;transition:width .8s ease"></div></div>
+      <div style="margin-top:6px;text-align:right;font-size:.76rem;color:#a8b0ba">Encore <span id="loyaltyRemaining">10</span>% pour atteindre le max 70%</div>
+    </div>
+
     <!-- Mode de transport ACTIF aujourd'hui -->
     <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25)">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -821,7 +838,7 @@
       updateToggleLabel(isOnline);
 
       renderStats();
-      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm(), loadModes()]);
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm(), loadModes(), loadLoyaltyBonus()]);
       // Lien vers ma carte
       const cardLink = document.getElementById('myCardLink');
       if (cardLink) cardLink.href = '/livreur-card.html?id=' + encodeURIComponent(session.user.id);
@@ -1557,6 +1574,39 @@
         alert('🆘 ' + (out.message || 'Rescue diffusée'));
         await loadMyDeliveries();
       } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    // ── Bonus fidélité ──
+    async function loadLoyaltyBonus() {
+      try {
+        const res = await fetch('/api/platform?endpoint=loyalty-bonus-get', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({})
+        });
+        const out = await res.json();
+        if (!out.success) return;
+        const panel = document.getElementById('loyaltyPanel');
+        if (!panel) return;
+        panel.style.display = 'block';
+        document.getElementById('loyaltyPart').textContent = out.part_finale + '%';
+        const fillPct = (out.bonus_pct / 10) * 100;
+        document.getElementById('loyaltyFill').style.width = fillPct + '%';
+        document.getElementById('loyaltyRemaining').textContent = (10 - out.bonus_pct).toFixed(0);
+        const html = (out.breakdown || []).map(b =>
+          `<span style="padding:6px 10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.3);border-radius:999px;font-size:.78rem;color:var(--brand-lime);font-weight:700">${b.icon} ${b.label} <strong>+${b.pts}%</strong></span>`
+        ).join('');
+        const allCriteria = [
+          { icon: '🌟', label: '50+ livraisons', need: out.stats.livraisons < 50, current: out.stats.livraisons + '/50' },
+          { icon: '⭐', label: 'Fiabilité ≥95', need: out.stats.fiabilite < 95, current: out.stats.fiabilite + '/100' },
+          { icon: '🏆', label: '3+ badges', need: out.stats.badges < 3, current: out.stats.badges + '/3' },
+          { icon: '📅', label: '10 mois membre', need: out.stats.mois < 10, current: out.stats.mois + '/10' }
+        ];
+        const missing = allCriteria.filter(c => c.need).map(c =>
+          `<span style="padding:6px 10px;background:rgba(255,255,255,.04);border:1px dashed #1E2535;border-radius:999px;font-size:.75rem;color:#a8b0ba">${c.icon} ${c.label} (${c.current})</span>`
+        ).join('');
+        document.getElementById('loyaltyBreakdown').innerHTML = (html || '<span style="color:#a8b0ba;font-size:.82rem">Aucun bonus encore. Voici ce qui te manque :</span>') + ' ' + missing;
+      } catch (e) {}
     }
 
     // ── Mode de transport multi/actif ──

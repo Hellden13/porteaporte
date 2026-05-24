@@ -3595,6 +3595,68 @@ module.exports = async function handler(req, res) {
       if (!r.ok) return res.status(400).json({ error: 'Mise à jour impossible' });
       return res.status(200).json({ success: true });
     }
+    if (endpoint === 'loyalty-bonus-get') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const userId = body.user_id || session.id;
+      // Charger profile + stats
+      const p = await getProfile(userId, sbUrl, sbKey);
+      if (!p) return res.status(404).json({ error: 'Profil introuvable' });
+
+      let totalLivraisons = 0;
+      let scoreFiabilite = 100;
+      let nbBadges = 0;
+      try {
+        const lr = await fetch(`${sbUrl}/rest/v1/livraisons?livreur_id=eq.${userId}&statut=in.(payee,paid)&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const cr = lr.headers.get('content-range') || '0-0/0';
+        totalLivraisons = Number(cr.split('/')[1]) || 0;
+      } catch (e) {}
+      try {
+        const fr = await fetch(`${sbUrl}/rest/v1/v_user_fiabilite?id=eq.${userId}&select=score`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        const fdata = fr.ok ? await fr.json() : [];
+        scoreFiabilite = fdata[0]?.score ?? 100;
+      } catch (e) {}
+      try {
+        const br = await fetch(`${sbUrl}/rest/v1/user_badges?user_id=eq.${userId}&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const cr = br.headers.get('content-range') || '0-0/0';
+        nbBadges = Number(cr.split('/')[1]) || 0;
+      } catch (e) {}
+
+      // Calcul du bonus
+      const breakdown = [];
+      let bonus = 0;
+      if (totalLivraisons >= 50) { bonus += 2; breakdown.push({ icon: '🌟', label: '50+ livraisons', pts: 2 }); }
+      if (scoreFiabilite >= 95) { bonus += 2; breakdown.push({ icon: '⭐', label: 'Fiabilité ≥95', pts: 2 }); }
+      if (nbBadges >= 3) { bonus += 1; breakdown.push({ icon: '🏆', label: '3+ badges', pts: 1 }); }
+      const moisAnciennete = p.cree_le ? Math.floor((Date.now() - new Date(p.cree_le).getTime()) / (30 * 86400000)) : 0;
+      if (moisAnciennete >= 10) { bonus += 1; breakdown.push({ icon: '📅', label: '10+ mois membre', pts: 1 }); }
+      if (Number(p.eco_bonus || 0) > 0) { bonus += 1; breakdown.push({ icon: '🌱', label: 'Bonus écologique', pts: 1 }); }
+      const manuel = Number(p.loyalty_bonus_manual || 0);
+      if (manuel > 0) { bonus += manuel; breakdown.push({ icon: '🎁', label: 'Bonus admin', pts: manuel }); }
+      // Cap à 10%
+      bonus = Math.min(10, bonus);
+
+      // Update profil
+      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ loyalty_bonus_pct: bonus, loyalty_updated_at: new Date().toISOString() })
+      }).catch(() => {});
+
+      return res.status(200).json({
+        success: true,
+        bonus_pct: bonus,
+        part_finale: 60 + bonus,
+        breakdown,
+        stats: { livraisons: totalLivraisons, fiabilite: scoreFiabilite, badges: nbBadges, mois: moisAnciennete }
+      });
+    }
     if (endpoint === 'vote-current') {
       // Public: récupérer le vote actif
       const r = await fetch(`${sbUrl}/rest/v1/community_votes?statut=eq.ouvert&fin=gte.${new Date().toISOString()}&select=*&order=cree_le.desc&limit=1`, {

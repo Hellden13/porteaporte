@@ -336,12 +336,24 @@ module.exports = async function handler(req, res) {
     }
   });
 
-  // Créditer les gains du livreur (60% + bonus rescue si applicable)
+  // Créditer les gains du livreur (60% + bonus rescue + bonus fidélité)
   if (livraison.livreur_id && captured.amount_received > 0) {
     const grossCents = captured.amount_received;
-    const baseNetCents = Math.floor(grossCents * 0.60);
-    const bonusPct = livraison.rescue_livreur_original ? (Number(livraison.rescue_bonus_pct) || 20) : 0;
-    const bonusCents = bonusPct > 0 ? Math.floor(baseNetCents * (bonusPct / 100)) : 0;
+    // Lire bonus fidélité depuis profile
+    let loyaltyBonus = 0;
+    try {
+      const pr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.livreur_id)}&select=loyalty_bonus_pct`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+      });
+      const profileData = pr.ok ? await pr.json() : [];
+      loyaltyBonus = Number(profileData[0]?.loyalty_bonus_pct || 0);
+      if (loyaltyBonus > 10) loyaltyBonus = 10; // safety cap
+    } catch (e) {}
+    // Part de base = 60% + bonus fidélité (max 70%)
+    const basePct = 60 + loyaltyBonus;
+    const baseNetCents = Math.floor(grossCents * (basePct / 100));
+    const rescuePct = livraison.rescue_livreur_original ? (Number(livraison.rescue_bonus_pct) || 20) : 0;
+    const bonusCents = rescuePct > 0 ? Math.floor(baseNetCents * (rescuePct / 100)) : 0;
     const netCents = baseNetCents + bonusCents;
     const feeCents = grossCents - netCents;
     await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
@@ -357,8 +369,11 @@ module.exports = async function handler(req, res) {
         status:                'available',
         available_after:       new Date().toISOString(),
         stripe_payment_intent: captured.id,
-        type:                  bonusPct > 0 ? 'rescue_bonus' : 'livraison',
-        notes:                 bonusPct > 0 ? `Livraison rescue (+${bonusPct}% bonus)` : null,
+        type:                  rescuePct > 0 ? 'rescue_bonus' : (loyaltyBonus > 0 ? 'loyalty_bonus' : 'livraison'),
+        notes:                 [
+          rescuePct > 0 ? `Rescue +${rescuePct}%` : null,
+          loyaltyBonus > 0 ? `Fidélité +${loyaltyBonus}% (part ${basePct}%)` : null
+        ].filter(Boolean).join(' · ') || null,
         created_at:            new Date().toISOString()
       })
     }).catch(e => console.error('[livreur_earnings insert]', e.message));
