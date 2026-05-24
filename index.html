@@ -146,6 +146,39 @@
       gap: 10px;
     }
 
+    .pia-guide-strip {
+      margin: 14px clamp(18px, 4vw, 48px) 0;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid rgba(184,245,62,.24);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.045));
+      box-shadow: 0 14px 42px rgba(0,0,0,.22);
+    }
+
+    .pia-guide-strip strong {
+      display: block;
+      color: var(--brand-text);
+      font-size: .98rem;
+      margin-bottom: 2px;
+    }
+
+    .pia-guide-strip span {
+      color: var(--brand-muted);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .pia-guide-actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .hero {
       min-height: calc(100vh - 74px);
       display: grid;
@@ -828,6 +861,16 @@
       .hero-panel {
         min-height: 500px;
       }
+
+      .pia-guide-strip {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .pia-guide-actions,
+      .pia-guide-actions .btn {
+        width: 100%;
+      }
     }
   </style>
 
@@ -864,10 +907,22 @@
       <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalités">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
+      <button class="btn btn-ghost" type="button" onclick="window.Pia ? window.Pia.open('aide') : location.href='/contact.html'">Pia me guide</button>
       <a id="nav-connexion" class="btn btn-ghost" href="login.html">Connexion</a>
       <a id="nav-commencer" class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
     </div>
   </header>
+
+  <section class="pia-guide-strip" aria-label="Aide Pia pour les nouveaux visiteurs">
+    <div>
+      <strong>Nouveau sur PorteàPorte ? Pia peut te guider.</strong>
+      <span>Dis simplement si tu veux envoyer, livrer, suivre une livraison ou participer au test Québec/Lévis.</span>
+    </div>
+    <div class="pia-guide-actions">
+      <button class="btn btn-secondary" type="button" onclick="window.Pia ? window.Pia.open('beta quebec') : location.href='/quebec-beta.html'">Test Québec/Lévis</button>
+      <button class="btn" type="button" onclick="window.Pia ? window.Pia.open('je suis perdu') : location.href='/role-choice.html'">Je me laisse guider</button>
+    </div>
+  </section>
 
   <!-- Bandeau Mode Impact -->
   <div id="impact-banner">
@@ -975,7 +1030,7 @@
         <div class="proof-divider"></div>
         <div class="proof-stat">
           <span class="ps-val">5 %</span>
-          <span class="ps-lbl">De chaque livraison reversé à des <a href="/transparence.html" style="color:var(--brand-lime);text-decoration:none">causes locales</a></span>
+          <span class="ps-lbl">Objectif bêta vers des <a href="/transparence.html" style="color:var(--brand-lime);text-decoration:none">causes locales</a></span>
         </div>
       </div>
     </div>
@@ -995,7 +1050,7 @@
         <div class="pourquoi-card">
           <span class="pq-icon">💸</span>
           <h3>Économies réelles</h3>
-          <p>Les livreurs se déplacent déjà — ils n'ajoutent pas un trajet. Résultat : un prix 60 % inférieur aux grands transporteurs, sans compromis sur le suivi.</p>
+          <p>Les livreurs se déplacent déjà — ils n'ajoutent pas un trajet. Résultat visé : rester souvent moins cher que les grands transporteurs, avec un suivi clair.</p>
           <span class="pq-stat">~60 %</span>
           <span class="pq-sub">moins cher qu'UPS/FedEx — estimé bêta</span>
         </div>
@@ -1124,7 +1179,7 @@
 
         <article class="temoignage-card">
           <div class="temo-stars">★★★★★</div>
-          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permet de rentabiliser ces trajets. J'ai fait environ 1 100 $ en octobre en acceptant des colis sur ma route. Ça couvre mon essence et plus. » <em style="font-size:0.78rem;color:var(--brand-muted)">(résultat bêta · individuel)</em></p>
+          <p class="temo-text">« Je fais Montréal–Sherbrooke deux fois par semaine pour le travail. PorteàPorte me permettrait de rentabiliser ces trajets en acceptant des colis sur ma route. Ça peut aider à couvrir une partie de l'essence. » <em style="font-size:0.78rem;color:var(--brand-muted)">(scénario bêta · revenus variables)</em></p>
           <div class="temo-author">
             <img class="temo-avatar" src="https://randomuser.me/api/portraits/men/45.jpg" alt="David T." loading="lazy">
             <div>
@@ -1278,13 +1333,13 @@
               <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/61.jpg" alt="Robert">
               <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/women/52.jpg" alt="Amélie">
               <img loading="lazy" decoding="async" src="https://randomuser.me/api/portraits/men/78.jpg" alt="François">
-              <div class="cf-more">+2k</div>
+              <div class="cf-more">Bêta</div>
             </div>
-            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">Des centaines de membres en bêta au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
+            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">Une communauté bêta en construction au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
             <div class="comm-stats-2x2">
               <div class="cs2-card">
-                <span class="cs2-val">47</span>
-                <span class="cs2-lbl">Villes desservies</span>
+                <span class="cs2-val">Objectif</span>
+                <span class="cs2-lbl">Villes bêta à ouvrir progressivement</span>
               </div>
               <div class="cs2-card">
                 <span class="cs2-val">0 $</span>
@@ -1292,7 +1347,7 @@
               </div>
               <div class="cs2-card" data-impact>
                 <span class="cs2-val">5 %</span>
-                <span class="cs2-lbl">Des revenus reversés<br>à des causes locales</span>
+                <span class="cs2-lbl">Impact communautaire<br>suivi publiquement</span>
               </div>
               <div class="cs2-card">
                 <span class="cs2-val">3 min</span>
@@ -1359,8 +1414,8 @@
         <div class="trust-badge">
           <div class="tb-icon">🛡️</div>
           <div>
-            <div class="tb-title">Couverture assurance</div>
-            <div class="tb-desc">Un fonds de protection communautaire (bêta) couvre les colis en transit. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Protection colis</a> pour les détails.</div>
+            <div class="tb-title">Protection optionnelle</div>
+            <div class="tb-desc">Un programme de protection bêta peut aider certains dossiers admissibles. Ce n'est pas une assurance formelle. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Protection colis</a> pour les détails.</div>
           </div>
         </div>
         <div class="trust-badge">
@@ -1387,8 +1442,8 @@
         <div class="trust-badge">
           <div class="tb-icon">💬</div>
           <div>
-            <div class="tb-title">Support humain 7j/7</div>
-            <div class="tb-desc">Notre équipe répond en moins de 4 heures via l'assistant intégré. Problème réel = réponse réelle, pas un bot.</div>
+            <div class="tb-title">Support humain</div>
+            <div class="tb-desc">Pendant la bêta, notre objectif est de répondre rapidement aux vrais problèmes, avec une personne quand le dossier le demande.</div>
           </div>
         </div>
         <div class="trust-badge">
@@ -1506,6 +1561,7 @@
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
           <a class="btn" href="/role-choice.html" style="font-size:1rem;padding:14px 28px">📦 Envoyer un colis</a>
           <a class="btn btn-ghost" href="/devenir-livreur.html" style="font-size:1rem;padding:14px 28px">🚗 Devenir livreur</a>
+          <a class="btn btn-ghost" href="/quebec-beta.html" style="font-size:1rem;padding:14px 28px">Beta Quebec/Levis</a>
           <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px" data-impact>🛣️ Covoiturage</a>
         </div>
         <p style="font-size:0.8rem;color:var(--brand-muted)">
@@ -1711,6 +1767,7 @@
           <h4>Plateforme</h4>
           <a href="/expediteur.html">Envoyer un colis</a>
           <a href="/devenir-livreur.html">Devenir livreur</a>
+          <a href="/quebec-beta.html">Test Québec/Lévis</a>
           <a href="/covoiturage.html">Covoiturage</a>
           <a href="/browse-missions.html">Voir les missions</a>
           <a href="/assurance.html">Protection colis (bêta)</a>
