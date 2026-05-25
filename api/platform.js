@@ -3973,37 +3973,25 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // ─── Endpoint PUBLIC livreur-ratings-get (avant le check session) ───
+    // Public: ratings d'un livreur (badge etoiles sur livreur-card.html)
     if (endpoint === 'livreur-ratings-get') {
       const livreurId = body.livreur_id || body.user_id;
       if (!livreurId) return res.status(400).json({ error: 'livreur_id requis' });
       let reviews = [];
       try {
-        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${livreurId}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, {
-          headers: sbHeaders(sbKey)
-        });
+        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${livreurId}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
         if (r.ok) reviews = await r.json();
       } catch (_) {}
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
-            headers: sbHeaders(sbKey)
-          });
-          if (r.ok) {
-            const raw = await r.json();
-            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
-          }
+          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
         } catch (_) {}
       }
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
-            headers: sbHeaders(sbKey)
-          });
-          if (r.ok) {
-            const raw = await r.json();
-            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
-          }
+          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
         } catch (_) {}
       }
       const valid = reviews.filter(r => Number(r.rating) >= 1 && Number(r.rating) <= 5);
@@ -4012,8 +4000,7 @@ module.exports = async function handler(req, res) {
       const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       valid.forEach(r => { breakdown[Number(r.rating)] = (breakdown[Number(r.rating)] || 0) + 1; });
       return res.status(200).json({
-        success: true,
-        count,
+        success: true, count,
         average: avg !== null ? Math.round(avg * 10) / 10 : null,
         breakdown,
         recent: valid.slice(0, 5).map(r => ({ rating: r.rating, comment: (r.comment || '').slice(0, 200), date: r.created_at }))
