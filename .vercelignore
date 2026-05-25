@@ -42,7 +42,9 @@ GUIDE-DEPLOIEMENT-3-NIVEAUX.txt
 INDEX-TELECHARGEMENT.txt
 save/
 node_modules/
+_video-work/
 *.mp4
+!assets/video/*.mp4
 *.mov
 *.avi
 *.mkv
