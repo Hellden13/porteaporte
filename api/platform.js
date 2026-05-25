@@ -3973,6 +3973,53 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
+    // ─── Endpoint PUBLIC livreur-ratings-get (avant le check session) ───
+    if (endpoint === 'livreur-ratings-get') {
+      const livreurId = body.livreur_id || body.user_id;
+      if (!livreurId) return res.status(400).json({ error: 'livreur_id requis' });
+      let reviews = [];
+      try {
+        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${livreurId}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, {
+          headers: sbHeaders(sbKey)
+        });
+        if (r.ok) reviews = await r.json();
+      } catch (_) {}
+      if (!reviews.length) {
+        try {
+          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
+            headers: sbHeaders(sbKey)
+          });
+          if (r.ok) {
+            const raw = await r.json();
+            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
+          }
+        } catch (_) {}
+      }
+      if (!reviews.length) {
+        try {
+          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
+            headers: sbHeaders(sbKey)
+          });
+          if (r.ok) {
+            const raw = await r.json();
+            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
+          }
+        } catch (_) {}
+      }
+      const valid = reviews.filter(r => Number(r.rating) >= 1 && Number(r.rating) <= 5);
+      const count = valid.length;
+      const avg = count > 0 ? valid.reduce((s, r) => s + Number(r.rating), 0) / count : null;
+      const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      valid.forEach(r => { breakdown[Number(r.rating)] = (breakdown[Number(r.rating)] || 0) + 1; });
+      return res.status(200).json({
+        success: true,
+        count,
+        average: avg !== null ? Math.round(avg * 10) / 10 : null,
+        breakdown,
+        recent: valid.slice(0, 5).map(r => ({ rating: r.rating, comment: (r.comment || '').slice(0, 200), date: r.created_at }))
+      });
+    }
+
     if (endpoint === 'push-send' && internal) {
       const ctx = {
         sbUrl,
@@ -4272,55 +4319,6 @@ module.exports = async function handler(req, res) {
             auditEvents.filter(e => e.event_type?.includes('webhook')).length === 0 ? '⚠️ Aucun audit event webhook - vérifier que le webhook Stripe est bien configuré et signé' : null
           ].filter(Boolean)
         }
-      });
-    }
-    if (endpoint === 'livreur-ratings-get') {
-      // Public: récupère moyenne + nombre + 5 derniers avis pour un livreur
-      const livreurId = body.livreur_id || body.user_id;
-      if (!livreurId) return res.status(400).json({ error: 'livreur_id requis' });
-      let reviews = [];
-      // Essai sur la nouvelle table reviews
-      try {
-        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${livreurId}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, {
-          headers: sbHeaders(sbKey)
-        });
-        if (r.ok) reviews = await r.json();
-      } catch (_) {}
-      // Fallback ancienne table (livreur_id, note)
-      if (!reviews.length) {
-        try {
-          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
-            headers: sbHeaders(sbKey)
-          });
-          if (r.ok) {
-            const raw = await r.json();
-            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
-          }
-        } catch (_) {}
-      }
-      // Fallback evaluations
-      if (!reviews.length) {
-        try {
-          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, {
-            headers: sbHeaders(sbKey)
-          });
-          if (r.ok) {
-            const raw = await r.json();
-            reviews = raw.map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
-          }
-        } catch (_) {}
-      }
-      const valid = reviews.filter(r => Number(r.rating) >= 1 && Number(r.rating) <= 5);
-      const count = valid.length;
-      const avg = count > 0 ? valid.reduce((s, r) => s + Number(r.rating), 0) / count : null;
-      const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-      valid.forEach(r => { breakdown[Number(r.rating)] = (breakdown[Number(r.rating)] || 0) + 1; });
-      return res.status(200).json({
-        success: true,
-        count,
-        average: avg !== null ? Math.round(avg * 10) / 10 : null,
-        breakdown,
-        recent: valid.slice(0, 5).map(r => ({ rating: r.rating, comment: (r.comment || '').slice(0, 200), date: r.created_at }))
       });
     }
     if (endpoint === 'admin-stripe-health') {
