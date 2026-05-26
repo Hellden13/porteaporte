@@ -1,4 +1,4 @@
-# Vercel & env
+# Vercel et variables locales
 .vercel
 .env*.local
 .env*
@@ -8,15 +8,23 @@ backups/
 save/
 *.backup
 
-# Images sources (trop lourdes pour le repo)
+# Images et medias sources trop lourds pour le repo
 hero-triptych.jpg
 *-triptych.jpg
+_video-work/
+video2_assets/
+*.mp4
+!assets/video/*.mp4
+*.mov
+*.avi
+*.mkv
+*.osp
 
 # Fichiers temporaires Windows
 Thumbs.db
 desktop.ini
 
-# Images générées par IA (non déployées)
+# Images generees par IA non deployees
 "ChatGPT Image*"
 ChatGPT*.png
 ChatGPT*.jpg
@@ -27,6 +35,3 @@ npm-debug.log*
 
 # Node
 node_modules/
-
-.vercel
-.env*.local
