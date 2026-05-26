@@ -3545,6 +3545,46 @@ module.exports = async function handler(req, res) {
         },
       });
     }
+    if (endpoint === 'admin-debug-rides') {
+      // Diagnostic complet des trajets covoiturage existants
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      // Charge TOUS les rides (peu importe le statut)
+      const r = await fetch(`${sbUrl}/rest/v1/rides?select=*&order=created_at.desc&limit=50`, {
+        headers: sbHeaders(sbKey)
+      });
+      if (!r.ok) return res.status(500).json({ error: 'Lecture impossible', status: r.status });
+      const rides = await r.json();
+
+      const byStatus = {};
+      for (const ride of rides) {
+        const s = ride.status || 'null';
+        if (!byStatus[s]) byStatus[s] = 0;
+        byStatus[s]++;
+      }
+
+      return res.status(200).json({
+        success: true,
+        total: rides.length,
+        by_status: byStatus,
+        rides: rides.map(ride => ({
+          id: ride.id,
+          driver_id: ride.driver_id,
+          start_city: ride.start_city,
+          end_city: ride.end_city,
+          departure_time: ride.departure_time,
+          status: ride.status,
+          available_seats: ride.available_seats,
+          is_return_trip: ride.is_return_trip,
+          is_recurring: ride.is_recurring,
+          recurrence_days: ride.recurrence_days,
+          created_at: ride.created_at
+        }))
+      });
+    }
     if (endpoint === 'admin-purge-test-data') {
       // Purge des données de test (livraisons fictives, comptes test, etc.) - admin seulement
       const session = await getSession(req, sbUrl, sbKey);
