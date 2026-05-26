@@ -80,6 +80,19 @@
 
     .disclaimer { font-size:.78rem; color:var(--brand-muted); text-align:center; margin-top:24px; line-height:1.6; padding:16px; background:rgba(255,255,255,.02); border-radius:10px; }
     .disclaimer strong { color:#ffd700; }
+
+    /* ── Boutons partage ── */
+    .share-wrap { background:linear-gradient(135deg,rgba(0,217,255,.06),rgba(184,245,62,.04)); border:1px solid rgba(0,217,255,.3); border-radius:14px; padding:20px; text-align:center; margin-top:18px; }
+    .share-wrap h4 { margin:0 0 12px; font-size:1rem; color:#fff; }
+    .share-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .share-btn { display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border:none; border-radius:10px; font-weight:800; cursor:pointer; font-size:.85rem; text-decoration:none; transition:transform .15s; font-family:inherit; }
+    .share-btn:hover { transform:translateY(-1px); }
+    .share-btn.fb { background:#1877F2; color:#fff; }
+    .share-btn.sms { background:#34d058; color:#0a1006; }
+    .share-btn.copy { background:rgba(255,255,255,.08); color:#fff; border:1px solid var(--brand-border); }
+    .share-btn.native { background:rgba(0,217,255,.18); color:var(--brand-cyan); border:1px solid rgba(0,217,255,.4); }
+    .copied-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#7dffc1; color:#0a1006; padding:13px 24px; border-radius:99px; font-weight:900; box-shadow:0 8px 30px rgba(0,255,159,.4); z-index:1000; opacity:0; transition:opacity .25s; pointer-events:none; font-size:.92rem; }
+    .copied-toast.show { opacity:1; }
   </style>
 </head>
 <body>
@@ -211,12 +224,25 @@
       </div>
     </div>
 
+    <div class="share-wrap">
+      <h4>📤 Partage ton résultat</h4>
+      <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px">Tes amis savent peut-être pas qu'ils gagneraient plus avec PorteàPorte. Montre-leur.</p>
+      <div class="share-row">
+        <button class="share-btn fb" onclick="shareFB()">📘 Facebook</button>
+        <button class="share-btn sms" onclick="shareSMS()">💬 SMS</button>
+        <button class="share-btn copy" onclick="shareCopy()">📋 Copier le texte</button>
+        <button class="share-btn native" onclick="shareNative()" id="nativeBtn" style="display:none">📲 Partager</button>
+      </div>
+    </div>
+
     <div class="cta">
       <h3>Convaincu ? Tu peux commencer en 5 minutes.</h3>
       <p style="color:var(--brand-muted);margin:0 0 14px;font-size:.95rem">Inscription gratuite. Vérification KYC en 24h. Premier virement après ta 1ère livraison capturée.</p>
       <a class="btn" href="/devenir-livreur.html">🚗 M'inscrire comme livreur</a>
       <a class="btn btn-ghost" href="/comparatif.html">📊 Comparatif complet</a>
     </div>
+
+    <div class="copied-toast" id="copiedToast">✅ Copié dans le presse-papier !</div>
 
     <div class="disclaimer">
       <strong>⚖️ Engagement transparence :</strong> ces chiffres assument une demande active sur ta zone. <strong style="color:#ffd700">Phase bêta Québec/Lévis</strong> : le volume sera plus faible les 3 premiers mois — projection complète après ~3 mois d'établissement. Les coûts essence/usure sont issus de CAA-Québec 2024. Pas de bonus rescue (5-20% sup quand actif) ni de pourboires inclus.
@@ -371,6 +397,79 @@
 
       document.getElementById('compareTable').innerHTML = papRow + compRows;
     }
+
+    // ─── PARTAGE ───
+    function buildShareText() {
+      const veh = VEHICLES[state.vehicle];
+      const mix = MIX[state.mix];
+      const livMois = state.livraisons * 4.33;
+      const kmMois = state.kmSem * 4.33;
+      const brutBase = livMois * mix.livreur;
+      const bonusFid = state.bonusFid ? brutBase * (10/60) : 0;
+      const brutTotal = brutBase + bonusFid;
+      const litres = kmMois * (veh.conso / 100);
+      const essence = litres * state.gazPrice;
+      const usure = kmMois * veh.usure;
+      const net = brutTotal - essence - usure;
+      const hoursLiv = livMois * 0.25;
+      const hoursDrive = kmMois / 50;
+      const hoursTotal = hoursLiv + hoursDrive;
+      const netPerHour = hoursTotal > 0 ? net / hoursTotal : 0;
+      const profileLabel = { opportuniste: 'Opportuniste', mixte: 'Mixte', fulltime: 'Temps plein' }[state.profile] || 'Mixte';
+      const fmt = v => Math.round(v).toLocaleString('fr-CA');
+
+      return `🚗 J'ai testé le calculateur PorteàPorte (livraison entre voisins au Québec) !\n\n` +
+             `Profil : ${profileLabel} (${state.livraisons} livraisons/sem, ${veh.label})\n` +
+             `💰 Revenu net mensuel estimé : ${fmt(net)} $\n` +
+             `⏱️ Soit ${netPerHour.toFixed(1)} $/h NET (après essence + usure)\n\n` +
+             `Vs Uber Eats QC à ~13 $/h NET... y'a pas photo.\n\n` +
+             `Teste avec tes vrais chiffres : https://porteaporte.site/calculateur-revenus-livreur.html\n\n` +
+             `#PorteàPorte #LivraisonQuébec #MadeInQuébec`;
+    }
+    const SHARE_URL = 'https://porteaporte.site/calculateur-revenus-livreur.html';
+
+    window.shareFB = function() {
+      const text = buildShareText();
+      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}&quote=${encodeURIComponent(text)}`;
+      window.open(url, '_blank', 'width=600,height=600');
+    };
+    window.shareSMS = function() {
+      const text = buildShareText();
+      // sms: scheme marche sur mobile, ouvre app SMS pré-remplie
+      window.location.href = `sms:?body=${encodeURIComponent(text)}`;
+    };
+    window.shareCopy = async function() {
+      const text = buildShareText();
+      try {
+        await navigator.clipboard.writeText(text);
+        const toast = document.getElementById('copiedToast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+      } catch (e) {
+        // Fallback : sélection
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const toast = document.getElementById('copiedToast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+    };
+    window.shareNative = async function() {
+      if (!navigator.share) { shareCopy(); return; }
+      try {
+        await navigator.share({
+          title: 'Combien je gagnerais avec PorteàPorte ?',
+          text: buildShareText(),
+          url: SHARE_URL
+        });
+      } catch (e) { /* user cancel */ }
+    };
+    // Détecte mobile / Web Share API → affiche bouton natif
+    if (navigator.share) document.getElementById('nativeBtn').style.display = 'inline-flex';
 
     // Init
     applyProfile('opportuniste');
