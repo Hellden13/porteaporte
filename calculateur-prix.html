@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculateur de prix livraison — PorteàPorte</title>
-  <meta name="description" content="Calcule en direct combien tu paierais pour envoyer 1, 2 ou X colis avec PorteàPorte. Comparaison live avec UPS, FedEx, Postes Canada.">
+  <meta name="description" content="Estime combien tu paierais pour envoyer 1, 2 ou X colis avec PorteàPorte. Comparaison indicative avec UPS, FedEx et Postes Canada.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="PorteàPorte">
   <meta property="og:title" content="💰 Combien je paie pour envoyer mon colis ?">
-  <meta property="og:description" content="Calculateur transparent. Compare PorteàPorte vs UPS, FedEx, Postes Canada en direct.">
+  <meta property="og:description" content="Calculateur transparent. Compare une estimation PorteàPorte avec des transporteurs connus.">
   <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
   <meta property="og:url" content="https://porteaporte.site/calculateur-prix.html">
   <meta name="twitter:card" content="summary_large_image">
@@ -88,7 +88,7 @@
     <div class="hero">
       <div class="eyebrow">💰 Calculateur transparent · Sans inscription</div>
       <h1>Combien tu paies <span>pour envoyer ?</span></h1>
-      <p class="sub">Ajoute autant de colis que tu veux. Choisis chaque option. Vois ton prix exact en direct, comparé à UPS, FedEx, Purolator et Postes Canada.</p>
+      <p class="sub">Ajoute autant de colis que tu veux. Choisis chaque option. Obtiens une estimation claire, comparée à des transporteurs connus.</p>
     </div>
 
     <div class="grid">
@@ -151,7 +151,7 @@
 
     <div class="share-wrap">
       <h4>📤 Partage ton calcul</h4>
-      <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px">Montre à tes amis combien ils économiseraient. Calcul partagé en 1 clic.</p>
+      <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px">Montre à tes amis combien un envoi local pourrait coûter. Calcul partagé en 1 clic.</p>
       <div class="share-row">
         <button class="share-btn fb" onclick="shareFB()">📘 Facebook</button>
         <button class="share-btn sms" onclick="shareSMS()">💬 SMS</button>
@@ -374,8 +374,8 @@
       return `💰 J'ai testé le calculateur PorteàPorte (livraison entre voisins au Québec) !\n\n` +
              `📦 ${colis.length} colis · ${villeDepart} → ${villeArrivee} (${distance} km, ${urgency})\n` +
              `✨ Prix PorteàPorte : ${totalPap} $\n` +
-             `📊 Vs UPS : ~${upsPrice} $ (j'économise ${savePct}%)\n\n` +
-             `Et le profit reste au Québec — 60% va direct au livreur, 5% à des organismes locaux.\n\n` +
+             `📊 Comparaison indicative avec UPS : ~${upsPrice} $ (écart estimé ${savePct}%)\n\n` +
+             `Objectif PorteàPorte : mieux rémunérer le livreur local et soutenir des organismes d'ici.\n\n` +
              `Teste avec ton propre envoi : https://porteaporte.site/calculateur-prix.html\n\n` +
              `#PorteàPorte #LivraisonQuébec #MadeInQuébec`;
     }
