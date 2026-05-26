@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateur de prix livraison — PorteàPorte</title>
+  <meta name="description" content="Calcule en direct combien tu paierais pour envoyer 1, 2 ou X colis avec PorteàPorte. Comparaison live avec UPS, FedEx, Postes Canada.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteàPorte">
+  <meta property="og:title" content="💰 Combien je paie pour envoyer mon colis ?">
+  <meta property="og:description" content="Calculateur transparent. Compare PorteàPorte vs UPS, FedEx, Postes Canada en direct.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/calculateur-prix.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
+    .wrap { max-width:1080px; margin:0 auto; padding:40px 20px 80px; }
+    .hero { text-align:center; margin-bottom:32px; }
+    .eyebrow { display:inline-block; padding:6px 14px; font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--brand-lime); border:1px solid rgba(184,245,62,.3); border-radius:99px; margin-bottom:18px; }
+    h1 { font-size:clamp(2rem,5vw,3.4rem); font-weight:900; line-height:1.05; margin:0 0 14px; letter-spacing:-.02em; }
+    h1 span { color:var(--brand-lime); }
+    .sub { color:var(--brand-muted); font-size:1.05rem; max-width:60ch; margin:0 auto; line-height:1.6; }
+
+    .grid { display:grid; grid-template-columns:1fr 1.2fr; gap:22px; }
+    @media(max-width:880px){.grid{grid-template-columns:1fr}}
+    .panel { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:14px; padding:22px; }
+    .panel h3 { margin:0 0 16px; font-size:1rem; color:var(--brand-lime); display:flex; gap:8px; align-items:center; }
+
+    .colis-card { background:rgba(255,255,255,.03); border:1px solid var(--brand-border); border-radius:10px; padding:14px; margin-bottom:10px; position:relative; }
+    .colis-card .num { display:inline-block; padding:2px 10px; background:rgba(184,245,62,.15); color:var(--brand-lime); border-radius:99px; font-size:.74rem; font-weight:900; margin-bottom:8px; }
+    .colis-card .del { position:absolute; top:10px; right:10px; cursor:pointer; color:#ff9999; font-size:1.1rem; background:rgba(255,90,90,.1); border:none; border-radius:6px; padding:4px 9px; }
+    .colis-card label { display:block; margin-bottom:8px; font-size:.78rem; color:#d8dde6; font-weight:700; }
+    .colis-card .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+    .colis-card input, .colis-card select { box-sizing:border-box; width:100%; padding:8px 10px; background:#05080c; border:1px solid var(--brand-border); border-radius:6px; color:#fff; font:inherit; font-size:.85rem; }
+    .colis-card .price-mini { text-align:right; font-size:.92rem; color:var(--brand-lime); font-weight:900; margin-top:4px; }
+
+    .add-btn { width:100%; padding:12px; background:rgba(0,217,255,.08); border:1px dashed rgba(0,217,255,.4); border-radius:10px; color:var(--brand-cyan); font-weight:700; cursor:pointer; font-size:.9rem; }
+    .add-btn:hover { background:rgba(0,217,255,.15); }
+
+    .input-row { margin-bottom:14px; }
+    .input-row label { display:block; margin-bottom:5px; font-size:.85rem; color:#d8dde6; font-weight:700; }
+    .input-row input, .input-row select { width:100%; box-sizing:border-box; padding:10px 12px; background:#05080c; border:1px solid var(--brand-border); border-radius:8px; color:#fff; font:inherit; }
+
+    .total-hero { background:linear-gradient(135deg,rgba(184,245,62,.1),rgba(0,217,255,.06)); border:2px solid rgba(184,245,62,.4); border-radius:18px; padding:28px; text-align:center; margin-bottom:16px; }
+    .total-hero .label { font-size:.78rem; text-transform:uppercase; letter-spacing:.1em; color:var(--brand-muted); margin-bottom:8px; }
+    .total-hero .big { font-size:clamp(2.4rem,7vw,4rem); font-weight:900; color:var(--brand-lime); line-height:1; font-variant-numeric:tabular-nums; }
+    .total-hero .small { font-size:.85rem; color:#fff; margin-top:6px; }
+    .total-hero .sub-small { font-size:.78rem; color:var(--brand-muted); margin-top:4px; }
+
+    .compare-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:11px 14px; background:rgba(255,255,255,.03); border-radius:8px; margin-bottom:7px; font-size:.88rem; }
+    .compare-row.pap { background:rgba(184,245,62,.08); border:1px solid rgba(184,245,62,.3); }
+    .compare-row .name { color:#fff; font-weight:700; }
+    .compare-row .name small { display:block; font-size:.7rem; color:var(--brand-muted); font-weight:400; }
+    .compare-row .price { font-variant-numeric:tabular-nums; font-weight:900; min-width:75px; text-align:right; }
+    .compare-row .save { font-size:.76rem; color:#7dffc1; font-weight:700; min-width:80px; text-align:right; }
+    .compare-row.pap .price { color:var(--brand-lime); }
+
+    .cta { background:linear-gradient(135deg,rgba(184,245,62,.08),rgba(0,217,255,.05)); border:1px solid rgba(184,245,62,.3); border-radius:14px; padding:24px; text-align:center; margin-top:22px; }
+    .cta h3 { margin:0 0 10px; font-size:1.2rem; }
+    .cta .btn { font-size:.95rem; padding:13px 24px; margin:5px; }
+
+    .disclaimer { font-size:.76rem; color:var(--brand-muted); text-align:center; margin-top:20px; padding:14px; background:rgba(255,255,255,.02); border-radius:10px; }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+    <a href="/" style="color:#fff;font-weight:900;text-decoration:none;display:flex;gap:10px;align-items:center"><img src="/logo.svg" width="30" height="30" alt=""> PorteàPorte</a>
+    <a class="btn btn-ghost" href="/" style="font-size:.85rem;padding:7px 14px">← Accueil</a>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <div class="eyebrow">💰 Calculateur transparent · Sans inscription</div>
+      <h1>Combien tu paies <span>pour envoyer ?</span></h1>
+      <p class="sub">Ajoute autant de colis que tu veux. Choisis chaque option. Vois ton prix exact en direct, comparé à UPS, FedEx, Purolator et Postes Canada.</p>
+    </div>
+
+    <div class="grid">
+      <!-- ─── ENTRÉES ─── -->
+      <div>
+        <div class="panel">
+          <h3>📍 Itinéraire</h3>
+          <div class="input-row">
+            <label>Ville de départ</label>
+            <input type="text" id="villeDepart" value="Québec" placeholder="Ex: Québec">
+          </div>
+          <div class="input-row">
+            <label>Ville d'arrivée</label>
+            <input type="text" id="villeArrivee" value="Lévis" placeholder="Ex: Lévis">
+          </div>
+          <div class="input-row">
+            <label>📏 Distance (km) — auto si villes connues</label>
+            <input type="number" id="distance" value="10" min="1" max="2000">
+          </div>
+          <div class="input-row">
+            <label>⏱️ Délai souhaité</label>
+            <select id="urgency">
+              <option value="flexible">Flexible (3-7 jours)</option>
+              <option value="48h" selected>48 heures</option>
+              <option value="24h">24 heures (express)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>📦 Tes colis</h3>
+          <div id="colisList"></div>
+          <button class="add-btn" onclick="addColis()">+ Ajouter un colis</button>
+        </div>
+      </div>
+
+      <!-- ─── RÉSULTATS ─── -->
+      <div>
+        <div class="total-hero">
+          <div class="label">Prix total PorteàPorte</div>
+          <div class="big" id="totalPap">0 $</div>
+          <div class="small"><span id="nbColis">0</span> colis · <span id="distVal">0</span> km · <span id="delaiVal">48h</span></div>
+          <div class="sub-small">Frais Stripe inclus · sans inscription requise</div>
+        </div>
+
+        <div class="panel">
+          <h3>⚖️ Comparé aux grands transporteurs</h3>
+          <div id="compareTable"></div>
+          <div style="text-align:center;margin-top:14px;font-size:.78rem;color:var(--brand-muted)">
+            💡 Économies estimées sur livraisons locales 24-48h selon grilles publiques 2026.
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>📊 Détail de la répartition (où va ton $)</h3>
+          <div id="breakdown" style="font-size:.85rem;line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <h3>Convaincu ? Crée ta livraison en 2 minutes.</h3>
+      <p style="color:var(--brand-muted);margin:0 0 14px;font-size:.92rem">Inscription gratuite. Pas d'abonnement. Tu paies seulement quand tu envoies.</p>
+      <a class="btn" href="/role-choice.html">📦 Envoyer mon colis</a>
+      <a class="btn btn-ghost" href="/comparatif.html">📊 Comparatif complet PàP vs concurrents</a>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Source :</strong> Formule officielle PorteàPorte (base 4$ + 0.5$/km + 0.8$/kg × multiplicateurs taille/type/urgence). Compétiteurs estimés via grilles publiques. Tarifs exacts seront affichés à la création de ta livraison.
+    </div>
+  </main>
+
+  <script>
+    // ─── État ───
+    let colis = [
+      { id: Date.now(), poids: 3, taille: 'moyen', type: 'colis' }
+    ];
+
+    // ─── Formule PàP ───
+    const SIZE_MULT  = { petit:1, moyen:1, grand:1.4, xl:2.5 };
+    const TYPE_MULT  = { colis:1, document:0.7, nourriture:1.1, fragile:1.15, electronique:1.2, meuble:1.8, electromenager:2.2, autre:1 };
+    const URG_MULT   = { flexible:1, '48h':1.1, '24h':1.3 };
+
+    function calcPapColis(c, distance, urgency) {
+      const sizeMult = SIZE_MULT[c.taille] || 1;
+      const typeMult = TYPE_MULT[c.type] || 1;
+      const urgMult  = URG_MULT[urgency] || 1;
+      const raw = (4 + distance * 0.5 + c.poids * 0.8) * sizeMult * typeMult * urgMult;
+      return Math.max(5, Math.ceil(raw));
+    }
+
+    // ─── Multiplicateurs compétiteurs ───
+    const COMPETITORS = [
+      { name: 'Postes Canada Xpresspost', sub: 'Société d\'État', mult: 2.4, xlMult: 3.0, supportsXL: true },
+      { name: 'Purolator Express',        sub: 'Privé canadien',  mult: 2.9, xlMult: 3.4, supportsXL: true },
+      { name: 'UPS Standard',             sub: 'Multinational',   mult: 3.2, xlMult: 3.8, supportsXL: true },
+      { name: 'FedEx Express Saver',      sub: 'Multinational',   mult: 3.5, xlMult: 4.0, supportsXL: true },
+      { name: 'Uber Direct',              sub: 'Gig worker',      mult: 2.2, supportsXL: false },
+      { name: 'DoorDash Courier',         sub: 'Gig worker',      mult: 2.5, supportsXL: false }
+    ];
+
+    // ─── Distances connues Quebec ───
+    const CITY_DIST = {
+      'quebeclevis': 10, 'levisquebec': 10,
+      'quebecmontreal': 270, 'montrealquebec': 270,
+      'quebectroisrivieres': 130, 'troisrivieresquebec': 130,
+      'quebecsherbrooke': 240, 'sherbrookequebec': 240,
+      'quebecsaintefoy': 8, 'saintefoyquebec': 8,
+      'quebecsaintaugustin': 18, 'saintaugustinquebec': 18,
+      'levissaintenicolas': 12, 'saintenicolaslevis': 12,
+    };
+    function normCity(s) { return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+    function autoDistance(v1, v2) {
+      const key = normCity(v1) + normCity(v2);
+      return CITY_DIST[key] || null;
+    }
+
+    // ─── Render ───
+    function renderColis() {
+      const html = colis.map((c, i) => `
+        <div class="colis-card">
+          <span class="num">Colis #${i+1}</span>
+          ${colis.length > 1 ? `<button class="del" onclick="removeColis(${c.id})">×</button>` : ''}
+          <div class="row">
+            <div>
+              <label>Poids (kg)</label>
+              <input type="number" min="0.1" max="200" step="0.5" value="${c.poids}" onchange="updateColis(${c.id}, 'poids', this.value)">
+            </div>
+            <div>
+              <label>Taille</label>
+              <select onchange="updateColis(${c.id}, 'taille', this.value)">
+                <option value="petit"${c.taille==='petit'?' selected':''}>Petit (lettre, livre)</option>
+                <option value="moyen"${c.taille==='moyen'?' selected':''}>Moyen (boîte chaussures)</option>
+                <option value="grand"${c.taille==='grand'?' selected':''}>Grand (boîte 25 kg)</option>
+                <option value="xl"${c.taille==='xl'?' selected':''}>XL / Meuble / Électroménager</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Type</label>
+            <select onchange="updateColis(${c.id}, 'type', this.value)">
+              <option value="colis"${c.type==='colis'?' selected':''}>Colis standard</option>
+              <option value="document"${c.type==='document'?' selected':''}>Document</option>
+              <option value="nourriture"${c.type==='nourriture'?' selected':''}>Nourriture</option>
+              <option value="fragile"${c.type==='fragile'?' selected':''}>Fragile</option>
+              <option value="electronique"${c.type==='electronique'?' selected':''}>Électronique</option>
+              <option value="meuble"${c.type==='meuble'?' selected':''}>Meuble</option>
+              <option value="electromenager"${c.type==='electromenager'?' selected':''}>Électroménager</option>
+            </select>
+          </div>
+          <div class="price-mini" id="price-${c.id}">— $</div>
+        </div>
+      `).join('');
+      document.getElementById('colisList').innerHTML = html;
+      compute();
+    }
+
+    window.addColis = () => {
+      colis.push({ id: Date.now() + Math.random(), poids: 3, taille: 'moyen', type: 'colis' });
+      renderColis();
+    };
+    window.removeColis = (id) => {
+      if (colis.length <= 1) return;
+      colis = colis.filter(c => c.id !== id);
+      renderColis();
+    };
+    window.updateColis = (id, key, val) => {
+      const c = colis.find(c => c.id === id);
+      if (!c) return;
+      c[key] = key === 'poids' ? Number(val) : val;
+      compute();
+    };
+
+    // ─── Auto-distance ───
+    function tryAutoDistance() {
+      const v1 = document.getElementById('villeDepart').value;
+      const v2 = document.getElementById('villeArrivee').value;
+      const d = autoDistance(v1, v2);
+      if (d !== null) {
+        document.getElementById('distance').value = d;
+      }
+    }
+
+    // ─── Compute ───
+    function compute() {
+      const distance = Number(document.getElementById('distance').value) || 10;
+      const urgency = document.getElementById('urgency').value;
+
+      // Prix par colis + total
+      let totalPap = 0;
+      let isAnyXL = false;
+      colis.forEach(c => {
+        const p = calcPapColis(c, distance, urgency);
+        totalPap += p;
+        const el = document.getElementById('price-' + c.id);
+        if (el) el.textContent = p + ' $';
+        if (c.taille === 'xl' || c.type === 'meuble' || c.type === 'electromenager') isAnyXL = true;
+      });
+
+      document.getElementById('totalPap').textContent = totalPap + ' $';
+      document.getElementById('nbColis').textContent = colis.length;
+      document.getElementById('distVal').textContent = distance;
+      document.getElementById('delaiVal').textContent = urgency;
+
+      // Comparaison
+      const fmt = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 });
+      const papRow = `<div class="compare-row pap">
+        <div class="name">✨ <strong>PorteàPorte</strong><small>Voisin sur ta route</small></div>
+        <div class="price">${fmt(totalPap)}</div>
+        <div class="save">référence</div>
+      </div>`;
+      const compRows = COMPETITORS.map(c => {
+        const mult = isAnyXL ? (c.xlMult || c.mult) : c.mult;
+        const compPrice = totalPap * mult;
+        if (isAnyXL && !c.supportsXL) {
+          return `<div class="compare-row">
+            <div class="name">${c.name}<small>${c.sub}</small></div>
+            <div class="price" style="color:#ff9999">refuse</div>
+            <div class="save">XL non pris</div>
+          </div>`;
+        }
+        const save = compPrice - totalPap;
+        const savePct = Math.round((save / compPrice) * 100);
+        return `<div class="compare-row">
+          <div class="name">${c.name}<small>${c.sub}</small></div>
+          <div class="price">${fmt(compPrice)}</div>
+          <div class="save">−${savePct}%<br><span style="color:var(--brand-muted);font-size:.7rem">tu épargnes ${fmt(save)}</span></div>
+        </div>`;
+      }).join('');
+      document.getElementById('compareTable').innerHTML = papRow + compRows;
+
+      // Breakdown répartition
+      const livreur = totalPap * 0.60;
+      const communaute = totalPap * 0.05;
+      const protection = totalPap * 0.08;
+      const profit = totalPap * 0.10;
+      const ops = totalPap * 0.04;
+      const dev = totalPap * 0.05;
+      const marketing = totalPap * 0.03;
+      const urgenceFund = totalPap * 0.05;
+      const fmt2 = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 2 });
+      document.getElementById('breakdown').innerHTML = `
+        <div style="display:flex;justify-content:space-between"><span>🚗 Livreur québécois (60%)</span><strong style="color:var(--brand-lime)">${fmt2(livreur)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>💚 Causes communautaires (5%)</span><strong style="color:#ff6b9d">${fmt2(communaute)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🛡️ Protection colis (8%)</span><strong>${fmt2(protection)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🆘 Fonds urgence (5%)</span><strong>${fmt2(urgenceFund)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🔧 Développement (5%)</span><strong>${fmt2(dev)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>📢 Marketing (3%)</span><strong>${fmt2(marketing)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🏛️ Opérations (4%)</span><strong>${fmt2(ops)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>💰 Profit → fonds litige bêta (10%)</span><strong style="color:var(--brand-cyan)">${fmt2(profit)}</strong></div>
+      `;
+    }
+
+    document.getElementById('villeDepart').addEventListener('input', tryAutoDistance);
+    document.getElementById('villeArrivee').addEventListener('input', tryAutoDistance);
+    document.getElementById('distance').addEventListener('input', compute);
+    document.getElementById('urgency').addEventListener('change', compute);
+
+    renderColis();
+  </script>
+</body>
+</html>

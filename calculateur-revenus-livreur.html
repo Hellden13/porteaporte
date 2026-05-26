@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateur de revenus livreur — PorteàPorte</title>
+  <meta name="description" content="Combien gagnerais-tu comme livreur PorteàPorte ? Calculateur transparent avec coûts réels (essence, usure) et comparaison Uber Eats, DoorDash, Purolator.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PorteàPorte">
+  <meta property="og:title" content="💰 Combien je gagnerais comme livreur PorteàPorte ?">
+  <meta property="og:description" content="Calculateur transparent. 3 profils. Coûts réels. Comparaison Uber/DoorDash/Purolator en direct.">
+  <meta property="og:image" content="https://porteaporte.site/hero-center.jpg">
+  <meta property="og:url" content="https://porteaporte.site/calculateur-revenus-livreur.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
+    .wrap { max-width:1100px; margin:0 auto; padding:40px 20px 80px; }
+    .hero { text-align:center; margin-bottom:40px; }
+    .eyebrow { display:inline-block; padding:6px 14px; font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--brand-lime); border:1px solid rgba(184,245,62,.3); border-radius:99px; margin-bottom:18px; }
+    h1 { font-size:clamp(2rem,5vw,3.4rem); font-weight:900; line-height:1.05; margin:0 0 14px; letter-spacing:-.02em; }
+    h1 span { color:var(--brand-lime); }
+    .sub { color:var(--brand-muted); font-size:1.05rem; max-width:62ch; margin:0 auto; line-height:1.6; }
+
+    .profile-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:30px; }
+    .profile-card { background:var(--brand-bg-surface); border:2px solid var(--brand-border); border-radius:14px; padding:20px 18px; cursor:pointer; transition:all .2s; text-align:center; }
+    .profile-card:hover { border-color:rgba(184,245,62,.4); transform:translateY(-2px); }
+    .profile-card.active { border-color:var(--brand-lime); background:rgba(184,245,62,.06); }
+    .profile-card .icon { font-size:2.2rem; margin-bottom:8px; line-height:1; }
+    .profile-card .name { font-weight:900; color:#fff; font-size:1rem; margin-bottom:4px; }
+    .profile-card .desc { font-size:.78rem; color:var(--brand-muted); line-height:1.4; }
+    @media(max-width:680px){.profile-row{grid-template-columns:1fr}}
+
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    @media(max-width:880px){.grid{grid-template-columns:1fr}}
+    .panel { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:16px; padding:24px; }
+    .panel h3 { margin:0 0 18px; font-size:1.1rem; color:var(--brand-lime); display:flex; gap:8px; align-items:center; }
+
+    .input-row { margin-bottom:18px; }
+    .input-row label { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-size:.88rem; color:#d8dde6; font-weight:700; }
+    .input-row label .val { color:var(--brand-lime); font-weight:900; font-variant-numeric:tabular-nums; font-size:1.05rem; }
+    .input-row input[type=range] { width:100%; accent-color:var(--brand-lime); height:4px; }
+    .input-row input[type=number] { width:100px; padding:8px 12px; background:#05080c; border:1px solid var(--brand-border); border-radius:8px; color:var(--brand-lime); font-weight:900; text-align:center; font-size:1rem; font:inherit; }
+    .input-row .hint { font-size:.72rem; color:var(--brand-muted); margin-top:4px; }
+    .input-row .toggle { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; background:rgba(255,255,255,.04); border:1px solid var(--brand-border); border-radius:99px; cursor:pointer; font-size:.85rem; font-weight:700; color:var(--brand-muted); }
+    .input-row .toggle:has(input:checked) { border-color:var(--brand-lime); color:var(--brand-lime); background:rgba(184,245,62,.06); }
+    .input-row .toggle input { accent-color:var(--brand-lime); }
+
+    .vehicle-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+    .vehicle-btn { padding:10px 6px; background:rgba(255,255,255,.04); border:1px solid var(--brand-border); border-radius:10px; cursor:pointer; text-align:center; font-size:.75rem; color:var(--brand-muted); font-weight:700; transition:all .15s; }
+    .vehicle-btn.active { border-color:var(--brand-lime); color:var(--brand-lime); background:rgba(184,245,62,.08); }
+    .vehicle-btn .ico { font-size:1.4rem; display:block; margin-bottom:3px; }
+
+    .result-hero { background:linear-gradient(135deg,rgba(184,245,62,.1),rgba(0,217,255,.06)); border:2px solid rgba(184,245,62,.4); border-radius:18px; padding:28px; text-align:center; margin-bottom:18px; }
+    .result-hero .label { font-size:.78rem; text-transform:uppercase; letter-spacing:.1em; color:var(--brand-muted); margin-bottom:8px; }
+    .result-hero .big { font-size:clamp(2.6rem,7vw,4rem); font-weight:900; color:var(--brand-lime); line-height:1; margin-bottom:6px; font-variant-numeric:tabular-nums; }
+    .result-hero .sub-amount { font-size:1rem; color:#fff; font-weight:700; }
+    .result-hero .small { font-size:.8rem; color:var(--brand-muted); margin-top:8px; }
+
+    .breakdown-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:.9rem; }
+    .breakdown-row:last-child { border:none; font-weight:900; padding-top:14px; color:var(--brand-lime); border-top:2px solid var(--brand-border); border-bottom:none; }
+    .breakdown-row .lbl { color:#d8dde6; }
+    .breakdown-row .amt { font-variant-numeric:tabular-nums; font-weight:700; }
+    .breakdown-row.neg .amt { color:#ff9999; }
+    .breakdown-row.pos .amt { color:#7dffc1; }
+
+    .compare-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:11px 14px; align-items:center; background:rgba(255,255,255,.03); border-radius:10px; margin-bottom:7px; font-size:.88rem; }
+    .compare-row.pap { background:rgba(184,245,62,.08); border:1px solid rgba(184,245,62,.3); }
+    .compare-row .name { color:#fff; font-weight:700; }
+    .compare-row .name small { display:block; font-size:.7rem; color:var(--brand-muted); font-weight:400; }
+    .compare-row .rate { color:var(--brand-muted); font-size:.82rem; font-variant-numeric:tabular-nums; }
+    .compare-row .net { font-weight:900; font-variant-numeric:tabular-nums; min-width:80px; text-align:right; }
+    .compare-row.pap .net { color:var(--brand-lime); }
+
+    .cta { background:linear-gradient(135deg,rgba(184,245,62,.08),rgba(0,217,255,.05)); border:1px solid rgba(184,245,62,.3); border-radius:16px; padding:28px; text-align:center; margin-top:24px; }
+    .cta h3 { margin:0 0 10px; font-size:1.3rem; color:#fff; }
+    .cta .btn { font-size:1rem; padding:14px 28px; margin:6px; }
+
+    .disclaimer { font-size:.78rem; color:var(--brand-muted); text-align:center; margin-top:24px; line-height:1.6; padding:16px; background:rgba(255,255,255,.02); border-radius:10px; }
+    .disclaimer strong { color:#ffd700; }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+    <a href="/" style="color:#fff;font-weight:900;text-decoration:none;display:flex;gap:10px;align-items:center"><img src="/logo.svg" width="30" height="30" alt=""> PorteàPorte</a>
+    <a class="btn btn-ghost" href="/" style="font-size:.85rem;padding:7px 14px">← Accueil</a>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <div class="eyebrow">💰 Calculateur transparent · Données 2026</div>
+      <h1>Combien tu gagnerais<br><span>comme livreur PorteàPorte ?</span></h1>
+      <p class="sub">Joue avec les sliders. Tu vois ton revenu net en direct, comparé à Uber Eats, DoorDash, Skip et Purolator. <strong style="color:var(--brand-lime)">Aucun chiffre maquillé</strong> — coûts essence et usure inclus.</p>
+    </div>
+
+    <!-- ─── 3 PROFILS ─── -->
+    <div class="profile-row">
+      <div class="profile-card active" data-profile="opportuniste" onclick="setProfile('opportuniste')">
+        <div class="icon">🟢</div>
+        <div class="name">Opportuniste</div>
+        <div class="desc">Tu fais ton trajet quotidien. Tu prends 1-2 colis sur la route. Zéro km supplémentaire.</div>
+      </div>
+      <div class="profile-card" data-profile="mixte" onclick="setProfile('mixte')">
+        <div class="icon">🟡</div>
+        <div class="name">Mixte / Régulier</div>
+        <div class="desc">3-4 soirées par semaine. Détours volontaires. Étudiant, parent à mi-temps, retraité actif.</div>
+      </div>
+      <div class="profile-card" data-profile="fulltime" onclick="setProfile('fulltime')">
+        <div class="icon">🔴</div>
+        <div class="name">Temps plein</div>
+        <div class="desc">C'est ton job. 5 jours/sem, 8h/jour. Tu cherches activement des missions partout.</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- ─── ENTRÉES ─── -->
+      <div>
+        <div class="panel">
+          <h3>🚗 Ton véhicule</h3>
+          <div class="vehicle-row" id="vehicleRow">
+            <div class="vehicle-btn" data-veh="velo" onclick="setVehicle('velo')"><span class="ico">🚴</span>Vélo</div>
+            <div class="vehicle-btn active" data-veh="voiture" onclick="setVehicle('voiture')"><span class="ico">🚗</span>Voiture</div>
+            <div class="vehicle-btn" data-veh="van" onclick="setVehicle('van')"><span class="ico">🚐</span>Van</div>
+            <div class="vehicle-btn" data-veh="camion" onclick="setVehicle('camion')"><span class="ico">🚚</span>Camion</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>⏱️ Ton activité hebdomadaire</h3>
+          <div class="input-row">
+            <label>📦 Nb livraisons / semaine <span class="val"><span id="livVal">5</span></span></label>
+            <input type="range" id="livraisons" min="1" max="100" value="5" step="1">
+            <div class="hint">Compte ce que tu penses faire en moyenne par semaine</div>
+          </div>
+          <div class="input-row">
+            <label>📍 Km parcourus / semaine pour PàP <span class="val"><span id="kmVal">10</span> km</span></label>
+            <input type="range" id="kmSem" min="0" max="2000" value="10" step="5">
+            <div class="hint" id="kmHint">Si trajet déjà fait : mets 0. Sinon : km supplémentaires.</div>
+          </div>
+          <div class="input-row">
+            <label>📐 Type moyen de colis</label>
+            <div class="vehicle-row">
+              <div class="vehicle-btn" data-mix="petit" onclick="setMix('petit')"><span class="ico">📨</span>Petit<br><span style="font-size:.65rem">7$ moyen</span></div>
+              <div class="vehicle-btn active" data-mix="moyen" onclick="setMix('moyen')"><span class="ico">📦</span>Moyen<br><span style="font-size:.65rem">15$ moyen</span></div>
+              <div class="vehicle-btn" data-mix="gros" onclick="setMix('gros')"><span class="ico">📚</span>Gros<br><span style="font-size:.65rem">50$ moyen</span></div>
+              <div class="vehicle-btn" data-mix="xl" onclick="setMix('xl')"><span class="ico">🪑</span>XL/Meuble<br><span style="font-size:.65rem">120$ moyen</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>💸 Coûts (réels)</h3>
+          <div class="input-row">
+            <label>⛽ Prix essence ($/L) <span class="val"><span id="gazVal">1.919</span> $</span></label>
+            <input type="range" id="gazPrice" min="1.20" max="2.50" value="1.919" step="0.01">
+            <div class="hint">Prix réel Québec aujourd'hui — ajuste si différent</div>
+          </div>
+          <div class="input-row">
+            <label>🔧 Usure véhicule</label>
+            <div style="font-size:.85rem;color:#d8dde6">Auto-calculé : <strong id="usureVal">0.05 $/km</strong> selon ton véhicule</div>
+            <div class="hint">Inclut huile, pneus, frein, dépréciation. Source : CAA-Québec 2024.</div>
+          </div>
+          <div class="input-row">
+            <label style="cursor:pointer;display:flex;gap:8px;align-items:center">
+              <input type="checkbox" id="bonusFid" checked> 🏆 Bonus fidélité actif (+10% après ~30 livraisons confirmées)
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── RÉSULTATS ─── -->
+      <div>
+        <div class="result-hero">
+          <div class="label">Revenu net mensuel estimé</div>
+          <div class="big" id="netMonth">0 $</div>
+          <div class="sub-amount">soit <span id="netHour">0</span> $/h net (après essence et usure)</div>
+          <div class="small" id="hoursMonth">0h estimées dans le mois</div>
+        </div>
+
+        <div class="panel">
+          <h3>📊 Détail mensuel</h3>
+          <div class="breakdown-row pos">
+            <span class="lbl">Revenu brut PàP (60% du prix client)</span>
+            <span class="amt" id="brutVal">0 $</span>
+          </div>
+          <div class="breakdown-row pos">
+            <span class="lbl">+ Bonus fidélité (+10% si actif)</span>
+            <span class="amt" id="bonusVal">0 $</span>
+          </div>
+          <div class="breakdown-row neg">
+            <span class="lbl">− Essence (<span id="litresVal">0</span> L)</span>
+            <span class="amt" id="essenceVal">0 $</span>
+          </div>
+          <div class="breakdown-row neg">
+            <span class="lbl">− Usure véhicule</span>
+            <span class="amt" id="usureMonthVal">0 $</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="lbl">NET DANS TA POCHE</span>
+            <span class="amt" id="netVal">0 $</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>⚖️ Comparé aux compétiteurs (même nb d'heures)</h3>
+          <div id="compareTable"></div>
+          <div class="hint" style="margin-top:12px;color:var(--brand-muted);font-size:.74rem">Sources : études gig economy QC 2024-2025, salaires bureau Statistique Canada.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <h3>Convaincu ? Tu peux commencer en 5 minutes.</h3>
+      <p style="color:var(--brand-muted);margin:0 0 14px;font-size:.95rem">Inscription gratuite. Vérification KYC en 24h. Premier virement après ta 1ère livraison capturée.</p>
+      <a class="btn" href="/devenir-livreur.html">🚗 M'inscrire comme livreur</a>
+      <a class="btn btn-ghost" href="/comparatif.html">📊 Comparatif complet</a>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚖️ Engagement transparence :</strong> ces chiffres assument une demande active sur ta zone. <strong style="color:#ffd700">Phase bêta Québec/Lévis</strong> : le volume sera plus faible les 3 premiers mois — projection complète après ~3 mois d'établissement. Les coûts essence/usure sont issus de CAA-Québec 2024. Pas de bonus rescue (5-20% sup quand actif) ni de pourboires inclus.
+    </div>
+  </main>
+
+  <script>
+    // ─── État ───
+    const state = {
+      profile: 'opportuniste',
+      vehicle: 'voiture',
+      mix: 'moyen',
+      livraisons: 5,
+      kmSem: 10,
+      gazPrice: 1.919,
+      bonusFid: true
+    };
+
+    // ─── Données véhicules ───
+    const VEHICLES = {
+      velo:    { conso: 0, usure: 0.01, label: 'Vélo' },          // L/100km, $/km
+      voiture: { conso: 8, usure: 0.05, label: 'Voiture' },        // 8 L/100km
+      van:     { conso: 12, usure: 0.08, label: 'Van' },           // 12 L/100km
+      camion:  { conso: 16, usure: 0.10, label: 'Camion' }         // 16 L/100km
+    };
+
+    // ─── Prix moyen par mix de colis (livreur 60%) ───
+    const MIX = {
+      petit: { client: 7,   livreur: 4.20  },  // boîte chaussures, lettre
+      moyen: { client: 15,  livreur: 9.00  },  // boîte normale, fragile
+      gros:  { client: 50,  livreur: 30.00 },  // meuble, électronique
+      xl:    { client: 120, livreur: 72.00 }   // électroménager, gros meuble
+    };
+
+    // ─── Compétiteurs (tarif net/h après dépenses, QC 2024-2025) ───
+    const COMPETITORS = [
+      { name: 'Uber Eats',          sub: 'temps plein QC',    netPerHour: 12.5 },
+      { name: 'DoorDash',           sub: 'gig worker',        netPerHour: 13.5 },
+      { name: 'Skip The Dishes',    sub: 'gig worker',        netPerHour: 12.5 },
+      { name: 'Amazon Flex',        sub: 'blocs 4h imposés',  netPerHour: 20   },
+      { name: 'Pizza salarié',      sub: 'avec tips',         netPerHour: 16   },
+      { name: 'Purolator employé',  sub: 'salarié contrat',   netPerHour: 24   }
+    ];
+
+    // ─── Profils par défaut ───
+    function applyProfile(p) {
+      if (p === 'opportuniste') {
+        state.livraisons = 5;
+        state.kmSem = 0;
+        document.getElementById('kmHint').textContent = 'Trajet déjà fait → 0 km supplémentaire (recommandé pour Opportuniste)';
+      } else if (p === 'mixte') {
+        state.livraisons = 12;
+        state.kmSem = 200;
+        document.getElementById('kmHint').textContent = '~200 km/sem pour 3-4 soirées de tournée';
+      } else if (p === 'fulltime') {
+        state.livraisons = 60;
+        state.kmSem = 800;
+        document.getElementById('kmHint').textContent = '~800 km/sem pour 5j × 8h de livraison';
+      }
+      document.getElementById('livraisons').value = state.livraisons;
+      document.getElementById('kmSem').value = state.kmSem;
+      document.getElementById('livVal').textContent = state.livraisons;
+      document.getElementById('kmVal').textContent = state.kmSem;
+    }
+
+    window.setProfile = (p) => {
+      state.profile = p;
+      document.querySelectorAll('.profile-card').forEach(c => c.classList.toggle('active', c.dataset.profile === p));
+      applyProfile(p);
+      compute();
+    };
+    window.setVehicle = (v) => {
+      state.vehicle = v;
+      document.querySelectorAll('[data-veh]').forEach(b => b.classList.toggle('active', b.dataset.veh === v));
+      compute();
+    };
+    window.setMix = (m) => {
+      state.mix = m;
+      document.querySelectorAll('[data-mix]').forEach(b => b.classList.toggle('active', b.dataset.mix === m));
+      compute();
+    };
+
+    // ─── Listeners ───
+    document.getElementById('livraisons').addEventListener('input', e => { state.livraisons = +e.target.value; document.getElementById('livVal').textContent = e.target.value; compute(); });
+    document.getElementById('kmSem').addEventListener('input', e => { state.kmSem = +e.target.value; document.getElementById('kmVal').textContent = e.target.value; compute(); });
+    document.getElementById('gazPrice').addEventListener('input', e => { state.gazPrice = +e.target.value; document.getElementById('gazVal').textContent = (+e.target.value).toFixed(3); compute(); });
+    document.getElementById('bonusFid').addEventListener('change', e => { state.bonusFid = e.target.checked; compute(); });
+
+    // ─── Calcul principal ───
+    function compute() {
+      const veh = VEHICLES[state.vehicle];
+      const mix = MIX[state.mix];
+
+      // Mensuel = hebdo × 4.33
+      const livMois = state.livraisons * 4.33;
+      const kmMois = state.kmSem * 4.33;
+
+      // Revenu brut (60% client = livreur)
+      const brutBase = livMois * mix.livreur;
+      const bonusFid = state.bonusFid ? brutBase * (10/60) : 0; // +10% sur les 60% = ratio 10/60
+      const brutTotal = brutBase + bonusFid;
+
+      // Coûts
+      const litres = kmMois * (veh.conso / 100);
+      const essence = litres * state.gazPrice;
+      const usure = kmMois * veh.usure;
+      const usurePerKm = veh.usure;
+
+      // Net
+      const net = brutTotal - essence - usure;
+
+      // Heures estimées (15 min par livraison + km à 50km/h moyenne ville)
+      const hoursLiv = livMois * 0.25;
+      const hoursDrive = kmMois / 50;
+      const hoursTotal = hoursLiv + hoursDrive;
+      const netPerHour = hoursTotal > 0 ? net / hoursTotal : 0;
+
+      // ─── Affichage ───
+      const fmt = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 });
+      const fmt2 = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 2 });
+
+      document.getElementById('netMonth').textContent = fmt(net);
+      document.getElementById('netHour').textContent = netPerHour.toFixed(1);
+      document.getElementById('hoursMonth').textContent = `~${hoursTotal.toFixed(0)}h estimées dans le mois (${state.livraisons} livraisons/sem)`;
+
+      document.getElementById('brutVal').textContent = fmt(brutBase);
+      document.getElementById('bonusVal').textContent = state.bonusFid ? '+' + fmt(bonusFid) : '0 $';
+      document.getElementById('essenceVal').textContent = '-' + fmt2(essence);
+      document.getElementById('litresVal').textContent = litres.toFixed(0);
+      document.getElementById('usureMonthVal').textContent = '-' + fmt2(usure);
+      document.getElementById('usureVal').textContent = usurePerKm.toFixed(2) + ' $/km';
+      document.getElementById('netVal').textContent = fmt(net);
+
+      // ─── Comparaison ───
+      const papRow = `<div class="compare-row pap">
+        <div class="name">✨ <strong>PorteàPorte (toi)</strong><small>Bonus trajet déjà fait pris en compte</small></div>
+        <div class="rate">${netPerHour.toFixed(1)} $/h</div>
+        <div class="net">${fmt(net)}</div>
+      </div>`;
+
+      const compRows = COMPETITORS.map(c => {
+        const compMonth = c.netPerHour * hoursTotal;
+        const diff = net - compMonth;
+        const diffStr = diff >= 0 ? '+' + fmt(diff) : fmt(diff);
+        const diffColor = diff >= 0 ? 'var(--brand-lime)' : '#ff9999';
+        return `<div class="compare-row">
+          <div class="name">${c.name}<small>${c.sub}</small></div>
+          <div class="rate">${c.netPerHour.toFixed(1)} $/h</div>
+          <div class="net" style="color:${diffColor}">${fmt(compMonth)}<br><span style="font-size:.7rem;font-weight:600">${diffStr}</span></div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('compareTable').innerHTML = papRow + compRows;
+    }
+
+    // Init
+    applyProfile('opportuniste');
+    compute();
+  </script>
+</body>
+</html>
