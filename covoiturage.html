@@ -400,6 +400,7 @@
       <section class="search-section" id="recherche-trajet">
         <div class="search-card">
           <h2>Trouver un trajet <span>près de vous</span></h2>
+          <p style="color:var(--brand-muted);font-size:.92rem;margin:-8px 0 18px;text-align:center">🔍 <strong style="color:var(--brand-lime)">Aucun compte requis</strong> pour chercher — explore les trajets disponibles avant de t'inscrire.</p>
           <div class="search-grid">
             <div class="field">
               <label>Départ</label>
@@ -472,6 +473,22 @@
           <h3>Trajets disponibles</h3>
           <span class="results-count" id="results-count"></span>
         </div>
+
+        <!-- Bandeau conversion pour visiteurs non-connectés -->
+        <div id="visitor-conversion-banner" style="display:none;background:linear-gradient(135deg,rgba(184,245,62,.1),rgba(0,217,255,.06));border:1px solid rgba(184,245,62,.35);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="font-size:2rem">👋</div>
+            <div style="flex:1;min-width:200px">
+              <strong style="color:#fff;font-size:1rem;display:block;margin-bottom:4px">Tu vois des trajets qui t'intéressent ?</strong>
+              <span style="color:var(--brand-muted);font-size:.88rem">Inscription gratuite en 2 min — paiement sécurisé Stripe, pas d'abonnement.</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a class="btn" href="/role-choice.html" style="white-space:nowrap;padding:11px 22px">📝 Créer mon compte</a>
+              <a class="btn btn-ghost" href="/login.html" style="white-space:nowrap;padding:11px 22px">Connexion</a>
+            </div>
+          </div>
+        </div>
+
         <div id="results-list"></div>
       </section>
 
@@ -649,6 +666,19 @@
     const CHAT_LABEL    = { silencieux: '🤫 Silencieux', selon_humeur: '🙂 Selon l\'humeur', bavard: '😄 Bavard' };
     const TRUNK_LABEL   = { petit: '🎒 Petit coffre', moyen: '🧳 Coffre moyen', grand: '🚚 Grand coffre' };
 
+    // ─── Détection visiteur non-connecté → CTA conversion adapté ───
+    let _isLoggedIn = null;
+    async function checkLogin() {
+      if (_isLoggedIn !== null) return _isLoggedIn;
+      try {
+        const db = window.getSupabaseClient && window.getSupabaseClient();
+        if (!db) { _isLoggedIn = false; return false; }
+        const { data: { session } } = await db.auth.getSession();
+        _isLoggedIn = !!session;
+        return _isLoggedIn;
+      } catch (e) { _isLoggedIn = false; return false; }
+    }
+
     function renderResults(rides) {
       const section = document.getElementById('results-section');
       const list    = document.getElementById('results-list');
@@ -658,9 +688,27 @@
       count.textContent = rides.length + ' trajet' + (rides.length !== 1 ? 's' : '') + ' trouvé' + (rides.length !== 1 ? 's' : '');
 
       if (!rides.length) {
-        list.innerHTML = '<div class="empty-state"><div style="font-size:2.5rem">🗺️</div><p>Aucun trajet trouvé pour ces critères.<br>Essayez d\'autres dates ou villes.</p><a class="btn" href="/covoiturage-publier.html" style="margin-top:16px;display:inline-flex;">Publier le premier trajet</a></div>';
+        list.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size:2.5rem">🗺️</div>
+            <p>Aucun trajet trouvé pour ces critères.<br>Essayez d'autres dates ou villes, ou sois le premier à publier ton trajet !</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
+              <a class="btn" href="/covoiturage-publier.html">🚗 Publier le premier trajet</a>
+              <a class="btn btn-ghost" href="/liste-attente.html">🔔 Me prévenir quand un trajet est dispo</a>
+            </div>
+          </div>`;
         return;
       }
+
+      // Bandeau conversion pour visiteurs non-connectés (s'affiche au-dessus des résultats)
+      checkLogin().then(loggedIn => {
+        const banner = document.getElementById('visitor-conversion-banner');
+        if (banner && !loggedIn && rides.length > 0) {
+          banner.style.display = 'block';
+        } else if (banner) {
+          banner.style.display = 'none';
+        }
+      });
 
       list.innerHTML = rides.map(r => {
         const d = r.driver || {};
