@@ -4683,3 +4683,4 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Erreur serveur', details: err.message });
   }
 };
+// trigger redeploy Tue May 26 20:09:54     2026
