@@ -180,7 +180,16 @@
       <div class="form-section">
         <h3>Horaire</h3>
         <div class="form-grid cols3">
-          <div class="field"><label>Date et heure de départ *</label><input type="datetime-local" id="departure_time"></div>
+          <div class="field"><label>Date et heure de départ *</label>
+            <input type="datetime-local" id="departure_time">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              <button type="button" class="quick-pick" onclick="quickDate(0,7)">Aujourd'hui 7h</button>
+              <button type="button" class="quick-pick" onclick="quickDate(0,17)">Aujourd'hui 17h</button>
+              <button type="button" class="quick-pick" onclick="quickDate(1,7)">Demain 7h</button>
+              <button type="button" class="quick-pick" onclick="quickDate(1,17)">Demain 17h</button>
+              <button type="button" class="quick-pick" onclick="quickDateRelative(1)">+ 1h</button>
+            </div>
+          </div>
           <div class="field"><label>Flexibilité horaire</label>
             <select id="flexibility_minutes">
               <option value="0">Heure fixe</option>
@@ -189,8 +198,12 @@
               <option value="60">± 1 heure</option>
             </select>
           </div>
-          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Ex : 250" min="1" oninput="updatePricePreview()"></div>
+          <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Auto si Québec ↔ Lévis" min="1" oninput="updatePricePreview()"></div>
         </div>
+        <style>
+          .quick-pick { padding: 6px 12px; background: rgba(0,217,255,.1); border: 1px solid rgba(0,217,255,.35); color: var(--brand-cyan); border-radius: 6px; font-size: .78rem; cursor: pointer; font-weight: 700; transition: all .15s; }
+          .quick-pick:hover { background: rgba(0,217,255,.25); transform: translateY(-1px); }
+        </style>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
           <label class="toggle-option"><input type="checkbox" id="is_recurring" onchange="toggleRecurring()"> 🔁 Trajet récurrent (je fais ce trajet chaque semaine)</label>
@@ -199,18 +212,31 @@
           <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
         </div>
         <div id="recurring-section" style="display:none;margin-top:14px;padding:16px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:10px">
-          <strong style="color:var(--brand-lime);font-size:.92rem">📅 Jours de la semaine où tu fais ce trajet</strong>
-          <p style="color:var(--brand-muted);font-size:.82rem;margin:6px 0 12px">Coche les jours. Les passagers verront ton trajet apparaître les jours sélectionnés.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="lun"> Lundi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="mar"> Mardi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="mer"> Mercredi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="jeu"> Jeudi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="ven"> Vendredi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="sam"> Samedi</label>
-            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="dim"> Dimanche</label>
+          <strong style="color:var(--brand-lime);font-size:.92rem">🔁 Fréquence du trajet</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px">
+            <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="weekly" checked> Chaque semaine</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="biweekly"> Aux 2 semaines</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="monthly"> 1 fois par mois</label>
           </div>
-          <p style="color:var(--brand-cyan);font-size:.78rem;margin-top:12px">💡 La date ci-dessus = jour de PUBLICATION. L'heure compte pour tous les jours cochés. Ton trajet reste visible tant qu'il est récurrent.</p>
+
+          <strong style="color:var(--brand-lime);font-size:.92rem">📅 Jours où tu fais ce trajet</strong>
+          <p style="color:var(--brand-muted);font-size:.82rem;margin:6px 0 10px">Coche les jours. Boutons rapides pour aller plus vite :</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <button type="button" class="quick-pick" onclick="presetDays('semaine')">Lun-Ven (semaine)</button>
+            <button type="button" class="quick-pick" onclick="presetDays('weekend')">Sam-Dim (weekend)</button>
+            <button type="button" class="quick-pick" onclick="presetDays('tous')">Tous les jours</button>
+            <button type="button" class="quick-pick" onclick="presetDays('aucun')">Effacer</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="lun"> Lun</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="mar"> Mar</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="mer"> Mer</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="jeu"> Jeu</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="ven"> Ven</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="sam"> Sam</label>
+            <label class="toggle-option" style="padding:8px 12px"><input type="checkbox" class="recur-day" value="dim"> Dim</label>
+          </div>
+          <p style="color:var(--brand-cyan);font-size:.78rem;margin-top:12px">💡 L'heure ci-dessus s'applique à tous les jours cochés. Ton trajet reste visible jusqu'à ce que tu le supprimes.</p>
         </div>
       </div>
       <div class="step-actions">
@@ -260,9 +286,12 @@
           </div>
           <div class="field"><label>Espace de rangement (coffre)</label>
             <select id="trunk_size">
-              <option value="petit">Petit — sac à dos seulement</option>
-              <option value="moyen" selected>Moyen — 1 à 2 valises</option>
-              <option value="grand">Grand — plusieurs valises</option>
+              <option value="aucun">🚫 Aucun — coffre plein, sac à pieds seulement</option>
+              <option value="minimal">📱 Minimal — 1 sac à main ou sacoche</option>
+              <option value="petit">🎒 Petit — 1 sac à dos / 1 sac d'épicerie</option>
+              <option value="moyen" selected>🧳 Moyen — 1 à 2 valises ou 4-5 sacs</option>
+              <option value="grand">📦 Grand — plusieurs valises ou colis volumineux</option>
+              <option value="xl">🚚 XL — meuble, électroménager, palette (camion/van)</option>
             </select>
           </div>
         </div>
@@ -279,12 +308,63 @@
           <label class="toggle-option"><input type="checkbox" id="accepts_packages" onchange="togglePackageFields()"> 📦 J'accepte des colis</label>
         </div>
       </div>
-      <div id="package-fields" style="display:none;margin-top:16px;">
-        <div class="info-note">📦 En acceptant des colis, vous pouvez recevoir des frais supplémentaires (8 $ de base + 1,50 $/kg au-delà de 5 kg). Ces frais vous reviennent intégralement.</div>
-        <div class="form-grid">
-          <div class="field"><label>Poids maximum accepté (kg)</label><input type="number" id="package_max_kg" value="10" min="1" max="50" step="1"></div>
-          <div class="field"><label>Dimension max (cm, plus grand côté)</label><input type="number" id="package_max_dim_cm" value="60" min="10" max="200" step="5"></div>
+      <div id="package-fields" style="display:none;margin-top:16px;padding:18px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:12px">
+        <div style="background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+          <strong style="color:#7dffc1;display:block;margin-bottom:6px">💰 Bonus pour toi : 8 $ + 1,50 $ par kg supplémentaire après 5 kg</strong>
+          <div style="color:var(--brand-muted);font-size:.85rem;line-height:1.6">
+            <strong style="color:#fff">Exemple :</strong> 1 colis de 3 kg sur ta route = <strong style="color:#7dffc1">+8 $ pour toi</strong> (sans détour, sans effort).<br>
+            <strong style="color:#fff">Exemple :</strong> 1 colis de 10 kg = <strong style="color:#7dffc1">+15,50 $</strong> (8 $ + 5 kg × 1,50 $).<br>
+            Ce bonus s'ajoute aux paiements passagers et te revient à 100%.
+          </div>
         </div>
+
+        <strong style="color:var(--brand-lime);font-size:.92rem;display:block;margin-bottom:6px">📦 Quels colis acceptes-tu ?</strong>
+        <p style="color:var(--brand-muted);font-size:.82rem;margin:0 0 12px">Choisis ce qui rentre dans ton coffre. Pas besoin de mesurer :</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">
+          <label class="package-size-card" onclick="setPackageSize('lettre',2,30)">
+            <input type="radio" name="pkg-size" value="lettre">
+            <div class="pkg-icon">📨</div>
+            <div class="pkg-name">Lettre / petit</div>
+            <div class="pkg-desc">Max 2 kg · enveloppe, livre</div>
+          </label>
+          <label class="package-size-card selected" onclick="setPackageSize('boite',10,60)">
+            <input type="radio" name="pkg-size" value="boite" checked>
+            <div class="pkg-icon">📦</div>
+            <div class="pkg-name">Boîte standard</div>
+            <div class="pkg-desc">Max 10 kg · boîte chaussures</div>
+          </label>
+          <label class="package-size-card" onclick="setPackageSize('grand',25,100)">
+            <input type="radio" name="pkg-size" value="grand">
+            <div class="pkg-icon">📚</div>
+            <div class="pkg-name">Grand colis</div>
+            <div class="pkg-desc">Max 25 kg · ~1 m de long</div>
+          </label>
+          <label class="package-size-card" onclick="setPackageSize('xl',50,200)">
+            <input type="radio" name="pkg-size" value="xl">
+            <div class="pkg-icon">🪑</div>
+            <div class="pkg-name">XL / volumineux</div>
+            <div class="pkg-desc">Max 50 kg · meuble, électroménager</div>
+          </label>
+        </div>
+
+        <details style="font-size:.85rem">
+          <summary style="cursor:pointer;color:var(--brand-cyan);font-weight:700">⚙️ Ajuster manuellement (avancé)</summary>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="field"><label>Poids maximum (kg)</label><input type="number" id="package_max_kg" value="10" min="1" max="50" step="1"></div>
+            <div class="field"><label>Longueur maximum (cm)</label><input type="number" id="package_max_dim_cm" value="60" min="10" max="200" step="5"></div>
+          </div>
+        </details>
+
+        <style>
+          .package-size-card { display:block; padding:14px 12px; background:rgba(255,255,255,.04); border:2px solid var(--brand-border); border-radius:12px; cursor:pointer; text-align:center; transition:all .15s; }
+          .package-size-card:hover { border-color:rgba(184,245,62,.5); transform:translateY(-1px); }
+          .package-size-card.selected { border-color:var(--brand-lime); background:rgba(184,245,62,.08); }
+          .package-size-card input { display:none; }
+          .pkg-icon { font-size:1.8rem; margin-bottom:4px; }
+          .pkg-name { font-weight:800; color:#fff; font-size:.9rem; }
+          .pkg-desc { color:var(--brand-muted); font-size:.74rem; margin-top:2px; line-height:1.4; }
+        </style>
       </div>
       <div class="step-actions">
         <button class="btn btn-ghost" onclick="goStep(1)">← Retour</button>
@@ -390,20 +470,36 @@
       </div>
 
       <div class="form-section">
-        <h3>Point de départ sécuritaire</h3>
-        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 12px;">Optionnel — lieu public connu pour que les passagers vous retrouvent facilement.</p>
+        <h3>🛡️ Point de départ — Embarquement sécuritaire</h3>
+        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 14px;">
+          Choisis un <strong style="color:var(--brand-lime)">lieu public bien éclairé</strong> où le passager te retrouve. Rassure tes passagers = + de réservations.
+        </p>
+
+        <strong style="display:block;color:var(--brand-cyan);font-size:.85rem;margin-bottom:8px">Lieux suggérés (clique pour pré-remplir)</strong>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Tim Hortons')">☕ Tim Hortons</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','McDonald\'s')">🍔 McDonald's</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Walmart')">🏪 Walmart</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Station d\'essence')">⛽ Station essence</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Métro / Station bus')">🚆 Métro/Bus</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Stationnement public')">🅿️ Stationnement public</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','IGA')">🛒 IGA</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Centre commercial')">🏬 Centre commercial</button>
+        </div>
+
         <div class="form-grid">
           <div class="field">
-            <label>Ville de départ</label>
-            <input type="text" id="meeting-city-start" placeholder="Ex : Québec" oninput="loadMeetingPoints('start')">
+            <label>Type de lieu (ou adresse spécifique)</label>
+            <input type="text" id="meeting-point-label-start" placeholder="Ex : Tim Hortons, ou adresse complète">
           </div>
           <div class="field">
-            <label>Point sécuritaire</label>
-            <select id="meeting-point-start">
-              <option value="">Choisir un endroit…</option>
-            </select>
+            <label>Ville/secteur précis</label>
+            <input type="text" id="meeting-city-start" placeholder="Ex : Lévis - secteur Lauzon">
           </div>
         </div>
+        <p style="font-size:.78rem;color:var(--brand-cyan);margin-top:8px">🛡️ <strong>Bonus confiance :</strong> tu seras suivi en direct par GPS pendant tout le trajet. Les passagers reçoivent ton itinéraire en temps réel.</p>
+        <!-- Champs cachés pour compat ancien backend -->
+        <input type="hidden" id="meeting-point-start" value="">
       </div>
 
       <div class="form-section">
@@ -418,19 +514,32 @@
       </div>
 
       <div class="form-section">
-        <h3>Point d'arrivée sécuritaire</h3>
+        <h3>🛡️ Point d'arrivée — Débarquement sécuritaire</h3>
+        <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 14px;">Où tu déposeras les passagers (idéalement un lieu public connu).</p>
+
+        <strong style="display:block;color:var(--brand-cyan);font-size:.85rem;margin-bottom:8px">Lieux suggérés</strong>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Tim Hortons')">☕ Tim Hortons</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','McDonald\'s')">🍔 McDonald's</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Walmart')">🏪 Walmart</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Station d\'essence')">⛽ Station essence</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Métro / Station bus')">🚆 Métro/Bus</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Stationnement public')">🅿️ Stationnement public</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','IGA')">🛒 IGA</button>
+          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Centre commercial')">🏬 Centre commercial</button>
+        </div>
+
         <div class="form-grid">
           <div class="field">
-            <label>Ville d'arrivée</label>
-            <input type="text" id="meeting-city-end" placeholder="Ex : Montréal" oninput="loadMeetingPoints('end')">
+            <label>Type de lieu (ou adresse spécifique)</label>
+            <input type="text" id="meeting-point-label-end" placeholder="Ex : Walmart, ou adresse complète">
           </div>
           <div class="field">
-            <label>Point sécuritaire</label>
-            <select id="meeting-point-end">
-              <option value="">Choisir un endroit…</option>
-            </select>
+            <label>Ville/secteur précis</label>
+            <input type="text" id="meeting-city-end" placeholder="Ex : Québec - secteur Lebourgneuf">
           </div>
         </div>
+        <input type="hidden" id="meeting-point-end" value="">
       </div>
 
       <div class="step-actions">
@@ -575,6 +684,52 @@
         document.getElementById('is_recurring').checked ? 'block' : 'none';
     }
 
+    // ─── Pickers rapides date/heure ───
+    function quickDate(daysOffset, hour) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysOffset);
+      d.setHours(hour, 0, 0, 0);
+      // Format YYYY-MM-DDTHH:MM
+      const pad = n => String(n).padStart(2, '0');
+      const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      document.getElementById('departure_time').value = val;
+    }
+    function quickDateRelative(hoursOffset) {
+      const d = new Date(Date.now() + hoursOffset * 3600000);
+      d.setMinutes(0, 0, 0); // arrondir heure
+      const pad = n => String(n).padStart(2, '0');
+      const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      document.getElementById('departure_time').value = val;
+    }
+
+    // ─── Presets jours récurrence ───
+    function presetDays(type) {
+      const map = {
+        semaine: ['lun','mar','mer','jeu','ven'],
+        weekend: ['sam','dim'],
+        tous: ['lun','mar','mer','jeu','ven','sam','dim'],
+        aucun: []
+      };
+      const want = map[type] || [];
+      document.querySelectorAll('.recur-day').forEach(c => { c.checked = want.includes(c.value); });
+    }
+
+    // ─── Preset taille colis (auto kg + cm) ───
+    function setPackageSize(name, kg, cm) {
+      document.getElementById('package_max_kg').value = kg;
+      document.getElementById('package_max_dim_cm').value = cm;
+      document.querySelectorAll('.package-size-card').forEach(c => c.classList.remove('selected'));
+      const card = document.querySelector(`.package-size-card input[value="${name}"]`)?.closest('.package-size-card');
+      if (card) card.classList.add('selected');
+    }
+
+    // ─── Preset points sécuritaires ───
+    function presetSafePoint(side, name) {
+      document.getElementById('meeting-point-label-' + side).value = name;
+      const cityInput = document.getElementById('meeting-city-' + side);
+      if (!cityInput.value) cityInput.focus();
+    }
+
     // ── Colis ────────────────────────────────────────────────────
     function togglePackageFields() {
       document.getElementById('package-fields').style.display =
@@ -708,6 +863,11 @@
         recurrence_days: document.getElementById('is_recurring').checked
           ? Array.from(document.querySelectorAll('.recur-day:checked')).map(c => c.value)
           : null,
+        recurrence_frequency: document.getElementById('is_recurring').checked
+          ? (document.querySelector('input[name="recur-freq"]:checked')?.value || 'weekly')
+          : null,
+        pickup_safe_label: document.getElementById('meeting-point-label-start')?.value?.trim() || null,
+        dropoff_safe_label: document.getElementById('meeting-point-label-end')?.value?.trim() || null,
         flexibility_minutes: document.getElementById('flexibility_minutes').value,
         total_distance_km: document.getElementById('total_distance_km').value || null,
         is_return_trip: document.getElementById('is_return_trip').checked,
