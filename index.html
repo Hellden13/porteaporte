@@ -1135,10 +1135,36 @@
         <div class="eyebrow">Livraison collaborative au Quebec</div>
         <h1 id="hero-title">Quelqu'un passe deja <span>dans ta direction.</span></h1>
         <p>Ton voisin va déjà à Québec ce matin. Ton collègue rentre à Lévis ce soir. PorteàPorte connecte tes colis aux gens qui passent déjà par là — pas à des livreurs professionnels, à madame et monsieur tout le monde.</p>
-        <div class="cta-buttons">
-          <a class="btn" href="role-choice.html">Choisir mon role</a>
-          <a class="btn btn-secondary" href="browse-missions.html">Voir les missions</a>
+        <div class="hero-cta-3" role="group" aria-label="Choisis ce que tu veux faire">
+          <a class="hero-cta-btn cta-expediteur" href="/expediteur.html">
+            <span class="cta-ico">📦</span>
+            <span class="cta-text">J'envoie un colis</span>
+          </a>
+          <a class="hero-cta-btn cta-livreur" href="/devenir-livreur.html">
+            <span class="cta-ico">🚗</span>
+            <span class="cta-text">Je suis livreur</span>
+          </a>
+          <a class="hero-cta-btn cta-covoit" href="/covoiturage.html">
+            <span class="cta-ico">🤝</span>
+            <span class="cta-text">Covoiturage</span>
+          </a>
         </div>
+        <style>
+          .hero-cta-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:24px 0 18px; max-width:560px; }
+          .hero-cta-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:18px 10px; border-radius:14px; text-decoration:none; font-weight:900; transition:all .2s; min-height:90px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,.15); }
+          .hero-cta-btn:hover, .hero-cta-btn:focus-visible { transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,.3); }
+          .hero-cta-btn .cta-ico { font-size:1.7rem; line-height:1; }
+          .hero-cta-btn .cta-text { font-size:.88rem; letter-spacing:-.01em; line-height:1.2; }
+          .cta-expediteur { background:linear-gradient(135deg,#b8f53e,#9ce326); color:#071006; border:2px solid #b8f53e; }
+          .cta-livreur { background:linear-gradient(135deg,#00d9ff,#00b8d4); color:#001828; border:2px solid #00d9ff; }
+          .cta-covoit { background:linear-gradient(135deg,#ff6b9d,#e94f87); color:#fff; border:2px solid #ff6b9d; }
+          @media(max-width:520px) {
+            .hero-cta-3 { grid-template-columns:1fr; gap:8px; max-width:none; }
+            .hero-cta-btn { flex-direction:row; min-height:60px; padding:14px 18px; }
+            .hero-cta-btn .cta-ico { font-size:1.5rem; }
+            .hero-cta-btn .cta-text { font-size:1rem; }
+          }
+        </style>
         <div class="trust-row" aria-label="Points forts">
           <div class="trust-item">
             <strong>Suivi GPS</strong>
