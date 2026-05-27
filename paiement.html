@@ -291,27 +291,45 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 <script>
 // ? STRIPE INIT ?
 const db = window.getSupabaseClient();
-const stripe = Stripe('pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a');
-const elements = stripe.elements();
-const cardElement = elements.create('card',{
-  style:{
-    base:{
-      color:'#F5F0E8',
-      fontFamily:'Bricolage Grotesque, sans-serif',
-      fontSize:'14px',
-      '::placeholder':{color:'rgba(245,240,232,0.3)'}
-    },
-    invalid:{color:'#FF4D4D'}
+let stripe = null;
+let cardElement = null;
+
+async function initStripeElements(){
+  const errEl = document.getElementById('card-errors');
+  try {
+    const res = await fetch('/api/platform?endpoint=stripe-public-config');
+    const cfg = await res.json().catch(() => ({}));
+    const publishableKey = cfg.publishable_key || 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a';
+    stripe = Stripe(publishableKey);
+    const elements = stripe.elements();
+    cardElement = elements.create('card',{
+      style:{
+        base:{
+          color:'#F5F0E8',
+          fontFamily:'Bricolage Grotesque, sans-serif',
+          fontSize:'14px',
+          '::placeholder':{color:'rgba(245,240,232,0.3)'}
+        },
+        invalid:{color:'#FF4D4D'}
+      }
+    });
+    cardElement.mount('#card-element');
+    cardElement.on('focus',()=>document.getElementById('stripe-wrap').classList.add('focused'));
+    cardElement.on('blur',()=>document.getElementById('stripe-wrap').classList.remove('focused'));
+    cardElement.on('change',e=>{
+      if(e.error){errEl.textContent=e.error.message;errEl.style.display='block'}
+      else{errEl.style.display='none'}
+    });
+    console.log('[paiement] Stripe initialise en mode', cfg.mode || (publishableKey.includes('_test_') ? 'test' : 'live'));
+  } catch (err) {
+    console.error('[paiement] Stripe init impossible:', err);
+    if (errEl) {
+      errEl.textContent = 'Paiement temporairement indisponible. Recharge la page ou contacte le support.';
+      errEl.style.display = 'block';
+    }
   }
-});
-cardElement.mount('#card-element');
-cardElement.on('focus',()=>document.getElementById('stripe-wrap').classList.add('focused'));
-cardElement.on('blur',()=>document.getElementById('stripe-wrap').classList.remove('focused'));
-cardElement.on('change',e=>{
-  const errEl=document.getElementById('card-errors');
-  if(e.error){errEl.textContent=e.error.message;errEl.style.display='block'}
-  else{errEl.style.display='none'}
-});
+}
+initStripeElements();
 
 // ? CALCUL PRIX ?
 let prixLivraison=85;
@@ -557,6 +575,10 @@ async function handlePayment(){
   errEl.style.display = 'none';
 
   try {
+    if (!stripe || !cardElement) {
+      throw new Error('Module de paiement en chargement. Attends quelques secondes et réessaie.');
+    }
+
     // 1. Créer PaymentIntent côté serveur
     const session = await getSessionOrThrow();
     const livraisonId = await createLivraisonIfNeeded(session);

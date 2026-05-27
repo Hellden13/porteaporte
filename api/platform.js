@@ -3459,6 +3459,16 @@ module.exports = async function handler(req, res) {
     endpoint = endpointFromReq(req, body);
     const sbUrl = sanitizeEnv(process.env.SUPABASE_URL);
     const sbKey = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
+
+    if (endpoint === 'stripe-public-config') {
+      const publishableKey = sanitizeEnv(process.env.STRIPE_PUBLIC_KEY)
+        || 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a';
+      return res.status(200).json({
+        publishable_key: publishableKey,
+        mode: publishableKey.includes('_test_') ? 'test' : 'live'
+      });
+    }
+
     if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
     const internalSecret = process.env.INTERNAL_API_SECRET;
     const internalHeader = req.headers['x-internal-notifier-secret'];
