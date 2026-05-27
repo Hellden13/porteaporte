@@ -2543,6 +2543,166 @@ async function recipientReview(req, res, sbUrl, sbKey, body) {
   return res.status(200).json({ success: true });
 }
 
+// ─────────────────────────────────────────────────────────────────
+// AVIS COVOITURAGE — bidirectionnel (chauffeur ↔ passager)
+// ─────────────────────────────────────────────────────────────────
+async function rideReviewCreate(req, res, ctx, body) {
+  const session = ctx.session;
+  if (!session) return res.status(401).json({ error: 'Connexion requise' });
+
+  const rideId = String(body.ride_id || '').trim();
+  const rating = Math.round(toNumber(body.rating, 0));
+  const comment = String(body.comment || '').trim().slice(0, 800);
+  if (!rideId) return res.status(400).json({ error: 'ride_id requis' });
+  if (rating < 1 || rating > 5) return res.status(400).json({ error: 'Note 1-5 requise' });
+
+  // Récupérer le trajet
+  const rRes = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(rideId)}&select=id,driver_id,status,departure_time`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rides = rRes.ok ? await rRes.json() : [];
+  const ride = rides[0];
+  if (!ride) return res.status(404).json({ error: 'Trajet introuvable' });
+
+  // Le trajet doit être terminé pour pouvoir évaluer
+  const finishedStatuses = ['termine', 'completed', 'effectue', 'done'];
+  const departed = ride.departure_time && new Date(ride.departure_time).getTime() < Date.now();
+  if (!finishedStatuses.includes(String(ride.status || '').toLowerCase()) && !departed) {
+    return res.status(409).json({ error: 'Le trajet n\'est pas encore terminé' });
+  }
+
+  // Trouver les bookings pour déterminer le rôle
+  const bRes = await fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?ride_id=eq.${encodeURIComponent(rideId)}&select=passenger_id,status`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const bookings = bRes.ok ? await bRes.json() : [];
+  const isDriver = ride.driver_id === session.id;
+  const myBooking = bookings.find(b => b.passenger_id === session.id);
+  const isPassenger = !!myBooking;
+
+  if (!isDriver && !isPassenger) {
+    return res.status(403).json({ error: 'Vous n\'avez pas participé à ce trajet' });
+  }
+
+  let reviewedId, reviewerRole, reviewedRole;
+  if (isDriver) {
+    // Chauffeur évalue un passager
+    const targetPassengerId = String(body.target_user_id || '').trim();
+    if (!targetPassengerId) return res.status(400).json({ error: 'target_user_id requis (passager à évaluer)' });
+    const targetBooking = bookings.find(b => b.passenger_id === targetPassengerId);
+    if (!targetBooking) return res.status(404).json({ error: 'Ce passager n\'est pas inscrit au trajet' });
+    reviewedId = targetPassengerId;
+    reviewerRole = 'driver';
+    reviewedRole = 'passenger';
+  } else {
+    // Passager évalue le chauffeur
+    reviewedId = ride.driver_id;
+    reviewerRole = 'passenger';
+    reviewedRole = 'driver';
+  }
+
+  // Vérifier double-évaluation
+  const dupRes = await fetch(`${ctx.sbUrl}/rest/v1/reviews?ride_id=eq.${encodeURIComponent(rideId)}&reviewer_id=eq.${session.id}&reviewed_id=eq.${reviewedId}&select=id&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const dup = dupRes.ok ? await dupRes.json() : [];
+  if (dup.length) return res.status(409).json({ error: 'Vous avez déjà évalué cette personne pour ce trajet' });
+
+  const payload = {
+    ride_id: rideId,
+    reviewer_id: session.id,
+    reviewed_id: reviewedId,
+    reviewer_role: reviewerRole,
+    reviewed_role: reviewedRole,
+    rating,
+    comment
+  };
+
+  let r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+    method: 'POST',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify(payload)
+  });
+  let data = await r.json().catch(() => ({}));
+
+  // Fallback : retirer ride_id si colonne manquante
+  if (!r.ok && /column .* does not exist|Could not find/i.test(JSON.stringify(data))) {
+    delete payload.ride_id;
+    r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+      method: 'POST',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(payload)
+    });
+    data = await r.json().catch(() => ({}));
+  }
+
+  if (!r.ok) return res.status(400).json({ error: 'Création avis impossible', details: data });
+
+  // Alerte si note basse
+  if (rating <= 2) {
+    alertAdmin(
+      `Note basse (${rating}⭐) covoiturage`,
+      `Un ${reviewerRole} a donné ${rating}/5 à un ${reviewedRole}. Vérifie si action requise.`,
+      {
+        severity: rating === 1 ? 'critical' : 'warning',
+        details: {
+          'Note': `${rating} / 5 ⭐`,
+          'Trajet': rideId.slice(0, 8),
+          'Évaluateur': reviewerRole,
+          'Évalué': reviewedRole,
+          'Commentaire': (comment || '').slice(0, 250) || '(aucun)'
+        },
+        cta_url: `https://porteaporte.site/admin/users.html`,
+        cta_label: '👤 Voir le profil →'
+      }
+    );
+  }
+
+  return res.status(200).json({ success: true, review: Array.isArray(data) ? data[0] : data });
+}
+
+async function rideUserRating(req, res, ctx, body) {
+  const userId = String(body.user_id || ctx.session?.id || '').trim();
+  if (!userId) return res.status(400).json({ error: 'user_id requis' });
+
+  // Tente d'abord avec les avis covoit (ride_id NOT NULL), fallback toutes reviews
+  let rRes = await fetch(`${ctx.sbUrl}/rest/v1/reviews?reviewed_id=eq.${encodeURIComponent(userId)}&ride_id=not.is.null&select=rating,comment,reviewer_role,reviewed_role,created_at&order=created_at.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  let reviews = rRes.ok ? await rRes.json() : [];
+
+  if (!reviews.length || !rRes.ok) {
+    // Fallback : toutes les reviews concernant ce user (cov ou liv)
+    rRes = await fetch(`${ctx.sbUrl}/rest/v1/reviews?reviewed_id=eq.${encodeURIComponent(userId)}&select=rating,comment,reviewer_role,reviewed_role,created_at&order=created_at.desc&limit=50`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    reviews = rRes.ok ? await rRes.json() : [];
+  }
+
+  const valid = reviews.filter(x => Number(x.rating) >= 1 && Number(x.rating) <= 5);
+  const avg = valid.length ? (valid.reduce((s, x) => s + Number(x.rating), 0) / valid.length) : null;
+
+  // Calcul score confiance simple (badge)
+  let badge = null;
+  if (valid.length >= 20 && avg >= 4.7) badge = { label: '🌟 Élite', color: '#b8f53e' };
+  else if (valid.length >= 10 && avg >= 4.5) badge = { label: '✓ Confiance vérifiée', color: '#00d9ff' };
+  else if (valid.length >= 3 && avg >= 4.0) badge = { label: '👍 Recommandé', color: '#ffd166' };
+  else if (valid.length >= 1) badge = { label: '🌱 Nouveau membre', color: '#888' };
+
+  return res.status(200).json({
+    user_id: userId,
+    avg_rating: avg ? Math.round(avg * 10) / 10 : null,
+    count: valid.length,
+    badge,
+    recent: valid.slice(0, 10).map(x => ({
+      rating: x.rating,
+      comment: x.comment || '',
+      reviewer_role: x.reviewer_role || null,
+      created_at: x.created_at
+    }))
+  });
+}
+
 async function fetchImpactState(sbUrl, sbKey) {
   const settingsRes = await fetch(`${sbUrl}/rest/v1/impact_settings?select=*&id=eq.default&limit=1`, {
     headers: sbHeaders(sbKey)
@@ -4625,6 +4785,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
     if (endpoint === 'ride-package-book')    return await ridePackageBook(req, res, ctx, body);
+    if (endpoint === 'ride-review-create')   return await rideReviewCreate(req, res, ctx, body);
+    if (endpoint === 'ride-user-rating')     return await rideUserRating(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
