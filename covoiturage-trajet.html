@@ -652,7 +652,15 @@ async function bookPassenger() {
   var res = await fetch('/api/platform?endpoint=ride-book', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-    body: JSON.stringify({ ride_id: rideId, user_id: currentUser.id, seats_booked: seats, has_luggage: luggage, has_pet: pet, special_requests: note, pickup_city: pickup, dropoff_city: dropoff })
+    body: JSON.stringify({
+      ride_id: rideId,
+      seats_reserved: seats,
+      has_large_luggage: luggage,
+      has_pet: pet,
+      special_requests: note,
+      pickup_city: pickup,
+      dropoff_city: dropoff
+    })
   });
   var data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || 'Erreur reservation');

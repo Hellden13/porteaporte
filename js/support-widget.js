@@ -10,69 +10,93 @@ if (!window.__PIA_LOADED__) {
 
     const KNOWLEDGE = [
       {
-        keys: ['envoyer', 'colis', 'expedier', 'lettre', 'expediteur', 'livraison'],
-        title: 'Envoyer un colis',
-        answer: 'Pour envoyer un colis, commence par creer une livraison. Tu indiques le depart, l arrivee, la taille, la valeur declaree et la protection si tu en veux une. Les adresses completes restent protegees avant acceptation.',
+        keys: ['covoiturage', 'trajet', 'passager', 'conducteur', 'route', 'lift', 'siege', 'place', 'covoit', 'voyage', 'chauffeur'],
+        title: 'Covoiturage — trouver un trajet',
+        answer: 'Cherche ton trajet : ville depart, ville arrivee, date. Tu vois immediatement qui passe deja par la. La beta privilegie les profils verifies, la messagerie interne et les evaluations apres chaque trajet. Paiement en ligne protege en cours de stabilisation pour le covoiturage.',
         actions: [
-          ['Creer une livraison', '/create-mission.html'],
-          ['Voir les protections', '/assurance.html'],
-          ['FAQ expediteur', '/faq.html']
+          ['Trouver un trajet', '/covoiturage.html'],
+          ['Pourquoi nous (comparatif)', '/comparatif-covoiturage.html'],
+          ['Securite expliquee', '/securite.html']
         ]
       },
       {
-        keys: ['livreur', 'livrer', 'gagner', 'verification', 'verifie', 'velo', 'pied', 'voiture'],
-        title: 'Devenir livreur',
-        answer: 'Pour livrer, tu dois creer ton compte, choisir le role livreur et terminer la verification. A pied ou a velo, le permis de conduire n est pas logique : on verifie plutot ton identite, ton telephone, ta ville et ton mode de transport. Un livreur non verifie ne voit pas les vrais colis.',
+        keys: ['publier', 'conduire', 'conducteur', 'chauffeur', 'gagner', 'essence', 'auto', 'voiture', 'siege libre'],
+        title: 'Je conduis — publier un trajet',
+        answer: 'Tu fais deja la route ? Publie ton trajet en 60 secondes (mode express). Tu remplis ton auto, tu partages l essence. Bonus : active "j accepte les colis" et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre. 0 % de commission sur tes 10 premiers trajets en beta.',
         actions: [
-          ['Devenir livreur', '/devenir-livreur.html'],
-          ['Verifier mon profil', '/livreur.html'],
-          ['Dashboard livreur', '/dashboard-livreur.html']
+          ['Publier un trajet', '/covoiturage-publier.html'],
+          ['Guide chauffeur', '/covoiturage-info.html'],
+          ['Securite chauffeur', '/securite.html']
         ]
       },
       {
-        keys: ['quebec', 'levis', 'beta', 'test', '50', 'lundi', 'tester'],
-        title: 'Beta Quebec / Levis',
-        answer: 'Pour le test terrain, utilise la page beta Quebec. Elle explique simplement quoi faire : envoyer un colis, devenir livreur, ou demander de l aide a Pia.',
+        keys: ['envoyer', 'colis', 'expedier', 'lettre', 'expediteur', 'livraison', 'paquet', 'boite'],
+        title: 'Envoyer un colis dans le coffre',
+        answer: 'Bonus de notre concept : tu peux glisser un colis dans le coffre d un chauffeur qui passe deja dans la bonne direction. Plus economique que Postes Canada / Purolart, livraison souvent le jour meme. Tu indiques depart, arrivee, taille et valeur declaree. Adresses completes protegees avant acceptation.',
         actions: [
-          ['Ouvrir la beta Quebec', '/quebec-beta.html'],
-          ['Commencer', '/role-choice.html'],
-          ['Contacter PorteaPorte', '/contact.html']
+          ['Envoyer un colis', '/expediteur.html'],
+          ['Trouver un chauffeur', '/covoiturage.html'],
+          ['Protections', '/assurance.html']
         ]
       },
       {
-        keys: ['paiement', 'stripe', 'argent', 'escrow', 'capture', 'payer', 'remboursement'],
-        title: 'Paiement protege',
-        answer: 'Le paiement passe par Stripe. L argent est protege pendant la mission et le paiement du livreur depend de la confirmation de livraison ou de la resolution du dossier. Pour un probleme, garde les preuves : photos, GPS, messages et historique.',
+        keys: ['paiement', 'stripe', 'argent', 'escrow', 'capture', 'payer', 'remboursement', 'rembourser', 'no-show'],
+        title: 'Paiement et reservation',
+        answer: 'Pour les livraisons, le paiement Stripe protege est deja au coeur du parcours. Pour le covoiturage, la reservation fonctionne et le paiement en ligne protege est a stabiliser avant de promettre un remboursement automatique. Aucune info de carte ne doit etre stockee sur nos serveurs.',
         actions: [
-          ['Comprendre la protection', '/assurance.html'],
-          ['Voir les conditions', '/cgu.html'],
-          ['Historique paiements', '/historique-paiements.html']
+          ['FAQ securite paiement', '/securite.html'],
+          ['Voir les conditions', '/cgu.html']
+        ]
+      },
+      {
+        keys: ['securite', 'kyc', 'identite', 'verifie', 'verification', 'face', 'safe', 'arnaque', 'fraude', 'femme'],
+        title: 'Securite et identite verifiee',
+        answer: 'La confiance doit passer par les profils verifies, les avis, les messages gardes dans l app et les signalements. Evite de voyager avec un profil incomplet. Si probleme pendant la beta, texte Denis au 438-449-2023.',
+        actions: [
+          ['Page securite complete', '/securite.html'],
+          ['Texter le fondateur', 'sms:+14384492023']
         ]
       },
       {
         keys: ['suivi', 'gps', 'tracking', 'position', 'destinataire', 'code', 'reception'],
         title: 'Suivi et reception',
-        answer: 'Le suivi sert a voir l etat de la livraison. Le destinataire peut confirmer la reception avec son code ou selon le processus prevu. Si personne n est sur place, le depot securise doit etre documente avec photo, GPS et note claire.',
+        answer: 'Le chauffeur peut activer le partage GPS pendant le trajet. Tu vois ou il est. Un contact de confiance que tu designes (mere, conjoint) peut aussi voir le GPS. Le partage s arrete a l arrivee. Pour les colis : photo de confirmation + code destinataire.',
         actions: [
           ['Suivre une livraison', '/suivi-livraison.html'],
-          ['Confirmation destinataire', '/confirmation-destinataire.html'],
           ['Support', '/contact.html']
         ]
       },
       {
-        keys: ['covoiturage', 'trajet', 'passager', 'conducteur', 'route'],
-        title: 'Covoiturage',
-        answer: 'Le covoiturage permet de partager un trajet deja prevu. Le prix est affiche avant confirmation. Les informations sensibles restent protegees et les profils approuves inspirent plus confiance.',
+        keys: ['evaluation', 'note', 'avis', 'etoile', 'rating', 'review', 'feedback'],
+        title: 'Evaluations mutuelles',
+        answer: 'Apres chaque trajet, le passager note le chauffeur ET le chauffeur note le passager. Note basse (1-2 etoiles) declenche une alerte admin. Les mauvais profils sont identifies vite. Badges visibles : 🌟 Elite, ✓ Confiance verifiee, 👍 Recommande, 🌱 Nouveau membre.',
         actions: [
-          ['Chercher un trajet', '/covoiturage.html'],
-          ['Publier un trajet', '/covoiturage-publier.html'],
-          ['Guide covoiturage', '/covoiturage-info.html']
+          ['Voir comment ca marche', '/securite.html']
         ]
       },
       {
-        keys: ['impact', 'organisme', 'don', 'transparence', 'communaute', 'tirage', 'points'],
+        keys: ['quebec', 'levis', 'beta', 'test', '50', 'lundi', 'tester', 'saguenay', 'montreal', 'sherbrooke'],
+        title: 'Beta — Quebec, Levis, partout',
+        answer: 'Beta ouverte au Quebec : Quebec, Levis, Saguenay, Trois-Rivieres, Montreal. 10 premiers trajets sans commission. Aucun engagement, annule quand tu veux.',
+        actions: [
+          ['Voir les trajets', '/covoiturage.html'],
+          ['Beta Quebec', '/quebec-beta.html'],
+          ['Contacter PorteaPorte', '/contact.html']
+        ]
+      },
+      {
+        keys: ['livreur', 'livrer', 'devenir livreur', 'verification livreur'],
+        title: 'Devenir livreur de colis',
+        answer: 'Tu veux livrer des colis (sans necessairement covoiturer) ? Cree ton compte, choisis le role livreur, termine la verification d identite. Tu vois ensuite les missions sur ta route. Tu garde 60 a 70 % du prix par colis.',
+        actions: [
+          ['Devenir livreur', '/devenir-livreur.html'],
+          ['Dashboard livreur', '/dashboard-livreur.html']
+        ]
+      },
+      {
+        keys: ['impact', 'organisme', 'don', 'transparence', 'communaute', 'tirage', 'points', 'porte coins'],
         title: 'Impact communautaire',
-        answer: 'La section Transparence montre l impact communautaire, les organismes, les tirages et les montants suivis publiquement quand les donnees sont disponibles. Les PorteCoins ne sont pas de l argent et ne sont pas une cryptomonnaie.',
+        answer: 'Un pourcentage de chaque trajet va a des organismes locaux quebecois que tu choisis chaque trimestre. Tout est public sur la page Transparence. Les PorteCoins ne sont pas de l argent et ne sont pas une cryptomonnaie.',
         actions: [
           ['Voir la transparence', '/transparence.html'],
           ['Programme Points', '/programme-points.html'],
@@ -82,21 +106,21 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['aide', 'support', 'contact', 'probleme', 'bug', 'question', 'perdu'],
         title: 'Besoin d aide',
-        answer: 'Dis-moi simplement ce que tu veux faire : envoyer, livrer, suivre, payer ou comprendre. Si c est urgent ou sensible, contacte aussi l equipe avec tes captures, photos et numeros de livraison.',
+        answer: 'Dis-moi simplement ce que tu veux faire : trouver un trajet, conduire, envoyer un colis, payer, comprendre. Si c est urgent, texte Denis au 438-449-2023 — il repond personnellement.',
         actions: [
+          ['Texter Denis (SMS)', 'sms:+14384492023'],
           ['Contact', '/contact.html'],
-          ['FAQ', '/faq.html'],
-          ['Choisir mon role', '/role-choice.html']
+          ['FAQ', '/faq.html']
         ]
       }
     ];
 
     const STARTERS = [
+      ['Je cherche un trajet', 'covoiturage'],
+      ['Je conduis (je veux publier)', 'publier conducteur'],
+      ['Comment ca marche, la securite ?', 'securite kyc'],
       ['Je veux envoyer un colis', 'envoyer colis'],
-      ['Je veux devenir livreur', 'devenir livreur'],
-      ['Je teste a Quebec', 'beta quebec'],
-      ['Je veux suivre une livraison', 'suivi gps'],
-      ['Je veux comprendre le paiement', 'paiement stripe'],
+      ['Je teste a Quebec/Levis', 'beta quebec'],
       ['Je suis perdu', 'aide']
     ];
 
@@ -379,7 +403,7 @@ if (!window.__PIA_LOADED__) {
       if (greeted && !topic) return;
       greeted = true;
       addBubble(
-        '<strong>Salut, je suis Pia.</strong><br>Dis-moi ce que tu veux faire et je t envoie directement au bon endroit.<br>' +
+        '<strong>Salut, je suis Pia.</strong><br>Je t aide a trouver ton trajet, publier le tien, ou comprendre comment ca marche. Dis-moi ce que tu veux faire :<br>' +
         chipsHtml()
       );
       body().querySelectorAll('[data-pia-question]').forEach(function (chip) {

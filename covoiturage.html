@@ -735,7 +735,7 @@
 
       list.innerHTML = rides.map(r => {
         const d = r.driver || {};
-        const seats = r.available_seats;
+        const seats = Number(r.available_seats || 0);
         const seatsLabel = seats === 1 ? '1 place restante' : seats + ' places restantes';
 
         // Badges verts/bleus
@@ -771,7 +771,6 @@
         const score = d.score > 0 ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${(d.score / 20).toFixed(1)}</span>` : '';
 
         // Badge statut trajet
-        const seats = Number(r.available_seats || 0);
         const status = String(r.status || 'publie').toLowerCase();
         let statusBadge = '';
         if (['annule','cancelled'].includes(status)) {
