@@ -152,6 +152,15 @@
       Le prix maximum recommandé est de <strong>0,50 $/km</strong>. Vous ne pouvez pas réaliser de profit sur le transport de personnes.
     </div>
 
+    <!-- MODE EXPRESS — pour publier en 1 minute -->
+    <div id="express-toggle" style="margin:18px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(184,245,62,.10),rgba(0,217,255,.06));border:1px solid rgba(184,245,62,.4);border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div style="flex:1;min-width:200px;">
+        <strong style="color:#b8f53e;font-size:1rem;">🚀 Pressé ? Mode express</strong>
+        <div style="color:#aab2c5;font-size:.88rem;margin-top:2px;">Remplissez seulement <strong>Trajet</strong> + <strong>Prix</strong>. Les autres détails (véhicule, ambiance, arrêts) sont optionnels.</div>
+      </div>
+      <button type="button" id="btn-express" onclick="toggleExpress()" style="background:#b8f53e;color:#071006;border:0;padding:10px 18px;border-radius:999px;font-weight:900;cursor:pointer;font-size:.92rem;white-space:nowrap;">⚡ Activer mode express</button>
+    </div>
+
     <!-- STEPS NAV -->
     <div class="steps-nav">
       <button class="step-tab active" id="tab-1" onclick="goStep(1)">1. Trajet</button>
@@ -160,6 +169,32 @@
       <button class="step-tab"        id="tab-4" onclick="goStep(4)">4. Arrêts</button>
       <button class="step-tab"        id="tab-5" onclick="goStep(5)">5. Prix</button>
     </div>
+    <style>
+      body.express-mode #tab-2, body.express-mode #tab-3, body.express-mode #tab-4 { display:none; }
+      body.express-mode .form-section[data-optional="1"] { display:none; }
+      body.express-mode #step-2 .form-section, body.express-mode #step-3 .form-section, body.express-mode #step-4 .form-section { display:none; }
+    </style>
+    <script>
+      function toggleExpress() {
+        const on = document.body.classList.toggle('express-mode');
+        const btn = document.getElementById('btn-express');
+        if (on) {
+          btn.textContent = '✗ Désactiver mode express';
+          btn.style.background = '#1E2535';
+          btn.style.color = '#b8f53e';
+          // Si on est sur une étape masquée, sauter à 5 (Prix)
+          if ([2,3,4].includes(currentStep)) goStep(5);
+          // Pré-remplir des valeurs par défaut sensées si vides
+          const def = (id, val) => { const el = document.getElementById(id); if (el && !el.value) el.value = val; };
+          def('vehicle_type', 'sedan');
+          def('trunk_size', 'moyen');
+        } else {
+          btn.textContent = '⚡ Activer mode express';
+          btn.style.background = '#b8f53e';
+          btn.style.color = '#071006';
+        }
+      }
+    </script>
 
     <!-- STEP 1 : TRAJET -->
     <div class="step-panel active" id="step-1">

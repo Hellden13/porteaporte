@@ -177,6 +177,7 @@
       transition: border-color 0.2s;
     }
     .ride-card:hover { border-color: var(--brand-lime); }
+    .status-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.78rem; font-weight:800; letter-spacing:.02em; }
     .ride-route {
       display: flex;
       align-items: center;
@@ -769,9 +770,26 @@
         // Score étoiles
         const score = d.score > 0 ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${(d.score / 20).toFixed(1)}</span>` : '';
 
+        // Badge statut trajet
+        const seats = Number(r.available_seats || 0);
+        const status = String(r.status || 'publie').toLowerCase();
+        let statusBadge = '';
+        if (['annule','cancelled'].includes(status)) {
+          statusBadge = '<span class="status-pill" style="background:#3a1414;color:#ff8c8c;border:1px solid #6b2828">❌ Annulé</span>';
+        } else if (['termine','completed','done'].includes(status)) {
+          statusBadge = '<span class="status-pill" style="background:#1a1a1a;color:#888;border:1px solid #333">✅ Terminé</span>';
+        } else if (seats <= 0) {
+          statusBadge = '<span class="status-pill" style="background:#3a2414;color:#ffa066;border:1px solid #6b4424">🔴 Complet</span>';
+        } else if (seats === 1) {
+          statusBadge = '<span class="status-pill" style="background:#3a3014;color:#ffd166;border:1px solid #6b5424">🟡 1 place restante</span>';
+        } else {
+          statusBadge = `<span class="status-pill" style="background:#14321e;color:#7fe5a3;border:1px solid #2c6b46">🟢 ${seats} places dispo</span>`;
+        }
+
         return `
           <div class="ride-card">
             <div style="min-width:0">
+              <div style="margin-bottom:8px;">${statusBadge}</div>
               <div class="ride-route">
                 <span>${r.start_city}${r.start_sector ? ' · ' + r.start_sector : ''}</span>
                 <span class="arrow">→</span>
