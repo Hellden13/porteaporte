@@ -181,14 +181,28 @@
 
     async function loadPulse() {
       try {
+        // Rafraîchit la session à chaque appel (anti-expiration)
+        const { data: { session: freshSession } } = await db.auth.getSession();
+        if (!freshSession) {
+          document.getElementById('health-msg').textContent = '⚠️ Session expirée — reconnecte-toi';
+          if (timer) { clearInterval(timer); timer = null; }
+          return;
+        }
+        session = freshSession;
         const r = await fetch('/api/platform?endpoint=admin-operations-pulse', {
-          headers: { 'Authorization': 'Bearer ' + session.access_token }
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + freshSession.access_token
+          },
+          body: JSON.stringify({ endpoint: 'admin-operations-pulse' })
         });
         const out = await r.json();
-        if (!r.ok) throw new Error(out.error || 'Erreur');
+        if (!r.ok) throw new Error(out.error || 'Erreur ' + r.status);
         render(out.pulse);
       } catch (e) {
         document.getElementById('health-msg').textContent = '❌ ' + e.message;
+        console.error('[loadPulse]', e);
       }
     }
 
