@@ -374,19 +374,37 @@
     <a href="#section-covoiturage"  class="nav-link"><span class="icon">??</span> Covoiturage</a>
     <a href="#section-parrainage"   class="nav-link"><span class="icon">🤝</span> Parrainage</a>
     <a href="#section-notifications"class="nav-link"><span class="icon">🔔</span> Notifications push</a>
-    <div class="sidebar-label" style="margin-top:16px">Outils admin</div>
+    <div class="sidebar-label" style="margin-top:16px;color:#ff9999">🚨 Centre de contrôle</div>
+    <a href="/admin/operations.html" class="nav-link" style="background:rgba(184,245,62,.06);border-left:3px solid #b8f53e"><span class="icon">🚨</span> Operations (LIVE)</a>
+    <a href="/admin/diagnostic.html" class="nav-link"><span class="icon">🔍</span> Diagnostic</a>
+    <a href="/admin/stripe-health.html" class="nav-link"><span class="icon">💳</span> Stripe Health</a>
+    <a href="/admin/go-live.html" class="nav-link"><span class="icon">🚀</span> Go-Live Checklist</a>
+
+    <div class="sidebar-label" style="margin-top:16px">👥 Utilisateurs &amp; modération</div>
     <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
     <a href="/admin/users.html" class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
     <a href="/admin/face-verify.html" class="nav-link"><span class="icon">👤</span> Vérification faciale IA</a>
     <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Arbitrage manquements</a>
     <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
+
+    <div class="sidebar-label" style="margin-top:16px">💰 Finances &amp; analytics</div>
+    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètres financiers</a>
+    <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Dashboard Fondateur</a>
     <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
     <a href="/admin/backup.html" class="nav-link"><span class="icon">💾</span> Backup &amp; Export</a>
+
+    <div class="sidebar-label" style="margin-top:16px">🤝 Communauté &amp; partenariats</div>
     <a href="/admin/organismes.html" class="nav-link"><span class="icon">❤️</span> Organismes partenaires</a>
     <a href="/admin/votes.html" class="nav-link"><span class="icon">🗳️</span> Votes communautaires</a>
-    <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Dashboard Fondateur</a>
-    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètres financiers</a>
-    <a href="/transparence.html"     class="nav-link"><span class="icon">?</span> Page transparence</a>
+    <a href="/admin/partenaire.html" class="nav-link"><span class="icon">🏢</span> Partenaires commerciaux</a>
+    <a href="/admin/presse-kit.html" class="nav-link"><span class="icon">📰</span> Kit Presse (interne)</a>
+
+    <div class="sidebar-label" style="margin-top:16px">🌐 Pages publiques</div>
+    <a href="/transparence.html" class="nav-link" target="_blank"><span class="icon">📈</span> Transparence ↗</a>
+    <a href="/status.html" class="nav-link" target="_blank"><span class="icon">📡</span> Status service ↗</a>
+    <a href="/comparatif.html" class="nav-link" target="_blank"><span class="icon">⚖️</span> Comparatif vs concurrents ↗</a>
+    <a href="/calculateur-prix.html" class="nav-link" target="_blank"><span class="icon">💰</span> Calculateur prix ↗</a>
+    <a href="/calculateur-revenus-livreur.html" class="nav-link" target="_blank"><span class="icon">🚗</span> Calculateur revenus ↗</a>
     <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
     <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
     <a href="/dashboard-livreur.html"     class="nav-link"><span class="icon">🚚</span> Espace livreur</a>
@@ -400,19 +418,24 @@
 
   <main class="main">
     <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
+      <a href="/admin/operations.html" style="background:rgba(184,245,62,.15);color:#b8f53e;font-weight:900">🚨 OPS</a>
+      <a href="/admin/diagnostic.html">🔍 Diag</a>
+      <a href="/admin/stripe-health.html">💳 Stripe</a>
+      <a href="/admin/parametres.html">⚙️ Params</a>
+      <a href="/admin/fondateur.html">👑 Fondateur</a>
+      <a href="/admin/kyc-review.html">🪪 KYC</a>
+      <a href="/admin/manquements.html">⚖️ Litiges</a>
+      <a href="/admin/users.html">👥 Users</a>
+      <a href="/admin/organismes.html">❤️ Orgs</a>
+      <a href="/admin/votes.html">🗳️ Votes</a>
+      <a href="/admin/analytics.html">📊 Analytics</a>
+      <a href="/admin/backup.html">💾 Backup</a>
+      <a href="/admin/go-live.html">🚀 Go-Live</a>
+      <span style="border-left:1px solid #1E2535;margin:0 8px"></span>
       <a href="#section-stats">📊 Stats</a>
-      <a href="#section-users">👥 Utilisateurs</a>
-      <a href="#section-livreurs">🚚 Livreurs</a>
-      <a href="#section-livraisons">📦 Livraisons</a>
       <a href="#section-revenus">💰 Revenus</a>
-      <a href="#section-litiges">⚠️ Litiges</a>
+      <a href="#section-livreurs">🚚 Livreurs</a>
       <a href="#section-avis">⭐ Avis</a>
-      <a href="#section-rewards">? Missions</a>
-      <a href="#section-gamification">🎮 Gamification</a>
-      <a href="#section-impact">♥ Transparence</a>
-      <a href="#section-covoiturage">?? Covoiturage</a>
-      <a href="#section-parrainage">🤝 Parrainage</a>
-      <a href="#section-notifications">🔔 Notifs</a>
     </nav>
     <div class="page-header">
       <div>
