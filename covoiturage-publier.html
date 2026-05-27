@@ -179,17 +179,49 @@
       </div>
       <div class="form-section">
         <h3>Horaire</h3>
-        <div class="form-grid cols3">
-          <div class="field"><label>Date et heure de départ *</label>
-            <input type="datetime-local" id="departure_time">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-              <button type="button" class="quick-pick" onclick="quickDate(0,7)">Aujourd'hui 7h</button>
-              <button type="button" class="quick-pick" onclick="quickDate(0,17)">Aujourd'hui 17h</button>
-              <button type="button" class="quick-pick" onclick="quickDate(1,7)">Demain 7h</button>
-              <button type="button" class="quick-pick" onclick="quickDate(1,17)">Demain 17h</button>
-              <button type="button" class="quick-pick" onclick="quickDateRelative(1)">+ 1h</button>
-            </div>
+        <!-- ─── DATE + HEURE ULTRA-RAPIDE ─── -->
+        <div class="field">
+          <label>Quand pars-tu ? *</label>
+
+          <!-- Étape 1 : QUAND (jour) -->
+          <div style="font-size:.78rem;color:var(--brand-muted);margin:6px 0 4px;font-weight:700;letter-spacing:.04em">1️⃣ JOUR</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" class="quick-pick day-btn active" data-day="0" onclick="pickDay(0,this)">Aujourd'hui</button>
+            <button type="button" class="quick-pick day-btn" data-day="1" onclick="pickDay(1,this)">Demain</button>
+            <button type="button" class="quick-pick day-btn" data-day="2" onclick="pickDay(2,this)">+2 jours</button>
+            <button type="button" class="quick-pick day-btn" data-day="7" onclick="pickDay(7,this)">+1 semaine</button>
+            <button type="button" class="quick-pick day-btn" data-day="-1" onclick="pickCustomDay(this)">📅 Autre date</button>
           </div>
+
+          <!-- Étape 2 : HEURE -->
+          <div style="font-size:.78rem;color:var(--brand-muted);margin:10px 0 4px;font-weight:700;letter-spacing:.04em">2️⃣ HEURE</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <button type="button" class="quick-pick hour-btn" data-h="6" onclick="pickHour(6,this)">06h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="7" onclick="pickHour(7,this)">07h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="8" onclick="pickHour(8,this)">08h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="9" onclick="pickHour(9,this)">09h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="12" onclick="pickHour(12,this)">Midi</button>
+            <button type="button" class="quick-pick hour-btn" data-h="15" onclick="pickHour(15,this)">15h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="16" onclick="pickHour(16,this)">16h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="17" onclick="pickHour(17,this)">17h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="18" onclick="pickHour(18,this)">18h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="19" onclick="pickHour(19,this)">19h</button>
+            <button type="button" class="quick-pick hour-btn" data-h="20" onclick="pickHour(20,this)">20h</button>
+          </div>
+
+          <!-- Récapitulatif live -->
+          <div id="dt-recap" style="margin-top:10px;padding:12px 14px;background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.3);border-radius:8px;font-size:.92rem;color:var(--brand-lime);font-weight:700">
+            📍 Sélectionne un jour et une heure
+          </div>
+
+          <!-- Date avancée (cachée par défaut, ouvre si "Autre date") -->
+          <details style="margin-top:8px;font-size:.85rem" id="dt-advanced">
+            <summary style="cursor:pointer;color:var(--brand-muted)">⚙️ Date/heure manuelle (avancé)</summary>
+            <input type="datetime-local" id="departure_time" style="margin-top:8px">
+          </details>
+        </div>
+
+        <div class="form-grid cols2" style="margin-top:14px">
           <div class="field"><label>Flexibilité horaire</label>
             <select id="flexibility_minutes">
               <option value="0">Heure fixe</option>
@@ -201,8 +233,9 @@
           <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Auto si Québec ↔ Lévis" min="1" oninput="updatePricePreview()"></div>
         </div>
         <style>
-          .quick-pick { padding: 6px 12px; background: rgba(0,217,255,.1); border: 1px solid rgba(0,217,255,.35); color: var(--brand-cyan); border-radius: 6px; font-size: .78rem; cursor: pointer; font-weight: 700; transition: all .15s; }
+          .quick-pick { padding: 8px 14px; background: rgba(0,217,255,.1); border: 1px solid rgba(0,217,255,.35); color: var(--brand-cyan); border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
           .quick-pick:hover { background: rgba(0,217,255,.25); transform: translateY(-1px); }
+          .quick-pick.active { background: var(--brand-lime); color: #071006; border-color: var(--brand-lime); box-shadow: 0 0 0 2px rgba(184,245,62,.3); }
         </style>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
@@ -684,23 +717,58 @@
         document.getElementById('is_recurring').checked ? 'block' : 'none';
     }
 
-    // ─── Pickers rapides date/heure ───
-    function quickDate(daysOffset, hour) {
+    // ─── Picker ULTRA-RAPIDE : jour + heure en 2 clics ───
+    let _selectedDay = 0;  // 0 = aujourd'hui, 1 = demain, etc. (-1 = custom)
+    let _selectedHour = null; // null tant qu'aucune heure choisie
+
+    function pickDay(daysOffset, btn) {
+      _selectedDay = daysOffset;
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updateRecap();
+    }
+    function pickHour(hour, btn) {
+      _selectedHour = hour;
+      document.querySelectorAll('.hour-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updateRecap();
+    }
+    function pickCustomDay(btn) {
+      _selectedDay = -1;
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.getElementById('dt-advanced').open = true;
+      updateRecap();
+    }
+    function updateRecap() {
+      const recap = document.getElementById('dt-recap');
+      const hidden = document.getElementById('departure_time');
+      if (_selectedDay === -1) {
+        // Mode manuel via datetime-local
+        if (hidden.value) {
+          const d = new Date(hidden.value);
+          recap.textContent = '✅ ' + d.toLocaleString('fr-CA', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'America/Toronto' });
+        } else {
+          recap.textContent = '📅 Saisis la date dans le champ ci-dessous';
+        }
+        return;
+      }
+      if (_selectedHour === null) {
+        recap.textContent = '⏰ Choisis une heure';
+        return;
+      }
       const d = new Date();
-      d.setDate(d.getDate() + daysOffset);
-      d.setHours(hour, 0, 0, 0);
-      // Format YYYY-MM-DDTHH:MM
+      d.setDate(d.getDate() + _selectedDay);
+      d.setHours(_selectedHour, 0, 0, 0);
       const pad = n => String(n).padStart(2, '0');
-      const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      document.getElementById('departure_time').value = val;
+      hidden.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
+      const label = d.toLocaleDateString('fr-CA', { weekday:'long', day:'numeric', month:'long' }) + ' à ' + _selectedHour + 'h00';
+      recap.innerHTML = '✅ <strong>' + label + '</strong>';
     }
-    function quickDateRelative(hoursOffset) {
-      const d = new Date(Date.now() + hoursOffset * 3600000);
-      d.setMinutes(0, 0, 0); // arrondir heure
-      const pad = n => String(n).padStart(2, '0');
-      const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      document.getElementById('departure_time').value = val;
-    }
+    // Refresh quand l'user édite manuellement
+    document.addEventListener('change', e => {
+      if (e.target?.id === 'departure_time' && _selectedDay === -1) updateRecap();
+    });
 
     // ─── Presets jours récurrence ───
     function presetDays(type) {
