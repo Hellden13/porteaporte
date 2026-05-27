@@ -1,5 +1,14 @@
 # Checklist test live beta PorteaPorte
 
+Pack beta complet:
+
+- `BETA-50-QUEBEC-LEVIS.md`
+- `GEL-FONCTIONNALITES-BETA.md`
+- `PARCOURS-TESTS-BETA.md`
+- `PROMESSES-LEGALES-A-VERIFIER.md`
+- `ROUTINE-QUOTIDIENNE-BETA.md`
+- `GUIDE-TESTEURS-BETA.md`
+
 Objectif: valider le cycle complet avec de vrais comptes, sans ouvrir la plateforme largement.
 
 ## 1. Avant le test
