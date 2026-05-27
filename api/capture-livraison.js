@@ -293,7 +293,7 @@ module.exports = async function handler(req, res) {
     }
     return res.status(404).json({
       error: 'PaymentIntent introuvable. Cette livraison n\'a pas de paiement enregistré. Contacte le support pour validation manuelle.',
-      contact: 'denismorneaubtc@gmail.com'
+      contact: 'bonjour@porteaporte.site'
     });
   }
 
