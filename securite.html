@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sécurité — Tout ce que tu dois savoir | PorteàPorte</title>
+  <meta name="description" content="Comment PorteàPorte protège tes paiements, ton identité et ton trajet. Réponses concrètes à toutes les questions sécurité du covoiturage et de la livraison.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
+    .back { display: inline-block; color: var(--brand-muted); text-decoration: none; margin-bottom: 20px; font-size: 0.9rem; }
+    .back:hover { color: var(--brand-lime); }
+    .eyebrow { color: var(--brand-lime); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem; margin-bottom: 10px; }
+    h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.1; margin: 0 0 14px; letter-spacing: -0.02em; }
+    h1 span { color: var(--brand-lime); }
+    .lede { font-size: 1.08rem; color: var(--brand-muted); line-height: 1.55; margin-bottom: 40px; }
+
+    .trust-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin: 24px 0 40px; }
+    .trust-pill { background: rgba(184,245,62,.08); border: 1px solid rgba(184,245,62,.25); border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .trust-pill .ico { font-size: 1.6rem; }
+    .trust-pill .lbl { font-weight: 700; color: var(--brand-lime); font-size: 0.88rem; margin-top: 4px; }
+
+    h2 { font-size: 1.5rem; margin: 50px 0 16px; color: var(--brand-text); border-bottom: 2px solid rgba(184,245,62,.3); padding-bottom: 8px; }
+    h2 .num { color: var(--brand-lime); margin-right: 8px; }
+
+    .faq-item { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+    .faq-item summary { cursor: pointer; font-weight: 800; font-size: 1.02rem; color: var(--brand-text); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .faq-item summary::after { content: '+'; color: var(--brand-lime); font-size: 1.4rem; font-weight: 900; transition: transform .2s; flex-shrink: 0; }
+    .faq-item[open] summary::after { transform: rotate(45deg); }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-answer { color: var(--brand-muted); line-height: 1.65; margin-top: 12px; font-size: 0.97rem; }
+    .faq-answer strong { color: var(--brand-text); }
+    .faq-answer ul { padding-left: 20px; }
+    .faq-answer li { margin-bottom: 6px; }
+    .faq-answer a { color: var(--brand-lime); }
+
+    .scenario-box { background: linear-gradient(135deg, rgba(255,107,107,.08), rgba(244,185,76,.05)); border: 1px solid rgba(255,107,107,.25); border-radius: 14px; padding: 18px 22px; margin: 14px 0; }
+    .scenario-box .label { color: #ff8c8c; font-weight: 900; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .scenario-box .response { color: var(--brand-text); line-height: 1.55; }
+    .scenario-box .response strong { color: #b8f53e; }
+
+    .contact-box { background: linear-gradient(135deg, #b8f53e, #9ce326); color: #071006; padding: 26px 24px; border-radius: 18px; text-align: center; margin-top: 50px; }
+    .contact-box h2 { margin: 0 0 8px; color: #071006; border: 0; padding: 0; font-size: 1.4rem; }
+    .contact-box p { margin: 0 0 16px; color: #1a2a0f; font-weight: 600; }
+    .contact-box a { display: inline-block; background: #071006; color: #b8f53e; padding: 12px 24px; border-radius: 999px; font-weight: 900; text-decoration: none; margin: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← Retour à l'accueil</a>
+    <div class="eyebrow">🛡️ Sécurité · Transparence totale</div>
+    <h1>Comment on te <span>protège</span>.</h1>
+    <p class="lede">On sait que confier ton siège (ou ton colis) à un inconnu, c'est pas anodin. Voici exactement comment PorteàPorte sécurise chaque étape — sans bullshit marketing.</p>
+
+    <div class="trust-bar">
+      <div class="trust-pill"><div class="ico">🔒</div><div class="lbl">Paiement escrow</div></div>
+      <div class="trust-pill"><div class="ico">🆔</div><div class="lbl">KYC vérifié</div></div>
+      <div class="trust-pill"><div class="ico">📸</div><div class="lbl">Photo identité</div></div>
+      <div class="trust-pill"><div class="ico">⭐</div><div class="lbl">Évaluations</div></div>
+      <div class="trust-pill"><div class="ico">📞</div><div class="lbl">Support direct</div></div>
+    </div>
+
+    <h2><span class="num">1.</span>Sécurité du paiement</h2>
+
+    <details class="faq-item">
+      <summary>Le conducteur peut-il prendre mon argent et disparaître ?</summary>
+      <div class="faq-answer">
+        <strong>Non.</strong> Quand tu réserves un trajet, ton paiement est gardé en <em>escrow</em> par Stripe (notre processeur de paiement, le même qu'utilise Shopify, Amazon, Lyft). Le conducteur ne reçoit l'argent que <strong>2 heures après la fin confirmée du trajet</strong>.
+        <ul>
+          <li>S'il annule → tu es <strong>remboursé automatiquement</strong></li>
+          <li>S'il ne se présente pas (no-show) → tu cliques « Signaler no-show » → remboursement en 2-5 jours ouvrables</li>
+          <li>Si problème pendant le trajet → on bloque le versement le temps de résoudre</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Mes infos de carte sont-elles en sécurité ?</summary>
+      <div class="faq-answer">
+        <strong>Tes infos ne touchent jamais nos serveurs.</strong> Tout passe directement chez Stripe, certifié PCI-DSS niveau 1 (le plus haut standard de l'industrie). On ne voit qu'un identifiant anonyme et les 4 derniers chiffres pour ton historique.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Combien coûte la commission ? Y a-t-il des frais cachés ?</summary>
+      <div class="faq-answer">
+        <strong>8 % au conducteur. 0 % au passager.</strong> C'est tout.
+        <ul>
+          <li>Aucun frais d'inscription</li>
+          <li>Aucun abonnement</li>
+          <li>Aucun frais caché au moment du paiement</li>
+          <li>Tu vois le prix final dès la recherche</li>
+        </ul>
+        <strong>Bonus bêta :</strong> 0 % de commission sur tes 10 premiers trajets publiés.
+      </div>
+    </details>
+
+    <h2><span class="num">2.</span>Identité des personnes</h2>
+
+    <details class="faq-item">
+      <summary>Comment vérifiez-vous les conducteurs ?</summary>
+      <div class="faq-answer">
+        Tout conducteur doit fournir avant son premier trajet :
+        <ul>
+          <li><strong>Pièce d'identité officielle</strong> (permis de conduire, carte d'assurance maladie ou passeport)</li>
+          <li><strong>Photo selfie</strong> comparée automatiquement à la pièce d'identité (technologie IA)</li>
+          <li><strong>Numéro de téléphone vérifié</strong> par SMS</li>
+          <li><strong>Plaque d'immatriculation</strong> visible sur la fiche du trajet</li>
+        </ul>
+        Un badge « ✓ Identité vérifiée » apparaît sur leur profil seulement après validation.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Et les passagers ? Sont-ils vérifiés aussi ?</summary>
+      <div class="faq-answer">
+        <strong>Oui.</strong> Tout utilisateur (passager ou expéditeur de colis) doit confirmer son téléphone par SMS et son identité avant la première transaction. Le KYC complet est exigé pour les conducteurs et pour tout transport de colis de plus de 100 $ de valeur déclarée.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Puis-je voir les avis avant de réserver ?</summary>
+      <div class="faq-answer">
+        <strong>Oui.</strong> Chaque profil affiche :
+        <ul>
+          <li>La moyenne d'étoiles (1 à 5)</li>
+          <li>Le nombre de trajets effectués</li>
+          <li>Les commentaires écrits par les passagers/conducteurs précédents</li>
+          <li>La date d'inscription (méfiance pour les comptes < 30 jours sans avis)</li>
+        </ul>
+      </div>
+    </details>
+
+    <h2><span class="num">3.</span>Pendant le trajet</h2>
+
+    <details class="faq-item">
+      <summary>Y a-t-il un suivi GPS ?</summary>
+      <div class="faq-answer">
+        <strong>Oui, en option.</strong> Le conducteur peut activer le partage GPS pendant le trajet. La position est visible par les passagers et par un contact de confiance que tu désignes (ex : ton conjoint, ta mère). Le partage s'arrête automatiquement à l'arrivée.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Que faire si je me sens mal à l'aise pendant le trajet ?</summary>
+      <div class="faq-answer">
+        <strong>Bouton d'urgence dans l'app :</strong>
+        <ul>
+          <li>📞 Appel direct au 911 (1 clic)</li>
+          <li>📱 Alerte SMS automatique à ton contact d'urgence avec ta position GPS</li>
+          <li>📝 Signaler un comportement déplacé (modération sous 2h en heures ouvrables)</li>
+        </ul>
+        <strong>Tu peux aussi texter directement le fondateur au 438-449-2023</strong> — il répond personnellement.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Que se passe-t-il si on a un accident ?</summary>
+      <div class="faq-answer">
+        L'assurance auto du conducteur est en première ligne (c'est obligatoire au Québec — SAAQ). Pour la phase bêta, nous recommandons à chaque conducteur de confirmer auprès de son assureur que le covoiturage rémunéré est couvert. Une assurance complémentaire est à l'étude pour la phase de production.
+        <br><br>
+        <strong>Notre engagement bêta :</strong> Si un sinistre survient et que ton assurance refuse, nous t'accompagnons dans la démarche et cherchons une solution. Texte-nous immédiatement.
+      </div>
+    </details>
+
+    <h2><span class="num">4.</span>Scénarios concrets — « Et si… »</h2>
+
+    <div class="scenario-box">
+      <div class="label">⚠️ Et si le conducteur annule à la dernière minute ?</div>
+      <div class="response">Tu reçois une notification immédiate, et ton paiement est <strong>automatiquement remboursé en 2-5 jours ouvrables</strong>. Le conducteur perd 1 étoile et reçoit un avertissement. 3 annulations injustifiées = compte suspendu.</div>
+    </div>
+
+    <div class="scenario-box">
+      <div class="label">⚠️ Et si le conducteur ne se présente pas ?</div>
+      <div class="response">Tu attends 15 min, puis tu cliques <strong>« Signaler no-show »</strong> dans l'app. Remboursement intégral + crédit de 10 $ offert pour ton prochain trajet (en bêta).</div>
+    </div>
+
+    <div class="scenario-box">
+      <div class="label">⚠️ Et si mon colis est endommagé ou perdu ?</div>
+      <div class="response">Tu déclares la valeur du colis au moment de l'envoi (max 500 $ en bêta). Le conducteur signe la prise en charge avec photo. Si dommage/perte → <strong>compensation jusqu'à la valeur déclarée</strong> dans les 14 jours, sur preuve.</div>
+    </div>
+
+    <div class="scenario-box">
+      <div class="label">⚠️ Et si je me fais arnaquer ?</div>
+      <div class="response">Texte le fondateur au <strong>438-449-2023</strong>. Denis répond personnellement. En cas de fraude avérée, on rembourse <strong>intégralement</strong> et on bannit le compte fautif. On ne te laisse jamais seul·e.</div>
+    </div>
+
+    <div class="scenario-box">
+      <div class="label">⚠️ Et si je veux supprimer mon compte et mes données ?</div>
+      <div class="response">Va dans ton profil → <em>Paramètres</em> → <em>Supprimer mon compte</em>. Tes données personnelles sont effacées dans les 30 jours (conformément à la loi 25 du Québec). Tu peux aussi nous écrire à <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a>.</div>
+    </div>
+
+    <h2><span class="num">5.</span>Confidentialité de tes données</h2>
+
+    <details class="faq-item">
+      <summary>Vendez-vous mes données ?</summary>
+      <div class="faq-answer">
+        <strong>Jamais.</strong> On ne vend rien, on ne fait pas de pub ciblée, on ne partage tes infos avec personne sauf obligation légale. C'est dans notre <a href="/politique-confidentialite.html">politique de confidentialité</a> et c'est conforme à la <strong>loi 25 du Québec</strong>.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Le conducteur voit-il mon adresse exacte ?</summary>
+      <div class="faq-answer">
+        Seulement <strong>après que tu confirmes la réservation</strong>. Avant ça, il voit juste la ville/quartier. Tu peux choisir un <strong>point de rencontre sécurisé</strong> (Tim Hortons, station d'essence, métro) au lieu de chez toi.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Mes messages avec le conducteur sont-ils privés ?</summary>
+      <div class="faq-answer">
+        Oui — chiffrés en transit. Nous pouvons les consulter <strong>uniquement</strong> en cas de signalement de problème, pour fins de modération. Aucun humain ne les lit autrement.
+      </div>
+    </details>
+
+    <div class="contact-box">
+      <h2>Encore une question ?</h2>
+      <p>Le fondateur répond directement. Pas de bot, pas de file d'attente.</p>
+      <a href="sms:+14384492023">📱 Texte 438-449-2023</a>
+      <a href="mailto:bonjour@porteaporte.site">✉️ bonjour@porteaporte.site</a>
+    </div>
+
+    <p style="text-align:center;color:var(--brand-muted);font-size:0.85rem;margin-top:30px;">
+      Cette page est mise à jour régulièrement. Dernière révision : 2026.<br>
+      Voir aussi : <a href="/politique-confidentialite.html" style="color:var(--brand-lime);">Politique de confidentialité</a> · <a href="/conditions-utilisation.html" style="color:var(--brand-lime);">Conditions d'utilisation</a> · <a href="/faq.html" style="color:var(--brand-lime);">FAQ générale</a>
+    </p>
+  </div>
+</body>
+</html>

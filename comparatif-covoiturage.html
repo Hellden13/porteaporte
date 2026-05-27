@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparatif covoiturage — PorteàPorte vs Amigo Express vs Groupes Facebook</title>
+  <meta name="description" content="Pourquoi choisir PorteàPorte pour ton covoiturage québécois ? Comparatif honnête vs Amigo Express, Poparide et les groupes Facebook. Sécurité, prix, simplicité.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0C10">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+    .eyebrow { color: var(--brand-lime); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem; margin-bottom: 10px; }
+    h1 { font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 14px; letter-spacing: -0.02em; }
+    h1 span { color: var(--brand-lime); }
+    .lede { font-size: 1.1rem; color: var(--brand-muted); max-width: 760px; line-height: 1.55; margin-bottom: 40px; }
+
+    .verdict-box { background: linear-gradient(135deg, rgba(184,245,62,.12), rgba(0,217,255,.08)); border: 1px solid rgba(184,245,62,.3); border-radius: 18px; padding: 24px 26px; margin: 30px 0 40px; }
+    .verdict-box h2 { margin: 0 0 8px; font-size: 1.25rem; color: var(--brand-lime); }
+    .verdict-box p { margin: 0; color: var(--brand-text); font-size: 1.02rem; line-height: 1.55; }
+    .verdict-box strong { color: var(--brand-lime); }
+
+    .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; background: rgba(255,255,255,.02); border: 1px solid var(--brand-border); border-radius: 16px; overflow: hidden; margin: 30px 0; font-size: 0.96rem; }
+    .compare-table th, .compare-table td { padding: 16px 14px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--brand-border); }
+    .compare-table th { background: rgba(255,255,255,.04); font-weight: 800; font-size: 1rem; color: var(--brand-text); text-align: center; }
+    .compare-table th.us { background: linear-gradient(135deg, rgba(184,245,62,.18), rgba(184,245,62,.08)); color: var(--brand-lime); }
+    .compare-table td { color: var(--brand-text); }
+    .compare-table td.us-cell { background: rgba(184,245,62,.06); font-weight: 700; }
+    .compare-table td:first-child { font-weight: 700; color: var(--brand-muted); width: 28%; }
+    .compare-table tr:last-child td { border-bottom: 0; }
+    .check { color: #b8f53e; font-weight: 900; }
+    .cross { color: #ff6b6b; font-weight: 900; }
+    .meh { color: #f4b94c; font-weight: 900; }
+
+    .arg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin: 40px 0; }
+    .arg-card { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); border-radius: 14px; padding: 20px; }
+    .arg-card h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--brand-lime); display: flex; align-items: center; gap: 8px; }
+    .arg-card p { margin: 0; color: var(--brand-muted); line-height: 1.5; font-size: 0.93rem; }
+
+    .price-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 30px 0; }
+    .price-card { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px; text-align: center; }
+    .price-card.us { background: linear-gradient(135deg, rgba(184,245,62,.12), rgba(0,217,255,.06)); border-color: rgba(184,245,62,.4); }
+    .price-card .name { font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; }
+    .price-card .name.us-name { color: var(--brand-lime); }
+    .price-card .commission { font-size: 2rem; font-weight: 900; margin: 6px 0; }
+    .price-card .commission.us-com { color: var(--brand-lime); }
+    .price-card .note { font-size: 0.82rem; color: var(--brand-muted); }
+
+    .cta-final { background: linear-gradient(135deg, #b8f53e, #9ce326); color: #071006; padding: 28px 24px; border-radius: 18px; text-align: center; margin-top: 50px; }
+    .cta-final h2 { margin: 0 0 10px; font-size: 1.5rem; color: #071006; }
+    .cta-final p { margin: 0 0 18px; color: #1a2a0f; font-weight: 600; }
+    .cta-final .btn-go { display: inline-block; background: #071006; color: #b8f53e; padding: 14px 28px; border-radius: 999px; font-weight: 900; text-decoration: none; transition: transform .2s; }
+    .cta-final .btn-go:hover { transform: scale(1.05); }
+
+    .back { display: inline-block; color: var(--brand-muted); text-decoration: none; margin-bottom: 20px; font-size: 0.9rem; }
+    .back:hover { color: var(--brand-lime); }
+
+    @media (max-width: 720px) {
+      .compare-table { font-size: 0.82rem; }
+      .compare-table th, .compare-table td { padding: 10px 8px; }
+      .price-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← Retour à l'accueil</a>
+    <div class="eyebrow">Comparatif honnête</div>
+    <h1>PorteàPorte vs <span>Amigo Express</span> vs <span>Groupes Facebook</span></h1>
+    <p class="lede">On ne va pas te mentir : Amigo Express et les groupes Facebook ont leurs forces. Voici les vraies différences — pour que tu choisisses en connaissance de cause.</p>
+
+    <div class="verdict-box">
+      <h2>📌 Le verdict en 1 phrase</h2>
+      <p><strong>PorteàPorte</strong> = la sécurité d'Amigo, au prix de Facebook, avec en plus la possibilité d'<strong>envoyer un colis dans le coffre</strong> du conducteur.</p>
+    </div>
+
+    <h2 style="margin-top:50px;font-size:1.6rem;">💰 Commission par trajet</h2>
+    <div class="price-row">
+      <div class="price-card us">
+        <div class="name us-name">PorteàPorte</div>
+        <div class="commission us-com">8 %</div>
+        <div class="note"><strong>0 %</strong> sur tes 10 premiers trajets (bêta)</div>
+      </div>
+      <div class="price-card">
+        <div class="name">Amigo Express</div>
+        <div class="commission">~15 %</div>
+        <div class="note">+ frais de service variables</div>
+      </div>
+      <div class="price-card">
+        <div class="name">Groupes Facebook</div>
+        <div class="commission" style="color:#b8f53e;">0 %</div>
+        <div class="note">…mais 0 sécurité aussi</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:50px;font-size:1.6rem;">🔍 Comparatif détaillé</h2>
+    <div style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="us">🇶🇨 PorteàPorte</th>
+          <th>Amigo Express</th>
+          <th>Groupes Facebook</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Paiement protégé</td>
+          <td class="us-cell"><span class="check">✓</span> Stripe escrow</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="cross">✗</span> Virement Interac risqué</td>
+        </tr>
+        <tr>
+          <td>Identité conducteur vérifiée (KYC)</td>
+          <td class="us-cell"><span class="check">✓</span> Face + ID</td>
+          <td><span class="meh">~</span> Email + tel</td>
+          <td><span class="cross">✗</span> Faux profils possibles</td>
+        </tr>
+        <tr>
+          <td>Remboursement si no-show</td>
+          <td class="us-cell"><span class="check">✓</span> Automatique</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="cross">✗</span> Tu perds ton temps</td>
+        </tr>
+        <tr>
+          <td>Commission</td>
+          <td class="us-cell"><span class="check">8 %</span></td>
+          <td><span class="meh">~15 %</span></td>
+          <td><span class="check">0 %</span></td>
+        </tr>
+        <tr>
+          <td>Interface moderne</td>
+          <td class="us-cell"><span class="check">✓</span> 2026</td>
+          <td><span class="meh">~</span> Look 2012</td>
+          <td><span class="cross">✗</span> Pas conçu pour ça</td>
+        </tr>
+        <tr>
+          <td>App mobile</td>
+          <td class="us-cell"><span class="check">✓</span> PWA installable</td>
+          <td><span class="check">✓</span> Oui (2.8★)</td>
+          <td><span class="check">✓</span> App FB</td>
+        </tr>
+        <tr>
+          <td>Service client en français</td>
+          <td class="us-cell"><span class="check">✓</span> Direct au fondateur</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="cross">✗</span> Aucun</td>
+        </tr>
+        <tr>
+          <td>📦 Envoyer un colis dans le coffre</td>
+          <td class="us-cell"><span class="check">✓</span> Unique au Québec</td>
+          <td><span class="cross">✗</span> Non</td>
+          <td><span class="cross">✗</span> Non</td>
+        </tr>
+        <tr>
+          <td>❤️ % aux organismes québécois</td>
+          <td class="us-cell"><span class="check">✓</span> Transparent</td>
+          <td><span class="cross">✗</span> Non</td>
+          <td><span class="cross">✗</span> Non</td>
+        </tr>
+        <tr>
+          <td>100 % québécois</td>
+          <td class="us-cell"><span class="check">✓</span> Oui</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="meh">~</span> Multinationale US</td>
+        </tr>
+        <tr>
+          <td>Système d'évaluation</td>
+          <td class="us-cell"><span class="check">✓</span> Après chaque trajet</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="cross">✗</span> Aucun</td>
+        </tr>
+        <tr>
+          <td>Recherche par ville + date</td>
+          <td class="us-cell"><span class="check">✓</span> Instantanée</td>
+          <td><span class="check">✓</span> Oui</td>
+          <td><span class="cross">✗</span> Scroll infini de posts</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 style="margin-top:50px;font-size:1.6rem;">🎯 Pourquoi on existe vraiment</h2>
+    <div class="arg-grid">
+      <div class="arg-card">
+        <h3>💸 Moins cher qu'Amigo</h3>
+        <p>Notre commission est ~50 % plus basse. Plus d'argent reste dans tes poches (chauffeur) ou réduit ton coût (passager).</p>
+      </div>
+      <div class="arg-card">
+        <h3>🛡️ Plus sûr que Facebook</h3>
+        <p>Identité vérifiée, paiement protégé, remboursement auto. Fini de croiser les doigts en envoyant 30 $ à un inconnu sur Messenger.</p>
+      </div>
+      <div class="arg-card">
+        <h3>📦 Bonus colis unique</h3>
+        <p>Tu conduis ? Accepte un petit colis dans le coffre et gagne <strong>15-25 $ de plus</strong> sans détour. Personne d'autre au Québec ne propose ça.</p>
+      </div>
+      <div class="arg-card">
+        <h3>🇶🇨 100 % d'ici</h3>
+        <p>Bâti à Québec, par un Québécois. Pas une multinationale lointaine. Tu textes le fondateur au 438-449-2023 si t'as un problème.</p>
+      </div>
+      <div class="arg-card">
+        <h3>❤️ Impact local</h3>
+        <p>Une part de chaque trajet va à des organismes communautaires que <strong>tu</strong> choisis chaque trimestre. Vérifiable sur la page Transparence.</p>
+      </div>
+      <div class="arg-card">
+        <h3>⚡ Interface moderne</h3>
+        <p>Design 2026, pensé mobile-first, recherche en 2 secondes. Pas un site qui ressemble à un vieux portail de 2010.</p>
+      </div>
+    </div>
+
+    <h2 style="margin-top:50px;font-size:1.6rem;">🤔 « Mais le groupe Facebook est gratuit… »</h2>
+    <p style="color:var(--brand-muted);font-size:1rem;line-height:1.6;max-width:780px;">
+      C'est vrai. Et si tout se passe bien, tu sauves 1-2 $ sur le trajet. <strong>Mais</strong> :
+    </p>
+    <ul style="color:var(--brand-text);line-height:1.7;font-size:1rem;max-width:780px;">
+      <li>~30 % des covoit FB se font <strong>ghoster</strong> (étude informelle, sondage groupes Lift Québec)</li>
+      <li>Aucune garantie de remboursement si le conducteur annule à la dernière minute</li>
+      <li>Identité fausse possible (faux profil FB en 2 minutes)</li>
+      <li>Aucun support si problème</li>
+    </ul>
+    <p style="color:var(--brand-muted);font-size:1rem;line-height:1.6;max-width:780px;">
+      Notre commission de 8 % représente ~2-4 $ par trajet — le prix d'un café <strong>pour ne plus stresser</strong>.
+    </p>
+
+    <div class="cta-final">
+      <h2>Tu veux essayer ?</h2>
+      <p>10 premiers trajets sans commission. Tu peux annuler quand tu veux, aucun engagement.</p>
+      <a class="btn-go" href="/covoiturage.html">🔍 Trouver un trajet maintenant</a>
+    </div>
+
+    <p style="text-align:center;color:var(--brand-muted);font-size:0.85rem;margin-top:30px;">
+      Une question ? Texte directement le fondateur Denis au <a href="sms:+14384492023" style="color:var(--brand-lime);">📱 438-449-2023</a><br>
+      Données comparatives basées sur les sites publics d'Amigo Express et Poparide en 2026. Sources sur demande.
+    </p>
+  </div>
+</body>
+</html>
