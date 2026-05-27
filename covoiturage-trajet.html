@@ -421,6 +421,60 @@ function renderRide(r) {
   var nCh = dp.nb_trajets_chauffeur || 0;
   document.getElementById('driver-trips').textContent = nCh > 0 ? nCh + ' trajet' + (nCh > 1 ? 's' : '') + ' comme chauffeur' : '';
 
+  // Badge de confiance bidirectionnel (basé sur les avis covoit)
+  var driverIdForBadge = r.driver_id || dp.user_id || p.id;
+  if (driverIdForBadge && window.RideReview) {
+    var badgeWrap = document.createElement('div');
+    badgeWrap.id = 'driver-trust-badge';
+    badgeWrap.style.marginTop = '6px';
+    document.getElementById('driver-trips').parentNode.appendChild(badgeWrap);
+    window.RideReview.injectBadge(badgeWrap, driverIdForBadge);
+  }
+
+  // Boutons d'action (Contacter / Évaluer) — visibles seulement si connecté
+  var actionsWrap = document.getElementById('driver-actions-wrap');
+  if (!actionsWrap) {
+    actionsWrap = document.createElement('div');
+    actionsWrap.id = 'driver-actions-wrap';
+    actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;';
+    document.getElementById('card-chauffeur').appendChild(actionsWrap);
+  }
+  actionsWrap.innerHTML = '';
+  if (currentUser && driverIdForBadge && driverIdForBadge !== currentUser.id) {
+    var btnChat = document.createElement('button');
+    btnChat.type = 'button';
+    btnChat.style.cssText = 'background:linear-gradient(135deg,#00d9ff,#00b8d4);color:#001828;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9rem;';
+    btnChat.innerHTML = '💬 Contacter le chauffeur';
+    btnChat.addEventListener('click', function () {
+      window.RideChat.open({
+        ride_id: r.id || rideId,
+        other_user_id: driverIdForBadge,
+        other_name: prenom || 'Chauffeur'
+      });
+    });
+    actionsWrap.appendChild(btnChat);
+  }
+  // Bouton Évaluer (si trajet terminé OU dans le passé)
+  var statusLower = String(r.status || '').toLowerCase();
+  var departed = r.departure_time && new Date(r.departure_time).getTime() < Date.now();
+  var canReview = currentUser && driverIdForBadge && driverIdForBadge !== currentUser.id
+                  && (['termine','completed','done'].includes(statusLower) || departed);
+  if (canReview) {
+    var btnReview = document.createElement('button');
+    btnReview.type = 'button';
+    btnReview.style.cssText = 'background:linear-gradient(135deg,#b8f53e,#9ce326);color:#071006;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9rem;';
+    btnReview.innerHTML = '⭐ Évaluer ce trajet';
+    btnReview.addEventListener('click', function () {
+      window.RideReview.open({
+        ride_id: r.id || rideId,
+        role: 'passenger',
+        target_name: prenom || 'Chauffeur',
+        onSuccess: function () { setTimeout(function () { location.reload(); }, 1500); }
+      });
+    });
+    actionsWrap.appendChild(btnReview);
+  }
+
   var bio = p.bio || dp.bio;
   var _bioWrap = document.getElementById('driver-bio-wrap');
   _bioWrap.innerHTML = '';
@@ -637,5 +691,7 @@ async function bookPackage() {
 })();
 </script>
   <script src="/js/support-widget.js"></script>
+  <script src="/js/ride-review-modal.js"></script>
+  <script src="/js/ride-chat.js"></script>
 </body>
 </html>
