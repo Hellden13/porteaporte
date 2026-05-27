@@ -193,9 +193,24 @@
         </div>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
+          <label class="toggle-option"><input type="checkbox" id="is_recurring" onchange="toggleRecurring()"> 🔁 Trajet récurrent (je fais ce trajet chaque semaine)</label>
         </div>
         <div id="return-section" style="display:none;margin-top:14px;">
           <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
+        </div>
+        <div id="recurring-section" style="display:none;margin-top:14px;padding:16px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:10px">
+          <strong style="color:var(--brand-lime);font-size:.92rem">📅 Jours de la semaine où tu fais ce trajet</strong>
+          <p style="color:var(--brand-muted);font-size:.82rem;margin:6px 0 12px">Coche les jours. Les passagers verront ton trajet apparaître les jours sélectionnés.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="lun"> Lundi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="mar"> Mardi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="mer"> Mercredi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="jeu"> Jeudi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="ven"> Vendredi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="sam"> Samedi</label>
+            <label class="toggle-option" style="padding:8px 14px"><input type="checkbox" class="recur-day" value="dim"> Dimanche</label>
+          </div>
+          <p style="color:var(--brand-cyan);font-size:.78rem;margin-top:12px">💡 La date ci-dessus = jour de PUBLICATION. L'heure compte pour tous les jours cochés. Ton trajet reste visible tant qu'il est récurrent.</p>
         </div>
       </div>
       <div class="step-actions">
@@ -555,6 +570,11 @@
         document.getElementById('is_return_trip').checked ? 'block' : 'none';
     }
 
+    function toggleRecurring() {
+      document.getElementById('recurring-section').style.display =
+        document.getElementById('is_recurring').checked ? 'block' : 'none';
+    }
+
     // ── Colis ────────────────────────────────────────────────────
     function togglePackageFields() {
       document.getElementById('package-fields').style.display =
@@ -684,6 +704,10 @@
         end_city:       document.getElementById('end_city').value.trim(),
         end_sector:     document.getElementById('end_sector').value.trim(),
         departure_time: document.getElementById('departure_time').value,
+        is_recurring: document.getElementById('is_recurring').checked,
+        recurrence_days: document.getElementById('is_recurring').checked
+          ? Array.from(document.querySelectorAll('.recur-day:checked')).map(c => c.value)
+          : null,
         flexibility_minutes: document.getElementById('flexibility_minutes').value,
         total_distance_km: document.getElementById('total_distance_km').value || null,
         is_return_trip: document.getElementById('is_return_trip').checked,
