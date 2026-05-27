@@ -405,12 +405,39 @@
           <div class="search-grid">
             <div class="field">
               <label>Départ</label>
-              <input type="text" id="s-from" placeholder="Ex : Québec" autocomplete="off">
+              <input type="text" id="s-from" placeholder="Ex : Québec" autocomplete="off" list="qc-cities">
             </div>
             <div class="field">
               <label>Destination</label>
-              <input type="text" id="s-to" placeholder="Ex : Montréal" autocomplete="off">
+              <input type="text" id="s-to" placeholder="Ex : Montréal" autocomplete="off" list="qc-cities">
             </div>
+            <datalist id="qc-cities">
+              <option value="Québec"></option>
+              <option value="Lévis"></option>
+              <option value="Montréal"></option>
+              <option value="Laval"></option>
+              <option value="Trois-Rivières"></option>
+              <option value="Sherbrooke"></option>
+              <option value="Saguenay"></option>
+              <option value="Chicoutimi"></option>
+              <option value="Jonquière"></option>
+              <option value="Rimouski"></option>
+              <option value="Rivière-du-Loup"></option>
+              <option value="Saint-Georges (Beauce)"></option>
+              <option value="Sainte-Marie (Beauce)"></option>
+              <option value="Drummondville"></option>
+              <option value="Victoriaville"></option>
+              <option value="Gatineau"></option>
+              <option value="Saint-Hyacinthe"></option>
+              <option value="Granby"></option>
+              <option value="Longueuil"></option>
+              <option value="Châteauguay"></option>
+              <option value="Joliette"></option>
+              <option value="Sept-Îles"></option>
+              <option value="Baie-Comeau"></option>
+              <option value="Matane"></option>
+              <option value="Gaspé"></option>
+            </datalist>
             <div class="field">
               <label>Date</label>
               <input type="date" id="s-date">

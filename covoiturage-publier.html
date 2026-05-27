@@ -201,14 +201,39 @@
       <div class="form-section">
         <h3>Point de départ</h3>
         <div class="form-grid">
-          <div class="field"><label>Ville de départ *</label><input type="text" id="start_city" placeholder="Ex : Québec"></div>
+          <div class="field"><label>Ville de départ *</label><input type="text" id="start_city" placeholder="Ex : Québec" list="qc-cities-publier" autocomplete="off"></div>
           <div class="field"><label>Secteur / Quartier</label><input type="text" id="start_sector" placeholder="Ex : Saint-Roch"></div>
         </div>
       </div>
       <div class="form-section">
         <h3>Destination</h3>
         <div class="form-grid">
-          <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal"></div>
+          <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal" list="qc-cities-publier" autocomplete="off">
+              <datalist id="qc-cities-publier">
+                <option value="Québec"></option>
+                <option value="Lévis"></option>
+                <option value="Montréal"></option>
+                <option value="Laval"></option>
+                <option value="Trois-Rivières"></option>
+                <option value="Sherbrooke"></option>
+                <option value="Saguenay"></option>
+                <option value="Chicoutimi"></option>
+                <option value="Jonquière"></option>
+                <option value="Rimouski"></option>
+                <option value="Rivière-du-Loup"></option>
+                <option value="Saint-Georges (Beauce)"></option>
+                <option value="Sainte-Marie (Beauce)"></option>
+                <option value="Drummondville"></option>
+                <option value="Victoriaville"></option>
+                <option value="Gatineau"></option>
+                <option value="Saint-Hyacinthe"></option>
+                <option value="Granby"></option>
+                <option value="Longueuil"></option>
+                <option value="Sept-Îles"></option>
+                <option value="Baie-Comeau"></option>
+                <option value="Matane"></option>
+                <option value="Gaspé"></option>
+              </datalist></div>
           <div class="field"><label>Secteur / Quartier</label><input type="text" id="end_sector" placeholder="Ex : Plateau"></div>
         </div>
       </div>
@@ -729,9 +754,36 @@
         const dist = document.getElementById('total_distance_km');
         if (!dist.value) {
           const pairs = {
+            // Axes existants
             'quebec-montreal':265,'montreal-quebec':265,'quebec-levis':8,'levis-quebec':8,
             'montreal-laval':18,'laval-montreal':18,'montreal-sherbrooke':145,'sherbrooke-montreal':145,
-            'quebec-troisrivieres':130,'troisrivieres-quebec':130,'montreal-troisrivieres':140,'troisrivieres-montreal':140
+            'quebec-troisrivieres':130,'troisrivieres-quebec':130,'montreal-troisrivieres':140,'troisrivieres-montreal':140,
+            // Nouveaux axes : Rimouski / Rivière-du-Loup / Beauce
+            'quebec-rimouski':300,'rimouski-quebec':300,
+            'quebec-rivieredu loup':200,'rivieredu loup-quebec':200,
+            'quebec-rivieredu-loup':200,'rivieredu-loup-quebec':200,
+            'quebec-riviere-du-loup':200,'riviere-du-loup-quebec':200,
+            'quebec-beauce':110,'beauce-quebec':110,
+            'quebec-saintgeorges':110,'saintgeorges-quebec':110,
+            'quebec-saint-georges':110,'saint-georges-quebec':110,
+            'levis-rimouski':295,'rimouski-levis':295,
+            'levis-rivieredu-loup':195,'rivieredu-loup-levis':195,
+            'levis-riviere-du-loup':195,'riviere-du-loup-levis':195,
+            'levis-beauce':95,'beauce-levis':95,
+            'levis-saint-georges':95,'saint-georges-levis':95,
+            'levis-montreal':260,'montreal-levis':260,
+            'montreal-rimouski':550,'rimouski-montreal':550,
+            'montreal-rivieredu-loup':445,'rivieredu-loup-montreal':445,
+            'montreal-riviere-du-loup':445,'riviere-du-loup-montreal':445,
+            'montreal-beauce':340,'beauce-montreal':340,
+            'montreal-saint-georges':340,'saint-georges-montreal':340,
+            'rimouski-rivieredu-loup':100,'rivieredu-loup-rimouski':100,
+            'rimouski-riviere-du-loup':100,'riviere-du-loup-rimouski':100,
+            'troisrivieres-rimouski':430,'rimouski-troisrivieres':430,
+            // Saguenay (renforce)
+            'quebec-saguenay':210,'saguenay-quebec':210,
+            'quebec-chicoutimi':215,'chicoutimi-quebec':215,
+            'montreal-saguenay':460,'saguenay-montreal':460
           };
           const key = norm(document.getElementById('start_city').value) + '-' + norm(document.getElementById('end_city').value);
           if (pairs[key]) dist.value = pairs[key];
