@@ -858,7 +858,12 @@
         start_sector:   document.getElementById('start_sector').value.trim(),
         end_city:       document.getElementById('end_city').value.trim(),
         end_sector:     document.getElementById('end_sector').value.trim(),
-        departure_time: document.getElementById('departure_time').value,
+        departure_time: (() => {
+          const v = document.getElementById('departure_time').value;
+          // datetime-local renvoie en local time naive (ex "2026-05-26T06:15").
+          // On laisse le browser le parser en LOCAL (EDT/EST), puis convert en UTC ISO.
+          return v ? new Date(v).toISOString() : null;
+        })(),
         is_recurring: document.getElementById('is_recurring').checked,
         recurrence_days: document.getElementById('is_recurring').checked
           ? Array.from(document.querySelectorAll('.recur-day:checked')).map(c => c.value)
@@ -871,7 +876,10 @@
         flexibility_minutes: document.getElementById('flexibility_minutes').value,
         total_distance_km: document.getElementById('total_distance_km').value || null,
         is_return_trip: document.getElementById('is_return_trip').checked,
-        return_departure_time: document.getElementById('return_departure_time').value || null,
+        return_departure_time: (() => {
+          const v = document.getElementById('return_departure_time').value;
+          return v ? new Date(v).toISOString() : null;
+        })(),
         vehicle_type:   document.getElementById('vehicle_type').value,
         vehicle_make:   document.getElementById('vehicle_make').value.trim() || null,
         vehicle_model:  document.getElementById('vehicle_model').value.trim() || null,

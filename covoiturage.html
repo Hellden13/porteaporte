@@ -615,10 +615,32 @@
       return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
     }
 
-    function formatDate(iso) {
+    function formatDate(iso, ride) {
       if (!iso) return '';
       const d = new Date(iso);
-      return d.toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      // Affichage heure locale Eastern (Québec)
+      const heure = d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' });
+
+      // ─── Trajet RÉCURRENT : afficher les jours au lieu de la date ───
+      if (ride && ride.is_recurring && Array.isArray(ride.recurrence_days) && ride.recurrence_days.length) {
+        const dayLabels = { lun:'Lun', mar:'Mar', mer:'Mer', jeu:'Jeu', ven:'Ven', sam:'Sam', dim:'Dim' };
+        const days = ride.recurrence_days.map(k => dayLabels[k] || k);
+        // Détection patterns courants
+        const semaine = ['Lun','Mar','Mer','Jeu','Ven'];
+        const weekend = ['Sam','Dim'];
+        const tous = [...semaine, ...weekend];
+        const sortedDays = [...days].sort((a,b) => tous.indexOf(a) - tous.indexOf(b));
+        let label;
+        if (sortedDays.length === 7) label = 'Tous les jours';
+        else if (sortedDays.join(',') === semaine.join(',')) label = 'Lun-Ven (semaine)';
+        else if (sortedDays.join(',') === weekend.join(',')) label = 'Sam-Dim (weekend)';
+        else label = sortedDays.join('-');
+        return `🔁 ${label} à ${heure}`;
+      }
+
+      // ─── Trajet ponctuel : date complète ───
+      const date = d.toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Toronto' });
+      return `${date} à ${heure}`;
     }
 
     async function searchRides() {
@@ -756,7 +778,7 @@
                 <span>${r.end_city}${r.end_sector ? ' · ' + r.end_sector : ''}</span>
               </div>
               <div class="ride-meta" style="margin-bottom:6px;">
-                <span>🗓 ${formatDate(r.departure_time)}</span>
+                <span>🗓 ${formatDate(r.departure_time, r)}</span>
                 <span>🚗 ${vehicleStr}</span>
                 <span>🪑 ${seatsLabel}</span>
                 ${r.total_distance_km ? `<span>📏 ${r.total_distance_km} km</span>` : ''}
