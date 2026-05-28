@@ -1084,7 +1084,6 @@
       <a href="manifeste.html" data-layer="3">Impact</a>
       <a href="securite.html">Sécurité</a>
       <a href="faq.html" data-layer="2">FAQ</a>
-      <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact" data-layer="3">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
       <a class="header-phone" href="sms:+14384492023" title="Texte le fondateur directement" style="display:inline-flex;align-items:center;gap:6px;color:var(--brand-lime);font-weight:800;text-decoration:none;font-size:.92rem;padding:8px 12px;border:1px solid rgba(93,191,255,.4);border-radius:999px;white-space:nowrap;">📱 438-449-2023</a>
@@ -1165,20 +1164,7 @@
             Envoyer un colis
           </a>
         </div>
-        <div class="trust-row" aria-label="Points forts">
-          <div class="trust-item">
-            <strong>Suivi GPS</strong>
-            <span>Statut visible a chaque etape</span>
-          </div>
-          <div class="trust-item">
-            <strong>Paiement securise</strong>
-            <span>Parcours clair pour tous</span>
-          </div>
-          <div class="trust-item">
-            <strong>Local</strong>
-            <span>Des trajets deja prevus</span>
-          </div>
-        </div>
+        <p style="color:var(--pp-white-muted); font-size:.92rem; margin:0;">📦 Ajoutez aussi un colis sur votre route — gagnez 15-25 $ de plus.</p>
       </div>
 
       <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
@@ -1278,8 +1264,50 @@
       </div>
     </section>
 
-    <!-- ═══ 3 PORTES D'ENTRÉE — refonte premium ═══ -->
-    <section class="pp-section" aria-label="Choisir comment commencer" style="background:var(--pp-night-2);border-top:1px solid var(--pp-divider);border-bottom:1px solid var(--pp-divider);">
+    <!-- ═══ COMMENT ÇA MARCHE — 3 cartes simples (L1) ═══ -->
+    <section class="pp-section" aria-label="Comment ça marche" style="background:var(--pp-night-2);border-top:1px solid var(--pp-divider);border-bottom:1px solid var(--pp-divider);">
+      <div class="pp-container">
+        <div style="text-align:center;margin-bottom:48px;">
+          <div class="pp-eyebrow">Simple. Vraiment.</div>
+          <h2 class="pp-h2" style="margin-top:14px;">Trois étapes. <span style="background:var(--pp-grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Et tu roules.</span></h2>
+        </div>
+        <div class="pp-grid-3">
+          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</div>
+              <div class="pp-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
+              </div>
+            </div>
+            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Publiez ou cherchez</h3>
+            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Conducteur : publie ton trajet en 60 secondes. Passager : trouve un siège en 30 secondes.</p>
+          </div>
+          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</div>
+              <div class="pp-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              </div>
+            </div>
+            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Réservation sécurisée</h3>
+            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Paiement protégé par Stripe. Le chauffeur n'est payé qu'après le trajet confirmé.</p>
+          </div>
+          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</div>
+              <div class="pp-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+            </div>
+            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Évaluations mutuelles</h3>
+            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Après chaque trajet, chacun note l'autre. Les bons profils ressortent, les mauvais dégagent.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 3 PORTES D'ENTRÉE — déplacé en Couche 2 (Découverte) ═══ -->
+    <section class="pp-section" aria-label="Choisir comment commencer" data-layer="2" style="background:var(--pp-night-2);border-top:1px solid var(--pp-divider);border-bottom:1px solid var(--pp-divider);">
       <div class="pp-container">
         <div style="text-align:center;margin-bottom:48px;">
           <div class="pp-eyebrow">Choisissez votre porte</div>
@@ -2329,5 +2357,6 @@
     })();
   </script>
   <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/pp-icons.js" defer></script>
 </body>
 </html>
