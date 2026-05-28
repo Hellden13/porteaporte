@@ -214,6 +214,26 @@
 }
 .pp-pulse { animation: ppPulse 2.5s infinite; }
 
+/* ── Sticky CTA mobile (visible < 720px) ── */
+.pp-sticky-cta {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 840;
+  display: none;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0));
+  background: rgba(5, 10, 24, 0.92);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--pp-divider-strong);
+  box-shadow: 0 -8px 28px rgba(0,0,0,0.4);
+}
+.pp-sticky-cta .pp-btn { width: 100%; padding: 14px 18px; font-size: 1rem; }
+@media (max-width: 720px) {
+  .pp-sticky-cta { display: block; }
+  body { padding-bottom: 76px; }
+  /* La pilule de niveau se décale au-dessus du CTA sticky */
+  .pp-layer-pill { bottom: 86px; }
+}
+
 /* ── Section padding standard ── */
 .pp-section { padding: clamp(64px, 9vw, 120px) clamp(18px, 4vw, 48px); }
 .pp-container { max-width: 1200px; margin: 0 auto; }

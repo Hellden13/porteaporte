@@ -791,14 +791,50 @@
       count.textContent = rides.length + ' trajet' + (rides.length !== 1 ? 's' : '') + ' trouvé' + (rides.length !== 1 ? 's' : '');
 
       if (!rides.length) {
+        // Trajets de démo (béta) — pour ne pas montrer une page vide
+        const fromCity = document.getElementById('s-from').value.trim() || 'Québec';
+        const toCity = document.getElementById('s-to').value.trim() || 'Montréal';
+        const demoDate = document.getElementById('s-date').value || new Date(Date.now() + 86400000).toISOString().slice(0,10);
+        const demos = [
+          { name: 'Marie T.', verified: true, rating: 4.9, n: 12, price: 24, time: '07h00', seats: 3 },
+          { name: 'Jean-François L.', verified: true, rating: 4.7, n: 8, price: 22, time: '14h30', seats: 2 },
+          { name: 'Sophie G.', verified: true, rating: 5.0, n: 5, price: 25, time: '17h45', seats: 1 }
+        ];
         list.innerHTML = `
-          <div class="empty-state">
-            <div style="font-size:2.5rem">🗺️</div>
-            <p>Aucun trajet trouvé pour ces critères.<br>Essayez d'autres dates ou villes, ou sois le premier à publier ton trajet !</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
-              <a class="btn" href="/covoiturage-publier.html">🚗 Publier le premier trajet</a>
-              <a class="btn btn-ghost" href="/liste-attente.html">🔔 Me prévenir quand un trajet est dispo</a>
+          <div style="margin-bottom:16px;padding:12px 16px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:10px;color:#ffd166;font-size:.88rem;">
+            ✨ <strong>Aperçu bêta.</strong> Voici à quoi ressembleraient des trajets ${fromCity} → ${toCity}. Sois le premier à en publier un vrai !
+          </div>
+        ` + demos.map((d, i) => `
+          <div class="ride-card" style="opacity:0.92;">
+            <div style="min-width:0">
+              <div style="margin-bottom:8px;">
+                <span class="status-pill" style="background:#14321e;color:#7fe5a3;border:1px solid #2c6b46">🟢 ${d.seats} place${d.seats>1?'s':''} dispo</span>
+                <span style="font-size:.72rem;color:#888;margin-left:6px;">Exemple</span>
+              </div>
+              <div class="ride-route">
+                <span>${fromCity}</span>
+                <span class="arrow">→</span>
+                <span>${toCity}</span>
+              </div>
+              <div class="ride-meta" style="margin-bottom:6px;">
+                <span>🗓 ${new Date(demoDate).toLocaleDateString('fr-CA', {weekday:'long', day:'numeric', month:'short'})} · ${d.time}</span>
+              </div>
+              <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+                <strong style="color:var(--brand-text)">${d.name}</strong>
+                <span style="color:#5dbfff;font-size:.78rem;">✓ Vérifié</span>
+                <span style="color:#ffd166;font-size:.78rem;">⭐ ${d.rating} (${d.n} avis)</span>
+              </div>
             </div>
+            <div class="ride-price">
+              <div class="ride-price-amount">${d.price} $</div>
+              <div class="ride-price-label">par personne</div>
+              <a class="pp-btn pp-btn-primary pp-btn-sm" href="/covoiturage-publier.html" style="margin-top:10px;">Publier un vrai trajet</a>
+            </div>
+          </div>
+        `).join('') + `
+          <div style="text-align:center;margin-top:20px;padding:16px;color:var(--brand-muted);font-size:.88rem;">
+            👋 Tu veux que ce trajet existe pour vrai ? <a href="/covoiturage-publier.html" style="color:#5dbfff;font-weight:800;">Publie-le →</a>
+            ou <a href="/liste-attente.html" style="color:#5dbfff;font-weight:800;">demande à être notifié</a>.
           </div>`;
         return;
       }
