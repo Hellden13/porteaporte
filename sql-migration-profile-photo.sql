@@ -3,6 +3,7 @@
 -- ════════════════════════════════════════════════════════════
 
 ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS photo_url TEXT,
   ADD COLUMN IF NOT EXISTS photo_status TEXT DEFAULT 'none'
     CHECK (photo_status IN ('none', 'pending', 'approved', 'rejected')),
   ADD COLUMN IF NOT EXISTS photo_visible_to_others BOOLEAN DEFAULT true,
