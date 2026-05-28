@@ -497,9 +497,22 @@
 
       <!-- RÉSULTATS -->
       <section class="results-section" id="results-section" style="display:none;">
-        <div class="results-header">
-          <h3>Trajets disponibles</h3>
-          <span class="results-count" id="results-count"></span>
+        <div class="results-header" style="flex-wrap:wrap;gap:10px;">
+          <div>
+            <h3>Trajets disponibles</h3>
+            <span class="results-count" id="results-count"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--brand-muted);">
+            <label for="sort-select">Trier&nbsp;:</label>
+            <select id="sort-select" onchange="searchRides()" style="background:var(--brand-bg-dark);border:1px solid var(--brand-border);color:var(--brand-text);padding:6px 10px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">
+              <option value="pertinence">🎯 Pertinence (recommandé)</option>
+              <option value="date">📅 Date la plus proche</option>
+              <option value="prix">💸 Prix le plus bas</option>
+            </select>
+          </div>
+        </div>
+        <div id="matching-info" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.25);border-radius:10px;font-size:.85rem;color:var(--brand-muted);">
+          🎯 <strong style="color:var(--brand-lime);">Tri intelligent activé.</strong> Les trajets sont classés selon : identité vérifiée, note moyenne, expérience chauffeur, proximité horaire, et plus encore.
         </div>
 
         <!-- Bandeau conversion pour visiteurs non-connectés -->
@@ -699,6 +712,13 @@
       if (music) params.set('music_policy', music);
       if (chat)  params.set('chat_policy',  chat);
 
+      // 🎯 Tri intelligent
+      const sortSelEl = document.getElementById('sort-select');
+      const sortMode = sortSelEl ? sortSelEl.value : 'pertinence';
+      params.set('sort', sortMode);
+      const matchInfo = document.getElementById('matching-info');
+      if (matchInfo) matchInfo.style.display = sortMode === 'pertinence' ? 'block' : 'none';
+
       try {
         const res  = await fetch('/api/platform?' + params);
         const data = await res.json();
@@ -821,10 +841,19 @@
           statusBadge = `<span class="status-pill" style="background:#14321e;color:#7fe5a3;border:1px solid #2c6b46">🟢 ${seats} places dispo</span>`;
         }
 
+        // Badge meilleur match (IA)
+        const matchBadge = r.match_badge
+          ? `<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,#b8f53e,#9ce326);color:#071006;font-weight:900;font-size:.78rem;letter-spacing:.02em;margin-right:6px;">${r.match_badge}</span>`
+          : '';
+        // Raisons du matching (top 3)
+        const matchReasons = Array.isArray(r.match_reasons) && r.match_reasons.length
+          ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;">${r.match_reasons.map(reason => `<span style="font-size:.72rem;color:#7fe5a3;background:rgba(127,229,163,.08);border:1px solid rgba(127,229,163,.25);padding:2px 8px;border-radius:999px;">${reason}</span>`).join('')}</div>`
+          : '';
+
         return `
-          <div class="ride-card">
+          <div class="ride-card" ${r.match_rank === 1 ? 'style="border-color:rgba(184,245,62,.4);box-shadow:0 0 24px rgba(184,245,62,.08);"' : ''}>
             <div style="min-width:0">
-              <div style="margin-bottom:8px;">${statusBadge}</div>
+              <div style="margin-bottom:8px;">${matchBadge}${statusBadge}</div>
               <div class="ride-route">
                 <span>${r.start_city}${r.start_sector ? ' · ' + r.start_sector : ''}</span>
                 <span class="arrow">→</span>
@@ -839,6 +868,7 @@
               </div>
               <div class="ride-meta">${ambiance}</div>
               ${stops}
+              ${matchReasons}
               <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                 <strong style="color:var(--brand-text)">${d.prenom || 'Chauffeur'}</strong>
                 ${score}

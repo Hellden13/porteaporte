@@ -12,7 +12,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['covoiturage', 'trajet', 'passager', 'conducteur', 'route', 'lift', 'siege', 'place', 'covoit', 'voyage', 'chauffeur'],
         title: 'Covoiturage — trouver un trajet',
-        answer: 'Cherche ton trajet : ville depart, ville arrivee, date. Tu vois immediatement qui passe deja par la. La beta privilegie les profils verifies, la messagerie interne et les evaluations apres chaque trajet. Paiement en ligne protege en cours de stabilisation pour le covoiturage.',
+        answer: 'Cherche ton trajet : ville depart, ville arrivee, date. Tu vois immediatement qui passe deja par la. La beta privilegie les profils verifies, la messagerie interne et les evaluations apres chaque trajet. Le paiement en ligne protege autorise la carte au moment de reserver, puis la capture se fait apres validation du trajet.',
         actions: [
           ['Trouver un trajet', '/covoiturage.html'],
           ['Pourquoi nous (comparatif)', '/comparatif-covoiturage.html'],
@@ -42,7 +42,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['paiement', 'stripe', 'argent', 'escrow', 'capture', 'payer', 'remboursement', 'rembourser', 'no-show'],
         title: 'Paiement et reservation',
-        answer: 'Pour les livraisons, le paiement Stripe protege est deja au coeur du parcours. Pour le covoiturage, la reservation fonctionne et le paiement en ligne protege est a stabiliser avant de promettre un remboursement automatique. Aucune info de carte ne doit etre stockee sur nos serveurs.',
+        answer: 'Le paiement Stripe protege est actif pour les livraisons et le covoiturage. Pour un trajet, la carte est autorisee a la reservation et la capture reste manuelle apres validation. Aucune info de carte n est stockee sur nos serveurs.',
         actions: [
           ['FAQ securite paiement', '/securite.html'],
           ['Voir les conditions', '/cgu.html']
@@ -337,6 +337,11 @@ if (!window.__PIA_LOADED__) {
     }
 
     function build() {
+      const existingButton = document.getElementById('pia-launch');
+      const existingPanel = document.getElementById('pia-panel');
+      if (existingButton) existingButton.remove();
+      if (existingPanel) existingPanel.remove();
+
       const button = document.createElement('button');
       button.id = 'pia-launch';
       button.type = 'button';

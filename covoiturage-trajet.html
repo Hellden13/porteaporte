@@ -118,7 +118,7 @@
     .btn-reserve:disabled { opacity: .6; cursor: not-allowed; transform: none; }
     .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; color: #6c63ff; text-decoration: none; margin-bottom: 18px; font-weight: 600; }
     .back-link:hover { text-decoration: underline; }
-    #toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a2e; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+    #toast { position: fixed; top: 18px; right: 18px; max-width: min(360px, calc(100vw - 36px)); background: #1a1a2e; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
     #toast.show { opacity: 1; }
     #toast.success { background: #198754; }
     #toast.error   { background: #dc3545; }
