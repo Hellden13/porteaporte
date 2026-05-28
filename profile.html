@@ -293,7 +293,19 @@
         <div id="profileContainer" style="display: none;">
             <div class="profile-grid">
                 <div class="profile-card">
-                    <div class="avatar" id="avatarBox"><span id="avatarInitials">P</span></div>
+                    <div class="avatar" id="avatarBox" style="position:relative;cursor:pointer;" onclick="document.getElementById('photoUpload').click()" title="Cliquer pour changer la photo">
+                      <span id="avatarInitials">P</span>
+                      <div style="position:absolute;bottom:0;right:0;background:#b8f53e;color:#071006;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;border:3px solid #0a0c10;">📷</div>
+                    </div>
+                    <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+                    <div id="photo-status" style="margin-top:10px;font-size:.85rem;text-align:center;"></div>
+                    <div id="photo-visibility-toggle" style="display:none;margin-top:10px;padding:10px;background:rgba(184,245,62,.06);border-radius:8px;font-size:.85rem;">
+                      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="photo-visible-check" onchange="togglePhotoVisibility()">
+                        <span>👁️ Photo visible aux autres utilisateurs</span>
+                      </label>
+                      <div style="color:#888;font-size:.75rem;margin-top:4px;margin-left:24px;">Décocher = ton avatar reste anonyme</div>
+                    </div>
                     <div class="profile-name" id="profileName">Nom</div>
                     <div class="profile-email" id="profileEmail">email@example.com</div>
                     <div class="profile-stats">
@@ -420,14 +432,29 @@
                     const fullName = `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Utilisateur';
                     document.getElementById('profileName').textContent = fullName;
 
-                    // Avatar dynamique
+                    // Avatar dynamique + statut + toggle visibilité
+                    window.__currentProfile = profile;
+                    const photoStatusEl = document.getElementById('photo-status');
+                    const visToggleWrap = document.getElementById('photo-visibility-toggle');
+                    const visCheck = document.getElementById('photo-visible-check');
+                    if (profile.photo_status === 'pending') {
+                        photoStatusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48h)</span>';
+                    } else if (profile.photo_status === 'rejected') {
+                        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">✗ Photo refusée' + (profile.photo_moderation_reason ? ' : ' + profile.photo_moderation_reason : '') + '. Tu peux en soumettre une autre.</span>';
+                    } else if (profile.photo_status === 'approved') {
+                        photoStatusEl.innerHTML = '<span style="color:#7fe5a3;">✓ Photo approuvée</span>';
+                        visToggleWrap.style.display = 'block';
+                        visCheck.checked = profile.photo_visible_to_others !== false;
+                    }
                     const avatarBox = document.getElementById('avatarBox');
-                    if (profile.photo_url) {
+                    const showPhoto = profile.photo_url && profile.photo_status !== 'rejected';
+                    if (showPhoto) {
                         const _avatarImg = document.createElement('img');
-                        _avatarImg.src = profile.photo_url; /* .src via propriété DOM — safe */
+                        _avatarImg.src = profile.photo_url;
                         _avatarImg.alt = fullName;
-                        avatarBox.innerHTML = '';
-                        avatarBox.appendChild(_avatarImg);
+                        _avatarImg.style.opacity = profile.photo_status === 'pending' ? '0.6' : '1';
+                        avatarBox.querySelector('span').remove();
+                        avatarBox.insertBefore(_avatarImg, avatarBox.firstChild);
                     } else {
                         const initials = fullName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
                         document.getElementById('avatarInitials').textContent = initials;
@@ -530,6 +557,81 @@
                 document.execCommand('copy');
                 flash();
             });
+
+    // ─── Upload photo de profil ───
+    async function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert('Photo trop lourde (max 5MB)'); return; }
+      if (!file.type.startsWith('image/')) { alert('Seules les images sont acceptées'); return; }
+
+      const photoStatusEl = document.getElementById('photo-status');
+      photoStatusEl.innerHTML = '<span style="color:#888;">📤 Upload en cours…</span>';
+
+      try {
+        // Compress + read as data URL
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              const max = 600;
+              let w = img.width, h = img.height;
+              if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+              else { if (h > max) { w = w * max / h; h = max; } }
+              const canvas = document.createElement('canvas');
+              canvas.width = w; canvas.height = h;
+              canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.onerror = reject;
+            img.src = reader.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const { data: { session } } = await window.supa.auth.getSession();
+        const r = await fetch('/api/platform?endpoint=profile-photo-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'profile-photo-upload', photo_data_url: dataUrl })
+        });
+        const d = await r.json();
+        if (!r.ok) {
+          photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + (d.error || 'upload échoué') + '</span>';
+          return;
+        }
+        photoStatusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48h)</span>';
+        // Preview immédiate
+        const avatarBox = document.getElementById('avatarBox');
+        const existing = avatarBox.querySelector('img');
+        if (existing) existing.remove();
+        const span = avatarBox.querySelector('span');
+        if (span) span.remove();
+        const newImg = document.createElement('img');
+        newImg.src = dataUrl;
+        newImg.style.opacity = '0.6';
+        avatarBox.insertBefore(newImg, avatarBox.firstChild);
+      } catch (err) {
+        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + (err.message || err) + '</span>';
+      }
+    }
+
+    async function togglePhotoVisibility() {
+      const visible = document.getElementById('photo-visible-check').checked;
+      try {
+        const { data: { session } } = await window.supa.auth.getSession();
+        await fetch('/api/platform?endpoint=profile-photo-visibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'profile-photo-visibility', visible })
+        });
+      } catch (e) {
+        alert('Erreur : ' + e.message);
+        document.getElementById('photo-visible-check').checked = !visible;
+      }
+    }
         }
 
         async function logout() {

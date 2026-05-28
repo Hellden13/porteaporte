@@ -2705,6 +2705,97 @@ async function rideUserRating(req, res, ctx, body) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// PHOTO DE PROFIL — upload + visibilité + modération
+// ─────────────────────────────────────────────────────────────────
+async function profilePhotoUpload(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+  const dataUrl = String(body.photo_data_url || body.data_url || '').trim();
+  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'photo_data_url (data:image/...) requis' });
+  }
+  // Rate limit : 5 uploads par user / heure
+  const rl = await checkRateLimit(`photoup:${ctx.session.id}`, 5, 3600);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
+
+  try {
+    const photoUrl = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'profile-' + ctx.session.id + '-' + Date.now(), dataUrl);
+    if (!photoUrl) return res.status(500).json({ error: 'Upload échoué' });
+
+    const patch = {
+      photo_url: photoUrl,
+      photo_status: 'pending',
+      photo_submitted_at: new Date().toISOString(),
+      photo_moderation_reason: null
+    };
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(patch)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(400).json({ error: 'Mise à jour profil impossible', details: data });
+
+    // Alerte admin nouvelle photo à modérer
+    alertAdmin('📸 Nouvelle photo à modérer', 'Un utilisateur vient de soumettre une photo de profil.', {
+      severity: 'info',
+      details: { 'User': ctx.session.id.slice(0, 8), 'URL': photoUrl },
+      cta_url: 'https://porteaporte.site/admin/photos-moderation.html',
+      cta_label: '👀 Modérer →'
+    });
+
+    return res.status(200).json({ success: true, photo_url: photoUrl, status: 'pending', message: 'Photo en attente d\'approbation (24-48h)' });
+  } catch (e) {
+    return res.status(500).json({ error: 'Erreur upload : ' + (e.message || 'inconnue') });
+  }
+}
+
+async function profilePhotoVisibility(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+  const visible = body.visible === true || body.visible === 'true';
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify({ photo_visible_to_others: visible })
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Mise à jour impossible' });
+  return res.status(200).json({ success: true, visible });
+}
+
+async function adminPhotosPending(req, res, ctx) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?photo_status=eq.pending&select=id,prenom,nom,photo_url,photo_submitted_at,role,ville&order=photo_submitted_at.asc&limit=100`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const profiles = r.ok ? await r.json() : [];
+  return res.status(200).json({ pending: profiles, count: profiles.length });
+}
+
+async function adminPhotoModerate(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const userId = String(body.user_id || '').trim();
+  const action = String(body.action || '').toLowerCase();
+  const reason = String(body.reason || '').trim().slice(0, 500);
+  if (!userId || !['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ error: 'user_id et action (approve|reject) requis' });
+  }
+  const patch = {
+    photo_status: action === 'approve' ? 'approved' : 'rejected',
+    photo_moderated_at: new Date().toISOString(),
+    photo_moderation_reason: reason || null
+  };
+  // Si rejet : retirer aussi la photo_url
+  if (action === 'reject') patch.photo_url = null;
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(patch)
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Modération échouée' });
+  return res.status(200).json({ success: true, action, user_id: userId });
+}
+
+// ─────────────────────────────────────────────────────────────────
 // CARTE DES VILLES — trajets actifs groupés par ville de départ
 // ─────────────────────────────────────────────────────────────────
 const QC_CITY_COORDS = {
@@ -5028,6 +5119,10 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-active-cities')   return await rideActiveCities(req, res, ctx);
     if (endpoint === 'ride-search-log')      return await rideSearchLog(req, res, ctx, body);
     if (endpoint === 'admin-top-searches')   return await adminTopSearches(req, res, ctx, body);
+    if (endpoint === 'profile-photo-upload')     return await profilePhotoUpload(req, res, ctx, body);
+    if (endpoint === 'profile-photo-visibility') return await profilePhotoVisibility(req, res, ctx, body);
+    if (endpoint === 'admin-photos-pending')     return await adminPhotosPending(req, res, ctx);
+    if (endpoint === 'admin-photo-moderate')     return await adminPhotoModerate(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
