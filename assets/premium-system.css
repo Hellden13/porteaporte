@@ -1,0 +1,269 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PorteàPorte — Premium Design System v1.0
+   Style : Bleu nuit + bleu électrique · Glassmorphism · Premium
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Palette Premium (bleu nuit cinématographique) ── */
+  --pp-night: #050a18;
+  --pp-night-2: #0b1228;
+  --pp-night-3: #131c3a;
+  --pp-deep: #0a1230;
+  --pp-electric: #1f8bff;
+  --pp-electric-glow: #3da9ff;
+  --pp-electric-bright: #5dbfff;
+  --pp-sky: #88cfff;
+  --pp-white: #f5f9ff;
+  --pp-white-dim: #c6d1e3;
+  --pp-white-muted: #8896b3;
+  --pp-divider: rgba(125, 161, 220, 0.12);
+  --pp-divider-strong: rgba(125, 161, 220, 0.22);
+
+  /* ── Dégradés signature ── */
+  --pp-grad-hero: radial-gradient(ellipse at 20% -10%, rgba(31, 139, 255, 0.22), transparent 55%),
+                  radial-gradient(ellipse at 80% 110%, rgba(93, 191, 255, 0.18), transparent 50%),
+                  linear-gradient(180deg, #050a18 0%, #0b1228 100%);
+  --pp-grad-card: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  --pp-grad-cta: linear-gradient(135deg, #1f8bff 0%, #5dbfff 100%);
+  --pp-grad-cta-hover: linear-gradient(135deg, #3da9ff 0%, #88cfff 100%);
+  --pp-grad-text: linear-gradient(120deg, #ffffff 0%, #88cfff 60%, #1f8bff 100%);
+
+  /* ── Ombres premium ── */
+  --pp-shadow-sm: 0 2px 8px rgba(5, 10, 24, 0.4);
+  --pp-shadow-md: 0 8px 32px rgba(5, 10, 24, 0.45);
+  --pp-shadow-lg: 0 20px 60px rgba(5, 10, 24, 0.55);
+  --pp-shadow-glow: 0 0 40px rgba(31, 139, 255, 0.35);
+  --pp-shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--pp-divider);
+
+  /* ── Rayons & espacements ── */
+  --pp-r-sm: 10px;
+  --pp-r-md: 16px;
+  --pp-r-lg: 22px;
+  --pp-r-xl: 28px;
+  --pp-r-pill: 999px;
+
+  /* ── Easings ── */
+  --pp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --pp-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Glassmorphism utility ── */
+.pp-glass {
+  background: rgba(11, 18, 40, 0.6);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--pp-divider-strong);
+  border-radius: var(--pp-r-lg);
+}
+
+/* ── Bouton premium ── */
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.98rem;
+  letter-spacing: -0.005em;
+  border-radius: var(--pp-r-pill);
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.25s var(--pp-ease), box-shadow 0.25s var(--pp-ease), background 0.25s var(--pp-ease);
+  white-space: nowrap;
+}
+.pp-btn-primary {
+  background: var(--pp-grad-cta);
+  color: #051022;
+  box-shadow: var(--pp-shadow-md), 0 0 0 0 rgba(31, 139, 255, 0);
+}
+.pp-btn-primary:hover, .pp-btn-primary:focus-visible {
+  background: var(--pp-grad-cta-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--pp-shadow-lg), 0 0 28px rgba(93, 191, 255, 0.45);
+}
+.pp-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--pp-white);
+  border: 1px solid var(--pp-divider-strong);
+  backdrop-filter: blur(12px);
+}
+.pp-btn-ghost:hover, .pp-btn-ghost:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--pp-electric);
+  transform: translateY(-2px);
+}
+.pp-btn-lg { padding: 18px 36px; font-size: 1.06rem; }
+.pp-btn-sm { padding: 10px 18px; font-size: 0.88rem; }
+
+/* ── Carte premium ── */
+.pp-card {
+  position: relative;
+  background: var(--pp-grad-card);
+  border: 1px solid var(--pp-divider);
+  border-radius: var(--pp-r-lg);
+  padding: 28px;
+  box-shadow: var(--pp-shadow-card);
+  transition: transform 0.35s var(--pp-ease), border-color 0.3s var(--pp-ease), box-shadow 0.35s var(--pp-ease);
+  overflow: hidden;
+}
+.pp-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(31, 139, 255, 0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s var(--pp-ease);
+  pointer-events: none;
+}
+.pp-card:hover { transform: translateY(-6px); border-color: var(--pp-divider-strong); box-shadow: var(--pp-shadow-lg); }
+.pp-card:hover::before { opacity: 1; }
+
+/* ── Eyebrow premium ── */
+.pp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(31, 139, 255, 0.1);
+  border: 1px solid rgba(31, 139, 255, 0.3);
+  color: var(--pp-electric-bright);
+  font-weight: 700;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--pp-r-pill);
+}
+
+/* ── Titres ── */
+.pp-h1 {
+  font-size: clamp(2.4rem, 6.5vw, 5rem);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  margin: 0 0 22px;
+  color: var(--pp-white);
+}
+.pp-h1 .grad {
+  background: var(--pp-grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.pp-h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--pp-white);
+  margin: 0 0 12px;
+}
+.pp-h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--pp-white);
+  margin: 0 0 8px;
+}
+.pp-lede {
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--pp-white-dim);
+  max-width: 620px;
+}
+
+/* ── Icône premium (cercle dégradé) ── */
+.pp-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(31, 139, 255, 0.12);
+  border: 1px solid rgba(31, 139, 255, 0.25);
+  color: var(--pp-electric-bright);
+  flex-shrink: 0;
+}
+.pp-icon-circle svg { width: 24px; height: 24px; stroke-width: 2; }
+.pp-icon-circle.lg { width: 64px; height: 64px; border-radius: 20px; }
+.pp-icon-circle.lg svg { width: 30px; height: 30px; }
+
+/* ── Hover lift utility ── */
+.pp-lift { transition: transform 0.3s var(--pp-ease); }
+.pp-lift:hover { transform: translateY(-4px); }
+
+/* ── Fade-in au scroll (subtle) ── */
+@keyframes ppFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pp-fade-up { animation: ppFadeUp 0.8s var(--pp-ease) both; }
+.pp-fade-up.d1 { animation-delay: 0.1s; }
+.pp-fade-up.d2 { animation-delay: 0.2s; }
+.pp-fade-up.d3 { animation-delay: 0.3s; }
+.pp-fade-up.d4 { animation-delay: 0.4s; }
+
+/* ── Glow pulse autour d'un élément focus ── */
+@keyframes ppPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 139, 255, 0.6); }
+  50% { box-shadow: 0 0 0 14px rgba(31, 139, 255, 0); }
+}
+.pp-pulse { animation: ppPulse 2.5s infinite; }
+
+/* ── Section padding standard ── */
+.pp-section { padding: clamp(64px, 9vw, 120px) clamp(18px, 4vw, 48px); }
+.pp-container { max-width: 1200px; margin: 0 auto; }
+
+/* ── Grid auto responsive ── */
+.pp-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.pp-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-fade-up, .pp-pulse, .pp-btn, .pp-card, .pp-lift { animation: none !important; transition: none !important; }
+}
+
+/* ── Overrides globaux subtils pour matcher le système premium ── */
+body {
+  background: var(--pp-night);
+  color: var(--pp-white);
+}
+.hero, .pourquoi-section, .how-section {
+  background: var(--pp-grad-hero);
+}
+/* Smooth les anciens .btn pour qu'ils héritent un peu du look premium */
+.btn:not(.pp-btn) {
+  border-radius: var(--pp-r-pill);
+  transition: transform 0.25s var(--pp-ease), box-shadow 0.25s var(--pp-ease);
+}
+.btn:not(.pp-btn):hover { transform: translateY(-2px); }
+/* Cards anciennes : ombre douce automatique */
+.feature-card, .impact-zone-inner, .porte, .how-step, .pourquoi-card {
+  border-radius: var(--pp-r-lg) !important;
+  transition: transform 0.3s var(--pp-ease), border-color 0.3s var(--pp-ease), box-shadow 0.3s var(--pp-ease);
+}
+.feature-card:hover, .porte:hover, .how-step:hover, .pourquoi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--pp-shadow-md);
+}
+/* Header un peu plus glassy */
+.site-header {
+  background: rgba(5, 10, 24, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  border-bottom: 1px solid var(--pp-divider);
+}
+/* Eyebrow ancien : style premium */
+.eyebrow {
+  color: var(--pp-electric-bright) !important;
+}
+/* Pia strip plus premium */
+.pia-guide-strip {
+  border-color: var(--pp-divider-strong) !important;
+  background: linear-gradient(135deg, rgba(31, 139, 255, 0.08), rgba(93, 191, 255, 0.04)) !important;
+  border-radius: var(--pp-r-lg) !important;
+}
+
