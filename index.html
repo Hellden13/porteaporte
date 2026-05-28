@@ -1079,13 +1079,12 @@
       <span>PorteaPorte</span>
     </a>
     <nav class="main-nav" aria-label="Navigation principale">
-      <a href="expediteur.html">Envoyer un colis</a>
-      <a href="devenir-livreur.html">Devenir livreur</a>
       <a href="covoiturage.html">Covoiturage</a>
-      <a href="comparatif-covoiturage.html">Pourquoi nous?</a>
-      <a href="securite.html">🛡️ Sécurité</a>
-      <a href="faq.html">FAQ</a>
-      <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact pour voir toutes les fonctionnalités">✦ Mode Impact</button>
+      <a href="expediteur.html" data-layer="2">Livraison</a>
+      <a href="manifeste.html" data-layer="3">Impact</a>
+      <a href="securite.html">Sécurité</a>
+      <a href="faq.html" data-layer="2">FAQ</a>
+      <button id="impact-toggle" onclick="toggleImpactMode()" title="Activer le mode Impact" data-layer="3">✦ Mode Impact</button>
     </nav>
     <div class="header-actions">
       <a class="header-phone" href="sms:+14384492023" title="Texte le fondateur directement" style="display:inline-flex;align-items:center;gap:6px;color:var(--brand-lime);font-weight:800;text-decoration:none;font-size:.92rem;padding:8px 12px;border:1px solid rgba(93,191,255,.4);border-radius:999px;white-space:nowrap;">📱 438-449-2023</a>
@@ -1095,7 +1094,7 @@
     </div>
   </header>
 
-  <section class="pia-guide-strip" aria-label="Aide Pia pour les nouveaux visiteurs">
+  <section class="pia-guide-strip" aria-label="Aide Pia pour les nouveaux visiteurs" data-layer="2">
     <div>
       <strong>Nouveau sur PorteàPorte ? Pia peut te guider.</strong>
       <span>Dis simplement si tu cherches un trajet, si tu conduis (covoit ou colis), ou si tu veux participer au test Québec/Lévis.</span>
@@ -1184,6 +1183,98 @@
 
       <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
         <img class="hero-photo" src="/assets/photos/hero-covoiturage-confiance.png" alt="Covoiturage de confiance entre Québécois — PorteàPorte" loading="eager" onerror="this.src='/assets/photos/scenario-covoiturage.jpg'">
+      </div>
+    </section>
+
+    <!-- ═══ BARRE DE RECHERCHE INLINE (Couche 1 — visible toujours) ═══ -->
+    <section class="pp-section" style="padding:48px clamp(18px,4vw,48px); background:var(--pp-night);">
+      <div class="pp-container">
+        <div class="pp-glass" style="padding:24px; max-width:920px; margin:0 auto;">
+          <form onsubmit="event.preventDefault(); ppQuickSearch();" style="display:grid; grid-template-columns:1fr 1fr 160px 130px; gap:12px; align-items:end;">
+            <div>
+              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Départ</label>
+              <input type="text" id="pp-search-from" placeholder="Ex : Québec" list="pp-qc-cities" autocomplete="off"
+                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Destination</label>
+              <input type="text" id="pp-search-to" placeholder="Ex : Montréal" list="pp-qc-cities" autocomplete="off"
+                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Date</label>
+              <input type="date" id="pp-search-date"
+                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
+            </div>
+            <button type="submit" class="pp-btn pp-btn-primary" style="height:44px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Chercher
+            </button>
+          </form>
+          <datalist id="pp-qc-cities">
+            <option value="Québec"></option><option value="Lévis"></option><option value="Montréal"></option>
+            <option value="Trois-Rivières"></option><option value="Sherbrooke"></option><option value="Saguenay"></option>
+            <option value="Rimouski"></option><option value="Rivière-du-Loup"></option><option value="Saint-Georges (Beauce)"></option>
+            <option value="Gatineau"></option><option value="Drummondville"></option><option value="Victoriaville"></option>
+          </datalist>
+        </div>
+        <style>
+          @media (max-width: 720px) {
+            #pp-search-from, #pp-search-to, #pp-search-date { font-size: 1rem; }
+            form[onsubmit*="ppQuickSearch"] { grid-template-columns: 1fr !important; }
+          }
+        </style>
+        <script>
+          function ppQuickSearch() {
+            const f = document.getElementById('pp-search-from').value.trim();
+            const t = document.getElementById('pp-search-to').value.trim();
+            const d = document.getElementById('pp-search-date').value;
+            const p = new URLSearchParams();
+            if (f) p.set('from', f);
+            if (t) p.set('to', t);
+            if (d) p.set('date', d);
+            window.location.href = '/covoiturage.html' + (p.toString() ? '?' + p.toString() : '');
+          }
+        </script>
+      </div>
+    </section>
+
+    <!-- ═══ TRAJETS POPULAIRES (Couche 1 — visible toujours) ═══ -->
+    <section class="pp-section" style="padding:24px clamp(18px,4vw,48px) 60px;">
+      <div class="pp-container">
+        <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div class="pp-eyebrow">Trajets populaires</div>
+            <h2 class="pp-h2" style="margin-top:10px; font-size:clamp(1.4rem, 3vw, 2rem);">Ce qui roule au Québec.</h2>
+          </div>
+          <a href="/covoiturage.html" style="color:var(--pp-electric-bright); font-weight:800; font-size:.92rem; text-decoration:none;">Voir tous les trajets →</a>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Montr%C3%A9al" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Montréal</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">265 km · ~3h · ~25 $/place</div>
+          </a>
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=L%C3%A9vis&to=Qu%C3%A9bec" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Lévis → Québec</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">8 km · ~15 min · ~3 $/place</div>
+          </a>
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Saguenay" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Saguenay</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">210 km · ~2h30 · ~20 $/place</div>
+          </a>
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Rimouski" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Rimouski</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">300 km · ~3h30 · ~28 $/place</div>
+          </a>
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Trois-Rivi%C3%A8res" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Trois-Rivières</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">130 km · ~1h30 · ~14 $/place</div>
+          </a>
+          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Saint-Georges" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Beauce</div>
+            <div style="font-size:.82rem; color:var(--pp-white-muted);">110 km · ~1h15 · ~12 $/place</div>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -1399,7 +1490,7 @@
     </div>
 
     <!-- ===== POURQUOI PORTEAPORTE (covoit-first) ===== -->
-    <section class="pourquoi-section" aria-labelledby="pq-title">
+    <section class="pourquoi-section" aria-labelledby="pq-title" data-layer="2">
       <div style="max-width:1120px;margin:0 auto;text-align:center">
         <div class="eyebrow" style="justify-content:center">Pourquoi PorteàPorte ?</div>
         <h2 id="pq-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Un concept aussi simple que puissant.</h2>
@@ -1472,7 +1563,7 @@
     </section>
 
     <!-- ===== COMMENT ÇA MARCHE — 5 ÉTAPES (covoit-first) ===== -->
-    <section class="how-section" id="features" aria-labelledby="how-title">
+    <section class="how-section" id="features" aria-labelledby="how-title" data-layer="2">
       <div style="max-width:1120px;margin:0 auto;text-align:center">
         <div class="eyebrow" style="justify-content:center">Simple. Vraiment.</div>
         <h2 id="how-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Cinq étapes. De A à Z.</h2>
@@ -2075,6 +2166,22 @@
       }).bindTooltip(name + ' (bêta active)', { permanent: false }).addTo(miniMap);
     });
   </script>
+
+  <!-- ═══ CTA FINAL (Couche 1) ═══ -->
+  <section class="pp-section" style="background:var(--pp-grad-hero); border-top:1px solid var(--pp-divider);">
+    <div class="pp-container" style="text-align:center;">
+      <div class="pp-eyebrow">Prêt ?</div>
+      <h2 class="pp-h2" style="margin:14px 0 12px;">Tu vas quelque part ? <span style="background:var(--pp-grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Quelqu'un aussi.</span></h2>
+      <p class="pp-lede" style="margin:0 auto 30px;">Réserve, conduis, ou glisse un colis dans le coffre. Trois façons de bouger, une seule communauté.</p>
+      <div style="display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+        <a class="pp-btn pp-btn-primary pp-btn-lg" href="/covoiturage.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Trouver mon trajet
+        </a>
+        <a class="pp-btn pp-btn-ghost pp-btn-lg" href="/covoiturage-publier.html">Publier mon trajet</a>
+      </div>
+    </div>
+  </section>
 
   <footer class="footer-full">
     <div class="footer-full-inner">
