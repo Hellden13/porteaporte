@@ -9,6 +9,7 @@
   <meta name="description" content="Partagez les frais d'un trajet existant. Mise en relation entre conducteurs et passagers au Québec.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
   <style>
     /* ── HERO ── */
     .cov-hero {
@@ -65,10 +66,12 @@
       padding: 48px 0 0;
     }
     .search-card {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid var(--pp-divider-strong, rgba(125,161,220,0.22));
+      border-radius: 22px;
       padding: 32px;
+      box-shadow: 0 20px 60px rgba(5, 10, 24, 0.45);
+      backdrop-filter: blur(12px);
     }
     .search-card h2 {
       margin: 0 0 24px;
@@ -166,17 +169,34 @@
     #results-list { display: flex; flex-direction: column; gap: 12px; }
 
     .ride-card {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border);
-      border-radius: 12px;
-      padding: 20px 24px;
+      position: relative;
+      background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid var(--pp-divider, rgba(125,161,220,0.12));
+      border-radius: 18px;
+      padding: 22px 26px;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 16px;
       align-items: center;
-      transition: border-color 0.2s;
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), border-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      overflow: hidden;
     }
-    .ride-card:hover { border-color: var(--brand-lime); }
+    .ride-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(31,139,255,0.06), transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+    .ride-card:hover {
+      border-color: rgba(31,139,255,0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(5,10,24,0.45);
+    }
+    .ride-card:hover::before { opacity: 1; }
     .status-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.78rem; font-weight:800; letter-spacing:.02em; }
     .ride-route {
       display: flex;
@@ -490,7 +510,10 @@
           </div>
 
           <div style="margin-top:18px;">
-            <button class="btn" onclick="searchRides()" id="search-btn">🔍 Rechercher</button>
+            <button class="pp-btn pp-btn-primary pp-btn-lg" onclick="searchRides()" id="search-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Rechercher un trajet
+            </button>
           </div>
         </div>
       </section>
@@ -882,7 +905,7 @@
               <div style="font-size:0.72rem;color:var(--brand-muted);margin-top:2px;">dont ${fmt(r.platform_fee)} frais service</div>
               ${r.luggage_fee_info ? `<div style="font-size:0.72rem;color:var(--brand-cyan);margin-top:2px;">+${fmt(r.luggage_fee_info)} bagage → chauffeur</div>` : ''}
               ${r.group_discount ? `<div style="font-size:0.72rem;color:#f59e0b;margin-top:4px;">👥 +1 passager = -${r.group_discount.next_pct}% pour tous</div>` : ''}
-              <a class="btn" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;white-space:nowrap;">Voir le trajet</a>
+              <a class="pp-btn pp-btn-primary pp-btn-sm" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;">Voir le trajet</a>
             </div>
           </div>
         `;
