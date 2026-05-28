@@ -187,7 +187,7 @@
         const profMap = {};
         for (const p of profs || []) profMap[p.id] = [p.prenom, p.nom].filter(Boolean).join(' ');
         document.getElementById('top-livreurs').innerHTML = topLivIds.map(([id, gain]) => `
-          <div class="list-row"><span>${profMap[id] || id.slice(0,8)}</span><strong style="color:#b8f53e">${gain.toFixed(2)} $</strong></div>
+          <div class="list-row"><span>${profMap[id] || id.slice(0,8)}</span><strong style="color:#5dbfff">${gain.toFixed(2)} $</strong></div>
         `).join('');
       } else {
         document.getElementById('top-livreurs').innerHTML = '<div class="empty">Aucun gain livreur</div>';
@@ -235,7 +235,7 @@
       const chartW = w - padding * 2;
       const chartH = h - padding * 2;
       const stepX = chartW / Math.max(data.length - 1, 1);
-      ctx.strokeStyle = '#b8f53e';
+      ctx.strokeStyle = '#5dbfff';
       ctx.lineWidth = 2;
       ctx.beginPath();
       data.forEach(([day, val], i) => {
@@ -245,7 +245,7 @@
       });
       ctx.stroke();
       // Points
-      ctx.fillStyle = '#b8f53e';
+      ctx.fillStyle = '#5dbfff';
       data.forEach(([day, val], i) => {
         const x = padding + i * stepX;
         const y = padding + chartH - (val / max) * chartH;

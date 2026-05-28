@@ -22,18 +22,18 @@
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
     .btn{display:inline-flex;text-decoration:none;width:auto}
     .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--brand-muted-dark);margin-right:8px}
-    .live-dot.on{background:var(--brand-lime);box-shadow:0 0 0 5px rgba(0,255,159,.12)}
+    .live-dot.on{background:var(--brand-lime);box-shadow:0 0 0 5px rgba(93,191,255,.12)}
     .map-preview{min-height:190px;border:1px solid var(--brand-border);border-radius:10px;background:var(--brand-bg-dark);display:grid;place-items:center;color:var(--brand-muted);margin-top:14px;text-align:center;padding:18px}
-    .map-preview.has-location{background:linear-gradient(135deg,rgba(0,217,255,.08),rgba(0,255,159,.08));padding:0;overflow:hidden}
+    .map-preview.has-location{background:linear-gradient(135deg,rgba(0,217,255,.08),rgba(93,191,255,.08));padding:0;overflow:hidden}
     .progress-wrap{margin:16px 0;padding:14px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:10px}
     .progress-label{display:flex;justify-content:space-between;font-size:.85rem;font-weight:700;margin-bottom:8px}
     .progress-label .eta{color:var(--brand-lime)}
     .progress-bar{height:10px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden;position:relative}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));border-radius:999px;transition:width 1s ease}
-    .progress-fill::after{content:'';position:absolute;top:-3px;width:16px;height:16px;border-radius:50%;background:var(--brand-lime);box-shadow:0 0 8px var(--brand-lime),0 0 16px rgba(184,245,62,.5);transition:left 1s ease}
+    .progress-fill::after{content:'';position:absolute;top:-3px;width:16px;height:16px;border-radius:50%;background:var(--brand-lime);box-shadow:0 0 8px var(--brand-lime),0 0 16px rgba(93,191,255,.5);transition:left 1s ease}
     .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--brand-lime);animation:pulse 1.5s infinite}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    .live-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:999px;font-size:.75rem;font-weight:800;color:var(--brand-lime);margin-top:6px}
+    .live-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:999px;font-size:.75rem;font-weight:800;color:var(--brand-lime);margin-top:6px}
   </style>
 </head>
 <body>
@@ -313,7 +313,7 @@
       const confirmSection = document.getElementById('confirm-section');
       if (['livre', 'livree', 'delivered'].includes(l.statut)) {
         const confirmLink = '/confirmation-destinataire.html?livraison_id=' + encodeURIComponent(id);
-        confirmSection.innerHTML = '<div style="margin-top:16px;padding:16px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25);border-radius:10px">'
+        confirmSection.innerHTML = '<div style="margin-top:16px;padding:16px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:10px">'
           + '<div style="font-weight:800;color:var(--brand-lime);margin-bottom:8px">📬 Ton colis est arrivé !</div>'
           + '<p class="note" style="margin:0 0 14px">Entre le code de réception reçu de l\'expéditeur pour confirmer et libérer le paiement au livreur.</p>'
           + '<a href="' + confirmLink + '" class="btn" style="text-decoration:none">Confirmer la réception →</a>'

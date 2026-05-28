@@ -49,7 +49,7 @@
       transition: all 0.2s;
     }
     .topbar-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
-    .topbar-btn.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(0,255,159,0.06); }
+    .topbar-btn.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(93,191,255,0.06); }
 
     /* ---- Layout: map + side panel ---- */
     .layout {
@@ -104,7 +104,7 @@
       background: var(--brand-bg-dark);
     }
     .mission-item:hover { border-color: var(--brand-cyan); background: rgba(0,217,255,0.03); }
-    .mission-item.selected { border-color: var(--brand-lime); background: rgba(0,255,159,0.04); }
+    .mission-item.selected { border-color: var(--brand-lime); background: rgba(93,191,255,0.04); }
 
     .mi-route { font-weight: 700; font-size: 0.88rem; }
     .mi-meta { color: var(--brand-muted); font-size: 0.76rem; margin-top: 3px; }
@@ -280,7 +280,7 @@
       background: transparent;
       transition: all 0.15s;
     }
-    .filter-pill:hover, .filter-pill.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(0,255,159,0.07); }
+    .filter-pill:hover, .filter-pill.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(93,191,255,0.07); }
 
     /* ---- Empty / loading ---- */
     .side-loading { text-align: center; padding: 32px 16px; color: var(--brand-muted); font-size: 0.88rem; }
@@ -400,15 +400,15 @@
 
     function addMarker(mission) {
       if (!mission._lat || !mission._lng) return;
-      const color = mission._locked ? '#A8ACB1' : '#00FF9F';
+      const color = mission._locked ? '#A8ACB1' : '#5dbfff';
       const marker = L.marker([mission._lat, mission._lng], { icon: missionIcon(color) });
 
       marker.bindPopup(`
         <div style="min-width:160px">
           <div style="font-weight:800;font-size:.88rem;margin-bottom:4px">${mission.ville_depart || '?'} → ${mission.ville_arrivee || '?'}</div>
           <div style="color:#A8ACB1;font-size:.76rem;margin-bottom:8px">${mission.type_colis || 'Colis'}${mission.poids_kg ? ' · ' + mission.poids_kg + ' kg' : ''}</div>
-          <div style="font-weight:900;color:#00FF9F;font-size:1rem;margin-bottom:8px">${money(mission.prix_total)}</div>
-          <button onclick="showDetail('${mission.id}')" style="width:100%;padding:7px;border:none;border-radius:6px;background:linear-gradient(135deg,#00FF9F,#00D9FF);color:#0A0C10;font-weight:800;font-size:12px;cursor:pointer">
+          <div style="font-weight:900;color:#5dbfff;font-size:1rem;margin-bottom:8px">${money(mission.prix_total)}</div>
+          <button onclick="showDetail('${mission.id}')" style="width:100%;padding:7px;border:none;border-radius:6px;background:linear-gradient(135deg,#5dbfff,#00D9FF);color:#0A0C10;font-weight:800;font-size:12px;cursor:pointer">
             ${mission._locked ? '🔒 Déverrouiller' : 'Voir détails'}
           </button>
         </div>
@@ -536,7 +536,7 @@
                ${locked ? '🔒 Déverrouiller & accepter' : 'Accepter cette mission'}
              </button>
              <p class="bio-note">Confirmation biométrique requise</p>`
-          : `<a href="/login.html" style="display:block;width:100%;padding:14px;border:none;border-radius:9px;background:linear-gradient(135deg,#00FF9F,#00D9FF);color:#0A0C10;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none">Se connecter pour accepter</a>`
+          : `<a href="/login.html" style="display:block;width:100%;padding:14px;border:none;border-radius:9px;background:linear-gradient(135deg,#5dbfff,#00D9FF);color:#0A0C10;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none">Se connecter pour accepter</a>`
         }
       `;
 

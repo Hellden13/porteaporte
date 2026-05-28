@@ -25,14 +25,14 @@ body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:va
 
 /* ── LOGIN ── */
 #login-screen{position:fixed;inset:0;background:var(--ink);z-index:9999;display:flex;align-items:center;justify-content:center}
-#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(184,245,62,.05),transparent 70%)}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(93,191,255,.05),transparent 70%)}
 .login-box{background:var(--smoke);border:1px solid var(--border);border-radius:6px;padding:36px;width:340px;position:relative;z-index:1}
 .ll{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:4px}
 .ll span{color:var(--lime)}
 .ls{font-size:12px;color:var(--muted);margin-bottom:24px}
 .lf{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
 .li{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:11px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;border-radius:2px;transition:border-color .2s}
-.li:focus{border-color:rgba(184,245,62,.4)}
+.li:focus{border-color:rgba(93,191,255,.4)}
 .li.err{border-color:var(--red);animation:shake .3s}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .lb{width:100%;background:var(--lime);color:var(--ink);border:none;padding:13px;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border-radius:2px;margin-top:14px;transition:all .2s}
@@ -54,8 +54,8 @@ body{font-family:'Bricolage Grotesque',sans-serif;background:var(--ink);color:va
 .sidebar{width:200px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto}
 .sb-sec{padding:4px 14px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-top:12px;margin-bottom:2px}
 .sb-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;cursor:pointer;border-left:2px solid transparent;color:var(--muted);transition:all .15s}
-.sb-item:hover{background:rgba(184,245,62,.05);color:var(--paper)}
-.sb-item.on{background:rgba(184,245,62,.08);color:var(--lime);border-left-color:var(--lime)}
+.sb-item:hover{background:rgba(93,191,255,.05);color:var(--paper)}
+.sb-item.on{background:rgba(93,191,255,.08);color:var(--lime);border-left-color:var(--lime)}
 .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:50px}
 .sb-badge.o{background:var(--orange)}
 .sb-badge.g{background:#3B6D11}
@@ -85,11 +85,11 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--s2);padding:8px 12px;text-align:left;font-size:9px;font-weight:500;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
 td{padding:8px 12px;border-bottom:1px solid var(--border)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(184,245,62,.02)}
+tr:hover td{background:rgba(93,191,255,.02)}
 
 /* ── TAGS ── */
 .tag{display:inline-flex;padding:2px 7px;border-radius:50px;font-size:10px;font-weight:500}
-.tg{background:rgba(184,245,62,.1);color:var(--lime);border:1px solid rgba(184,245,62,.2)}
+.tg{background:rgba(93,191,255,.1);color:var(--lime);border:1px solid rgba(93,191,255,.2)}
 .tb{background:rgba(61,255,197,.1);color:var(--teal);border:1px solid rgba(61,255,197,.2)}
 .to{background:rgba(255,184,60,.1);color:var(--orange);border:1px solid rgba(255,184,60,.2)}
 .tr{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
@@ -108,7 +108,7 @@ tr:hover td{background:rgba(184,245,62,.02)}
 /* ── FORM ── */
 .fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:block;margin-top:10px}
 .fi{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:2px;padding:8px 11px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
-.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi:focus{border-color:rgba(93,191,255,.4)}
 select.fi option{background:#141918}
 textarea.fi{resize:vertical;min-height:70px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -142,7 +142,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
 /* ── PARTENAIRE CARD ── */
 .partner-card{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:8px;position:relative}
-.partner-card.active{border-color:rgba(184,245,62,.25)}
+.partner-card.active{border-color:rgba(93,191,255,.25)}
 .partner-card.pending{border-color:rgba(255,184,60,.25)}
 .pc-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .pc-logo{width:40px;height:40px;border-radius:4px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
@@ -162,18 +162,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .org-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--teal);letter-spacing:-.5px}
 
 /* ── NOTE ── */
-.note{padding:9px 13px;border-left:2px solid rgba(184,245,62,.4);background:rgba(184,245,62,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:8px}
+.note{padding:9px 13px;border-left:2px solid rgba(93,191,255,.4);background:rgba(93,191,255,.03);font-size:11px;color:var(--muted);line-height:1.6;border-radius:0 4px 4px 0;margin-top:8px}
 .note strong{color:var(--paper)}
 .note-r{border-left-color:var(--red);background:rgba(255,77,77,.03)}
 .note-o{border-left-color:var(--orange);background:rgba(255,140,0,.03)}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid rgba(184,245,62,.3);border-radius:4px;padding:11px 15px;font-size:12px;transform:translateX(130%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);z-index:999;max-width:260px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid rgba(93,191,255,.3);border-radius:4px;padding:11px 15px;font-size:12px;transform:translateX(130%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);z-index:999;max-width:260px}
 .toast.show{transform:translateX(0)}
 
 /* ── TIRAGE ── */
 .tirage-n{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--lime);letter-spacing:-2px;line-height:1}
-.winner-box{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.25);border-radius:4px;padding:18px;text-align:center;display:none;margin-top:10px}
+.winner-box{background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);border-radius:4px;padding:18px;text-align:center;display:none;margin-top:10px}
 .cd{display:flex;gap:8px;justify-content:center;margin-top:10px}
 .cd-item{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:6px 12px;text-align:center;min-width:50px}
 .cd-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--lime);letter-spacing:-1px;line-height:1}
@@ -261,7 +261,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="g3" style="margin-bottom:12px">
     <div class="card2" style="cursor:pointer;border-color:rgba(255,77,77,.2)" onclick="show('litiges')"><div style="font-size:18px;margin-bottom:5px">⚠️</div><div style="font-size:12px;font-weight:500">2 litiges urgents</div><div style="font-size:10px;color:var(--red)">Action requise · 30h</div></div>
     <div class="card2" style="cursor:pointer;border-color:rgba(255,184,60,.2)" onclick="show('livreurs')"><div style="font-size:18px;margin-bottom:5px">🚗</div><div style="font-size:12px;font-weight:500">3 demandes livreurs</div><div style="font-size:10px;color:var(--orange)">À certifier</div></div>
-    <div class="card2" style="cursor:pointer;border-color:rgba(184,245,62,.2)" onclick="show('sections')"><div style="font-size:18px;margin-bottom:5px">🔧</div><div style="font-size:12px;font-weight:500">Contrôles du site</div><div style="font-size:10px;color:var(--lime)">Sections · Dons · Partenaires</div></div>
+    <div class="card2" style="cursor:pointer;border-color:rgba(93,191,255,.2)" onclick="show('sections')"><div style="font-size:18px;margin-bottom:5px">🔧</div><div style="font-size:12px;font-weight:500">Contrôles du site</div><div style="font-size:10px;color:var(--lime)">Sections · Dons · Partenaires</div></div>
   </div>
   <div class="g2">
     <div class="card">
@@ -535,7 +535,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
 
       <!-- PAGE DEVENIR PARTENAIRE -->
-      <div class="card" style="border-color:rgba(184,245,62,.15);background:rgba(184,245,62,.03)">
+      <div class="card" style="border-color:rgba(93,191,255,.15);background:rgba(93,191,255,.03)">
         <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">🌐 Page publique "Devenir partenaire"</div>
         <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">
           Cette page explique aux entreprises comment rejoindre le réseau PorteàPorte. Elle est accessible depuis le footer du site.
@@ -636,9 +636,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="slbl">Tirages mensuels</div>
   <div class="stitle">🎁 Tirages</div>
   <div class="g2">
-    <div class="card" style="background:rgba(184,245,62,.03);border-color:rgba(184,245,62,.18)">
+    <div class="card" style="background:rgba(93,191,255,.03);border-color:rgba(93,191,255,.18)">
       <div style="font-size:11px;color:var(--lime);font-weight:500;margin-bottom:12px">🎊 Tirage Avril 2026</div>
-      <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.2);border-radius:4px;padding:18px;text-align:center;margin-bottom:12px">
+      <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.2);border-radius:4px;padding:18px;text-align:center;margin-bottom:12px">
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Cagnotte</div>
         <div class="tirage-n" id="tirage-n">750 $</div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">1 247 participants</div>

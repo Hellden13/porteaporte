@@ -44,9 +44,9 @@
 
     /* ── BANNIÈRE LÉGALE ── */
     .legal-banner {
-      background: rgba(184,245,62,0.08);
+      background: rgba(93,191,255,0.08);
       border-top: 2px solid var(--brand-lime);
-      border-bottom: 1px solid rgba(184,245,62,0.2);
+      border-bottom: 1px solid rgba(93,191,255,0.2);
       padding: 14px clamp(18px,4vw,48px);
       text-align: center;
       font-size: 0.88rem;
@@ -226,7 +226,7 @@
       border: 1px solid var(--brand-border);
       font-size: 0.78rem;
     }
-    .badge.green  { background: rgba(184,245,62,0.08); border-color: rgba(184,245,62,0.3); color: var(--brand-lime); }
+    .badge.green  { background: rgba(93,191,255,0.08); border-color: rgba(93,191,255,0.3); color: var(--brand-lime); }
     .badge.blue   { background: rgba(0,217,255,0.08); border-color: rgba(0,217,255,0.3); color: var(--brand-cyan); }
     .ride-price {
       text-align: right;
@@ -296,7 +296,7 @@
       justify-content: center;
       width: 36px; height: 36px;
       border-radius: 50%;
-      background: rgba(184,245,62,0.12);
+      background: rgba(93,191,255,0.12);
       color: var(--brand-lime);
       font-weight: 900;
       font-size: 1rem;
@@ -535,12 +535,12 @@
             </select>
           </div>
         </div>
-        <div id="matching-info" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.25);border-radius:10px;font-size:.85rem;color:var(--brand-muted);">
+        <div id="matching-info" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:10px;font-size:.85rem;color:var(--brand-muted);">
           🎯 <strong style="color:var(--brand-lime);">Tri intelligent activé.</strong> Les trajets sont classés selon : identité vérifiée, note moyenne, expérience chauffeur, proximité horaire, et plus encore.
         </div>
 
         <!-- Bandeau conversion pour visiteurs non-connectés -->
-        <div id="visitor-conversion-banner" style="display:none;background:linear-gradient(135deg,rgba(184,245,62,.1),rgba(0,217,255,.06));border:1px solid rgba(184,245,62,.35);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none">
+        <div id="visitor-conversion-banner" style="display:none;background:linear-gradient(135deg,rgba(93,191,255,.1),rgba(0,217,255,.06));border:1px solid rgba(93,191,255,.35);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none">
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:2rem">👋</div>
             <div style="flex:1;min-width:200px">
@@ -867,7 +867,7 @@
 
         // Badge meilleur match (IA)
         const matchBadge = r.match_badge
-          ? `<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,#b8f53e,#9ce326);color:#071006;font-weight:900;font-size:.78rem;letter-spacing:.02em;margin-right:6px;">${r.match_badge}</span>`
+          ? `<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#071006;font-weight:900;font-size:.78rem;letter-spacing:.02em;margin-right:6px;">${r.match_badge}</span>`
           : '';
         // Raisons du matching (top 3)
         const matchReasons = Array.isArray(r.match_reasons) && r.match_reasons.length
@@ -875,7 +875,7 @@
           : '';
 
         return `
-          <div class="ride-card" ${r.match_rank === 1 ? 'style="border-color:rgba(184,245,62,.4);box-shadow:0 0 24px rgba(184,245,62,.08);"' : ''}>
+          <div class="ride-card" ${r.match_rank === 1 ? 'style="border-color:rgba(93,191,255,.4);box-shadow:0 0 24px rgba(93,191,255,.08);"' : ''}>
             <div style="min-width:0">
               <div style="margin-bottom:8px;">${matchBadge}${statusBadge}</div>
               <div class="ride-route">

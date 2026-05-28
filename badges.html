@@ -20,25 +20,25 @@
   <script src="/js/supabase-config.js"></script>
   <style>
     body { padding: 0; margin: 0; background: #05080c; color: #fff; }
-    .hero { padding: 60px 24px 40px; text-align: center; background: radial-gradient(ellipse at center top, rgba(184,245,62,.15) 0%, transparent 70%); border-bottom: 1px solid var(--brand-border); }
+    .hero { padding: 60px 24px 40px; text-align: center; background: radial-gradient(ellipse at center top, rgba(93,191,255,.15) 0%, transparent 70%); border-bottom: 1px solid var(--brand-border); }
     .hero h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 0 0 14px; }
-    .hero h1 span { background: linear-gradient(135deg, #00d9ff, #b8f53e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero h1 span { background: linear-gradient(135deg, #00d9ff, #5dbfff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .hero p { color: var(--brand-muted); max-width: 720px; margin: 0 auto; font-size: 1.05rem; line-height: 1.7; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
 
     .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; justify-content: center; }
     .filter-btn { padding: 8px 16px; background: rgba(255,255,255,.04); border: 1px solid #1E2535; color: #a8b0ba; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: .85rem; }
-    .filter-btn.active { background: linear-gradient(135deg, #00d9ff, #b8f53e); color: #001828; border: none; }
+    .filter-btn.active { background: linear-gradient(135deg, #00d9ff, #5dbfff); color: #001828; border: none; }
 
-    .my-stats { background: linear-gradient(135deg, rgba(184,245,62,.06), rgba(0,217,255,.05)); border: 1px solid rgba(184,245,62,.3); border-radius: 14px; padding: 20px; margin-bottom: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+    .my-stats { background: linear-gradient(135deg, rgba(93,191,255,.06), rgba(0,217,255,.05)); border: 1px solid rgba(93,191,255,.3); border-radius: 14px; padding: 20px; margin-bottom: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
     .my-stats .stat { text-align: center; }
     .my-stats .val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
     .my-stats .lbl { font-size: .78rem; color: var(--brand-muted); text-transform: uppercase; margin-top: 4px; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
     .badge-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 14px; padding: 20px; text-align: center; position: relative; transition: all .25s ease; }
-    .badge-card:hover { transform: translateY(-3px); border-color: rgba(184,245,62,.4); }
-    .badge-card.owned { background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.05)); border-color: rgba(184,245,62,.5); box-shadow: 0 0 30px rgba(184,245,62,.1); }
+    .badge-card:hover { transform: translateY(-3px); border-color: rgba(93,191,255,.4); }
+    .badge-card.owned { background: linear-gradient(135deg, rgba(93,191,255,.08), rgba(0,217,255,.05)); border-color: rgba(93,191,255,.5); box-shadow: 0 0 30px rgba(93,191,255,.1); }
     .badge-card.owned::before { content: '✓'; position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; background: var(--brand-lime); color: #071006; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; }
     .badge-card.locked { opacity: 0.5; filter: grayscale(0.5); }
     .badge-icon { font-size: 3rem; margin-bottom: 10px; line-height: 1; }
@@ -50,8 +50,8 @@
     .rarity.rare { background: rgba(0,217,255,.15); color: #7de4ff; }
     .rarity.epic { background: rgba(184,90,255,.15); color: #c99fff; }
     .rarity.legendary { background: rgba(255,200,0,.15); color: #ffd700; }
-    .rarity.mythic { background: linear-gradient(135deg, rgba(255,90,90,.2), rgba(184,245,62,.2)); color: #ff6b9d; }
-    .xp-pill { padding: 3px 10px; background: rgba(184,245,62,.12); color: var(--brand-lime); border-radius: 999px; font-size: .72rem; font-weight: 800; }
+    .rarity.mythic { background: linear-gradient(135deg, rgba(255,90,90,.2), rgba(93,191,255,.2)); color: #ff6b9d; }
+    .xp-pill { padding: 3px 10px; background: rgba(93,191,255,.12); color: var(--brand-lime); border-radius: 999px; font-size: .72rem; font-weight: 800; }
 
     .empty { text-align: center; color: var(--brand-muted); padding: 60px; }
   </style>

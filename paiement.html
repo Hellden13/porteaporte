@@ -42,38 +42,38 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 .os-val{font-weight:500}
 .os-total{display:flex;justify-content:space-between;padding:14px 0 0;font-size:15px;font-weight:600;margin-top:4px;border-top:1px solid rgba(245,240,232,.15)}
 .os-total-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--lime);letter-spacing:-1px}
-.escrow-note{background:rgba(184,245,62,.05);border:1px solid rgba(184,245,62,.15);border-radius:4px;padding:12px;margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6}
+.escrow-note{background:rgba(93,191,255,.05);border:1px solid rgba(93,191,255,.15);border-radius:4px;padding:12px;margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6}
 .escrow-note strong{color:var(--paper)}
 .escrow-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;margin-top:16px;padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(245,240,232,.08);border-radius:6px}
 .escrow-step{min-height:86px;display:flex;flex-direction:column;justify-content:center;gap:6px;text-align:center}
-.escrow-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;margin:0 auto;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.25);font-size:18px}
+.escrow-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;margin:0 auto;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.25);font-size:18px}
 .escrow-step strong{font-size:12px;color:var(--paper)}
 .escrow-step span{font-size:10px;color:var(--muted);line-height:1.35}
-.escrow-arrow{height:1px;background:linear-gradient(90deg,rgba(184,245,62,.25),rgba(11,255,203,.6));width:28px;position:relative}
+.escrow-arrow{height:1px;background:linear-gradient(90deg,rgba(93,191,255,.25),rgba(11,255,203,.6));width:28px;position:relative}
 .escrow-arrow::after{content:'';position:absolute;right:-2px;top:-3px;width:7px;height:7px;border-top:1px solid rgba(11,255,203,.8);border-right:1px solid rgba(11,255,203,.8);transform:rotate(45deg)}
 
 /* FORMULAIRE PAIEMENT */
 .pay-form{display:flex;flex-direction:column;gap:0}
 .step-block{background:var(--smoke);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:14px}
 .step-title{font-size:12px;font-weight:500;color:var(--lime);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.step-num{width:22px;height:22px;border-radius:50%;background:rgba(184,245,62,.15);border:1px solid rgba(184,245,62,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lime)}
+.step-num{width:22px;height:22px;border-radius:50%;background:rgba(93,191,255,.15);border:1px solid rgba(93,191,255,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lime)}
 
 .fl{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;margin-top:12px}
 .fl:first-child{margin-top:0}
 .fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);padding:10px 13px;color:var(--paper);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;border-radius:2px}
-.fi:focus{border-color:rgba(184,245,62,.4)}
+.fi:focus{border-color:rgba(93,191,255,.4)}
 .fi::placeholder{color:rgba(245,240,232,.2)}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* STRIPE ELEMENT */
 .stripe-wrap{background:rgba(255,255,255,.05);border:1px solid rgba(245,240,232,.1);border-radius:2px;padding:12px 13px;transition:border-color .2s;margin-top:12px}
-.stripe-wrap.focused{border-color:rgba(184,245,62,.4)}
+.stripe-wrap.focused{border-color:rgba(93,191,255,.4)}
 #card-element{min-height:24px}
 #card-errors{color:var(--red);font-size:12px;margin-top:8px;display:none}
 
 /* BOUTON PAYER */
 .pay-btn{width:100%;background:var(--lime);color:var(--ink);border:none;padding:16px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;border-radius:2px;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.5px}
-.pay-btn:hover:not(:disabled){background:var(--teal);transform:translateY(-1px);box-shadow:0 12px 28px rgba(184,245,62,.22)}
+.pay-btn:hover:not(:disabled){background:var(--teal);transform:translateY(-1px);box-shadow:0 12px 28px rgba(93,191,255,.22)}
 .pay-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .pay-btn .spinner{width:18px;height:18px;border:2px solid rgba(5,8,10,.3);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;display:none}
 .pay-btn.loading .spinner{display:block}
@@ -94,7 +94,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
 .success-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,60px);letter-spacing:-1px;color:var(--lime);margin-bottom:10px}
 .success-sub{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 24px;line-height:1.65;font-weight:300}
-.transaction-id{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--paper);letter-spacing:2px;background:var(--smoke);border:1px solid rgba(184,245,62,.2);padding:10px 18px;border-radius:4px;margin:14px auto;display:inline-block}
+.transaction-id{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--paper);letter-spacing:2px;background:var(--smoke);border:1px solid rgba(93,191,255,.2);padding:10px 18px;border-radius:4px;margin:14px auto;display:inline-block}
 .transaction-id span{color:var(--lime)}
 .next-steps{display:flex;flex-direction:column;gap:8px;max-width:380px;margin:0 auto;text-align:left}
 .ns{display:flex;gap:10px;padding:10px 12px;background:var(--smoke);border:1px solid var(--border);border-radius:4px;font-size:12px}
@@ -106,7 +106,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
   .order-summary{position:static}
   .fr{grid-template-columns:1fr}
   .escrow-flow{grid-template-columns:1fr;gap:10px}
-  .escrow-arrow{width:1px;height:24px;margin:0 auto;background:linear-gradient(180deg,rgba(184,245,62,.25),rgba(11,255,203,.6))}
+  .escrow-arrow{width:1px;height:24px;margin:0 auto;background:linear-gradient(180deg,rgba(93,191,255,.25),rgba(11,255,203,.6))}
   .escrow-arrow::after{right:-3px;top:auto;bottom:-2px;transform:rotate(135deg)}
 }
 </style>

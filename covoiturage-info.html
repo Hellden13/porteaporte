@@ -16,7 +16,7 @@
       --surface: #111827;
       --surface2: #1A2235;
       --border: #1E2A3A;
-      --green: #B8F53E;
+      --green: #5dbfff;
       --cyan: #00D9FF;
       --text: #E8EDF5;
       --muted: #8A9BB0;
@@ -41,7 +41,7 @@
     .hero-bg { position: absolute; inset: 0; background: url('/assets/banniere-covoiturage.png') center/cover no-repeat; filter: brightness(.35); }
     .hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,15,30,.85) 0%, rgba(10,15,30,.4) 100%); }
     .hero-content { position: relative; padding: clamp(60px,8vw,100px) clamp(24px,5vw,80px); max-width: 720px; }
-    .hero-badge { display: inline-block; background: rgba(184,245,62,.15); border: 1px solid rgba(184,245,62,.3); color: var(--green); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 20px; }
+    .hero-badge { display: inline-block; background: rgba(93,191,255,.15); border: 1px solid rgba(93,191,255,.3); color: var(--green); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 20px; }
     .hero h1 { font-size: clamp(1.9rem,4.5vw,3rem); font-weight: 900; line-height: 1.15; margin-bottom: 18px; }
     .hero h1 span { color: var(--green); }
     .hero p { font-size: clamp(.95rem,1.8vw,1.1rem); color: #C8D4E0; max-width: 560px; margin-bottom: 32px; }
@@ -68,8 +68,8 @@
     /* HOW IT WORKS */
     .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
     .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
-    .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-size: 5rem; font-weight: 900; color: rgba(184,245,62,.06); line-height: 1; }
-    .step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,245,62,.12); border: 1.5px solid rgba(184,245,62,.3); color: var(--green); font-weight: 800; font-size: .9rem; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-size: 5rem; font-weight: 900; color: rgba(93,191,255,.06); line-height: 1; }
+    .step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(93,191,255,.12); border: 1.5px solid rgba(93,191,255,.3); color: var(--green); font-weight: 800; font-size: .9rem; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
     .step-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
     .step-card p { font-size: .88rem; color: var(--muted); line-height: 1.55; }
 
@@ -82,7 +82,7 @@
     .price-input input:focus, .price-input select:focus { outline: none; border-color: var(--green); }
     .price-options { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
     .opt-toggle { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: .83rem; cursor: pointer; transition: all .15s; user-select: none; }
-    .opt-toggle.active { border-color: var(--green); background: rgba(184,245,62,.08); color: var(--green); }
+    .opt-toggle.active { border-color: var(--green); background: rgba(93,191,255,.08); color: var(--green); }
     .opt-toggle input { display: none; }
     .price-result { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; }
     .price-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: .88rem; color: var(--muted); border-bottom: 1px solid rgba(30,42,58,.5); }
@@ -100,7 +100,7 @@
     .bonus-card .seats { font-size: 2rem; font-weight: 900; color: var(--green); margin-bottom: 4px; }
     .bonus-card .label { font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
     .bonus-card .reduction { font-size: 1.1rem; font-weight: 700; }
-    .bonus-card .badge-tag { display: inline-block; background: rgba(184,245,62,.12); color: var(--green); border-radius: 6px; padding: 3px 10px; font-size: .72rem; font-weight: 700; margin-top: 8px; }
+    .bonus-card .badge-tag { display: inline-block; background: rgba(93,191,255,.12); color: var(--green); border-radius: 6px; padding: 3px 10px; font-size: .72rem; font-weight: 700; margin-top: 8px; }
 
     /* MISSIONS */
     .missions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
@@ -108,7 +108,7 @@
     .mission-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
     .mission-card h4 { font-size: .95rem; font-weight: 700; margin-bottom: 5px; }
     .mission-card p { font-size: .82rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
-    .xp-pill { display: inline-block; background: rgba(184,245,62,.1); color: var(--green); border-radius: 6px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
+    .xp-pill { display: inline-block; background: rgba(93,191,255,.1); color: var(--green); border-radius: 6px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
 
     /* BADGES */
     .badges-grid { display: flex; flex-wrap: wrap; gap: 14px; }
@@ -286,7 +286,7 @@
         <div class="price-row"><span>Distance totale trajet</span><span class="val" id="r-dist-total">120 km</span></div>
         <div class="price-row"><span>Votre portion</span><span class="val" id="r-dist-pax">80 km</span></div>
         <div class="price-row"><span>Part de base</span><span class="val" id="r-base">—</span></div>
-        <div class="price-row" id="r-bonus-row" style="display:none"><span>🎉 Bonus groupe (−<span id="r-bonus-pct">0</span>%)</span><span class="val" id="r-bonus" style="color:#B8F53E">—</span></div>
+        <div class="price-row" id="r-bonus-row" style="display:none"><span>🎉 Bonus groupe (−<span id="r-bonus-pct">0</span>%)</span><span class="val" id="r-bonus" style="color:#5dbfff">—</span></div>
         <div class="price-row" id="r-extras-row" style="display:none"><span>Options</span><span class="val" id="r-extras">—</span></div>
         <div class="price-row"><span>Frais plateforme (10%)</span><span class="val" id="r-fee">—</span></div>
         <div class="price-row total"><span>Vous payez</span><span class="val" id="r-total">—</span></div>
@@ -344,7 +344,7 @@
     <p class="section-sub">Chaque trajet compte. Accomplissez des missions, gagnez des XP et des badges.</p>
     <div class="missions-grid">
       <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🚗</div>
+        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🚗</div>
         <div>
           <h4>Premier trajet partagé</h4>
           <p>Complétez votre tout premier trajet en covoiturage.</p>
@@ -360,7 +360,7 @@
         </div>
       </div>
       <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🌿</div>
+        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🌿</div>
         <div>
           <h4>Éco-route</h4>
           <p>Trajet de 50 km+ avec au moins 2 passagers.</p>
@@ -376,7 +376,7 @@
         </div>
       </div>
       <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(184,245,62,.1)">🤝</div>
+        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🤝</div>
         <div>
           <h4>Aide communautaire</h4>
           <p>Trajet aidant une personne âgée, un étudiant ou une personne sans véhicule.</p>
@@ -392,7 +392,7 @@
         </div>
       </div>
       <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(184,245,62,.1)">⭐</div>
+        <div class="mission-icon" style="background:rgba(93,191,255,.1)">⭐</div>
         <div>
           <h4>Ambassadeur local</h4>
           <p>10 trajets complétés avec une note de 4,8 et plus.</p>
@@ -420,18 +420,18 @@
     <h2 class="section-title">Votre réputation se voit</h2>
     <p class="section-sub">Chaque badge est un signe de confiance visible sur votre profil.</p>
     <div class="badges-grid">
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🌱</div><div><div class="name">Nouveau covoitureur</div><div class="desc">Premier compte covoiturage créé</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🌱</div><div><div class="name">Nouveau covoitureur</div><div class="desc">Premier compte covoiturage créé</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">✅</div><div><div class="name">Conducteur vérifié</div><div class="desc">Profil et véhicule validés</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🧑‍🤝‍🧑</div><div><div class="name">Passager fiable</div><div class="desc">Jamais annulé à moins de 24h</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🧑‍🤝‍🧑</div><div><div class="name">Passager fiable</div><div class="desc">Jamais annulé à moins de 24h</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">🚗</div><div><div class="name">Premier trajet utile</div><div class="desc">Premier covoiturage complété</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">🎯</div><div><div class="name">Auto pleine</div><div class="desc">Véhicule complet au départ</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🌿</div><div><div class="name">Éco-route</div><div class="desc">50 km+ avec 2 passagers min.</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🌿</div><div><div class="name">Éco-route</div><div class="desc">50 km+ avec 2 passagers min.</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">⏱️</div><div><div class="name">Fiable sur la route</div><div class="desc">5 trajets sans retard</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🤝</div><div><div class="name">Coup de main local</div><div class="desc">Aide à la communauté</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🤝</div><div><div class="name">Coup de main local</div><div class="desc">Aide à la communauté</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">⭐</div><div><div class="name">Ambassadeur PorteÀPorte</div><div class="desc">10 trajets, note 4,8+</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🗺️</div><div><div class="name">Connecteur régional</div><div class="desc">Trajets interrégionaux Québec</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🗺️</div><div><div class="name">Connecteur régional</div><div class="desc">Trajets interrégionaux Québec</div></div></div>
       <div class="badge-item"><div class="badge-icon" style="background:rgba(255,107,107,.12)">❤️</div><div><div class="name">Trajet solidaire</div><div class="desc">Aide proactive à autrui</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(184,245,62,.12)">🏆</div><div><div class="name">Groupe optimisé</div><div class="desc">Auto pleine 3 fois de suite</div></div></div>
+      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🏆</div><div><div class="name">Groupe optimisé</div><div class="desc">Auto pleine 3 fois de suite</div></div></div>
     </div>
   </div>
 </div>
@@ -464,7 +464,7 @@
         </div>
       </div>
       <div class="level-row">
-        <div class="level-num" style="background:rgba(184,245,62,.12);color:var(--green)">3</div>
+        <div class="level-num" style="background:rgba(93,191,255,.12);color:var(--green)">3</div>
         <div class="level-info"><div class="name">Habitué</div><div class="xp">500 – 999 XP</div></div>
         <div class="level-perks">
           <span class="perk-chip">Meilleure visibilité</span>
@@ -481,13 +481,13 @@
           <span class="perk-chip">Badge Ambassadeur</span>
         </div>
       </div>
-      <div class="level-row" style="border-color:rgba(184,245,62,.3);">
-        <div class="level-num" style="background:rgba(184,245,62,.2);color:var(--green)">5</div>
+      <div class="level-row" style="border-color:rgba(93,191,255,.3);">
+        <div class="level-num" style="background:rgba(93,191,255,.2);color:var(--green)">5</div>
         <div class="level-info"><div class="name">Capitaine régional</div><div class="xp">2 000+ XP</div></div>
         <div class="level-perks">
-          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Visibilité maximale</span>
-          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Missions capitaine</span>
-          <span class="perk-chip" style="border-color:rgba(184,245,62,.3);color:var(--green)">Badge exclusif</span>
+          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Visibilité maximale</span>
+          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Missions capitaine</span>
+          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Badge exclusif</span>
         </div>
       </div>
     </div>

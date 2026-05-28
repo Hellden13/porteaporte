@@ -45,7 +45,7 @@
       position:relative;
     }
     .transport-card:hover { border-color:var(--brand-cyan);background:rgba(0,217,255,0.04); }
-    .transport-card.selected { border-color:var(--brand-lime);background:rgba(0,255,159,0.06); }
+    .transport-card.selected { border-color:var(--brand-lime);background:rgba(93,191,255,0.06); }
     .transport-card input[type=radio] { position:absolute;opacity:0;pointer-events:none; }
     .transport-icon { font-size:28px;margin-bottom:8px; }
     .transport-name { font-weight:800;font-size:.85rem;margin-bottom:4px; }
@@ -54,8 +54,8 @@
       display:inline-flex;align-items:center;gap:4px;margin-top:7px;
       padding:3px 8px;border-radius:999px;font-size:.68rem;font-weight:800;
     }
-    .eco-20 { background:rgba(0,255,159,.18);color:#00FF9F;border:1px solid rgba(0,255,159,.35); }
-    .eco-15 { background:rgba(0,255,159,.12);color:#57ffbc;border:1px solid rgba(0,255,159,.25); }
+    .eco-20 { background:rgba(93,191,255,.18);color:#5dbfff;border:1px solid rgba(93,191,255,.35); }
+    .eco-15 { background:rgba(93,191,255,.12);color:#57ffbc;border:1px solid rgba(93,191,255,.25); }
     .eco-10 { background:rgba(0,217,255,.12);color:#00D9FF;border:1px solid rgba(0,217,255,.25); }
     .eco-5  { background:rgba(0,217,255,.07);color:#00aad4;border:1px solid rgba(0,217,255,.18); }
     .eco-0  { background:rgba(168,172,177,.07);color:var(--brand-muted);border:1px solid var(--brand-border); }
@@ -63,7 +63,7 @@
     /* ---- Eco summary box ---- */
     .eco-summary {
       display:none;
-      padding:16px;background:rgba(0,255,159,.07);border:1px solid rgba(0,255,159,.25);
+      padding:16px;background:rgba(93,191,255,.07);border:1px solid rgba(93,191,255,.25);
       border-radius:10px;margin-bottom:20px;
     }
     .eco-summary.show { display:block; }
@@ -99,7 +99,7 @@
       background:var(--brand-bg-surface);
     }
     .upload-zone:hover,.upload-zone.drag { border-color:var(--brand-cyan);background:rgba(0,217,255,.04); }
-    .upload-zone.done { border-color:var(--brand-lime);background:rgba(0,255,159,.04);border-style:solid; }
+    .upload-zone.done { border-color:var(--brand-lime);background:rgba(93,191,255,.04);border-style:solid; }
     .upload-zone.hidden { display:none; }
     .upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer; }
     .upload-icon { font-size:26px;margin-bottom:6px; }
@@ -123,7 +123,7 @@
 
     /* ---- Status ---- */
     .status-msg { display:none;padding:11px 15px;border-radius:9px;font-size:.86rem;margin-bottom:14px;line-height:1.5; }
-    .status-msg.success { background:rgba(0,255,159,.1);border:1px solid rgba(0,255,159,.3);color:var(--brand-lime);display:block; }
+    .status-msg.success { background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.3);color:var(--brand-lime);display:block; }
     .status-msg.error   { background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ffb4b4;display:block; }
     .status-msg.info    { background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.25);color:var(--brand-cyan);display:block; }
 
@@ -159,7 +159,7 @@
 
   <!-- State: verified -->
   <div id="stateVerified" style="display:none">
-    <div class="state-banner" style="border:1px solid rgba(0,255,159,.3)">
+    <div class="state-banner" style="border:1px solid rgba(93,191,255,.3)">
       <div class="icon">✅</div>
       <h2 style="color:var(--brand-lime)">Identité vérifiée</h2>
       <p>Tu es un livreur vérifié PorteàPorte. Ton bonus écologique est actif sur chaque livraison.</p>
@@ -196,11 +196,11 @@
     <div id="statusMsg" class="status-msg"></div>
 
     <!-- ===== STRIPE IDENTITY (alternative rapide) ===== -->
-    <div style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(184,245,62,.08),rgba(0,217,255,.06));border:2px solid rgba(184,245,62,.4);border-radius:14px">
+    <div style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(93,191,255,.08),rgba(0,217,255,.06));border:2px solid rgba(93,191,255,.4);border-radius:14px">
       <div style="text-align:center">
-        <div style="color:#b8f53e;font-weight:900;font-size:1.1rem;margin-bottom:6px">⚡ Vérification instantanée (30 secondes)</div>
+        <div style="color:#5dbfff;font-weight:900;font-size:1.1rem;margin-bottom:6px">⚡ Vérification instantanée (30 secondes)</div>
         <p style="color:#a8b0ba;font-size:.92rem;line-height:1.6;margin:0 0 14px">Évite le formulaire long et la vérification manuelle (24-48h). Stripe Identity vérifie ton permis + selfie + détection de vie en 30 secondes.</p>
-        <button onclick="startStripeIdentity()" style="padding:14px 28px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:.95rem;cursor:pointer">⚡ Vérifier mon identité maintenant</button>
+        <button onclick="startStripeIdentity()" style="padding:14px 28px;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:.95rem;cursor:pointer">⚡ Vérifier mon identité maintenant</button>
         <div id="identity-msg" style="margin-top:10px;font-size:.82rem"></div>
         <p style="margin-top:14px;font-size:.72rem;color:#6d7886">OU continue le formulaire ci-dessous (vérification manuelle par admin sous 24-48h)</p>
       </div>
@@ -341,10 +341,10 @@
         <button class="btn-next" id="submitBtn" onclick="submitKyc()" disabled>Soumettre mon dossier ✓</button>
       </div>
 
-      <div style="margin-top:24px;padding:20px;background:rgba(184,245,62,.06);border:2px solid rgba(184,245,62,.3);border-radius:14px">
-        <div style="text-align:center;color:#b8f53e;font-weight:900;font-size:1rem;margin-bottom:8px">⚡ NOUVEAU : Vérification instantanée</div>
+      <div style="margin-top:24px;padding:20px;background:rgba(93,191,255,.06);border:2px solid rgba(93,191,255,.3);border-radius:14px">
+        <div style="text-align:center;color:#5dbfff;font-weight:900;font-size:1rem;margin-bottom:8px">⚡ NOUVEAU : Vérification instantanée</div>
         <p style="color:#a8b0ba;font-size:.88rem;line-height:1.6;text-align:center;margin:0 0 14px">Plutôt que d'attendre 24-48h la vérification manuelle, fais ta vérification d'identité <strong style="color:#fff">en 30 secondes</strong> via Stripe Identity (carte + selfie + détection vivant).</p>
-        <button onclick="startStripeIdentity()" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:1rem;cursor:pointer">⚡ Lancer la vérification instantanée Stripe</button>
+        <button onclick="startStripeIdentity()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006;border:none;border-radius:10px;font-weight:900;font-size:1rem;cursor:pointer">⚡ Lancer la vérification instantanée Stripe</button>
         <div id="identity-msg" style="margin-top:10px;font-size:.82rem;text-align:center"></div>
       </div>
     </div>
@@ -806,7 +806,7 @@
       const data = await r.json();
       if (data.display_name) {
         addrInput.value = data.display_name.split(',').slice(0,4).join(',').trim();
-        addrInput.style.borderColor = '#b8f53e';
+        addrInput.style.borderColor = '#5dbfff';
       } else {
         addrInput.placeholder = '123 rue Principale, Montréal, QC H2T 1V6';
         alert('Adresse non trouvée');
@@ -832,7 +832,7 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Erreur Stripe Identity');
-      msgEl.style.color = '#b8f53e';
+      msgEl.style.color = '#5dbfff';
       msgEl.textContent = '✅ Redirection vers Stripe...';
       window.location.href = out.verification_url;
     } catch (err) {

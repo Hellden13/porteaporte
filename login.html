@@ -206,7 +206,7 @@
       margin-top: 12px;
       line-height: 1.5;
     }
-    .status-msg.success { background: rgba(0,255,159,0.1); border: 1px solid rgba(0,255,159,0.3); color: var(--brand-lime); }
+    .status-msg.success { background: rgba(93,191,255,0.1); border: 1px solid rgba(93,191,255,0.3); color: var(--brand-lime); }
     .status-msg.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ffb4b4; }
     .status-msg.info { background: rgba(0,217,255,0.08); border: 1px solid rgba(0,217,255,0.25); color: var(--brand-cyan); }
 
@@ -391,10 +391,10 @@
       el.id = 'admin-portal-overlay';
       el.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,30,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:9999;padding:24px;';
       el.innerHTML = `
-        <div style="font-size:1.5rem;font-weight:900;color:#B8F53E">PorteàPorte Admin</div>
+        <div style="font-size:1.5rem;font-weight:900;color:#5dbfff">PorteàPorte Admin</div>
         <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Tu es connecté en tant qu'administrateur.<br>Où veux-tu aller ?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
-          <a href="/admin/dashboard-admin.html" style="background:#B8F53E;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">⚡ Dashboard Admin</a>
+          <a href="/admin/dashboard-admin.html" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">⚡ Dashboard Admin</a>
           <a href="/dashboard-expediteur.html"  style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">📦 Expéditeur</a>
           <a href="/dashboard-livreur.html"     style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚚 Livreur</a>
           <a href="/dashboard-covoiturage.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚗 Covoiturage</a>
@@ -414,10 +414,10 @@
       el.id = 'user-portal-overlay';
       el.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,30,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:9999;padding:24px;';
       el.innerHTML = `
-        <div style="font-size:1.5rem;font-weight:900;color:#B8F53E">PorteaPorte</div>
+        <div style="font-size:1.5rem;font-weight:900;color:#5dbfff">PorteaPorte</div>
         <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Ton compte peut utiliser plusieurs espaces.<br>Choisis ou tu veux aller.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
-          <a href="/dashboard-expediteur.html" style="background:#B8F53E;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">Expediteur</a>
+          <a href="/dashboard-expediteur.html" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">Expediteur</a>
           <a href="${driverHref}" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">${driverText}</a>
           <a href="/dashboard-covoiturage.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Covoiturage</a>
           <a href="/profile.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Profil</a>

@@ -237,9 +237,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 subdomains: 'abcd',
                 maxZoom: 19
             }).addTo(map);
-            polyline = L.polyline([], { color: '#B8F53E', weight: 4 }).addTo(map);
+            polyline = L.polyline([], { color: '#5dbfff', weight: 4 }).addTo(map);
             userMarker = L.circleMarker([46.7749, -71.2783], {
-                radius: 10, fillColor: '#B8F53E', color: '#0A0C0F', weight: 2, fillOpacity: 1
+                radius: 10, fillColor: '#5dbfff', color: '#0A0C0F', weight: 2, fillOpacity: 1
             }).addTo(map).bindPopup('Votre position');
         }
 
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 document.getElementById('client-status').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-CA');
                 if (!livreurMarker) {
                     livreurMarker = L.circleMarker([lat, lng], {
-                        radius: 12, fillColor: '#B8F53E', color: '#0A0C0F', weight: 2, fillOpacity: 1
+                        radius: 12, fillColor: '#5dbfff', color: '#0A0C0F', weight: 2, fillOpacity: 1
                     }).addTo(map).bindPopup('🚚 Livreur');
                 } else {
                     livreurMarker.setLatLng([lat, lng]);

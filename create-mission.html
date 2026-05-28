@@ -18,7 +18,7 @@
     input,select,textarea{width:100%;box-sizing:border-box;border:1px solid var(--brand-border);background:var(--brand-bg-dark);color:var(--brand-text);border-radius:8px;padding:12px 14px;font:inherit;min-height:44px}
     textarea{min-height:96px;resize:vertical}.hint{font-size:12px;color:#a9b0ad;margin-top:6px}
     .check{display:flex;gap:10px;align-items:center;background:#090f14;border:1px solid var(--brand-border);border-radius:8px;padding:12px}.check input{width:auto;min-height:0}
-    .price{background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.35);border-radius:8px;padding:18px;text-align:center}.price strong{font-size:30px;color:var(--brand-lime)}
+    .price{background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.35);border-radius:8px;padding:18px;text-align:center}.price strong{font-size:30px;color:var(--brand-lime)}
     .actions{display:flex;gap:12px;margin-top:24px}.btn{border:0;border-radius:8px;padding:13px 18px;font-weight:850;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center;align-items:center}.primary{background:var(--brand-lime);color:#071008;flex:1}.ghost{background:#151b21;color:var(--brand-text);border:1px solid var(--brand-border)}.btn:disabled{opacity:.6;cursor:wait}
     .msg{display:none;border-radius:8px;padding:16px 18px;margin:18px 0;line-height:1.45}.msg.show{display:block}.err{background:#2a1012;border:1px solid var(--brand-danger);color:var(--brand-danger)}.ok{background:#102417;border:1px solid var(--brand-success);color:var(--brand-lime)}
     @media(max-width:640px){.grid{grid-template-columns:1fr}.actions{flex-direction:column}.top{align-items:flex-start;gap:10px;flex-direction:column}}
@@ -36,7 +36,7 @@
     <h1>Creer une nouvelle livraison</h1>
     <p class="muted">Remplis les informations du colis. Les adresses completes restent protegees et ne seront affichees qu'au livreur assigne.</p>
     <p class="hint">Les adresses completes restent masquees jusqu'a l'acceptation de la livraison.</p>
-    <div id="beta-zone-notice" style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.3);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:.9rem;color:var(--brand-lime);display:none">
+    <div id="beta-zone-notice" style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:.9rem;color:var(--brand-lime);display:none">
       🍁 <strong>Bêta active à <span id="beta-zone-list">Québec / Lévis</span></strong> uniquement. Les villes de départ et d'arrivée doivent être dans la zone bêta. Pour une autre ville : <a href="mailto:bonjour@porteaporte.site" style="color:var(--brand-lime);text-decoration:underline">bonjour@porteaporte.site</a>
     </div>
     <script>
@@ -116,7 +116,7 @@
           <label class="check"><input id="requires-photo" type="checkbox"> Photo requise</label>
           <label class="check"><input id="is-priority" type="checkbox"> Priorite +5 CAD</label>
           <div class="full"><label for="insurance-plan">Protection colis *</label><select id="insurance-plan" required><option value="none">Aucune protection - 0 CAD - couverture 0 CAD</option><option value="base">Base - 1 CAD - couverture max 50 CAD</option><option value="standard">Standard - 2.99 CAD - couverture max 250 CAD</option><option value="plus">Plus - 5.99 CAD - couverture max 1000 CAD</option></select><div class="hint">La protection livraison est optionnelle. Sans protection payee, aucune couverture contractuelle ne s'applique.</div></div>
-          <div class="full" style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:10px;padding:14px 16px;margin-bottom:8px">
+          <div class="full" style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
               <div>
                 <div style="font-size:.78rem;color:var(--brand-lime);font-weight:800;text-transform:uppercase;letter-spacing:.06em">💡 Prix calculé automatiquement</div>
@@ -153,7 +153,7 @@
     }
     function showRecipientCode(id, code, confirmLink){
       const panel=el('recipient-code-panel');
-      panel.innerHTML='<strong>Code destinataire : '+code+'</strong><br><span>À transmettre uniquement au destinataire. Il confirme lui-même la réception après livraison.</span><br><a href="'+confirmLink+'" target="_blank" rel="noopener noreferrer" style="color:#B8F53E;font-weight:800">Ouvrir la page de confirmation</a>';
+      panel.innerHTML='<strong>Code destinataire : '+code+'</strong><br><span>À transmettre uniquement au destinataire. Il confirme lui-même la réception après livraison.</span><br><a href="'+confirmLink+'" target="_blank" rel="noopener noreferrer" style="color:#5dbfff;font-weight:800">Ouvrir la page de confirmation</a>';
       panel.style.display='block';
       panel.classList.add('show');
       localStorage.setItem('pap_reception_code_'+id,code);

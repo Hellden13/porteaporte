@@ -49,14 +49,14 @@
     .match-score{font-weight:800;color:var(--brand-lime)}
     .match-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
     .match-tag{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
-    .tag-green{color:var(--brand-lime);border-color:rgba(0,255,159,.3);background:rgba(0,255,159,.07)}
+    .tag-green{color:var(--brand-lime);border-color:rgba(93,191,255,.3);background:rgba(93,191,255,.07)}
     .tag-yellow{color:#fbbf24;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07)}
     .tag-red{color:#ff8a8a;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
     /* Eco bonus */
-    .eco-gain{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:8px 12px;border-radius:8px;background:rgba(0,255,159,.07);border:1px solid rgba(0,255,159,.2)}
+    .eco-gain{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:8px 12px;border-radius:8px;background:rgba(93,191,255,.07);border:1px solid rgba(93,191,255,.2)}
     .eco-gain-left{font-size:11px;color:var(--brand-lime);font-weight:700}
     .eco-gain-right{font-size:13px;font-weight:900;color:var(--brand-lime)}
-    .eco-banner-top{margin-bottom:16px;padding:12px 14px;border-radius:9px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);font-size:13px;color:var(--brand-lime);font-weight:700;display:flex;align-items:center;gap:10px}
+    .eco-banner-top{margin-bottom:16px;padding:12px 14px;border-radius:9px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);font-size:13px;color:var(--brand-lime);font-weight:700;display:flex;align-items:center;gap:10px}
     .eco-banner-top span{color:var(--brand-muted);font-weight:400;font-size:12px}
     @media(max-width:720px){.topbar{padding:14px 16px}.hero{display:block}.hero .btn{margin-top:14px}.page{padding:24px 14px}h1{font-size:28px}}
   </style>
@@ -93,7 +93,7 @@
     }
     function showSuccess(msg) {
       const el = document.getElementById('status');
-      if (el) { el.textContent = msg; el.style.color = 'var(--brand-lime, #b8f53e)'; el.style.display = 'block'; }
+      if (el) { el.textContent = msg; el.style.color = 'var(--brand-lime, #5dbfff)'; el.style.display = 'block'; }
     }
 
     function money(value) {
@@ -264,7 +264,7 @@
           : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
 
         const onRouteBadge = m.on_route
-          ? `<span style="display:inline-block;padding:2px 8px;background:rgba(0,255,159,.15);color:#7dffc1;border:1px solid rgba(0,255,159,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`
+          ? `<span style="display:inline-block;padding:2px 8px;background:rgba(93,191,255,.15);color:#7dffc1;border:1px solid rgba(93,191,255,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`
           : '';
         const detourBadge = (m.detour_km != null && m.detour_km > 0)
           ? `<span style="display:inline-block;padding:2px 8px;background:rgba(255,200,0,.12);color:#ffd700;border-radius:999px;font-size:.72rem;font-weight:700;margin-left:4px">+${m.detour_km} km détour</span>`
@@ -274,7 +274,7 @@
           : '';
         const rescueStyle = m.rescue_mode
           ? ' style="border:2px solid #ff4444;background:linear-gradient(135deg,rgba(255,68,68,.06),rgba(255,150,0,.04));box-shadow:0 0 30px rgba(255,68,68,.2)"'
-          : (m.on_route ? ' style="border-color:rgba(0,255,159,.4);box-shadow:0 0 0 1px rgba(0,255,159,.2)"' : '');
+          : (m.on_route ? ' style="border-color:rgba(93,191,255,.4);box-shadow:0 0 0 1px rgba(93,191,255,.2)"' : '');
         return `
         <article class="mission-card"${rescueStyle}>
           ${m.rescue_mode ? `<div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,68,68,.1);border-left:3px solid #ff4444;border-radius:6px;font-size:.82rem;color:#ffb0b0"><strong>🆘 MISSION RESCUE</strong><br>Un autre livreur a besoin d'aide. Tu reçois <strong style="color:#ffd700">+${m.rescue_bonus_pct||20}% bonus</strong>. ${m.rescue_pickup_address ? 'Va chercher le colis chez : <strong style="color:#fff">'+m.rescue_pickup_address+'</strong>' : 'Contacte le livreur original pour récupérer le colis.'}</div>` : ''}
@@ -340,7 +340,7 @@
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:grid;place-items:center;padding:20px';
         overlay.innerHTML = `
-          <div style="max-width:480px;width:100%;background:#0a0e14;border:2px solid rgba(184,245,62,.4);border-radius:14px;padding:28px">
+          <div style="max-width:480px;width:100%;background:#0a0e14;border:2px solid rgba(93,191,255,.4);border-radius:14px;padding:28px">
             <div style="text-align:center;margin-bottom:16px">
               <div style="font-size:48px;margin-bottom:8px">🛰️</div>
               <h2 style="margin:0;color:#fff;font-size:1.25rem">Consentement GPS obligatoire</h2>
@@ -354,13 +354,13 @@
               <li>Si tu désactives le GPS pendant la livraison, ton compte sera signalé</li>
               <li>Tracking arrêté automatiquement à la fin de la livraison</li>
             </ul>
-            <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.25);border-radius:8px;cursor:pointer;margin-bottom:14px">
+            <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:8px;cursor:pointer;margin-bottom:14px">
               <input type="checkbox" id="gpsConsentBox" style="margin-top:3px">
               <span style="color:#fff;font-size:.88rem;font-weight:700">J'accepte de partager ma position GPS jusqu'à la fin de la livraison</span>
             </label>
             <div style="display:flex;gap:10px">
               <button id="gpsCancel" style="flex:1;padding:12px;background:#1E2535;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">Annuler</button>
-              <button id="gpsAccept" style="flex:1;padding:12px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900" disabled>Continuer</button>
+              <button id="gpsAccept" style="flex:1;padding:12px;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900" disabled>Continuer</button>
             </div>
           </div>
         `;

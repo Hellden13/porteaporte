@@ -226,7 +226,19 @@
   .pp-fade-up, .pp-pulse, .pp-btn, .pp-card, .pp-lift { animation: none !important; transition: none !important; }
 }
 
-/* ── Overrides globaux subtils pour matcher le système premium ── */
+/* ── Overrides globaux : on remappe les anciennes couleurs vers la palette bleue ── */
+/* Le fichier est chargé APRÈS brand-uniform.css donc :root gagne la cascade */
+:root {
+  --brand-lime: #5dbfff;
+  --brand-cyan: #3da9ff;
+  --brand-cyan-dark: #1f8bff;
+  --color-lime-accent: #5dbfff;
+  --color-cyan-primary: #3da9ff;
+  --color-cyan-dark: #1f8bff;
+  --color-accent: #5dbfff;
+  --accent: #3da9ff;
+}
+
 body {
   background: var(--pp-night);
   color: var(--pp-white);

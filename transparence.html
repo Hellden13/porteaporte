@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
     body{padding:0}
-    .hero{padding:56px 0 28px;border-bottom:1px solid var(--brand-bg-surface-light);background:linear-gradient(180deg,rgba(184,245,62,.06),transparent)}
+    .hero{padding:56px 0 28px;border-bottom:1px solid var(--brand-bg-surface-light);background:linear-gradient(180deg,rgba(93,191,255,.06),transparent)}
     .hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1;margin:0 0 12px;color:var(--brand-text)}
     .hero p{max-width:760px;color:var(--brand-muted);font-size:1rem;line-height:1.7;margin:0}
     .impact-grid{display:grid;gap:16px;grid-template-columns:1fr;margin:28px 0}
@@ -30,9 +30,9 @@
     .split{display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--brand-muted);font-size:.86rem}
     .amount{font-size:1.4rem;font-weight:900;color:var(--brand-lime)}
     .note{font-size:.84rem;color:var(--brand-muted);line-height:1.65}
-    .status{display:inline-flex;padding:5px 10px;border:1px solid rgba(184,245,62,.35);border-radius:999px;color:var(--brand-lime);font-size:.78rem;font-weight:800;margin-bottom:14px}
+    .status{display:inline-flex;padding:5px 10px;border:1px solid rgba(93,191,255,.35);border-radius:999px;color:var(--brand-lime);font-size:.78rem;font-weight:800;margin-bottom:14px}
     .empty{color:var(--brand-muted);padding:22px;text-align:center}
-    .beta-notice{border:1px solid rgba(184,245,62,.25);background:rgba(184,245,62,.06);border-radius:10px;padding:14px 18px;color:var(--brand-lime);font-size:.88rem;line-height:1.6;margin-bottom:20px}
+    .beta-notice{border:1px solid rgba(93,191,255,.25);background:rgba(93,191,255,.06);border-radius:10px;padding:14px 18px;color:var(--brand-lime);font-size:.88rem;line-height:1.6;margin-bottom:20px}
     .beta-notice strong{display:block;margin-bottom:4px;font-size:.95rem}
     @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
     .loading-pulse{animation:pulse 1.4s ease-in-out infinite;color:var(--brand-muted);font-size:.9rem;padding:20px;text-align:center}
@@ -102,7 +102,7 @@
         <div class="metric-value" id="impact-deliveries">0</div>
         <div class="metric-sub" id="impact-rate">5% de la commission reversés aux organismes</div>
       </div>
-      <div class="metric" style="border-color:rgba(0,255,159,.25);background:rgba(0,255,159,.04)">
+      <div class="metric" style="border-color:rgba(93,191,255,.25);background:rgba(93,191,255,.04)">
         <div class="metric-label" style="color:var(--brand-lime)">🛡️ Jours sans réclamation</div>
         <div class="metric-value" id="platform-claim-free" style="color:var(--brand-lime)">—</div>
         <div class="metric-sub">Compteur plateforme — remis à zéro à chaque litige ouvert.</div>
@@ -217,8 +217,8 @@
         const html = POSTES.map(p => {
           const pct = Number(s[p.key] != null ? s[p.key] : p.def);
           const dollars = (ticket * pct / 100).toFixed(2);
-          const bg = p.hl ? 'rgba(184,245,62,.12)' : p.cause ? 'rgba(255,107,157,.08)' : 'rgba(255,255,255,.03)';
-          const border = p.hl ? '#b8f53e' : p.cause ? '#ff6b9d' : 'transparent';
+          const bg = p.hl ? 'rgba(93,191,255,.12)' : p.cause ? 'rgba(255,107,157,.08)' : 'rgba(255,255,255,.03)';
+          const border = p.hl ? '#5dbfff' : p.cause ? '#ff6b9d' : 'transparent';
           return `<div style="display:grid;grid-template-columns:36px 1fr 70px 90px;gap:12px;align-items:center;padding:12px 16px;background:${bg};border-radius:8px;border-left:3px solid ${border}">
             <div style="font-size:1.3rem">${p.icon}</div>
             <div style="font-weight:700;color:#fff;font-size:.92rem">${p.name}</div>

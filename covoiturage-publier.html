@@ -24,7 +24,7 @@
     .page-subtitle { color: var(--brand-muted); margin: 0 0 36px; font-size: 1rem; line-height: 1.6; }
 
     .legal-note {
-      background: rgba(184,245,62,0.07); border: 1px solid rgba(184,245,62,0.25);
+      background: rgba(93,191,255,0.07); border: 1px solid rgba(93,191,255,0.25);
       border-radius: 8px; padding: 14px 18px; font-size: 0.85rem;
       color: var(--brand-lime); margin-bottom: 32px; line-height: 1.55;
     }
@@ -83,7 +83,7 @@
       transition: all 0.2s; user-select: none;
     }
     .toggle-option input { accent-color: var(--brand-lime); width: 16px; height: 16px; }
-    .toggle-option:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
+    .toggle-option:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(93,191,255,0.06); }
 
     /* RADIO CARD */
     .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; }
@@ -96,7 +96,7 @@
     }
     .radio-card input[type=radio] { display: none; }
     .radio-card .icon { font-size: 1.5rem; line-height: 1; }
-    .radio-card:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(184,245,62,0.06); }
+    .radio-card:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(93,191,255,0.06); }
 
     /* POINTS D'ARRÊT */
     .stop-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -155,12 +155,12 @@
     </div>
 
     <!-- MODE EXPRESS — pour publier en 1 minute -->
-    <div id="express-toggle" style="margin:18px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(184,245,62,.10),rgba(0,217,255,.06));border:1px solid rgba(184,245,62,.4);border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div id="express-toggle" style="margin:18px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(93,191,255,.10),rgba(0,217,255,.06));border:1px solid rgba(93,191,255,.4);border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div style="flex:1;min-width:200px;">
-        <strong style="color:#b8f53e;font-size:1rem;">🚀 Pressé ? Mode express</strong>
+        <strong style="color:#5dbfff;font-size:1rem;">🚀 Pressé ? Mode express</strong>
         <div style="color:#aab2c5;font-size:.88rem;margin-top:2px;">Remplissez seulement <strong>Trajet</strong> + <strong>Prix</strong>. Les autres détails (véhicule, ambiance, arrêts) sont optionnels.</div>
       </div>
-      <button type="button" id="btn-express" onclick="toggleExpress()" style="background:#b8f53e;color:#071006;border:0;padding:10px 18px;border-radius:999px;font-weight:900;cursor:pointer;font-size:.92rem;white-space:nowrap;">⚡ Activer mode express</button>
+      <button type="button" id="btn-express" onclick="toggleExpress()" style="background:#5dbfff;color:#071006;border:0;padding:10px 18px;border-radius:999px;font-weight:900;cursor:pointer;font-size:.92rem;white-space:nowrap;">⚡ Activer mode express</button>
     </div>
 
     <!-- STEPS NAV -->
@@ -183,7 +183,7 @@
         if (on) {
           btn.textContent = '✗ Désactiver mode express';
           btn.style.background = '#1E2535';
-          btn.style.color = '#b8f53e';
+          btn.style.color = '#5dbfff';
           // Si on est sur une étape masquée, sauter à 5 (Prix)
           if ([2,3,4].includes(currentStep)) goStep(5);
           // Pré-remplir des valeurs par défaut sensées si vides
@@ -192,7 +192,7 @@
           def('trunk_size', 'moyen');
         } else {
           btn.textContent = '⚡ Activer mode express';
-          btn.style.background = '#b8f53e';
+          btn.style.background = '#5dbfff';
           btn.style.color = '#071006';
         }
       }
@@ -272,7 +272,7 @@
           </div>
 
           <!-- Récapitulatif live -->
-          <div id="dt-recap" style="margin-top:10px;padding:12px 14px;background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.3);border-radius:8px;font-size:.92rem;color:var(--brand-lime);font-weight:700">
+          <div id="dt-recap" style="margin-top:10px;padding:12px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:8px;font-size:.92rem;color:var(--brand-lime);font-weight:700">
             📍 Sélectionne un jour et une heure
           </div>
 
@@ -297,7 +297,7 @@
         <style>
           .quick-pick { padding: 8px 14px; background: rgba(0,217,255,.1); border: 1px solid rgba(0,217,255,.35); color: var(--brand-cyan); border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
           .quick-pick:hover { background: rgba(0,217,255,.25); transform: translateY(-1px); }
-          .quick-pick.active { background: var(--brand-lime); color: #071006; border-color: var(--brand-lime); box-shadow: 0 0 0 2px rgba(184,245,62,.3); }
+          .quick-pick.active { background: var(--brand-lime); color: #071006; border-color: var(--brand-lime); box-shadow: 0 0 0 2px rgba(93,191,255,.3); }
         </style>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
@@ -306,7 +306,7 @@
         <div id="return-section" style="display:none;margin-top:14px;">
           <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
         </div>
-        <div id="recurring-section" style="display:none;margin-top:14px;padding:16px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:10px">
+        <div id="recurring-section" style="display:none;margin-top:14px;padding:16px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px">
           <strong style="color:var(--brand-lime);font-size:.92rem">🔁 Fréquence du trajet</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px">
             <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="weekly" checked> Chaque semaine</label>
@@ -403,8 +403,8 @@
           <label class="toggle-option"><input type="checkbox" id="accepts_packages" onchange="togglePackageFields()"> 📦 J'accepte des colis</label>
         </div>
       </div>
-      <div id="package-fields" style="display:none;margin-top:16px;padding:18px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.3);border-radius:12px">
-        <div style="background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div id="package-fields" style="display:none;margin-top:16px;padding:18px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:12px">
+        <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
           <strong style="color:#7dffc1;display:block;margin-bottom:6px">💰 Bonus pour toi : 8 $ + 1,50 $ par kg supplémentaire après 5 kg</strong>
           <div style="color:var(--brand-muted);font-size:.85rem;line-height:1.6">
             <strong style="color:#fff">Exemple :</strong> 1 colis de 3 kg sur ta route = <strong style="color:#7dffc1">+8 $ pour toi</strong> (sans détour, sans effort).<br>
@@ -453,8 +453,8 @@
 
         <style>
           .package-size-card { display:block; padding:14px 12px; background:rgba(255,255,255,.04); border:2px solid var(--brand-border); border-radius:12px; cursor:pointer; text-align:center; transition:all .15s; }
-          .package-size-card:hover { border-color:rgba(184,245,62,.5); transform:translateY(-1px); }
-          .package-size-card.selected { border-color:var(--brand-lime); background:rgba(184,245,62,.08); }
+          .package-size-card:hover { border-color:rgba(93,191,255,.5); transform:translateY(-1px); }
+          .package-size-card.selected { border-color:var(--brand-lime); background:rgba(93,191,255,.08); }
           .package-size-card input { display:none; }
           .pkg-icon { font-size:1.8rem; margin-bottom:4px; }
           .pkg-name { font-weight:800; color:#fff; font-size:.9rem; }

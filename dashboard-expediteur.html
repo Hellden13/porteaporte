@@ -162,7 +162,7 @@
             padding: 12px;
             border: 1px solid var(--brand-bg-surface-light);
             border-radius: 10px;
-            background: rgba(184,245,62,.04);
+            background: rgba(93,191,255,.04);
             margin-top: 10px;
         }
 
@@ -230,7 +230,7 @@
 
         .mission-card:hover {
             border-color: var(--brand-lime);
-            box-shadow: 0 4px 24px rgba(184,245,62,.10);
+            box-shadow: 0 4px 24px rgba(93,191,255,.10);
             transform: translateY(-2px);
         }
 
@@ -389,7 +389,7 @@
 
         .quick-action-btn:hover {
             border-color: var(--brand-lime);
-            background: rgba(184,245,62,.05);
+            background: rgba(93,191,255,.05);
             color: var(--brand-lime);
         }
 
@@ -487,7 +487,7 @@
 
     <!-- TABS NAVIGATION -->
     <nav id="expTabs" style="position:sticky;top:60px;z-index:50;display:flex;gap:4px;padding:8px 20px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border);overflow-x:auto;backdrop-filter:blur(12px)">
-      <button class="exp-tab active" data-tab="missions" onclick="switchExpTab('missions')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#00ff9f,#b8f53e);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Mes expéditions</button>
+      <button class="exp-tab active" data-tab="missions" onclick="switchExpTab('missions')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#5dbfff,#5dbfff);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Mes expéditions</button>
       <button class="exp-tab" data-tab="creer" onclick="switchExpTab('creer')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">➕ Nouvelle livraison</button>
       <button class="exp-tab" data-tab="paiements" onclick="window.location.href='/historique-paiements.html'" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">💳 Paiements</button>
     </nav>
@@ -621,7 +621,7 @@
                 <div class="sidebar-title">Mes récompenses</div>
                 <div id="exp-badges-row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
                 <div id="exp-level-info" style="font-size:0.8rem;color:#9BA1A9;line-height:1.5"></div>
-                <a href="/programme-points.html" style="display:block;margin-top:10px;font-size:0.8rem;color:var(--brand-lime,#B8F53E)">Voir le programme Points Impact →</a>
+                <a href="/programme-points.html" style="display:block;margin-top:10px;font-size:0.8rem;color:var(--brand-lime,#5dbfff)">Voir le programme Points Impact →</a>
                 <a href="/parrainage.html" style="display:block;margin-top:4px;font-size:0.8rem;color:#9BA1A9">🤝 Parrainer un ami</a>
             </div>
         </aside>
@@ -922,7 +922,7 @@
           document.querySelectorAll('.exp-tab').forEach(btn => {
             const isActive = btn.dataset.tab === tab;
             if (isActive) {
-              btn.style.background = 'linear-gradient(135deg,#00ff9f,#b8f53e)';
+              btn.style.background = 'linear-gradient(135deg,#5dbfff,#5dbfff)';
               btn.style.color = '#071006';
               btn.style.border = 'none';
             } else {
@@ -1189,7 +1189,7 @@
                         <div style="display:flex;align-items:center;gap:14px">
                           ${mission.livreur_profile.photo_url
                               ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(0,217,255,.5)">`
-                              : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#b8f53e);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
+                              : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#5dbfff);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
                           <div style="flex:1">
                             <div style="font-size:.72rem;color:#00d9ff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
                             <div style="font-size:1.05rem;font-weight:900;color:#fff;margin-top:2px">${livreurNom}</div>
@@ -1200,7 +1200,7 @@
                           </div>
                         </div>
                         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-                          <a href="/livreur-card.html?id=${esc(mission.livreur_id)}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:8px;color:#b8f53e;font-weight:800;text-decoration:none;font-size:.85rem">🆔 Voir sa carte d'identité</a>
+                          <a href="/livreur-card.html?id=${esc(mission.livreur_id)}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:8px;color:#5dbfff;font-weight:800;text-decoration:none;font-size:.85rem">🆔 Voir sa carte d'identité</a>
                           <a href="/messagerie.html?livraison=${esc(mission.id)}" style="flex:1;text-align:center;padding:10px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
                         </div>
                         <p style="margin:10px 0 0;font-size:.75rem;color:#a8b0ba;text-align:center">⚠️ Vérifie son identité avant d'ouvrir : compare son visage à la photo</p>

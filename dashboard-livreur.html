@@ -355,9 +355,9 @@
       border-radius: 999px;
       font-size: 0.72rem;
       font-weight: 700;
-      background: rgba(0,255,159,0.12);
+      background: rgba(93,191,255,0.12);
       color: var(--brand-lime);
-      border: 1px solid rgba(0,255,159,0.25);
+      border: 1px solid rgba(93,191,255,0.25);
     }
     .status-badge.red { background: rgba(239,68,68,0.12); color: #ff8a8a; border-color: rgba(239,68,68,0.25); }
     .status-badge.yellow { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
@@ -432,7 +432,7 @@
 
     <!-- ── TABS NAVIGATION ── -->
     <nav id="livreurTabs" style="position:sticky;top:60px;z-index:50;display:flex;gap:4px;margin:0 -20px 18px;padding:8px 20px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border);overflow-x:auto;backdrop-filter:blur(12px)">
-      <button class="liv-tab active" data-tab="encours" onclick="switchTab('encours')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#00ff9f,#b8f53e);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">🚀 En cours</button>
+      <button class="liv-tab active" data-tab="encours" onclick="switchTab('encours')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#5dbfff,#5dbfff);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">🚀 En cours</button>
       <button class="liv-tab" data-tab="missions" onclick="switchTab('missions')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Missions</button>
       <button class="liv-tab" data-tab="config" onclick="switchTab('config')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">⚙️ Profil</button>
       <button class="liv-tab" data-tab="stats" onclick="switchTab('stats')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📊 Stats</button>
@@ -443,7 +443,7 @@
     <div data-section="config">
 
     <!-- Bonus fidélité (60% → 70% max) -->
-    <div id="loyaltyPanel" style="margin-bottom:18px;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(255,200,0,.08),rgba(184,245,62,.06));border:2px solid rgba(255,200,0,.35);display:none">
+    <div id="loyaltyPanel" style="margin-bottom:18px;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(255,200,0,.08),rgba(93,191,255,.06));border:2px solid rgba(255,200,0,.35);display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
         <div style="flex:1;min-width:220px">
           <div style="font-weight:900;color:#ffd700;font-size:.95rem;margin-bottom:4px">🏆 Bonus Fidélité actif</div>
@@ -455,12 +455,12 @@
         </div>
       </div>
       <div id="loyaltyBreakdown" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
-      <div id="loyaltyProgress" style="margin-top:14px;height:8px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden"><div id="loyaltyFill" style="height:100%;background:linear-gradient(90deg,#ffd700,#b8f53e);width:0%;transition:width .8s ease"></div></div>
+      <div id="loyaltyProgress" style="margin-top:14px;height:8px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden"><div id="loyaltyFill" style="height:100%;background:linear-gradient(90deg,#ffd700,#5dbfff);width:0%;transition:width .8s ease"></div></div>
       <div style="margin-top:6px;text-align:right;font-size:.76rem;color:#a8b0ba">Encore <span id="loyaltyRemaining">10</span>% pour atteindre le max 70%</div>
     </div>
 
     <!-- Mode de transport ACTIF aujourd'hui -->
-    <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25)">
+    <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25)">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <div style="font-weight:900;color:#7dffc1;font-size:.9rem;margin-bottom:4px">🚦 Mode actif aujourd'hui</div>
@@ -481,17 +481,17 @@
           <option value="car">🚗 Voiture</option>
           <option value="truck">🚛 Camion / Van</option>
         </select>
-        <button class="btn-sm" onclick="addMode()" style="padding:6px 12px;background:rgba(0,255,159,.15);border:1px solid rgba(0,255,159,.4);color:#7dffc1;border-radius:6px;font-size:.78rem;cursor:pointer">+ Ajouter</button>
+        <button class="btn-sm" onclick="addMode()" style="padding:6px 12px;background:rgba(93,191,255,.15);border:1px solid rgba(93,191,255,.4);color:#7dffc1;border-radius:6px;font-size:.78rem;cursor:pointer">+ Ajouter</button>
       </div>
     </div>
 
     <!-- Ma carte d'identité (à montrer à l'expéditeur au pickup) -->
-    <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.22);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.22);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="flex:1;min-width:200px">
-        <div style="font-weight:900;color:#b8f53e;font-size:.95rem;margin-bottom:4px">🆔 Ma carte d'identité numérique</div>
+        <div style="font-weight:900;color:#5dbfff;font-size:.95rem;margin-bottom:4px">🆔 Ma carte d'identité numérique</div>
         <div style="color:#a8b0ba;font-size:.82rem">Montre cette carte à l'expéditeur au pickup. Il scanne ton QR et vérifie ton identité.</div>
       </div>
-      <a id="myCardLink" href="/livreur-card.html" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;font-weight:900;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:.88rem;white-space:nowrap">📲 Ouvrir ma carte</a>
+      <a id="myCardLink" href="/livreur-card.html" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006;font-weight:900;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:.88rem;white-space:nowrap">📲 Ouvrir ma carte</a>
     </div>
 
     <!-- Route du livreur (IA matching covoiturage colis) -->
@@ -516,7 +516,7 @@
     <div data-section="stats">
 
     <!-- Eco bonus banner -->
-    <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);align-items:center;gap:14px;flex-wrap:wrap">
+    <div id="ecoBanner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);align-items:center;gap:14px;flex-wrap:wrap">
       <span style="font-size:24px" id="ecoIcon">🌱</span>
       <div style="flex:1;min-width:0">
         <div style="font-weight:800;color:var(--brand-lime)" id="ecoBannerTitle">Bonus écologique actif</div>
@@ -583,7 +583,7 @@
         <div id="bonusMissionsList"><p class="loading-msg">Les missions bonus apparaitront ici pendant la beta.</p></div>
       </div>
       <div class="reward-card">
-        <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(184,245,62,0.08);border:1px solid rgba(184,245,62,0.3);border-radius:10px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px">
+        <div id="sub-pro-banner" style="display:none;margin-bottom:14px;background:rgba(93,191,255,0.08);border:1px solid rgba(93,191,255,0.3);border-radius:10px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px">
           <div>
             <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--brand-lime);font-weight:800;margin-bottom:2px">Abonnement actif</div>
             <div id="sub-pro-name" style="font-weight:800;font-size:0.95rem"></div>
@@ -650,7 +650,7 @@
           <!-- Eco bonus row — shown only if eco_bonus > 0 -->
           <div class="rev-bar" id="revEcoRow" style="display:none">
             <span class="rev-label" id="revEcoLabel" style="color:var(--brand-lime)">Éco (+0%)</span>
-            <div class="rev-track"><div class="rev-fill" id="revEcoBar" style="width:0%;background:linear-gradient(90deg,#00FF9F,#57ffbc)"></div></div>
+            <div class="rev-track"><div class="rev-fill" id="revEcoBar" style="width:0%;background:linear-gradient(90deg,#5dbfff,#57ffbc)"></div></div>
             <span class="rev-amount" id="revEco" style="color:var(--brand-lime)">—</span>
           </div>
           <div class="rev-bar">
@@ -660,7 +660,7 @@
           </div>
           <div class="rev-bar">
             <span class="rev-label">Cause (5%)</span>
-            <div class="rev-track"><div class="rev-fill" style="width:5%;background:rgba(0,255,159,0.4)"></div></div>
+            <div class="rev-track"><div class="rev-fill" style="width:5%;background:rgba(93,191,255,0.4)"></div></div>
             <span class="rev-amount" id="revCause">—</span>
           </div>
           <div id="revTotalRow" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--brand-border);display:flex;justify-content:space-between;align-items:center">
@@ -743,7 +743,7 @@
       </div>
 
       <button id="btnPayout" onclick="requestPayout()"
-        style="width:100%;background:linear-gradient(135deg,#00ff9f,#00cc7a);color:#0A0C10;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer;margin-bottom:8px">
+        style="width:100%;background:linear-gradient(135deg,#5dbfff,#00cc7a);color:#0A0C10;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer;margin-bottom:8px">
         💸 Virer mes gains maintenant
       </button>
       <div id="payoutDisabledMsg" style="display:none;background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.3);border-radius:8px;padding:10px 14px;font-size:.8rem;color:#ffd700;margin-bottom:10px;line-height:1.5"></div>
@@ -795,7 +795,7 @@
     }
 
     function showSuccess(message) {
-      showBanner(message, '#B8F53E', null, null, 'Succès');
+      showBanner(message, '#5dbfff', null, null, 'Succès');
       setTimeout(() => {
         const banner = document.getElementById('bannerArea');
         if (banner) banner.innerHTML = '';
@@ -845,7 +845,7 @@
       if (normalizedRole === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
       const roleOk = ['livreur', 'les deux', 'admin'].includes(normalizedRole);
       if (!roleOk) {
-        showBanner('Ton compte est enregistré comme expéditeur. Ajoute le rôle livreur pour commencer la vérification.', '#B8F53E', '/role-choice.html', 'Changer mon rôle');
+        showBanner('Ton compte est enregistré comme expéditeur. Ajoute le rôle livreur pour commencer la vérification.', '#5dbfff', '/role-choice.html', 'Changer mon rôle');
         return;
       }
       const driverVerified = normalizedRole === 'admin' || p.driver_status === 'verified';
@@ -854,7 +854,7 @@
           pending_review: { title: 'Vérification en cours', msg: 'Ta demande est en révision. Tu peux ouvrir ton dossier, mettre tes informations à jour ou revenir au profil. Les vraies missions restent bloquées jusqu’à l’approbation admin.', color: '#F59E0B', link: '/livreur.html', linkText: 'Voir ma vérification' },
           rejected: { title: 'Vérification refusée', msg: 'Ta demande a été refusée. Corrige les informations et soumets de nouveau.', color: '#EF4444', link: '/livreur.html', linkText: 'Soumettre à nouveau' }
         };
-        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification livreur avant d’accéder aux missions.', color: '#B8F53E', link: '/livreur.html', linkText: 'Démarrer la vérification' };
+        const s = msgs[p.driver_status] || { title: 'Vérification requise', msg: 'Complète ta vérification livreur avant d’accéder aux missions.', color: '#5dbfff', link: '/livreur.html', linkText: 'Démarrer la vérification' };
         showBanner(s.msg, s.color, s.link, s.linkText, s.title);
         return;
       }
@@ -1192,8 +1192,8 @@
       ms.innerHTML = (cf.milestones || []).map(m => {
         const done = m.reached;
         const active = m.current && !done;
-        const bg = done ? 'rgba(0,255,159,.12)' : active ? 'rgba(251,191,36,.08)' : 'rgba(255,255,255,.03)';
-        const border = done ? 'rgba(0,255,159,.3)' : active ? 'rgba(251,191,36,.25)' : 'var(--brand-border)';
+        const bg = done ? 'rgba(93,191,255,.12)' : active ? 'rgba(251,191,36,.08)' : 'rgba(255,255,255,.03)';
+        const border = done ? 'rgba(93,191,255,.3)' : active ? 'rgba(251,191,36,.25)' : 'var(--brand-border)';
         const textColor = done ? 'var(--brand-lime)' : active ? '#fbbf24' : 'var(--brand-muted)';
         return `<div style="flex:1;min-width:90px;background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px;text-align:center">
           <div style="font-size:1.4rem">${m.emoji}</div>
@@ -1310,13 +1310,13 @@
                 <option value="livreur">Moi (problème personnel, oubli…)</option>
                 <option value="inconnu">Cause inconnue / autre</option>
               </select>
-              <div style="font-size:.75rem;color:#a8b0ba;margin-bottom:10px;padding:8px;background:rgba(0,255,159,.05);border-radius:6px">
+              <div style="font-size:.75rem;color:#a8b0ba;margin-bottom:10px;padding:8px;background:rgba(93,191,255,.05);border-radius:6px">
                 💡 Si le destinataire est fautif, tu reçois une <strong>compensation</strong> :<br>
                 • Retour expéditeur : <strong>50%</strong> du gain<br>
                 • Re-livraison : <strong>25%</strong> immédiatement + reste à la livraison
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-                <button class="btn-sm" style="background:rgba(0,255,159,.12);border:1px solid rgba(0,255,159,.4);color:#7dffc1;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
+                <button class="btn-sm" style="background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);color:#7dffc1;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
                 <button class="btn-sm" style="background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);color:#7de4ff;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="planRelivraison('${row.id}')">🔄 Re-<br>livraison</button>
                 <button class="btn-sm" style="background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.4);color:#ffb0b0;font-size:.8rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','retour_expediteur')">↩️ Retour<br>expéditeur</button>
               </div>
@@ -1333,8 +1333,8 @@
               <div id="imprevu-msg-${row.id}" style="margin-top:8px;font-size:.82rem"></div>
             </div>
             ${delivered ? `
-            <div id="livreur-review-${row.id}" style="display:none;margin-top:12px;background:rgba(184,245,62,0.05);border:1px solid rgba(184,245,62,0.15);border-radius:10px;padding:14px;">
-              <div style="font-size:.85rem;font-weight:700;color:#B8F53E;margin-bottom:10px;">Évaluer l'expéditeur</div>
+            <div id="livreur-review-${row.id}" style="display:none;margin-top:12px;background:rgba(93,191,255,0.05);border:1px solid rgba(93,191,255,0.15);border-radius:10px;padding:14px;">
+              <div style="font-size:.85rem;font-weight:700;color:#5dbfff;margin-bottom:10px;">Évaluer l'expéditeur</div>
               <form onsubmit="submitLivreurReview(event,'${row.id}')">
                 <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
                   <label style="font-size:.82rem;color:#8A9BB0;">Note :</label>
@@ -1434,14 +1434,14 @@
     const INTEL_LABELS = {
       animal: { icon: '🐕', name: 'Animal', color: '#ffd700' },
       acces: { icon: '🪜', name: 'Accès', color: '#7de4ff' },
-      code_sonnette: { icon: '🚪', name: 'Code/Sonnette', color: '#b8f53e' },
+      code_sonnette: { icon: '🚪', name: 'Code/Sonnette', color: '#5dbfff' },
       stationnement: { icon: '🅿️', name: 'Stationnement', color: '#ffb74d' },
       securite: { icon: '⚠️', name: 'Sécurité', color: '#ffb0b0' },
       comportement: { icon: '😡', name: 'Comportement', color: '#ff6b6b' },
       do_not_deliver: { icon: '🚫', name: 'NE PAS LIVRER', color: '#ff4444' },
       horaires: { icon: '⏰', name: 'Horaires', color: '#a8b0ba' },
       reception: { icon: '🏢', name: 'Réception', color: '#7de4ff' },
-      pourboire: { icon: '💸', name: 'Pourboire', color: '#b8f53e' },
+      pourboire: { icon: '💸', name: 'Pourboire', color: '#5dbfff' },
       autre: { icon: '💡', name: 'Info', color: '#a8b0ba' }
     };
 
@@ -1497,7 +1497,7 @@
           <input id="ia-sev" type="range" min="1" max="5" value="2" style="width:100%;margin-bottom:14px">
           <div style="display:flex;gap:10px">
             <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:12px;background:#1E2535;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">Annuler</button>
-            <button onclick="submitIntel('${addr.replace(/'/g,"\\'")}','${ville.replace(/'/g,"\\'")}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900">📨 Publier</button>
+            <button onclick="submitIntel('${addr.replace(/'/g,"\\'")}','${ville.replace(/'/g,"\\'")}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006;border:none;border-radius:8px;cursor:pointer;font-weight:900">📨 Publier</button>
           </div>
           <div id="ia-msg" style="margin-top:10px;font-size:.82rem"></div>
         </div>
@@ -1536,7 +1536,7 @@
       document.querySelectorAll('.liv-tab').forEach(btn => {
         const isActive = btn.dataset.tab === tab;
         if (isActive) {
-          btn.style.background = 'linear-gradient(135deg,#00ff9f,#b8f53e)';
+          btn.style.background = 'linear-gradient(135deg,#5dbfff,#5dbfff)';
           btn.style.color = '#071006';
           btn.style.border = 'none';
         } else {
@@ -1627,7 +1627,7 @@
         document.getElementById('loyaltyFill').style.width = fillPct + '%';
         document.getElementById('loyaltyRemaining').textContent = (10 - out.bonus_pct).toFixed(0);
         const html = (out.breakdown || []).map(b =>
-          `<span style="padding:6px 10px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.3);border-radius:999px;font-size:.78rem;color:var(--brand-lime);font-weight:700">${b.icon} ${b.label} <strong>+${b.pts}%</strong></span>`
+          `<span style="padding:6px 10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.3);border-radius:999px;font-size:.78rem;color:var(--brand-lime);font-weight:700">${b.icon} ${b.label} <strong>+${b.pts}%</strong></span>`
         ).join('');
         const allCriteria = [
           { icon: '🌟', label: '50+ livraisons', need: out.stats.livraisons < 50, current: out.stats.livraisons + '/50' },
@@ -1679,7 +1679,7 @@
         const lbl = MODE_LABELS[m] || { icon: '🚲', name: m };
         const isActive = m === active;
         return `
-          <button class="btn-sm" onclick="setActiveMode('${m}')" style="padding:8px 14px;background:${isActive ? 'linear-gradient(135deg,#00ff9f,#b8f53e)' : 'rgba(255,255,255,.04)'};border:1px solid ${isActive ? '#b8f53e' : '#1E2535'};color:${isActive ? '#071006' : '#fff'};border-radius:8px;font-weight:800;cursor:pointer;font-size:.85rem;display:inline-flex;align-items:center;gap:5px">
+          <button class="btn-sm" onclick="setActiveMode('${m}')" style="padding:8px 14px;background:${isActive ? 'linear-gradient(135deg,#5dbfff,#5dbfff)' : 'rgba(255,255,255,.04)'};border:1px solid ${isActive ? '#5dbfff' : '#1E2535'};color:${isActive ? '#071006' : '#fff'};border-radius:8px;font-weight:800;cursor:pointer;font-size:.85rem;display:inline-flex;align-items:center;gap:5px">
             ${lbl.icon} ${lbl.name}${isActive ? ' ✓' : ''}
           </button>
           <button onclick="removeMode('${m}')" title="Retirer ce mode" style="padding:4px 8px;background:transparent;border:none;color:#6d7886;cursor:pointer;font-size:.8rem">✕</button>
@@ -1972,7 +1972,7 @@
         if (!res.ok) throw new Error(out.error || 'Erreur');
         msgEl.style.color = '#7dffc1';
         const compMsg = out.compensation_amount > 0 ? ` Compensation créditée : ${out.compensation_amount.toFixed(2)} $` : '';
-        msgEl.innerHTML = '✅ Action enregistrée. L\'expéditeur a été notifié.' + (compMsg ? `<br><strong style="color:#b8f53e">💰${compMsg}</strong>` : '');
+        msgEl.innerHTML = '✅ Action enregistrée. L\'expéditeur a été notifié.' + (compMsg ? `<br><strong style="color:#5dbfff">💰${compMsg}</strong>` : '');
         setTimeout(() => loadMyDeliveries(), 2500);
       } catch (err) {
         msgEl.style.color = '#ffb0b0';
@@ -1998,7 +1998,7 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Avis impossible');
-        msgEl.style.color = '#B8F53E';
+        msgEl.style.color = '#5dbfff';
         msgEl.textContent = '✅ Avis envoyé. Merci !';
         setTimeout(() => toggleLivreurReview(livraisonId), 1800);
       } catch (err) {
@@ -2148,12 +2148,12 @@
               <span class="mission-price">${money(m.prix_total)}</span>
             </div>
             ${m.adresse_masquees ? `
-            <div style="background:rgba(184,245,62,.08);border:1px solid rgba(184,245,62,.22);border-radius:8px;padding:10px;font-size:.82rem;color:#d9f99d">
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.22);border-radius:8px;padding:10px;font-size:.82rem;color:#d9f99d">
               Adresses complètes masquées jusqu'à acceptation de la mission.
             </div>` : (m.adresse_depart || m.adresse_arrivee ? `
             <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;font-size:.82rem;display:grid;gap:5px">
               ${m.adresse_depart ? `<div><span style="color:#6d7886">📦 Départ :</span> <span style="color:#e0e6f0">${esc(m.adresse_depart)}</span></div>` : ''}
-              ${m.adresse_arrivee ? `<div><span style="color:#6d7886">🏠 Livraison :</span> <span style="color:#B8F53E;font-weight:700">${esc(m.adresse_arrivee)}</span></div>` : ''}
+              ${m.adresse_arrivee ? `<div><span style="color:#6d7886">🏠 Livraison :</span> <span style="color:#5dbfff;font-weight:700">${esc(m.adresse_arrivee)}</span></div>` : ''}
             </div>` : '')}
             <button class="accept-btn" style="width:100%" onclick="openBioModal('${m.id}')">Accepter cette mission</button>
           </div>`;
@@ -2201,7 +2201,7 @@
                 </div>
               </div>
 
-              <div style="background:rgba(184,245,62,.06);border:1px solid rgba(184,245,62,.15);border-radius:10px;padding:12px;display:grid;gap:8px">
+              <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.15);border-radius:10px;padding:12px;display:grid;gap:8px">
                 <div style="display:flex;gap:8px;align-items:flex-start">
                   <span style="font-size:1rem;flex-shrink:0">📦</span>
                   <div>
@@ -2214,7 +2214,7 @@
                   <span style="font-size:1rem;flex-shrink:0">🏠</span>
                   <div>
                     <div style="font-size:.72rem;color:#6d7886;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Livrer ici</div>
-                    <div style="font-weight:700;color:#B8F53E;font-size:.93rem">${esc(adresseArrivee || row.ville_arrivee || '?')}</div>
+                    <div style="font-weight:700;color:#5dbfff;font-size:.93rem">${esc(adresseArrivee || row.ville_arrivee || '?')}</div>
                     ${adresseArrivee && row.ville_arrivee ? `<div style="font-size:.8rem;color:#8A9BB0">${esc(row.ville_arrivee)}</div>` : ''}
                     ${nomDestinataire ? `<div style="font-size:.8rem;color:#8A9BB0;margin-top:2px">👤 ${esc(nomDestinataire)}</div>` : ''}
                     ${telDestinataire ? `<div style="margin-top:3px"><a href="tel:${esc(telDestinataire)}" style="font-size:.85rem;color:#00d9ff;font-weight:700;text-decoration:none">📞 ${esc(telDestinataire)}</a></div>` : ''}
@@ -2258,11 +2258,11 @@
 
                 <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">2. Selfie au pickup (preuve d'identité)</label>
                 <div id="selfie-zone-${row.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:#05080c;border:1px dashed #1E2535;border-radius:10px;margin-bottom:12px">
-                  <video id="selfie-video-${row.id}" autoplay playsinline style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(184,245,62,.5)"></video>
+                  <video id="selfie-video-${row.id}" autoplay playsinline style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(93,191,255,.5)"></video>
                   <canvas id="selfie-canvas-${row.id}" style="display:none"></canvas>
-                  <img loading="lazy" decoding="async" id="selfie-preview-${row.id}" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #b8f53e">
-                  <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);color:#b8f53e">📷 Activer la caméra</button>
-                  <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#b8f53e,#78d900);color:#071006">📸 Capturer ma selfie</button>
+                  <img loading="lazy" decoding="async" id="selfie-preview-${row.id}" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #5dbfff">
+                  <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);color:#5dbfff">📷 Activer la caméra</button>
+                  <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006">📸 Capturer ma selfie</button>
                   <button class="btn-sm" type="button" onclick="retakeSelfie('${row.id}')" id="selfie-retake-${row.id}" style="display:none;background:#1E2535;color:#fff">🔄 Reprendre</button>
                 </div>
 
@@ -2279,11 +2279,11 @@
                   <option value="livreur">Moi (problème personnel, oubli…)</option>
                   <option value="inconnu">Cause inconnue / autre</option>
                 </select>
-                <div style="font-size:.75rem;color:#a8b0ba;margin-bottom:10px;padding:8px;background:rgba(0,255,159,.05);border-radius:6px">
+                <div style="font-size:.75rem;color:#a8b0ba;margin-bottom:10px;padding:8px;background:rgba(93,191,255,.05);border-radius:6px">
                   💡 Si destinataire fautif → compensation : Retour <strong>50%</strong> · Re-livraison <strong>25%</strong>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-                  <button class="btn-sm" style="background:rgba(0,255,159,.12);border:1px solid rgba(0,255,159,.4);color:#7dffc1;font-size:.78rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
+                  <button class="btn-sm" style="background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);color:#7dffc1;font-size:.78rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','depot_securise')">📸 Dépôt<br>sécurisé</button>
                   <button class="btn-sm" style="background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);color:#7de4ff;font-size:.78rem;padding:10px 6px;line-height:1.3" onclick="planRelivraison('${row.id}')">🔄 Re-<br>livraison</button>
                   <button class="btn-sm" style="background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.4);color:#ffb0b0;font-size:.78rem;padding:10px 6px;line-height:1.3" onclick="actionImprevu('${row.id}','retour_expediteur')">↩️ Retour<br>expéditeur</button>
                 </div>
@@ -2336,7 +2336,7 @@
 
     function statusBadge(status) {
       const map = {
-        active:      { label: 'Actif',            color: '#00ff9f', bg: 'rgba(0,255,159,.12)' },
+        active:      { label: 'Actif',            color: '#5dbfff', bg: 'rgba(93,191,255,.12)' },
         onboarding:  { label: 'En configuration', color: '#f5a623', bg: 'rgba(245,166,35,.12)' },
         pending:     { label: 'Non configuré',    color: '#8A9BB0', bg: 'rgba(138,155,176,.12)' },
         restricted:  { label: 'Restreint',        color: '#ff4d4d', bg: 'rgba(255,77,77,.12)'  },
@@ -2366,7 +2366,7 @@
             <p style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">
               ${esc(data.error)}
             </p>
-            <a href="/onboarding-livreur.html" style="display:block;text-align:center;background:linear-gradient(135deg,#00ff9f,#b8f53e);color:#071006;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:900;text-decoration:none">
+            <a href="/onboarding-livreur.html" style="display:block;text-align:center;background:linear-gradient(135deg,#5dbfff,#5dbfff);color:#071006;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:900;text-decoration:none">
               Continuer ma vérification
             </a>`;
           return;
@@ -2589,7 +2589,7 @@
       el.innerHTML = months.map((m, i) => {
         const pct = Math.round((m.total / max) * 100);
         const isLast = i === months.length - 1;
-        const color = isLast ? 'var(--brand-lime)' : 'rgba(184,245,62,0.35)';
+        const color = isLast ? 'var(--brand-lime)' : 'rgba(93,191,255,0.35)';
         return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
           <div style="font-size:0.68rem;color:var(--brand-muted);white-space:nowrap">${m.total > 0 ? '$' + Math.round(m.total) : ''}</div>
           <div style="flex:1;width:100%;display:flex;align-items:flex-end">

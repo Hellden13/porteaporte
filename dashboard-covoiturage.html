@@ -13,7 +13,7 @@
   <style>
     :root {
       --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
-      --border:#1E2A3A; --green:#B8F53E; --cyan:#00D9FF;
+      --border:#1E2A3A; --green:#5dbfff; --cyan:#00D9FF;
       --text:#E8EDF5; --muted:#8A9BB0; --danger:#FF6B6B; --radius:14px;
     }
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -43,7 +43,7 @@
     .dash-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
     .dash-header h1{font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:900;}
     .dash-header p{color:var(--muted);font-size:.9rem;margin-top:4px;}
-    .role-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,245,62,.1);border:1px solid rgba(184,245,62,.25);color:var(--green);border-radius:100px;padding:5px 14px;font-size:.78rem;font-weight:700;margin-top:8px;}
+    .role-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.25);color:var(--green);border-radius:100px;padding:5px 14px;font-size:.78rem;font-weight:700;margin-top:8px;}
 
     /* STATS */
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;}
@@ -78,7 +78,7 @@
     .badges-row{display:flex;flex-wrap:wrap;gap:10px;}
     .badge-pill{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;}
     .badge-pill .ico{font-size:1.1rem;}
-    .badge-pill.earned{border-color:rgba(184,245,62,.3);background:rgba(184,245,62,.06);}
+    .badge-pill.earned{border-color:rgba(93,191,255,.3);background:rgba(93,191,255,.06);}
     .badge-pill .bname{font-weight:600;}
     .badge-pill .bloc{color:var(--muted);font-size:.75rem;}
     .locked-icon{opacity:.35;filter:grayscale(1);}
@@ -173,9 +173,9 @@ let currentSection = 'overview';
 const LEVELS = [
   { n:1, name:'Nouveau',          min:0,    max:199,  color:'#8B9BB0' },
   { n:2, name:'Fiable',           min:200,  max:499,  color:'#00D9FF' },
-  { n:3, name:'Habitué',          min:500,  max:999,  color:'#B8F53E' },
+  { n:3, name:'Habitué',          min:500,  max:999,  color:'#5dbfff' },
   { n:4, name:'Ambassadeur',      min:1000, max:1999, color:'#FFB74D' },
-  { n:5, name:'Capitaine régional', min:2000, max:9999, color:'#B8F53E' },
+  { n:5, name:'Capitaine régional', min:2000, max:9999, color:'#5dbfff' },
 ];
 
 function getLevel(xp) {
@@ -233,11 +233,11 @@ function fmtDT(d)   { return d ? new Date(d).toLocaleString('fr-CA',{dateStyle:'
 
 function statusChip(s) {
   const map = {
-    publie: ['#B8F53E','#0D2A00','Publié'],
+    publie: ['#5dbfff','#0D2A00','Publié'],
     complet: ['#00D9FF','#002233','Complet'],
     annule: ['#FF6B6B','#2A0000','Annulé'],
     termine: ['#5A6A7A','#111','Terminé'],
-    confirme: ['#B8F53E','#0D2A00','Confirmé'],
+    confirme: ['#5dbfff','#0D2A00','Confirmé'],
     en_attente: ['#FFB74D','#1A0F00','En attente'],
     annule_passager: ['#FF6B6B','#2A0000','Annulé'],
     annule_chauffeur: ['#FF6B6B','#2A0000','Annulé'],
@@ -381,7 +381,7 @@ function buildTrajets() {
           ${bookings.map(b=>{
             const drvContact = [];
             if (b.driver_email) drvContact.push(`<a href="mailto:${b.driver_email}?subject=PorteàPorte%20-%20Réservation%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
-            if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
+            if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
             return `<tr>
               <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
@@ -415,7 +415,7 @@ function buildReservations() {
         ${allBookings.map(b=>{
           const contactInfo = [];
           if (b.passenger_email) contactInfo.push(`<a href="mailto:${b.passenger_email}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
-          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(184,245,62,.12);border:1px solid rgba(184,245,62,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.passenger_phone}</a>`);
+          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.passenger_phone}</a>`);
           return `<tr>
             <td><strong>${b.passenger_prenom||'—'}</strong>${b.passenger_email ? `<div style="font-size:.72rem;color:var(--muted)">${b.passenger_email}</div>` : ''}</td>
             <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
@@ -448,7 +448,7 @@ function buildMissions() {
         <div class="mission-info">
           <div class="mission-name">${m.name}</div>
           <div class="mission-desc">${m.description}</div>
-          <div style="margin-top:5px"><span style="background:rgba(184,245,62,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(0,217,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
+          <div style="margin-top:5px"><span style="background:rgba(93,191,255,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(0,217,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
         </div>
         <div class="mission-prog-wrap" style="min-width:120px">
           <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>

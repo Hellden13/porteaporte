@@ -18,17 +18,17 @@
     .hero-manifeste {
       min-height: 70vh; padding: 80px 24px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, rgba(184,245,62,.15) 0%, transparent 60%), linear-gradient(135deg, #05080c, #001828);
+      background: radial-gradient(ellipse at center, rgba(93,191,255,.15) 0%, transparent 60%), linear-gradient(135deg, #05080c, #001828);
       text-align: center; position: relative; overflow: hidden;
     }
     .hero-manifeste::before {
       content: ''; position: absolute; inset: 0;
-      background-image: radial-gradient(circle at 20% 30%, rgba(0,217,255,.08) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(184,245,62,.08) 0%, transparent 40%);
+      background-image: radial-gradient(circle at 20% 30%, rgba(0,217,255,.08) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(93,191,255,.08) 0%, transparent 40%);
       pointer-events: none;
     }
-    .tag-hero { display: inline-block; padding: 6px 16px; background: rgba(184,245,62,.15); border: 1px solid rgba(184,245,62,.4); border-radius: 999px; color: var(--brand-lime); font-size: .8rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 28px; position: relative; z-index: 2; }
+    .tag-hero { display: inline-block; padding: 6px 16px; background: rgba(93,191,255,.15); border: 1px solid rgba(93,191,255,.4); border-radius: 999px; color: var(--brand-lime); font-size: .8rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 28px; position: relative; z-index: 2; }
     h1.title { font-size: clamp(2.4rem, 7vw, 5rem); font-weight: 900; line-height: 1.05; margin: 0 0 24px; position: relative; z-index: 2; }
-    h1.title span { background: linear-gradient(135deg, #00d9ff, #b8f53e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    h1.title span { background: linear-gradient(135deg, #00d9ff, #5dbfff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .hero-manifeste p.lead { font-size: clamp(1.05rem, 2vw, 1.4rem); color: var(--brand-muted); max-width: 760px; line-height: 1.6; position: relative; z-index: 2; margin: 0 0 30px; }
     .signature { color: var(--brand-lime); font-style: italic; font-size: 1rem; position: relative; z-index: 2; }
 
@@ -39,13 +39,13 @@
     .section p.intro { font-size: 1.2rem; color: var(--brand-muted); }
 
     .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 40px 0; }
-    .pillar { background: linear-gradient(160deg, rgba(16,22,30,.95), rgba(8,12,18,.98)); border: 1px solid rgba(184,245,62,.2); border-radius: 14px; padding: 24px; }
+    .pillar { background: linear-gradient(160deg, rgba(16,22,30,.95), rgba(8,12,18,.98)); border: 1px solid rgba(93,191,255,.2); border-radius: 14px; padding: 24px; }
     .pillar .icon { font-size: 2.4rem; margin-bottom: 10px; }
     .pillar h3 { margin: 0 0 8px; color: var(--brand-lime); font-size: 1.1rem; }
     .pillar p { font-size: .92rem; color: var(--brand-muted); margin: 0; line-height: 1.6; }
 
     .quote-block {
-      background: linear-gradient(135deg, rgba(184,245,62,.08), rgba(0,217,255,.06));
+      background: linear-gradient(135deg, rgba(93,191,255,.08), rgba(0,217,255,.06));
       border-left: 4px solid var(--brand-lime);
       padding: 30px 36px;
       border-radius: 14px;
@@ -58,18 +58,18 @@
     .quote-block::before { content: '«'; position: absolute; top: -10px; left: 20px; font-size: 4rem; color: var(--brand-lime); opacity: .3; }
     .quote-author { display: block; margin-top: 14px; font-size: .95rem; color: var(--brand-lime); font-style: normal; font-weight: 700; }
 
-    .promise { background: linear-gradient(135deg, rgba(0,217,255,.05), rgba(184,245,62,.05)); border: 1px solid var(--brand-border); border-radius: 16px; padding: 30px; margin: 30px 0; }
+    .promise { background: linear-gradient(135deg, rgba(0,217,255,.05), rgba(93,191,255,.05)); border: 1px solid var(--brand-border); border-radius: 16px; padding: 30px; margin: 30px 0; }
     .promise h3 { margin: 0 0 14px; color: var(--brand-lime); font-size: 1.15rem; }
     .promise ul { margin: 0; padding-left: 22px; line-height: 1.9; color: #d8dde6; }
 
     .cta-final {
       text-align: center; padding: 80px 24px;
-      background: radial-gradient(ellipse at center, rgba(184,245,62,.12) 0%, transparent 70%), #001828;
+      background: radial-gradient(ellipse at center, rgba(93,191,255,.12) 0%, transparent 70%), #001828;
       border-top: 1px solid var(--brand-border);
     }
     .cta-final h2 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 18px; }
     .cta-final p { color: var(--brand-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 32px; }
-    .btn-mega { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #00d9ff, #b8f53e); color: #001828; border-radius: 12px; font-weight: 900; font-size: 1.05rem; text-decoration: none; margin: 6px; transition: transform .2s; }
+    .btn-mega { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #00d9ff, #5dbfff); color: #001828; border-radius: 12px; font-weight: 900; font-size: 1.05rem; text-decoration: none; margin: 6px; transition: transform .2s; }
     .btn-mega:hover { transform: scale(1.05); }
     .btn-outline { background: transparent; border: 2px solid var(--brand-lime); color: var(--brand-lime); }
   </style>
