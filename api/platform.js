@@ -15,6 +15,7 @@ const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
+  ridePaymentCreate, ridePaymentSync,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
 } = require('../lib/_rides');
@@ -2704,6 +2705,152 @@ async function rideUserRating(req, res, ctx, body) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// CARTE DES VILLES — trajets actifs groupés par ville de départ
+// ─────────────────────────────────────────────────────────────────
+const QC_CITY_COORDS = {
+  'quebec':            { name: 'Québec',            lat: 46.8139, lng: -71.2080 },
+  'levis':             { name: 'Lévis',             lat: 46.7382, lng: -71.2465 },
+  'montreal':          { name: 'Montréal',          lat: 45.5017, lng: -73.5673 },
+  'laval':             { name: 'Laval',             lat: 45.6066, lng: -73.7124 },
+  'longueuil':         { name: 'Longueuil',         lat: 45.5371, lng: -73.5108 },
+  'trois-rivieres':    { name: 'Trois-Rivières',    lat: 46.3432, lng: -72.5432 },
+  'troisrivieres':     { name: 'Trois-Rivières',    lat: 46.3432, lng: -72.5432 },
+  'sherbrooke':        { name: 'Sherbrooke',        lat: 45.4042, lng: -71.8929 },
+  'saguenay':          { name: 'Saguenay',          lat: 48.4280, lng: -71.0680 },
+  'chicoutimi':        { name: 'Chicoutimi',        lat: 48.4280, lng: -71.0680 },
+  'jonquiere':         { name: 'Jonquière',         lat: 48.4170, lng: -71.2410 },
+  'rimouski':          { name: 'Rimouski',          lat: 48.4488, lng: -68.5236 },
+  'riviere-du-loup':   { name: 'Rivière-du-Loup',   lat: 47.8285, lng: -69.5424 },
+  'rivieredu-loup':    { name: 'Rivière-du-Loup',   lat: 47.8285, lng: -69.5424 },
+  'rivieredu loup':    { name: 'Rivière-du-Loup',   lat: 47.8285, lng: -69.5424 },
+  'saint-georges':     { name: 'Saint-Georges',     lat: 46.1184, lng: -70.6650 },
+  'saintgeorges':      { name: 'Saint-Georges',     lat: 46.1184, lng: -70.6650 },
+  'sainte-marie':      { name: 'Sainte-Marie',      lat: 46.4429, lng: -71.0207 },
+  'beauce':            { name: 'Beauce',            lat: 46.1184, lng: -70.6650 },
+  'drummondville':     { name: 'Drummondville',     lat: 45.8836, lng: -72.4849 },
+  'victoriaville':     { name: 'Victoriaville',     lat: 46.0521, lng: -71.9544 },
+  'gatineau':          { name: 'Gatineau',          lat: 45.4765, lng: -75.7013 },
+  'sept-iles':         { name: 'Sept-Îles',         lat: 50.2123, lng: -66.3835 },
+  'baie-comeau':       { name: 'Baie-Comeau',       lat: 49.2169, lng: -68.1487 },
+  'matane':            { name: 'Matane',            lat: 48.8504, lng: -67.5235 },
+  'gaspe':             { name: 'Gaspé',             lat: 48.8313, lng: -64.4859 },
+  'saint-hyacinthe':   { name: 'Saint-Hyacinthe',   lat: 45.6304, lng: -72.9573 },
+  'granby':            { name: 'Granby',            lat: 45.4001, lng: -72.7325 },
+  'joliette':          { name: 'Joliette',          lat: 46.0226, lng: -73.4421 }
+};
+function _normCity(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+async function rideActiveCities(req, res, ctx) {
+  // Récupère tous les trajets publiés à venir (next 90 days)
+  const inDays = new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString();
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=eq.publie&departure_time=gte.${new Date().toISOString()}&departure_time=lte.${inDays}&select=start_city,end_city,departure_time&limit=500`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  let rides = r.ok ? await r.json() : [];
+
+  // Fallback : sans filtre status si vide
+  if (!rides.length || !r.ok) {
+    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?departure_time=gte.${new Date().toISOString()}&select=start_city,end_city,departure_time&limit=500`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    if (r2.ok) rides = await r2.json();
+  }
+
+  // Group by start_city
+  const groups = {};
+  rides.forEach(ride => {
+    const cityKey = _normCity(ride.start_city);
+    if (!cityKey) return;
+    if (!groups[cityKey]) groups[cityKey] = { destinations: new Set(), count: 0 };
+    groups[cityKey].count++;
+    if (ride.end_city) groups[cityKey].destinations.add(ride.end_city);
+  });
+
+  // Build response with coords
+  const cities = [];
+  Object.entries(groups).forEach(([key, info]) => {
+    const coords = QC_CITY_COORDS[key];
+    if (!coords) return;
+    cities.push({
+      key,
+      name: coords.name,
+      lat: coords.lat,
+      lng: coords.lng,
+      ride_count: info.count,
+      destinations: Array.from(info.destinations).slice(0, 6)
+    });
+  });
+
+  return res.status(200).json({ total_rides: rides.length, cities });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ANALYTICS — log des recherches de trajets
+// ─────────────────────────────────────────────────────────────────
+async function rideSearchLog(req, res, ctx, body) {
+  const fromCity = String(body.from_city || body.from || '').trim().slice(0, 80);
+  const toCity = String(body.to_city || body.to || '').trim().slice(0, 80);
+  const resultsCount = Math.max(0, parseInt(body.results_count || 0, 10) || 0);
+  if (!fromCity && !toCity) return res.status(400).json({ error: 'from_city ou to_city requis' });
+
+  // Rate limit léger (anti-spam)
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`searchlog:${ip}`, 60, 300);
+  if (!rl.allowed) return res.status(200).json({ logged: false }); // silencieux
+
+  const payload = {
+    from_city: fromCity || null,
+    to_city: toCity || null,
+    from_norm: fromCity ? _normCity(fromCity) : null,
+    to_norm: toCity ? _normCity(toCity) : null,
+    results_count: resultsCount,
+    user_id: ctx.session?.id || null,
+    ip_hash: ip ? require('crypto').createHash('sha256').update(ip).digest('hex').slice(0, 16) : null
+  };
+  // Best-effort insert (silent fail if table missing)
+  try {
+    await fetch(`${ctx.sbUrl}/rest/v1/ride_search_logs`, {
+      method: 'POST', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(payload)
+    });
+  } catch {}
+  return res.status(200).json({ logged: true });
+}
+
+async function adminTopSearches(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const days = Math.min(90, Math.max(1, parseInt(body.days || 30, 10) || 30));
+  const sinceIso = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_search_logs?created_at=gte.${sinceIso}&select=from_norm,to_norm,results_count&limit=10000`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = r.ok ? await r.json() : [];
+
+  // Aggregate
+  const fromCounts = {}, toCounts = {}, pairCounts = {}, zeroResultPairs = {};
+  rows.forEach(row => {
+    if (row.from_norm) fromCounts[row.from_norm] = (fromCounts[row.from_norm] || 0) + 1;
+    if (row.to_norm) toCounts[row.to_norm] = (toCounts[row.to_norm] || 0) + 1;
+    if (row.from_norm && row.to_norm) {
+      const pk = `${row.from_norm} → ${row.to_norm}`;
+      pairCounts[pk] = (pairCounts[pk] || 0) + 1;
+      if ((row.results_count || 0) === 0) zeroResultPairs[pk] = (zeroResultPairs[pk] || 0) + 1;
+    }
+  });
+  const sortDesc = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, 20);
+
+  return res.status(200).json({
+    period_days: days,
+    total_searches: rows.length,
+    top_departure_cities: sortDesc(fromCounts),
+    top_destination_cities: sortDesc(toCounts),
+    top_pairs: sortDesc(pairCounts),
+    zero_result_pairs: sortDesc(zeroResultPairs)
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
 // MESSAGERIE COVOITURAGE — in-app, sécurisée RLS
 // ─────────────────────────────────────────────────────────────────
 async function rideMessageSend(req, res, ctx, body) {
@@ -4866,6 +5013,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
     if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
+    if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
+    if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
@@ -4876,6 +5025,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-message-send')    return await rideMessageSend(req, res, ctx, body);
     if (endpoint === 'ride-message-thread')  return await rideMessageThread(req, res, ctx, body);
     if (endpoint === 'ride-message-unread')  return await rideMessageUnreadCount(req, res, ctx);
+    if (endpoint === 'ride-active-cities')   return await rideActiveCities(req, res, ctx);
+    if (endpoint === 'ride-search-log')      return await rideSearchLog(req, res, ctx, body);
+    if (endpoint === 'admin-top-searches')   return await adminTopSearches(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);

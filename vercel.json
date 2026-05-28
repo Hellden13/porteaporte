@@ -201,6 +201,14 @@
                          "destination":  "/api/platform?endpoint=ride-book"
                      },
                      {
+                         "source":  "/api/ride-payment-create",
+                         "destination":  "/api/platform?endpoint=ride-payment-create"
+                     },
+                     {
+                         "source":  "/api/ride-payment-sync",
+                         "destination":  "/api/platform?endpoint=ride-payment-sync"
+                     },
+                     {
                          "source":  "/api/ride-package-book",
                          "destination":  "/api/platform?endpoint=ride-package-book"
                      },

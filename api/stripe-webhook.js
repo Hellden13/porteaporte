@@ -158,6 +158,35 @@ module.exports = async function handler(req, res) {
   /* ── payment_intent.amount_capturable_updated ──────────── */
   /* Carte confirmée, fonds autorisés, capture manuelle prête */
   if (type === 'payment_intent.amount_capturable_updated') {
+    const bookingId = obj.metadata?.booking_id;
+    if (bookingId && obj.metadata?.type === 'ride_booking' && obj.status === 'requires_capture') {
+      await sbPatch(sbUrl, sbKey, 'ride_bookings',
+        `id=eq.${encodeURIComponent(bookingId)}`,
+        {
+          status: 'confirme',
+          confirmed_at: new Date().toISOString(),
+          stripe_payment_intent: obj.id,
+          payment_status: 'requires_capture',
+          payment_currency: obj.currency || 'cad',
+          payment_authorized_at: new Date().toISOString()
+        }).catch(() => {});
+
+      await sbPatch(sbUrl, sbKey, 'transactions',
+        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
+        { statut: 'requires_capture' }).catch(() => {});
+
+      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        user_id: obj.metadata?.passenger_id || null,
+        actor_id: obj.metadata?.passenger_id || null,
+        event_type: 'ride_payment_authorized_requires_capture_webhook',
+        amount_cents: obj.amount_capturable || obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status,
+        evidence: { source: 'api/stripe-webhook', event_id: event.id, ride_id: obj.metadata?.ride_id || null, booking_id: bookingId }
+      }).catch(() => {});
+    }
+
     const livraisonId = obj.metadata?.livraison_id;
     if (livraisonId && obj.status === 'requires_capture') {
       await sbPatch(sbUrl, sbKey, 'livraisons',
@@ -189,6 +218,31 @@ module.exports = async function handler(req, res) {
   /* ── payment_intent.succeeded ───────────────────────────── */
   /* Capture complétée : garder Supabase aligné avec Stripe    */
   if (type === 'payment_intent.succeeded') {
+    const bookingId = obj.metadata?.booking_id;
+    if (bookingId && obj.metadata?.type === 'ride_booking') {
+      await sbPatch(sbUrl, sbKey, 'transactions',
+        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
+        { statut: 'succeeded' }).catch(() => {});
+
+      await sbPatch(sbUrl, sbKey, 'ride_bookings',
+        `id=eq.${encodeURIComponent(bookingId)}`,
+        {
+          payment_status: 'succeeded',
+          paid_at: new Date().toISOString()
+        }).catch(() => {});
+
+      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        user_id: obj.metadata?.passenger_id || null,
+        actor_id: null,
+        event_type: 'ride_payment_intent_succeeded_webhook_reconciled',
+        amount_cents: obj.amount_received || obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status,
+        evidence: { source: 'api/stripe-webhook', event_id: event.id, ride_id: obj.metadata?.ride_id || null, booking_id: bookingId }
+      }).catch(() => {});
+    }
+
     const livraisonId = obj.metadata?.livraison_id;
     if (livraisonId) {
       await sbPatch(sbUrl, sbKey, 'transactions',

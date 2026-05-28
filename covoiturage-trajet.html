@@ -6,6 +6,7 @@
   <title>Détail du trajet — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css"/>
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     body { background: #f7f8fa; }
     .trajet-wrapper {
@@ -108,6 +109,10 @@
     .pkg-price-preview { background: #f0edff; border-radius: 10px; padding: 10px 14px; font-size: .83rem; color: #4b44cc; margin-bottom: 14px; display: none; }
     .pkg-price-preview strong { font-size: 1.1rem; }
     .pkg-unavail { text-align: center; color: #aaa; font-size: .85rem; padding: 16px 0; display: none; }
+    .payment-box { display:none; border:1.5px solid #e0e0e0; border-radius:12px; padding:12px; margin:14px 0; background:#fff; }
+    .payment-box.active { display:block; }
+    .payment-title { font-size:.86rem; font-weight:700; color:#1a1a2e; margin-bottom:8px; }
+    .payment-note { font-size:.76rem; color:#666; margin-top:8px; line-height:1.35; }
     .btn-reserve { width: 100%; background: linear-gradient(135deg,#6c63ff,#8b7fff); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 15px rgba(108,99,255,.35); }
     .btn-reserve:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.45); }
     .btn-reserve:disabled { opacity: .6; cursor: not-allowed; transform: none; }
@@ -264,6 +269,12 @@
           <div class="pkg-unavail" id="pkg-unavail">Ce trajet n'accepte pas les colis.</div>
         </div>
 
+        <div class="payment-box" id="ride-payment-box">
+          <div class="payment-title" id="ride-payment-title">Paiement securise</div>
+          <div id="ride-payment-element"></div>
+          <div class="payment-note">La carte est autorisee maintenant. Le paiement est capture seulement apres validation du trajet.</div>
+        </div>
+
         <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Reserver ma place</button>
       </div>
     </div>
@@ -282,6 +293,10 @@ let currentUser  = null;
 let currentSession = null;
 let activeTab    = 'passenger';
 let rideSettings = null;
+let pendingRidePayment = null;
+let stripeClient = null;
+let stripeElements = null;
+let ridePaymentReady = false;
 
 const params = new URLSearchParams(location.search);
 const rideId = params.get('id') || params.get('ride_id');
@@ -301,6 +316,17 @@ function switchTab(tab) {
   document.getElementById('form-passenger').style.display = tab === 'passenger' ? '' : 'none';
   document.getElementById('form-package').style.display   = tab === 'package'   ? '' : 'none';
   document.getElementById('btn-reserve').textContent = tab === 'passenger' ? 'Reserver ma place' : 'Envoyer mon colis';
+  if (tab !== 'passenger') resetRidePayment();
+}
+
+function resetRidePayment() {
+  pendingRidePayment = null;
+  stripeElements = null;
+  ridePaymentReady = false;
+  var box = document.getElementById('ride-payment-box');
+  var el = document.getElementById('ride-payment-element');
+  if (box) box.classList.remove('active');
+  if (el) el.innerHTML = '';
 }
 
 function updatePkgPrice() {
@@ -630,7 +656,11 @@ async function submitBooking() {
   btn.textContent = 'En cours...';
   try {
     if (activeTab === 'passenger') {
-      await bookPassenger();
+      if (ridePaymentReady && pendingRidePayment) {
+        await confirmRidePayment();
+      } else {
+        await bookPassenger();
+      }
     } else {
       await bookPackage();
     }
@@ -638,8 +668,41 @@ async function submitBooking() {
     showToast('Erreur : ' + e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = activeTab === 'passenger' ? 'Reserver ma place' : 'Envoyer mon colis';
+    btn.textContent = activeTab === 'passenger'
+      ? (ridePaymentReady ? 'Payer et confirmer' : 'Reserver ma place')
+      : 'Envoyer mon colis';
   }
+}
+
+async function loadStripeClient() {
+  if (stripeClient) return stripeClient;
+  if (!window.Stripe) throw new Error('Stripe.js indisponible');
+  var cfgRes = await fetch('/api/platform?endpoint=stripe-public-config');
+  var cfg = await cfgRes.json();
+  if (!cfgRes.ok || !cfg.publishable_key) {
+    throw new Error('Stripe public non configure');
+  }
+  stripeClient = window.Stripe(cfg.publishable_key);
+  return stripeClient;
+}
+
+async function mountRidePayment(paymentData) {
+  const stripe = await loadStripeClient();
+  stripeElements = stripe.elements({ clientSecret: paymentData.client_secret });
+  const paymentElement = stripeElements.create('payment', {
+    layout: 'tabs',
+    fields: { billingDetails: { name: 'auto', email: 'auto' } }
+  });
+  var host = document.getElementById('ride-payment-element');
+  host.innerHTML = '';
+  paymentElement.mount('#ride-payment-element');
+  document.getElementById('ride-payment-title').textContent =
+    'Paiement securise - ' + Number(paymentData.montant_dollars || 0).toFixed(2) + ' $ ' + String(paymentData.currency || 'CAD').toUpperCase();
+  document.getElementById('ride-payment-box').classList.add('active');
+  pendingRidePayment = paymentData;
+  ridePaymentReady = true;
+  document.getElementById('btn-reserve').textContent = 'Payer et confirmer';
+  showToast('Reservation creee. Confirme le paiement pour bloquer ta place.', 'success');
 }
 
 async function bookPassenger() {
@@ -664,8 +727,45 @@ async function bookPassenger() {
   });
   var data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || 'Erreur reservation');
+
+  var paymentRes = await fetch('/api/platform?endpoint=ride-payment-create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ booking_id: data.booking.id })
+  });
+  var paymentData = await paymentRes.json();
+  if (!paymentRes.ok || paymentData.error) throw new Error(paymentData.error || 'Erreur paiement');
+  if (paymentData.already_authorized) {
+    showToast('Reservation confirmee !', 'success');
+    setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 1500);
+    return;
+  }
+  await mountRidePayment(paymentData);
+}
+
+async function confirmRidePayment() {
+  if (!stripeClient || !stripeElements || !pendingRidePayment) throw new Error('Paiement non initialise');
+  var result = await stripeClient.confirmPayment({
+    elements: stripeElements,
+    redirect: 'if_required'
+  });
+  if (result.error) throw new Error(result.error.message || 'Paiement refuse');
+
+  var pi = result.paymentIntent || {};
+  var syncRes = await fetch('/api/platform?endpoint=ride-payment-sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({
+      booking_id: pendingRidePayment.booking_id,
+      payment_intent_id: pi.id || pendingRidePayment.payment_intent_id
+    })
+  });
+  var sync = await syncRes.json();
+  if (!syncRes.ok || sync.error || !sync.authorized) {
+    throw new Error(sync.error || 'Paiement non autorise par Stripe');
+  }
   showToast('Reservation confirmee !', 'success');
-  setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 2000);
+  setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 1500);
 }
 
 async function bookPackage() {

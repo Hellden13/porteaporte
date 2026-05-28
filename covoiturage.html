@@ -702,7 +702,16 @@
       try {
         const res  = await fetch('/api/platform?' + params);
         const data = await res.json();
-        renderResults(data.rides || []);
+        const rides = data.rides || [];
+        renderResults(rides);
+        // Log la recherche pour analytics (fire-and-forget, non bloquant)
+        if (from || to) {
+          fetch('/api/platform?endpoint=ride-search-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: 'ride-search-log', from_city: from, to_city: to, results_count: rides.length })
+          }).catch(function(){});
+        }
       } catch (e) {
         renderResults([]);
       } finally {

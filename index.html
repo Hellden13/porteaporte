@@ -1230,6 +1230,90 @@
       </div>
     </section>
 
+    <!-- ═══ CARTE INTERACTIVE — trajets actifs au Québec ═══ -->
+    <section class="map-section" aria-labelledby="map-title" style="padding:60px 20px;background:rgba(0,217,255,.03);border-top:1px solid var(--brand-border);border-bottom:1px solid var(--brand-border);">
+      <div style="max-width:1120px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div class="eyebrow" style="justify-content:center;">🗺️ Carte des trajets en cours</div>
+          <h2 id="map-title" style="font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px;">Qui passe près de chez toi ?</h2>
+          <p style="color:var(--brand-muted);margin:0;">Clique sur une ville pour voir les trajets disponibles au départ de là.</p>
+        </div>
+        <div id="qc-map" style="height:480px;max-height:60vh;width:100%;border-radius:16px;overflow:hidden;border:1px solid var(--brand-border);background:#0a1118;"></div>
+        <div id="qc-map-empty" style="display:none;text-align:center;padding:30px 20px;color:var(--brand-muted);font-size:.95rem;">
+          🕓 Aucun trajet actif pour le moment.
+          <a href="/covoiturage-publier.html" style="color:var(--brand-lime);text-decoration:underline;font-weight:700;margin-left:4px;">Sois le premier à en publier un</a>
+        </div>
+      </div>
+    </section>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+      (function () {
+        if (typeof L === 'undefined') return setTimeout(arguments.callee, 200);
+        // Init carte centrée sur le Québec
+        var map = L.map('qc-map', { scrollWheelZoom: false, zoomControl: true }).setView([47.5, -71.5], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 18,
+          attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // Charge les villes actives
+        fetch('/api/platform?endpoint=ride-active-cities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'ride-active-cities' })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var cities = (d && d.cities) || [];
+          if (!cities.length) {
+            document.getElementById('qc-map-empty').style.display = 'block';
+            // Affiche quand même quelques villes principales pour le contexte
+            var sample = [
+              { name: 'Québec', lat: 46.8139, lng: -71.2080 },
+              { name: 'Lévis', lat: 46.7382, lng: -71.2465 },
+              { name: 'Montréal', lat: 45.5017, lng: -73.5673 },
+              { name: 'Saguenay', lat: 48.4280, lng: -71.0680 },
+              { name: 'Trois-Rivières', lat: 46.3432, lng: -72.5432 },
+              { name: 'Rimouski', lat: 48.4488, lng: -68.5236 }
+            ];
+            sample.forEach(function (c) {
+              L.circleMarker([c.lat, c.lng], { radius: 6, color: '#666', fillColor: '#444', fillOpacity: 0.5, weight: 1 })
+                .bindPopup('<strong>' + c.name + '</strong><br><span style="color:#888;font-size:.85rem;">Aucun trajet actif</span>')
+                .addTo(map);
+            });
+            return;
+          }
+          // Affiche un marqueur par ville active
+          cities.forEach(function (c) {
+            var size = Math.min(28, Math.max(10, 8 + c.ride_count * 2));
+            var color = c.ride_count >= 5 ? '#b8f53e' : c.ride_count >= 2 ? '#00d9ff' : '#ffd166';
+            var marker = L.circleMarker([c.lat, c.lng], {
+              radius: size,
+              color: color,
+              fillColor: color,
+              fillOpacity: 0.4,
+              weight: 2
+            }).addTo(map);
+            var destText = c.destinations && c.destinations.length
+              ? '<div style="font-size:.78rem;color:#666;margin-top:4px;">Vers : ' + c.destinations.join(', ') + '</div>'
+              : '';
+            marker.bindPopup(
+              '<div style="font-family:system-ui,sans-serif;min-width:160px;">' +
+                '<strong style="font-size:1rem;color:#222;">' + c.name + '</strong><br>' +
+                '<span style="color:' + color + ';font-weight:800;">' + c.ride_count + ' trajet' + (c.ride_count > 1 ? 's' : '') + ' actif' + (c.ride_count > 1 ? 's' : '') + '</span>' +
+                destText +
+                '<div style="margin-top:8px;"><a href="/covoiturage.html?from=' + encodeURIComponent(c.name) + '" style="color:#00b8d4;font-weight:700;text-decoration:none;">Voir les trajets →</a></div>' +
+              '</div>'
+            );
+          });
+        })
+        .catch(function () {
+          document.getElementById('qc-map-empty').style.display = 'block';
+        });
+      })();
+    </script>
+
     <!-- ═══ MODE IMPACT — la pièce maîtresse émotionnelle ═══ -->
     <section class="impact-zone-hero" aria-labelledby="impact-hero-title">
       <div class="impact-zone-inner">
