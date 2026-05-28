@@ -226,6 +226,111 @@
   .pp-fade-up, .pp-pulse, .pp-btn, .pp-card, .pp-lift { animation: none !important; transition: none !important; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   COUCHES D'ENGAGEMENT — Simple / Découverte / Immersion
+   ═══════════════════════════════════════════════════════════════ */
+/* Par défaut : Couche 1 (Simple). data-layer="2" et "3" sont cachés. */
+body[data-layer-mode="simple"] [data-layer="2"],
+body[data-layer-mode="simple"] [data-layer="3"] { display: none !important; }
+
+/* Découverte : on montre couche 2, on cache couche 3 */
+body[data-layer-mode="discovery"] [data-layer="3"] { display: none !important; }
+
+/* Immersion : tout visible — pas de override (état naturel) */
+
+/* Pilule sélecteur couche (subtile, en bas à gauche) */
+.pp-layer-pill {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 850;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 14px;
+  background: rgba(11, 18, 40, 0.85);
+  border: 1px solid var(--pp-divider-strong);
+  border-radius: var(--pp-r-pill);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--pp-white-dim);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--pp-shadow-md);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s var(--pp-ease), border-color 0.2s;
+}
+.pp-layer-pill:hover { border-color: var(--pp-electric); transform: translateY(-2px); }
+.pp-layer-pill .pp-layer-label { color: var(--pp-electric-bright); }
+.pp-layer-pill .pp-layer-chevron {
+  background: var(--pp-electric);
+  color: #051022;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  margin-left: 4px;
+}
+
+/* Menu dropdown des couches */
+.pp-layer-menu {
+  position: fixed;
+  bottom: 60px;
+  left: 18px;
+  z-index: 851;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(11, 18, 40, 0.95);
+  border: 1px solid var(--pp-divider-strong);
+  border-radius: var(--pp-r-md);
+  min-width: 220px;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--pp-shadow-lg);
+}
+.pp-layer-menu.open { display: flex; }
+.pp-layer-opt {
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--pp-white-dim);
+  transition: background 0.2s;
+}
+.pp-layer-opt:hover { background: rgba(31, 139, 255, 0.1); color: var(--pp-white); }
+.pp-layer-opt.active { background: rgba(31, 139, 255, 0.15); color: var(--pp-electric-bright); }
+.pp-layer-opt .pp-layer-opt-name { font-weight: 800; font-size: 0.92rem; }
+.pp-layer-opt .pp-layer-opt-desc { font-size: 0.74rem; color: var(--pp-white-muted); }
+
+/* Animation subtile quand on débloque une couche */
+@keyframes ppLayerUnlock {
+  0% { transform: scale(0.6) translateY(20px); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.pp-layer-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 14px 22px;
+  background: var(--pp-grad-cta);
+  color: #051022;
+  border-radius: var(--pp-r-pill);
+  font-weight: 800;
+  font-size: 0.92rem;
+  box-shadow: var(--pp-shadow-lg);
+  animation: ppLayerUnlock 0.5s var(--pp-ease) both;
+}
+
 /* ── Overrides globaux : on remappe les anciennes couleurs vers la palette bleue ── */
 /* Le fichier est chargé APRÈS brand-uniform.css donc :root gagne la cascade */
 :root {
