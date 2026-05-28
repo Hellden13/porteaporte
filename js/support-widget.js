@@ -165,25 +165,26 @@ if (!window.__PIA_LOADED__) {
           right: 22px;
           bottom: 22px;
           z-index: 9998;
-          display: inline-flex;
+          display: grid;
+          place-items: center;
           align-items: center;
-          gap: 9px;
-          min-height: 50px;
-          padding: 0 16px;
-          border: 1px solid rgba(184,245,62,.45);
-          border-radius: 999px;
+          width: 58px;
+          height: 58px;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 18px;
           background: linear-gradient(135deg,#00d9ff,#b8f53e);
           color: #071006;
           font-weight: 900;
           box-shadow: 0 18px 46px rgba(0,0,0,.45), 0 0 24px rgba(0,217,255,.22);
           cursor: pointer;
         }
-        #pia-launch .pia-dot {
-          width: 9px;
-          height: 9px;
-          border-radius: 50%;
-          background: #071006;
-          box-shadow: 0 0 0 5px rgba(7,16,6,.12);
+        #pia-launch svg {
+          width: 27px;
+          height: 27px;
+          display: block;
+          fill: #fff;
+          filter: drop-shadow(0 2px 3px rgba(0,0,0,.2));
         }
         #pia-panel {
           position: fixed;
@@ -320,10 +321,9 @@ if (!window.__PIA_LOADED__) {
         }
         @media (max-width: 560px) {
           #pia-launch {
-            left: 14px;
-            right: 14px;
+            left: auto;
+            right: 16px;
             bottom: 14px;
-            justify-content: center;
           }
           #pia-panel {
             left: 12px;
@@ -345,7 +345,9 @@ if (!window.__PIA_LOADED__) {
       const button = document.createElement('button');
       button.id = 'pia-launch';
       button.type = 'button';
-      button.innerHTML = '<span class="pia-dot"></span><span>Pia me guide</span>';
+      button.setAttribute('aria-label', 'Ouvrir Pia');
+      button.title = 'Pia';
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5c0 4.1-3.8 7.5-8.5 7.5-1 0-2-.15-2.9-.46L4 21l1.18-4.02C3.82 15.6 3 13.7 3 11.5 3 7.36 6.8 4 11.5 4S20 7.36 20 11.5Z"/></svg>';
       button.addEventListener('click', function () { isOpen ? close() : open(); });
 
       const panel = document.createElement('section');
