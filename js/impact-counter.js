@@ -18,8 +18,8 @@
       .pap-impact-val { font-size: 2.2rem; font-weight: 900; color: #b8f53e; line-height: 1; margin-bottom: 4px; transition: all .8s ease; font-variant-numeric: tabular-nums; }
       .pap-impact-lbl { font-size: .82rem; color: #a8b0ba; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
       .pap-impact-pulse { position: relative; }
-      .pap-impact-pulse::after { content: ''; position: absolute; top: 6px; right: -8px; width: 8px; height: 8px; background: #00ff9f; border-radius: 50%; box-shadow: 0 0 0 0 rgba(0,255,159,.5); animation: papPulse 2s infinite; }
-      @keyframes papPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,255,159,.5); } 50% { box-shadow: 0 0 0 8px rgba(0,255,159,0); } }
+      .pap-impact-pulse::after { content: ''; position: absolute; top: 6px; right: -8px; width: 8px; height: 8px; background: #5dbfff; border-radius: 50%; box-shadow: 0 0 0 0 rgba(93,191,255,.5); animation: papPulse 2s infinite; }
+      @keyframes papPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(93,191,255,.5); } 50% { box-shadow: 0 0 0 8px rgba(93,191,255,0); } }
       .pap-impact-title { text-align: center; color: #b8f53e; font-weight: 900; font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
       .pap-impact-subtitle { text-align: center; color: #a8b0ba; font-size: .85rem; margin-bottom: 18px; }
     `;

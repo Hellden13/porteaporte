@@ -45,7 +45,7 @@
       .pap-rating-modal .submit:disabled { opacity:.5; cursor:not-allowed; }
       .pap-rating-modal .cancel { background:rgba(255,255,255,.05); color:#a8b0ba; border:1px solid #1e2535; }
       .pap-rating-msg { padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:.88rem; display:none; }
-      .pap-rating-msg.ok { display:block; background:rgba(0,255,159,.1); color:#7dffc1; border:1px solid rgba(0,255,159,.3); }
+      .pap-rating-msg.ok { display:block; background:rgba(93,191,255,.1); color:#7dffc1; border:1px solid rgba(93,191,255,.3); }
       .pap-rating-msg.err { display:block; background:rgba(255,90,90,.1); color:#ff9999; border:1px solid rgba(255,90,90,.3); }
       .pap-thanks { text-align:center; padding:20px 0; color:#7dffc1; font-weight:700; font-size:1rem; }
       .pap-thanks .big { font-size:3rem; line-height:1; margin-bottom:10px; }

@@ -17,7 +17,7 @@
       @keyframes papShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
       .pap-toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(10,14,20,.95); border:1px solid rgba(184,245,62,.4); padding:12px 22px; border-radius:10px; color:#fff; font-weight:700; z-index:99998; animation:papSlideDown .3s ease; box-shadow:0 8px 30px rgba(0,0,0,.5); }
       .pap-toast.err { border-color:rgba(255,90,90,.5); }
-      .pap-toast.ok { border-color:rgba(0,255,159,.5); }
+      .pap-toast.ok { border-color:rgba(93,191,255,.5); }
       @keyframes papSlideDown { from{transform:translate(-50%,-30px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
     `;
     document.head.appendChild(s);

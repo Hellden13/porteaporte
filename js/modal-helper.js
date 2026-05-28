@@ -14,11 +14,11 @@
     .pp-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
     .pp-modal-btn{border:1px solid #1F2937;border-radius:8px;padding:11px 16px;font-weight:800;cursor:pointer;background:#1A1F28;color:#F0F2F5}
     .pp-modal-btn:hover{border-color:#00D9FF}
-    .pp-modal-btn.primary{border-color:transparent;background:linear-gradient(135deg,#00D9FF,#00FF9F);color:#0A0C10}
+    .pp-modal-btn.primary{border-color:transparent;background:linear-gradient(135deg,#00D9FF,#5dbfff);color:#0A0C10}
     .pp-modal-btn.danger{border-color:transparent;background:#EF4444;color:white}
     .pp-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);z-index:10001;max-width:min(92vw,560px);padding:13px 16px;border-radius:8px;background:#111318;border:1px solid #1F2937;color:#F0F2F5;box-shadow:0 16px 44px rgba(0,0,0,.45);opacity:0;transition:all .18s ease;font-size:14px;line-height:1.45}
     .pp-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .pp-toast.success{border-color:#00FF9F;color:#00FF9F}
+    .pp-toast.success{border-color:#5dbfff;color:#5dbfff}
     .pp-toast.error{border-color:#EF4444;color:#ffb4b4}
     .pp-toast.info{border-color:#00D9FF;color:#BFEFFF}
   `;

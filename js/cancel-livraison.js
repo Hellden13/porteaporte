@@ -22,7 +22,7 @@
       .pc-modal h2 { margin:0 0 8px; color:#fff; font-size:1.3rem; }
       .pc-modal .sub { color:#a8b0ba; font-size:.9rem; margin:0 0 20px; line-height:1.5; }
       .pc-status-card { padding:16px 18px; border-radius:12px; margin-bottom:18px; border:1px solid; }
-      .pc-status-card.full { background:rgba(0,255,159,.08); border-color:rgba(0,255,159,.35); color:#7dffc1; }
+      .pc-status-card.full { background:rgba(93,191,255,.08); border-color:rgba(93,191,255,.35); color:#7dffc1; }
       .pc-status-card.partial { background:rgba(255,200,0,.08); border-color:rgba(255,200,0,.35); color:#ffd700; }
       .pc-status-card.none { background:rgba(255,90,90,.08); border-color:rgba(255,90,90,.35); color:#ff9999; }
       .pc-status-card strong { display:block; font-size:1.1rem; margin-bottom:6px; }
