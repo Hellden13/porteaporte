@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateurs - PorteaPorte</title>
+  <meta name="description" content="Calculateurs PorteaPorte pour comparer les couts colis et simuler les revenus conducteur.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { margin:0; background:#07090d; color:#f6fbff; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+    main { min-height:100vh; padding:60px 18px; display:grid; place-items:center; }
+    .wrap { width:min(980px,100%); }
+    h1 { font-size:clamp(2.4rem,7vw,5.4rem); line-height:.92; margin:12px 0 16px; letter-spacing:0; }
+    p { color:#a8b4c2; line-height:1.7; max-width:720px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:28px; }
+    .card { padding:26px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.055); color:#f6fbff; text-decoration:none; }
+    .card strong { color:#b8f53e; }
+    @media(max-width:760px){ .grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wrap">
+      <a href="/" style="color:#a8b4c2;text-decoration:none;font-weight:800;">← Accueil</a>
+      <h1>Comparer sans charger l'accueil.</h1>
+      <p>Les comparateurs et scenarios longs ont ete sortis de la homepage courte. Ils restent accessibles ici.</p>
+      <div class="grid">
+        <a class="card" href="/calculateur-prix.html"><h2>Calculateur prix colis</h2><p>Comparer le cout d'un envoi PorteaPorte avec d'autres options.</p><strong>Ouvrir</strong></a>
+        <a class="card" href="/calculateur-revenus-livreur.html"><h2>Simulateur conducteur</h2><p>Estimer le revenu possible quand un trajet accepte aussi des colis.</p><strong>Ouvrir</strong></a>
+      </div>
+    </div>
+  </main>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>

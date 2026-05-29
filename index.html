@@ -3,2368 +3,583 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PorteàPorte — Covoiturage Québec sécurisé (+ envoi de colis)</title>
-  <meta name="description" content="Covoiturage entre Québécois avec profils de confiance, messagerie et réservations. Réserve ton siège entre Québec, Lévis, Saguenay et plus — ou glisse un colis dans le coffre.">
+  <title>PorteaPorte - Covoiturage Quebec securise</title>
+  <meta name="description" content="Covoiturage entre Quebecois avec profils de confiance, reservations protegees et option colis dans le coffre. Trouve ou publie un trajet au Quebec.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0A0C10">
+  <meta name="theme-color" content="#07090d">
+  <meta property="og:title" content="PorteaPorte - Covoiturage Quebec securise">
+  <meta property="og:description" content="Trouve un siege, publie ton trajet ou glisse un colis dans le coffre d'un conducteur verifie.">
+  <meta property="og:image" content="/assets/photos/hero-covoiturage-confiance.png">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/supabase-config.js"></script>
   <style>
-    .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      padding: 16px clamp(18px, 4vw, 48px);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+    :root {
+      --bg: #07090d;
+      --panel: #0d131b;
+      --panel-2: #111a24;
+      --text: #f6fbff;
+      --muted: #a8b4c2;
+      --line: rgba(255,255,255,.12);
+      --cyan: #00d9ff;
+      --lime: #b8f53e;
+      --green: #12d18e;
+      --shadow: 0 24px 80px rgba(0,0,0,.45);
     }
 
-    .brand-mark {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--brand-text);
-      font-weight: 900;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .brand-mark img {
-      width: 34px;
-      height: 34px;
-      object-fit: contain;
-    }
-
-    .main-nav {
-      display: flex;
-      align-items: center;
-      gap: 22px;
-    }
-
-    .main-nav a {
-      color: var(--brand-muted);
-      font-weight: 650;
-      text-decoration: none;
-      font-size: 0.95rem;
-    }
-
-    .main-nav a:hover,
-    .main-nav a:focus-visible {
-      color: var(--brand-text);
-    }
-
-    /* ── Mode Simple/Impact ─────────────────────────────── */
-    /* Par défaut : mode simple — les éléments [data-impact] sont cachés */
-    body.mode-simple [data-impact] { display: none !important; }
-
-    #impact-toggle {
-      background: none;
-      border: 1px solid var(--brand-border);
-      border-radius: 999px;
-      color: var(--brand-muted);
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 5px 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      letter-spacing: 0.04em;
-    }
-    #impact-toggle:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
-    /* Cacher le bouton du nav quand Mode Impact est actif — la pilule en bas prend le relai */
-    body:not(.mode-simple) #impact-toggle { display: none; }
-
-    /* Bandeau Mode Impact actif — discret en bas de page */
-    #impact-banner {
-      display: none;
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      align-items: center;
-      gap: 12px;
-      padding: 8px 16px;
-      background: rgba(10,15,30,.92);
-      border: 1px solid rgba(93,191,255,.3);
-      border-radius: 50px;
-      font-size: 0.78rem;
-      color: var(--brand-lime);
-      font-weight: 700;
-      white-space: nowrap;
-      z-index: 800;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 20px rgba(0,0,0,.4);
-    }
-    body:not(.mode-simple) #impact-banner { display: flex; }
-    #impact-banner span { color: var(--brand-muted); font-weight: 400; display: none; }
-    #impact-banner button {
-      background: none; border: 1px solid rgba(93,191,255,.3);
-      border-radius: 20px; color: var(--brand-lime);
-      font-size: 0.72rem; padding: 3px 10px; cursor: pointer;
-    }
-
-    /* Feedback popup */
-    #feedback-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.7); z-index: 9999;
-      align-items: center; justify-content: center; padding: 20px;
-    }
-    #feedback-overlay.open { display: flex; }
-    #feedback-box {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border);
-      border-radius: 16px; padding: 32px;
-      max-width: 460px; width: 100%;
-    }
-    #feedback-box h3 { font-size: 1.1rem; margin-bottom: 6px; }
-    #feedback-box p { color: var(--brand-muted); font-size: .88rem; margin-bottom: 22px; line-height: 1.6; }
-    .fb-question { margin-bottom: 18px; }
-    .fb-question label { display: block; font-size: .88rem; font-weight: 700; margin-bottom: 8px; }
-    .fb-options { display: flex; gap: 8px; }
-    .fb-options button {
-      flex: 1; padding: 9px; border-radius: 8px;
-      border: 1px solid var(--brand-border); background: var(--brand-bg-dark);
-      color: var(--brand-muted); font-size: .85rem; cursor: pointer; transition: all .2s;
-    }
-    .fb-options button.selected { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(93,191,255,.08); }
-    #fb-submit {
-      width: 100%; padding: 12px; border-radius: 8px; border: none;
-      background: var(--brand-lime); color: #0A0C10;
-      font-weight: 800; font-size: .95rem; cursor: pointer; margin-top: 8px;
-    }
-    #fb-submit:disabled { opacity: .5; cursor: not-allowed; }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .pia-guide-strip {
-      margin: 14px clamp(18px, 4vw, 48px) 0;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      border: 1px solid rgba(93,191,255,.24);
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(93,191,255,.08), rgba(0,217,255,.045));
-      box-shadow: 0 14px 42px rgba(0,0,0,.22);
-    }
-
-    .pia-guide-strip strong {
-      display: block;
-      color: var(--brand-text);
-      font-size: .98rem;
-      margin-bottom: 2px;
-    }
-
-    .pia-guide-strip span {
-      color: var(--brand-muted);
-      font-size: .86rem;
-      line-height: 1.45;
-    }
-
-    .pia-guide-actions {
-      display: flex;
-      gap: 9px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .hero {
-      min-height: calc(100vh - 74px);
-      display: grid;
-      grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr);
-      align-items: center;
-      gap: clamp(24px, 4vw, 56px);
-      padding: clamp(42px, 8vw, 88px) clamp(18px, 4vw, 48px) 48px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .hero-copy {
-      max-width: 680px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 18px;
-      color: var(--brand-lime);
-      font-size: 0.78rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 28px;
-      height: 2px;
-      background: var(--brand-lime);
-      border-radius: 999px;
-    }
-
-    .hero h1 {
-      margin: 0 0 20px;
-      color: var(--brand-text);
-      font-size: clamp(2.45rem, 7vw, 5.35rem);
-      line-height: 0.98;
-      font-weight: 900;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 72% 8%, rgba(0,217,255,.18), transparent 28%),
+        radial-gradient(circle at 10% 34%, rgba(184,245,62,.08), transparent 26%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       letter-spacing: 0;
     }
 
-    .hero h1 span {
-      color: var(--brand-cyan);
-    }
-
-    .hero p {
-      max-width: 610px;
-      margin: 0 0 30px;
-      color: var(--brand-muted);
-      font-size: clamp(1rem, 2.4vw, 1.22rem);
-      line-height: 1.75;
-    }
-
-    .cta-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-
-    .trust-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      max-width: 570px;
-    }
-
-    .trust-item {
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--brand-border);
-      border-radius: 8px;
-    }
-
-    .trust-item strong {
-      display: block;
-      color: var(--brand-text);
-      font-size: 1.1rem;
-      margin-bottom: 2px;
-    }
-
-    .trust-item span {
-      color: var(--brand-muted);
-      font-size: 0.84rem;
-    }
-
-    .hero-panel {
-      position: relative;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.5);
-      overflow: hidden;
-      background: var(--brand-bg-dark);
-    }
-
-    .hero-panel img.hero-photo {
-      width: 100%;
-      height: auto;
-      object-fit: unset;
-      display: block;
-    }
-
-    .hero-panel::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(10, 12, 16, 0.05) 0%,
-        rgba(10, 12, 16, 0.0) 40%,
-        rgba(10, 12, 16, 0.7) 75%,
-        rgba(10, 12, 16, 0.92) 100%
-      );
-      pointer-events: none;
-    }
-
-    .live-video-section {
-      padding: 34px clamp(18px, 4vw, 48px) 64px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0));
-    }
-
-    .live-video-inner {
-      max-width: 1120px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
-      gap: clamp(24px, 5vw, 52px);
-      align-items: center;
-    }
-
-    .live-video-copy h2 {
-      margin: 0 0 14px;
-      color: var(--brand-text);
-      font-size: clamp(1.55rem, 3.5vw, 2.45rem);
-      line-height: 1.12;
-    }
-
-    .live-video-copy p {
-      margin: 0 0 22px;
-      color: var(--brand-muted);
-      line-height: 1.7;
-      max-width: 58ch;
-    }
-
-    .live-video-points {
-      display: grid;
-      gap: 10px;
-      margin: 0 0 26px;
-      padding: 0;
-      list-style: none;
-      color: var(--brand-text);
-      font-weight: 700;
-    }
-
-    .live-video-points li {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
-
-    .live-video-points li::before {
-      content: '';
-      width: 9px;
-      height: 9px;
-      margin-top: 8px;
-      border-radius: 999px;
-      background: var(--brand-lime);
-      box-shadow: 0 0 0 4px rgba(93,191,255,0.13);
-      flex: 0 0 auto;
-    }
-
-    .live-video-frame {
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 22px;
-      overflow: hidden;
-      background: #071018;
-      box-shadow: 0 24px 58px rgba(0,0,0,0.34);
-    }
-
-    .live-video-frame video {
-      display: block;
-      width: 100%;
-      aspect-ratio: 9 / 16;
-      object-fit: cover;
-      background: #05080c;
-    }
-
-    .route-map {
-      position: absolute;
-      inset: 0;
-      opacity: 0.78;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
-      background-size: 42px 42px;
-    }
-
-    .route-line {
-      position: absolute;
-      left: 14%;
-      right: 13%;
-      top: 43%;
-      height: 3px;
-      background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime));
-      transform: rotate(-18deg);
-      transform-origin: center;
-      box-shadow: 0 0 24px rgba(0, 217, 255, 0.34);
-    }
-
-    .route-point {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border: 3px solid var(--brand-bg-dark);
-      border-radius: 50%;
-      background: var(--brand-lime);
-      box-shadow: 0 0 0 6px rgba(0, 255, 159, 0.16);
-    }
-
-    .route-point.start { left: 15%; top: 52%; }
-    .route-point.end { right: 16%; top: 30%; background: var(--brand-cyan); box-shadow: 0 0 0 6px rgba(0, 217, 255, 0.16); }
-
-    .delivery-card {
-      position: absolute;
-      left: 28px;
-      right: 28px;
-      bottom: 28px;
-      display: grid;
-      gap: 16px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      background: rgba(10, 12, 16, 0.82);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    .delivery-card header {
-      position: static;
+    a { color: inherit; }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0;
-      border: 0;
-      background: transparent !important;
+      gap: 20px;
+      padding: 16px clamp(18px, 4vw, 48px);
+      background: rgba(7,9,13,.78);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(18px);
     }
 
-    .delivery-card h2 {
-      margin: 0;
-      color: var(--brand-text);
-      font-size: 1rem;
-    }
-
-    .status-pill {
+    .brand {
       display: inline-flex;
       align-items: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: 999px;
-      background: rgba(0, 255, 159, 0.12);
-      color: var(--brand-lime);
-      border: 1px solid rgba(0, 255, 159, 0.3);
-      font-size: 0.78rem;
-      font-weight: 800;
-    }
-
-    .delivery-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
+      font-weight: 950;
+      text-decoration: none;
+      white-space: nowrap;
     }
+    .brand img { width: 36px; height: 36px; object-fit: contain; }
+    .nav { display: flex; align-items: center; gap: 20px; }
+    .nav a { color: var(--muted); text-decoration: none; font-size: .93rem; font-weight: 750; }
+    .nav a:hover { color: var(--text); }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
 
-    .delivery-grid div {
-      padding: 12px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .delivery-grid span {
-      display: block;
-      color: var(--brand-muted);
-      font-size: 0.76rem;
-      margin-bottom: 4px;
-    }
-
-    .delivery-grid strong {
-      color: var(--brand-text);
-      font-size: 0.92rem;
-    }
-
-    .features-section {
-      padding: 58px clamp(18px, 4vw, 48px) 76px;
-      background: var(--brand-bg-dark);
-    }
-
-    .section-inner {
-      max-width: 1120px;
-      margin: 0 auto;
-    }
-
-    .section-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    .section-heading h2 {
-      margin: 0;
-      color: var(--brand-text);
-      font-size: clamp(1.8rem, 4vw, 2.7rem);
-      line-height: 1.08;
-    }
-
-    .section-heading p {
-      max-width: 420px;
-      color: var(--brand-muted);
-      margin: 0;
-    }
-
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .feature-card {
-      min-height: 224px;
-      padding: 22px;
-    }
-
-    .feature-kicker {
+    .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 38px;
-      height: 38px;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--cyan), var(--lime));
+      color: #061014;
+      font-weight: 950;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 18px 40px rgba(0,217,255,.22);
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .btn.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    main { overflow: hidden; }
+    .section {
+      padding: clamp(52px, 7vw, 92px) clamp(18px, 4vw, 48px);
+    }
+    .inner { width: min(1180px, 100%); margin: 0 auto; }
+    .eyebrow {
+      color: var(--lime);
+      font-size: .78rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      max-width: 780px;
       margin-bottom: 18px;
-      border-radius: 8px;
-      background: rgba(0, 217, 255, 0.1);
-      color: var(--brand-cyan);
-      font-weight: 900;
+      font-size: clamp(3rem, 8vw, 7.4rem);
+      line-height: .88;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin-bottom: 12px;
+      font-size: clamp(2rem, 4.8vw, 4.4rem);
+      line-height: .96;
+      letter-spacing: 0;
+    }
+    h3 { font-size: 1.25rem; letter-spacing: 0; }
+    .lead {
+      max-width: 680px;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 1.8vw, 1.32rem);
+      line-height: 1.6;
+    }
+    .grad {
+      background: linear-gradient(135deg, var(--text), var(--cyan) 46%, var(--lime));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .feature-card h3 {
-      margin: 0 0 10px;
-      color: var(--brand-text);
-      font-size: 1.18rem;
+    .hero {
+      min-height: calc(100svh - 72px);
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(320px, 1.05fr);
+      align-items: center;
+      gap: clamp(28px, 6vw, 80px);
+      padding-top: clamp(44px, 7vw, 88px);
     }
-
-    .feature-card p {
-      margin: 0;
-      color: var(--brand-muted);
-      line-height: 1.7;
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 18px; }
+    .hero-note { color: var(--muted); font-size: .95rem; }
+    .hero-media {
+      position: relative;
+      min-height: min(660px, 70svh);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      background: #101820;
     }
-
-    footer {
-      padding: 24px clamp(18px, 4vw, 48px);
-      border-top: 1px solid var(--brand-border);
-      color: var(--brand-muted);
-      background: var(--brand-bg-surface);
+    .hero-media img { width: 100%; height: 100%; min-height: inherit; object-fit: cover; display: block; }
+    .hero-card {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
+    .hero-stat {
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      background: rgba(7,9,13,.76);
+      backdrop-filter: blur(12px);
+    }
+    .hero-stat strong { display: block; font-size: 1.05rem; }
+    .hero-stat span { color: var(--muted); font-size: .78rem; }
 
+    .quick-search {
+      margin-top: -36px;
+      position: relative;
+      z-index: 5;
+      padding-top: 0;
+    }
+    .search-box {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 180px auto;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 18px;
+      background: rgba(13,19,27,.92);
+      box-shadow: var(--shadow);
+    }
+    .field label {
+      display: block;
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .field input {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      background: #070b10;
+      color: var(--text);
+      font: inherit;
+      outline: 0;
+    }
+    .field input:focus { border-color: var(--cyan); }
+
+    .choice-grid,
+    .trust-grid,
+    .route-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .choice-grid { grid-template-columns: repeat(3, 1fr); }
+    .trust-grid { grid-template-columns: repeat(4, 1fr); }
+    .route-grid { grid-template-columns: repeat(3, 1fr); margin-top: 24px; }
+    .card {
+      min-height: 100%;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.03));
+      text-decoration: none;
+      box-shadow: 0 18px 58px rgba(0,0,0,.18);
+    }
+    .choice-card.primary {
+      background: linear-gradient(145deg, rgba(0,217,255,.24), rgba(184,245,62,.12));
+      border-color: rgba(0,217,255,.32);
+    }
+    .icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      background: rgba(0,217,255,.12);
+      color: var(--lime);
+      font-size: 1.35rem;
+    }
+    .card p { color: var(--muted); line-height: 1.55; margin-bottom: 0; }
+    .card .link { display: inline-block; margin-top: 18px; color: var(--cyan); font-weight: 900; }
+
+    .trust-card { text-align: center; padding: 20px 14px; }
+    .trust-card .icon { margin: 0 auto 12px; }
+    .trust-card h3 { margin-bottom: 6px; font-size: 1rem; }
+
+    .routes-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 10px;
+    }
+    .route-card { padding: 20px; }
+    .route-cities {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 950;
+      font-size: 1.2rem;
+    }
+    .route-meta { color: var(--muted); font-size: .9rem; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: clamp(22px, 5vw, 70px);
+      align-items: center;
+    }
+    .mini-panel {
+      padding: clamp(24px, 4vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(0,217,255,.12), rgba(255,255,255,.04));
+    }
+    .mini-panel img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      margin-top: 18px;
+    }
+    .impact-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .metric {
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .metric strong { display: block; color: var(--lime); font-size: 1.25rem; }
+    .metric span { color: var(--muted); font-size: .78rem; }
+
+    .cta {
+      text-align: center;
+      background: linear-gradient(135deg, rgba(0,217,255,.13), rgba(184,245,62,.1));
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .cta .lead { margin-left: auto; margin-right: auto; }
+    .footer {
+      padding: 38px clamp(18px,4vw,48px);
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
     .footer-inner {
-      max-width: 1120px;
+      width: min(1180px, 100%);
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
-      gap: 16px;
+      gap: 18px;
       flex-wrap: wrap;
     }
+    .footer a { color: var(--muted); text-decoration: none; margin-left: 14px; }
+    .footer a:hover { color: var(--text); }
 
-    /* ===== COMPARATEUR DE PRIX ===== */
-    .pricer-section {
-      padding: 64px clamp(18px, 4vw, 48px) 72px;
+    @media (max-width: 900px) {
+      .nav { display: none; }
+      .hero, .split { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+      .hero-media { min-height: 420px; }
+      .search-box { grid-template-columns: 1fr; }
+      .choice-grid, .trust-grid, .route-grid, .impact-metrics { grid-template-columns: 1fr; }
+      .routes-head { align-items: start; flex-direction: column; }
+      .hero-card { grid-template-columns: 1fr; }
     }
-
-    .pricer-card {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border);
-      border-radius: 14px;
-      padding: 28px;
-      max-width: 900px;
-    }
-
-    .pricer-inputs {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .pricer-field label {
-      display: block;
-      color: var(--brand-muted);
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 6px;
-    }
-
-    .pricer-field input,
-    .pricer-field select {
-      width: 100%;
-      padding: 10px 12px;
-      background: var(--brand-bg-dark);
-      border: 1px solid var(--brand-border);
-      border-radius: 8px;
-      color: var(--brand-text);
-      font-size: 15px;
-      font-weight: 600;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .pricer-field input:focus,
-    .pricer-field select:focus { border-color: var(--brand-cyan); }
-
-    .pricer-pap {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .pricer-pap-label {
-      color: var(--brand-lime);
-      font-weight: 800;
-      font-size: 0.9rem;
-    }
-
-    .pricer-pap-price {
-      color: var(--brand-lime);
-      font-size: 2rem;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .pricer-vs {
-      color: var(--brand-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--brand-border);
-    }
-
-    .pricer-competitors { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
-
-    .comp-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      background: var(--brand-bg-dark);
-      border: 1px solid var(--brand-border);
-      border-radius: 8px;
-    }
-
-    .comp-name { color: var(--brand-muted); font-size: 0.88rem; font-weight: 600; width: 90px; flex-shrink: 0; }
-    .comp-price { color: var(--brand-text); font-weight: 700; font-size: 0.95rem; width: 80px; }
-    .comp-save { color: var(--brand-cyan); font-size: 0.8rem; font-weight: 700; margin-left: auto; }
-
-    .pricer-cta { margin-top: 4px; }
-
-    /* ===== MINI-CARTE TEASER ===== */
-    .map-teaser-section {
-      padding: 0 clamp(18px, 4vw, 48px) 72px;
-    }
-
-    .map-teaser-wrap {
-      position: relative;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid var(--brand-border);
-      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
-    }
-
-    #miniMap {
-      height: 360px;
-      width: 100%;
-      pointer-events: none;
-    }
-
-    .map-teaser-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(10,12,16,0) 20%, rgba(10,12,16,0.92) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 32px;
-      text-align: center;
-      gap: 14px;
-    }
-
-    .map-teaser-overlay p {
-      color: var(--brand-muted);
-      font-size: 0.95rem;
-      max-width: 340px;
-      line-height: 1.6;
-    }
-
-    .triptych { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
-    .triptych a { display: block; overflow: hidden; position: relative; text-decoration: none; aspect-ratio: 1/2; }
-    .triptych img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
-    .triptych a:hover img { transform: scale(1.04); }
-    .triptych-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px; background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; }
-    .triptych-kicker { font-size: .75rem; font-weight: 700; color: #5dbfff; letter-spacing: .08em; text-transform: uppercase; }
-    .triptych-label  { font-size: 1rem; font-weight: 800; margin-top: 2px; }
-
-    /* ===== SOCIAL PROOF BAR ===== */
-    .proof-bar {
-      background: rgba(93,191,255,0.05);
-      border-top: 1px solid rgba(93,191,255,0.15);
-      border-bottom: 1px solid rgba(93,191,255,0.15);
-      padding: 16px clamp(18px,4vw,48px);
-    }
-    .proof-bar-inner {
-      max-width: 1120px; margin: 0 auto;
-      display: flex; align-items: center; justify-content: center;
-      gap: clamp(24px,4vw,56px); flex-wrap: wrap;
-    }
-    .proof-stat { text-align: center; }
-    .proof-stat .ps-val { font-size: 1.45rem; font-weight: 900; color: var(--brand-lime); display: block; }
-    .proof-stat .ps-lbl { font-size: 0.75rem; color: var(--brand-muted); font-weight: 600; letter-spacing: 0.04em; }
-    .proof-divider { width: 1px; height: 32px; background: var(--brand-border); flex-shrink: 0; }
-    @media(max-width:600px){ .proof-divider { display:none; } }
-
-    /* ===== TÉMOIGNAGES ===== */
-    .temoignages-section {
-      padding: 72px clamp(18px,4vw,48px);
-      background: rgba(255,255,255,0.015);
-      border-top: 1px solid var(--brand-border);
-      border-bottom: 1px solid var(--brand-border);
-    }
-    .temoignages-grid {
-      max-width: 1120px; margin: 32px auto 0;
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
-      gap: 20px;
-    }
-    .temoignage-card {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border);
-      border-radius: 14px; padding: 24px 26px;
-      display: flex; flex-direction: column; gap: 14px;
-      position: relative;
-    }
-    .temoignage-card::before {
-      content: '\201C';
-      position: absolute; top: 14px; right: 20px;
-      font-size: 4rem; color: rgba(93,191,255,0.12);
-      font-family: Georgia, serif; line-height: 1;
-    }
-    .temo-stars { color: #f5c518; font-size: 0.9rem; letter-spacing: 2px; }
-    .temo-text { color: var(--brand-muted); font-size: 0.93rem; line-height: 1.65; flex: 1; }
-    .temo-author { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
-    .temo-avatar {
-      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
-      border: 2px solid rgba(93,191,255,0.25); flex-shrink: 0;
-    }
-    .temo-name { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; }
-    .temo-role { font-size: 0.76rem; color: var(--brand-lime); font-weight: 600; }
-    .temo-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(0,217,255,0.08); color: var(--brand-cyan);
-      border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700;
-    }
-
-    /* ===== HISTOIRES VRAIES ===== */
-    .histoires-section { padding: 72px clamp(18px,4vw,48px); }
-    .histoires-grid {
-      max-width: 1120px; margin: 32px auto 0;
-      display: grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap: 24px;
-    }
-    .histoire-card {
-      background: var(--brand-bg-surface);
-      border: 1px solid var(--brand-border); border-radius: 16px; overflow: hidden;
-    }
-    .histoire-img-wrap { position: relative; height: 200px; overflow: hidden; }
-    .histoire-img-wrap img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition: transform .4s; }
-    .histoire-card:hover .histoire-img-wrap img { transform: scale(1.04); }
-    .histoire-tag {
-      position: absolute; top: 12px; left: 12px;
-      background: rgba(10,12,16,0.82); color: var(--brand-lime);
-      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em;
-      text-transform: uppercase; border-radius: 20px; padding: 4px 10px;
-    }
-    .histoire-body { padding: 20px 22px; }
-    .histoire-headline { font-size: 1.05rem; font-weight: 800; color: var(--brand-text); margin-bottom: 8px; line-height: 1.35; }
-    .histoire-text { font-size: 0.85rem; color: var(--brand-muted); line-height: 1.6; margin-bottom: 14px; }
-    .histoire-person { display: flex; align-items: center; gap: 10px; }
-    .histoire-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(93,191,255,0.3); }
-    .histoire-who { font-size: 0.8rem; font-weight: 700; color: var(--brand-text); }
-    .histoire-where { font-size: 0.73rem; color: var(--brand-muted); }
-    .histoire-stat {
-      display: inline-block; margin-top: 12px;
-      background: rgba(93,191,255,0.1); color: var(--brand-lime);
-      border-radius: 8px; padding: 5px 12px; font-size: 0.82rem; font-weight: 800;
-    }
-
-    /* ===== CONFIANCE & SÉCURITÉ ===== */
-    .trust-section {
-      padding: 72px clamp(18px,4vw,48px);
-      background: rgba(255,255,255,0.015);
-      border-top: 1px solid var(--brand-border);
-    }
-    .trust-badges-grid {
-      max-width: 1120px; margin: 32px auto 0;
-      display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px;
-    }
-    .trust-badge {
-      display: flex; align-items: flex-start; gap: 14px;
-      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
-      border-radius: 12px; padding: 18px 20px;
-    }
-    .trust-badge .tb-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
-    .trust-badge .tb-title { font-weight: 700; color: var(--brand-text); font-size: 0.9rem; margin-bottom: 4px; }
-    .trust-badge .tb-desc { font-size: 0.78rem; color: var(--brand-muted); line-height: 1.5; }
-    .trust-verified-row {
-      max-width: 1120px; margin: 28px auto 0;
-      display: flex; align-items: center; justify-content: center;
-      gap: clamp(16px,3vw,36px); flex-wrap: wrap;
-    }
-    .tv-item {
-      display: flex; align-items: center; gap: 7px;
-      font-size: 0.8rem; font-weight: 700; color: var(--brand-muted);
-    }
-    .tv-item .tv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-lime); flex-shrink: 0; }
-
-    /* ===== POURQUOI PORTEAPORTE ===== */
-    .pourquoi-section { padding: 72px clamp(18px,4vw,48px); background: rgba(255,255,255,0.012); border-top: 1px solid var(--brand-border); border-bottom: 1px solid var(--brand-border); }
-    .pourquoi-grid { max-width:1120px; margin:32px auto 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
-    .pourquoi-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:16px; padding:28px 26px; transition:border-color .2s; }
-    .pourquoi-card:hover { border-color: var(--brand-lime); }
-    .pourquoi-card .pq-icon { font-size:2rem; margin-bottom:14px; display:block; }
-    .pourquoi-card h3 { margin:0 0 10px; font-size:1.1rem; }
-    .pourquoi-card p { margin:0; font-size:0.88rem; color:var(--brand-muted); line-height:1.65; }
-    .pourquoi-card .pq-stat { display:block; margin-top:14px; font-size:1.5rem; font-weight:900; color:var(--brand-lime); }
-    .pourquoi-card .pq-sub { font-size:0.75rem; color:var(--brand-muted); }
-
-    /* ===== COMMENT ÇA MARCHE — 5 ÉTAPES ===== */
-    .how-section { padding:72px clamp(18px,4vw,48px); }
-    .how-steps { max-width:1000px; margin:44px auto 0; display:grid; grid-template-columns:repeat(5,1fr); gap:0; position:relative; }
-    .how-steps::before { content:''; position:absolute; top:23px; left:calc(10% + 8px); right:calc(10% + 8px); height:2px; background:linear-gradient(90deg,var(--brand-lime),var(--brand-cyan)); z-index:0; pointer-events:none; }
-    .how-step { text-align:center; position:relative; z-index:1; padding:0 6px; }
-    .how-step-num { width:46px; height:46px; border-radius:50%; border:2px solid var(--brand-lime); background:var(--brand-bg-dark); color:var(--brand-lime); font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; flex-shrink:0; }
-    .how-step h4 { font-size:0.82rem; font-weight:700; color:var(--brand-text); margin:0 0 5px; line-height:1.3; }
-    .how-step p { font-size:0.75rem; color:var(--brand-muted); line-height:1.5; margin:0; }
-    .how-step .how-emoji { font-size:1.2rem; display:block; margin-bottom:6px; }
-
-    /* ===== COMMUNAUTÉ & HISTOIRE MARTIN ===== */
-    .communaute-section { padding:72px clamp(18px,4vw,48px); background:rgba(255,255,255,0.012); border-top:1px solid var(--brand-border); border-bottom:1px solid var(--brand-border); }
-    .communaute-inner { max-width:1120px; margin:0 auto; }
-    .comm-layout { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; margin-top:36px; }
-    .comm-faces { display:flex; align-items:center; margin-bottom:16px; }
-    .comm-faces img { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); object-fit:cover; margin-left:-10px; transition:transform .2s; }
-    .comm-faces img:first-child { margin-left:0; }
-    .comm-faces img:hover { transform:scale(1.15); z-index:5; }
-    .comm-faces .cf-more { width:44px; height:44px; border-radius:50%; border:3px solid var(--brand-bg-dark); background:var(--brand-bg-surface); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; color:var(--brand-lime); margin-left:-10px; flex-shrink:0; }
-    .comm-left h2 { font-size:clamp(1.5rem,3.5vw,2.2rem); margin:0 0 14px; line-height:1.2; }
-    .comm-left p { color:var(--brand-muted); font-size:0.95rem; line-height:1.7; margin:0 0 22px; }
-    .comm-stats-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .cs2-card { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:12px; padding:16px; text-align:center; }
-    .cs2-val { font-size:1.7rem; font-weight:900; color:var(--brand-lime); display:block; }
-    .cs2-lbl { font-size:0.75rem; color:var(--brand-muted); }
-    .martin-story { background:linear-gradient(135deg,rgba(93,191,255,0.07),rgba(0,217,255,0.04)); border:1px solid rgba(93,191,255,0.2); border-radius:18px; padding:32px; }
-    .martin-tag { display:inline-block; background:rgba(93,191,255,0.12); color:var(--brand-lime); border-radius:999px; padding:4px 14px; font-size:0.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:18px; }
-    .martin-quote { font-size:1.15rem; font-weight:900; color:var(--brand-text); line-height:1.35; margin:0 0 16px; }
-    .martin-quote span { color:var(--brand-lime); }
-    .martin-body { font-size:0.88rem; color:var(--brand-muted); line-height:1.7; margin:0 0 22px; }
-    .martin-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
-    .mn-card { background:rgba(10,12,16,0.6); border:1px solid var(--brand-border); border-radius:10px; padding:12px; text-align:center; }
-    .mn-val { font-size:1.3rem; font-weight:900; color:var(--brand-lime); }
-    .mn-lbl { font-size:0.72rem; color:var(--brand-muted); }
-    .martin-author { display:flex; align-items:center; gap:10px; }
-    .martin-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid rgba(93,191,255,0.3); }
-    .martin-name { font-weight:700; font-size:0.88rem; }
-    .martin-role { font-size:0.76rem; color:var(--brand-muted); }
-
-    /* ===== FOOTER ENRICHI ===== */
-    .footer-full { padding:48px clamp(18px,4vw,48px) 28px; border-top:1px solid var(--brand-border); background:var(--brand-bg-surface); }
-    .footer-full-inner { max-width:1120px; margin:0 auto; }
-    .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:40px; }
-    .footer-brand h3 { margin:0 0 10px; font-size:1.1rem; font-weight:900; }
-    .footer-brand p { color:var(--brand-muted); font-size:0.84rem; line-height:1.65; margin:0 0 18px; max-width:260px; }
-    .footer-col h4 { font-size:0.78rem; font-weight:800; color:var(--brand-lime); text-transform:uppercase; letter-spacing:.07em; margin:0 0 14px; }
-    .footer-col a { display:block; color:var(--brand-muted); font-size:0.84rem; text-decoration:none; margin-bottom:9px; transition:color .15s; }
-    .footer-col a:hover { color:var(--brand-text); }
-    .footer-bottom { border-top:1px solid var(--brand-border); padding-top:20px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:0.78rem; color:var(--brand-muted); }
-    @media(max-width:760px){ .footer-grid{ grid-template-columns:1fr 1fr; } .comm-layout { grid-template-columns:1fr; } .how-steps { grid-template-columns:1fr; gap:16px; } .how-steps::before { display:none; } .live-video-inner { grid-template-columns: 1fr; } .live-video-frame { max-width: 360px; margin: 0 auto; } }
-    @media(max-width:480px){ .footer-grid { grid-template-columns:1fr; } }
-
-    @media (max-width: 920px) {
-      .hero {
-        grid-template-columns: 1fr;
-        padding-top: 34px;
-      }
-
-      .hero-panel {
-        min-height: 430px;
-      }
-
-      .section-heading,
-      .footer-inner {
-        align-items: start;
-        flex-direction: column;
-      }
-
-      .features {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .triptych { grid-template-columns: 1fr; }
-      .triptych a { aspect-ratio: 16/9; }
-    }
-    @media (max-width: 720px) {
-      .site-header {
-        position: relative;
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .main-nav {
-        display: none;
-      }
-
-      .header-actions,
-      .header-actions button,
-      .header-actions a,
-      .cta-buttons button,
-      .cta-buttons a {
-        width: 100%;
-      }
-
-      .trust-row,
-      .delivery-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-panel {
-        min-height: 500px;
-      }
-
-      .pia-guide-strip {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .pia-guide-actions,
-      .pia-guide-actions .btn {
-        width: 100%;
-      }
-    }
-
-    /* ═══════════════════════════════════════════
-       3 PORTES D'ENTRÉE (sous le hero)
-    ═══════════════════════════════════════════ */
-    .portes-zone {
-      padding: clamp(40px, 6vw, 80px) clamp(18px, 4vw, 48px);
-    }
-    .portes-inner {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 18px; max-width: 1180px; margin: 0 auto;
-    }
-    .porte {
-      display: flex; flex-direction: column; justify-content: space-between;
-      gap: 28px; padding: 32px 28px;
-      background: linear-gradient(160deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 22px;
-      text-decoration: none; color: var(--brand-text);
-      transition: transform .25s ease, border-color .25s ease, background .25s ease;
-      position: relative; overflow: hidden; min-height: 240px;
-    }
-    .porte:hover, .porte:focus-visible {
-      transform: translateY(-4px);
-      border-color: rgba(93,191,255,.45);
-      background: linear-gradient(160deg, rgba(93,191,255,.07), rgba(93,191,255,.02));
-    }
-    .porte-icon { font-size: 2.4rem; line-height: 1; }
-    .porte h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -.01em; }
-    .porte p { font-size: .95rem; color: var(--brand-muted); margin: 0; line-height: 1.5; }
-    .porte-arrow { font-size: 1.1rem; color: var(--brand-lime); font-weight: 800; }
-    @media (max-width: 820px) {
-      .portes-inner { grid-template-columns: 1fr; }
-      .porte { min-height: auto; }
-    }
-
-    /* ═══════════════════════════════════════════
-       MODE IMPACT HERO ZONE (la pièce émotionnelle)
-    ═══════════════════════════════════════════ */
-    .impact-zone-hero {
-      background: linear-gradient(180deg, #05080c 0%, #0a1018 100%);
-      border-top: 1px solid rgba(93,191,255,.15);
-      border-bottom: 1px solid rgba(93,191,255,.15);
-      padding: clamp(70px, 10vw, 130px) clamp(18px, 4vw, 48px);
-      position: relative; overflow: hidden;
-    }
-    .impact-zone-hero::before {
-      content: ''; position: absolute; inset: 0;
-      background:
-        radial-gradient(circle at 15% 30%, rgba(93,191,255,.10), transparent 45%),
-        radial-gradient(circle at 85% 70%, rgba(0,217,255,.08), transparent 45%);
-      pointer-events: none;
-    }
-    .impact-zone-hero::after {
-      content: ''; position: absolute; inset: 0;
-      background: url('/assets/photos/mode-impact-communaute.jpg') center/cover no-repeat;
-      opacity: 0; transition: opacity .6s;
-      pointer-events: none; z-index: 0;
-    }
-    .impact-zone-hero.has-photo::after { opacity: .08; }
-    .impact-zone-inner { position: relative; max-width: 1080px; margin: 0 auto; text-align: center; }
-    .impact-hero-eyebrow {
-      display: inline-flex; gap: 8px; align-items: center;
-      font-size: .78rem; font-weight: 800; letter-spacing: .18em;
-      text-transform: uppercase; color: var(--brand-lime); margin-bottom: 22px;
-    }
-    .impact-zone-hero h2 {
-      font-size: clamp(2rem, 5vw, 3.4rem);
-      font-weight: 900; line-height: 1.08; letter-spacing: -.02em;
-      margin: 0 auto 22px; max-width: 22ch;
-    }
-    .impact-zone-hero h2 span { color: var(--brand-lime); }
-    .impact-hero-sub {
-      font-size: clamp(1rem, 1.8vw, 1.2rem);
-      color: var(--brand-muted); max-width: 58ch; margin: 0 auto 56px; line-height: 1.6;
-    }
-    .impact-hero-stats {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 24px; max-width: 920px; margin: 0 auto 50px;
-    }
-    .impact-hero-stat {
-      padding: 28px 18px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(93,191,255,.18);
-      border-radius: 18px;
-    }
-    .impact-hero-stat .big {
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
-      font-weight: 900; color: var(--brand-lime);
-      letter-spacing: -.02em; line-height: 1; margin-bottom: 10px;
-    }
-    .impact-hero-stat .label { font-size: .85rem; color: var(--brand-muted); font-weight: 600; }
-    @media (max-width: 760px) { .impact-hero-stats { grid-template-columns: 1fr; } }
-    .impact-hero-quote {
-      max-width: 60ch; margin: 0 auto 44px;
-      font-size: clamp(1.1rem, 2vw, 1.4rem);
-      font-style: italic; color: #e8eef5; line-height: 1.5;
-      padding: 0 20px; border-left: 3px solid var(--brand-lime);
-    }
-    .impact-hero-actions {
-      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
-    }
-    .impact-hero-actions .btn { font-size: .95rem; padding: 14px 26px; }
   </style>
-
-  <meta name="description" content="PorteàPorte — Covoiturage entre Québécois avec profils de confiance, réservations et option colis. Réserve ton siège Québec ↔ Lévis ↔ Saguenay ↔ Montréal.">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PorteÀPorte">
-  <meta property="og:title" content="PorteàPorte — Covoiturage Québec sécurisé (+ envoi de colis)">
-  <meta property="og:description" content="PorteàPorte — Covoiturage entre Québécois avec profils de confiance, réservations et option colis. Réserve ton siège Québec ↔ Lévis ↔ Saguenay ↔ Montréal.">
-  <meta property="og:image" content="https://porteaporte.site/assets/hero-center.jpg">
-  <meta property="og:url" content="https://porteaporte.site/index.html">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PorteàPorte — Covoiturage Québec sécurisé (+ envoi de colis)">
-  <meta name="twitter:description" content="PorteàPorte — Covoiturage entre Québécois avec profils de confiance, réservations et option colis. Réserve ton siège Québec ↔ Lévis ↔ Saguenay ↔ Montréal.">
-  <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
 </head>
 <body>
-<!-- Bouton flottant SMS/WhatsApp -->
-  <a href="sms:+14384492023?body=Salut%20!%20J'ai%20une%20question%20sur%20PorteàPorte" id="float-sms" aria-label="Texte-moi par SMS"
-     style="position:fixed;bottom:20px;right:20px;z-index:900;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;text-decoration:none;box-shadow:0 6px 24px rgba(37,211,102,.5);transition:transform .2s;animation:floatPulse 2.5s ease-in-out infinite;">
-    💬
-  </a>
-  <style>
-    @keyframes floatPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
-    #float-sms:hover, #float-sms:focus-visible { transform:scale(1.15); }
-    @media (max-width:520px) { #float-sms { width:56px; height:56px; bottom:16px; right:16px; font-size:1.6rem; } }
-  </style>
-
   <header class="site-header">
-    <a class="brand-mark" href="index.html" aria-label="Accueil PorteaPorte">
-      <img src="logo.svg" alt="">
+    <a class="brand" href="/" aria-label="PorteaPorte accueil">
+      <img src="/logo.svg" alt="">
       <span>PorteaPorte</span>
     </a>
-    <nav class="main-nav" aria-label="Navigation principale">
-      <a href="covoiturage.html">Covoiturage</a>
-      <a href="expediteur.html" data-layer="2">Livraison</a>
-      <a href="manifeste.html" data-layer="3">Impact</a>
-      <a href="securite.html">Sécurité</a>
-      <a href="faq.html" data-layer="2">FAQ</a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="/covoiturage.html">Trajets</a>
+      <a href="/conducteurs">Conducteurs</a>
+      <a href="/livraison">Colis</a>
+      <a href="/securite">Securite</a>
+      <a href="/impact">Impact</a>
     </nav>
     <div class="header-actions">
-      <a class="header-phone" href="sms:+14384492023" title="Texte le fondateur directement" style="display:inline-flex;align-items:center;gap:6px;color:var(--brand-lime);font-weight:800;text-decoration:none;font-size:.92rem;padding:8px 12px;border:1px solid rgba(93,191,255,.4);border-radius:999px;white-space:nowrap;">📱 438-449-2023</a>
-      <button class="btn btn-ghost" type="button" onclick="window.Pia ? window.Pia.open('aide') : location.href='/contact.html'">Me guider</button>
-      <a id="nav-connexion" class="btn btn-ghost" href="login.html">Connexion</a>
-      <a id="nav-commencer" class="btn" href="role-choice.html">Commencer — c'est gratuit</a>
+      <a class="btn ghost" href="/login.html">Connexion</a>
+      <a class="btn" href="/role-choice.html">Commencer</a>
     </div>
   </header>
 
-  <section class="pia-guide-strip" aria-label="Aide Pia pour les nouveaux visiteurs" data-layer="2">
-    <div>
-      <strong>Nouveau sur PorteàPorte ? Pia peut te guider.</strong>
-      <span>Dis simplement si tu cherches un trajet, si tu conduis (covoit ou colis), ou si tu veux participer au test Québec/Lévis.</span>
-    </div>
-    <div class="pia-guide-actions">
-      <button class="btn btn-secondary" type="button" onclick="window.Pia ? window.Pia.open('beta quebec') : location.href='/quebec-beta.html'">Test Québec/Lévis</button>
-      <button class="btn" type="button" onclick="window.Pia ? window.Pia.open('je suis perdu') : location.href='/role-choice.html'">Je me laisse guider</button>
-    </div>
-  </section>
-
-  <!-- Bandeau Mode Impact -->
-  <div id="impact-banner">
-    <div>✦ Mode Impact activé — <span>Tu vois toutes les fonctionnalités avancées : covoiturage, points, transparence, éco.</span></div>
-    <button onclick="toggleImpactMode()">Revenir au mode simple</button>
-  </div>
-
-  <!-- Popup feedback (affiché après 7 jours en mode Impact) -->
-  <div id="feedback-overlay">
-    <div id="feedback-box">
-      <h3>✦ Ton avis sur le Mode Impact</h3>
-      <p>Tu utilises le mode Impact depuis 7 jours. 3 questions rapides pour nous aider à décider si ces fonctionnalités font partie du grand lancement.</p>
-      <div class="fb-question">
-        <label>Les Points Impact t'ont-ils motivé à utiliser la plateforme plus souvent ?</label>
-        <div class="fb-options" data-q="points">
-          <button onclick="fbSelect(this,'points','oui')">Oui</button>
-          <button onclick="fbSelect(this,'points','non')">Non</button>
-          <button onclick="fbSelect(this,'points','indifferent')">Indifférent</button>
-        </div>
-      </div>
-      <div class="fb-question">
-        <label>La section Transparence/Impact humanitaire influence-t-elle ton choix de plateforme ?</label>
-        <div class="fb-options" data-q="transparence">
-          <button onclick="fbSelect(this,'transparence','oui')">Oui</button>
-          <button onclick="fbSelect(this,'transparence','non')">Non</button>
-          <button onclick="fbSelect(this,'transparence','indifferent')">Indifférent</button>
-        </div>
-      </div>
-      <div class="fb-question">
-        <label>Sans ces fonctionnalités avancées, utiliserais-tu quand même PorteàPorte ?</label>
-        <div class="fb-options" data-q="sans_impact">
-          <button onclick="fbSelect(this,'sans_impact','oui')">Oui</button>
-          <button onclick="fbSelect(this,'sans_impact','non')">Non</button>
-          <button onclick="fbSelect(this,'sans_impact','peut_etre')">Peut-être</button>
-        </div>
-      </div>
-      <button id="fb-submit" onclick="submitFeedback()" disabled>Envoyer mon avis</button>
-    </div>
-  </div>
-
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <div class="pp-eyebrow pp-fade-up">✦ Covoiturage entre Québécois</div>
-        <h1 id="hero-title" class="pp-h1 pp-fade-up d1">Voyagez plus. <span class="grad">Dépensez moins.</span></h1>
-        <p class="pp-lede pp-fade-up d2"><strong style="color:var(--pp-white);">Rencontrez. Partagez. Économisez.</strong> Des Québécois font la route chaque jour entre Québec, Lévis, Saguenay, Trois-Rivières, Montréal, Rimouski et la Beauce. Réservez votre siège — ou glissez un colis dans le coffre. Identité vérifiée, paiement protégé.</p>
-
-        <div class="pp-fade-up d3" role="group" aria-label="Actions principales" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:30px 0 14px;max-width:520px;">
-          <a class="pp-btn pp-btn-primary pp-btn-lg" href="/covoiturage.html">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            Trouver un trajet
-          </a>
-          <a class="pp-btn pp-btn-ghost pp-btn-lg" href="/covoiturage-publier.html">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
-            Publier mon trajet
-          </a>
+    <section class="section hero" aria-labelledby="hero-title">
+      <div>
+        <div class="eyebrow">Covoiturage Quebec</div>
+        <h1 id="hero-title">Voyagez plus. <span class="grad">Depensez moins.</span></h1>
+        <p class="lead">Trouvez un siege avec un conducteur verifie, publiez votre trajet, ou ajoutez un colis dans le coffre quand la route existe deja.</p>
+        <div class="hero-actions">
+          <a class="btn" href="/covoiturage.html">Trouver un trajet</a>
+          <a class="btn secondary" href="/covoiturage-publier.html">Publier mon trajet</a>
         </div>
-        <a href="/expediteur.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--pp-electric-bright);font-weight:700;font-size:.88rem;text-decoration:none;margin-bottom:18px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-          Ou envoyer un colis dans le coffre →
-        </a>
-        <p style="color:var(--pp-white-muted); font-size:.92rem; margin:0;">📦 Ajoutez aussi un colis sur votre route — gagnez 15-25 $ de plus.</p>
+        <p class="hero-note">Paiement protege, messagerie interne, profils verifies et evaluations apres trajet.</p>
       </div>
-
-      <div class="hero-panel" aria-label="Apercu d'une livraison suivie">
-        <img class="hero-photo" src="/assets/photos/hero-covoiturage-confiance.png" alt="Covoiturage de confiance entre Québécois — PorteàPorte" loading="eager" onerror="this.src='/assets/photos/scenario-covoiturage.jpg'">
+      <div class="hero-media" aria-label="Covoiturage de confiance">
+        <img src="/assets/photos/hero-covoiturage-confiance.png" alt="Covoiturage de confiance entre Quebecois" loading="eager" onerror="this.src='/assets/photos/scenario-covoiturage.jpg'">
+        <div class="hero-card" aria-label="Points forts">
+          <div class="hero-stat"><strong>Stripe</strong><span>reservation protegee</span></div>
+          <div class="hero-stat"><strong>Profils</strong><span>identite verifiee</span></div>
+          <div class="hero-stat"><strong>Colis</strong><span>bonus sur la route</span></div>
+        </div>
       </div>
     </section>
 
-    <!-- ═══ BARRE DE RECHERCHE INLINE (Couche 1 — visible toujours) ═══ -->
-    <section class="pp-section" style="padding:48px clamp(18px,4vw,48px); background:var(--pp-night);">
-      <div class="pp-container">
-        <div class="pp-glass" style="padding:24px; max-width:920px; margin:0 auto;">
-          <form onsubmit="event.preventDefault(); ppQuickSearch();" style="display:grid; grid-template-columns:1fr 1fr 160px 130px; gap:12px; align-items:end;">
-            <div>
-              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Départ</label>
-              <input type="text" id="pp-search-from" placeholder="Ex : Québec" list="pp-qc-cities" autocomplete="off"
-                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Destination</label>
-              <input type="text" id="pp-search-to" placeholder="Ex : Montréal" list="pp-qc-cities" autocomplete="off"
-                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="display:block; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--pp-white-muted); margin-bottom:6px;">Date</label>
-              <input type="date" id="pp-search-date"
-                style="width:100%; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--pp-divider-strong); border-radius:10px; color:var(--pp-white); font-size:.95rem; font-weight:600; outline:none; box-sizing:border-box;">
-            </div>
-            <button type="submit" class="pp-btn pp-btn-primary" style="height:44px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-              Chercher
-            </button>
-          </form>
-          <datalist id="pp-qc-cities">
-            <option value="Québec"></option><option value="Lévis"></option><option value="Montréal"></option>
-            <option value="Trois-Rivières"></option><option value="Sherbrooke"></option><option value="Saguenay"></option>
-            <option value="Rimouski"></option><option value="Rivière-du-Loup"></option><option value="Saint-Georges (Beauce)"></option>
-            <option value="Gatineau"></option><option value="Drummondville"></option><option value="Victoriaville"></option>
-          </datalist>
+    <section class="section quick-search" aria-label="Recherche rapide trajet">
+      <form class="search-box" id="ride-search-form">
+        <div class="field">
+          <label for="search-from">Depart</label>
+          <input id="search-from" name="from" placeholder="Quebec" list="qc-cities" autocomplete="off">
         </div>
-        <style>
-          @media (max-width: 720px) {
-            #pp-search-from, #pp-search-to, #pp-search-date { font-size: 1rem; }
-            form[onsubmit*="ppQuickSearch"] { grid-template-columns: 1fr !important; }
-          }
-        </style>
-        <script>
-          function ppQuickSearch() {
-            const f = document.getElementById('pp-search-from').value.trim();
-            const t = document.getElementById('pp-search-to').value.trim();
-            const d = document.getElementById('pp-search-date').value;
-            const p = new URLSearchParams();
-            if (f) p.set('from', f);
-            if (t) p.set('to', t);
-            if (d) p.set('date', d);
-            window.location.href = '/covoiturage.html' + (p.toString() ? '?' + p.toString() : '');
-          }
-        </script>
+        <div class="field">
+          <label for="search-to">Arrivee</label>
+          <input id="search-to" name="to" placeholder="Montreal" list="qc-cities" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="search-date">Date</label>
+          <input id="search-date" name="date" type="date">
+        </div>
+        <button class="btn" type="submit">Rechercher</button>
+        <datalist id="qc-cities">
+          <option value="Quebec"><option value="Levis"><option value="Montreal"><option value="Trois-Rivieres">
+          <option value="Saguenay"><option value="Sherbrooke"><option value="Rimouski"><option value="Gatineau">
+          <option value="Drummondville"><option value="Victoriaville"><option value="Riviere-du-Loup"><option value="Saint-Georges">
+        </datalist>
+      </form>
+    </section>
+
+    <section class="section" aria-labelledby="choices-title">
+      <div class="inner">
+        <div class="eyebrow">Commencer</div>
+        <h2 id="choices-title">Trois chemins. Le covoiturage en premier.</h2>
+        <div class="choice-grid">
+          <a class="card choice-card primary" href="/covoiturage.html" style="position:relative;overflow:hidden;padding:0;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;">
+            <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre conducteur et passagère devant une maison" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
+            <div style="position:relative;z-index:2;padding:22px;">
+              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">1</div>
+              <h3 style="margin-top:14px;">Rencontrez votre conducteur</h3>
+              <p style="color:#dbe5f3;">Réservez une place entre villes québécoises avec un conducteur vérifié. Montez à bord et partez.</p>
+              <span class="link">Voir les trajets</span>
+            </div>
+          </a>
+          <a class="card choice-card" href="/covoiturage-publier.html">
+            <div class="icon">2</div>
+            <h3>Publier un trajet</h3>
+            <p>Tu fais deja la route ? Remplis tes sieges et reduis ton cout d'essence.</p>
+            <span class="link">Publier</span>
+          </a>
+          <a class="card choice-card" href="/livraison">
+            <div class="icon">3</div>
+            <h3>Envoyer un colis</h3>
+            <p>Secondaire mais puissant: un colis peut voyager dans un coffre deja en route.</p>
+            <span class="link">Option colis</span>
+          </a>
+        </div>
       </div>
     </section>
 
-    <!-- ═══ TRAJETS POPULAIRES (Couche 1 — visible toujours) ═══ -->
-    <section class="pp-section" style="padding:24px clamp(18px,4vw,48px) 60px;">
-      <div class="pp-container">
-        <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+    <section class="section" aria-labelledby="trust-title" style="background:rgba(255,255,255,.025);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+      <div class="inner">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(20px,4vw,48px);align-items:center;margin-bottom:30px;">
           <div>
-            <div class="pp-eyebrow">Trajets populaires</div>
-            <h2 class="pp-h2" style="margin-top:10px; font-size:clamp(1.4rem, 3vw, 2rem);">Ce qui roule au Québec.</h2>
+            <div class="eyebrow">Confiance</div>
+            <h2 id="trust-title">Conducteurs vérifiés.</h2>
+            <p class="lead" style="margin-top:8px;">Des profils réels. Des trajets réels. Une communauté québécoise.</p>
           </div>
-          <a href="/covoiturage.html" style="color:var(--pp-electric-bright); font-weight:800; font-size:.92rem; text-decoration:none;">Voir tous les trajets →</a>
+          <div style="position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:var(--shadow);min-height:280px;">
+            <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre Québécois — conducteur vérifié" loading="lazy" onerror="this.parentElement.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 50%,rgba(7,9,13,.4) 100%);"></div>
+          </div>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Montr%C3%A9al" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Montréal</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">265 km · ~3h · ~25 $/place</div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=L%C3%A9vis&to=Qu%C3%A9bec" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Lévis → Québec</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">8 km · ~15 min · ~3 $/place</div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Saguenay" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Saguenay</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">210 km · ~2h30 · ~20 $/place</div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Rimouski" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Rimouski</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">300 km · ~3h30 · ~28 $/place</div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Trois-Rivi%C3%A8res" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Trois-Rivières</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">130 km · ~1h30 · ~14 $/place</div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage.html?from=Qu%C3%A9bec&to=Saint-Georges" style="text-decoration:none; color:inherit; padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900; color:var(--pp-white); font-size:1.05rem;">Québec → Beauce</div>
-            <div style="font-size:.82rem; color:var(--pp-white-muted);">110 km · ~1h15 · ~12 $/place</div>
-          </a>
+        <div class="trust-grid">
+          <div class="card trust-card"><div class="icon">ID</div><h3>Identité</h3><p>Profils vérifiés pour réduire l'anonymat.</p></div>
+          <div class="card trust-card"><div class="icon">$</div><h3>Paiement</h3><p>Autorisation Stripe avant confirmation.</p></div>
+          <div class="card trust-card"><div class="icon">GPS</div><h3>Suivi</h3><p>Partage et messages dans l'app.</p></div>
+          <div class="card trust-card"><div class="icon">★</div><h3>Avis</h3><p>Évaluations après chaque trajet.</p></div>
         </div>
+        <p style="margin:22px 0 0;"><a href="/securite.html" style="color:var(--cyan);font-weight:900;text-decoration:none;">Voir la sécurité complète →</a></p>
       </div>
     </section>
+    <style>
+      @media (max-width: 720px) {
+        section[aria-labelledby="trust-title"] > .inner > div:first-child {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    </style>
 
-    <!-- ═══ COMMENT ÇA MARCHE — 3 cartes simples (L1) ═══ -->
-    <section class="pp-section" aria-label="Comment ça marche" style="background:var(--pp-night-2);border-top:1px solid var(--pp-divider);border-bottom:1px solid var(--pp-divider);">
-      <div class="pp-container">
-        <div style="text-align:center;margin-bottom:48px;">
-          <div class="pp-eyebrow">Simple. Vraiment.</div>
-          <h2 class="pp-h2" style="margin-top:14px;">Trois étapes. <span style="background:var(--pp-grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Et tu roules.</span></h2>
-        </div>
-        <div class="pp-grid-3">
-          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</div>
-              <div class="pp-icon-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
-              </div>
-            </div>
-            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Publiez ou cherchez</h3>
-            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Conducteur : publie ton trajet en 60 secondes. Passager : trouve un siège en 30 secondes.</p>
-          </div>
-          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</div>
-              <div class="pp-icon-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-              </div>
-            </div>
-            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Réservation sécurisée</h3>
-            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Paiement protégé par Stripe. Le chauffeur n'est payé qu'après le trajet confirmé.</p>
-          </div>
-          <div class="pp-card" style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="width:36px;height:36px;border-radius:50%;background:var(--pp-grad-cta);color:#051022;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</div>
-              <div class="pp-icon-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              </div>
-            </div>
-            <h3 class="pp-h3" style="font-size:1.2rem;margin:0;">Évaluations mutuelles</h3>
-            <p style="color:var(--pp-white-dim);line-height:1.6;margin:0;font-size:.94rem;">Après chaque trajet, chacun note l'autre. Les bons profils ressortent, les mauvais dégagent.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ 3 PORTES D'ENTRÉE — déplacé en Couche 2 (Découverte) ═══ -->
-    <section class="pp-section" aria-label="Choisir comment commencer" data-layer="2" style="background:var(--pp-night-2);border-top:1px solid var(--pp-divider);border-bottom:1px solid var(--pp-divider);">
-      <div class="pp-container">
-        <div style="text-align:center;margin-bottom:48px;">
-          <div class="pp-eyebrow">Choisissez votre porte</div>
-          <h2 class="pp-h2" style="margin-top:14px;">Trois façons de bouger. <span style="background:var(--pp-grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Une seule plateforme.</span></h2>
-        </div>
-        <div class="pp-grid-3">
-          <a class="pp-card pp-lift" href="/covoiturage.html" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:18px;">
-            <div class="pp-icon-circle lg">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            </div>
-            <div>
-              <h3 class="pp-h3" style="font-size:1.4rem;">Trouver un trajet</h3>
-              <p style="color:var(--pp-white-dim);line-height:1.6;margin:8px 0 0;font-size:.96rem;"><strong style="color:var(--pp-white);">Rencontrez. Partagez. Économisez.</strong> Réservez votre siège entre Québec, Lévis, Saguenay et plus.</p>
-            </div>
-            <div style="margin-top:auto;display:flex;align-items:center;gap:6px;color:var(--pp-electric-bright);font-weight:800;font-size:.92rem;">
-              Voir les trajets
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </div>
-          </a>
-          <a class="pp-card pp-lift" href="/covoiturage-publier.html" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:18px;">
-            <div class="pp-icon-circle lg">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
-            </div>
-            <div>
-              <h3 class="pp-h3" style="font-size:1.4rem;">Je conduis</h3>
-              <p style="color:var(--pp-white-dim);line-height:1.6;margin:8px 0 0;font-size:.96rem;"><strong style="color:var(--pp-white);">Voyagez plus. Dépensez moins.</strong> Publiez votre trajet en 2 minutes — et glissez un colis dans le coffre pour arrondir.</p>
-            </div>
-            <div style="margin-top:auto;display:flex;align-items:center;gap:6px;color:var(--pp-electric-bright);font-weight:800;font-size:.92rem;">
-              Publier un trajet
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </div>
-          </a>
-          <a class="pp-card pp-lift" href="/expediteur.html" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:18px;">
-            <div class="pp-icon-circle lg">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
-            </div>
-            <div>
-              <h3 class="pp-h3" style="font-size:1.4rem;">Envoyer un colis</h3>
-              <p style="color:var(--pp-white-dim);line-height:1.6;margin:8px 0 0;font-size:.96rem;"><strong style="color:var(--pp-white);">Ensemble, allons plus loin.</strong> Un Québécois passe déjà par là — confiez-lui votre colis.</p>
-            </div>
-            <div style="margin-top:auto;display:flex;align-items:center;gap:6px;color:var(--pp-electric-bright);font-weight:800;font-size:.92rem;">
-              Envoyer maintenant
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </div>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ CONFIANCE — 4 icônes (L1) ═══ -->
-    <section class="pp-section" style="padding:60px clamp(18px,4vw,48px);">
-      <div class="pp-container">
-        <div style="text-align:center; margin-bottom:36px;">
-          <div class="pp-eyebrow">Confiance</div>
-          <h2 class="pp-h2" style="margin-top:12px; font-size:clamp(1.5rem, 3vw, 2.2rem);">Sécurisé. Humain. Québécois.</h2>
-        </div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:18px; max-width:920px; margin:0 auto;">
-          <div style="text-align:center; padding:18px 14px;">
-            <div class="pp-icon-circle" style="margin:0 auto 12px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-            </div>
-            <div style="font-weight:800; color:var(--pp-white); font-size:.95rem;">Conducteurs vérifiés</div>
-            <div style="font-size:.78rem; color:var(--pp-white-muted); margin-top:4px;">Pièce d'identité + selfie</div>
-          </div>
-          <div style="text-align:center; padding:18px 14px;">
-            <div class="pp-icon-circle" style="margin:0 auto 12px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
-            </div>
-            <div style="font-weight:800; color:var(--pp-white); font-size:.95rem;">Paiement protégé</div>
-            <div style="font-size:.78rem; color:var(--pp-white-muted); margin-top:4px;">Stripe escrow</div>
-          </div>
-          <div style="text-align:center; padding:18px 14px;">
-            <div class="pp-icon-circle" style="margin:0 auto 12px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div style="font-weight:800; color:var(--pp-white); font-size:.95rem;">Communauté québécoise</div>
-            <div style="font-size:.78rem; color:var(--pp-white-muted); margin-top:4px;">Vrais voisins, vraies routes</div>
-          </div>
-          <div style="text-align:center; padding:18px 14px;">
-            <div class="pp-icon-circle" style="margin:0 auto 12px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            </div>
-            <div style="font-weight:800; color:var(--pp-white); font-size:.95rem;">Support humain</div>
-            <div style="font-size:.78rem; color:var(--pp-white-muted); margin-top:4px;">Texte le fondateur direct</div>
-          </div>
-        </div>
-        <div style="text-align:center; margin-top:24px;">
-          <a href="/securite.html" style="color:var(--pp-electric-bright); font-weight:800; font-size:.92rem; text-decoration:none;">En savoir plus sur la sécurité →</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ IMPACT MINI (L1) ═══ -->
-    <section class="pp-section" style="padding:48px clamp(18px,4vw,48px); background:linear-gradient(180deg, transparent, rgba(31,139,255,0.04));">
-      <div class="pp-container" style="text-align:center;">
-        <div class="pp-eyebrow">Impact</div>
-        <h2 class="pp-h2" style="margin:12px 0 8px; font-size:clamp(1.4rem, 3vw, 2rem);">Chaque trajet peut aider quelqu'un.</h2>
-        <p class="pp-lede" style="margin:0 auto 22px;">Une partie de chaque activité retourne à des organismes québécois choisis par la communauté.</p>
-        <a href="/manifeste.html" class="pp-btn pp-btn-ghost">Découvrir notre impact</a>
-      </div>
-    </section>
-
-    <!-- ═══ CARTE INTERACTIVE — trajets actifs au Québec (L2) ═══ -->
-    <section class="map-section" aria-labelledby="map-title" data-layer="2" style="padding:60px 20px;background:rgba(0,217,255,.03);border-top:1px solid var(--brand-border);border-bottom:1px solid var(--brand-border);">
-      <div style="max-width:1120px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:24px;">
-          <div class="eyebrow" style="justify-content:center;">🗺️ Carte des trajets en cours</div>
-          <h2 id="map-title" style="font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px;">Qui passe près de chez toi ?</h2>
-          <p style="color:var(--brand-muted);margin:0;">Clique sur une ville pour voir les trajets disponibles au départ de là.</p>
-        </div>
-        <div id="qc-map" style="height:480px;max-height:60vh;width:100%;border-radius:16px;overflow:hidden;border:1px solid var(--brand-border);background:#0a1118;"></div>
-        <div id="qc-map-empty" style="display:none;text-align:center;padding:30px 20px;color:var(--brand-muted);font-size:.95rem;">
-          🕓 Aucun trajet actif pour le moment.
-          <a href="/covoiturage-publier.html" style="color:var(--brand-lime);text-decoration:underline;font-weight:700;margin-left:4px;">Sois le premier à en publier un</a>
-        </div>
-      </div>
-    </section>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script>
-      (function () {
-        if (typeof L === 'undefined') return setTimeout(arguments.callee, 200);
-        // Init carte centrée sur le Québec
-        var map = L.map('qc-map', { scrollWheelZoom: false, zoomControl: true }).setView([47.5, -71.5], 6);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 18,
-          attribution: '&copy; OpenStreetMap &copy; CARTO'
-        }).addTo(map);
-
-        // Charge les villes actives
-        fetch('/api/platform?endpoint=ride-active-cities', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: 'ride-active-cities' })
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          var cities = (d && d.cities) || [];
-          if (!cities.length) {
-            document.getElementById('qc-map-empty').style.display = 'block';
-            // Affiche quand même quelques villes principales pour le contexte
-            var sample = [
-              { name: 'Québec', lat: 46.8139, lng: -71.2080 },
-              { name: 'Lévis', lat: 46.7382, lng: -71.2465 },
-              { name: 'Montréal', lat: 45.5017, lng: -73.5673 },
-              { name: 'Saguenay', lat: 48.4280, lng: -71.0680 },
-              { name: 'Trois-Rivières', lat: 46.3432, lng: -72.5432 },
-              { name: 'Rimouski', lat: 48.4488, lng: -68.5236 }
-            ];
-            sample.forEach(function (c) {
-              L.circleMarker([c.lat, c.lng], { radius: 6, color: '#666', fillColor: '#444', fillOpacity: 0.5, weight: 1 })
-                .bindPopup('<strong>' + c.name + '</strong><br><span style="color:#888;font-size:.85rem;">Aucun trajet actif</span>')
-                .addTo(map);
-            });
-            return;
-          }
-          // Affiche un marqueur par ville active
-          cities.forEach(function (c) {
-            var size = Math.min(28, Math.max(10, 8 + c.ride_count * 2));
-            var color = c.ride_count >= 5 ? '#5dbfff' : c.ride_count >= 2 ? '#00d9ff' : '#ffd166';
-            var marker = L.circleMarker([c.lat, c.lng], {
-              radius: size,
-              color: color,
-              fillColor: color,
-              fillOpacity: 0.4,
-              weight: 2
-            }).addTo(map);
-            var destText = c.destinations && c.destinations.length
-              ? '<div style="font-size:.78rem;color:#666;margin-top:4px;">Vers : ' + c.destinations.join(', ') + '</div>'
-              : '';
-            marker.bindPopup(
-              '<div style="font-family:system-ui,sans-serif;min-width:160px;">' +
-                '<strong style="font-size:1rem;color:#222;">' + c.name + '</strong><br>' +
-                '<span style="color:' + color + ';font-weight:800;">' + c.ride_count + ' trajet' + (c.ride_count > 1 ? 's' : '') + ' actif' + (c.ride_count > 1 ? 's' : '') + '</span>' +
-                destText +
-                '<div style="margin-top:8px;"><a href="/covoiturage.html?from=' + encodeURIComponent(c.name) + '" style="color:#00b8d4;font-weight:700;text-decoration:none;">Voir les trajets →</a></div>' +
-              '</div>'
-            );
-          });
-        })
-        .catch(function () {
-          document.getElementById('qc-map-empty').style.display = 'block';
-        });
-      })();
-    </script>
-
-    <!-- ═══ MODE IMPACT — la pièce maîtresse émotionnelle (Couche 3) ═══ -->
-    <section class="impact-zone-hero" aria-labelledby="impact-hero-title" data-layer="3">
-      <div class="impact-zone-inner">
-        <div class="impact-hero-eyebrow">✦ Mode Impact · Transparence totale</div>
-        <h2 id="impact-hero-title">Chaque livraison <span>nourrit quelqu'un.</span></h2>
-        <p class="impact-hero-sub">Ici, le profit ne part pas à Wall Street. Il reste dans Québec. Un pourcentage de chaque livraison va à des organismes locaux que <strong>tu</strong> choisis chaque trimestre.</p>
-
-        <div class="impact-hero-stats">
-          <div class="impact-hero-stat">
-            <div class="big" id="ihz-pool">— $</div>
-            <div class="label">Redistribué aux organismes locaux</div>
-          </div>
-          <div class="impact-hero-stat">
-            <div class="big" id="ihz-deliveries">—</div>
-            <div class="label">Livraisons collaboratives effectuées</div>
-          </div>
-          <div class="impact-hero-stat">
-            <div class="big" id="ihz-livreur-pct">60 %</div>
-            <div class="label">Du prix versé directement au livreur</div>
-          </div>
-        </div>
-
-        <blockquote class="impact-hero-quote">« On ne construit pas une app de livraison. On construit un réseau d'entraide entre gens ordinaires — et on prouve, chiffres à l'appui, que le profit peut rester chez nous. »</blockquote>
-
-        <div class="impact-hero-actions">
-          <a class="btn" href="/transparence.html">Voir où va chaque dollar</a>
-          <a class="btn btn-secondary" href="/vote-communautaire.html">🗳️ Voter le prochain organisme</a>
-          <a class="btn btn-secondary" href="/organismes.html">❤️ Voir nos organismes</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== COMPTEUR IMPACT LIVE ===== -->
-    <div data-layer="3" style="max-width:1200px;margin:0 auto;padding:0 20px"><div id="pap-impact-counter"></div></div>
-
-    <!-- ===== CALCULATEUR TRANSPARENCE ===== -->
-    <div data-layer="3" style="max-width:1100px;margin:0 auto;padding:0 20px" data-impact><div id="pap-calculator"></div></div>
-
-    <!-- ===== BARRE PREUVE SOCIALE ===== -->
-    <div class="proof-bar" aria-label="Statistiques PorteàPorte — données bêta" data-layer="2">
-      <div class="proof-bar-inner">
-        <div class="proof-stat">
-          <span class="ps-val">Bêta</span>
-          <span class="ps-lbl">Ouverte au Québec · Lévis · Montréal</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-stat">
-          <span class="ps-val">Gratuit</span>
-          <span class="ps-lbl">Inscription sans engagement</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-stat">
-          <span class="ps-val">Stripe</span>
-          <span class="ps-lbl">Paiement Stripe en préparation</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-stat">
-          <span class="ps-val">KYC</span>
-          <span class="ps-lbl">Livreurs vérifiés</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-stat">
-          <span class="ps-val">~60 %</span>
-          <span class="ps-lbl">Moins cher qu'UPS (estimé)</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-stat">
-          <span class="ps-val">5 %</span>
-          <span class="ps-lbl">Objectif bêta vers des <a href="/transparence.html" style="color:var(--brand-lime);text-decoration:none">causes locales</a></span>
-        </div>
-      </div>
-    </div>
-    <div style="text-align:center;padding:8px clamp(18px,4vw,48px);font-size:0.72rem;color:var(--brand-muted)">
-      ⚡ PorteàPorte est en bêta ouverte à Lévis, Québec et Montréal. Les économies affichées sont des estimations comparatives. Aucune donnée n'est fabriquée — si une zone affiche zéro, c'est l'état réel de la bêta.
-    </div>
-
-    <!-- ===== POURQUOI PORTEAPORTE (covoit-first) ===== -->
-    <section class="pourquoi-section" aria-labelledby="pq-title" data-layer="2">
-      <div style="max-width:1120px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">Pourquoi PorteàPorte ?</div>
-        <h2 id="pq-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Un concept aussi simple que puissant.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Quelqu'un fait déjà la route. Tu embarques (ou ton colis embarque). Tout le monde y gagne.</p>
-      </div>
-      <div class="pourquoi-grid">
-
-        <div class="pourquoi-card">
-          <span class="pq-icon">💸</span>
-          <h3>Économies réelles</h3>
-          <p>Réserve un siège plutôt qu'un billet d'autocar. Partage l'essence avec un voisin. Trois fois moins cher qu'Amigo Express, sans les <em>no-show</em> des groupes Facebook.</p>
-          <span class="pq-stat">~50 %</span>
-          <span class="pq-sub">moins cher que les transporteurs classiques</span>
-        </div>
-
-        <div class="pourquoi-card">
-          <span class="pq-icon">🛣️</span>
-          <h3>Trajets déjà existants</h3>
-          <p>Aucun nouveau véhicule sur la route. Marie va déjà à Québec le vendredi. Trois passagers embarquent. L'essence est divisée par quatre — et un colis prend la place du siège libre.</p>
-          <span class="pq-stat">0</span>
-          <span class="pq-sub">véhicule supplémentaire — le trajet existait déjà</span>
-        </div>
-
-        <div class="pourquoi-card">
-          <span class="pq-icon">🌿</span>
-          <h3>Écologique par nature</h3>
-          <p>Quatre passagers dans une auto = trois voitures de moins sur l'autoroute 20. C'est mathématique : le covoiturage est le geste écolo le plus rentable au quotidien.</p>
-          <span class="pq-stat">–75 %</span>
-          <span class="pq-sub">d'émissions CO₂ vs 4 voitures séparées</span>
-        </div>
-
-        <div class="pourquoi-card">
-          <span class="pq-icon">🤝</span>
-          <h3>Profondément humain</h3>
-          <p>Tu voyages avec une vraie personne vérifiée de ta région, pas avec un chauffeur anonyme. Elle te texte, elle arrive à l'heure, elle connaît le coin — et tu la notes après le trajet.</p>
-          <span class="pq-stat">🤝</span>
-          <span class="pq-sub">profils vérifiés, messagerie, évaluations</span>
-        </div>
-
-      </div>
-    </section>
-
-    <section class="features-section" aria-labelledby="impact-title" data-impact data-layer="3">
-      <div class="section-inner">
-        <div class="section-heading">
-          <h2 id="impact-title">Transparence, gagnants et impact.</h2>
-          <p>Une seule page publique pour voir les concours, les derniers gagnants et l'argent estime pour la communaute.</p>
-        </div>
-        <div class="features">
-          <article class="feature-card">
-            <div class="feature-kicker">Impact</div>
-            <h3 id="home-impact-pool">Donnees beta a venir</h3>
-            <p id="home-impact-text">Montants communautaires mis a jour en direct.</p>
-          </article>
-          <article class="feature-card">
-            <div class="feature-kicker">Abonnements Pro</div>
-            <h3>Conducteur Pro &amp; Marchand Local</h3>
-            <p>Badge, priorité de recherche et avantages exclusifs pour ceux qui font de PorteàPorte leur activité principale.</p>
-          </article>
-          <article class="feature-card">
-            <div class="feature-kicker">Gagnants</div>
-            <h3 id="home-winner-title">Aucun gagnant publie</h3>
-            <p id="home-winner-text">Les gagnants publics apparaissent ici apres validation.</p>
-          </article>
-        </div>
-        <div style="margin-top:18px">
-          <a class="btn btn-secondary" href="transparence.html">Voir la transparence complete</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== COMMENT ÇA MARCHE — 5 ÉTAPES (covoit-first) ===== -->
-    <section class="how-section" id="features" aria-labelledby="how-title" data-layer="2">
-      <div style="max-width:1120px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">Simple. Vraiment.</div>
-        <h2 id="how-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Cinq étapes. De A à Z.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Pas de paperasse, pas de surprise. Juste un trajet partagé qui marche.</p>
-      </div>
-      <div class="how-steps">
-        <div class="how-step">
-          <div class="how-step-num">1</div>
-          <span class="how-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" style="color:var(--pp-electric-bright,#5dbfff);vertical-align:middle;"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
-          <h4>Tu trouves ton trajet</h4>
-          <p>Ville de départ, destination, date. En 30 secondes tu vois qui passe déjà par là.</p>
-        </div>
-        <div class="how-step">
-          <div class="how-step-num">2</div>
-          <span class="how-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" style="color:var(--pp-electric-bright,#5dbfff);vertical-align:middle;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span>
-          <h4>Tu réserves en sécurité</h4>
-          <p>Réservation claire, messagerie interne et paiement protégé à stabiliser avant le lancement large.</p>
-        </div>
-        <div class="how-step">
-          <div class="how-step-num">3</div>
-          <span class="how-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" style="color:var(--pp-electric-bright,#5dbfff);vertical-align:middle;"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-          <h4>Suivi GPS en temps réel</h4>
-          <p>Tu vois où il est. Notification à chaque étape clé du trajet.</p>
-        </div>
-        <div class="how-step">
-          <div class="how-step-num">4</div>
-          <span class="how-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" style="color:var(--pp-electric-bright,#5dbfff);vertical-align:middle;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></span>
-          <h4>Arrivée confirmée</h4>
-          <p>Le trajet se termine, chaque côté peut confirmer et laisser une évaluation.</p>
-        </div>
-        <div class="how-step">
-          <div class="how-step-num">5</div>
-          <span class="how-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" style="color:var(--pp-electric-bright,#5dbfff);vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
-          <h4>Évaluations mutuelles</h4>
-          <p>Tu notes le chauffeur. Il te note. Le réseau s'améliore — les mauvais profils dégagent.</p>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:14px;padding:14px 18px;max-width:760px;margin:14px auto 0;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:14px;">
-        <strong style="color:var(--brand-lime);">📦 Bonus chauffeur :</strong>
-        <span style="color:var(--brand-muted);">Active « j'accepte les colis » et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre.</span>
-      </div>
-      <div style="text-align:center;margin-top:36px">
-        <a class="btn" href="/covoiturage.html">🔍 Trouver mon trajet</a>
-        <a class="btn btn-ghost" href="/covoiturage-publier.html" style="margin-left:12px">🚙 Je conduis</a>
-        <a class="btn btn-ghost" href="/faq.html" style="margin-left:12px">J'ai une question</a>
-      </div>
-    </section>
-    <!-- ===== TÉMOIGNAGES ===== -->
-    <section class="temoignages-section" aria-labelledby="temo-title" data-layer="2">
-      <div style="max-width:760px;margin:0 auto;text-align:center;padding:60px 20px">
-        <div class="eyebrow" style="justify-content:center">💬 Témoignages</div>
-        <h2 id="temo-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 14px">Les premiers témoignages arrivent bientôt.</h2>
-        <p style="color:var(--brand-muted);font-size:1.02rem;line-height:1.6;margin:0 0 24px">
-          On est en <strong style="color:var(--brand-lime)">phase bêta</strong> à Québec et Lévis. Plutôt que de te montrer de faux portraits avec des fausses citations, on a choisi d'attendre les <strong>vrais retours</strong> de nos premiers clients. Tu pourrais être le premier à y figurer.
-        </p>
-        <div style="display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <a class="btn" href="/role-choice.html">🚀 Devenir un de nos premiers utilisateurs</a>
-          <a class="btn btn-secondary" href="/comparatif.html">📊 Voir les chiffres réels</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== 3 SCÉNARIOS RÉALISTES (sans fake photos) ===== -->
-    <section class="histoires-section" aria-labelledby="histoires-title" data-layer="2">
-      <div style="max-width:1120px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">📖 3 scénarios concrets</div>
-        <h2 id="histoires-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Trois façons d'utiliser PorteàPorte.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Pas des témoignages inventés — des cas concrets que tu peux simuler dans <a href="/calculateur-prix.html" style="color:var(--brand-lime)">notre calculateur</a>.</p>
-      </div>
-      <div class="histoires-grid">
-
-        <article class="histoire-card">
-          <div class="histoire-img-wrap" style="background:linear-gradient(135deg,#0a1018,#1a2030);display:flex;align-items:center;justify-content:center;font-size:5rem;position:relative">
-            <img src="/assets/photos/scenario-boutique.jpg" alt="Boutique locale québécoise" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
-            <span style="position:relative;z-index:1">🛍️</span>
-            <span class="histoire-tag">Expéditeur</span>
-          </div>
-          <div class="histoire-body">
-            <h3 class="histoire-headline">Pour une boutique Etsy local</h3>
-            <p class="histoire-text">Tu envoies 8-12 colis par semaine via Purolator/UPS. Tu paies ~30-45 $ par colis. Avec PorteàPorte, des voisins qui passent déjà dans la direction de tes clients livrent pour 12-18 $ par colis.</p>
-            <div class="histoire-stat">💰 Économie typique : ~380 $/mois pour 10 colis/sem</div>
-            <a href="/calculateur-prix.html" style="display:inline-block;margin-top:10px;color:var(--brand-lime);font-size:.85rem;font-weight:700">📊 Calcule ton économie →</a>
-          </div>
-        </article>
-
-        <article class="histoire-card">
-          <div class="histoire-img-wrap" style="background:linear-gradient(135deg,#0a1018,#1a2030);display:flex;align-items:center;justify-content:center;font-size:5rem;position:relative">
-            <img src="/assets/photos/scenario-livreur.jpg" alt="Livreur sur sa route quotidienne" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
-            <span style="position:relative;z-index:1">🚗</span>
-            <span class="histoire-tag">Livreur</span>
-          </div>
-          <div class="histoire-body">
-            <h3 class="histoire-headline">Pour un représentant routier</h3>
-            <p class="histoire-text">Tu fais Québec→Sherbrooke 2× par semaine pour le travail. Tu acceptes 2-3 colis sur ta route. Aucune essence supplémentaire, aucun détour. Juste du bonus pur sur un trajet déjà fait.</p>
-            <div class="histoire-stat">📦 Potentiel : ~600-1 100 $/mois supplémentaires</div>
-            <a href="/calculateur-revenus-livreur.html" style="display:inline-block;margin-top:10px;color:var(--brand-lime);font-size:.85rem;font-weight:700">📊 Simule tes revenus →</a>
-          </div>
-        </article>
-
-        <article class="histoire-card" data-impact>
-          <div class="histoire-img-wrap" style="background:linear-gradient(135deg,#0a1018,#1a2030);display:flex;align-items:center;justify-content:center;font-size:5rem;position:relative">
-            <img src="/assets/photos/scenario-covoiturage.jpg" alt="Covoiturage régulier entre Québécois" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
-            <span style="position:relative;z-index:1">🤝</span>
-            <span class="histoire-tag">Covoiturage</span>
-          </div>
-          <div class="histoire-body">
-            <h3 class="histoire-headline">Pour des collègues sur la même route</h3>
-            <p class="histoire-text">2 personnes qui font Trois-Rivières→Québec chaque vendredi. En partageant le trajet via PàP, chacun économise ~30 $ par trajet vs voyage solo, et l'environnement gagne 1 voiture sur la route.</p>
-            <div class="histoire-stat">🚗 Économie typique : ~240 $/mois (2 trajets/sem)</div>
-            <a href="/covoiturage.html" style="display:inline-block;margin-top:10px;color:var(--brand-lime);font-size:.85rem;font-weight:700">🚗 Voir les trajets →</a>
-          </div>
-        </article>
-
-      </div>
-    </section>
-
-    <!-- ===== COMMUNAUTÉ ===== -->
-    <section class="communaute-section" aria-labelledby="comm-title">
-      <div class="communaute-inner">
-        <div style="text-align:center;margin-bottom:8px">
-          <div class="eyebrow" style="justify-content:center">Communauté</div>
-          <h2 id="comm-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Pas une app. Un réseau de vraies personnes.</h2>
-          <p style="color:var(--brand-muted);font-size:1rem;margin:0">Des gens ordinaires qui font quelque chose d'extraordinaire avec leurs trajets quotidiens.</p>
-        </div>
-        <div class="comm-layout">
-
-          <div class="comm-left">
-            <div class="comm-faces" id="commFaces" style="margin-top:28px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-              <!-- Photos chargées dynamiquement si présentes, sinon fallback bandeau -->
-            </div>
-            <div id="commFacesFallback" style="margin-top:28px;margin-bottom:18px;padding:24px;background:linear-gradient(135deg,rgba(93,191,255,.06),rgba(0,217,255,.04));border:1px solid rgba(93,191,255,.2);border-radius:14px;text-align:center">
-              <div style="font-size:2.4rem;margin-bottom:8px">🍁</div>
-              <strong style="display:block;color:var(--brand-lime);font-size:1.05rem;margin-bottom:6px">Bêta active à Québec / Lévis</strong>
-              <span style="color:var(--brand-muted);font-size:.88rem">Les premiers livreurs et expéditeurs s'inscrivent en ce moment. Tu peux être parmi les pionniers.</span>
-            </div>
-            <script>
-              // Auto-détection des 6 portraits communauté
-              (async function() {
-                const faces = ['face-1-femme-60s','face-2-homme-30s','face-3-jeune-femme','face-4-agriculteur','face-5-pro-femme','face-6-construction'];
-                const loaded = [];
-                await Promise.all(faces.map(name => new Promise(resolve => {
-                  const img = new Image();
-                  img.onload = () => { loaded.push(name); resolve(); };
-                  img.onerror = () => resolve();
-                  img.src = `/assets/photos/${name}.jpg`;
-                })));
-                if (loaded.length >= 4) {
-                  document.getElementById('commFacesFallback').style.display = 'none';
-                  document.getElementById('commFaces').innerHTML =
-                    loaded.map(n => `<img loading="lazy" src="/assets/photos/${n}.jpg" alt="" style="width:54px;height:54px;border-radius:50%;border:2px solid #5dbfff;object-fit:cover">`).join('') +
-                    `<div style="display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;background:rgba(93,191,255,.15);border:2px solid rgba(93,191,255,.4);color:#5dbfff;font-weight:900;font-size:.78rem">Bêta</div>`;
-                }
-              })();
-            </script>
-            <p style="color:var(--brand-muted);font-size:0.88rem;margin:0 0 24px;line-height:1.6">Une communauté bêta en construction au Québec. Des travailleurs, des étudiants, des commerçants, des familles. Tous connectés par le bon sens : si tu passes déjà, autant le partager.</p>
-            <div class="comm-stats-2x2">
-              <div class="cs2-card">
-                <span class="cs2-val">Objectif</span>
-                <span class="cs2-lbl">Villes bêta à ouvrir progressivement</span>
-              </div>
-              <div class="cs2-card">
-                <span class="cs2-val">0 $</span>
-                <span class="cs2-lbl">Frais d'inscription</span>
-              </div>
-              <div class="cs2-card" data-impact>
-                <span class="cs2-val">5 %</span>
-                <span class="cs2-lbl">Impact communautaire<br>suivi publiquement</span>
-              </div>
-              <div class="cs2-card">
-                <span class="cs2-val">3 min</span>
-                <span class="cs2-lbl">Pour publier<br>une première mission</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- SCÉNARIO ILLUSTRATIF (sans faux portrait) -->
-          <div class="martin-story">
-            <span class="martin-tag">📖 Scénario réaliste · Bêta Québec</span>
-            <p class="martin-quote">Un voisin qui va déjà à Montréal.<br><span>Il transporte ta laveuse.</span></p>
-            <p class="martin-body">Imagine : tu fais le trajet Québec → Montréal deux fois par mois pour voir ta famille. Tu as de la place dans ton pickup. Sur PorteàPorte, une famille de Sainte-Foy cherche à transporter une laveuse à leur fille à Montréal.<br><br>Le trajet coïncide. Tu acceptes. <strong style="color:var(--brand-lime)">Tu couvres ton essence avec un bonus de 45 $.</strong> <strong>La famille économise 180 $</strong> vs un service spécialisé. La laveuse arrive en 3 heures, le jour même.<br><br><em style="color:var(--brand-muted);font-size:.85rem">C'est l'idée de base. Maintenant en bêta active. Tu peux être ce voisin.</em></p>
-            <div class="martin-nums">
-              <div class="mn-card">
-                <div class="mn-val">180 $</div>
-                <div class="mn-lbl">économisés par la famille</div>
-              </div>
-              <div class="mn-card">
-                <div class="mn-val">45 $</div>
-                <div class="mn-lbl">bonus essence pour le livreur</div>
-              </div>
-              <div class="mn-card">
-                <div class="mn-val">3 h</div>
-                <div class="mn-lbl">livraison le jour même</div>
-              </div>
-            </div>
-            <div style="margin-top:18px;padding:14px 18px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:10px;font-size:.88rem;color:var(--brand-lime);text-align:center">
-              💡 Calculs réels via <a href="/calculateur-prix.html" style="color:#fff;font-weight:700">notre calculateur</a> ou <a href="/calculateur-revenus-livreur.html" style="color:#fff;font-weight:700">simulateur livreur</a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== CONFIANCE & SÉCURITÉ (L3 — caché par défaut, visible en Immersion) ===== -->
-    <section class="trust-section" aria-labelledby="trust-title" data-layer="3">
-      <div style="max-width:1120px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">Votre sécurité, notre priorité</div>
-        <h2 id="trust-title" style="font-size:clamp(1.6rem,4vw,2.6rem);margin:0 0 6px">Construit pour inspirer confiance.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0">Chaque mécanisme existe pour protéger expéditeurs et livreurs.</p>
-      </div>
-      <div class="trust-badges-grid">
-        <div class="trust-badge">
-          <div class="tb-icon">🔒</div>
+    <section class="section" aria-labelledby="routes-title">
+      <div class="inner">
+        <div class="routes-head">
           <div>
-            <div class="tb-title">Paiement Stripe sécurisé</div>
-            <div class="tb-desc">Toutes les transactions passent par Stripe, le leader mondial du paiement en ligne. Votre carte n'est jamais stockée sur nos serveurs.</div>
+            <div class="eyebrow">Trajets populaires</div>
+            <h2 id="routes-title">Les routes qui reviennent souvent.</h2>
           </div>
+          <a class="btn secondary" href="/covoiturage.html">Voir tous les trajets</a>
         </div>
-        <div class="trust-badge">
-          <div class="tb-icon">🪪</div>
-          <div>
-            <div class="tb-title">Identité vérifiée (KYC)</div>
-            <div class="tb-desc">Chaque livreur soumet une pièce d'identité officielle vérifiée manuellement avant d'accéder aux missions. Zéro anonymat.</div>
-          </div>
-        </div>
-        <div class="trust-badge">
-          <div class="tb-icon">🛡️</div>
-          <div>
-            <div class="tb-title">Protection optionnelle</div>
-            <div class="tb-desc">Un programme de protection bêta peut aider certains dossiers admissibles. Ce n'est pas une assurance formelle. Voir la page <a href="/assurance.html" style="color:var(--brand-cyan)">Protection colis</a> pour les détails.</div>
-          </div>
-        </div>
-        <div class="trust-badge">
-          <div class="tb-icon">📍</div>
-          <div>
-            <div class="tb-title">Suivi GPS en temps réel</div>
-            <div class="tb-desc">L'expéditeur voit la position du livreur à chaque étape. Notification automatique à la livraison avec confirmation photo.</div>
-          </div>
-        </div>
-        <div class="trust-badge">
-          <div class="tb-icon">⭐</div>
-          <div>
-            <div class="tb-title">Score de confiance public</div>
-            <div class="tb-desc">Ponctualité, fiabilité, comportement — chaque livreur et chauffeur est noté sur 3 dimensions visibles avant de réserver.</div>
-          </div>
-        </div>
-        <div class="trust-badge" data-impact>
-          <div class="tb-icon">🤝</div>
-          <div>
-            <div class="tb-title">Points sécuritaires covoiturage</div>
-            <div class="tb-desc">Embarquement et débarquement dans des lieux publics vérifiés : Tim Hortons, Walmart, stations de métro — jamais en isolement.</div>
-          </div>
-        </div>
-        <div class="trust-badge">
-          <div class="tb-icon">💬</div>
-          <div>
-            <div class="tb-title">Support humain</div>
-            <div class="tb-desc">Pendant la bêta, notre objectif est de répondre rapidement aux vrais problèmes, avec une personne quand le dossier le demande.</div>
-          </div>
-        </div>
-        <div class="trust-badge">
-          <div class="tb-icon">🔍</div>
-          <div>
-            <div class="tb-title">Transparence totale</div>
-            <div class="tb-desc">Les frais et la répartition des revenus sont publiés publiquement. <a href="/transparence.html" style="color:var(--brand-cyan)">Voir la page Transparence</a>.</div>
-          </div>
-        </div>
-      </div>
-      <div class="trust-verified-row">
-        <div class="tv-item"><span class="tv-dot"></span>SSL / HTTPS</div>
-        <div class="tv-item"><span class="tv-dot"></span>Données chiffrées au repos</div>
-        <div class="tv-item"><span class="tv-dot"></span>Aucune revente de données</div>
-        <div class="tv-item"><span class="tv-dot"></span>Hébergé au Canada</div>
-        <div class="tv-item"><span class="tv-dot"></span>Conforme à la Loi 25 (QC)</div>
-        <div class="tv-item"><span class="tv-dot"></span>Paiement PCI-DSS</div>
-      </div>
-    </section>
-
-    <!-- ===== TRIPTYCH MARKETING (L3) ===== -->
-    <section data-layer="3" style="padding:0 clamp(18px,4vw,48px) 72px;">
-      <div style="max-width:1120px;margin:0 auto;">
-        <div class="triptych">
-
-          <a href="/livreur.html">
-            <img src="/assets/hero-left.jpg" alt="Livraison collaborative — livreur remettant un colis" loading="lazy">
-            <div class="triptych-caption">
-              <div class="triptych-kicker">Livraison</div>
-              <div class="triptych-label">Sécuritaire · Suivi en temps réel</div>
-            </div>
+        <div class="route-grid">
+          <a class="card route-card" href="/covoiturage.html?from=Quebec&to=Montreal">
+            <div class="route-cities"><span>Quebec</span><span>→</span><span>Montreal</span></div>
+            <div class="route-meta">Travail, famille, fin de semaine.</div>
           </a>
-
-          <a href="/covoiturage.html" data-impact>
-            <img src="/assets/hero-center.jpg" alt="Application covoiturage PorteàPorte sur mobile" loading="lazy">
-            <div class="triptych-caption">
-              <div class="triptych-kicker">Covoiturage</div>
-              <div class="triptych-label">Partagez vos trajets · Économisez</div>
-            </div>
+          <a class="card route-card" href="/covoiturage.html?from=Quebec&to=Levis">
+            <div class="route-cities"><span>Quebec</span><span>→</span><span>Levis</span></div>
+            <div class="route-meta">Court trajet, souvent utile.</div>
           </a>
-
-          <a href="/programme-points.html" data-impact>
-            <img src="/assets/hero-right.jpg" alt="Dashboard PorteàPorte avec badges et Points Impact" loading="lazy">
-            <div class="triptych-caption">
-              <div class="triptych-kicker">Récompenses</div>
-              <div class="triptych-label">Badges · Points Impact · Récompenses</div>
-            </div>
+          <a class="card route-card" href="/covoiturage.html?from=Trois-Rivieres&to=Quebec">
+            <div class="route-cities"><span>Trois-Rivieres</span><span>→</span><span>Quebec</span></div>
+            <div class="route-meta">Interurbain, simple a partager.</div>
           </a>
-
         </div>
       </div>
     </section>
 
-    <!-- ===== COMPARATEUR DE PRIX (L3 — déplacé conceptuellement vers /expediteur.html, caché ici) ===== -->
-    <section class="pricer-section" data-layer="3">
-      <div class="section-inner">
-        <div class="section-heading">
-          <h2>Combien tu économises vraiment ?</h2>
-          <p>Compare le prix PorteàPorte avec les grands transporteurs.</p>
+    <section class="section" aria-labelledby="colis-title" style="background:rgba(255,255,255,.025);">
+      <div class="inner split">
+        <div>
+          <div class="eyebrow">Colis, en second</div>
+          <h2 id="colis-title">Un coffre libre peut rendre service.</h2>
+          <p class="lead">La livraison reste presente, mais secondaire: quand un conducteur accepte les colis, il peut gagner un bonus sans creer un nouveau trajet.</p>
+          <div class="hero-actions">
+            <a class="btn secondary" href="/livraison">Envoyer un colis</a>
+            <a class="btn ghost" href="/calculateur">Comparer les couts</a>
+          </div>
         </div>
+        <div class="mini-panel">
+          <h3>Pour les conducteurs</h3>
+          <p>Active "j'accepte les colis" en publiant ton trajet. Le covoiturage reste le coeur; le colis devient un extra naturel.</p>
+          <img src="/assets/photos/hero-covoiturage-colis.png" alt="Colis dans un trajet de covoiturage" loading="lazy">
+        </div>
+      </div>
+    </section>
 
-        <div class="pricer-card">
-          <div class="pricer-inputs">
-            <div class="pricer-field">
-              <label>Poids du colis (kg)</label>
-              <input type="number" id="pWeight" value="2" min="0.1" max="50" step="0.5" oninput="calcPrice()">
-            </div>
-            <div class="pricer-field">
-              <label>Distance (km)</label>
-              <input type="number" id="pDist" value="30" min="1" max="500" step="5" oninput="calcPrice()">
-            </div>
-            <div class="pricer-field">
-              <label>Type</label>
-              <select id="pType" onchange="calcPrice()">
-                <option value="standard">Standard</option>
-                <option value="urgent">Urgent</option>
-                <option value="fragile">Fragile</option>
-              </select>
-            </div>
+    <section class="section" aria-labelledby="impact-title">
+      <div class="inner split">
+        <div class="mini-panel">
+          <div class="eyebrow">Impact</div>
+          <h2 id="impact-title">Moins de trajets vides. Plus d'entraide locale.</h2>
+          <p class="lead">Chaque siege rempli et chaque coffre utile rendent le reseau plus efficace. Les details complets restent sur les pages Impact et Transparence.</p>
+          <div class="impact-metrics">
+            <div class="metric"><strong>CO2</strong><span>moins de voitures seules</span></div>
+            <div class="metric"><strong>Local</strong><span>reseau quebecois</span></div>
+            <div class="metric"><strong>Public</strong><span>suivi transparent</span></div>
           </div>
-
-          <div class="pricer-results" id="pricerResults">
-            <!-- filled by JS -->
-          </div>
-
-          <div class="pricer-cta">
-            <a class="btn" href="role-choice.html">Envoyer au prix PorteàPorte</a>
+        </div>
+        <div>
+          <h3>Garder la homepage claire.</h3>
+          <p class="lead">Les longues explications communautaires, les gagnants, les abonnements et les tableaux transparence vivent dans leurs pages dediees.</p>
+          <div class="hero-actions">
+            <a class="btn secondary" href="/impact">Voir l'impact</a>
+            <a class="btn ghost" href="/transparence">Transparence</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== MINI-CARTE TEASER (L3 — déjà couvert par la carte interactive en L2) ===== -->
-    <section class="map-teaser-section" data-layer="3">
-      <div class="section-inner">
-        <div class="section-heading">
-          <h2>Des missions partout au Québec.</h2>
-          <p>Vois les trajets actifs en temps réel et trouve un livreur près de toi.</p>
+    <section class="section cta" aria-labelledby="cta-title">
+      <div class="inner">
+        <div class="eyebrow">Pret ?</div>
+        <h2 id="cta-title">La route existe deja. Partage-la.</h2>
+        <p class="lead">Commence par le covoiturage. Ajoute les colis et l'impact quand c'est pertinent.</p>
+        <div class="hero-actions" style="justify-content:center;">
+          <a class="btn" href="/covoiturage.html">Trouver mon trajet</a>
+          <a class="btn secondary" href="/covoiturage-publier.html">Publier mon trajet</a>
         </div>
-        <div class="map-teaser-wrap">
-          <div id="miniMap"></div>
-          <div class="map-teaser-overlay">
-            <p>Rejoins le réseau pour voir toutes les missions disponibles.</p>
-            <a class="btn" href="map.html">Explorer la carte complète</a>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- ===== CTA CONVERSION ===== -->
-    <section style="padding:72px clamp(18px,4vw,48px);background:linear-gradient(135deg,rgba(93,191,255,0.07),rgba(0,217,255,0.05));border-top:1px solid rgba(93,191,255,0.15)">
-      <div style="max-width:760px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">Prêt à essayer ?</div>
-        <h2 style="font-size:clamp(1.8rem,5vw,3rem);margin:0 0 16px;line-height:1.15">Rejoins la bêta.<br>C'est gratuit. C'est maintenant.</h2>
-        <p style="color:var(--brand-muted);font-size:1rem;margin:0 0 32px;line-height:1.7">Pas d'abonnement. Pas de frais d'inscription. Tu paies seulement quand tu envoies ou reçois une livraison. Les livreurs sont payés après chaque mission confirmée.</p>
-        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
-          <a class="btn" href="/role-choice.html" style="font-size:1rem;padding:14px 28px">📦 Envoyer un colis</a>
-          <a class="btn btn-ghost" href="/devenir-livreur.html" style="font-size:1rem;padding:14px 28px">🚗 Devenir livreur</a>
-          <a class="btn btn-ghost" href="/quebec-beta.html" style="font-size:1rem;padding:14px 28px">Beta Quebec/Levis</a>
-          <a class="btn btn-ghost" href="/covoiturage.html" style="font-size:1rem;padding:14px 28px" data-impact>🛣️ Covoiturage</a>
-        </div>
-        <p style="font-size:0.8rem;color:var(--brand-muted)">
-          ✓ Inscription en 2 minutes &nbsp;·&nbsp; ✓ Suivi GPS inclus &nbsp;·&nbsp; ✓ Paiement sécurisé Stripe &nbsp;·&nbsp; ✓ Bêta ouverte au Québec
-        </p>
       </div>
     </section>
   </main>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    /* ---- Price comparator ---- */
-    const RATES = {
-      standard: { base: 4.5,  perKm: 0.18, perKg: 0.9  },
-      urgent:   { base: 7.0,  perKm: 0.22, perKg: 1.2  },
-      fragile:  { base: 6.0,  perKm: 0.20, perKg: 1.1  }
-    };
-    const COMPETITORS = [
-      { name: 'UPS',      multiplier: 3.2 },
-      { name: 'FedEx',    multiplier: 3.5 },
-      { name: 'Purolator',multiplier: 2.9 },
-      { name: 'Postes CA',multiplier: 2.4 }
-    ];
-
-    function calcPrice() {
-      const w = Math.max(0.1, parseFloat(document.getElementById('pWeight').value) || 2);
-      const d = Math.max(1,   parseFloat(document.getElementById('pDist').value)   || 30);
-      const t = document.getElementById('pType').value;
-      const r = RATES[t];
-      const pap = r.base + d * r.perKm + w * r.perKg;
-
-      const rows = COMPETITORS.map(c => {
-        const price = pap * c.multiplier;
-        const save  = price - pap;
-        const pct   = Math.round(save / price * 100);
-        return { name: c.name, price, save, pct };
-      });
-
-      const fmt = v => v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
-
-      document.getElementById('pricerResults').innerHTML = `
-        <div class="pricer-pap">
-          <span class="pricer-pap-label">PorteàPorte</span>
-          <span class="pricer-pap-price">${fmt(pap)}</span>
-        </div>
-        <div class="pricer-vs">vs les grands transporteurs</div>
-        <div class="pricer-competitors">
-          ${rows.map(c => `
-            <div class="comp-row">
-              <span class="comp-name">${c.name}</span>
-              <span class="comp-price">${fmt(c.price)}</span>
-              <span class="comp-save">Tu économises ${fmt(c.save)} (${c.pct}%)</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    calcPrice();
-
-    async function loadHomeImpact() {
-      try {
-        const res = await fetch('/api/impact-public');
-        const out = await res.json();
-        if (!res.ok) throw new Error(out.error || 'Impact indisponible');
-        const money = cents => (Number(cents || 0) / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
-        const impact = out.impact || {};
-        const totals = impact.totals || {};
-        document.getElementById('home-impact-pool').textContent = money(totals.donation_pool_cents);
-        document.getElementById('home-impact-text').textContent = `${totals.deliveries_count || 0} livraisons comptees ce mois-ci.`;
-        const draw = (out.draws || [])[0];
-        if (draw) {
-          document.getElementById('home-draw-title').textContent = draw.title || 'Tirage PorteaPorte';
-          document.getElementById('home-draw-text').textContent = `${draw.status || 'actif'} · ${draw.draw_date || ''}`;
-        }
-        const winner = (out.winners || [])[0];
-        if (winner) {
-          document.getElementById('home-winner-title').textContent = winner.user_email || 'Gagnant PorteaPorte';
-          document.getElementById('home-winner-text').textContent = winner.prize_title || 'Tirage PorteaPorte';
-        }
-      } catch (err) {
-        document.getElementById('home-impact-pool').textContent = 'Transparence';
-        document.getElementById('home-impact-text').textContent = 'Consulte la page publique pour les mises a jour.';
-      }
-    }
-    loadHomeImpact();
-
-    // ─── Auto-activation du background photo Mode Impact si présent ───
-    (function() {
-      const img = new Image();
-      img.onload = () => document.querySelector('.impact-zone-hero')?.classList.add('has-photo');
-      img.src = '/assets/photos/mode-impact-communaute.jpg';
-    })();
-
-    // ─── Stats live de la nouvelle Mode Impact hero zone ───
-    (async function loadIhz() {
-      try {
-        const [resImpact, resSettings] = await Promise.all([
-          fetch('/api/impact-public'),
-          fetch('/api/platform?endpoint=platform-settings-get')
-        ]);
-        if (resImpact.ok) {
-          const out = await resImpact.json();
-          const totals = (out.impact || {}).totals || {};
-          const cents = Number(totals.donation_pool_cents || 0);
-          const deliv = Number(totals.deliveries_count || 0);
-          const poolEl = document.getElementById('ihz-pool');
-          const delivEl = document.getElementById('ihz-deliveries');
-          if (poolEl) poolEl.textContent = cents > 0
-            ? (cents / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 0 })
-            : 'Bêta';
-          if (delivEl) delivEl.textContent = deliv > 0 ? deliv.toLocaleString('fr-CA') : 'En cours';
-        }
-        if (resSettings.ok) {
-          const out = await resSettings.json();
-          const pct = Number(out.settings?.pct_livreur);
-          if (Number.isFinite(pct) && pct > 0) {
-            const el = document.getElementById('ihz-livreur-pct');
-            if (el) el.textContent = pct.toFixed(0) + ' %';
-          }
-        }
-      } catch (_) {
-        const p = document.getElementById('ihz-pool'); if (p) p.textContent = 'Bêta';
-        const d = document.getElementById('ihz-deliveries'); if (d) d.textContent = 'En cours';
-      }
-    })();
-
-    /* ════════════════════════════════════════════════
-       MODE SIMPLE / MODE IMPACT
-    ════════════════════════════════════════════════ */
-    const IMPACT_KEY     = 'pap_mode';
-    const IMPACT_DATE_KEY= 'pap_impact_since';
-    const FEEDBACK_KEY   = 'pap_feedback_done';
-    const fbAnswers      = {};
-
-    function isImpactMode() {
-      return localStorage.getItem(IMPACT_KEY) === 'impact';
-    }
-
-    function applyMode() {
-      const impact = isImpactMode();
-      document.body.classList.toggle('mode-simple', !impact);
-      const btn = document.getElementById('impact-toggle');
-      if (btn) btn.textContent = impact ? '✦ Mode Impact ON' : '✦ Mode Impact';
-    }
-
-    function toggleImpactMode() {
-      if (isImpactMode()) {
-        localStorage.setItem(IMPACT_KEY, 'simple');
-        localStorage.removeItem(IMPACT_DATE_KEY);
-      } else {
-        localStorage.setItem(IMPACT_KEY, 'impact');
-        localStorage.setItem(IMPACT_DATE_KEY, Date.now().toString());
-      }
-      applyMode();
-    }
-
-    // Feedback popup
-    function fbSelect(btn, question, answer) {
-      btn.closest('.fb-options').querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      fbAnswers[question] = answer;
-      const allAnswered = ['points','transparence','sans_impact'].every(q => fbAnswers[q]);
-      document.getElementById('fb-submit').disabled = !allAnswered;
-    }
-
-    async function submitFeedback() {
-      const btn = document.getElementById('fb-submit');
-      btn.disabled = true;
-      btn.textContent = 'Envoi...';
-      try {
-        await fetch('/api/platform', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: 'impact-feedback', ...fbAnswers, source: 'mode_impact_popup' })
-        });
-      } catch(_) {}
-      localStorage.setItem(FEEDBACK_KEY, '1');
-      document.getElementById('feedback-overlay').classList.remove('open');
-      btn.textContent = 'Merci ! 🙏';
-    }
-
-    function checkFeedbackTrigger() {
-      if (!isImpactMode()) return;
-      if (localStorage.getItem(FEEDBACK_KEY)) return;
-      const since = parseInt(localStorage.getItem(IMPACT_DATE_KEY) || '0', 10);
-      if (!since) return;
-      const days = (Date.now() - since) / 86400000;
-      if (days >= 7) {
-        document.getElementById('feedback-overlay').classList.add('open');
-      }
-    }
-
-    // Init
-    applyMode();
-    checkFeedbackTrigger();
-
-    // Fermer popup en cliquant outside
-    document.getElementById('feedback-overlay').addEventListener('click', function(e) {
-      if (e.target === this) this.classList.remove('open');
-    });
-
-    /* ---- Mini map ---- */
-    const miniMap = L.map('miniMap', { zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false })
-      .setView([46.8, -71.5], 7);
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd', maxZoom: 18
-    }).addTo(miniMap);
-
-    /* Points de la zone bêta Québec/Lévis uniquement (vraies villes de couverture) */
-    const betaCities = [
-      [46.8139, -71.2080, 'Québec'],
-      [46.8033, -71.1779, 'Lévis']
-    ];
-    betaCities.forEach(([lat, lng, name]) => {
-      L.circleMarker([lat, lng], {
-        radius: 9,
-        fillColor: '#5dbfff',
-        color: '#0A0C10',
-        weight: 2,
-        fillOpacity: 0.9
-      }).bindTooltip(name + ' (bêta active)', { permanent: false }).addTo(miniMap);
-    });
-  </script>
-
-  <!-- ═══ CTA FINAL (L3 — doublon avec 'Rejoins la bêta' qui reste L1) ═══ -->
-  <section class="pp-section" data-layer="3" style="background:var(--pp-grad-hero); border-top:1px solid var(--pp-divider);">
-    <div class="pp-container" style="text-align:center;">
-      <div class="pp-eyebrow">Prêt ?</div>
-      <h2 class="pp-h2" style="margin:14px 0 12px;">Tu vas quelque part ? <span style="background:var(--pp-grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Quelqu'un aussi.</span></h2>
-      <p class="pp-lede" style="margin:0 auto 30px;">Réserve, conduis, ou glisse un colis dans le coffre. Trois façons de bouger, une seule communauté.</p>
-      <div style="display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center;">
-        <a class="pp-btn pp-btn-primary pp-btn-lg" href="/covoiturage.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          Trouver mon trajet
-        </a>
-        <a class="pp-btn pp-btn-ghost pp-btn-lg" href="/covoiturage-publier.html">Publier mon trajet</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ STICKY CTA MOBILE (P10) ═══ -->
-  <div class="pp-sticky-cta" role="region" aria-label="Action rapide">
-    <a class="pp-btn pp-btn-primary" href="/covoiturage.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      Trouver mon trajet
-    </a>
-  </div>
-
-  <footer class="footer-full">
-    <div class="footer-full-inner">
-      <div class="footer-grid">
-
-        <div class="footer-brand">
-          <h3>PorteàPorte</h3>
-          <p>Le réseau de gens ordinaires qui partagent leurs trajets quotidiens pour livrer des colis au Québec. Quelqu'un passe déjà dans ta direction.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-            <a class="btn btn-ghost" href="/role-choice.html" style="font-size:0.8rem;padding:7px 14px">Commencer</a>
-            <a class="btn btn-ghost" href="/contact.html" style="font-size:0.8rem;padding:7px 14px">Nous écrire</a>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <a href="https://www.facebook.com/profile.php?id=61568025027918&locale=fr_CA" target="_blank" rel="noopener" aria-label="Page Facebook PorteàPorte" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#1877F2;color:#fff;border-radius:8px;font-weight:700;font-size:.8rem;text-decoration:none">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.47h-2.796v8.385C19.612 22.954 24 17.99 24 12"/></svg>
-              Facebook
-            </a>
-          </div>
-        </div>
-
-        <div class="footer-col">
-          <h4>Plateforme</h4>
-          <a href="/expediteur.html">Envoyer un colis</a>
-          <a href="/devenir-livreur.html">Devenir livreur</a>
-          <a href="/quebec-beta.html">Test Québec/Lévis</a>
-          <a href="/liste-attente.html">🔔 Liste d'attente autres villes</a>
-          <a href="/covoiturage.html">Covoiturage</a>
-          <a href="/browse-missions.html">Voir les missions</a>
-          <a href="/assurance.html">Protection colis (bêta)</a>
-          <a href="/map.html">Carte des trajets</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Communauté</h4>
-          <a href="/comparatif.html">📊 Comparatif vs UPS/FedEx/Uber</a>
-          <a href="/calculateur-prix.html">💰 Calculateur prix (expéditeur)</a>
-          <a href="/calculateur-revenus-livreur.html">🚗 Calculateur revenus (livreur)</a>
-          <a href="/programme-points.html">Points Impact</a>
-          <a href="/parrainage.html">Parrainage</a>
-          <a href="/transparence.html">Transparence</a>
-          <a href="/partenaire.html">Partenaires</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/contact.html">Support</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Légal</h4>
-          <a href="/status.html">📡 État du service (live)</a>
-          <a href="/mes-donnees.html">🔒 Mes données (Loi 25)</a>
-          <a href="/cgu.html">Conditions d'utilisation</a>
-          <a href="/cgv.html">Conditions de vente</a>
-          <a href="/confidentialite.html">Confidentialité</a>
-          <a href="/legal.html">Mentions légales</a>
-          <a href="/reglements-concours.html">Règlements concours</a>
-          <a href="mailto:bonjour@porteaporte.site">bonjour@porteaporte.site</a>
-        </div>
-
-      </div>
-      <div class="footer-bottom">
-        <span>© 2026 PorteàPorte — Québec, Canada</span>
-        <span style="display:flex;gap:16px;flex-wrap:wrap">
-          <span>🔒 SSL · PCI-DSS</span>
-          <span>🍁 Hébergé au Canada</span>
-          <span>⚖️ Conforme Loi 25 (QC)</span>
-        </span>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>PorteaPorte - Covoiturage et colis sur routes existantes.</div>
+      <div>
+        <a href="/cgu.html">CGU</a>
+        <a href="/confidentialite.html">Confidentialite</a>
+        <a href="/contact.html">Contact</a>
       </div>
     </div>
   </footer>
-  <script defer src="/js/support-widget.js"></script>
-  <script defer src="/js/pwa-install.js"></script>
-  <script defer src="/js/impact-counter.js"></script>
-  <script defer src="/js/impact-calculator.js"></script>
-  <script defer src="/js/loading.js"></script>
-  <script defer src="/js/analytics.js"></script>
-  <!-- Bannière bêta -->
-  <div id="pap-beta-banner" style="position:fixed;bottom:14px;left:14px;z-index:99996;padding:8px 14px;background:rgba(255,200,0,.12);border:1px solid rgba(255,200,0,.4);border-radius:999px;color:#ffd700;font-size:.78rem;font-weight:800;backdrop-filter:blur(8px);cursor:pointer" onclick="this.remove()">🧪 BÊTA · porteaporte.site — clique pour fermer</div>
+
   <script>
-    (async function() {
-      try {
-        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
-        if (!db) return;
-        const { data } = await db.auth.getSession();
-        if (!data?.session) return;
-        const { data: profile } = await db.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
-        if (profile?.role !== 'admin') return;
-        // Admin connecté : cacher Connexion + Commencer (accès admin via URL directe /admin)
-        const connexion = document.getElementById('nav-connexion');
-        const commencer = document.getElementById('nav-commencer');
-        if (connexion) connexion.style.display = 'none';
-        if (commencer) commencer.style.display = 'none';
-      } catch (_) {}
+    (function () {
+      const form = document.getElementById('ride-search-form');
+      const date = document.getElementById('search-date');
+      if (date && !date.value) date.valueAsDate = new Date();
+      if (!form) return;
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const from = document.getElementById('search-from').value.trim();
+        const to = document.getElementById('search-to').value.trim();
+        const when = document.getElementById('search-date').value;
+        const qs = new URLSearchParams();
+        if (from) qs.set('from', from);
+        if (to) qs.set('to', to);
+        if (when) qs.set('date', when);
+        location.href = '/covoiturage.html' + (qs.toString() ? '?' + qs.toString() : '');
+      });
     })();
   </script>
-  <script src="/js/layer-mode.js" defer></script>
-  <script src="/js/pp-icons.js" defer></script>
+  <script src="/js/support-widget.js"></script>
 </body>
 </html>

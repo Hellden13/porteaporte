@@ -33,6 +33,22 @@
     ],
     "rewrites":  [
                      {
+                         "source":  "/livraison",
+                         "destination":  "/livraison.html"
+                     },
+                     {
+                         "source":  "/impact",
+                         "destination":  "/impact.html"
+                     },
+                     {
+                         "source":  "/calculateur",
+                         "destination":  "/calculateur.html"
+                     },
+                     {
+                         "source":  "/conducteurs",
+                         "destination":  "/conducteurs.html"
+                     },
+                     {
                          "source":  "/admin",
                          "destination":  "/admin/dashboard-admin.html"
                      },

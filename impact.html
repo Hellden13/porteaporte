@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact - PorteaPorte</title>
+  <meta name="description" content="Impact local de PorteaPorte: trajets partages, entraide, transparence et organismes.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body { margin:0; background:#07090d; color:#f6fbff; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+    main { min-height:100vh; padding:60px 18px; display:grid; place-items:center; background:radial-gradient(circle at 20% 20%,rgba(184,245,62,.12),transparent 28%),#07090d; }
+    .wrap { width:min(1040px,100%); }
+    h1 { margin:12px 0 16px; font-size:clamp(2.6rem,7vw,5.8rem); line-height:.9; letter-spacing:0; }
+    p { color:#a8b4c2; line-height:1.7; font-size:1.08rem; max-width:720px; }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:28px; }
+    .card { padding:24px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.055); text-decoration:none; color:#f6fbff; }
+    .card span { color:#00d9ff; font-weight:900; }
+    @media(max-width:820px){ .grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wrap">
+      <a href="/" style="color:#a8b4c2;text-decoration:none;font-weight:800;">← Accueil</a>
+      <h1>Impact local, sans alourdir l'accueil.</h1>
+      <p>La homepage garde le covoiturage en premier. Les details communautaires, les chiffres, les organismes et la transparence complete vivent ici et dans les pages dediees.</p>
+      <div class="grid">
+        <a class="card" href="/manifeste.html"><h2>Manifeste</h2><p>L'histoire, la mission et la vision PorteaPorte.</p><span>Lire</span></a>
+        <a class="card" href="/transparence.html"><h2>Transparence</h2><p>Suivi public des montants, concours et repartitions.</p><span>Voir les donnees</span></a>
+        <a class="card" href="/organismes.html"><h2>Organismes</h2><p>Les partenaires et causes locales.</p><span>Decouvrir</span></a>
+      </div>
+    </div>
+  </main>
+  <script src="/js/support-widget.js"></script>
+</body>
+</html>
