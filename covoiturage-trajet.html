@@ -367,10 +367,13 @@ function formatShortDate(dt) {
 }
 
 function populateCitySelects(ride) {
+  // BUG #4 — Inclure les secteurs pour clarifier l'itinéraire
+  const startLabel = (ride.departure_city || ride.from_city || '') + (ride.start_sector ? ' · ' + ride.start_sector : '');
+  const endLabel   = (ride.destination_city || ride.to_city || '') + (ride.end_sector ? ' · ' + ride.end_sector : '');
   const stops = [
-    { id: 'depart',  label: ride.departure_city || ride.from_city || '' },
-    ...(Array.isArray(ride.stop_points) ? ride.stop_points.map(s => ({ id: s.id || s.city, label: s.city || s.name || s.label || '' })) : []),
-    { id: 'arrivee', label: ride.destination_city || ride.to_city || '' }
+    { id: 'depart',  label: startLabel },
+    ...(Array.isArray(ride.stop_points) ? ride.stop_points.map(s => ({ id: s.id || s.city, label: (s.city || s.name || s.label || '') + (s.sector ? ' · ' + s.sector : '') })) : []),
+    { id: 'arrivee', label: endLabel }
   ].filter(s => s.label);
 
   ['pax-pickup','pax-dropoff','pkg-pickup','pkg-dropoff'].forEach(function(selId) {
@@ -396,15 +399,33 @@ function renderRide(r) {
   document.getElementById('ride-date-line').textContent = formatDate(r.departure_time || r.date);
 
   const seats = r.available_seats ?? r.seats_available ?? 0;
-  const dist  = r.distance_km ? r.distance_km + ' km' : '--';
-  const trunk = r.trunk_size === 'large' ? 'Grand coffre' : r.trunk_size === 'medium' ? 'Coffre moyen' : r.trunk_size === 'small' ? 'Petit coffre' : '--';
-  const flex  = r.flexibility === 'flexible' ? 'Flexible' : r.flexibility === 'on_demand' ? 'Sur demande' : 'Fixe';
+  const dist  = (r.distance_km || r.total_distance_km) ? (r.distance_km || r.total_distance_km) + ' km' : '—';
+
+  // BUG #2 — Mapping coffre élargi (gère 'petit/moyen/grand' ET 'small/medium/large')
+  var trunkMap = {
+    'small': 'Petit', 'petit': 'Petit',
+    'medium': 'Moyen', 'moyen': 'Moyen',
+    'large': 'Grand', 'grand': 'Grand'
+  };
+  var trunkRaw = String(r.trunk_size || '').toLowerCase();
+  var trunkLabel = trunkMap[trunkRaw] || 'Non précisé';
+  var trunkTooltip = trunkRaw === 'small' || trunkRaw === 'petit' ? 'Sac à dos, petit colis' :
+                     trunkRaw === 'medium' || trunkRaw === 'moyen' ? '1 valise ou boîte moyenne' :
+                     trunkRaw === 'large' || trunkRaw === 'grand' ? 'Plusieurs valises, gros colis' : 'Le conducteur n\'a pas précisé la taille';
+
+  // BUG #3 — Lecture flexibility_minutes (numérique) en priorité, fallback texte
+  var flexMin = Number(r.flexibility_minutes || 0);
+  var flexLabel;
+  if (flexMin > 0) flexLabel = '± ' + flexMin + ' min';
+  else if (r.flexibility === 'flexible') flexLabel = 'Flexible';
+  else if (r.flexibility === 'on_demand') flexLabel = 'Sur demande';
+  else flexLabel = 'Heure fixe';
 
   document.getElementById('meta-grid').innerHTML =
     '<div class="meta-item"><div class="mi-icon">&#128186;</div><div class="mi-val">' + seats + '</div><div class="mi-lbl">places dispo.</div></div>' +
     '<div class="meta-item"><div class="mi-icon">&#128207;</div><div class="mi-val">' + dist + '</div><div class="mi-lbl">distance</div></div>' +
-    '<div class="meta-item"><div class="mi-icon">&#129533;</div><div class="mi-val">' + trunk + '</div><div class="mi-lbl">coffre</div></div>' +
-    '<div class="meta-item"><div class="mi-icon">&#128336;</div><div class="mi-val">' + flex + '</div><div class="mi-lbl">horaire</div></div>';
+    '<div class="meta-item" title="' + trunkTooltip + '"><div class="mi-icon">&#129533;</div><div class="mi-val">' + trunkLabel + '</div><div class="mi-lbl">coffre</div></div>' +
+    '<div class="meta-item" title="Marge de temps de départ acceptée par le conducteur"><div class="mi-icon">&#128336;</div><div class="mi-val">' + flexLabel + '</div><div class="mi-lbl">horaire</div></div>';
 
   var stopArr = [
     { name: r.departure_city || r.from_city, sub: r.departure_address || '', dot: 'filled', time: r.departure_time }
@@ -603,6 +624,24 @@ function renderRide(r) {
 
   populateCitySelects(r);
   if (r.accepts_pets) document.getElementById('pet-row').style.display = '';
+
+  // BUG #5 — Feedback visuel + tooltip pour le bagage
+  var lugRow = document.querySelector('label.check-row:has(#pax-luggage)');
+  var lugInput = document.getElementById('pax-luggage');
+  if (lugRow && lugInput) {
+    if (r.accepts_large_luggage) {
+      lugRow.title = 'Le conducteur accepte les bagages en soute (+ supplément)';
+      lugRow.style.opacity = '1';
+      lugRow.style.cursor = 'pointer';
+      lugInput.disabled = false;
+    } else {
+      lugRow.title = 'Le conducteur n\'accepte pas les bagages en soute pour ce trajet';
+      lugRow.style.opacity = '0.45';
+      lugRow.style.cursor = 'not-allowed';
+      lugInput.disabled = true;
+      lugInput.checked = false;
+    }
+  }
 
   if (r.accepts_packages) {
     document.getElementById('booking-tabs').style.display = '';
