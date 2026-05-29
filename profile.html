@@ -375,6 +375,53 @@
                 </div>
             </div>
 
+            <!-- PRÉFÉRENCES PASSAGER (filtre auto pour recherche covoit) -->
+            <div class="info-card" style="margin-top:24px;">
+                <div class="section-title">🎯 Mes préférences passager</div>
+                <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px;">Coche tes besoins. La recherche de trajets les pré-appliquera automatiquement.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--brand-bg-surface-light);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="pref-pet" onchange="savePrefs()"> 🐾 J'ai un animal
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--brand-bg-surface-light);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="pref-luggage" onchange="savePrefs()"> 🧳 Gros bagages
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--brand-bg-surface-light);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="pref-ac" onchange="savePrefs()"> ❄️ Climatisation
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--brand-bg-surface-light);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="pref-nonsmoker" onchange="savePrefs()"> 🚭 Non-fumeur uniquement
+                    </label>
+                </div>
+                <p id="prefs-saved" style="color:var(--brand-lime);font-size:.8rem;margin-top:10px;display:none;">✓ Préférences sauvegardées</p>
+            </div>
+            <script>
+                (function () {
+                    function loadPrefs() {
+                        try {
+                            const p = JSON.parse(localStorage.getItem('pp_passenger_prefs') || '{}');
+                            document.getElementById('pref-pet').checked = !!p.pet;
+                            document.getElementById('pref-luggage').checked = !!p.luggage;
+                            document.getElementById('pref-ac').checked = !!p.ac;
+                            document.getElementById('pref-nonsmoker').checked = !!p.nonsmoker;
+                        } catch (e) {}
+                    }
+                    window.savePrefs = function () {
+                        const prefs = {
+                            pet: document.getElementById('pref-pet').checked,
+                            luggage: document.getElementById('pref-luggage').checked,
+                            ac: document.getElementById('pref-ac').checked,
+                            nonsmoker: document.getElementById('pref-nonsmoker').checked
+                        };
+                        localStorage.setItem('pp_passenger_prefs', JSON.stringify(prefs));
+                        const ok = document.getElementById('prefs-saved');
+                        ok.style.display = 'block';
+                        setTimeout(() => ok.style.display = 'none', 2000);
+                    };
+                    loadPrefs();
+                })();
+            </script>
+
             <!-- BADGES -->
             <div class="badges-section">
                 <div class="section-title">🎖️ Mes badges</div>

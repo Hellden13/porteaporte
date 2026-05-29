@@ -857,12 +857,20 @@
         // Badges verts/bleus
         const badges = [];
         if (d.verified)              badges.push('<span class="badge green">✅ Vérifié</span>');
-        if (r.accepts_pets)          badges.push('<span class="badge">🐾 Animaux</span>');
-        if (r.accepts_large_luggage) badges.push('<span class="badge">🧳 Gros bagages</span>');
-        if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts</span>');
-        if (r.accepts_packages)      badges.push(`<span class="badge blue">📦 Colis jusqu'à ${r.package_max_kg||10} kg</span>`);
-        if (r.ac_available)          badges.push('<span class="badge blue">❄️ Clim</span>');
-        if (r.accessible)            badges.push('<span class="badge blue">♿</span>');
+        if (r.accessible)            badges.push('<span class="badge blue">♿ Accessible</span>');
+        if (r.accepts_extra_stops)   badges.push('<span class="badge">📍 Arrêts possibles</span>');
+
+        // ─── FICHE CONDUCTEUR : conditions claires ✓/✗ ───
+        const yesStyle = 'background:rgba(127,229,163,.10);color:#7fe5a3;border:1px solid rgba(127,229,163,.35);';
+        const noStyle  = 'background:rgba(255,140,140,.08);color:#ff8c8c;border:1px solid rgba(255,140,140,.25);';
+        const chip = (icon, label, ok) => `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:.74rem;font-weight:700;${ok ? yesStyle : noStyle}">${icon} ${label} ${ok ? '✓' : '✗'}</span>`;
+        const conditions = [
+          chip('🐾', 'Animal', !!r.accepts_pets),
+          chip('🧳', 'Bagages', !!r.accepts_large_luggage),
+          chip('📦', 'Colis' + (r.accepts_packages && r.package_max_kg ? ' (' + r.package_max_kg + 'kg)' : ''), !!r.accepts_packages),
+          chip('❄️', 'Clim', !!r.ac_available)
+        ].join(' ');
+        const conditionsHtml = `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;">${conditions}</div>`;
 
         // Infos véhicule
         const vehicleStr = [d.vehicle_year, d.vehicle_make, d.vehicle_model, d.vehicle_color]
@@ -936,6 +944,7 @@
                 ${badges.join('')}
               </div>
               <div class="ride-meta">${ambiance}</div>
+              ${conditionsHtml}
               ${stops}
               ${matchReasons}
               <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -968,6 +977,15 @@
 
     // Recherche auto si params dans URL
     window.addEventListener('DOMContentLoaded', function () {
+      // Pré-appliquer les préférences passager du profil (localStorage)
+      try {
+        const prefs = JSON.parse(localStorage.getItem('pp_passenger_prefs') || '{}');
+        if (prefs.pet)       { const el = document.getElementById('f-pets');      if (el) el.checked = true; }
+        if (prefs.luggage)   { const el = document.getElementById('f-luggage');   if (el) el.checked = true; }
+        if (prefs.ac)        { const el = document.getElementById('f-ac');        if (el) el.checked = true; }
+        if (prefs.nonsmoker) { const el = document.getElementById('f-nonsmoker'); if (el) el.checked = true; }
+      } catch (e) {}
+
       const p = new URLSearchParams(window.location.search);
       if (p.get('from')) document.getElementById('s-from').value = p.get('from');
       if (p.get('to'))   document.getElementById('s-to').value   = p.get('to');
