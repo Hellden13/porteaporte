@@ -2718,8 +2718,11 @@ async function profilePhotoUpload(req, res, ctx, body) {
   if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
 
   try {
-    const photoUrl = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'profile-' + ctx.session.id + '-' + Date.now(), dataUrl);
-    if (!photoUrl) return res.status(500).json({ error: 'Upload échoué' });
+    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'profile-' + ctx.session.id + '-' + Date.now(), dataUrl);
+    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué' });
+
+    // Construit l'URL publique Supabase (bucket doit autoriser SELECT public OU lecture authentifiée)
+    const photoUrl = `${ctx.sbUrl}/storage/v1/object/public/${uploaded.bucket}/${uploaded.path}`;
 
     const patch = {
       photo_url: photoUrl,
@@ -2891,24 +2894,29 @@ async function petPhotoUpload(req, res, ctx, body) {
   if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives' });
 
   try {
-    const url = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'pet-' + ctx.session.id + '-' + Date.now(), dataUrl);
-    if (!url) return res.status(500).json({ error: 'Upload échoué' });
+    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'pet-' + ctx.session.id + '-' + Date.now(), dataUrl);
+    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué' });
+
+    const petPhotoUrl = `${ctx.sbUrl}/storage/v1/object/public/${uploaded.bucket}/${uploaded.path}`;
 
     const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
       method: 'PATCH',
       headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-      body: JSON.stringify({ pet_photo_url: url, pet_photo_status: 'pending' })
+      body: JSON.stringify({ pet_photo_url: petPhotoUrl, pet_photo_status: 'pending' })
     });
-    if (!r.ok) return res.status(400).json({ error: 'MAJ profil impossible' });
+    if (!r.ok) {
+      const errBody = await r.json().catch(() => ({}));
+      return res.status(400).json({ error: 'MAJ profil impossible', details: errBody });
+    }
 
     alertAdmin('🐾 Nouvelle photo d\'animal à modérer', 'Un passager a soumis une photo d\'animal.', {
       severity: 'info',
-      details: { 'User': ctx.session.id.slice(0, 8), 'URL': url },
+      details: { 'User': ctx.session.id.slice(0, 8), 'URL': petPhotoUrl },
       cta_url: 'https://porteaporte.site/admin/photos-moderation.html',
       cta_label: '👀 Modérer →'
     });
 
-    return res.status(200).json({ success: true, photo_url: url, status: 'pending' });
+    return res.status(200).json({ success: true, photo_url: petPhotoUrl, status: 'pending' });
   } catch (e) {
     return res.status(500).json({ error: 'Erreur upload : ' + e.message });
   }
