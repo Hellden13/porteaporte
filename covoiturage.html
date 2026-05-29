@@ -876,12 +876,21 @@
           TRUNK_LABEL[r.trunk_size]       || '',
         ].filter(Boolean).map(t => `<span class="badge">${t}</span>`).join('');
 
-        // Points d'arrêt intermédiaires
-        const stops = Array.isArray(r.stop_points) && r.stop_points.length
+        // Point de rencontre départ + arrêts intermédiaires + point de drop-off
+        const startFull = (r.start_city || '') + (r.start_sector ? ' · ' + r.start_sector : '');
+        const endFull = (r.end_city || '') + (r.end_sector ? ' · ' + r.end_sector : '');
+        const pickupSafe = r.pickup_safe_label ? `<div style="margin-top:6px;font-size:0.78rem;color:#5dbfff;">📌 <strong>Pickup :</strong> ${r.pickup_safe_label}</div>` : '';
+        const dropoffSafe = r.dropoff_safe_label ? `<div style="font-size:0.78rem;color:#5dbfff;">🏁 <strong>Drop-off :</strong> ${r.dropoff_safe_label}</div>` : '';
+        const stopsDetailed = Array.isArray(r.stop_points) && r.stop_points.length
           ? `<div style="margin-top:6px;font-size:0.78rem;color:var(--brand-muted);">
-               📍 Arrêts : ${r.stop_points.map(s => s.city + (s.sector ? ' · ' + s.sector : '')).join(' → ')}
+               🛑 <strong>Arrêts intermédiaires :</strong> ${r.stop_points.map(s => {
+                 const label = (s.city || '') + (s.sector ? ' · ' + s.sector : '');
+                 const safe = s.safe_label || s.meeting_point_name ? ' <span style="color:#5dbfff;">(' + (s.safe_label || s.meeting_point_name) + ')</span>' : '';
+                 return label + safe;
+               }).join(' → ')}
              </div>`
           : '';
+        const stops = pickupSafe + dropoffSafe + stopsDetailed;
 
         // Score étoiles
         const score = d.score > 0 ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${(d.score / 20).toFixed(1)}</span>` : '';

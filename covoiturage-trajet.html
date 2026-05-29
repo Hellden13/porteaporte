@@ -427,15 +427,19 @@ function renderRide(r) {
     '<div class="meta-item" title="' + trunkTooltip + '"><div class="mi-icon">&#129533;</div><div class="mi-val">' + trunkLabel + '</div><div class="mi-lbl">coffre</div></div>' +
     '<div class="meta-item" title="Marge de temps de départ acceptée par le conducteur"><div class="mi-icon">&#128336;</div><div class="mi-val">' + flexLabel + '</div><div class="mi-lbl">horaire</div></div>';
 
+  // Enrichi : départ + secteur + point sécuritaire pickup
+  var startName = (r.departure_city || r.from_city || '') + (r.start_sector ? ' · ' + r.start_sector : '');
+  var endName   = (r.destination_city || r.to_city || '') + (r.end_sector ? ' · ' + r.end_sector : '');
   var stopArr = [
-    { name: r.departure_city || r.from_city, sub: r.departure_address || '', dot: 'filled', time: r.departure_time }
+    { name: startName, sub: r.departure_address || '', dot: 'filled', time: r.departure_time, meeting: r.pickup_safe_label || null }
   ];
   if (Array.isArray(r.stop_points)) {
     r.stop_points.forEach(function(s) {
-      stopArr.push({ name: s.city || s.name || s.label || '', sub: s.address || '', dot: '', meeting: s.meeting_point_name || null });
+      var stopName = (s.city || s.name || s.label || '') + (s.sector ? ' · ' + s.sector : '');
+      stopArr.push({ name: stopName, sub: s.address || '', dot: '', meeting: s.meeting_point_name || s.safe_label || null });
     });
   }
-  stopArr.push({ name: r.destination_city || r.to_city, sub: r.destination_address || '', dot: 'filled' });
+  stopArr.push({ name: endName, sub: r.destination_address || '', dot: 'filled', meeting: r.dropoff_safe_label || null });
 
   document.getElementById('timeline').innerHTML = stopArr.map(function(s) {
     return '<div class="tl-stop">' +
