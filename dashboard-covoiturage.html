@@ -346,7 +346,8 @@ function buildOverview() {
 function buildTrajets() {
   const rides    = dashData.my_rides    || [];
   const bookings = dashData.my_bookings || [];
-  const isConducteur = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux';
+  // Affiche les trajets publiés si role conducteur OU s'il existe déjà des trajets publiés (sécurité)
+  const isConducteur = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux' || rides.length > 0;
 
   return `
   <div class="dash-header">
