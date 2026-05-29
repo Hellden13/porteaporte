@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v3
 // Stratégie : cache-first pour assets statiques, network-first pour API
-const SW_VERSION = 'pap-v13-hero-revelation';
+const SW_VERSION = 'pap-v14-trilogie';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
