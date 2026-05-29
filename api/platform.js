@@ -2796,6 +2796,47 @@ async function adminPhotoModerate(req, res, ctx, body) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// ADMIN — Correction d'un trajet (distance, prix/km) sans casser les autres champs
+// ─────────────────────────────────────────────────────────────────
+async function adminRideFix(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const rideId = String(body.ride_id || '').trim();
+  if (!rideId) return res.status(400).json({ error: 'ride_id requis' });
+
+  const patch = {};
+  if (body.total_distance_km !== undefined && body.total_distance_km !== null && body.total_distance_km !== '') {
+    const km = Number(body.total_distance_km);
+    if (!Number.isFinite(km) || km < 1 || km > 2000) return res.status(400).json({ error: 'total_distance_km invalide (1-2000)' });
+    patch.total_distance_km = km;
+  }
+  if (body.cost_per_km !== undefined && body.cost_per_km !== null && body.cost_per_km !== '') {
+    const cpk = Number(body.cost_per_km);
+    if (!Number.isFinite(cpk) || cpk < 0 || cpk > 1) return res.status(400).json({ error: 'cost_per_km invalide (0-1)' });
+    patch.cost_per_km = Math.min(cpk, 0.50); // plafond légal QC
+  }
+  if (!Object.keys(patch).length) return res.status(400).json({ error: 'Aucun champ à modifier' });
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(rideId)}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(patch)
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.status(400).json({ error: 'Correction échouée', details: data });
+  return res.status(200).json({ success: true, ride: Array.isArray(data) ? data[0] : data, patch });
+}
+
+// Liste les trajets actifs pour admin (debug + correction)
+async function adminRidesList(req, res, ctx) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?select=id,start_city,start_sector,end_city,end_sector,total_distance_km,cost_per_km,available_seats,status,departure_time&order=created_at.desc&limit=50`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rides = r.ok ? await r.json() : [];
+  return res.status(200).json({ rides });
+}
+
+// ─────────────────────────────────────────────────────────────────
 // CARTE DES VILLES — trajets actifs groupés par ville de départ
 // ─────────────────────────────────────────────────────────────────
 const QC_CITY_COORDS = {
@@ -5123,6 +5164,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'profile-photo-visibility') return await profilePhotoVisibility(req, res, ctx, body);
     if (endpoint === 'admin-photos-pending')     return await adminPhotosPending(req, res, ctx);
     if (endpoint === 'admin-photo-moderate')     return await adminPhotoModerate(req, res, ctx, body);
+    if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
+    if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);

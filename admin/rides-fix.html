@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correction trajets — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { background:#0a0c10; color:#e9edf4; font-family:system-ui,sans-serif; margin:0; padding:24px; }
+    .wrap { max-width:1100px; margin:0 auto; }
+    h1 { color:#5dbfff; margin:0 0 8px; }
+    .sub { color:#888; margin-bottom:24px; }
+    table { width:100%; border-collapse:collapse; background:#13182a; border-radius:12px; overflow:hidden; }
+    th, td { text-align:left; padding:12px 10px; border-bottom:1px solid #2a3142; font-size:.88rem; }
+    th { background:#1a2032; color:#5dbfff; font-weight:800; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
+    tr:hover { background:#171c2e; }
+    .pill { display:inline-block; padding:3px 9px; border-radius:999px; font-size:.72rem; font-weight:800; }
+    .pill.warn { background:#3a2414; color:#ffa066; border:1px solid #6b4424; }
+    .pill.ok { background:#14321e; color:#7fe5a3; border:1px solid #2c6b46; }
+    .fix-btn { background:linear-gradient(135deg,#5dbfff,#3da9ff); color:#051022; border:0; padding:6px 12px; border-radius:8px; font-weight:800; font-size:.78rem; cursor:pointer; }
+    .fix-btn:hover { opacity:.9; }
+    a.back { color:#888; text-decoration:none; }
+    a.back:hover { color:#5dbfff; }
+    .input-num { width:80px; padding:4px 8px; background:#0a0c10; border:1px solid #2a3142; border-radius:6px; color:#e9edf4; font-size:.85rem; }
+    .err { color:#ff8c8c; font-size:.85rem; margin-top:6px; }
+    .ok-msg { color:#7fe5a3; font-size:.85rem; margin-top:6px; }
+    .empty { text-align:center; padding:40px; color:#888; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/admin/dashboard-admin.html">← Tableau de bord admin</a>
+    <h1>🛠 Correction des trajets covoiturage</h1>
+    <p class="sub">Modifier <code>total_distance_km</code> et <code>cost_per_km</code> sans toucher au reste. Trajets > 30 km flaggés si la paire de villes est locale.</p>
+
+    <div id="msg"></div>
+    <table id="rides-table">
+      <thead>
+        <tr>
+          <th>Trajet</th>
+          <th>Distance (km)</th>
+          <th>$/km</th>
+          <th>Places</th>
+          <th>Statut</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="rides-body">
+        <tr><td colspan="6" class="empty">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let session = null;
+    function showMsg(text, isError) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = isError ? 'err' : 'ok-msg';
+      setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+    }
+    function isLocalPair(from, to) {
+      const a = String(from || '').toLowerCase();
+      const b = String(to || '').toLowerCase();
+      const localQc = ['quebec', 'québec', 'levis', 'lévis', 'st-nicolas', 'saint-nicolas', 'vanier', 'sillery', 'sainte-foy', 'charny', 'romuald', 'pintendre', 'beauport', 'limoilou', 'cap-rouge'];
+      return localQc.some(c => a.includes(c)) && localQc.some(c => b.includes(c));
+    }
+    async function load() {
+      const db = window.getSupabaseClient && window.getSupabaseClient();
+      if (!db) { alert('Supabase non chargé'); return; }
+      const { data: { session: s } } = await db.auth.getSession();
+      if (!s) { location.href = '/login.html?redirect=/admin/rides-fix.html'; return; }
+      session = s;
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-rides-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token },
+          body: JSON.stringify({ endpoint: 'admin-rides-list' })
+        });
+        const d = await r.json();
+        if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+        render(d.rides || []);
+      } catch (e) { alert('Erreur : ' + e.message); }
+    }
+    function render(rides) {
+      const body = document.getElementById('rides-body');
+      if (!rides.length) { body.innerHTML = '<tr><td colspan="6" class="empty">Aucun trajet</td></tr>'; return; }
+      body.innerHTML = rides.map(r => {
+        const km = Number(r.total_distance_km || 0);
+        const local = isLocalPair(r.start_city, r.end_city);
+        const flagged = local && km > 30;
+        const from = (r.start_city || '?') + (r.start_sector ? ' · ' + r.start_sector : '');
+        const to = (r.end_city || '?') + (r.end_sector ? ' · ' + r.end_sector : '');
+        return `
+          <tr data-id="${r.id}">
+            <td>
+              <div style="font-weight:700;">${from} → ${to}</div>
+              <div style="font-size:.72rem;color:#888;">${r.id.slice(0, 8)}…</div>
+            </td>
+            <td>
+              <input type="number" class="input-num" data-km value="${km}" min="1" max="2000" step="1">
+              ${flagged ? '<span class="pill warn">⚠ Trop élevé</span>' : ''}
+            </td>
+            <td>
+              <input type="number" class="input-num" data-cpk value="${Number(r.cost_per_km || 0.35)}" min="0" max="0.5" step="0.01">
+            </td>
+            <td>${r.available_seats || 0}</td>
+            <td><span class="pill ${r.status === 'publie' ? 'ok' : ''}">${r.status || '—'}</span></td>
+            <td><button class="fix-btn" onclick="fixRide('${r.id}')">Appliquer</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+    async function fixRide(rideId) {
+      const row = document.querySelector('tr[data-id="' + rideId + '"]');
+      if (!row) return;
+      const km = parseFloat(row.querySelector('[data-km]').value);
+      const cpk = parseFloat(row.querySelector('[data-cpk]').value);
+      try {
+        const r = await fetch('/api/platform?endpoint=admin-ride-fix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'admin-ride-fix', ride_id: rideId, total_distance_km: km, cost_per_km: cpk })
+        });
+        const d = await r.json();
+        if (!r.ok) { showMsg('Erreur : ' + (d.error || r.status), true); return; }
+        showMsg('✅ Trajet corrigé : ' + km + ' km · ' + cpk.toFixed(2) + ' $/km');
+        row.style.background = 'rgba(127,229,163,.08)';
+        setTimeout(() => row.style.background = '', 2000);
+      } catch (e) { showMsg('Erreur : ' + e.message, true); }
+    }
+    load();
+  </script>
+</body>
+</html>
