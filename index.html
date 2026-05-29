@@ -366,24 +366,77 @@
   <main>
     <section class="section hero" aria-labelledby="hero-title">
       <div>
-        <div class="eyebrow">Covoiturage Quebec</div>
-        <h1 id="hero-title">Voyagez plus. <span class="grad">Depensez moins.</span></h1>
-        <p class="lead">Trouvez un siege avec un conducteur verifie, publiez votre trajet, ou ajoutez un colis dans le coffre quand la route existe deja.</p>
-        <div class="hero-actions">
+        <div class="eyebrow hero-anim hero-anim-1">100% Québécois · trajets vérifiés</div>
+        <h1 id="hero-title" class="hero-anim hero-anim-2">Voyagez plus. <span class="grad">Dépensez moins.</span></h1>
+        <ul class="hero-thread" aria-label="Ce qu'un trajet rend possible">
+          <li class="hero-anim hero-anim-3"><span class="verb">Quelqu'un voyage.</span></li>
+          <li class="hero-anim hero-anim-4"><span class="verb">Quelqu'un embarque.</span></li>
+          <li class="hero-anim hero-anim-5"><span class="verb">Un colis arrive.</span></li>
+          <li class="hero-anim hero-anim-6"><span class="verb">La communauté gagne.</span></li>
+        </ul>
+        <div class="hero-actions hero-anim hero-anim-7">
           <a class="btn" href="/covoiturage.html">Trouver un trajet</a>
           <a class="btn secondary" href="/covoiturage-publier.html">Publier mon trajet</a>
         </div>
-        <p class="hero-note">Paiement protege, messagerie interne, profils verifies et evaluations apres trajet.</p>
+        <p class="hero-note hero-anim hero-anim-7">Paiement protégé · profils vérifiés · évaluations après trajet</p>
       </div>
-      <div class="hero-media" aria-label="Covoiturage de confiance">
-        <img src="/assets/photos/hero-covoiturage-confiance.png" alt="Covoiturage de confiance entre Quebecois" loading="eager" onerror="this.src='/assets/photos/scenario-covoiturage.jpg'">
+      <div class="hero-media hero-anim hero-anim-1" aria-label="Rencontre entre conducteur et passagère, Québec">
+        <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre un conducteur et une passagère devant une maison québécoise" loading="eager" onerror="this.src='/assets/photos/hero-covoiturage-confiance.png'">
         <div class="hero-card" aria-label="Points forts">
-          <div class="hero-stat"><strong>Stripe</strong><span>reservation protegee</span></div>
-          <div class="hero-stat"><strong>Profils</strong><span>identite verifiee</span></div>
+          <div class="hero-stat"><strong>Stripe</strong><span>réservation protégée</span></div>
+          <div class="hero-stat"><strong>Profils</strong><span>identité vérifiée</span></div>
           <div class="hero-stat"><strong>Colis</strong><span>bonus sur la route</span></div>
         </div>
       </div>
     </section>
+    <style>
+      /* Fil émotionnel — révélation séquentielle */
+      .hero-thread {
+        list-style: none;
+        margin: 22px 0 28px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .hero-thread li {
+        font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+        line-height: 1.45;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.005em;
+      }
+      .hero-thread .verb {
+        background: linear-gradient(120deg, #5dbfff 0%, #3da9ff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+      }
+      /* Animation révélation */
+      @keyframes heroReveal {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .hero-anim {
+        opacity: 0;
+        animation: heroReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        will-change: opacity, transform;
+      }
+      .hero-anim-1 { animation-delay: 0.05s; }
+      .hero-anim-2 { animation-delay: 0.25s; }
+      .hero-anim-3 { animation-delay: 0.75s; }
+      .hero-anim-4 { animation-delay: 0.95s; }
+      .hero-anim-5 { animation-delay: 1.15s; }
+      .hero-anim-6 { animation-delay: 1.35s; }
+      .hero-anim-7 { animation-delay: 1.70s; }
+      @media (prefers-reduced-motion: reduce) {
+        .hero-anim { animation: none; opacity: 1; transform: none; }
+      }
+      @media (max-width: 720px) {
+        .hero-thread { margin: 18px 0 22px; gap: 4px; }
+      }
+    </style>
 
     <section class="section quick-search" aria-label="Recherche rapide trajet">
       <form class="search-box" id="ride-search-form">
