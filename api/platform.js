@@ -2763,16 +2763,35 @@ async function profilePhotoVisibility(req, res, ctx, body) {
 
 async function adminPhotosPending(req, res, ctx) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?photo_status=eq.pending&select=id,prenom,nom,photo_url,photo_submitted_at,role,ville&order=photo_submitted_at.asc&limit=100`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const profiles = r.ok ? await r.json() : [];
-  return res.status(200).json({ pending: profiles, count: profiles.length });
+  // Profil + photo animal en attente
+  const [profRes, petRes] = await Promise.all([
+    fetch(`${ctx.sbUrl}/rest/v1/profiles?photo_status=eq.pending&select=id,prenom,nom,photo_url,photo_submitted_at,role,ville&order=photo_submitted_at.asc&limit=100`, {
+      headers: sbHeaders(ctx.sbKey)
+    }),
+    fetch(`${ctx.sbUrl}/rest/v1/profiles?pet_photo_status=eq.pending&select=id,prenom,nom,pet_photo_url,pet_name,pet_species,pet_breed&limit=100`, {
+      headers: sbHeaders(ctx.sbKey)
+    }).catch(() => null)
+  ]);
+  const profiles = profRes.ok ? await profRes.json() : [];
+  const pets = (petRes && petRes.ok) ? await petRes.json() : [];
+  return res.status(200).json({ pending: profiles, pending_pets: pets, count: profiles.length, count_pets: pets.length });
 }
 
 async function adminPhotoModerate(req, res, ctx, body) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
   const userId = String(body.user_id || '').trim();
+  // Support de la modération photo animal
+  if (body.kind === 'pet') {
+    const action = String(body.action || '').toLowerCase();
+    if (!userId || !['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'user_id + action requis' });
+    const patch = { pet_photo_status: action === 'approve' ? 'approved' : 'rejected' };
+    if (action === 'reject') patch.pet_photo_url = null;
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
+      method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch)
+    });
+    if (!r.ok) return res.status(400).json({ error: 'Modération pet échouée' });
+    return res.status(200).json({ success: true, action, user_id: userId, kind: 'pet' });
+  }
   const action = String(body.action || '').toLowerCase();
   const reason = String(body.reason || '').trim().slice(0, 500);
   if (!userId || !['approve', 'reject'].includes(action)) {
@@ -2824,6 +2843,92 @@ async function adminRideFix(req, res, ctx, body) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Correction échouée', details: data });
   return res.status(200).json({ success: true, ride: Array.isArray(data) ? data[0] : data, patch });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CARTE ANIMAL — fiche que le conducteur voit lors de la réservation
+// ─────────────────────────────────────────────────────────────────
+async function petCardUpsert(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+
+  const patch = {};
+  const allowedSpecies = ['chien', 'chat', 'oiseau', 'rongeur', 'autre'];
+  const allowedSize = ['petit', 'moyen', 'grand'];
+
+  if (body.pet_name !== undefined)       patch.pet_name = String(body.pet_name || '').trim().slice(0, 60) || null;
+  if (body.pet_species !== undefined)    patch.pet_species = allowedSpecies.includes(body.pet_species) ? body.pet_species : null;
+  if (body.pet_breed !== undefined)      patch.pet_breed = String(body.pet_breed || '').trim().slice(0, 80) || null;
+  if (body.pet_size !== undefined)       patch.pet_size = allowedSize.includes(body.pet_size) ? body.pet_size : null;
+  if (body.pet_weight_kg !== undefined)  {
+    const w = Number(body.pet_weight_kg);
+    patch.pet_weight_kg = Number.isFinite(w) && w >= 0 && w <= 100 ? w : null;
+  }
+  if (body.pet_vaccinated !== undefined) patch.pet_vaccinated = !!body.pet_vaccinated;
+  if (body.pet_carrier !== undefined)    patch.pet_carrier = !!body.pet_carrier;
+  if (body.pet_notes !== undefined)      patch.pet_notes = String(body.pet_notes || '').trim().slice(0, 500) || null;
+
+  if (!Object.keys(patch).length) return res.status(400).json({ error: 'Aucun champ fourni' });
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(patch)
+  });
+  if (!r.ok) {
+    const errBody = await r.json().catch(() => ({}));
+    return res.status(400).json({ error: 'Sauvegarde impossible', details: errBody });
+  }
+  return res.status(200).json({ success: true, patch });
+}
+
+async function petPhotoUpload(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+  const dataUrl = String(body.photo_data_url || body.data_url || '').trim();
+  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'photo_data_url requis' });
+  }
+  const rl = await checkRateLimit(`petphoto:${ctx.session.id}`, 5, 3600);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives' });
+
+  try {
+    const url = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'pet-' + ctx.session.id + '-' + Date.now(), dataUrl);
+    if (!url) return res.status(500).json({ error: 'Upload échoué' });
+
+    const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${ctx.session.id}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify({ pet_photo_url: url, pet_photo_status: 'pending' })
+    });
+    if (!r.ok) return res.status(400).json({ error: 'MAJ profil impossible' });
+
+    alertAdmin('🐾 Nouvelle photo d\'animal à modérer', 'Un passager a soumis une photo d\'animal.', {
+      severity: 'info',
+      details: { 'User': ctx.session.id.slice(0, 8), 'URL': url },
+      cta_url: 'https://porteaporte.site/admin/photos-moderation.html',
+      cta_label: '👀 Modérer →'
+    });
+
+    return res.status(200).json({ success: true, photo_url: url, status: 'pending' });
+  } catch (e) {
+    return res.status(500).json({ error: 'Erreur upload : ' + e.message });
+  }
+}
+
+async function petCardGet(req, res, ctx, body) {
+  const userId = String(body.user_id || ctx.session?.id || '').trim();
+  if (!userId) return res.status(400).json({ error: 'user_id requis' });
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=pet_name,pet_species,pet_breed,pet_size,pet_weight_kg,pet_photo_url,pet_photo_status,pet_vaccinated,pet_carrier,pet_notes`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Lecture impossible' });
+  const data = await r.json();
+  const pet = data[0] || {};
+  // Si demandé pour un autre user, masquer la photo si pas approuvée
+  if (userId !== ctx.session?.id && pet.pet_photo_status !== 'approved') {
+    pet.pet_photo_url = null;
+  }
+  return res.status(200).json({ pet });
 }
 
 // Liste les trajets actifs pour admin (debug + correction)
@@ -5166,6 +5271,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-photo-moderate')     return await adminPhotoModerate(req, res, ctx, body);
     if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
     if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
+    if (endpoint === 'pet-card-upsert')          return await petCardUpsert(req, res, ctx, body);
+    if (endpoint === 'pet-photo-upload')         return await petPhotoUpload(req, res, ctx, body);
+    if (endpoint === 'pet-card-get')             return await petCardGet(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);

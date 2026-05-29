@@ -395,6 +395,167 @@
                 </div>
                 <p id="prefs-saved" style="color:var(--brand-lime);font-size:.8rem;margin-top:10px;display:none;">✓ Préférences sauvegardées</p>
             </div>
+
+            <!-- CARTE ANIMAL : visible au conducteur lors de la réservation -->
+            <div class="info-card" id="pet-card-section" style="margin-top:24px;display:none;">
+                <div class="section-title">🐾 Carte d'accès animal</div>
+                <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px;">Le conducteur verra cette carte avant d'accepter ta réservation. Photo soumise à modération (24-48 h).</p>
+                <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                    <div style="position:relative;width:140px;height:140px;border-radius:14px;background:rgba(255,255,255,.04);border:2px dashed var(--brand-bg-surface-light);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="document.getElementById('petPhotoUpload').click()" title="Cliquer pour changer la photo">
+                        <img id="pet-photo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+                        <div id="pet-photo-placeholder" style="text-align:center;color:var(--brand-muted);font-size:.78rem;">📷<br>Photo animal</div>
+                    </div>
+                    <input type="file" id="petPhotoUpload" accept="image/*" style="display:none" onchange="handlePetPhotoUpload(event)">
+                    <div style="flex:1;min-width:200px;">
+                        <div id="pet-photo-status" style="font-size:.78rem;margin-bottom:8px;"></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <input type="text" id="pet_name" placeholder="Nom (ex : Rex)" maxlength="60" style="padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.88rem;">
+                            <select id="pet_species" style="padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.88rem;">
+                                <option value="">Espèce…</option>
+                                <option value="chien">🐕 Chien</option>
+                                <option value="chat">🐈 Chat</option>
+                                <option value="oiseau">🐦 Oiseau</option>
+                                <option value="rongeur">🐹 Rongeur</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                            <input type="text" id="pet_breed" placeholder="Race / type" maxlength="80" style="padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.88rem;">
+                            <select id="pet_size" style="padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.88rem;">
+                                <option value="">Taille…</option>
+                                <option value="petit">Petit (< 10 kg)</option>
+                                <option value="moyen">Moyen (10-25 kg)</option>
+                                <option value="grand">Grand (> 25 kg)</option>
+                            </select>
+                            <input type="number" id="pet_weight_kg" placeholder="Poids kg" min="0" max="100" step="0.5" style="padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.88rem;">
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--brand-muted);cursor:pointer;"><input type="checkbox" id="pet_vaccinated"> 💉 Vacciné</label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--brand-muted);cursor:pointer;"><input type="checkbox" id="pet_carrier"> 📦 Cage de transport</label>
+                        </div>
+                        <textarea id="pet_notes" placeholder="Comportement (ex : calme, dort en voiture, sociable)…" maxlength="500" style="margin-top:8px;width:100%;min-height:60px;padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+                        <button onclick="savePetCard()" style="margin-top:10px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border:0;padding:10px 18px;border-radius:8px;font-weight:800;cursor:pointer;font-size:.88rem;">Sauvegarder la carte</button>
+                        <p id="pet-saved" style="color:var(--brand-lime);font-size:.8rem;margin-top:8px;display:none;">✓ Carte animal sauvegardée</p>
+                    </div>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    // Affiche la section carte animal SEULEMENT si la pref animal est cochée
+                    function togglePetSection() {
+                        const checked = document.getElementById('pref-pet').checked;
+                        document.getElementById('pet-card-section').style.display = checked ? 'block' : 'none';
+                    }
+                    document.getElementById('pref-pet').addEventListener('change', togglePetSection);
+                    togglePetSection();
+
+                    async function loadPetCard() {
+                        try {
+                            const { data: { session } } = await window.supa.auth.getSession();
+                            if (!session) return;
+                            const r = await fetch('/api/platform?endpoint=pet-card-get', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                                body: JSON.stringify({ endpoint: 'pet-card-get' })
+                            });
+                            const d = await r.json();
+                            if (!r.ok) return;
+                            const p = d.pet || {};
+                            if (p.pet_name) document.getElementById('pet_name').value = p.pet_name;
+                            if (p.pet_species) document.getElementById('pet_species').value = p.pet_species;
+                            if (p.pet_breed) document.getElementById('pet_breed').value = p.pet_breed;
+                            if (p.pet_size) document.getElementById('pet_size').value = p.pet_size;
+                            if (p.pet_weight_kg) document.getElementById('pet_weight_kg').value = p.pet_weight_kg;
+                            document.getElementById('pet_vaccinated').checked = !!p.pet_vaccinated;
+                            document.getElementById('pet_carrier').checked = !!p.pet_carrier;
+                            if (p.pet_notes) document.getElementById('pet_notes').value = p.pet_notes;
+                            if (p.pet_photo_url) {
+                                const img = document.getElementById('pet-photo-img');
+                                img.src = p.pet_photo_url;
+                                img.style.display = 'block';
+                                document.getElementById('pet-photo-placeholder').style.display = 'none';
+                            }
+                            const statusEl = document.getElementById('pet-photo-status');
+                            if (p.pet_photo_status === 'pending') statusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation</span>';
+                            else if (p.pet_photo_status === 'approved') statusEl.innerHTML = '<span style="color:#7fe5a3;">✓ Photo approuvée</span>';
+                            else if (p.pet_photo_status === 'rejected') statusEl.innerHTML = '<span style="color:#ff8c8c;">✗ Photo refusée — soumets-en une nouvelle</span>';
+                        } catch (e) {}
+                    }
+                    loadPetCard();
+
+                    window.savePetCard = async function () {
+                        try {
+                            const { data: { session } } = await window.supa.auth.getSession();
+                            if (!session) { alert('Connecte-toi'); return; }
+                            const payload = {
+                                endpoint: 'pet-card-upsert',
+                                pet_name: document.getElementById('pet_name').value,
+                                pet_species: document.getElementById('pet_species').value || null,
+                                pet_breed: document.getElementById('pet_breed').value,
+                                pet_size: document.getElementById('pet_size').value || null,
+                                pet_weight_kg: document.getElementById('pet_weight_kg').value || null,
+                                pet_vaccinated: document.getElementById('pet_vaccinated').checked,
+                                pet_carrier: document.getElementById('pet_carrier').checked,
+                                pet_notes: document.getElementById('pet_notes').value
+                            };
+                            const r = await fetch('/api/platform?endpoint=pet-card-upsert', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                                body: JSON.stringify(payload)
+                            });
+                            const d = await r.json();
+                            if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+                            const ok = document.getElementById('pet-saved');
+                            ok.style.display = 'block';
+                            setTimeout(() => ok.style.display = 'none', 2500);
+                        } catch (e) { alert('Erreur : ' + e.message); }
+                    };
+
+                    window.handlePetPhotoUpload = async function (e) {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
+                        const statusEl = document.getElementById('pet-photo-status');
+                        statusEl.innerHTML = '<span style="color:#888;">📤 Upload…</span>';
+                        try {
+                            const dataUrl = await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        const max = 600;
+                                        let w = img.width, h = img.height;
+                                        if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+                                        else { if (h > max) { w = w * max / h; h = max; } }
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = w; canvas.height = h;
+                                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                                        resolve(canvas.toDataURL('image/jpeg', 0.85));
+                                    };
+                                    img.onerror = reject;
+                                    img.src = reader.result;
+                                };
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                            });
+                            const { data: { session } } = await window.supa.auth.getSession();
+                            const r = await fetch('/api/platform?endpoint=pet-photo-upload', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                                body: JSON.stringify({ endpoint: 'pet-photo-upload', photo_data_url: dataUrl })
+                            });
+                            const d = await r.json();
+                            if (!r.ok) { statusEl.innerHTML = '<span style="color:#ff8c8c;">' + (d.error || 'Erreur') + '</span>'; return; }
+                            statusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48 h)</span>';
+                            const img = document.getElementById('pet-photo-img');
+                            img.src = dataUrl;
+                            img.style.opacity = '0.7';
+                            img.style.display = 'block';
+                            document.getElementById('pet-photo-placeholder').style.display = 'none';
+                        } catch (err) {
+                            statusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + err.message + '</span>';
+                        }
+                    };
+                })();
+            </script>
             <script>
                 (function () {
                     function loadPrefs() {
