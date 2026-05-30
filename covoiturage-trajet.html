@@ -605,18 +605,23 @@ function renderRide(r) {
     }).join('');
   }
 
-  var price = r.price_per_seat || r.price || 0;
-  document.getElementById('price-total').textContent = parseFloat(price).toFixed(2) + ' $';
+  // Lecture du price_breakdown retourné par calcRidePrice (vraie source de vérité)
+  var pb = r.price_breakdown || {};
+  var price   = Number(pb.totalPassenger || r.price_per_seat || r.price || 0);
+  var paxBase = Number(pb.paxBase        || r.pax_base_price || 0);
+  var platFee = Number(pb.platformFee    || r.platform_fee   || 0);
+  var lugFee  = Number(pb.luggageFee     || r.luggage_fee    || 0);
+  var driverAmt = Number(pb.driverAmount || 0);
 
-  var paxBase    = r.pax_base_price || price;
-  var platFee    = r.platform_fee   || 0;
-  var lugFee     = r.luggage_fee    || 0;
+  document.getElementById('price-total').textContent = price.toFixed(2) + ' $';
+
   document.getElementById('price-breakdown').innerHTML =
-    '<div class="pb-row"><span>Trajet de base</span><span>' + parseFloat(paxBase).toFixed(2) + ' $</span></div>' +
-    '<div class="pb-row"><span>Frais de plateforme</span><span>' + parseFloat(platFee).toFixed(2) + ' $</span></div>' +
-    (lugFee > 0 ? '<div class="pb-row"><span>Supplement bagage</span><span>' + parseFloat(lugFee).toFixed(2) + ' $</span></div>' : '') +
-    '<div class="pb-row total"><span>Total passager</span><span>' + parseFloat(price).toFixed(2) + ' $</span></div>' +
-    '<div class="pb-note">Les frais de bagage sont verses en totalite au chauffeur.</div>';
+    '<div class="pb-row"><span>Trajet de base</span><span>' + paxBase.toFixed(2) + ' $</span></div>' +
+    '<div class="pb-row"><span>Frais de plateforme</span><span>' + platFee.toFixed(2) + ' $</span></div>' +
+    (lugFee > 0 ? '<div class="pb-row"><span>Supplément bagage</span><span>' + lugFee.toFixed(2) + ' $</span></div>' : '') +
+    '<div class="pb-row total"><span>Total passager</span><span>' + price.toFixed(2) + ' $</span></div>' +
+    (driverAmt > 0 ? '<div class="pb-row" style="color:#7fe5a3;font-size:.78rem;"><span>↳ versé au conducteur</span><span>' + driverAmt.toFixed(2) + ' $</span></div>' : '') +
+    '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>';
 
   if (r.group_discount && parseFloat(r.group_discount) > 0) {
     var gb = document.getElementById('group-banner');
