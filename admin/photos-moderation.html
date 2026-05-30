@@ -66,49 +66,74 @@
         });
         const d = await r.json();
         if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
-        document.getElementById('count').textContent = d.count || 0;
-        renderGrid(d.pending || []);
+        const totalCount = (d.count || 0) + (d.count_pets || 0);
+        document.getElementById('count').textContent = totalCount;
+        renderGrid(d.pending || [], d.pending_pets || []);
       } catch (e) { alert('Erreur : ' + e.message); }
     }
-    function renderGrid(items) {
+    function renderGrid(profileItems, petItems) {
       const grid = document.getElementById('grid');
-      if (!items.length) {
+      if (!profileItems.length && !petItems.length) {
         grid.innerHTML = '<div class="empty"><div class="em">🎉</div>Aucune photo en attente de modération !</div>';
         return;
       }
-      grid.innerHTML = items.map(p => {
+      const profileCards = profileItems.map(p => {
         const name = (p.prenom || '') + ' ' + (p.nom || '');
         const role = p.role === 'admin' ? '🛡️ Admin' : (p.role === 'livreur' ? '🚗 Livreur' : '👤 Membre');
         const dateStr = p.photo_submitted_at ? new Date(p.photo_submitted_at).toLocaleDateString('fr-CA', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
         const safePhoto = String(p.photo_url || '').replace(/'/g, '');
         const safeId = String(p.id || '').replace(/'/g, '');
         return `
-          <div class="card" data-id="${safeId}">
+          <div class="card" data-id="${safeId}" data-kind="profile">
+            <div style="background:#5dbfff;color:#051022;padding:6px 12px;font-size:.72rem;font-weight:900;text-transform:uppercase;">👤 Photo profil</div>
             <img class="photo" src="${safePhoto}" alt="Photo de ${name}" onclick="openModal('${safePhoto}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
             <div class="info">
               <div class="name">${name.trim() || 'Sans nom'}</div>
               <div class="meta">${role} · ${p.ville || 'Ville inconnue'} · ${dateStr}</div>
             </div>
             <div class="actions">
-              <button class="btn-reject" onclick="moderate('${safeId}', 'reject')">✗ Refuser</button>
-              <button class="btn-approve" onclick="moderate('${safeId}', 'approve')">✓ Approuver</button>
+              <button class="btn-reject" onclick="moderate('${safeId}', 'reject', 'profile')">✗ Refuser</button>
+              <button class="btn-approve" onclick="moderate('${safeId}', 'approve', 'profile')">✓ Approuver</button>
             </div>
           </div>
         `;
       }).join('');
+      const petCards = petItems.map(p => {
+        const name = (p.prenom || '') + ' ' + (p.nom || '');
+        const petInfo = [p.pet_name, p.pet_species, p.pet_breed].filter(Boolean).join(' · ') || 'Animal';
+        const safePhoto = String(p.pet_photo_url || '').replace(/'/g, '');
+        const safeId = String(p.id || '').replace(/'/g, '');
+        return `
+          <div class="card" data-id="${safeId}" data-kind="pet">
+            <div style="background:#ffd166;color:#1a1100;padding:6px 12px;font-size:.72rem;font-weight:900;text-transform:uppercase;">🐾 Photo animal</div>
+            <img class="photo" src="${safePhoto}" alt="Animal de ${name}" onclick="openModal('${safePhoto}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
+            <div class="info">
+              <div class="name">${petInfo}</div>
+              <div class="meta">Passager : ${name.trim() || 'Anonyme'}</div>
+            </div>
+            <div class="actions">
+              <button class="btn-reject" onclick="moderate('${safeId}', 'reject', 'pet')">✗ Refuser</button>
+              <button class="btn-approve" onclick="moderate('${safeId}', 'approve', 'pet')">✓ Approuver</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      grid.innerHTML = profileCards + petCards;
     }
-    async function moderate(userId, action) {
+    async function moderate(userId, action, kind) {
       let reason = '';
       if (action === 'reject') {
-        reason = prompt('Raison du refus (optionnel, envoyée à l\'utilisateur) :') || '';
+        reason = prompt('Raison du refus (optionnel) :') || '';
       } else {
         if (!confirm('Approuver cette photo ? Elle sera visible aux autres utilisateurs.')) return;
       }
       try {
+        const body = { endpoint: 'admin-photo-moderate', user_id: userId, action, reason };
+        if (kind === 'pet') body.kind = 'pet';
         const r = await fetch('/api/platform?endpoint=admin-photo-moderate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-          body: JSON.stringify({ endpoint: 'admin-photo-moderate', user_id: userId, action, reason })
+          body: JSON.stringify(body)
         });
         const d = await r.json();
         if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
