@@ -2371,9 +2371,9 @@ async function refundPayment(req, res, ctx, body) {
 }
 
 async function createReview(req, res, ctx, body) {
-  // Rate limit : 5 avis par utilisateur par heure (admins exemptés pour tests)
+  // Rate limit : 30 avis/h en bêta (admins illimités)
   if (ctx.profile?.role !== 'admin') {
-    const rl = await checkRateLimit(`review:${ctx.session.id}`, 5, 3600);
+    const rl = await checkRateLimit(`review-v2:${ctx.session.id}`, 30, 3600);
     if (!rl.allowed) return res.status(429).json({ error: 'Trop d\'avis soumis. Réessayez dans une heure.' });
   }
 
