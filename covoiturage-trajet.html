@@ -121,6 +121,53 @@
     .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; color: #6c63ff; text-decoration: none; margin-bottom: 18px; font-weight: 600; }
     .back-link:hover { text-decoration: underline; }
     #toast { position: fixed; top: 18px; right: 18px; max-width: min(360px, calc(100vw - 36px)); background: #1a1a2e; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+
+    /* Points d'embarquement/débarquement visuels */
+    .meeting-cards { display:flex; flex-direction:column; gap:8px; }
+    .meeting-card {
+      display:flex; align-items:center; gap:12px;
+      padding:11px 14px;
+      background:#f7f8fa;
+      border:2px solid #e0e0e0;
+      border-radius:10px;
+      cursor:pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .meeting-card:hover { border-color:#6c63ff; background:#fff; }
+    .meeting-card.selected {
+      border-color:#6c63ff;
+      background:linear-gradient(135deg, rgba(108,99,255,.08), rgba(108,99,255,.02));
+      box-shadow:0 2px 8px rgba(108,99,255,.18);
+    }
+    .meeting-card .mc-time {
+      background:#1a1a2e; color:#fff; font-weight:800; font-size:.78rem;
+      padding:5px 9px; border-radius:6px; min-width:54px; text-align:center;
+      flex-shrink:0;
+    }
+    .meeting-card.selected .mc-time { background:#6c63ff; }
+    .meeting-card .mc-info { flex:1; min-width:0; }
+    .meeting-card .mc-name {
+      font-weight:700; color:#1a1a2e; font-size:.92rem;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .meeting-card .mc-sub { font-size:.76rem; color:#666; margin-top:2px; }
+    .meeting-card .mc-badges { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+    .meeting-card .mc-badge {
+      font-size:.68rem; font-weight:700;
+      background:#e8f5e9; color:#1b5e20;
+      padding:2px 7px; border-radius:10px;
+    }
+    .meeting-card .mc-badge.cam { background:#fff3cd; color:#856404; }
+    .meeting-card .mc-radio {
+      width:20px; height:20px; border-radius:50%;
+      border:2px solid #ccc; flex-shrink:0; position:relative;
+    }
+    .meeting-card.selected .mc-radio { border-color:#6c63ff; }
+    .meeting-card.selected .mc-radio::after {
+      content:''; position:absolute; inset:3px;
+      background:#6c63ff; border-radius:50%;
+    }
     #toast.show { opacity: 1; }
     #toast.success { background: #198754; }
     #toast.error   { background: #dc3545; }
@@ -218,13 +265,16 @@
         </div>
 
         <div id="form-passenger">
+          <!-- Sélection visuelle des points de pickup (cards cliquables) -->
           <div class="form-group">
-            <label>Point de depart</label>
-            <select id="pax-pickup"></select>
+            <label>📍 Où veux-tu embarquer ?</label>
+            <div id="pickup-cards" class="meeting-cards"></div>
+            <select id="pax-pickup" style="display:none"></select>
           </div>
           <div class="form-group">
-            <label>Point d'arrivee</label>
-            <select id="pax-dropoff"></select>
+            <label>🏁 Où veux-tu débarquer ?</label>
+            <div id="dropoff-cards" class="meeting-cards"></div>
+            <select id="pax-dropoff" style="display:none"></select>
           </div>
           <div class="form-group">
             <label>Nombre de places</label>
@@ -367,30 +417,103 @@ function formatShortDate(dt) {
 }
 
 function populateCitySelects(ride) {
-  // BUG #4 — Inclure les secteurs pour clarifier l'itinéraire
+  // Construire la liste des arrêts enrichie (départ + intermédiaires + arrivée)
   const startLabel = (ride.departure_city || ride.from_city || '') + (ride.start_sector ? ' · ' + ride.start_sector : '');
   const endLabel   = (ride.destination_city || ride.to_city || '') + (ride.end_sector ? ' · ' + ride.end_sector : '');
-  const stops = [
-    { id: 'depart',  label: startLabel },
-    ...(Array.isArray(ride.stop_points) ? ride.stop_points.map(s => ({ id: s.id || s.city, label: (s.city || s.name || s.label || '') + (s.sector ? ' · ' + s.sector : '') })) : []),
-    { id: 'arrivee', label: endLabel }
-  ].filter(s => s.label);
+  const departTime = ride.departure_time ? new Date(ride.departure_time) : null;
 
+  // Estimation heure de passage à chaque point (linéaire selon distance)
+  const stops = [];
+  stops.push({
+    id: 'depart',
+    label: startLabel,
+    meeting: ride.pickup_safe_label || null,
+    time: departTime,
+    isStart: true
+  });
+  if (Array.isArray(ride.stop_points)) {
+    ride.stop_points.forEach((s, idx) => {
+      const stopName = (s.city || s.name || s.label || '') + (s.sector ? ' · ' + s.sector : '');
+      // Heure estimée : +15 min par arrêt si pas de time spécifique
+      let stopTime = null;
+      if (s.time) stopTime = new Date(s.time);
+      else if (departTime) stopTime = new Date(departTime.getTime() + (idx + 1) * 15 * 60 * 1000);
+      stops.push({
+        id: s.id || s.city || ('stop_' + idx),
+        label: stopName,
+        meeting: s.meeting_point_name || s.safe_label || null,
+        time: stopTime
+      });
+    });
+  }
+  // Heure d'arrivée : départ + (distance × 1 min/km par défaut)
+  let endTime = null;
+  if (departTime) {
+    const distKm = Number(ride.total_distance_km || ride.distance_km || 30);
+    endTime = new Date(departTime.getTime() + Math.round(distKm * 1.0) * 60 * 1000);
+  }
+  stops.push({
+    id: 'arrivee',
+    label: endLabel,
+    meeting: ride.dropoff_safe_label || null,
+    time: endTime,
+    isEnd: true
+  });
+
+  const visibleStops = stops.filter(s => s.label);
+
+  // Selects cachés (rétrocompatibilité avec submitBooking)
   ['pax-pickup','pax-dropoff','pkg-pickup','pkg-dropoff'].forEach(function(selId) {
     const sel = document.getElementById(selId);
+    if (!sel) return;
     sel.innerHTML = '';
-    stops.forEach(function(s) {
+    visibleStops.forEach(function(s) {
       const o = document.createElement('option');
       o.value = s.id;
       o.textContent = s.label;
       sel.appendChild(o);
     });
   });
+  // Par défaut : pickup = 1er, dropoff = dernier
+  document.getElementById('pax-pickup').selectedIndex = 0;
+  document.getElementById('pax-dropoff').selectedIndex = visibleStops.length - 1;
+  if (document.getElementById('pkg-pickup')) document.getElementById('pkg-pickup').selectedIndex = 0;
+  if (document.getElementById('pkg-dropoff')) document.getElementById('pkg-dropoff').selectedIndex = visibleStops.length - 1;
 
-  ['pax-dropoff','pkg-dropoff'].forEach(function(id) {
-    const sel = document.getElementById(id);
-    if (sel.options.length > 1) sel.selectedIndex = sel.options.length - 1;
-  });
+  // Cards visuelles pickup & dropoff
+  function fmtTime(d) { return d ? d.toLocaleTimeString('fr-CA', { hour:'2-digit', minute:'2-digit', timeZone:'America/Toronto' }) : '—'; }
+  function renderCards(containerId, selectId, defaultIdx) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = visibleStops.map((s, i) => {
+      const time = fmtTime(s.time);
+      const meetingHtml = s.meeting ? '<div class="mc-sub">📌 ' + esc(s.meeting) + '</div>' : '';
+      const badges = [];
+      if (s.meeting) badges.push('<span class="mc-badge cam">🎥 Point safe</span>');
+      if (s.isStart) badges.push('<span class="mc-badge">🚗 Départ</span>');
+      if (s.isEnd) badges.push('<span class="mc-badge">🏁 Arrivée</span>');
+      const badgesHtml = badges.length ? '<div class="mc-badges">' + badges.join('') + '</div>' : '';
+      const sel = (i === defaultIdx) ? ' selected' : '';
+      return '<div class="meeting-card' + sel + '" data-stop-id="' + esc(s.id) + '" data-idx="' + i + '">' +
+        '<div class="mc-time">' + time + '</div>' +
+        '<div class="mc-info">' +
+          '<div class="mc-name">' + esc(s.label) + '</div>' +
+          meetingHtml +
+          badgesHtml +
+        '</div>' +
+        '<div class="mc-radio"></div>' +
+      '</div>';
+    }).join('');
+    container.querySelectorAll('.meeting-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        container.querySelectorAll('.meeting-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        document.getElementById(selectId).value = card.dataset.stopId;
+      });
+    });
+  }
+  renderCards('pickup-cards',  'pax-pickup',  0);
+  renderCards('dropoff-cards', 'pax-dropoff', visibleStops.length - 1);
 }
 
 function renderRide(r) {
