@@ -2460,7 +2460,10 @@ async function createReview(req, res, ctx, body) {
     data = await r.json().catch(() => ({}));
   }
 
-  if (!r.ok) return res.status(400).json({ error: 'Creation avis impossible', details: data });
+  if (!r.ok) {
+    const errMsg = data?.message || data?.error?.message || data?.hint || data?.details || JSON.stringify(data).slice(0, 300);
+    return res.status(400).json({ error: 'Création avis impossible : ' + errMsg, details: data });
+  }
 
   // 🚨 Alerte admin si note basse (1 ou 2 étoiles)
   if (rating <= 2 && reviewedRole === 'livreur') {
