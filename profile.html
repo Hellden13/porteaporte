@@ -449,7 +449,7 @@
 
                     async function loadPetCard() {
                         try {
-                            const { data: { session } } = await window.supa.auth.getSession();
+                            const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
                             if (!session) return;
                             const r = await fetch('/api/platform?endpoint=pet-card-get', {
                                 method: 'POST',
@@ -483,7 +483,7 @@
 
                     window.savePetCard = async function () {
                         try {
-                            const { data: { session } } = await window.supa.auth.getSession();
+                            const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
                             if (!session) { alert('Connecte-toi'); return; }
                             const payload = {
                                 endpoint: 'pet-card-upsert',
@@ -536,7 +536,7 @@
                                 reader.onerror = reject;
                                 reader.readAsDataURL(file);
                             });
-                            const { data: { session } } = await window.supa.auth.getSession();
+                            const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
                             const r = await fetch('/api/platform?endpoint=pet-photo-upload', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
@@ -801,7 +801,7 @@
           reader.readAsDataURL(file);
         });
 
-        const { data: { session } } = await window.supa.auth.getSession();
+        const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
         const r = await fetch('/api/platform?endpoint=profile-photo-upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
@@ -831,7 +831,7 @@
     async function togglePhotoVisibility() {
       const visible = document.getElementById('photo-visible-check').checked;
       try {
-        const { data: { session } } = await window.supa.auth.getSession();
+        const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
         await fetch('/api/platform?endpoint=profile-photo-visibility', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
