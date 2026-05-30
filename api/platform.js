@@ -2379,9 +2379,8 @@ async function createReview(req, res, ctx, body) {
   const rating = Math.round(toNumber(body.rating || body.note, 0));
   const comment = String(body.comment || body.commentaire || '').trim().slice(0, 800);
   const reviewerRole = body.reviewer_role || 'expediteur'; // 'expediteur' | 'livreur'
-  if (!livraisonId || rating < 1 || rating > 5) {
-    return res.status(400).json({ error: 'livraison_id et note 1-5 requis' });
-  }
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id manquant ou null' });
+  if (rating < 1 || rating > 5) return res.status(400).json({ error: 'Note requise entre 1 et 5 étoiles (reçu: ' + rating + ')' });
 
   const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,expediteur_id,livreur_id,statut`, {
     headers: sbHeaders(ctx.sbKey)

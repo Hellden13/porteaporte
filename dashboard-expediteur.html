@@ -1060,7 +1060,13 @@
 
         async function submitReview(event, livraisonId) {
             event.preventDefault();
+            if (!livraisonId) { showError('❌ Livraison introuvable'); return; }
             if (reviewInProgress.has(livraisonId)) return;
+            const ratingEl = document.getElementById('rating-' + livraisonId);
+            const commentEl = document.getElementById('comment-' + livraisonId);
+            if (!ratingEl) { showError('❌ Formulaire d\'avis introuvable'); return; }
+            const ratingVal = Number(ratingEl.value || 0);
+            if (ratingVal < 1 || ratingVal > 5) { showError('❌ Sélectionne une note de 1 à 5 étoiles'); return; }
             reviewInProgress.add(livraisonId);
             const user = AUTH_API.getUser();
             try {
@@ -1071,9 +1077,10 @@
                         'Authorization': 'Bearer ' + user.session.access_token
                     },
                     body: JSON.stringify({
+                        endpoint: 'create-review',
                         livraison_id: livraisonId,
-                        rating: Number(document.getElementById('rating-' + livraisonId).value || 5),
-                        comment: document.getElementById('comment-' + livraisonId).value.trim()
+                        rating: ratingVal,
+                        comment: commentEl ? commentEl.value.trim() : ''
                     })
                 });
                 const result = await res.json().catch(() => ({}));
