@@ -421,13 +421,17 @@ function buildReservations() {
           // Carte animal (visible si passager a un animal sur ce trajet)
           let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';
           if (b.has_pet && b.passenger_pet) {
+            // Stocke l'animal dans une map globale; on passe juste l'ID
+            window.__pets = window.__pets || {};
+            window.__pets[b.id] = b.passenger_pet;
             const pet = b.passenger_pet;
-            const speciesIcon = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' }[pet.species] || '🐾';
+            const speciesIcon = ({ chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' }[pet.species]) || '🐾';
             const petLabel = [pet.name, pet.breed].filter(Boolean).join(' · ') || pet.species || 'Animal';
-            const petPhotoBtn = pet.photo_url
-              ? `<img src="${pet.photo_url}" alt="${petLabel}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffd166;cursor:pointer" onclick="window.__showPet(${JSON.stringify(pet).replace(/"/g,'&quot;')})" title="Voir la carte animal"/>`
-              : `<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,209,102,.12);border:2px dashed rgba(255,209,102,.4);display:flex;align-items:center;justify-content:center;font-size:1rem;">${speciesIcon}</div>`;
-            petCell = `<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__showPet(${JSON.stringify(pet).replace(/"/g,'&quot;')})">${petPhotoBtn}<div><div style="font-weight:700;font-size:.82rem">${speciesIcon} ${petLabel}</div>${pet.size ? `<div style="font-size:.7rem;color:var(--muted)">${pet.size}${pet.weight_kg ? ' · ' + pet.weight_kg + ' kg' : ''}</div>` : ''}</div></div>`;
+            const sizeWeight = pet.size ? (pet.size + (pet.weight_kg ? ' · ' + pet.weight_kg + ' kg' : '')) : '';
+            const petAvatar = pet.photo_url
+              ? '<img src="' + pet.photo_url + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffd166;flex-shrink:0;">'
+              : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,209,102,.12);border:2px dashed rgba(255,209,102,.4);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">' + speciesIcon + '</div>';
+            petCell = '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__showPet(\'' + b.id + '\')" title="Voir la carte animal">' + petAvatar + '<div><div style="font-weight:700;font-size:.82rem">' + speciesIcon + ' ' + petLabel + '</div>' + (sizeWeight ? '<div style="font-size:.7rem;color:var(--muted)">' + sizeWeight + '</div>' : '') + '</div></div>';
           }
 
           return `<tr>
@@ -456,17 +460,21 @@ function buildReservations() {
     </div>
   </div>
   <script>
-    window.__showPet = function(pet) {
-      const m = document.getElementById('pet-modal');
-      const img = document.getElementById('pet-modal-img');
-      const emoji = document.getElementById('pet-modal-emoji');
-      const speciesIcons = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' };
+    window.__showPet = function(bookingId) {
+      var pet = (window.__pets || {})[bookingId];
+      if (!pet) return;
+      var m = document.getElementById('pet-modal');
+      var img = document.getElementById('pet-modal-img');
+      var emoji = document.getElementById('pet-modal-emoji');
+      var speciesIcons = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' };
       if (pet.photo_url) { img.src = pet.photo_url; img.style.display = 'block'; emoji.style.display = 'none'; }
       else { img.style.display = 'none'; emoji.style.display = 'block'; emoji.textContent = speciesIcons[pet.species] || '🐾'; }
       document.getElementById('pet-modal-name').textContent = pet.name || 'Animal du passager';
-      const meta = [pet.species, pet.breed, pet.size, pet.weight_kg ? pet.weight_kg + ' kg' : null].filter(Boolean).join(' · ');
+      var metaParts = [pet.species, pet.breed, pet.size];
+      if (pet.weight_kg) metaParts.push(pet.weight_kg + ' kg');
+      var meta = metaParts.filter(function(x){ return !!x; }).join(' · ');
       document.getElementById('pet-modal-meta').textContent = meta || 'Aucun détail';
-      const tags = [];
+      var tags = [];
       if (pet.vaccinated) tags.push('<span style="background:rgba(127,229,163,.12);color:#7fe5a3;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">💉 Vacciné</span>');
       if (pet.carrier) tags.push('<span style="background:rgba(93,191,255,.12);color:#5dbfff;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">📦 Cage de transport</span>');
       document.getElementById('pet-modal-tags').innerHTML = tags.join('');
