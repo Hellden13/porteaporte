@@ -2718,10 +2718,10 @@ async function profilePhotoUpload(req, res, ctx, body) {
   if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
 
   try {
-    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'profile-' + ctx.session.id + '-' + Date.now(), dataUrl);
-    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué' });
+    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'profile-' + ctx.session.id + '-' + Date.now(), dataUrl, 'profile-photos');
+    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué — vérifier bucket profile-photos' });
 
-    // Construit l'URL publique Supabase (bucket doit autoriser SELECT public OU lecture authentifiée)
+    // Construit l'URL publique Supabase (bucket profile-photos doit être PUBLIC)
     const photoUrl = `${ctx.sbUrl}/storage/v1/object/public/${uploaded.bucket}/${uploaded.path}`;
 
     const patch = {
@@ -2894,8 +2894,8 @@ async function petPhotoUpload(req, res, ctx, body) {
   if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives' });
 
   try {
-    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'pet-' + ctx.session.id + '-' + Date.now(), dataUrl);
-    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué' });
+    const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'pet-' + ctx.session.id + '-' + Date.now(), dataUrl, 'profile-photos');
+    if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué — vérifier bucket profile-photos' });
 
     const petPhotoUrl = `${ctx.sbUrl}/storage/v1/object/public/${uploaded.bucket}/${uploaded.path}`;
 
