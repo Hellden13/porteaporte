@@ -459,30 +459,7 @@ function buildReservations() {
       </div>
     </div>
   </div>
-  <script>
-    window.__showPet = function(bookingId) {
-      var pet = (window.__pets || {})[bookingId];
-      if (!pet) return;
-      var m = document.getElementById('pet-modal');
-      var img = document.getElementById('pet-modal-img');
-      var emoji = document.getElementById('pet-modal-emoji');
-      var speciesIcons = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' };
-      if (pet.photo_url) { img.src = pet.photo_url; img.style.display = 'block'; emoji.style.display = 'none'; }
-      else { img.style.display = 'none'; emoji.style.display = 'block'; emoji.textContent = speciesIcons[pet.species] || '🐾'; }
-      document.getElementById('pet-modal-name').textContent = pet.name || 'Animal du passager';
-      var metaParts = [pet.species, pet.breed, pet.size];
-      if (pet.weight_kg) metaParts.push(pet.weight_kg + ' kg');
-      var meta = metaParts.filter(function(x){ return !!x; }).join(' · ');
-      document.getElementById('pet-modal-meta').textContent = meta || 'Aucun détail';
-      var tags = [];
-      if (pet.vaccinated) tags.push('<span style="background:rgba(127,229,163,.12);color:#7fe5a3;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">💉 Vacciné</span>');
-      if (pet.carrier) tags.push('<span style="background:rgba(93,191,255,.12);color:#5dbfff;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">📦 Cage de transport</span>');
-      document.getElementById('pet-modal-tags').innerHTML = tags.join('');
-      document.getElementById('pet-modal-notes').textContent = pet.notes || '';
-      m.style.display = 'flex';
-    };
-  </script>
-  </div>`;
+  `;
 }
 
 // ── MISSIONS ──
@@ -609,6 +586,31 @@ function buildSignalements() {
 
 init();
 </script>
+  <script>
+    // Carte animal — affichée dans modale globale (hors template literal pour éviter conflits parser)
+    window.__showPet = function(bookingId) {
+      var pet = (window.__pets || {})[bookingId];
+      if (!pet) return;
+      var m = document.getElementById('pet-modal');
+      if (!m) return;
+      var img = document.getElementById('pet-modal-img');
+      var emoji = document.getElementById('pet-modal-emoji');
+      var speciesIcons = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' };
+      if (pet.photo_url) { img.src = pet.photo_url; img.style.display = 'block'; emoji.style.display = 'none'; }
+      else { img.style.display = 'none'; emoji.style.display = 'block'; emoji.textContent = speciesIcons[pet.species] || '🐾'; }
+      document.getElementById('pet-modal-name').textContent = pet.name || 'Animal du passager';
+      var metaParts = [pet.species, pet.breed, pet.size];
+      if (pet.weight_kg) metaParts.push(pet.weight_kg + ' kg');
+      var meta = metaParts.filter(function(x){ return !!x; }).join(' · ');
+      document.getElementById('pet-modal-meta').textContent = meta || 'Aucun détail';
+      var tags = [];
+      if (pet.vaccinated) tags.push('<span style="background:rgba(127,229,163,.12);color:#7fe5a3;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">💉 Vacciné</span>');
+      if (pet.carrier) tags.push('<span style="background:rgba(93,191,255,.12);color:#5dbfff;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">📦 Cage de transport</span>');
+      document.getElementById('pet-modal-tags').innerHTML = tags.join('');
+      document.getElementById('pet-modal-notes').textContent = pet.notes || '';
+      m.style.display = 'flex';
+    };
+  </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/layer-mode.js" defer></script>
 </body>
