@@ -1064,7 +1064,7 @@
             reviewInProgress.add(livraisonId);
             const user = AUTH_API.getUser();
             try {
-                const res = await fetch('/api/create-review', {
+                const res = await fetch("/api/platform?endpoint=create-review", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

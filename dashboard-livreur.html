@@ -1991,7 +1991,7 @@
       const comment = document.getElementById('lrev-comment-' + livraisonId)?.value.trim() || '';
       const msgEl   = document.getElementById('lrev-msg-' + livraisonId);
       try {
-        const res = await fetch('/api/create-review', {
+        const res = await fetch("/api/platform?endpoint=create-review", {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
           body: JSON.stringify({ livraison_id: livraisonId, rating, comment, reviewer_role: 'livreur' })
