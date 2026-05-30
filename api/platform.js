@@ -2421,48 +2421,17 @@ async function createReview(req, res, ctx, body) {
     comment,
     delivery_id: livraison.id
   };
-  let r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+  // Schéma moderne uniquement (la table reviews a été migrée avec les bonnes colonnes)
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
     method: 'POST',
-    headers: sbHeaders(ctx.sbKey),
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
     body: JSON.stringify(reviewPayload)
   });
-  let data = await r.json().catch(() => ({}));
-
-  if (!r.ok && /column .* does not exist|Could not find/i.test(JSON.stringify(data))) {
-    const legacyPayload = {
-      livreur_id: livraison.livreur_id,
-      expediteur_id: ctx.session.id,
-      livraison_id: livraison.id,
-      note: rating,
-      commentaire: comment
-    };
-    r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
-      method: 'POST',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify(legacyPayload)
-    });
-    data = await r.json().catch(() => ({}));
-  }
-
-  if (!r.ok) {
-    const evalPayload = {
-      livraison_id: livraison.id,
-      auteur_id: ctx.session.id,
-      cible_id: livraison.livreur_id,
-      note: rating,
-      commentaire: comment
-    };
-    r = await fetch(`${ctx.sbUrl}/rest/v1/evaluations`, {
-      method: 'POST',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify(evalPayload)
-    });
-    data = await r.json().catch(() => ({}));
-  }
+  const data = await r.json().catch(() => ({}));
 
   if (!r.ok) {
     const errMsg = data?.message || data?.error?.message || data?.hint || data?.details || JSON.stringify(data).slice(0, 300);
-    return res.status(400).json({ error: 'Création avis impossible : ' + errMsg, details: data });
+    return res.status(400).json({ error: 'Création avis impossible : ' + errMsg, details: data, payload_sent: reviewPayload });
   }
 
   // 🚨 Alerte admin si note basse (1 ou 2 étoiles)
