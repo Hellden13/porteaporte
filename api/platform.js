@@ -2371,9 +2371,11 @@ async function refundPayment(req, res, ctx, body) {
 }
 
 async function createReview(req, res, ctx, body) {
-  // Rate limit : 5 avis par utilisateur par heure
-  const rl = await checkRateLimit(`review:${ctx.session.id}`, 5, 3600);
-  if (!rl.allowed) return res.status(429).json({ error: 'Trop d\'avis soumis. Réessayez dans une heure.' });
+  // Rate limit : 5 avis par utilisateur par heure (admins exemptés pour tests)
+  if (ctx.profile?.role !== 'admin') {
+    const rl = await checkRateLimit(`review:${ctx.session.id}`, 5, 3600);
+    if (!rl.allowed) return res.status(429).json({ error: 'Trop d\'avis soumis. Réessayez dans une heure.' });
+  }
 
   const livraisonId = body.livraison_id || body.livraisonId || body.delivery_id;
   const rating = Math.round(toNumber(body.rating || body.note, 0));
