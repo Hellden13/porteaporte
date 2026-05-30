@@ -384,8 +384,11 @@
 
     // Insérer avant le premier bouton "Déconnecter" ou en premier enfant
     const logoutBtn = container.querySelector('button[onclick*="logout"]');
-    if (logoutBtn) {
+    if (logoutBtn && logoutBtn.parentNode === container) {
       container.insertBefore(widget, logoutBtn);
+    } else if (logoutBtn && logoutBtn.parentNode) {
+      // Logout est un petit-enfant : on insère avant lui dans son parent réel
+      logoutBtn.parentNode.insertBefore(widget, logoutBtn);
     } else {
       container.prepend(widget);
     }

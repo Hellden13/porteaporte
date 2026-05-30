@@ -163,6 +163,12 @@
 
   async function _submit() {
     if (!currentSelected || !currentContext) return;
+    if (!currentContext.livraisonId) {
+      const msgErr = document.getElementById('pap-rating-msg');
+      msgErr.textContent = 'Livraison introuvable — recharge la page.';
+      msgErr.className = 'pap-rating-msg error';
+      return;
+    }
     const msg = document.getElementById('pap-rating-msg');
     const btn = document.getElementById('pap-rating-submit');
     btn.disabled = true;
