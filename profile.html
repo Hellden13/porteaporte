@@ -687,6 +687,9 @@
                 document.getElementById('profileEmail').textContent = userEmail;
                 document.getElementById('infoEmail').textContent    = userEmail;
 
+                // Activer l'édition inline des champs
+                if (typeof window.initProfileEditing === 'function') window.initProfileEditing();
+
                 // Charger badges + code parrainage en parallèle
                 await Promise.all([loadBadges(userId), loadReferralCode(token)]);
 
@@ -767,6 +770,7 @@
                 document.execCommand('copy');
                 flash();
             });
+        }
 
     // ─── Upload photo de profil ───
     async function handlePhotoUpload(e) {
@@ -827,6 +831,7 @@
         photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + (err.message || err) + '</span>';
       }
     }
+    window.handlePhotoUpload = handlePhotoUpload;
 
     async function togglePhotoVisibility() {
       const visible = document.getElementById('photo-visible-check').checked;
@@ -842,7 +847,77 @@
         document.getElementById('photo-visible-check').checked = !visible;
       }
     }
-        }
+    window.togglePhotoVisibility = togglePhotoVisibility;
+
+    // ─── Édition inline des infos de profil ───
+    async function saveProfileField(field, value) {
+      try {
+        const client = window.db || window.getSupabaseClient();
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { alert('Session expirée'); return false; }
+        const { error } = await client.from('profiles').update({ [field]: value }).eq('id', session.user.id);
+        if (error) { alert('Erreur sauvegarde : ' + error.message); return false; }
+        return true;
+      } catch (e) {
+        alert('Erreur : ' + e.message);
+        return false;
+      }
+    }
+
+    function makeEditable(spanId, field, opts) {
+      opts = opts || {};
+      const span = document.getElementById(spanId);
+      if (!span || span.dataset.editableBound) return;
+      span.dataset.editableBound = '1';
+      span.style.cursor = 'pointer';
+      span.title = 'Cliquer pour modifier';
+      span.insertAdjacentHTML('beforeend', ' <span style="opacity:.5;font-size:.8em;">✏️</span>');
+      span.addEventListener('click', () => {
+        if (span.dataset.editing) return;
+        span.dataset.editing = '1';
+        const currentTxt = span.textContent.replace('✏️', '').trim();
+        const current = (currentTxt === '-' || !currentTxt) ? '' : currentTxt;
+        const input = document.createElement('input');
+        input.type = opts.type || 'text';
+        input.value = current;
+        input.style.cssText = 'padding:4px 8px;background:#0a0c10;border:1px solid var(--brand-lime);border-radius:6px;color:#fff;font:inherit;width:180px;';
+        if (opts.maxLength) input.maxLength = opts.maxLength;
+        span.innerHTML = '';
+        span.appendChild(input);
+        input.focus();
+        input.select();
+        const finish = async (save) => {
+          if (!span.dataset.editing) return;
+          delete span.dataset.editing;
+          const newVal = input.value.trim();
+          if (save && newVal !== current) {
+            span.innerHTML = '⏳';
+            const ok = await saveProfileField(field, newVal || null);
+            if (ok) {
+              span.textContent = newVal || '-';
+            } else {
+              span.textContent = current || '-';
+            }
+          } else {
+            span.textContent = current || '-';
+          }
+          span.insertAdjacentHTML('beforeend', ' <span style="opacity:.5;font-size:.8em;">✏️</span>');
+        };
+        input.addEventListener('blur', () => finish(true));
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+        });
+      });
+    }
+
+    window.initProfileEditing = function () {
+      makeEditable('infoPrenom',    'prenom');
+      makeEditable('infoNom',       'nom');
+      makeEditable('infoTelephone', 'telephone', { type: 'tel' });
+      makeEditable('infoVille',     'ville');
+      makeEditable('infoProvince',  'province');
+    };
 
         async function logout() {
             if (confirm('Es-tu sûr de vouloir te déconnecter ?')) {
