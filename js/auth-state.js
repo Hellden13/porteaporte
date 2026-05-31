@@ -17,9 +17,34 @@
     admin:      '/admin/dashboard-admin.html'
   };
 
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.async = false;
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureSupabase() {
+    if (window.db) return window.db;
+    try {
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+      }
+      if (!window.db) {
+        // Charge la config si pas encore là (définit window.db)
+        if (!window.getSupabaseClient) {
+          await loadScript('/js/supabase-config.js');
+        }
+      }
+    } catch (_) {}
+    return window.db || (typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null);
+  }
+
   async function sync() {
     try {
-      const db = window.db || (typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null);
+      const db = await ensureSupabase();
       if (!db) return;
       const { data } = await db.auth.getSession();
       const session = data?.session;
