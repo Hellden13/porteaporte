@@ -232,6 +232,12 @@
         <div id="vehicle-section"></div>
       </div>
 
+      <div class="card" id="card-safe-map" style="display:none">
+        <h2>🗺️ Points de rencontre</h2>
+        <p style="color:#666;font-size:.88rem;margin:0 0 14px">Lieux publics vérifiés par PorteàPorte. Itinéraire Google Maps disponible.</p>
+        <div id="safe-map-container"></div>
+      </div>
+
       <div class="card" id="card-avis" style="display:none">
         <h2>&#11088; Avis recents</h2>
         <div id="reviews-list"></div>
@@ -808,11 +814,27 @@ async function loadRide() {
       driver_info: rideData.driver || rideData.ride.driver_info || {},
       driver_profile: rideData.driver || rideData.ride.driver_profile || {},
       recent_reviews: rideData.driver?.recent_reviews || [],
-      price_breakdown: rideData.price_breakdown || null
+      price_breakdown: rideData.price_breakdown || null,
+      pickup_point:   rideData.pickup_point  || null,
+      dropoff_point:  rideData.dropoff_point || null
     } : rideData;
     currentRide  = ridePayload;
     rideSettings = settingsData.settings || settingsData || {};
     renderRide(ridePayload);
+
+    // Affiche la carte des points safe si au moins un des deux points a des coords
+    try {
+      const pickup  = ridePayload.pickup_point;
+      const dropoff = ridePayload.dropoff_point;
+      if ((pickup || dropoff) && window.PapSafeMap) {
+        const card = document.getElementById('card-safe-map');
+        const cont = document.getElementById('safe-map-container');
+        if (card && cont) {
+          card.style.display = 'block';
+          window.PapSafeMap.render(cont, { pickup, dropoff });
+        }
+      }
+    } catch (e) { console.warn('[safe-map] erreur:', e); }
   } catch(e) {
     showToast('Trajet indisponible : ' + e.message, 'error');
   }
@@ -974,6 +996,7 @@ async function bookPackage() {
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
+  <script src="/js/safe-points-map.js"></script>
   <script src="/js/ride-review-modal.js"></script>
   <script src="/js/ride-chat.js"></script>
   <script src="/js/layer-mode.js" defer></script>
