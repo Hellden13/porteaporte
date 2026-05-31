@@ -289,7 +289,7 @@
       document.getElementById('badge-ins').textContent = p.recent.inscriptions.length;
       const insHtml = p.recent.inscriptions.length
         ? p.recent.inscriptions.map(u => `<div class="row">
-            <div><strong>${u.prenom || ''} ${u.nom || ''}</strong> <span class="pill ${u.kyc_status || 'pending'}">${u.role || '?'}</span></div>
+            <div><strong>${u.prenom || ''} ${u.nom || ''}</strong> <span class="pill ${u.verification_status || 'pending'}">${u.role || '?'}</span></div>
             <div class="meta">${u.email} · ${fmtRelative(u.created_at)}</div>
           </div>`).join('')
         : '<div class="empty">Aucune inscription récente.</div>';

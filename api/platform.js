@@ -30,6 +30,24 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
+const FILE_ORIGIN_PUBLIC_ENDPOINTS = new Set([
+  'ride-search',
+  'ride-detail',
+  'ride-active-cities',
+  'ride-search-log',
+  'safe-meeting-points'
+]);
+
+function applyPlatformCors(req, res) {
+  const headers = { ...CORS };
+  const origin = req.headers?.origin;
+  const endpoint = endpointFromReq(req, req.body || {});
+  if (origin === 'null' && FILE_ORIGIN_PUBLIC_ENDPOINTS.has(endpoint)) {
+    headers['Access-Control-Allow-Origin'] = 'null';
+  }
+  Object.entries(headers).forEach(([k, v]) => res.setHeader(k, v));
+}
+
 async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
     return res.status(403).json({ error: 'Role expediteur requis' });
@@ -1785,6 +1803,183 @@ async function adminDashboard(req, res, ctx) {
   });
 }
 
+async function adminPilotage(req, res, ctx) {
+  if (!roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Admin requis' });
+  }
+
+  const now = Date.now();
+  const since24h = new Date(now - 24 * 3600 * 1000).toISOString();
+  const since7d = new Date(now - 7 * 86400 * 1000).toISOString();
+  const since30d = new Date(now - 30 * 86400 * 1000).toISOString();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = today.toISOString();
+
+  const headers = { ...sbHeaders(ctx.sbKey), Prefer: 'count=exact' };
+  const soft = (value, fallback = null) => value == null ? fallback : value;
+
+  async function fetchRows(table, query) {
+    try {
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/${table}?${query}`, { headers });
+      if (!r.ok) return { ok: false, rows: [], count: 0, status: r.status };
+      const rows = await r.json().catch(() => []);
+      const range = r.headers?.get?.('content-range') || '';
+      const count = Number(String(range).split('/')[1]) || rows.length || 0;
+      return { ok: true, rows: Array.isArray(rows) ? rows : [], count, status: r.status };
+    } catch (error) {
+      return { ok: false, rows: [], count: 0, error: error.message };
+    }
+  }
+
+  async function countRows(table, query) {
+    const result = await fetchRows(table, `${query}&limit=1`);
+    return result.count;
+  }
+
+  const [
+    profilesAll,
+    profilesNew,
+    profiles7d,
+    ridesAll,
+    ridesActive,
+    bookingsAll,
+    bookingsActive,
+    deliveriesAll,
+    deliveriesActive,
+    deliveriesDelivered,
+    transactions30d,
+    transactionsToday,
+    manquementsOpen,
+    kycPending,
+    ridePaymentsBlocked,
+    deliveryPaymentsBlocked,
+    impactSettings,
+    missionsActive,
+    pushSubs,
+    recentAudit
+  ] = await Promise.all([
+    fetchRows('profiles', 'select=id,role,created_at,driver_status,verification_status,suspendu&limit=1000'),
+    countRows('profiles', `select=id&created_at=gte.${since24h}`),
+    countRows('profiles', `select=id&created_at=gte.${since7d}`),
+    fetchRows('rides', 'select=id,status,available_seats,total_seats,seats_total,seats,created_at,departure_time,total_distance_km&limit=1000'),
+    fetchRows('rides', 'select=id,status,available_seats,total_seats,seats_total,seats,total_distance_km&status=in.(publie,active,confirmed)&limit=1000'),
+    fetchRows('ride_bookings', 'select=id,status,seats_reserved,total_passenger,driver_amount,platform_fee,payment_status,created_at&limit=1000'),
+    fetchRows('ride_bookings', 'select=id,status,seats_reserved,total_passenger,driver_amount,platform_fee,payment_status&status=in.(confirme,confirmed,requires_capture,pending)&limit=1000'),
+    fetchRows('livraisons', 'select=id,statut,prix_total,created_at,cree_le&limit=1000'),
+    fetchRows('livraisons', 'select=id,statut,prix_total,created_at,cree_le&statut=in.(publie,paiement_autorise,requires_capture,confirme,en_route,ramasse,picked_up,in_transit)&limit=1000'),
+    fetchRows('livraisons', 'select=id,statut,prix_total,created_at,cree_le&statut=in.(livre,livree,delivered,completed,termine)&limit=1000'),
+    fetchRows('transactions', `select=id,montant,amount_cents,platform_fee,commission_cents,type,statut,created_at,cree_le&created_at=gte.${since30d}&limit=1000`),
+    fetchRows('transactions', `select=id,montant,amount_cents,platform_fee,commission_cents,type,statut,created_at,cree_le&created_at=gte.${todayIso}&limit=1000`),
+    countRows('manquements', 'select=id&statut=in.(signale,open,en_attente)'),
+    countRows('kyc_submissions', 'select=id&status=in.(pending,en_attente,pending_review)'),
+    countRows('ride_bookings', 'select=id&payment_status=in.(requires_payment_method,requires_action,failed,blocked)'),
+    countRows('livraisons', 'select=id&statut=in.(payment_failed,paiement_bloque,blocked)'),
+    fetchRows('impact_settings', 'select=*&limit=1'),
+    countRows('missions', 'select=id&status=in.(active,published,en_cours)'),
+    countRows('push_subscriptions', 'select=id'),
+    countRows('transaction_audit_events', `select=id&created_at=gte.${since24h}`)
+  ]);
+
+  const profiles = profilesAll.rows;
+  const roleText = (p) => normalizeRole(p.role || '').toLowerCase();
+  const hasRole = (p, names) => names.some((name) => roleText(p).includes(name));
+  const drivers = profiles.filter((p) => hasRole(p, ['livreur', 'conducteur', 'les deux']) || p.driver_status === 'verified').length;
+  const expediteurs = profiles.filter((p) => hasRole(p, ['expediteur', 'les deux'])).length;
+  const admins = profiles.filter((p) => roleText(p) === 'admin').length;
+  const passagers = Math.max(0, profiles.length - drivers - expediteurs - admins);
+
+  const activeRideRows = ridesActive.rows.length ? ridesActive.rows : ridesAll.rows.filter((r) => ['publie', 'active', 'confirmed'].includes(String(r.status || '').toLowerCase()));
+  const totalSeats = activeRideRows.reduce((sum, r) => sum + (Number(r.total_seats || r.seats_total || r.seats || r.available_seats) || 0), 0);
+  const reservedSeats = bookingsActive.rows.reduce((sum, b) => sum + (Number(b.seats_reserved) || 1), 0);
+  const fillRate = totalSeats > 0 ? Math.min(100, Math.round((reservedSeats / Math.max(totalSeats, reservedSeats)) * 100)) : null;
+
+  const moneyCents = (row) => {
+    if (Number.isFinite(Number(row.amount_cents))) return Number(row.amount_cents);
+    if (Number.isFinite(Number(row.montant))) return Math.round(Number(row.montant) * 100);
+    if (Number.isFinite(Number(row.prix_total))) return Math.round(Number(row.prix_total) * 100);
+    return 0;
+  };
+  const commissionCents = (row) => {
+    if (Number.isFinite(Number(row.commission_cents))) return Number(row.commission_cents);
+    if (Number.isFinite(Number(row.platform_fee))) return Math.round(Number(row.platform_fee) * 100);
+    return Math.round(moneyCents(row) * 0.1);
+  };
+  const tx30 = transactions30d.rows;
+  const txToday = transactionsToday.rows;
+  const revenueToday = txToday.reduce((sum, row) => sum + moneyCents(row), 0);
+  const revenueWeek = tx30.filter((row) => new Date(row.created_at || row.cree_le || 0).toISOString() >= since7d).reduce((sum, row) => sum + moneyCents(row), 0);
+  const revenueMonth = tx30.reduce((sum, row) => sum + moneyCents(row), 0);
+  const commissions = tx30.reduce((sum, row) => sum + commissionCents(row), 0);
+  const deliveryRevenue = deliveriesAll.rows.reduce((sum, row) => sum + moneyCents(row), 0);
+
+  const impact = impactSettings.rows[0] || {};
+  const kmFromRides = ridesAll.rows.reduce((sum, row) => sum + (Number(row.total_distance_km) || 0), 0);
+  const co2Kg = soft(impact.total_co2_kg ?? impact.co2_saved_kg ?? impact.co2_economise_kg, kmFromRides ? Math.round(kmFromRides * 0.12) : null);
+
+  const alerts = {
+    critical_errors: recentAudit.ok ? 0 : 1,
+    payments_blocked: ridePaymentsBlocked + deliveryPaymentsBlocked,
+    litiges: manquementsOpen,
+    kyc_pending: kycPending
+  };
+
+  const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
+  const supabaseHealthy = profilesAll.ok && deliveriesAll.ok;
+  const apiHealthy = true;
+  const notificationsHealthy = pushSubs >= 0;
+
+  return res.status(200).json({
+    success: true,
+    generated_at: new Date().toISOString(),
+    growth: {
+      users: profiles.length,
+      new_today: profilesNew,
+      new_7d: profiles7d,
+      drivers,
+      passengers: passagers,
+      expediteurs,
+      livreurs: drivers
+    },
+    rides: {
+      published: ridesAll.count,
+      active: activeRideRows.length,
+      bookings: bookingsAll.count,
+      fill_rate_pct: fillRate
+    },
+    deliveries: {
+      active: deliveriesActive.count,
+      delivered: deliveriesDelivered.count,
+      revenue_cents: deliveryRevenue
+    },
+    impact: {
+      shared_km: soft(impact.total_km ?? impact.km_mutualises, Math.round(kmFromRides) || null),
+      co2_saved_kg: co2Kg,
+      community_missions: soft(impact.missions_communautaires ?? impact.community_missions, missionsActive),
+      meals_delivered: soft(impact.repas_livres ?? impact.meals_delivered, null),
+      help_actions: soft(impact.aides_effectuees ?? impact.help_actions, null)
+    },
+    finances: {
+      revenue_today_cents: revenueToday,
+      revenue_week_cents: revenueWeek,
+      revenue_month_cents: revenueMonth,
+      commissions_cents: commissions,
+      stripe: {
+        configured: stripeConfigured,
+        mode: String(process.env.STRIPE_SECRET_KEY || '').includes('_test_') ? 'test' : (stripeConfigured ? 'live' : 'missing')
+      }
+    },
+    alerts,
+    health: {
+      api: apiHealthy ? 'ok' : 'error',
+      supabase: supabaseHealthy ? 'ok' : 'degraded',
+      stripe: stripeConfigured ? 'ok' : 'missing',
+      notifications: notificationsHealthy ? 'ok' : 'unknown',
+      service_worker: 'configured'
+    }
+  });
+}
+
 async function adminDeliveryProof(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) {
     return res.status(403).json({ error: 'Admin requis' });
@@ -2989,15 +3184,14 @@ function _normCity(s) {
 }
 async function rideActiveCities(req, res, ctx) {
   // Récupère tous les trajets publiés à venir (next 90 days)
-  const inDays = new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString();
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=eq.publie&departure_time=gte.${new Date().toISOString()}&departure_time=lte.${inDays}&select=start_city,end_city,departure_time&limit=500`, {
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=eq.publie&or=(departure_time.gte.${new Date().toISOString()},is_recurring.eq.true)&select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
     headers: sbHeaders(ctx.sbKey)
   });
   let rides = r.ok ? await r.json() : [];
 
   // Fallback : sans filtre status si vide
   if (!rides.length || !r.ok) {
-    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?departure_time=gte.${new Date().toISOString()}&select=start_city,end_city,departure_time&limit=500`, {
+    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (r2.ok) rides = await r2.json();
@@ -3011,6 +3205,8 @@ async function rideActiveCities(req, res, ctx) {
     if (!groups[cityKey]) groups[cityKey] = { destinations: new Set(), count: 0 };
     groups[cityKey].count++;
     if (ride.end_city) groups[cityKey].destinations.add(ride.end_city);
+    if (ride.start_sector) groups[cityKey].destinations.add(ride.start_sector);
+    if (ride.end_sector) groups[cityKey].destinations.add(ride.end_sector);
   });
 
   // Build response with coords
@@ -4077,10 +4273,10 @@ async function adminRewards(req, res, ctx, body) {
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+    applyPlatformCors(req, res);
     return res.status(200).end();
   }
-  Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+  applyPlatformCors(req, res);
 
   // Rate limit global : 120 requêtes / minute par IP
   const _ip = getClientIp(req);
@@ -4172,6 +4368,12 @@ module.exports = async function handler(req, res) {
     // ── recipient-review (public, avis destinataire sans auth) ──────
     if (endpoint === 'ride-search') {
       return await rideSearch(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'ride-search-log') {
+      return await rideSearchLog(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'ride-active-cities') {
+      return await rideActiveCities(req, res, { sbUrl, sbKey, session: null, profile: null });
     }
     if (endpoint === 'ride-detail') {
       return await rideDetail(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
@@ -5123,8 +5325,15 @@ module.exports = async function handler(req, res) {
         catch (_) { return 0; }
       }
       async function rows(path, limit = 5) {
-        try { const r = await fetch(`${sbUrl}/rest/v1/${path}&limit=${limit}`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }); return r.ok ? await r.json() : []; }
-        catch (_) { return []; }
+        try {
+          const r = await fetch(`${sbUrl}/rest/v1/${path}&limit=${limit}`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } });
+          if (!r.ok) {
+            const err = await r.text().catch(() => '');
+            console.warn(`[operations-pulse] rows() ${path} → ${r.status}`, err.slice(0, 200));
+            return [];
+          }
+          return await r.json();
+        } catch (e) { console.warn(`[operations-pulse] rows() ${path} exception:`, e.message); return []; }
       }
 
       const [
@@ -5132,7 +5341,7 @@ module.exports = async function handler(req, res) {
         livraisons24h, livraisonsActives, inscriptions24h, webhookEvents24h,
         recentLivraisons, recentInscriptions, recentManquements, recentWebhooks
       ] = await Promise.all([
-        count(`profiles?select=id&kyc_status=eq.pending`),
+        count(`profiles?select=id&verification_status=eq.pending`),
         count(`manquements?select=id&statut=eq.signale`),
         count(`profiles?select=id&role=in.(livreur,les%20deux)&suspendu=eq.false`),
         count(`profiles?select=id&role=in.(expediteur,les%20deux)&suspendu=eq.false`),
@@ -5141,7 +5350,7 @@ module.exports = async function handler(req, res) {
         count(`profiles?select=id&created_at=gte.${since24h}`),
         count(`transaction_audit_events?select=id&event_type=like.*webhook*&created_at=gte.${since24h}`),
         rows(`livraisons?select=id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le&order=cree_le.desc`, 8),
-        rows(`profiles?select=id,email,prenom,nom,role,created_at,kyc_status&order=created_at.desc`, 6),
+        rows(`profiles?select=id,email,prenom,nom,role,created_at,verification_status&order=created_at.desc`, 6),
         rows(`manquements?select=*&order=created_at.desc&statut=eq.signale`, 5),
         rows(`transaction_audit_events?select=created_at,event_type,amount_cents,stripe_payment_intent&order=created_at.desc`, 8)
       ]);
@@ -5233,6 +5442,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
+    if (endpoint === 'admin-pilotage') return await adminPilotage(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
     if (endpoint === 'admin-dispute-action') return await adminDisputeAction(req, res, ctx, body);
