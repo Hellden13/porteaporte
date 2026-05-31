@@ -890,7 +890,14 @@
             }
 
             if (mission.statut === 'payee' && mission.livreur_id) {
-                buttons.push(`<button class="btn btn-ghost" type="button" onclick="toggleReview('${mission.id}')">Laisser un avis</button>`);
+                // Vérifie si avis déjà donné (mémoire locale pour affichage instantané)
+                const reviewDone = localStorage.getItem('pp_review_done_' + mission.id);
+                if (reviewDone) {
+                    const stars = '⭐'.repeat(parseInt(reviewDone) || 5);
+                    buttons.push(`<button class="btn btn-ghost" type="button" onclick="toggleReview('${mission.id}', true)" style="color:#7fe5a3;border-color:rgba(127,229,163,.4)">✓ Avis donné ${stars} · Modifier</button>`);
+                } else {
+                    buttons.push(`<button class="btn btn-ghost" type="button" onclick="toggleReview('${mission.id}')">Laisser un avis</button>`);
+                }
             }
 
             if (['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'en_route', 'ramasse', 'pending', 'accepted', 'in_transit'].includes(mission.statut)) {
@@ -1053,9 +1060,32 @@
             `;
         }
 
-        function toggleReview(livraisonId) {
+        async function toggleReview(livraisonId, isEdit) {
             const box = document.getElementById('review-' + livraisonId);
-            if (box) box.style.display = box.style.display === 'none' ? 'grid' : 'none';
+            if (!box) return;
+            const wasHidden = box.style.display === 'none';
+            box.style.display = wasHidden ? 'grid' : 'none';
+            // Mode édition : pré-remplir avec l'avis existant
+            if (wasHidden && isEdit) {
+                try {
+                    const user = AUTH_API.getUser();
+                    const r = await fetch('/api/platform?endpoint=my-review', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + user.session.access_token
+                        },
+                        body: JSON.stringify({ endpoint: 'my-review', livraison_id: livraisonId })
+                    });
+                    const d = await r.json();
+                    if (r.ok && d.review) {
+                        const ratingEl = document.getElementById('rating-' + livraisonId);
+                        const commentEl = document.getElementById('comment-' + livraisonId);
+                        if (ratingEl) ratingEl.value = d.review.rating;
+                        if (commentEl) commentEl.value = d.review.comment || '';
+                    }
+                } catch (e) { /* silencieux */ }
+            }
         }
 
         async function submitReview(event, livraisonId) {
@@ -1088,8 +1118,12 @@
                     showError('❌ ' + (result.error || 'Avis impossible'));
                     return;
                 }
-                showSuccess('✅ Avis envoyé. Merci.');
+                // Mémoire locale pour adapter le bouton au prochain load
+                try { localStorage.setItem('pp_review_done_' + livraisonId, String(ratingVal)); } catch (e) {}
+                showSuccess(result.updated ? '✅ Avis modifié. Merci !' : '✅ Avis envoyé. Merci !');
                 document.getElementById('review-' + livraisonId).style.display = 'none';
+                // Recharge la liste pour afficher le nouveau bouton "Modifier"
+                if (typeof loadMissions === 'function') setTimeout(loadMissions, 800);
             } finally {
                 reviewInProgress.delete(livraisonId);
             }

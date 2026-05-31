@@ -2421,17 +2421,32 @@ async function createReview(req, res, ctx, body) {
     comment,
     delivery_id: livraison.id
   };
-  // Schéma moderne uniquement (la table reviews a été migrée avec les bonnes colonnes)
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-    body: JSON.stringify(reviewPayload)
+  // UPSERT : si avis déjà soumis par ce reviewer pour cette livraison → update
+  const existRes = await fetch(`${ctx.sbUrl}/rest/v1/reviews?delivery_id=eq.${encodeURIComponent(livraison.id)}&reviewer_id=eq.${encodeURIComponent(ctx.session.id)}&select=id&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
   });
-  const data = await r.json().catch(() => ({}));
+  const existing = existRes.ok ? await existRes.json() : [];
+
+  let r, data;
+  if (existing[0]) {
+    // Update
+    r = await fetch(`${ctx.sbUrl}/rest/v1/reviews?id=eq.${existing[0].id}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify({ rating, comment })
+    });
+  } else {
+    r = await fetch(`${ctx.sbUrl}/rest/v1/reviews`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(reviewPayload)
+    });
+  }
+  data = await r.json().catch(() => ({}));
 
   if (!r.ok) {
     const errMsg = data?.message || data?.error?.message || data?.hint || data?.details || JSON.stringify(data).slice(0, 300);
-    return res.status(400).json({ error: 'Création avis impossible : ' + errMsg, details: data, payload_sent: reviewPayload });
+    return res.status(400).json({ error: (existing[0] ? 'Modification' : 'Création') + ' avis impossible : ' + errMsg, details: data, payload_sent: reviewPayload });
   }
 
   // 🚨 Alerte admin si note basse (1 ou 2 étoiles)
@@ -2453,7 +2468,20 @@ async function createReview(req, res, ctx, body) {
     );
   }
 
-  return res.status(200).json({ success: true, review: Array.isArray(data) ? data[0] : data });
+  return res.status(200).json({ success: true, updated: !!existing[0], review: Array.isArray(data) ? data[0] : data });
+}
+
+// Récupère l'avis donné par l'utilisateur courant pour une livraison
+async function getMyReview(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+  const livraisonId = body.livraison_id || body.delivery_id;
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/reviews?delivery_id=eq.${encodeURIComponent(livraisonId)}&reviewer_id=eq.${encodeURIComponent(ctx.session.id)}&select=id,rating,comment,created_at&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Lecture impossible' });
+  const rows = await r.json();
+  return res.status(200).json({ review: rows[0] || null });
 }
 
 // Avis public du destinataire (sans auth — prouvé par le code de confirmation)
@@ -5220,6 +5248,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-user-access') return await adminSetUserAccess(req, res, ctx, body);
     if (endpoint === 'refund-payment') return await refundPayment(req, res, ctx, body);
     if (endpoint === 'create-review') return await createReview(req, res, ctx, body);
+    if (endpoint === 'my-review')     return await getMyReview(req, res, ctx, body);
     if (endpoint === 'impact-admin') return await impactAdmin(req, res, ctx, body);
     if (endpoint === 'rewards-dashboard') return await rewardsDashboard(req, res, ctx);
     if (endpoint === 'draw-enter') return await drawEnter(req, res, ctx, body);
