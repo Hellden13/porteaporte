@@ -400,12 +400,12 @@
 
   <!-- HERO -->
   <div class="cov-hero">
-    <img loading="eager" decoding="async" src="/assets/photos/hero-covoiturage-confiance.png" alt="Covoiturage de confiance entre gens de chez nous — PorteàPorte">
+    <img loading="eager" decoding="async" src="/assets/photos/hero-covoiturage-confiance.webp" alt="Covoiturage de confiance entre gens de chez nous — PorteàPorte">
   </div>
 
   <!-- BANNIÈRE PROMO covoit + colis -->
   <div class="cov-promo-banner">
-    <img src="/assets/photos/hero-covoiturage-colis.png" alt="Covoiturage intelligent — trajets partagés, coûts réduits, colis dans le coffre — PorteàPorte" loading="lazy">
+    <img src="/assets/photos/hero-covoiturage-colis.webp" alt="Covoiturage intelligent — trajets partagés, coûts réduits, colis dans le coffre — PorteàPorte" loading="lazy">
   </div>
 
   <!-- BANNIÈRE LÉGALE -->
@@ -433,6 +433,19 @@
               <input type="text" id="s-to" placeholder="Ex : Montréal" autocomplete="off" list="qc-cities">
             </div>
             <datalist id="qc-cities">
+              <option value="Saint-Nicolas"></option>
+              <option value="St-Nicolas"></option>
+              <option value="Vanier"></option>
+              <option value="Sainte-Foy"></option>
+              <option value="Beauport"></option>
+              <option value="Charlesbourg"></option>
+              <option value="Limoilou"></option>
+              <option value="Ancienne-Lorette"></option>
+              <option value="Saint-Romuald"></option>
+              <option value="Charny"></option>
+              <option value="Saint-Jean-Chrysostome"></option>
+              <option value="Pintendre"></option>
+              <option value="Montmagny"></option>
               <option value="Québec"></option>
               <option value="Lévis"></option>
               <option value="Montréal"></option>
@@ -667,6 +680,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script>
+    const platformApi = (path) => (window.location.protocol === 'file:' ? 'https://porteaporte.site' : '') + path;
+
     // Date min = aujourd'hui
     document.getElementById('s-date').min = new Date().toISOString().split('T')[0];
 
@@ -744,13 +759,13 @@
       if (matchInfo) matchInfo.style.display = sortMode === 'pertinence' ? 'block' : 'none';
 
       try {
-        const res  = await fetch('/api/platform?' + params);
+        const res  = await fetch(platformApi('/api/platform?' + params));
         const data = await res.json();
         const rides = data.rides || [];
         renderResults(rides);
         // Log la recherche pour analytics (fire-and-forget, non bloquant)
         if (from || to) {
-          fetch('/api/platform?endpoint=ride-search-log', {
+          fetch(platformApi('/api/platform?endpoint=ride-search-log'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint: 'ride-search-log', from_city: from, to_city: to, results_count: rides.length })
@@ -791,50 +806,21 @@
       count.textContent = rides.length + ' trajet' + (rides.length !== 1 ? 's' : '') + ' trouvé' + (rides.length !== 1 ? 's' : '');
 
       if (!rides.length) {
-        // Trajets de démo (béta) — pour ne pas montrer une page vide
-        const fromCity = document.getElementById('s-from').value.trim() || 'Québec';
-        const toCity = document.getElementById('s-to').value.trim() || 'Montréal';
-        const demoDate = document.getElementById('s-date').value || new Date(Date.now() + 86400000).toISOString().slice(0,10);
-        const demos = [
-          { name: 'Marie T.', verified: true, rating: 4.9, n: 12, price: 24, time: '07h00', seats: 3 },
-          { name: 'Jean-François L.', verified: true, rating: 4.7, n: 8, price: 22, time: '14h30', seats: 2 },
-          { name: 'Sophie G.', verified: true, rating: 5.0, n: 5, price: 25, time: '17h45', seats: 1 }
-        ];
+        const emptyFromCity = document.getElementById('s-from').value.trim() || 'Québec';
+        const emptyToCity = document.getElementById('s-to').value.trim() || 'Montréal';
+        const emptyHasDate = !!document.getElementById('s-date').value;
         list.innerHTML = `
-          <div style="margin-bottom:16px;padding:12px 16px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:10px;color:#ffd166;font-size:.88rem;">
-            ✨ <strong>Aperçu bêta.</strong> Voici à quoi ressembleraient des trajets ${fromCity} → ${toCity}. Sois le premier à en publier un vrai !
-          </div>
-        ` + demos.map((d, i) => `
-          <div class="ride-card" style="opacity:0.92;">
-            <div style="min-width:0">
-              <div style="margin-bottom:8px;">
-                <span class="status-pill" style="background:#14321e;color:#7fe5a3;border:1px solid #2c6b46">🟢 ${d.seats} place${d.seats>1?'s':''} dispo</span>
-                <span style="font-size:.72rem;color:#888;margin-left:6px;">Exemple</span>
-              </div>
-              <div class="ride-route">
-                <span>${fromCity}</span>
-                <span class="arrow">→</span>
-                <span>${toCity}</span>
-              </div>
-              <div class="ride-meta" style="margin-bottom:6px;">
-                <span>🗓 ${new Date(demoDate).toLocaleDateString('fr-CA', {weekday:'long', day:'numeric', month:'short'})} · ${d.time}</span>
-              </div>
-              <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
-                <strong style="color:var(--brand-text)">${d.name}</strong>
-                <span style="color:#5dbfff;font-size:.78rem;">✓ Vérifié</span>
-                <span style="color:#ffd166;font-size:.78rem;">⭐ ${d.rating} (${d.n} avis)</span>
-              </div>
+          <div class="ride-card" style="display:block;text-align:center;padding:24px;">
+            <div style="font-size:1.05rem;font-weight:900;color:var(--brand-text);margin-bottom:8px;">Aucun vrai trajet trouvé</div>
+            <div style="color:var(--brand-muted);font-size:.92rem;line-height:1.5;max-width:620px;margin:0 auto 16px;">
+              Aucun conducteur n'a encore publié de trajet ${emptyFromCity} → ${emptyToCity}${emptyHasDate ? ' pour cette date' : ''}.
+              Essaie sans date, avec un secteur voisin, ou publie le premier vrai trajet.
             </div>
-            <div class="ride-price">
-              <div class="ride-price-amount">${d.price} $</div>
-              <div class="ride-price-label">par personne</div>
-              <a class="pp-btn pp-btn-primary pp-btn-sm" href="/covoiturage-publier.html" style="margin-top:10px;">Publier un vrai trajet</a>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+              ${emptyHasDate ? "<button class=\"pp-btn pp-btn-secondary pp-btn-sm\" type=\"button\" onclick=\"document.getElementById('s-date').value='';searchRides();\">Chercher sans date</button>" : ''}
+              <a class="pp-btn pp-btn-primary pp-btn-sm" href="/covoiturage-publier.html">Publier un vrai trajet</a>
+              <a class="pp-btn pp-btn-secondary pp-btn-sm" href="/liste-attente.html">Me notifier</a>
             </div>
-          </div>
-        `).join('') + `
-          <div style="text-align:center;margin-top:20px;padding:16px;color:var(--brand-muted);font-size:.88rem;">
-            👋 Tu veux que ce trajet existe pour vrai ? <a href="/covoiturage-publier.html" style="color:#5dbfff;font-weight:800;">Publie-le →</a>
-            ou <a href="/liste-attente.html" style="color:#5dbfff;font-weight:800;">demande à être notifié</a>.
           </div>`;
         return;
       }
@@ -980,16 +966,48 @@
       // Pré-appliquer les préférences passager du profil (localStorage)
       try {
         const prefs = JSON.parse(localStorage.getItem('pp_passenger_prefs') || '{}');
-        if (prefs.pet)       { const el = document.getElementById('f-pets');      if (el) el.checked = true; }
-        if (prefs.luggage)   { const el = document.getElementById('f-luggage');   if (el) el.checked = true; }
-        if (prefs.ac)        { const el = document.getElementById('f-ac');        if (el) el.checked = true; }
-        if (prefs.nonsmoker) { const el = document.getElementById('f-nonsmoker'); if (el) el.checked = true; }
+        const applied = [];
+        if (prefs.pet)       { const el = document.getElementById('f-pets');      if (el) { el.checked = true; applied.push('🐾 Animal'); } }
+        if (prefs.luggage)   { const el = document.getElementById('f-luggage');   if (el) { el.checked = true; applied.push('🧳 Bagages'); } }
+        if (prefs.ac)        { const el = document.getElementById('f-ac');        if (el) { el.checked = true; applied.push('❄️ Clim'); } }
+        if (prefs.nonsmoker) { const el = document.getElementById('f-nonsmoker'); if (el) { el.checked = true; applied.push('🚭 Non-fumeur'); } }
+        // Bannière visible si des filtres ont été auto-appliqués
+        if (applied.length) {
+          const form = document.querySelector('.search-form') || document.getElementById('search-btn')?.closest('form,section,div');
+          if (form) {
+            const notice = document.createElement('div');
+            notice.id = 'prefs-applied-notice';
+            notice.style.cssText = 'margin:10px 0;padding:10px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;color:#cde7ff;font-size:.85rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+            notice.innerHTML = `<span>🎯 Filtres auto depuis ton profil : <strong>${applied.join(' · ')}</strong></span>
+              <button type="button" onclick="(function(){['f-pets','f-luggage','f-ac','f-nonsmoker'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=false});document.getElementById('prefs-applied-notice').remove();})()" style="margin-left:auto;background:transparent;border:1px solid #5dbfff;color:#5dbfff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700;">✕ Retirer ces filtres</button>`;
+            form.insertBefore(notice, form.firstChild);
+          }
+        }
       } catch (e) {}
 
       const p = new URLSearchParams(window.location.search);
       if (p.get('from')) document.getElementById('s-from').value = p.get('from');
       if (p.get('to'))   document.getElementById('s-to').value   = p.get('to');
       if (p.get('date')) document.getElementById('s-date').value = p.get('date');
+      const cityList = document.getElementById('qc-cities');
+      if (cityList) {
+        fetch(platformApi('/api/platform?endpoint=ride-active-cities'))
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .then(function (data) {
+            const names = [];
+            (data && data.cities || []).forEach(function (city) {
+              if (city.name) names.push(city.name);
+              (city.destinations || []).forEach(function (destination) { names.push(destination); });
+            });
+            Array.from(new Set(names)).forEach(function (name) {
+              if (!name || cityList.querySelector('option[value="' + CSS.escape(name) + '"]')) return;
+              const option = document.createElement('option');
+              option.value = name;
+              cityList.appendChild(option);
+            });
+          })
+          .catch(function () {});
+      }
       if (p.get('from') || p.get('to')) searchRides();
     });
   </script>
