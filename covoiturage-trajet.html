@@ -926,7 +926,11 @@ async function bookPassenger() {
   var paymentRes = await fetch('/api/platform?endpoint=ride-payment-create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-    body: JSON.stringify({ booking_id: data.booking.id })
+    body: JSON.stringify({
+      booking_id: data.booking.id,
+      test_code: localStorage.getItem('PAP_RIDE_TEST_CODE') || undefined,
+      live_test_code: localStorage.getItem('PAP_RIDE_LIVE_1CAD_CODE') || undefined
+    })
   });
   var paymentData = await paymentRes.json();
   if (!paymentRes.ok || paymentData.error) throw new Error(paymentData.error || 'Erreur paiement');
@@ -1000,5 +1004,6 @@ async function bookPackage() {
   <script src="/js/ride-review-modal.js"></script>
   <script src="/js/ride-chat.js"></script>
   <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>

@@ -964,28 +964,6 @@
 
     // Recherche auto si params dans URL
     window.addEventListener('DOMContentLoaded', function () {
-      // Pré-appliquer les préférences passager du profil (localStorage)
-      try {
-        const prefs = JSON.parse(localStorage.getItem('pp_passenger_prefs') || '{}');
-        const applied = [];
-        if (prefs.pet)       { const el = document.getElementById('f-pets');      if (el) { el.checked = true; applied.push('🐾 Animal'); } }
-        if (prefs.luggage)   { const el = document.getElementById('f-luggage');   if (el) { el.checked = true; applied.push('🧳 Bagages'); } }
-        if (prefs.ac)        { const el = document.getElementById('f-ac');        if (el) { el.checked = true; applied.push('❄️ Clim'); } }
-        if (prefs.nonsmoker) { const el = document.getElementById('f-nonsmoker'); if (el) { el.checked = true; applied.push('🚭 Non-fumeur'); } }
-        // Bannière visible si des filtres ont été auto-appliqués
-        if (applied.length) {
-          const form = document.querySelector('.search-form') || document.getElementById('search-btn')?.closest('form,section,div');
-          if (form) {
-            const notice = document.createElement('div');
-            notice.id = 'prefs-applied-notice';
-            notice.style.cssText = 'margin:10px 0;padding:10px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;color:#cde7ff;font-size:.85rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
-            notice.innerHTML = `<span>🎯 Filtres auto depuis ton profil : <strong>${applied.join(' · ')}</strong></span>
-              <button type="button" onclick="(function(){['f-pets','f-luggage','f-ac','f-nonsmoker'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=false});document.getElementById('prefs-applied-notice').remove();})()" style="margin-left:auto;background:transparent;border:1px solid #5dbfff;color:#5dbfff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700;">✕ Retirer ces filtres</button>`;
-            form.insertBefore(notice, form.firstChild);
-          }
-        }
-      } catch (e) {}
-
       const p = new URLSearchParams(window.location.search);
       if (p.get('from')) document.getElementById('s-from').value = p.get('from');
       if (p.get('to'))   document.getElementById('s-to').value   = p.get('to');
@@ -1017,5 +995,6 @@
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/ride-review-modal.js"></script>
   <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>
