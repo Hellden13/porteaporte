@@ -55,17 +55,23 @@
   let ctx = null;
 
   function buildModal() {
-    if (document.getElementById('pc-overlay')) return;
-    const o = document.createElement('div');
-    o.id = 'pc-overlay';
-    o.className = 'pc-overlay';
-    o.innerHTML = `
+    const modalHtml = `
       <div class="pc-modal">
         <h2>❌ Annuler ma livraison</h2>
         <p class="sub">Vérifie la politique de remboursement applicable selon l'état actuel de ta livraison.</p>
         <div id="pc-content" class="pc-loading">Chargement de la politique...</div>
       </div>
     `;
+    let o = document.getElementById('pc-overlay');
+    if (o) {
+      // Overlay existe déjà : on ré-injecte le contenu frais (sinon on garde le message d'annulation précédente)
+      o.innerHTML = modalHtml;
+      return;
+    }
+    o = document.createElement('div');
+    o.id = 'pc-overlay';
+    o.className = 'pc-overlay';
+    o.innerHTML = modalHtml;
     document.body.appendChild(o);
     o.addEventListener('click', (e) => { if (e.target === o) closeModal(); });
   }
