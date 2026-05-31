@@ -12,6 +12,7 @@
   <meta property="og:description" content="Trouve un siege, publie ton trajet ou glisse un colis dans le coffre d'un conducteur verifie.">
   <meta property="og:image" content="/assets/photos/hero-covoiturage-confiance.png">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <style>
@@ -343,6 +344,57 @@
       .hero-card { grid-template-columns: 1fr; }
     }
   </style>
+
+  <!-- ─── SEO : JSON-LD structured data ─── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://porteaporte.site/#organization",
+        "name": "PorteàPorte",
+        "url": "https://porteaporte.site",
+        "logo": "https://porteaporte.site/logo.svg",
+        "description": "Plateforme québécoise de covoiturage et de livraison entre particuliers. Trajets vérifiés, paiement sécurisé Stripe.",
+        "areaServed": { "@type": "AdministrativeArea", "name": "Québec" },
+        "foundingLocation": { "@type": "Place", "name": "Québec, Canada" },
+        "sameAs": []
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://porteaporte.site/#website",
+        "url": "https://porteaporte.site",
+        "name": "PorteàPorte",
+        "publisher": { "@id": "https://porteaporte.site/#organization" },
+        "inLanguage": "fr-CA",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://porteaporte.site/covoiturage.html?from={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Service",
+        "name": "Covoiturage au Québec",
+        "provider": { "@id": "https://porteaporte.site/#organization" },
+        "serviceType": "Covoiturage entre particuliers",
+        "areaServed": { "@type": "AdministrativeArea", "name": "Québec" },
+        "url": "https://porteaporte.site/covoiturage.html",
+        "description": "Trouve ou publie un trajet partagé entre Québec, Lévis, Montréal et toutes les villes du Québec. Conducteurs vérifiés."
+      },
+      {
+        "@type": "Service",
+        "name": "Livraison de colis entre particuliers",
+        "provider": { "@id": "https://porteaporte.site/#organization" },
+        "serviceType": "Livraison collaborative",
+        "areaServed": { "@type": "AdministrativeArea", "name": "Québec" },
+        "url": "https://porteaporte.site/livraison.html",
+        "description": "Envoie ou livre des colis partout au Québec via le réseau de conducteurs PorteàPorte. Paiement sous séquestre Stripe."
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <header class="site-header">
@@ -381,7 +433,7 @@
         <p class="hero-note hero-anim hero-anim-7">Paiement protégé · profils vérifiés · évaluations après trajet</p>
       </div>
       <div class="hero-media hero-anim hero-anim-1" aria-label="Rencontre entre conducteur et passagère, Québec">
-        <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre un conducteur et une passagère devant une maison québécoise" loading="eager" onerror="this.src='/assets/photos/hero-covoiturage-confiance.png'">
+        <img src="/assets/photos/hero-rencontre-covoit.webp" alt="Rencontre entre un conducteur et une passagère devant une maison québécoise" loading="eager" onerror="this.src='/assets/photos/hero-covoiturage-confiance.png'">
         <div class="hero-card" aria-label="Points forts">
           <div class="hero-stat"><strong>Stripe</strong><span>réservation protégée</span></div>
           <div class="hero-stat"><strong>Profils</strong><span>identité vérifiée</span></div>
@@ -454,9 +506,13 @@
         </div>
         <button class="btn" type="submit">Rechercher</button>
         <datalist id="qc-cities">
-          <option value="Quebec"><option value="Levis"><option value="Montreal"><option value="Trois-Rivieres">
-          <option value="Saguenay"><option value="Sherbrooke"><option value="Rimouski"><option value="Gatineau">
-          <option value="Drummondville"><option value="Victoriaville"><option value="Riviere-du-Loup"><option value="Saint-Georges">
+          <option value="Québec"><option value="Lévis"><option value="Saint-Nicolas"><option value="St-Nicolas">
+          <option value="Vanier"><option value="Sainte-Foy"><option value="Beauport"><option value="Charlesbourg">
+          <option value="Limoilou"><option value="Ancienne-Lorette"><option value="Saint-Romuald"><option value="Charny">
+          <option value="Saint-Jean-Chrysostome"><option value="Pintendre"><option value="Montmagny"><option value="Saint-Georges">
+          <option value="Sainte-Marie"><option value="Trois-Rivières"><option value="Montréal"><option value="Laval">
+          <option value="Sherbrooke"><option value="Saguenay"><option value="Rimouski"><option value="Rivière-du-Loup">
+          <option value="Drummondville"><option value="Victoriaville"><option value="Gatineau"><option value="Granby">
         </datalist>
       </form>
     </section>
@@ -467,7 +523,7 @@
         <h2 id="choices-title">Trois chemins. Le covoiturage en premier.</h2>
         <div class="choice-grid">
           <a class="card choice-card primary" href="/covoiturage.html" style="position:relative;overflow:hidden;padding:0;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;">
-            <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre conducteur et passagère devant une maison" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+            <img src="/assets/photos/hero-rencontre-covoit.webp" alt="Rencontre entre conducteur et passagère devant une maison" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
               <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">1</div>
@@ -477,7 +533,7 @@
             </div>
           </a>
           <a class="card choice-card" href="/covoiturage-publier.html" style="position:relative;overflow:hidden;padding:0;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;">
-            <img src="/assets/photos/hero-publier-trajet.jpg" alt="Conducteur québécois qui publie son trajet sur son téléphone" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+            <img src="/assets/photos/hero-publier-trajet.webp" alt="Conducteur québécois qui publie son trajet sur son téléphone" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
               <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">2</div>
@@ -487,7 +543,7 @@
             </div>
           </a>
           <a class="card choice-card" href="/livraison" style="position:relative;overflow:hidden;padding:0;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;">
-            <img src="/assets/photos/hero-envoyer-colis.jpg" alt="Colis en carton naturel déposé dans le coffre d'une voiture" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+            <img src="/assets/photos/hero-envoyer-colis.webp" alt="Colis en carton naturel déposé dans le coffre d'une voiture" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
               <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">3</div>
@@ -509,7 +565,7 @@
             <p class="lead" style="margin-top:8px;">Des profils réels. Des trajets réels. Une communauté québécoise.</p>
           </div>
           <div style="position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:var(--shadow);min-height:280px;">
-            <img src="/assets/photos/hero-rencontre-covoit.jpg" alt="Rencontre entre Québécois — conducteur vérifié" loading="lazy" onerror="this.parentElement.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+            <img src="/assets/photos/hero-rencontre-covoit.webp" alt="Rencontre entre Québécois — conducteur vérifié" loading="lazy" onerror="this.parentElement.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 50%,rgba(7,9,13,.4) 100%);"></div>
           </div>
         </div>
@@ -570,7 +626,7 @@
         <div class="mini-panel">
           <h3>Pour les conducteurs</h3>
           <p>Active "j'accepte les colis" en publiant ton trajet. Le covoiturage reste le coeur; le colis devient un extra naturel.</p>
-          <img src="/assets/photos/hero-covoiturage-colis.png" alt="Colis dans un trajet de covoiturage" loading="lazy">
+          <img src="/assets/photos/hero-covoiturage-colis.webp" alt="Colis dans un trajet de covoiturage" loading="lazy">
         </div>
       </div>
     </section>
@@ -578,7 +634,7 @@
     <!-- ═══ COMMUNAUTÉ — Pas une app. Un réseau de vraies personnes. ═══ -->
     <section class="section" aria-labelledby="communaute-title" style="position:relative;padding:0;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
       <div style="position:relative;min-height:clamp(360px, 60vh, 560px);">
-        <img src="/assets/photos/hero-trajet-partage.jpg" alt="Trois Québécois partagent un trajet sur une route forestière au coucher du soleil" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(135deg,#0b1228,#050a18)';this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+        <img src="/assets/photos/hero-trajet-partage.webp" alt="Trois Québécois partagent un trajet sur une route forestière au coucher du soleil" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(135deg,#0b1228,#050a18)';this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,.2) 0%,rgba(7,9,13,.55) 55%,rgba(7,9,13,.95) 100%);z-index:1;"></div>
         <div class="inner" style="position:relative;z-index:2;padding:clamp(56px,9vw,120px) clamp(18px,4vw,48px);display:flex;flex-direction:column;justify-content:flex-end;min-height:inherit;">
           <div class="eyebrow">Communauté</div>
@@ -643,7 +699,26 @@
     (function () {
       const form = document.getElementById('ride-search-form');
       const date = document.getElementById('search-date');
-      if (date && !date.value) date.valueAsDate = new Date();
+      if (date) date.min = new Date().toISOString().slice(0, 10);
+      const list = document.getElementById('qc-cities');
+      if (list) {
+        fetch('/api/platform?endpoint=ride-active-cities')
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .then(function (data) {
+            const names = [];
+            (data && data.cities || []).forEach(function (city) {
+              if (city.name) names.push(city.name);
+              (city.destinations || []).forEach(function (destination) { names.push(destination); });
+            });
+            Array.from(new Set(names)).forEach(function (name) {
+              if (!name || list.querySelector('option[value="' + CSS.escape(name) + '"]')) return;
+              const option = document.createElement('option');
+              option.value = name;
+              list.appendChild(option);
+            });
+          })
+          .catch(function () {});
+      }
       if (!form) return;
       form.addEventListener('submit', function (event) {
         event.preventDefault();

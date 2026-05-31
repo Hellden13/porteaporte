@@ -9,6 +9,7 @@
   <title>FAQ — Questions fréquentes · PorteàPorte</title>
   <meta name="description" content="Toutes les réponses sur le covoiturage québécois, l'envoi de colis dans le coffre, les paiements et la sécurité sur PorteàPorte.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
@@ -106,6 +107,64 @@
   <meta name="twitter:title" content="FAQ — Questions fréquentes · PorteàPorte">
   <meta name="twitter:description" content="Questions fréquentes sur PorteÀPorte : livraison, covoiturage, paiements, sécurité et plus. Toutes les réponses en un seul endroit.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
+
+  <!-- ─── SEO : FAQPage JSON-LD pour rich snippets Google ─── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Qu'est-ce que PorteàPorte ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "PorteàPorte est un réseau québécois de partage de trajets pour les colis et le covoiturage. Des gens ordinaires qui font déjà le trajet Québec↔Lévis, Montréal↔Laval, Rimouski↔Québec partagent leur route avec des expéditeurs ou des passagers. Plus humain, plus écologique et souvent beaucoup moins cher que les grands transporteurs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "PorteàPorte est-il disponible partout au Québec ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui. Le réseau couvre l'ensemble du Québec. Les grandes villes (Montréal, Québec, Laval, Sherbrooke, Trois-Rivières, Saguenay) ont le plus de membres actifs, mais des missions inter-villes sont disponibles partout."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Est-ce que c'est légal ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui. Le partage de frais entre particuliers est légal au Québec tant qu'aucun profit n'est généré (cadre Uberlike non applicable au covoiturage à but partagé). Les expéditeurs paient les frais de livraison via paiement sécurisé Stripe."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Comment envoyer un colis via PorteàPorte ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Crée un compte gratuit, décris ton colis (poids, dimensions, ville départ/arrivée), choisis une option et paie. Un livreur du réseau accepte la mission et te tient informé jusqu'à la livraison avec preuve photo."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Puis-je suivre mon colis en temps réel ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui, tu reçois la position GPS du livreur en direct dès qu'il commence sa mission. Notifications automatiques aux étapes clés : accepté, en route, livré."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Comment est calculé le prix de ma livraison ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Le prix dépend de la distance (km), du poids du colis et de l'option choisie. Tu vois le prix exact avant de payer. PorteàPorte est souvent 30 à 60 % moins cher que les transporteurs traditionnels."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <header class="site-header">

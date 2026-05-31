@@ -80,6 +80,29 @@
     }
   }
 
+  // ─── Logout centralisé : remplace les 5+ implémentations dispersées ───
+  // Usage : <button onclick="papLogout()">Se déconnecter</button>
+  //        ou await window.papLogout({ skipConfirm: true })
+  window.papLogout = async function (opts) {
+    opts = opts || {};
+    if (!opts.skipConfirm && !confirm('Es-tu sûr de vouloir te déconnecter ?')) return;
+    try {
+      const db = await (async () => {
+        if (window.db) return window.db;
+        if (typeof window.getSupabaseClient === 'function') return window.getSupabaseClient();
+        return null;
+      })();
+      if (db?.auth) await db.auth.signOut();
+    } catch (_) {}
+    try {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      sessionStorage.clear();
+    } catch (_) {}
+    window.location.href = opts.redirect || '/index.html';
+  };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', sync);
   } else {

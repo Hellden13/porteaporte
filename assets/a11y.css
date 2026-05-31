@@ -1,0 +1,75 @@
+/**
+ * PorteàPorte — Accessibilité globale
+ * À inclure après les autres CSS pour overrider les focus invisibles.
+ */
+
+/* ─── Focus visible : contour clair pour navigation clavier ─── */
+:focus-visible {
+  outline: 3px solid #5dbfff !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+/* Sans focus-visible (clic souris), pas d'outline disgracieux */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── Boutons sans label visible → forcer aria-label sinon warning ─── */
+button:not([aria-label]):empty {
+  outline: 2px dashed #ff7a7a;
+}
+
+/* ─── Utility screen-reader only ─── */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ─── Skip-link : "Aller au contenu" pour clavier/screen-reader ─── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 12px;
+  background: #5dbfff;
+  color: #051022;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 800;
+  z-index: 99999;
+  transition: top .2s;
+}
+.skip-link:focus { top: 12px; }
+
+/* ─── Respecte prefers-reduced-motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Contraste minimum : texte muet trop pâle parfois → renforce ─── */
+.brand-muted, .text-muted, [class*="muted"] {
+  color: #b8c1cc; /* Au lieu du #888 historique : passe WCAG AA */
+}
+
+/* ─── Liens : toujours soulignés au focus pour confiance ─── */
+a:focus-visible { text-decoration: underline; }
+
+/* ─── Touch targets : min 44x44px sur mobile (WCAG 2.5.5) ─── */
+@media (pointer: coarse) {
+  button, a.btn, input[type="button"], input[type="submit"], .quick-pick {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
