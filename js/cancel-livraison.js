@@ -160,7 +160,12 @@
           ${out.livreur_compensation_cents > 0 ? `<p style="color:#ffd700;font-size:.85rem;margin:8px 0 0">Une compensation de ${fmt(out.livreur_compensation_cents)} a été versée au livreur (${out.policy_reason}).</p>` : ''}
         </div>
       `;
-      setTimeout(() => { closeModal(); if (typeof ctx?.onSuccess === 'function') ctx.onSuccess(out); }, 3500);
+      // Sauvegarde onSuccess AVANT closeModal (qui nullifie ctx)
+      const onSuccessFn = ctx?.onSuccess;
+      setTimeout(() => {
+        closeModal();
+        if (typeof onSuccessFn === 'function') onSuccessFn(out);
+      }, 3500);
     } catch (e) {
       msg.className = 'pc-msg err';
       msg.textContent = '❌ ' + e.message;
