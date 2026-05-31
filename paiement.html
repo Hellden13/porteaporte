@@ -125,7 +125,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
   <div style="max-width:480px;margin:0 auto">
     <div class="success-icon">OK</div>
     <div class="success-title">Paiement r&eacute;ussi !</div>
-    <p class="success-sub">Ton paiement est s&eacute;curis&eacute; en escrow. Il sera lib&eacute;r&eacute; au livreur uniquement apr&egrave;s confirmation de livraison.</p>
+    <p class="success-sub">Ton paiement est prot&eacute;g&eacute; par Stripe. La carte est autoris&eacute;e maintenant et la capture se fait apr&egrave;s confirmation de livraison.</p>
     <div class="transaction-id">PP-<span id="tx-id">XXXXX</span></div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:20px">Num&eacute;ro de transaction - garde-le</p>
     <div class="next-steps">
@@ -232,7 +232,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
       <div class="sec-badge">🔐 Escrow protégé</div>
     </div>
 
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6">En payant, tu acceptes les <a href="/cgu.html" style="color:var(--lime)">CGU PorteàPorte</a> et la <a href="/confidentialite.html" style="color:var(--lime)">politique de confidentialité</a>. Ton paiement est bloqué en escrow Stripe jusqu'à confirmation de livraison.</div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6">En payant, tu acceptes les <a href="/cgu.html" style="color:var(--lime)">CGU PorteàPorte</a> et la <a href="/confidentialite.html" style="color:var(--lime)">politique de confidentialité</a>. Ton paiement est autorisé par Stripe et capturé après confirmation de livraison.</div>
   </div>
 
   <!-- RÉSUMÉ -->
@@ -251,7 +251,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
         <span class="os-total-val" id="sum-total">?</span>
       </div>
       <div class="escrow-note">
-        🔐 <strong>Paiement en escrow :</strong> Ton argent est bloqué chez Stripe et ne sera libéré au livreur qu'après la confirmation du destinataire. Si la livraison échoue, tu es remboursé automatiquement.
+        🔐 <strong>Paiement protégé :</strong> Stripe autorise la carte et la capture se fait après confirmation du destinataire. Si la livraison échoue, l'annulation ou le remboursement est traité selon le statut du paiement et les preuves disponibles.
       </div>
 
       <div class="escrow-flow" aria-label="Fonctionnement de l'escrow Stripe">
@@ -656,9 +656,9 @@ loadExistingLivraison().catch(err => {
 
 </script>
   <script src="/js/support-widget.js"></script>
+  <script src="/js/app-launcher.js" defer></script>
 </body>
 </html>
-
 
 
 
