@@ -184,7 +184,12 @@
 
   function closeModal() {
     const o = document.getElementById('pc-overlay');
-    if (o) o.classList.remove('open');
+    if (o) {
+      o.classList.remove('open');
+      // Supprime du DOM pour garantir un état frais à la prochaine ouverture
+      setTimeout(() => { try { o.remove(); } catch (_) {} }, 200);
+    }
+    ctx = null;
   }
 
   window.PapCancel = { openModal, closeModal, _confirm };
