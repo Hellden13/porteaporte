@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilotage proprietaire - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 22px;
+      background: #060910;
+      color: var(--brand-text, #eef5ff);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .shell { max-width: 1480px; margin: 0 auto; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: clamp(1.4rem, 2vw, 2rem); letter-spacing: 0; }
+    .subtitle { color: var(--brand-muted, #9aa8ba); margin-top: 5px; font-size: .92rem; }
+    .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid rgba(93,191,255,.35);
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: rgba(93,191,255,.09);
+      color: #dff8ff;
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn.primary { background: linear-gradient(135deg,#5dbfff,#d6ff5d); color: #061006; border: 0; }
+    .status-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid rgba(93,191,255,.24);
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(93,191,255,.08), rgba(214,255,93,.04));
+      margin-bottom: 16px;
+    }
+    .status-main { font-weight: 900; }
+    .status-sub { color: var(--brand-muted, #9aa8ba); font-size: .84rem; margin-top: 4px; }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+    .panel {
+      grid-column: span 4;
+      background: var(--brand-bg-surface, #101724);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .panel.wide { grid-column: span 6; }
+    .panel.full { grid-column: 1 / -1; }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(0,0,0,.16);
+    }
+    .panel-title {
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #bcefff;
+      font-weight: 900;
+    }
+    .panel-note { font-size: .74rem; color: var(--brand-muted, #9aa8ba); white-space: nowrap; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,.07);
+    }
+    .metric {
+      min-height: 88px;
+      padding: 14px;
+      background: var(--brand-bg-surface, #101724);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .metric.main { grid-column: span 2; min-height: 104px; }
+    .label {
+      color: var(--brand-muted, #9aa8ba);
+      font-size: .74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .value {
+      font-size: clamp(1.35rem, 2.1vw, 2.25rem);
+      font-weight: 950;
+      line-height: 1;
+      color: #fff;
+      overflow-wrap: anywhere;
+    }
+    .value.good { color: #d6ff5d; }
+    .value.warn { color: #ffd36b; }
+    .value.bad { color: #ff8e8e; }
+    .hint { color: var(--brand-muted, #9aa8ba); font-size: .76rem; }
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,.07);
+    }
+    .health-item {
+      padding: 16px 14px;
+      background: var(--brand-bg-surface, #101724);
+      min-height: 92px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+    .pill.ok { color: #cfff78; background: rgba(214,255,93,.12); border: 1px solid rgba(214,255,93,.3); }
+    .pill.warn { color: #ffd36b; background: rgba(255,211,107,.12); border: 1px solid rgba(255,211,107,.3); }
+    .pill.bad { color: #ff9a9a; background: rgba(255,90,90,.12); border: 1px solid rgba(255,90,90,.3); }
+    .loading, .error {
+      padding: 24px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--brand-muted, #9aa8ba);
+    }
+    .error { color: #ff9a9a; border-color: rgba(255,90,90,.3); }
+    @media (max-width: 1100px) {
+      .panel, .panel.wide { grid-column: span 6; }
+      .health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .status-line { grid-template-columns: 1fr; }
+      .panel, .panel.wide { grid-column: 1 / -1; }
+      .metrics { grid-template-columns: 1fr; }
+      .metric.main { grid-column: auto; }
+      .health-grid { grid-template-columns: 1fr; }
+      .actions { width: 100%; }
+      .btn { flex: 1 1 auto; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <h1>Pilotage proprietaire</h1>
+        <div class="subtitle">Etat complet de PorteaPorte en moins de 60 secondes.</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="refresh-btn" type="button">Actualiser</button>
+        <a class="btn" href="/admin/dashboard-admin.html">Admin complet</a>
+        <a class="btn" href="/admin/operations.html">Operations</a>
+      </div>
+    </header>
+
+    <section class="status-line" aria-live="polite">
+      <div>
+        <div class="status-main" id="status-main">Chargement du cockpit...</div>
+        <div class="status-sub" id="status-sub">Connexion admin requise.</div>
+      </div>
+      <div class="panel-note" id="last-update">—</div>
+    </section>
+
+    <div id="content" class="loading">Lecture des indicateurs critiques...</div>
+  </main>
+
+  <script>
+    const money = (cents) => Number(cents || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    const number = (value) => value == null ? '—' : Number(value || 0).toLocaleString('fr-CA');
+    const pct = (value) => value == null ? '—' : `${Number(value || 0).toLocaleString('fr-CA')}%`;
+
+    function metric(label, value, hint, tone) {
+      return `<div class="metric">
+        <div class="label">${label}</div>
+        <div class="value ${tone || ''}">${value}</div>
+        <div class="hint">${hint || ''}</div>
+      </div>`;
+    }
+
+    function mainMetric(label, value, hint, tone) {
+      return `<div class="metric main">
+        <div class="label">${label}</div>
+        <div class="value ${tone || ''}">${value}</div>
+        <div class="hint">${hint || ''}</div>
+      </div>`;
+    }
+
+    function panel(title, note, body, wide) {
+      return `<section class="panel ${wide ? 'wide' : ''}">
+        <div class="panel-head"><div class="panel-title">${title}</div><div class="panel-note">${note || ''}</div></div>
+        <div class="metrics">${body}</div>
+      </section>`;
+    }
+
+    function health(name, state) {
+      const normalized = String(state || 'unknown').toLowerCase();
+      const tone = normalized === 'ok' ? 'ok' : normalized === 'missing' || normalized === 'error' ? 'bad' : 'warn';
+      const label = normalized === 'ok' ? 'OK' : normalized === 'missing' ? 'Manquant' : normalized === 'error' ? 'Erreur' : 'A verifier';
+      return `<div class="health-item">
+        <div class="label">${name}</div>
+        <div class="pill ${tone}">${label}</div>
+      </div>`;
+    }
+
+    function render(data) {
+      const alertTotal = Object.values(data.alerts || {}).reduce((sum, n) => sum + Number(n || 0), 0);
+      document.getElementById('status-main').textContent = alertTotal
+        ? `${alertTotal} point(s) demandent ton attention`
+        : 'Entreprise stable: aucun signal critique immediat';
+      document.getElementById('status-sub').textContent = `Covoiturage dominant, livraison en soutien, finances et systeme visibles.`;
+      document.getElementById('last-update').textContent = 'Mis a jour ' + new Date(data.generated_at).toLocaleString('fr-CA');
+
+      const g = data.growth || {};
+      const r = data.rides || {};
+      const d = data.deliveries || {};
+      const i = data.impact || {};
+      const f = data.finances || {};
+      const a = data.alerts || {};
+      const h = data.health || {};
+
+      document.getElementById('content').className = 'board';
+      document.getElementById('content').innerHTML =
+        panel('Croissance', 'base utilisateurs',
+          mainMetric('Utilisateurs', number(g.users), `${number(g.new_today)} nouveau(x) aujourd'hui`, 'good') +
+          metric('Nouveaux 7 jours', number(g.new_7d), 'inscriptions recentes') +
+          metric('Conducteurs', number(g.drivers), 'profils capables de conduire') +
+          metric('Passagers', number(g.passengers), 'estimation hors roles pro') +
+          metric('Expediteurs', number(g.expediteurs), 'clients colis') +
+          metric('Livreurs', number(g.livreurs), 'reseau execution')
+        ) +
+        panel('Covoiturage', 'coeur du pivot',
+          mainMetric('Trajets publies', number(r.published), `${number(r.active)} actif(s)`, 'good') +
+          metric('Reservations', number(r.bookings), 'demandes passagers') +
+          metric('Taux de remplissage', pct(r.fill_rate_pct), 'places reservees / capacite')
+        ) +
+        panel('Livraison', 'secondaire mais monétisable',
+          mainMetric('Colis actifs', number(d.active), 'en attente ou en cours', 'good') +
+          metric('Colis livres', number(d.delivered), 'missions terminees') +
+          metric('Revenus colis', money(d.revenue_cents), 'total observe')
+        ) +
+        panel('Impact', 'preuve communautaire',
+          mainMetric('Km mutualises', number(i.shared_km), 'trajets et donnees impact', 'good') +
+          metric('CO2 economise', i.co2_saved_kg == null ? '—' : `${number(i.co2_saved_kg)} kg`, 'estime ou configure') +
+          metric('Missions communautaires', number(i.community_missions), 'actives ou configurees') +
+          metric('Repas livres', number(i.meals_delivered), 'si suivi impact disponible') +
+          metric('Aides effectuees', number(i.help_actions), 'si suivi impact disponible')
+        ) +
+        panel('Finances', f.stripe?.mode ? `Stripe ${f.stripe.mode}` : 'Stripe',
+          mainMetric("Revenus aujourd'hui", money(f.revenue_today_cents), 'transactions du jour', 'good') +
+          metric('Semaine', money(f.revenue_week_cents), '7 derniers jours') +
+          metric('Mois', money(f.revenue_month_cents), '30 derniers jours') +
+          metric('Commissions', money(f.commissions_cents), 'estimees ou enregistrees') +
+          metric('Stripe', f.stripe?.configured ? 'Connecte' : 'Manquant', 'configuration serveur', f.stripe?.configured ? 'good' : 'bad')
+        ) +
+        panel('Alertes', 'a traiter avant campagne',
+          mainMetric('Erreurs critiques', number(a.critical_errors), 'sante audit/events', a.critical_errors ? 'bad' : 'good') +
+          metric('Paiements bloques', number(a.payments_blocked), 'Stripe / statuts paiement', a.payments_blocked ? 'warn' : 'good') +
+          metric('Litiges', number(a.litiges), 'manquements ouverts', a.litiges ? 'warn' : 'good') +
+          metric('KYC a verifier', number(a.kyc_pending), 'dossiers en attente', a.kyc_pending ? 'warn' : 'good')
+        ) +
+        `<section class="panel full">
+          <div class="panel-head"><div class="panel-title">Sante du systeme</div><div class="panel-note">disponibilite operationnelle</div></div>
+          <div class="health-grid">
+            ${health('API', h.api)}
+            ${health('Supabase', h.supabase)}
+            ${health('Stripe', h.stripe)}
+            ${health('Notifications', h.notifications)}
+            ${health('Service worker', h.service_worker)}
+          </div>
+        </section>`;
+    }
+
+    async function loadPilotage() {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true;
+      try {
+        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+        const { data } = await db.auth.getSession();
+        if (!data?.session) {
+          window.location.href = '/login.html?redirect=/admin/pilotage';
+          return;
+        }
+        const res = await fetch('/api/platform?endpoint=admin-pilotage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + data.session.access_token
+          },
+          body: JSON.stringify({ endpoint: 'admin-pilotage' })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || !out.success) throw new Error(out.error || 'Pilotage indisponible');
+        render(out);
+      } catch (error) {
+        document.getElementById('content').className = 'error';
+        document.getElementById('content').textContent = error.message;
+        document.getElementById('status-main').textContent = 'Pilotage indisponible';
+        document.getElementById('status-sub').textContent = 'Les donnees restent protegees; verifie la session admin ou l API.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', loadPilotage);
+    loadPilotage();
+  </script>
+  <script src="/js/admin-alert-bell.js" defer></script>
+</body>
+</html>

@@ -375,6 +375,7 @@
     <a href="#section-parrainage"   class="nav-link"><span class="icon">🤝</span> Parrainage</a>
     <a href="#section-notifications"class="nav-link"><span class="icon">🔔</span> Notifications push</a>
     <div class="sidebar-label" style="margin-top:16px;color:#ff9999">🚨 Centre de contrôle</div>
+    <a href="/admin/pilotage" class="nav-link" style="background:rgba(214,255,93,.08);border-left:3px solid #d6ff5d"><span class="icon">📍</span> Pilotage propriétaire</a>
     <a href="/admin/operations.html" class="nav-link" style="background:rgba(93,191,255,.06);border-left:3px solid #5dbfff"><span class="icon">🚨</span> Operations (LIVE)</a>
     <a href="/admin/diagnostic.html" class="nav-link"><span class="icon">🔍</span> Diagnostic</a>
     <a href="/admin/stripe-health.html" class="nav-link"><span class="icon">💳</span> Stripe Health</a>
@@ -418,6 +419,7 @@
 
   <main class="main">
     <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
+      <a href="/admin/pilotage" style="background:rgba(214,255,93,.15);color:#d6ff5d;font-weight:900">📍 Pilotage</a>
       <a href="/admin/operations.html" style="background:rgba(93,191,255,.15);color:#5dbfff;font-weight:900">🚨 OPS</a>
       <a href="/admin/diagnostic.html">🔍 Diag</a>
       <a href="/admin/stripe-health.html">💳 Stripe</a>
@@ -446,6 +448,48 @@
         <div class="page-sub" id="admin-welcome">Les donnees admin apparaissent ici quand la session est valide.</div>
       </div>
     </div>
+
+    <!-- ⚡ Widget modération temps réel (auto-polled par admin-alert-bell.js mais on duplique ici pour visibilité immédiate) -->
+    <div id="moderation-hero" style="background:linear-gradient(135deg,rgba(255,90,90,.08),rgba(255,200,0,.06));border:1px solid rgba(255,90,90,.3);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#ff9999;font-weight:800">⚡ À TRAITER MAINTENANT</div>
+          <div style="font-size:1.4rem;font-weight:900;color:#fff;margin-top:2px"><span id="mod-total">0</span> item(s) en attente de ton action</div>
+        </div>
+        <a href="/admin/operations.html" class="btn btn-sm">Centre opérations →</a>
+      </div>
+      <div id="mod-rows" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
+    </div>
+    <script>
+      (async function loadModerationHero() {
+        try {
+          const db = window.db || window.getSupabaseClient?.();
+          if (!db) return;
+          const { data: { session } } = await db.auth.getSession();
+          if (!session) return;
+          const r = await fetch('/api/platform?endpoint=admin-operations-pulse', { headers: { Authorization: 'Bearer ' + session.access_token } });
+          if (!r.ok) return;
+          const d = await r.json();
+          const a = d.pulse?.alerts || {};
+          const items = [
+            { lbl: '🪪 KYC livreur',  n: a.kyc_livreur_pending || 0, href: '/admin/kyc-review.html' },
+            { lbl: '📷 Photos profil', n: a.photos_pending      || 0, href: '/admin/photos-moderation.html' },
+            { lbl: '🐾 Photos animal', n: a.pet_photos_pending  || 0, href: '/admin/photos-moderation.html' },
+            { lbl: '⚠️ Manquements',   n: a.manquements_open    || 0, href: '/admin/manquements.html' },
+          ];
+          const total = items.reduce((s,i)=>s+i.n,0);
+          if (total === 0) return;
+          document.getElementById('moderation-hero').style.display = 'block';
+          document.getElementById('mod-total').textContent = total;
+          document.getElementById('mod-rows').innerHTML = items.filter(i=>i.n>0).map(i=>`
+            <a href="${i.href}" style="background:rgba(255,255,255,.05);border:1px solid #1e2535;border-radius:10px;padding:12px 14px;text-decoration:none;color:#fff;display:flex;justify-content:space-between;align-items:center;font-weight:700;transition:all .15s">
+              <span style="font-size:.88rem">${i.lbl}</span>
+              <span style="background:rgba(255,90,90,.2);color:#ff9999;padding:3px 10px;border-radius:999px;font-size:.92rem;font-weight:900">${i.n}</span>
+            </a>
+          `).join('');
+        } catch (e) {}
+      })();
+    </script>
 
     <div id="section-stats" class="stats-grid">
       <div class="stat-card">
@@ -2746,5 +2790,6 @@
 
   init();
 </script>
+  <script src="/js/admin-alert-bell.js" defer></script>
 </body>
 </html>
