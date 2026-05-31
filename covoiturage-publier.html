@@ -572,29 +572,33 @@
 
         <strong style="display:block;color:var(--brand-cyan);font-size:.85rem;margin-bottom:8px">Lieux suggérés (clique pour pré-remplir)</strong>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Tim Hortons')">☕ Tim Hortons</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','McDonald\'s')">🍔 McDonald's</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Walmart')">🏪 Walmart</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Station d\'essence')">⛽ Station essence</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Métro / Station bus')">🚆 Métro/Bus</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Stationnement public')">🅿️ Stationnement public</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','IGA')">🛒 IGA</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('start','Centre commercial')">🏬 Centre commercial</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','restaurant')">☕ Restaurants</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','commerce')">🛒 Commerces</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','station_essence')">⛽ Stations essence</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','gare')">🚆 Gares</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','stationnement')">🅿️ Stationnements</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('start','')">✨ Tous</button>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Type de lieu (ou adresse spécifique)</label>
-            <input type="text" id="meeting-point-label-start" placeholder="Ex : Tim Hortons, ou adresse complète">
-          </div>
-          <div class="field">
-            <label>Ville/secteur précis</label>
-            <input type="text" id="meeting-city-start" placeholder="Ex : Lévis - secteur Lauzon">
-          </div>
+        <div class="field" style="margin-top:8px">
+          <label>📍 Lieu de rendez-vous (vérifié par PorteàPorte) *</label>
+          <select id="meeting-point-start" onchange="onSafePicked('start')" style="width:100%;padding:14px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:.95rem;font-weight:600;cursor:pointer;">
+            <option value="">⏳ Saisis d'abord la ville de départ ci-dessus…</option>
+          </select>
+          <div id="meeting-info-start" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;font-size:.85rem;color:var(--brand-text);"></div>
         </div>
-        <p style="font-size:.78rem;color:var(--brand-cyan);margin-top:8px">🛡️ <strong>Bonus confiance :</strong> tu seras suivi en direct par GPS pendant tout le trajet. Les passagers reçoivent ton itinéraire en temps réel.</p>
-        <!-- Champs cachés pour compat ancien backend -->
-        <input type="hidden" id="meeting-point-start" value="">
+
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;color:var(--brand-muted);font-size:.85rem;">📝 Mon lieu n'est pas dans la liste ?</summary>
+          <div class="field" style="margin-top:10px">
+            <label>Adresse personnalisée (sera vérifiée par l'équipe)</label>
+            <input type="text" id="meeting-point-label-start" placeholder="Ex: Tim Hortons St-Romuald, 180 Route Lagueux">
+            <p style="font-size:.75rem;color:var(--brand-muted);margin-top:4px">Choisis un lieu PUBLIC et bien éclairé (jamais une adresse résidentielle).</p>
+          </div>
+        </details>
+
+        <input type="hidden" id="meeting-city-start" value="">
+        <p style="font-size:.78rem;color:var(--brand-cyan);margin-top:12px">🛡️ <strong>Bonus confiance :</strong> tu seras suivi en direct par GPS pendant tout le trajet.</p>
       </div>
 
       <div class="form-section">
@@ -614,27 +618,32 @@
 
         <strong style="display:block;color:var(--brand-cyan);font-size:.85rem;margin-bottom:8px">Lieux suggérés</strong>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Tim Hortons')">☕ Tim Hortons</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','McDonald\'s')">🍔 McDonald's</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Walmart')">🏪 Walmart</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Station d\'essence')">⛽ Station essence</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Métro / Station bus')">🚆 Métro/Bus</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Stationnement public')">🅿️ Stationnement public</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','IGA')">🛒 IGA</button>
-          <button type="button" class="quick-pick" onclick="presetSafePoint('end','Centre commercial')">🏬 Centre commercial</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','restaurant')">☕ Restaurants</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','commerce')">🛒 Commerces</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','station_essence')">⛽ Stations essence</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','gare')">🚆 Gares</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','stationnement')">🅿️ Stationnements</button>
+          <button type="button" class="quick-pick" onclick="filterSafeType('end','')">✨ Tous</button>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Type de lieu (ou adresse spécifique)</label>
-            <input type="text" id="meeting-point-label-end" placeholder="Ex : Walmart, ou adresse complète">
-          </div>
-          <div class="field">
-            <label>Ville/secteur précis</label>
-            <input type="text" id="meeting-city-end" placeholder="Ex : Québec - secteur Lebourgneuf">
-          </div>
+        <div class="field" style="margin-top:8px">
+          <label>📍 Lieu de débarquement (vérifié par PorteàPorte) *</label>
+          <select id="meeting-point-end" onchange="onSafePicked('end')" style="width:100%;padding:14px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:.95rem;font-weight:600;cursor:pointer;">
+            <option value="">⏳ Saisis d'abord la ville d'arrivée à l'étape 1…</option>
+          </select>
+          <div id="meeting-info-end" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;font-size:.85rem;color:var(--brand-text);"></div>
         </div>
-        <input type="hidden" id="meeting-point-end" value="">
+
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;color:var(--brand-muted);font-size:.85rem;">📝 Mon lieu n'est pas dans la liste ?</summary>
+          <div class="field" style="margin-top:10px">
+            <label>Adresse personnalisée (sera vérifiée par l'équipe)</label>
+            <input type="text" id="meeting-point-label-end" placeholder="Ex: IGA Sainte-Foy, 2450 Bd Laurier">
+            <p style="font-size:.75rem;color:var(--brand-muted);margin-top:4px">Choisis un lieu PUBLIC et bien éclairé (jamais une adresse résidentielle).</p>
+          </div>
+        </details>
+
+        <input type="hidden" id="meeting-city-end" value="">
       </div>
 
       <div class="step-actions">
@@ -880,28 +889,37 @@
       if (card) card.classList.add('selected');
     }
 
-    // ─── Preset points sécuritaires ───
-    function presetSafePoint(side, name) {
-      document.getElementById('meeting-point-label-' + side).value = name;
-      const cityInput = document.getElementById('meeting-city-' + side);
-      if (!cityInput.value) cityInput.focus();
-    }
-
     // ── Colis ────────────────────────────────────────────────────
     function togglePackageFields() {
       document.getElementById('package-fields').style.display =
         document.getElementById('accepts_packages').checked ? 'block' : 'none';
     }
 
-    // ── Points sécuritaires ───────────────────────────────────────
-    const meetingPointsCache = {};
-    async function loadMeetingPoints(side) {
-      const cityEl = document.getElementById('meeting-city-' + side);
-      const selEl  = document.getElementById('meeting-point-' + side);
-      const city   = cityEl.value.trim();
-      if (!city || city.length < 3) return;
+    // ── Points sécuritaires (NOUVEAU : catalogue pré-vérifié) ─────
+    const meetingPointsCache = {};      // { city: [points] }
+    const typeFilters = { start: '', end: '' };
+
+    const TYPE_ICON = {
+      restaurant: '☕', commerce: '🛒', station_essence: '⛽',
+      gare: '🚆', metro: '🚆', stationnement: '🅿️', autre: '📍'
+    };
+
+    async function loadSafePoints(side) {
+      const sourceCityId = side === 'start' ? 'start_city' : 'end_city';
+      const city = document.getElementById(sourceCityId).value.trim();
+      const selEl = document.getElementById('meeting-point-' + side);
+      const infoEl = document.getElementById('meeting-info-' + side);
+      if (infoEl) infoEl.style.display = 'none';
+
+      if (!city || city.length < 2) {
+        selEl.innerHTML = '<option value="">⏳ Saisis d\'abord la ville à l\'étape 1…</option>';
+        return;
+      }
+
+      document.getElementById('meeting-city-' + side).value = city;
 
       if (!meetingPointsCache[city]) {
+        selEl.innerHTML = '<option value="">⏳ Chargement…</option>';
         try {
           const res = await fetch('/api/platform?endpoint=safe-meeting-points&city=' + encodeURIComponent(city));
           const data = await res.json();
@@ -909,10 +927,87 @@
         } catch(_) { meetingPointsCache[city] = []; }
       }
 
-      const points = meetingPointsCache[city];
-      selEl.innerHTML = '<option value="">Aucun (point libre)</option>' +
-        points.map(p => `<option value="${p.id}">${p.name}${p.address ? ' — ' + p.address : ''}${p.verified ? ' ✅' : ''}</option>`).join('');
+      renderSafeSelect(side);
     }
+
+    function renderSafeSelect(side) {
+      const city = document.getElementById(side === 'start' ? 'start_city' : 'end_city').value.trim();
+      const selEl = document.getElementById('meeting-point-' + side);
+      const all = meetingPointsCache[city] || [];
+      const f = typeFilters[side];
+      const filtered = f ? all.filter(p => p.type === f) : all;
+
+      if (!all.length) {
+        selEl.innerHTML = `<option value="">Aucun lieu vérifié pour ${city} — utilise "Mon lieu n'est pas dans la liste"</option>`;
+        return;
+      }
+
+      // Regroupe par secteur
+      const bySector = {};
+      filtered.forEach(p => {
+        const s = p.sector || 'Autres secteurs';
+        if (!bySector[s]) bySector[s] = [];
+        bySector[s].push(p);
+      });
+
+      let html = '<option value="">— Sélectionne un lieu sécuritaire —</option>';
+      Object.keys(bySector).sort().forEach(sector => {
+        html += `<optgroup label="${sector}">`;
+        bySector[sector].forEach(p => {
+          const ic = TYPE_ICON[p.type] || '📍';
+          html += `<option value="${p.id}" data-info='${JSON.stringify({n:p.name, a:p.address, h:p.hours||'', t:p.type, c:!!p.has_cameras, l:!!p.well_lit, p:!!p.parking_free, sec:p.sector||''}).replace(/'/g,"&#39;")}'>${ic} ${p.name}</option>`;
+        });
+        html += '</optgroup>';
+      });
+      if (!filtered.length && f) {
+        html += `<option disabled>(Aucun lieu de type "${f}" — change le filtre)</option>`;
+      }
+      selEl.innerHTML = html;
+    }
+
+    function filterSafeType(side, type) {
+      typeFilters[side] = type;
+      renderSafeSelect(side);
+    }
+
+    function onSafePicked(side) {
+      const selEl = document.getElementById('meeting-point-' + side);
+      const infoEl = document.getElementById('meeting-info-' + side);
+      const opt = selEl.options[selEl.selectedIndex];
+      if (!opt || !opt.value) {
+        infoEl.style.display = 'none';
+        return;
+      }
+      let info = {};
+      try { info = JSON.parse((opt.dataset.info || '{}').replace(/&#39;/g,"'")); } catch(_) {}
+      const badges = [];
+      if (info.c) badges.push('📹 Caméras');
+      if (info.l) badges.push('💡 Bien éclairé');
+      if (info.p) badges.push('🅿️ Stationnement gratuit');
+      infoEl.innerHTML = `
+        <div style="font-weight:800;margin-bottom:4px">${TYPE_ICON[info.t]||'📍'} ${info.n}</div>
+        <div style="color:var(--brand-muted);margin-bottom:6px">${info.a}${info.sec ? ' · '+info.sec : ''}</div>
+        ${info.h ? `<div style="font-size:.78rem;color:var(--brand-muted);margin-bottom:4px">🕒 ${info.h}</div>` : ''}
+        ${badges.length ? `<div style="font-size:.78rem;color:var(--brand-cyan)">${badges.join(' · ')}</div>` : ''}
+      `;
+      infoEl.style.display = 'block';
+      // Reflète aussi le nom dans le champ libellé pour compat backend
+      const lbl = document.getElementById('meeting-point-label-' + side);
+      if (lbl) lbl.value = info.n + ' — ' + info.a;
+    }
+
+    // Auto-load quand la ville de départ/arrivée change
+    document.addEventListener('DOMContentLoaded', () => {
+      const sc = document.getElementById('start_city');
+      const ec = document.getElementById('end_city');
+      if (sc) sc.addEventListener('change', () => loadSafePoints('start'));
+      if (sc) sc.addEventListener('blur',   () => loadSafePoints('start'));
+      if (ec) ec.addEventListener('change', () => loadSafePoints('end'));
+      if (ec) ec.addEventListener('blur',   () => loadSafePoints('end'));
+      // Si déjà rempli (ex: retour navigateur)
+      if (sc && sc.value) loadSafePoints('start');
+      if (ec && ec.value) loadSafePoints('end');
+    });
 
     // ── Points d'arrêt ──────────────────────────────────────────
     function addStop() {
