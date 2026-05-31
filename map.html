@@ -124,6 +124,12 @@
     #map {
       flex: 1;
       z-index: 1;
+      min-height: 500px;        /* fallback si flex chain casse */
+      height: calc(100vh - 64px); /* viewport - topbar */
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      #map { height: calc(100vh - 120px); min-height: 400px; }
     }
     .leaflet-container { background: #0a0c10; }
 
