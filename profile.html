@@ -805,7 +805,17 @@
           reader.readAsDataURL(file);
         });
 
-        const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
+        const client = window.db || (typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null);
+        if (!client) {
+          photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Connexion Supabase non chargée. Recharge la page.</span>';
+          return;
+        }
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) {
+          photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Session expirée. Reconnecte-toi.</span>';
+          setTimeout(() => location.href = '/login.html?next=' + encodeURIComponent(location.pathname), 1500);
+          return;
+        }
         const r = await fetch('/api/platform?endpoint=profile-photo-upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
