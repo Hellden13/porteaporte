@@ -355,31 +355,50 @@ function buildTrajets() {
     ${isConducteur ? `<a href="/covoiturage-publier.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem">+ Publier</a>` : ''}
   </div>
 
-  ${isConducteur ? `
-  <div class="section-block">
-    <div class="section-head"><h2>Trajets publiés (${rides.length})</h2></div>
-    <div class="table-wrap">
-      ${rides.length === 0
-        ? `<p class="empty-msg">Aucun trajet publié. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publier mon premier trajet →</a></p>`
-        : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>
-          ${rides.map(r=>`<tr>
-            <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
-            <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
-            <td>${r.available_seats} pl.</td>
-            <td>${statusChip(r.status)}</td>
-            <td><a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a></td>
-          </tr>`).join('')}
-        </tbody></table>`}
+  ${isConducteur ? (() => {
+    const finishedStatuses = ['termine','completed','done','annule','cancelled'];
+    const activeRides = rides.filter(r => !finishedStatuses.includes(String(r.status||'').toLowerCase()));
+    const finishedRides = rides.filter(r => finishedStatuses.includes(String(r.status||'').toLowerCase()));
+    const rideRow = r => `<tr>
+      <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
+      <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
+      <td>${r.available_seats} pl.</td>
+      <td>${statusChip(r.status)}</td>
+      <td><a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a></td>
+    </tr>`;
+    return `
+    <div class="section-block">
+      <div class="section-head"><h2>🚀 Trajets en cours (${activeRides.length})</h2></div>
+      <div class="table-wrap">
+        ${activeRides.length === 0
+          ? `<p class="empty-msg">Aucun trajet en cours. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publier un nouveau trajet →</a></p>`
+          : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${activeRides.map(rideRow).join('')}</tbody></table>`}
+      </div>
     </div>
-  </div>` : ''}
+    ${finishedRides.length > 0 ? `
+    <details class="section-block" style="cursor:pointer">
+      <summary style="font-weight:800;color:var(--green);padding:8px 0;list-style:none;font-size:1.05rem">✅ Trajets terminés (${finishedRides.length}) — cliquer pour voir</summary>
+      <div class="table-wrap" style="margin-top:10px">
+        <table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${finishedRides.map(rideRow).join('')}</tbody></table>
+      </div>
+    </details>` : ''}`;
+  })() : ''}
 
+  ${(() => {
+    const finishedBookingStatuses = ['termine','completed','done','annule','cancelled','refunded','rembourse'];
+    const activeBookings = bookings.filter(b => !finishedBookingStatuses.includes(String(b.status||'').toLowerCase()));
+    const finishedBookings = bookings.filter(b => finishedBookingStatuses.includes(String(b.status||'').toLowerCase()));
+    window.__activeBookings = activeBookings;
+    window.__finishedBookings = finishedBookings;
+    return '';
+  })()}
   <div class="section-block">
-    <div class="section-head"><h2>Mes réservations passager (${bookings.length})</h2></div>
+    <div class="section-head"><h2>🚀 Mes réservations en cours (${window.__activeBookings.length})</h2></div>
     <div class="table-wrap">
-      ${bookings.length === 0
-        ? `<p class="empty-msg">Aucune réservation. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
-        : `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>
-          ${bookings.map(b=>{
+      ${window.__activeBookings.length === 0
+        ? `<p class="empty-msg">Aucune réservation en cours. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
+        : (() => {
+          const bookingRow = b => {
             const drvContact = [];
             if (b.driver_email) drvContact.push(`<a href="mailto:${b.driver_email}?subject=PorteàPorte%20-%20Réservation%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
             if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
@@ -390,10 +409,19 @@ function buildTrajets() {
               <td>${statusChip(b.status)}</td>
               <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
             </tr>`;
-          }).join('')}
-        </tbody></table>`}
+          };
+          window.__bookingRowFn = bookingRow;
+          return `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__activeBookings.map(bookingRow).join('')}</tbody></table>`;
+        })()}
     </div>
-  </div>`;
+  </div>
+  ${window.__finishedBookings && window.__finishedBookings.length > 0 ? `
+  <details class="section-block" style="cursor:pointer">
+    <summary style="font-weight:800;color:var(--green);padding:8px 0;list-style:none;font-size:1.05rem">✅ Réservations passées (${window.__finishedBookings.length}) — cliquer pour voir</summary>
+    <div class="table-wrap" style="margin-top:10px">
+      <table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__finishedBookings.map(window.__bookingRowFn).join('')}</tbody></table>
+    </div>
+  </details>` : ''}`;
 }
 
 // ── RÉSERVATIONS REÇUES ──

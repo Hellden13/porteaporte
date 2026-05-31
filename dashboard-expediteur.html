@@ -558,13 +558,29 @@
             </section>
 
             <div data-exp-section="missions">
-            <!-- TABS -->
+            <!-- TABS — défaut "En cours" pour focus utilisateur -->
             <div class="missions-tabs">
-                <button class="tab-button active" onclick="switchTab('all', event)">Toutes</button>
-                <button class="tab-button" onclick="switchTab('pending', event)">En attente</button>
-                <button class="tab-button" onclick="switchTab('completed', event)">Complétées</button>
-                <button class="tab-button" onclick="switchTab('disputes', event)">Litiges</button>
+                <button class="tab-button active" onclick="switchTab('pending', event)">🚀 En cours <span class="tab-count" data-count="pending"></span></button>
+                <button class="tab-button" onclick="switchTab('completed', event)">✅ Réussies <span class="tab-count" data-count="completed"></span></button>
+                <button class="tab-button" onclick="switchTab('disputes', event)">⚖️ Litiges <span class="tab-count" data-count="disputes"></span></button>
+                <button class="tab-button" onclick="switchTab('all', event)">📋 Toutes</button>
             </div>
+            <style>
+                .tab-count {
+                    display: inline-block;
+                    margin-left: 6px;
+                    padding: 1px 8px;
+                    background: rgba(255,255,255,.12);
+                    border-radius: 999px;
+                    font-size: .72rem;
+                    font-weight: 800;
+                    color: #fff;
+                    min-width: 18px;
+                    text-align: center;
+                }
+                .tab-button.active .tab-count { background: rgba(7,9,13,.25); color: #071006; }
+                .tab-count:empty { display: none; }
+            </style>
 
             <!-- MISSIONS GRID -->
             <div id="missions-container" class="missions-grid">
@@ -634,7 +650,7 @@
     <script src="/js/auth-complete.js"></script>
     
     <script>
-        let currentTab = 'all';
+        let currentTab = 'pending';
         let cachedLivraisons = [];
         const captureInProgress = new Set();
         const reviewInProgress = new Set();
@@ -784,6 +800,7 @@
 
                 cachedLivraisons = result.livraisons || [];
                 updateStats(cachedLivraisons);
+                updateTabCounts(cachedLivraisons);
                 displayMissions(cachedLivraisons);
             } catch (error) {
                 console.error('ERREUR livraisons expediteur:', error.message);
@@ -1197,6 +1214,21 @@
                     btn.textContent = 'Lien confirmation destinataire';
                 });
             }
+        }
+
+        function updateTabCounts(missions) {
+            const pendingS = ['en_attente', 'publie', 'paiement_autorise', 'requires_capture', 'processing', 'confirme', 'accepted', 'en_route', 'in_transit', 'ramasse', 'picked_up', 'livre', 'livree', 'delivered'];
+            const completedS = ['payee', 'paid', 'succeeded', 'confirmee'];
+            const disputesS = ['litige', 'rembourse'];
+            const counts = {
+                pending: missions.filter(m => pendingS.includes(m.statut)).length,
+                completed: missions.filter(m => completedS.includes(m.statut)).length,
+                disputes: missions.filter(m => disputesS.includes(m.statut)).length
+            };
+            document.querySelectorAll('.tab-count').forEach(el => {
+                const k = el.dataset.count;
+                el.textContent = counts[k] > 0 ? counts[k] : '';
+            });
         }
 
         function displayMissions(missions) {
