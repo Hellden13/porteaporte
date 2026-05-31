@@ -2960,6 +2960,89 @@ async function profilePhotoVisibility(req, res, ctx, body) {
   return res.status(200).json({ success: true, visible });
 }
 
+// ─── Liste des livraisons éligibles à la libération de paiement ───────────
+// Critères : statut livre/livree, depuis > 48h, recipient_confirmed_at null
+// Retourne 2 groupes :
+//   - clear : preuve photo + GPS dispo et accuracy < 100m → auto OK
+//   - ambiguous : pas de preuve ou preuve faible → demande validation admin
+async function adminAutoReleaseList(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const graceHours = Math.max(1, Math.min(168, Number(body?.grace_hours || 48)));
+  const sinceIso = new Date(Date.now() - graceHours * 3600 * 1000).toISOString();
+
+  // 1) Livraisons éligibles
+  const livUrl = `${ctx.sbUrl}/rest/v1/livraisons?` +
+    `statut=in.(livre,livree,delivered)` +
+    `&recipient_confirmed_at=is.null` +
+    `&or=(livre_le.lte.${sinceIso},mis_a_jour_le.lte.${sinceIso})` +
+    `&select=id,code,livreur_id,expediteur_id,ville_depart,ville_arrivee,prix_total,statut,livre_le,recipient_confirmed_at,stripe_payment_intent,payment_intent_id,delivery_proof_required_admin_review,adresse_arrivee` +
+    `&order=livre_le.asc&limit=200`;
+
+  const livRes = await fetch(livUrl, { headers: sbHeaders(ctx.sbKey) });
+  if (!livRes.ok) return res.status(500).json({ error: 'Lecture livraisons impossible' });
+  const livs = await livRes.json();
+  if (!livs.length) return res.status(200).json({ clear: [], ambiguous: [], total: 0, grace_hours: graceHours });
+
+  // 2) Preuves de livraison (1 par livraison la plus récente)
+  const ids = livs.map(l => l.id);
+  const inFilter = ids.map(id => `"${id}"`).join(',');
+  const proofRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/delivery_proofs?livraison_id=in.(${encodeURIComponent(inFilter)})&select=id,livraison_id,photo_storage_path,latitude,longitude,accuracy_m,note,proof_type,dropoff_type,status,created_at&order=created_at.desc`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const allProofs = proofRes.ok ? await proofRes.json() : [];
+  const proofByLiv = {};
+  allProofs.forEach(p => { if (!proofByLiv[p.livraison_id]) proofByLiv[p.livraison_id] = p; });
+
+  // 3) Manquements ouverts (pour exclure)
+  const manqRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/manquements?livraison_id=in.(${encodeURIComponent(inFilter)})&statut=in.(signale,en_revision)&select=livraison_id&limit=200`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const disputed = new Set((manqRes.ok ? await manqRes.json() : []).map(m => m.livraison_id));
+
+  // 4) Classement clear vs ambiguous
+  const clear = [], ambiguous = [];
+  for (const liv of livs) {
+    if (disputed.has(liv.id)) continue; // ignore les disputées
+    const proof = proofByLiv[liv.id] || null;
+    const hasPhoto = !!proof?.photo_storage_path;
+    const hasGPS = proof?.latitude != null && proof?.longitude != null;
+    const goodAccuracy = (proof?.accuracy_m || 9999) <= 100;
+    const score = (hasPhoto ? 1 : 0) + (hasGPS ? 1 : 0) + (goodAccuracy ? 1 : 0);
+
+    const item = {
+      livraison_id: liv.id,
+      code: liv.code,
+      livreur_id: liv.livreur_id,
+      expediteur_id: liv.expediteur_id,
+      route: `${liv.ville_depart || '?'} → ${liv.ville_arrivee || '?'}`,
+      prix_total: liv.prix_total,
+      livre_le: liv.livre_le,
+      hours_since: Math.round((Date.now() - new Date(liv.livre_le).getTime()) / 3600000),
+      has_payment: !!(liv.stripe_payment_intent || liv.payment_intent_id),
+      proof: proof ? {
+        photo_storage_path: proof.photo_storage_path,
+        latitude: proof.latitude, longitude: proof.longitude, accuracy_m: proof.accuracy_m,
+        note: proof.note, proof_type: proof.proof_type, created_at: proof.created_at
+      } : null,
+      score, // 0-3
+    };
+
+    // Clear si tous les 3 critères OK
+    if (score === 3) clear.push(item);
+    else ambiguous.push(item);
+  }
+
+  return res.status(200).json({
+    grace_hours: graceHours,
+    total: livs.length,
+    clear,
+    ambiguous,
+    note: 'Libération via /api/capture-livraison avec admin_override_reason. Les "clear" sont des candidats parfaits (preuve photo + GPS précis).'
+  });
+}
+
 async function adminPhotosPending(req, res, ctx) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
   // Profil + photo animal en attente
@@ -5501,6 +5584,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'profile-photo-visibility') return await profilePhotoVisibility(req, res, ctx, body);
     if (endpoint === 'admin-photos-pending')     return await adminPhotosPending(req, res, ctx);
     if (endpoint === 'admin-photo-moderate')     return await adminPhotoModerate(req, res, ctx, body);
+    if (endpoint === 'admin-auto-release-list')  return await adminAutoReleaseList(req, res, ctx, body);
     if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
     if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
     if (endpoint === 'pet-card-upsert')          return await petCardUpsert(req, res, ctx, body);

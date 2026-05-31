@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💰 Libération paiements livreurs — Admin</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 20px; min-height: 100vh; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 1.5rem; }
+    .sub { color: var(--brand-muted); margin-bottom: 22px; font-size: .92rem; line-height: 1.5; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+    .btn { padding: 10px 18px; background: linear-gradient(135deg, #5dbfff, #3da9ff); color: #051022; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.ghost { background: transparent; color: var(--brand-text); border: 1px solid var(--brand-border); }
+    .btn.danger { background: linear-gradient(135deg, #ff7a7a, #ff5252); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: .82rem; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .stat-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px 18px; }
+    .stat-card.clear { border-left: 3px solid #7dffc1; }
+    .stat-card.ambiguous { border-left: 3px solid #ffd700; }
+    .stat-card .lbl { font-size: .72rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat-card .val { font-size: 1.8rem; font-weight: 900; color: #fff; }
+    .stat-card.clear .val { color: #7dffc1; }
+    .stat-card.ambiguous .val { color: #ffd700; }
+
+    .section { margin-bottom: 32px; }
+    .section h2 { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; margin: 0 0 12px; }
+    .section h2 .pill { font-size: .72rem; background: rgba(125,255,193,.15); color: #7dffc1; padding: 3px 10px; border-radius: 999px; font-weight: 800; }
+    .section h2 .pill.warn { background: rgba(255,200,0,.15); color: #ffd700; }
+
+    .liv-card {
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+      display: grid; grid-template-columns: 100px 1fr auto; gap: 16px; align-items: center;
+    }
+    .liv-card.clear { border-left: 3px solid #7dffc1; }
+    .liv-card.ambiguous { border-left: 3px solid #ffd700; }
+    @media(max-width:680px){ .liv-card { grid-template-columns: 1fr; } }
+    .liv-photo { width: 100px; height: 100px; border-radius: 10px; background: #1e2535; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .liv-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .liv-photo .no-photo { color: #ff7a7a; font-size: 2rem; }
+    .liv-info { min-width: 0; }
+    .liv-code { font-family: monospace; font-size: .88rem; color: #5dbfff; margin-bottom: 4px; }
+    .liv-route { font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
+    .liv-meta { color: var(--brand-muted); font-size: .82rem; display: flex; gap: 14px; flex-wrap: wrap; }
+    .liv-meta .age { color: #ffd700; }
+    .liv-meta .price { color: #7dffc1; font-weight: 700; }
+    .liv-actions { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+    .gps-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; margin-top: 4px; }
+    .gps-pill.good { background: rgba(125,255,193,.12); color: #7dffc1; }
+    .gps-pill.weak { background: rgba(255,200,0,.12); color: #ffd700; }
+    .gps-pill.none { background: rgba(255,90,90,.12); color: #ff7a7a; }
+
+    .empty { text-align: center; padding: 40px; color: var(--brand-muted); border: 1px dashed var(--brand-border); border-radius: 12px; }
+    .empty .emoji { font-size: 3rem; margin-bottom: 8px; }
+
+    #log { max-height: 200px; overflow-y: auto; background: rgba(0,0,0,.4); border: 1px solid var(--brand-border); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: .78rem; color: #a8b0ba; }
+    #log .ok { color: #7dffc1; }
+    #log .err { color: #ff7a7a; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>💰 Libération paiements livreurs</h1>
+        <div class="sub">Livraisons marquées "livré" depuis plus de <strong>48h</strong> sans confirmation destinataire. Tu peux libérer manuellement le paiement vers le compte Stripe du livreur.</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="loadList()">🔄 Rafraîchir</button>
+        <a class="btn ghost btn-sm" href="/admin/dashboard-admin.html">← Admin</a>
+      </div>
+    </div>
+
+    <div class="stats" id="stats" style="display:none">
+      <div class="stat-card">
+        <div class="lbl">Total éligibles</div>
+        <div class="val" id="total">0</div>
+      </div>
+      <div class="stat-card clear">
+        <div class="lbl">✅ Cas clairs (photo + GPS)</div>
+        <div class="val" id="clear-count">0</div>
+      </div>
+      <div class="stat-card ambiguous">
+        <div class="lbl">⚠️ Cas ambigus (preuve faible)</div>
+        <div class="val" id="ambiguous-count">0</div>
+      </div>
+    </div>
+
+    <div id="content">
+      <div class="empty"><div class="emoji">⏳</div>Chargement...</div>
+    </div>
+
+    <div class="section" style="margin-top:32px">
+      <h2>📋 Journal d'actions</h2>
+      <div id="log">Aucune action effectuée pour le moment.</div>
+    </div>
+  </main>
+
+  <script>
+    const db = window.db || window.getSupabaseClient();
+    let bucketUrl = null;
+
+    function log(msg, cls = '') {
+      const el = document.getElementById('log');
+      const ts = new Date().toLocaleTimeString('fr-CA');
+      el.innerHTML = `<div class="${cls}">[${ts}] ${msg}</div>` + el.innerHTML;
+    }
+
+    function fmt(cents) { return ((cents || 0) / 100).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' }); }
+
+    async function loadList() {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname); return; }
+
+      const r = await fetch('/api/platform?endpoint=admin-auto-release-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'admin-auto-release-list', grace_hours: 48 })
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        document.getElementById('content').innerHTML = `<div class="empty"><div class="emoji">⚠️</div>Erreur : ${d.error || r.status}</div>`;
+        return;
+      }
+      renderList(d);
+    }
+
+    function photoUrl(path) {
+      if (!path) return null;
+      // delivery-proofs est un bucket privé → signed URL ou public selon config
+      if (path.startsWith('http')) return path;
+      const supaUrl = window.PORTEAPORTE_SUPABASE_URL;
+      return `${supaUrl}/storage/v1/object/public/delivery-proofs/${path}`;
+    }
+
+    function renderList(d) {
+      document.getElementById('stats').style.display = 'grid';
+      document.getElementById('total').textContent = d.total;
+      document.getElementById('clear-count').textContent = d.clear.length;
+      document.getElementById('ambiguous-count').textContent = d.ambiguous.length;
+
+      const cont = document.getElementById('content');
+      if (d.total === 0) {
+        cont.innerHTML = `<div class="empty"><div class="emoji">🎉</div><strong>Aucune libération en attente</strong><div style="margin-top:8px;color:var(--brand-muted)">Tous les livreurs ont été payés ou les livraisons sont récentes (<${d.grace_hours}h).</div></div>`;
+        return;
+      }
+
+      let html = '';
+      if (d.clear.length) {
+        html += `<div class="section"><h2>✅ Cas clairs <span class="pill">${d.clear.length}</span></h2>`;
+        html += d.clear.map(it => cardHtml(it, 'clear')).join('');
+        html += `</div>`;
+      }
+      if (d.ambiguous.length) {
+        html += `<div class="section"><h2>⚠️ Cas ambigus <span class="pill warn">${d.ambiguous.length}</span><span style="font-size:.78rem;font-weight:500;color:var(--brand-muted)"> — vérifie avant de libérer</span></h2>`;
+        html += d.ambiguous.map(it => cardHtml(it, 'ambiguous')).join('');
+        html += `</div>`;
+      }
+      cont.innerHTML = html;
+    }
+
+    function cardHtml(it, cls) {
+      const photo = it.proof?.photo_storage_path ? photoUrl(it.proof.photo_storage_path) : null;
+      const gpsBadge = !it.proof?.latitude ? '<span class="gps-pill none">📍 Pas de GPS</span>'
+        : (it.proof.accuracy_m && it.proof.accuracy_m <= 100) ? `<span class="gps-pill good">📍 GPS ±${Math.round(it.proof.accuracy_m)}m</span>`
+        : `<span class="gps-pill weak">📍 GPS ±${Math.round(it.proof.accuracy_m || 999)}m</span>`;
+
+      return `
+        <div class="liv-card ${cls}">
+          <div class="liv-photo">
+            ${photo ? `<a href="${photo}" target="_blank"><img src="${photo}" alt="Preuve" onerror="this.parentNode.innerHTML='<div class=no-photo>📷</div>'"></a>` : '<div class="no-photo">📷</div>'}
+          </div>
+          <div class="liv-info">
+            <div class="liv-code">${it.code || it.livraison_id.slice(0,8)}</div>
+            <div class="liv-route">${it.route}</div>
+            <div class="liv-meta">
+              <span class="price">${fmt(it.prix_total)}</span>
+              <span class="age">⏱️ Livré il y a ${it.hours_since}h</span>
+              ${gpsBadge}
+              ${it.proof?.proof_type ? `<span>📋 ${it.proof.proof_type}</span>` : ''}
+              ${!it.has_payment ? '<span style="color:#ff7a7a">⚠️ Pas de PaymentIntent</span>' : ''}
+            </div>
+            ${it.proof?.note ? `<div style="margin-top:6px;color:var(--brand-muted);font-size:.82rem;font-style:italic">"${it.proof.note}"</div>` : ''}
+          </div>
+          <div class="liv-actions">
+            <button class="btn btn-sm" onclick="release('${it.livraison_id}', '${cls}')">💰 Libérer paiement</button>
+            <button class="btn ghost btn-sm" onclick="openDispute('${it.livraison_id}')">⚠️ Ouvrir litige</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function release(livraisonId, kind) {
+      const reason = prompt(kind === 'clear'
+        ? 'Confirmation libération paiement (preuve photo + GPS validés).\nRaison admin (optionnelle) :'
+        : '⚠️ Cas AMBIGU. Vérifie la preuve avant de libérer.\nRaison admin obligatoire :', 'Délai 48h écoulé, preuve livraison validée');
+      if (reason === null) return;
+      if (kind === 'ambiguous' && !reason.trim()) { alert('Raison obligatoire pour les cas ambigus.'); return; }
+
+      log(`🚀 Libération ${livraisonId.slice(0,8)}...`);
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        const r = await fetch('/api/capture-livraison', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: livraisonId, admin_override_reason: reason || 'Délai 48h écoulé' })
+        });
+        const d = await r.json();
+        if (r.ok && d.success) {
+          log(`✅ ${livraisonId.slice(0,8)} libéré (${d.captured_amount ? fmt(d.captured_amount) : 'capture OK'})`, 'ok');
+          setTimeout(loadList, 1000);
+        } else {
+          log(`❌ ${livraisonId.slice(0,8)} : ${d.error || r.status}`, 'err');
+          alert('Erreur : ' + (d.error || r.status));
+        }
+      } catch (e) {
+        log(`❌ ${livraisonId.slice(0,8)} : ${e.message}`, 'err');
+      }
+    }
+
+    function openDispute(livraisonId) {
+      if (!confirm('Ouvrir un litige sur cette livraison ?')) return;
+      location.href = '/admin/manquements.html?livraison=' + livraisonId;
+    }
+
+    loadList();
+  </script>
+  <script src="/js/admin-alert-bell.js" defer></script>
+</body>
+</html>

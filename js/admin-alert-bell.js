@@ -177,11 +177,23 @@
       const d = await r.json();
       const a = d.pulse?.alerts || {};
 
+      // Compte aussi les libérations en attente (livraisons +48h sans confirmation)
+      let pendingReleases = 0;
+      try {
+        const rr = await fetch('/api/platform?endpoint=admin-auto-release-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'admin-auto-release-list', grace_hours: 48 })
+        });
+        if (rr.ok) { const dd = await rr.json(); pendingReleases = dd.total || 0; }
+      } catch(_) {}
+
       const items = [
-        { label: '🪪 KYC livreur',     n: a.kyc_livreur_pending || 0, href: '/admin/kyc-review.html' },
-        { label: '📷 Photos profil',   n: a.photos_pending      || 0, href: '/admin/photos-moderation.html' },
-        { label: '🐾 Photos animal',   n: a.pet_photos_pending  || 0, href: '/admin/photos-moderation.html' },
-        { label: '⚠️ Manquements',     n: a.manquements_open    || 0, href: '/admin/manquements.html' },
+        { label: '💰 Paiements à libérer', n: pendingReleases,            href: '/admin/auto-release.html' },
+        { label: '🪪 KYC livreur',         n: a.kyc_livreur_pending || 0, href: '/admin/kyc-review.html' },
+        { label: '📷 Photos profil',       n: a.photos_pending      || 0, href: '/admin/photos-moderation.html' },
+        { label: '🐾 Photos animal',       n: a.pet_photos_pending  || 0, href: '/admin/photos-moderation.html' },
+        { label: '⚠️ Manquements',         n: a.manquements_open    || 0, href: '/admin/manquements.html' },
       ];
       const total = items.reduce((s, i) => s + i.n, 0);
 
