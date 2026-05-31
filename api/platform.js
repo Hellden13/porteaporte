@@ -5337,11 +5337,16 @@ module.exports = async function handler(req, res) {
       }
 
       const [
-        kycPending, manquementsOpen, livreursTotal, expediteursTotal,
+        kycLivreurPending, photosPending, petPhotosPending, manquementsOpen, livreursTotal, expediteursTotal,
         livraisons24h, livraisonsActives, inscriptions24h, webhookEvents24h,
         recentLivraisons, recentInscriptions, recentManquements, recentWebhooks
       ] = await Promise.all([
-        count(`profiles?select=id&verification_status=eq.pending`),
+        // KYC livreur soumis et en attente de revue (vrai actionnable, pas default au signup)
+        count(`profiles?select=id&driver_status=eq.pending_review`),
+        // Photos profil soumises et en attente
+        count(`profiles?select=id&photo_status=eq.pending`),
+        // Photos animaux soumises et en attente
+        count(`profiles?select=id&pet_photo_status=eq.pending`),
         count(`manquements?select=id&statut=eq.signale`),
         count(`profiles?select=id&role=in.(livreur,les%20deux)&suspendu=eq.false`),
         count(`profiles?select=id&role=in.(expediteur,les%20deux)&suspendu=eq.false`),
@@ -5350,14 +5355,17 @@ module.exports = async function handler(req, res) {
         count(`profiles?select=id&created_at=gte.${since24h}`),
         count(`transaction_audit_events?select=id&event_type=like.*webhook*&created_at=gte.${since24h}`),
         rows(`livraisons?select=id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le&order=cree_le.desc`, 8),
-        rows(`profiles?select=id,email,prenom,nom,role,created_at,verification_status&order=created_at.desc`, 6),
+        rows(`profiles?select=id,email,prenom,nom,role,created_at,driver_status,photo_status&order=created_at.desc`, 6),
         rows(`manquements?select=*&order=created_at.desc&statut=eq.signale`, 5),
         rows(`transaction_audit_events?select=created_at,event_type,amount_cents,stripe_payment_intent&order=created_at.desc`, 8)
       ]);
 
+      const kycPending = kycLivreurPending; // alias retro-compat (operations.html lit alerts.kyc_pending)
+      const totalModerationPending = kycLivreurPending + photosPending + petPhotosPending;
+
       // Health score (0-100) basé sur l'absence d'alertes
       let healthScore = 100;
-      if (kycPending > 0) healthScore -= Math.min(20, kycPending * 5);
+      if (totalModerationPending > 0) healthScore -= Math.min(20, totalModerationPending * 5);
       if (manquementsOpen > 0) healthScore -= Math.min(30, manquementsOpen * 10);
       if (webhookEvents24h === 0 && livraisons24h > 0) healthScore -= 25; // suspect: livraisons mais aucun webhook
 
@@ -5368,6 +5376,10 @@ module.exports = async function handler(req, res) {
           health_score: Math.max(0, healthScore),
           alerts: {
             kyc_pending: kycPending,
+            kyc_livreur_pending: kycLivreurPending,
+            photos_pending: photosPending,
+            pet_photos_pending: petPhotosPending,
+            moderation_total: totalModerationPending,
             manquements_open: manquementsOpen,
             webhook_silent: webhookEvents24h === 0 && livraisons24h > 0
           },

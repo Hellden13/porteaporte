@@ -213,7 +213,9 @@
       card.className = 'health-card' + (score >= 80 ? '' : score >= 50 ? ' warn' : ' danger');
       document.getElementById('health-score').textContent = score + '%';
       const msgs = [];
-      if (p.alerts.kyc_pending > 0) msgs.push(`${p.alerts.kyc_pending} KYC à approuver`);
+      if (p.alerts.kyc_livreur_pending > 0) msgs.push(`${p.alerts.kyc_livreur_pending} KYC livreur à approuver`);
+      if (p.alerts.photos_pending > 0) msgs.push(`${p.alerts.photos_pending} photo(s) profil à modérer`);
+      if (p.alerts.pet_photos_pending > 0) msgs.push(`${p.alerts.pet_photos_pending} photo(s) animal à modérer`);
       if (p.alerts.manquements_open > 0) msgs.push(`${p.alerts.manquements_open} manquement(s) à traiter`);
       if (p.alerts.webhook_silent) msgs.push('Aucun webhook Stripe reçu dans les 24h alors qu\'il y a des livraisons');
       document.getElementById('health-msg').textContent = msgs.length ? '⚠️ ' + msgs.join(' · ') : '✅ Tout va bien — aucune action requise';
@@ -221,7 +223,8 @@
       // Actions
       const actEl = document.getElementById('health-actions');
       const acts = [];
-      if (p.alerts.kyc_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/kyc-review.html">Voir KYC</a>`);
+      if (p.alerts.kyc_livreur_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/kyc-review.html">Voir KYC livreur</a>`);
+      if (p.alerts.photos_pending > 0 || p.alerts.pet_photos_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/photos-moderation.html">Modérer photos</a>`);
       if (p.alerts.manquements_open > 0) acts.push(`<a class="btn btn-sm" href="/admin/manquements.html">Voir manquements</a>`);
       if (p.alerts.webhook_silent) acts.push(`<a class="btn btn-sm" href="/admin/diagnostic.html">Diagnostic</a>`);
       actEl.innerHTML = acts.join('');
