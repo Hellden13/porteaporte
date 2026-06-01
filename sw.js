@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v3
 // Stratégie : cache-first pour assets statiques, network-first pour API
-const SW_VERSION = 'pap-v42-fb-ready';
+const SW_VERSION = 'pap-v44-csp-turnstile';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
@@ -68,7 +68,16 @@ self.addEventListener('fetch', e => {
             caches.open(STATIC_CACHE).then(c => c.put(request, clone));
           }
           return res;
-        }).catch(() => caches.match('/logo.svg'));
+        }).catch(() => {
+          if (url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico)$/)) {
+            return caches.match('/logo.svg');
+          }
+          return new Response('', {
+            status: 503,
+            statusText: 'Asset unavailable',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          });
+        });
       })
     );
     return;

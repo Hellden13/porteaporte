@@ -24,9 +24,11 @@
         { "source": "/_archived/(.*)", "destination": "/404.html", "permanent": false },
         { "source": "/save/(.*)",      "destination": "/404.html", "permanent": false },
         { "source": "/lib/(.*)",       "destination": "/404.html", "permanent": false },
+        { "source": "/livreur-levels-release.js", "destination": "/404.html", "permanent": false },
         { "source": "/BACKEND-(.*\\.md)",  "destination": "/404.html", "permanent": false },
         { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },
         { "source": "/presse.html", "destination": "/admin/presse-kit.html", "permanent": false },
+        { "source": "/demo.html",            "destination": "/404.html", "permanent": false },
         { "source": "/admin/admin-legacy.html", "destination": "/404.html", "permanent": false },
         { "source": "/admin-dashboard.html",    "destination": "/404.html", "permanent": false },
         { "source": "/test-login.html",         "destination": "/404.html", "permanent": false }
@@ -39,6 +41,14 @@
                      {
                          "source":  "/impact",
                          "destination":  "/impact.html"
+                     },
+                     {
+                         "source":  "/securite",
+                         "destination":  "/securite.html"
+                     },
+                     {
+                         "source":  "/transparence",
+                         "destination":  "/transparence.html"
                      },
                      {
                          "source":  "/calculateur",
@@ -55,6 +65,10 @@
                      {
                          "source":  "/admin/dashboard-admin",
                          "destination":  "/admin/dashboard-admin.html"
+                     },
+                     {
+                         "source":  "/admin/pilotage",
+                         "destination":  "/admin/pilotage.html"
                      },
                      {
                          "source":  "/api/capture-payment",
@@ -452,7 +466,7 @@
                         "headers":  [
                                         {
                                             "key":  "Content-Security-Policy",
-                                            "value":  "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://cdn.jsdelivr.net https://nominatim.openstreetmap.org https://api.qrserver.com https://plausible.io; frame-src https://js.stripe.com https://www.google.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'"
+                                            "value":  "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net https://plausible.io https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://cdn.jsdelivr.net https://nominatim.openstreetmap.org https://api.qrserver.com https://plausible.io https://challenges.cloudflare.com; frame-src https://js.stripe.com https://www.google.com https://challenges.cloudflare.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'"
                                         },
                                         {
                                             "key":  "X-Content-Type-Options",
