@@ -716,7 +716,7 @@
         <div class="form-card">
           <form id="reward-draw-form" class="form-grid">
             <label for="reward-draw-title">Titre tirage</label>
-            <input id="reward-draw-title" placeholder="Tirage mensuel PorteaPorte">
+            <input id="reward-draw-title" placeholder="Tirage mensuel PorteàPorte">
             <label for="reward-draw-description">Lots</label>
             <textarea id="reward-draw-description" placeholder="Cartes essence, épicerie, entretien auto..."></textarea>
             <label for="reward-draw-date">Date tirage</label>
@@ -2001,7 +2001,7 @@
       document.getElementById('reward-winners-body').innerHTML = (out.winners || []).length ? out.winners.map(w => `
         <tr>
           <td><strong>${w.user_email || w.user_id || 'Gagnant enregistre'}</strong></td>
-          <td>${w.prize_title || 'Tirage PorteaPorte'}</td>
+          <td>${w.prize_title || 'Tirage PorteàPorte'}</td>
           <td>${w.user_role || 'utilisateur'}</td>
           <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('fr-CA') : '—'}</td>
         </tr>
@@ -2463,7 +2463,7 @@
       },
       anniversaire: {
         slug: 'anniversaire_' + now.getFullYear(), icon: '🎂',
-        name: 'Anniversaire PorteÀPorte ' + now.getFullYear(),
+        name: 'Anniversaire PorteàPorte ' + now.getFullYear(),
         description: 'Membre présent lors de l\'anniversaire de la plateforme.',
         campaign_name: 'Anniversaire', points_reward: 100, xp_reward: 200
       }

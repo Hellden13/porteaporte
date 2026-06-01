@@ -5,8 +5,8 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Transparence mensuelle des dons PorteaPorte">
-  <title>Transparence - PorteaPorte</title>
+  <meta name="description" content="Transparence mensuelle des dons PorteàPorte">
+  <title>Transparence - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
@@ -57,21 +57,21 @@
     .form-message{font-size:.88rem;margin-top:12px;color:var(--brand-muted)}
   </style>
 
-  <meta name="description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta name="description" content="Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PorteÀPorte">
-  <meta property="og:title" content="Transparence - PorteaPorte">
-  <meta property="og:description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta property="og:site_name" content="PorteàPorte">
+  <meta property="og:title" content="Transparence - PorteàPorte">
+  <meta property="og:description" content="Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
   <meta property="og:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <meta property="og:url" content="https://porteaporte.site/transparence.html">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Transparence - PorteaPorte">
-  <meta name="twitter:description" content="Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
+  <meta name="twitter:title" content="Transparence - PorteàPorte">
+  <meta name="twitter:description" content="Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteÀPorte"><span>PorteÀPorte</span></a>
+    <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt="PorteàPorte"><span>PorteàPorte</span></a>
     <nav style="display:flex;gap:12px">
       <a class="btn btn-ghost" href="/programme-points.html">Points Impact</a>
       <a class="btn btn-primary" href="/login.html" id="nav-compte-btn">Mon compte</a>
@@ -82,7 +82,7 @@
     <div class="container">
       <span class="status">Transparence en direct</span>
       <h1>Chaque mois, on montre où va l'argent.</h1>
-      <p>Les dons PorteaPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont estimés en direct à partir des livraisons complétées, puis confirmés à la clôture du mois.</p>
+      <p>Les dons PorteàPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont estimés en direct à partir des livraisons complétées, puis confirmés à la clôture du mois.</p>
     </div>
   </header>
 
@@ -151,7 +151,7 @@
         <div>
           <div class="section-title" style="margin-top:0">Faire une demande d'aide</div>
           <h2>Organismes, écoles et initiatives locales</h2>
-          <p class="note">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteaPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
+          <p class="note">Un organisme, une école ou une initiative locale peut soumettre une demande. L'administration PorteàPorte analysera la mission, les besoins et la cohérence avec le programme de dons avant d'accepter ou refuser.</p>
         </div>
         <span class="request-badge">Demande distincte</span>
       </div>
@@ -178,7 +178,7 @@
         </div>
         <div class="field full">
           <label for="app-mission">Mission et impact</label>
-          <textarea id="app-mission" required maxlength="1200" placeholder="Expliquez qui vous aidez, dans quelle région, et pourquoi PorteaPorte devrait vous soutenir."></textarea>
+          <textarea id="app-mission" required maxlength="1200" placeholder="Expliquez qui vous aidez, dans quelle région, et pourquoi PorteàPorte devrait vous soutenir."></textarea>
         </div>
         <div class="field full">
           <label for="app-support">Type d'aide souhaitée</label>
@@ -270,7 +270,7 @@
         document.getElementById('impact-orgs').innerHTML=orgs.length?orgs.map(org=>`
           <article class="org-card">
             <div class="org-name">${org.name}</div>
-            <div class="org-desc">${org.description||'Organisme soutenu par PorteaPorte.'}</div>
+            <div class="org-desc">${org.description||'Organisme soutenu par PorteàPorte.'}</div>
             <div class="bar"><span style="width:${Math.max(0,Math.min(100,org.allocation_percent))}%"></span></div>
             <div class="split"><span>${org.allocation_percent}% du fonds</span><span class="amount">${money(org.amount_cents)}</span></div>
             ${org.website_url?`<a href="${org.website_url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;color:var(--brand-cyan);font-weight:800;text-decoration:none">Voir l'organisme</a>`:''}
@@ -280,8 +280,8 @@
         document.getElementById('public-draws').innerHTML=draws.length?draws.map(draw=>`
           <article class="public-row">
             <div>
-              <strong>${draw.title||'Tirage PorteaPorte'}</strong>
-              <span>${draw.description||'Concours communautaire PorteaPorte.'}</span>
+              <strong>${draw.title||'Tirage PorteàPorte'}</strong>
+              <span>${draw.description||'Concours communautaire PorteàPorte.'}</span>
             </div>
             <div class="public-tag">${draw.status||'actif'} · ${draw.draw_date||''}</div>
           </article>
@@ -290,8 +290,8 @@
         document.getElementById('public-winners').innerHTML=winners.length?winners.map(winner=>`
           <article class="public-row">
             <div>
-              <strong>${winner.user_email||'Gagnant PorteaPorte'}</strong>
-              <span>${winner.prize_title||'Tirage PorteaPorte'} · ${winner.user_role||'utilisateur'}</span>
+              <strong>${winner.user_email||'Gagnant PorteàPorte'}</strong>
+              <span>${winner.prize_title||'Tirage PorteàPorte'} · ${winner.user_role||'utilisateur'}</span>
             </div>
             <div class="public-tag">${winner.created_at?new Date(winner.created_at).toLocaleDateString('fr-CA'):''}</div>
           </article>

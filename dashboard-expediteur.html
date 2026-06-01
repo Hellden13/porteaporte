@@ -436,6 +436,118 @@
             margin-bottom: 24px;
             font-size: 0.9rem;
         }
+
+        .owner-switch {
+            padding: 18px 0 10px;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(93,191,255,.18), transparent 32%),
+                linear-gradient(180deg, rgba(9,14,24,.98), rgba(9,14,24,.92));
+            border-bottom: 1px solid rgba(93,191,255,.16);
+        }
+
+        .owner-switch-card {
+            border: 1px solid rgba(93,191,255,.22);
+            background: rgba(255,255,255,.035);
+            border-radius: 8px;
+            padding: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .owner-switch-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .owner-switch-kicker {
+            color: #5dbfff;
+            font-size: .72rem;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .owner-switch-title {
+            margin: 4px 0 0;
+            color: #fff;
+            font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+            line-height: 1.1;
+            font-weight: 900;
+        }
+
+        .owner-switch-note {
+            color: #a8b0ba;
+            font-size: .88rem;
+            max-width: 520px;
+            line-height: 1.45;
+        }
+
+        .owner-switch-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .owner-choice {
+            min-height: 96px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.045);
+            color: #fff;
+            text-decoration: none;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform .15s ease, border-color .15s ease, background .15s ease;
+        }
+
+        .owner-choice:hover {
+            transform: translateY(-2px);
+            border-color: rgba(93,191,255,.6);
+            background: rgba(93,191,255,.09);
+        }
+
+        .owner-choice.primary {
+            background: linear-gradient(135deg, #5dbfff, #3da9ff);
+            color: #06111f;
+            border-color: transparent;
+            box-shadow: 0 14px 34px rgba(93,191,255,.18);
+        }
+
+        .owner-choice strong {
+            font-size: 1.02rem;
+            font-weight: 950;
+            line-height: 1.15;
+        }
+
+        .owner-choice span {
+            margin-top: 8px;
+            font-size: .8rem;
+            line-height: 1.35;
+            color: inherit;
+            opacity: .82;
+        }
+
+        @media (max-width: 860px) {
+            .owner-switch-grid { grid-template-columns: 1fr; }
+            .owner-choice { min-height: 84px; }
+        }
+
+        @media (max-width: 680px) {
+            .header-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+                width: 100%;
+            }
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -462,6 +574,8 @@
                     <h1>Mes Expéditions</h1>
                 </div>
                 <div class="header-actions">
+                    <a href="/covoiturage.html" class="btn btn-primary">Chercher un trajet</a>
+                    <a href="/covoiturage-publier.html" class="btn btn-ghost" style="font-size:0.85rem">Publier un trajet</a>
                     <a href="/create-mission.html" class="btn btn-primary">+ Nouvelle Expédition</a>
                     <a href="/historique-paiements.html" class="btn btn-ghost" style="font-size:0.85rem">💳 Historique paiements</a>
                 </div>
@@ -487,8 +601,38 @@
         </div>
     </section>
 
+    <section class="owner-switch" aria-label="Navigation principale">
+        <div class="container">
+            <div class="owner-switch-card">
+                <div class="owner-switch-head">
+                    <div>
+                        <div class="owner-switch-kicker">Covoiturage en premier</div>
+                        <h2 class="owner-switch-title">Que veux-tu faire maintenant?</h2>
+                    </div>
+                    <p class="owner-switch-note">Le dashboard reste disponible, mais les actions importantes sont ici: trouver un trajet, publier un trajet, ou envoyer un colis.</p>
+                </div>
+                <div class="owner-switch-grid">
+                    <a class="owner-choice primary" href="/covoiturage.html">
+                        <strong>Chercher un trajet</strong>
+                        <span>Voir les trajets disponibles et reserver une place.</span>
+                    </a>
+                    <a class="owner-choice" href="/covoiturage-publier.html">
+                        <strong>Publier un trajet</strong>
+                        <span>Tu conduis? Ajoute ton trajet et partage les frais.</span>
+                    </a>
+                    <a class="owner-choice" href="/create-mission.html">
+                        <strong>Envoyer un colis</strong>
+                        <span>Utilise la livraison quand le colis est prioritaire.</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- TABS NAVIGATION -->
     <nav id="expTabs" style="position:sticky;top:60px;z-index:50;display:flex;gap:4px;padding:8px 20px;background:rgba(10,12,16,.95);border-bottom:1px solid var(--brand-border);overflow-x:auto;backdrop-filter:blur(12px)">
+      <button class="exp-tab" onclick="window.location.href='/covoiturage.html'" style="flex-shrink:0;padding:10px 16px;background:rgba(93,191,255,.16);border:1px solid rgba(93,191,255,.45);color:#eaf7ff;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">Chercher un trajet</button>
+      <button class="exp-tab" onclick="window.location.href='/covoiturage-publier.html'" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">Publier un trajet</button>
       <button class="exp-tab active" data-tab="missions" onclick="switchExpTab('missions')" style="flex-shrink:0;padding:10px 16px;background:linear-gradient(135deg,#5dbfff,#5dbfff);border:none;color:#071006;font-weight:900;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📦 Mes expéditions</button>
       <button class="exp-tab" data-tab="creer" onclick="switchExpTab('creer')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">➕ Nouvelle livraison</button>
       <button class="exp-tab" data-tab="paiements" onclick="window.location.href='/historique-paiements.html'" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">💳 Paiements</button>
@@ -602,6 +746,8 @@
             <div class="sidebar-card">
                 <div class="sidebar-title">Actions rapides</div>
                 <div class="quick-actions">
+                    <a href="/covoiturage.html" class="quick-action-btn">Chercher un trajet</a>
+                    <a href="/covoiturage-publier.html" class="quick-action-btn">Publier un trajet</a>
                     <a href="/create-mission.html" class="quick-action-btn">Nouvelle livraison</a>
                     <a href="/browse-missions.html" class="quick-action-btn">Parcourir</a>
                     <a href="/profile.html" class="quick-action-btn">Mon profil</a>

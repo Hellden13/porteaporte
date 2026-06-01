@@ -385,6 +385,20 @@
       return value;
     }
 
+    function getSafeNextUrl() {
+      const raw = new URLSearchParams(window.location.search).get('next');
+      if (!raw) return '';
+      try {
+        const url = new URL(raw, window.location.origin);
+        if (url.origin !== window.location.origin) return '';
+        const path = url.pathname || '';
+        if (!path || path === '/login.html' || path.startsWith('/api/') || path.startsWith('/admin/')) return '';
+        return url.pathname + url.search + url.hash;
+      } catch (_) {
+        return '';
+      }
+    }
+
     /* ---- Admin portal choice overlay ---- */
     function showAdminPortalChoice() {
       const overlay = document.getElementById('admin-portal-overlay');
@@ -416,7 +430,7 @@
       el.id = 'user-portal-overlay';
       el.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,30,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:9999;padding:24px;';
       el.innerHTML = `
-        <div style="font-size:1.5rem;font-weight:900;color:#5dbfff">PorteaPorte</div>
+        <div style="font-size:1.5rem;font-weight:900;color:#5dbfff">PorteàPorte</div>
         <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Ton compte peut utiliser plusieurs espaces.<br>Choisis ou tu veux aller.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
           <a href="/dashboard-expediteur.html" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">Expediteur</a>
@@ -449,6 +463,13 @@
 
       const role = normalizeRole(profile?.role || 'expediteur');
       const driverStatus = profile?.driver_status || 'not_started';
+      const nextUrl = getSafeNextUrl();
+
+      if (nextUrl) {
+        showStatus('emailStatus', 'Connexion reussie ! Retour au trajet...', 'success');
+        setTimeout(() => { window.location.href = nextUrl; }, 700);
+        return;
+      }
 
       if (role === 'admin') {
         showAdminPortalChoice();

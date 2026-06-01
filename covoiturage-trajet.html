@@ -328,9 +328,9 @@
         </div>
 
         <div class="payment-box" id="ride-payment-box">
-          <div class="payment-title" id="ride-payment-title">Paiement securise</div>
+          <div class="payment-title" id="ride-payment-title">Paiement sécurisé</div>
           <div id="ride-payment-element"></div>
-          <div class="payment-note">La carte est autorisee maintenant. Le paiement est capture seulement apres validation du trajet.</div>
+          <div class="payment-note">La carte est autorisée maintenant. Le paiement est capturé seulement après validation du trajet.</div>
         </div>
 
         <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Reserver ma place</button>
@@ -598,7 +598,7 @@ function renderRide(r) {
 
   var verified = dp.identity_verified || p.identity_verified;
   document.getElementById('driver-verified-badge').innerHTML = verified
-    ? '<span class="driver-verified">&#10004; Identite verifiee</span>' : '';
+    ? '<span class="driver-verified">&#10004; Identité vérifiée</span>' : '';
 
   var nCh = dp.nb_trajets_chauffeur || 0;
   document.getElementById('driver-trips').textContent = nCh > 0 ? nCh + ' trajet' + (nCh > 1 ? 's' : '') + ' comme chauffeur' : '';
