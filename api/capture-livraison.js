@@ -268,9 +268,18 @@ module.exports = async function handler(req, res) {
   };
 
   let tx = await getPaymentTransaction(SB_URL, SB_KEY, livraison_id);
-  const paymentIntentId = tx?.stripe_payment_intent || livraison.stripe_payment_intent || livraison.payment_intent_id || null;
+  const rawPaymentIntentId = tx?.stripe_payment_intent || livraison.stripe_payment_intent || livraison.payment_intent_id || null;
 
-  // FALLBACK : si pas de PI mais admin valide → confirmation manuelle sans capture Stripe (ex: paiement raté/test)
+  // Détecte les placeholders/IDs invalides (ex: 'pi_XXX...', 'pi_TEST...', vides ou trop courts)
+  const isPlaceholderPI = rawPaymentIntentId && (
+    /pi_X{4,}/i.test(rawPaymentIntentId) ||
+    /pi_TEST/i.test(rawPaymentIntentId) ||
+    rawPaymentIntentId.length < 20
+  );
+  const paymentIntentId = isPlaceholderPI ? null : rawPaymentIntentId;
+
+  // FALLBACK : si pas de PI valide mais admin valide → confirmation manuelle sans capture Stripe
+  // (cas : livraison test/demo, paiement raté, PI placeholder type 'pi_XXX...')
   if (!paymentIntentId) {
     if (admin) {
       const livraisonUpdated = await safePatchLivraisonPaid(SB_URL, SB_KEY, livraison_id, recipientConfirmationPatch);
@@ -281,19 +290,31 @@ module.exports = async function handler(req, res) {
         event_type: 'manual_confirmation_no_stripe',
         amount_cents: 0,
         currency: 'cad',
-        evidence: { source: 'api/capture-livraison', reason: 'No PaymentIntent found, admin manual override' }
+        evidence: {
+          source: 'api/capture-livraison',
+          reason: isPlaceholderPI
+            ? 'Placeholder PaymentIntent detected (ex: pi_XXX...). Likely test/demo livraison. Admin manual override.'
+            : 'No PaymentIntent found, admin manual override.',
+          raw_payment_intent_id: rawPaymentIntentId || null,
+          admin_override_reason: admin_override_reason || null
+        }
       });
       return res.status(200).json({
         success: true,
         manual_no_stripe: true,
         livraison_id,
         db_updated: livraisonUpdated,
-        warning: 'Confirmation manuelle sans capture Stripe (PI absent)'
+        warning: isPlaceholderPI
+          ? `Confirmation manuelle : PaymentIntent placeholder détecté (${rawPaymentIntentId}). Livraison marquée payée sans capture Stripe — aucun fonds réel transféré.`
+          : 'Confirmation manuelle sans capture Stripe (PI absent)'
       });
     }
     return res.status(404).json({
-      error: 'PaymentIntent introuvable. Cette livraison n\'a pas de paiement enregistré. Contacte le support pour validation manuelle.',
-      contact: 'bonjour@porteaporte.site'
+      error: isPlaceholderPI
+        ? `Cette livraison utilise un PaymentIntent de test (${rawPaymentIntentId}). Aucun vrai paiement Stripe n'a été enregistré. Seul un admin peut la libérer manuellement.`
+        : 'PaymentIntent introuvable. Cette livraison n\'a pas de paiement enregistré. Contacte le support pour validation manuelle.',
+      contact: 'bonjour@porteaporte.site',
+      is_test_livraison: isPlaceholderPI
     });
   }
 

@@ -186,7 +186,7 @@
               <span class="age">⏱️ Livré il y a ${it.hours_since}h</span>
               ${gpsBadge}
               ${it.proof?.proof_type ? `<span>📋 ${it.proof.proof_type}</span>` : ''}
-              ${!it.has_payment ? '<span style="color:#ff7a7a">⚠️ Pas de PaymentIntent</span>' : ''}
+              ${!it.has_payment ? '<span style="color:#ff7a7a">⚠️ Pas de PaymentIntent (livraison test/sans paiement réel)</span>' : ''}
             </div>
             ${it.proof?.note ? `<div style="margin-top:6px;color:var(--brand-muted);font-size:.82rem;font-style:italic">"${it.proof.note}"</div>` : ''}
           </div>

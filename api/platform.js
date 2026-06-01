@@ -3071,7 +3071,13 @@ async function adminAutoReleaseList(req, res, ctx, body) {
       prix_total: liv.prix_total,
       livre_le: liv.livre_le,
       hours_since: Math.round((Date.now() - new Date(liv.livre_le).getTime()) / 3600000),
-      has_payment: !!(liv.stripe_payment_intent || liv.payment_intent_id),
+      has_payment: (() => {
+        const pi = liv.stripe_payment_intent || liv.payment_intent_id || '';
+        if (!pi) return false;
+        // Filtre les placeholders type 'pi_XXX...', 'pi_TEST...', trop courts
+        if (/pi_X{4,}/i.test(pi) || /pi_TEST/i.test(pi) || pi.length < 20) return false;
+        return true;
+      })(),
       proof: proof ? {
         photo_storage_path: proof.photo_storage_path,
         latitude: proof.latitude, longitude: proof.longitude, accuracy_m: proof.accuracy_m,
