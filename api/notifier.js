@@ -33,6 +33,9 @@ const PUBLIC_TYPES = new Set([
   'prefs_destinataire',
   'xl_confirmation_destinataire',
   'xl_confirmation_resultat',
+  'ride_booking_confirmed',
+  'ride_booking_to_driver',
+  'bienvenue',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -861,6 +864,125 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           { label: 'Montant payé', value: `${data.prix} $` },
           { label: 'Stripe ID', value: data.stripe_id || 'N/A' },
           { label: 'Cadeau pour', value: data.gift_email || 'Non (pour soi)' }
+        ])
+      });
+      break;
+    }
+
+    // ─── BIENVENUE NOUVEAU COMPTE ──────────────────────────────────
+    case 'bienvenue': {
+      const prenom = data.prenom || 'toi';
+      const role = data.role || 'expediteur';
+      const roleLabel = role === 'livreur' ? 'livreur' : role === 'les deux' ? 'membre (les deux côtés)' : 'expéditeur';
+      emails.push({
+        to: data.to || data.email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🎉 Bienvenue sur PorteàPorte, ${prenom} !`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#5dbfff;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h1 style="color:#fff;font-size:1.5rem;margin:0 0 12px">Bienvenue ${prenom} ! 🎉</h1>
+            <p style="color:#a8b0ba;line-height:1.6;margin:0 0 18px">Ton compte ${roleLabel} est créé. Tu peux maintenant utiliser PorteàPorte pour le covoiturage et la livraison de colis au Québec.</p>
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:18px;margin-bottom:18px">
+              <strong style="color:#5dbfff;display:block;margin-bottom:8px">🚀 Prochaines étapes</strong>
+              <ol style="color:#d8dde6;padding-left:20px;margin:0">
+                <li style="margin-bottom:6px">Complète ton profil (photo, ville, téléphone)</li>
+                <li style="margin-bottom:6px">Explore le tableau de bord</li>
+                ${role !== 'expediteur' ? '<li style="margin-bottom:6px"><strong>Important :</strong> finalise ton compte Stripe Connect pour recevoir tes paiements</li>' : ''}
+                <li>Publie ton premier trajet ou ta première livraison</li>
+              </ol>
+            </div>
+            <a href="https://porteaporte.site/dashboard.html" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📊 Ouvrir mon dashboard</a>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:20px">Une question ? <a href="mailto:bonjour@porteaporte.site" style="color:#5dbfff">bonjour@porteaporte.site</a></p>
+          </div>`
+      });
+      break;
+    }
+
+    // ─── COVOITURAGE : RÉSERVATION CONFIRMÉE (au passager) ────────
+    case 'ride_booking_confirmed': {
+      const route = `${data.ville_depart || '?'} → ${data.ville_arrivee || '?'}`;
+      emails.push({
+        to: data.passenger_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `✅ Réservation confirmée : ${route}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — RÉSERVATION CONFIRMÉE</div>
+            <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">✅ ${route}</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px">${data.departure_time || 'Date à confirmer'} · ${data.seats || 1} place(s) · <strong style="color:#7dffc1">${data.total_price || '—'} $</strong> payé</p>
+
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#5dbfff;display:block;margin-bottom:8px">👨‍✈️ Ton conducteur</strong>
+              <div><strong>${data.driver_name || 'Conducteur'}</strong></div>
+              ${data.driver_email ? `<div style="margin-top:4px"><a href="mailto:${data.driver_email}" style="color:#5dbfff">${data.driver_email}</a></div>` : ''}
+              ${data.driver_phone ? `<div><a href="tel:${data.driver_phone}" style="color:#7dffc1">📞 ${data.driver_phone}</a></div>` : ''}
+              ${data.driver_vehicle ? `<div style="color:#a8b0ba;margin-top:6px">🚙 ${data.driver_vehicle}</div>` : ''}
+            </div>
+
+            <div style="background:rgba(125,255,193,.06);border:1px solid rgba(125,255,193,.25);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#7dffc1;display:block;margin-bottom:8px">📍 Points de rencontre</strong>
+              <div style="margin-bottom:8px"><strong>Embarquement :</strong> ${data.pickup_label || data.ville_depart}<br>${data.pickup_address || ''}</div>
+              <div><strong>Débarquement :</strong> ${data.dropoff_label || data.ville_arrivee}<br>${data.dropoff_address || ''}</div>
+            </div>
+
+            <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📋 Voir tous les détails</a>
+
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">💡 Ton paiement est protégé. Le conducteur sera payé après la livraison du trajet. Tu peux contacter le conducteur directement par email ou téléphone si besoin.</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ─── COVOITURAGE : NOUVELLE RÉSERVATION (au conducteur) ───────
+    case 'ride_booking_to_driver': {
+      const route = `${data.ville_depart || '?'} → ${data.ville_arrivee || '?'}`;
+      emails.push({
+        to: data.driver_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🎫 Nouvelle réservation : ${data.passenger_name || 'Un passager'} (${route})`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — NOUVELLE RÉSERVATION</div>
+            <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">🎫 ${route}</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px">${data.departure_time || 'Date à confirmer'} · ${data.seats || 1} place(s) réservée(s)</p>
+
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#5dbfff;display:block;margin-bottom:8px">🎫 Ton passager</strong>
+              <div><strong>${data.passenger_name || 'Passager'}</strong></div>
+              ${data.passenger_email ? `<div style="margin-top:4px"><a href="mailto:${data.passenger_email}" style="color:#5dbfff">${data.passenger_email}</a></div>` : ''}
+              ${data.passenger_phone ? `<div><a href="tel:${data.passenger_phone}" style="color:#7dffc1">📞 ${data.passenger_phone}</a></div>` : ''}
+              ${data.has_luggage ? '<div style="color:#ffd700;margin-top:6px">🧳 A des bagages volumineux</div>' : ''}
+              ${data.has_pet ? '<div style="color:#ffd700;margin-top:6px">🐾 Voyage avec un animal</div>' : ''}
+              ${data.special_requests ? `<div style="color:#a8b0ba;margin-top:8px;font-style:italic">"${data.special_requests}"</div>` : ''}
+            </div>
+
+            <div style="background:rgba(125,255,193,.06);border:1px solid rgba(125,255,193,.25);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#7dffc1;display:block;margin-bottom:8px">📍 Points de rencontre</strong>
+              <div style="margin-bottom:8px"><strong>Embarquement :</strong> ${data.pickup_label || data.ville_depart}<br>${data.pickup_address || ''}</div>
+              <div><strong>Débarquement :</strong> ${data.dropoff_label || data.ville_arrivee}<br>${data.dropoff_address || ''}</div>
+            </div>
+
+            <div style="background:rgba(255,200,0,.08);border:1px solid rgba(255,200,0,.3);border-radius:10px;padding:14px;margin-bottom:18px;font-size:.88rem">
+              💰 <strong>Tu recevras ${data.driver_amount || '—'} $</strong> après la livraison du trajet (paiement Stripe escrow).
+            </div>
+
+            <a href="https://porteaporte.site/dashboard.html" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📊 Voir mes trajets</a>
+          </div>`
+      });
+      // Aussi notif admin pour suivi
+      emails.push({
+        to: adminEmail,
+        from: { email: fromEmail, name: fromName },
+        subject: `🎫 Réservation : ${route} (${data.total_price || '—'} $)`,
+        html: templateAdminNotif('Nouvelle réservation covoiturage', [
+          { label: 'Route', value: route },
+          { label: 'Passager', value: `${data.passenger_name || ''} (${data.passenger_email || ''})` },
+          { label: 'Conducteur', value: `${data.driver_name || ''} (${data.driver_email || ''})` },
+          { label: 'Date trajet', value: data.departure_time || '?' },
+          { label: 'Places', value: data.seats || 1 },
+          { label: 'Total payé', value: `${data.total_price || '—'} $` },
+          { label: 'Montant conducteur', value: `${data.driver_amount || '—'} $` }
         ])
       });
       break;
