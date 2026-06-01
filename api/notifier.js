@@ -894,6 +894,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             </div>
             <a href="https://porteaporte.site/dashboard.html" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📊 Ouvrir mon dashboard</a>
             <p style="color:#6d7886;font-size:.78rem;margin-top:20px">Une question ? <a href="mailto:bonjour@porteaporte.site" style="color:#5dbfff">bonjour@porteaporte.site</a></p>
+            <p style="color:#6d7886;font-size:.72rem;margin-top:14px;padding-top:14px;border-top:1px solid #1e2535;line-height:1.5">💡 <strong>Astuce :</strong> ajoute notre adresse à tes contacts pour ne plus jamais manquer nos courriels (confirmations, paiements, livraisons).</p>
           </div>`
       });
       break;

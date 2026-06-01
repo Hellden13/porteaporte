@@ -97,7 +97,7 @@
         // Réponse silencieuse : on fait croire que ça marche pour ne pas alerter le bot
         btn.textContent = 'Création...';
         setTimeout(() => {
-          showSuccess('Compte créé. Vérifie ton email.');
+          showSuccess('Compte créé. 📬 Vérifie ton email (et le dossier spam au cas où).');
           btn.textContent = 'Email envoyé';
         }, 1500);
         return;
@@ -150,7 +150,7 @@
         }, { onConflict: 'id' }).catch(() => {});
         if (!emailConfirmed) {
           await db.auth.signOut().catch(() => {});
-          showSuccess('Compte créé. Vérifie ton email avant d’ouvrir un dashboard.');
+          showSuccess('Compte créé. 📬 Vérifie ton email (et tes spams au cas où) avant d’ouvrir le dashboard.');
           btn.textContent = 'Email de confirmation envoyé';
           return;
         }
@@ -158,7 +158,7 @@
         return;
       }
 
-      showSuccess('Compte créé. Vérifie ton email pour confirmer ton inscription avant de te connecter.');
+      showSuccess('Compte créé. 📬 Vérifie ton email (et tes spams au cas où) pour confirmer ton inscription.');
       btn.textContent = 'Email de confirmation envoyé';
     });
   </script>
