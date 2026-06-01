@@ -53,9 +53,12 @@
       })();
     </script>
 
-    <div id="success-message" class="msg ok">Livraison creee. Ouverture du paiement escrow...</div>
+    <div id="success-message" class="msg ok">Livraison créée. Ouverture du paiement escrow...</div>
     <div id="recipient-code-panel" class="msg ok" style="display:none"></div>
     <div id="error-message" class="msg err">Erreur.</div>
+
+    <!-- Compteur de livreurs actifs : visible pour rassurer (ou alerter) avant de publier -->
+    <div id="drivers-count-banner" style="display:none;margin:14px 0;padding:14px 18px;border-radius:12px;font-size:.92rem;border:1px solid;"></div>
 
     <form id="create-mission-form" novalidate>
       <section class="panel">
@@ -227,12 +230,52 @@
     }
     function debouncedRecompute() { clearTimeout(priceDebounce); priceDebounce = setTimeout(recomputeAutoPrice, 400); }
 
+    // ─── Compteur de livreurs actifs (mis à jour quand ville change) ───
+    let _driversCountTimer = null;
+    function updateDriversCountBanner() {
+      clearTimeout(_driversCountTimer);
+      _driversCountTimer = setTimeout(async () => {
+        const city = el('delivery-city')?.value?.trim() || el('pickup-city')?.value?.trim() || '';
+        const banner = document.getElementById('drivers-count-banner');
+        if (!banner) return;
+        try {
+          const r = await fetch('/api/platform?endpoint=active-drivers-count' + (city ? '&city=' + encodeURIComponent(city) : ''));
+          if (!r.ok) return;
+          const d = await r.json();
+          banner.style.display = 'block';
+          if (d.online_now === 0) {
+            banner.style.background = 'rgba(255,200,0,.08)';
+            banner.style.borderColor = 'rgba(255,200,0,.35)';
+            banner.style.color = '#ffd700';
+            banner.innerHTML = `⚠️ <strong>${d.total_verified} livreur(s) vérifié(s)</strong> au total mais aucun en ligne maintenant. Ta livraison sera visible dès qu'un livreur se connecte (généralement quelques heures).`;
+          } else if (city && d.city_match === 0) {
+            banner.style.background = 'rgba(255,200,0,.08)';
+            banner.style.borderColor = 'rgba(255,200,0,.35)';
+            banner.style.color = '#ffd700';
+            banner.innerHTML = `⚠️ Aucun livreur basé à <strong>${city}</strong>. Mais <strong>${d.online_now} livreur(s) actif(s)</strong> ailleurs au Québec — l'un d'eux pourrait passer dans le coin.`;
+          } else {
+            banner.style.background = 'rgba(125,255,193,.08)';
+            banner.style.borderColor = 'rgba(125,255,193,.35)';
+            banner.style.color = '#7dffc1';
+            const cityTxt = (city && d.city_match) ? ` dont <strong>${d.city_match}</strong> à ${city}` : '';
+            banner.innerHTML = `✅ <strong>${d.online_now} livreur(s) actif(s)</strong> en ce moment${cityTxt}. Ta livraison sera visible immédiatement.`;
+          }
+        } catch (e) {
+          banner.style.display = 'none';
+        }
+      }, 600);
+    }
+
     document.addEventListener('DOMContentLoaded',()=>{
       ['base-price','is-priority','insurance-plan','declared-value'].forEach(id=>el(id).addEventListener('input',updatePrice));
       ['pickup-city','delivery-city','weight','taille-colis','category','deadline'].forEach(id=>el(id) && el(id).addEventListener('input',debouncedRecompute));
+      // Compteur livreurs actifs : update à chaque changement de ville
+      ['pickup-city','delivery-city'].forEach(id=>el(id)?.addEventListener('input', updateDriversCountBanner));
       el('create-mission-form').addEventListener('submit',createLivraison);
       el('create-livraison-btn').addEventListener('click',createLivraison);
       initPage();
+      // Premier appel sans ville pour montrer l'état global
+      updateDriversCountBanner();
     });
   </script>
   <script src="/js/support-widget.js"></script>

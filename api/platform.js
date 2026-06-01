@@ -2960,6 +2960,57 @@ async function profilePhotoVisibility(req, res, ctx, body) {
   return res.status(200).json({ success: true, visible });
 }
 
+// ─── Compteur de livreurs actifs dans une ville (public, pas d'auth) ────
+// Pour éviter qu'un expéditeur publie dans le vide. Si 0 → on lui propose
+// d'être averti par email quand un livreur s'inscrit.
+async function activeDriversCount(req, res, ctx, body) {
+  const url = new URL(req.url || '/', 'https://porteaporte.site');
+  const cityRaw = body?.city || url.searchParams.get('city') || '';
+  const city = String(cityRaw).trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, ''); // sans accents pour matching tolerant
+
+  // Compte 1) tous les livreurs vérifiés actifs et 2) ceux dispo+ville match
+  const filterAll = `role=in.(livreur,les%20deux)&suspendu=eq.false&driver_status=eq.verified`;
+  const filterDispo = `${filterAll}&disponible=eq.true`;
+
+  const headers = { apikey: ctx.sbKey, Authorization: `Bearer ${ctx.sbKey}`, Prefer: 'count=exact' };
+
+  async function countQuery(filter) {
+    try {
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id&${filter}`, { headers });
+      const cr = r.headers.get('content-range') || '0-0/0';
+      return Number(cr.split('/')[1]) || 0;
+    } catch (_) { return 0; }
+  }
+
+  const [totalVerified, totalOnline] = await Promise.all([
+    countQuery(filterAll),
+    countQuery(filterDispo)
+  ]);
+
+  // Si une ville est spécifiée, on essaye un match approximatif
+  let cityMatch = null;
+  if (city) {
+    try {
+      const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?select=id&${filterAll}&ville=ilike.*${encodeURIComponent(city)}*`, { headers });
+      const cr = r.headers.get('content-range') || '0-0/0';
+      cityMatch = Number(cr.split('/')[1]) || 0;
+    } catch (_) { cityMatch = 0; }
+  }
+
+  return res.status(200).json({
+    total_verified: totalVerified,
+    online_now: totalOnline,
+    city_match: cityMatch,
+    city: cityRaw || null,
+    hint: totalOnline === 0
+      ? 'Aucun livreur actif en ce moment. Ta livraison sera visible dès qu\'un livreur se connecte.'
+      : (cityMatch === 0 && city
+          ? `Aucun livreur vérifié à ${cityRaw} pour le moment. ${totalOnline} livreur(s) actif(s) ailleurs au Québec.`
+          : null)
+  });
+}
+
 // ─── Liste des livraisons éligibles à la libération de paiement ───────────
 // Critères : statut livre/livree, depuis > 48h, recipient_confirmed_at null
 // Retourne 2 groupes :
@@ -4452,6 +4503,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-search') {
       return await rideSearch(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
     }
+    if (endpoint === 'active-drivers-count') {
+      return await activeDriversCount(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
     if (endpoint === 'ride-search-log') {
       return await rideSearchLog(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
     }
@@ -5585,6 +5639,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-photos-pending')     return await adminPhotosPending(req, res, ctx);
     if (endpoint === 'admin-photo-moderate')     return await adminPhotoModerate(req, res, ctx, body);
     if (endpoint === 'admin-auto-release-list')  return await adminAutoReleaseList(req, res, ctx, body);
+    if (endpoint === 'active-drivers-count')     return await activeDriversCount(req, res, ctx, body);
     if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
     if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
     if (endpoint === 'pet-card-upsert')          return await petCardUpsert(req, res, ctx, body);

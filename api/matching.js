@@ -230,14 +230,42 @@ module.exports = async function handler(req, res) {
     if (action === 'accepter_livreur') {
       if (!session) return res.status(401).json({ error: 'Session requise' });
       if (!isVerifiedDriver(session, profile)) {
-        return res.status(403).json({ error: 'Livreur verifie requis' });
+        return res.status(403).json({ error: 'Livreur vérifié requis' });
       }
 
       const livraisonId = p.livraison_id || p.colis_id;
       const livreurId = p.livreur_id || session.id;
       if (!livraisonId || !livreurId) return res.status(400).json({ error: 'livraison_id et livreur_id requis' });
 
-      if (livreurId !== session.id) return res.status(403).json({ error: 'Un livreur ne peut accepter que pour lui-meme' });
+      if (livreurId !== session.id) return res.status(403).json({ error: 'Un livreur ne peut accepter que pour lui-même' });
+
+      // ─── GATE STRIPE CONNECT : le livreur doit avoir un compte qui peut recevoir des paiements ──
+      // Sinon il livrera et son paiement sera bloqué à la capture (litige garanti).
+      try {
+        const scRes = await fetch(`${SB_URL}/rest/v1/stripe_connect_accounts?user_id=eq.${session.id}&select=stripe_account_id,charges_enabled,payouts_enabled,details_submitted&limit=1`, {
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+        });
+        const scRows = scRes.ok ? await scRes.json() : [];
+        const sc = scRows[0];
+        if (!sc || !sc.payouts_enabled) {
+          return res.status(403).json({
+            error: 'Compte Stripe Connect incomplet',
+            message: sc
+              ? 'Ton compte Stripe Connect existe mais ne peut pas encore recevoir de paiements. Termine la vérification d\'identité.'
+              : 'Tu dois finaliser ton compte Stripe Connect avant d\'accepter une livraison. Sans ça, tu ne pourras pas être payé.',
+            requires_stripe_onboarding: true,
+            onboarding_url: '/kyc.html',
+            stripe_account_status: sc || null
+          });
+        }
+      } catch (e) {
+        console.warn('[matching] Stripe Connect check failed:', e.message);
+        // Fail-closed : si on ne peut pas vérifier, on refuse (sécurité d'abord)
+        return res.status(503).json({
+          error: 'Vérification Stripe Connect indisponible',
+          message: 'Réessaie dans quelques secondes ou contacte le support.'
+        });
+      }
 
       const r = await fetch(`${SB_URL}/rest/v1/rpc/accepter_livraison`, {
         method: 'POST',
