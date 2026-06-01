@@ -13,8 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
-  <!-- Cloudflare Turnstile : protection anti-bots -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
   <style>
     body{min-height:100vh;display:grid;place-items:center;padding:24px}
     .auth-card{width:100%;max-width:520px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px}
@@ -62,13 +60,14 @@
         </div>
       </div>
 
-      <!-- Anti-bot Turnstile (Cloudflare) -->
-      <div class="form-group" style="display:flex;justify-content:center;margin:14px 0">
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAADb0NgwdH8euxP1g" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+      <!-- Anti-bot honeypot : champ invisible aux humains, piège les bots qui remplissent tout -->
+      <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+        <label for="website">Ne pas remplir</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
       </div>
-      <input type="hidden" id="turnstile-token" name="cf-turnstile-response">
+      <input type="hidden" id="form-rendered-at" value="">
 
-      <button class="auth-btn" type="submit" id="signupBtn" disabled>Créer mon compte</button>
+      <button class="auth-btn" type="submit" id="signupBtn">Créer mon compte</button>
       <p style="font-size:.78rem;color:var(--brand-muted);text-align:center;margin-top:10px">
         En créant un compte, tu acceptes nos <a href="/cgu.html" target="_blank">CGU</a> et notre <a href="/confidentialite.html" target="_blank">politique de confidentialité (Loi 25)</a>.
       </p>
@@ -81,43 +80,27 @@
     const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
     const form = document.getElementById('signupForm');
     const btn = document.getElementById('signupBtn');
-    let turnstileToken = null;
 
-    // Callback Turnstile : déverrouille le bouton submit
-    window.onTurnstileSuccess = function (token) {
-      turnstileToken = token;
-      document.getElementById('turnstile-token').value = token;
-      btn.disabled = false;
-    };
+    // Honeypot : enregistre le moment où le form est rendu (bots remplissent en <2s)
+    document.getElementById('form-rendered-at').value = Date.now();
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       btn.disabled = true;
       btn.textContent = 'Création...';
 
-      // 1) Vérifier Turnstile côté serveur AVANT de créer le compte
-      if (!turnstileToken) {
-        showError('Anti-robot non validé. Recharge la page.');
-        btn.disabled = false;
-        btn.textContent = 'Créer mon compte';
+      // Anti-bot honeypot : si le champ caché est rempli OU si le form est soumis en <2s → bot
+      const honeypot = document.getElementById('website').value;
+      const renderedAt = parseInt(document.getElementById('form-rendered-at').value, 10) || 0;
+      const elapsed = Date.now() - renderedAt;
+      if (honeypot || elapsed < 2000) {
+        // Réponse silencieuse : on fait croire que ça marche pour ne pas alerter le bot
+        btn.textContent = 'Création...';
+        setTimeout(() => {
+          showSuccess('Compte créé. Vérifie ton email.');
+          btn.textContent = 'Email envoyé';
+        }, 1500);
         return;
-      }
-      try {
-        const tv = await fetch('/api/turnstile-verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: turnstileToken })
-        });
-        const tvd = await tv.json();
-        if (!tv.ok || !tvd.success) {
-          showError('Vérification anti-robot échouée. Recharge la page.');
-          btn.disabled = false;
-          btn.textContent = 'Créer mon compte';
-          return;
-        }
-      } catch (e) {
-        // En cas d'indisponibilité de Turnstile : on log mais laisse passer (fail-open) — éviter de bloquer 100% des users
-        console.warn('[turnstile] indisponible, fail-open:', e.message);
       }
 
       const role = new FormData(form).get('role');
