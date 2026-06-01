@@ -905,8 +905,32 @@ async function bookPassenger() {
   var luggage = document.getElementById('pax-luggage').checked;
   var pet     = document.getElementById('pax-pet').checked;
   var note    = document.getElementById('pax-note').value.trim();
-  var pickup  = document.getElementById('pax-pickup').value;
-  var dropoff = document.getElementById('pax-dropoff').value;
+  var pickupId  = document.getElementById('pax-pickup').value;
+  var dropoffId = document.getElementById('pax-dropoff').value;
+
+  // Résoudre l'ID d'arrêt → nom de ville réel
+  // pickupId peut être 'depart', 'arrivee', 'stop_N', ou un id custom.
+  // L'API attend des noms de ville. Fallback : start_city / end_city de la fiche du trajet.
+  function resolveCity(id, fallbackStart, fallbackEnd) {
+    if (!id || id === 'depart') return fallbackStart;
+    if (id === 'arrivee') return fallbackEnd;
+    // Cherche dans les stop_points si possible
+    if (currentRide && Array.isArray(currentRide.stop_points)) {
+      const stop = currentRide.stop_points.find(s => (s.id || s.city) === id);
+      if (stop) return stop.city || stop.name || stop.label || id;
+    }
+    return id; // fallback : envoie l'id tel quel
+  }
+  var startCity = currentRide.departure_city || currentRide.from_city || currentRide.start_city || '';
+  var endCity   = currentRide.destination_city || currentRide.to_city || currentRide.end_city || '';
+  var pickup  = resolveCity(pickupId, startCity, endCity);
+  var dropoff = resolveCity(dropoffId, startCity, endCity);
+
+  // Validation explicite avant envoi (sinon API renvoie 400 cryptique)
+  if (!pickup || !dropoff) {
+    throw new Error('Choisis un point d\'embarquement et un point de débarquement avant de réserver.');
+  }
+
   var res = await fetch('/api/platform?endpoint=ride-book', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
