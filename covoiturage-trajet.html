@@ -358,6 +358,43 @@ let ridePaymentReady = false;
 
 const params = new URLSearchParams(location.search);
 const rideId = params.get('id') || params.get('ride_id');
+const resumeBookingId = params.get('booking_id'); // si l'user revient depuis dashboard pour payer
+
+// Si on a un booking_id dans l'URL → reprendre le paiement direct (skip booking)
+async function resumeBookingPayment(bookingId) {
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    currentSession = session;
+
+    const paymentRes = await fetch('/api/platform?endpoint=ride-payment-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ booking_id: bookingId })
+    });
+    const paymentData = await paymentRes.json();
+    if (!paymentRes.ok || paymentData.error) {
+      showToast('❌ ' + (paymentData.error || 'Reprise paiement impossible'), 'error');
+      return;
+    }
+    if (paymentData.already_authorized) {
+      showToast('✅ Cette réservation est déjà payée. Redirection...', 'success');
+      setTimeout(() => location.href = '/dashboard.html', 1500);
+      return;
+    }
+    // Pré-remplir activeTab pour que mountRidePayment et confirmRidePayment fonctionnent
+    activeTab = 'passenger';
+    await mountRidePayment(paymentData);
+    showToast('💳 Finalise ton paiement ci-dessous', 'info');
+    // Scroll vers le widget de paiement
+    setTimeout(() => {
+      const el = document.getElementById('ride-payment-box');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
@@ -1028,6 +1065,10 @@ async function bookPackage() {
     currentUser = currentSession.user;
   }
   await loadRide();
+  // Si on a été redirigé depuis le dashboard avec un booking en attente → ouvre direct le paiement
+  if (resumeBookingId && currentSession) {
+    await resumeBookingPayment(resumeBookingId);
+  }
 })();
 </script>
   <script src="/js/support-widget.js"></script>
