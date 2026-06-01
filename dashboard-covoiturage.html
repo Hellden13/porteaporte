@@ -394,6 +394,18 @@ function buildTrajets() {
     window.__finishedBookings = finishedBookings;
     return '';
   })()}
+  ${(() => {
+    const pending = (window.__activeBookings || []).filter(b => ['en_attente','pending','unpaid'].includes(String(b.status||'').toLowerCase()));
+    if (!pending.length) return '';
+    const first = pending[0];
+    return `<div style="background:linear-gradient(135deg,rgba(255,200,0,.1),rgba(255,200,0,.04));border:1px solid rgba(255,200,0,.4);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <strong style="color:#ffd700;font-size:1rem">⚠️ ${pending.length} réservation${pending.length>1?'s':''} en attente de paiement</strong>
+        <div style="color:var(--muted);font-size:.85rem;margin-top:3px">Ta place ${pending.length>1?'sera':'est'} libérée si tu ne paies pas dans les prochaines heures.</div>
+      </div>
+      <a href="/covoiturage-trajet.html?ride_id=${encodeURIComponent(first.ride_id)}&booking_id=${encodeURIComponent(first.id)}" style="padding:10px 18px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border-radius:8px;font-weight:900;text-decoration:none;box-shadow:0 6px 16px rgba(93,191,255,.45)">💳 Payer maintenant</a>
+    </div>`;
+  })()}
   <div class="section-block">
     <div class="section-head"><h2>🚀 Mes réservations en cours (${window.__activeBookings.length})</h2></div>
     <div class="table-wrap">
@@ -404,11 +416,16 @@ function buildTrajets() {
             const drvContact = [];
             if (b.driver_email) drvContact.push(`<a href="mailto:${b.driver_email}?subject=PorteàPorte%20-%20Réservation%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
             if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
+            // Bouton "Payer maintenant" si reservation en attente de paiement
+            const isPending = ['en_attente', 'pending', 'unpaid'].includes(String(b.status||'').toLowerCase());
+            const payBtn = isPending
+              ? `<a href="/covoiturage-trajet.html?ride_id=${encodeURIComponent(b.ride_id)}&booking_id=${encodeURIComponent(b.id)}" style="display:inline-block;padding:7px 13px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border-radius:7px;font-weight:900;font-size:.82rem;text-decoration:none;margin:2px;box-shadow:0 4px 12px rgba(93,191,255,.4)">💳 Payer maintenant</a>`
+              : '';
             return `<tr>
               <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
               <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-              <td>${statusChip(b.status)}</td>
+              <td>${statusChip(b.status)} ${payBtn}</td>
               <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
             </tr>`;
           };
