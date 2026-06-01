@@ -379,7 +379,7 @@ async function resumeBookingPayment(bookingId) {
     }
     if (paymentData.already_authorized) {
       showToast('✅ Cette réservation est déjà payée. Redirection...', 'success');
-      setTimeout(() => location.href = '/dashboard.html', 1500);
+      setTimeout(() => location.href = '/covoiturage-confirme.html?booking_id=' + encodeURIComponent(bookingId), 1200);
       return;
     }
     // Pré-remplir activeTab pour que mountRidePayment et confirmRidePayment fonctionnent
@@ -1005,8 +1005,10 @@ async function bookPassenger() {
   var paymentData = await paymentRes.json();
   if (!paymentRes.ok || paymentData.error) throw new Error(paymentData.error || 'Erreur paiement');
   if (paymentData.already_authorized) {
-    showToast('Reservation confirmee !', 'success');
-    setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 1500);
+    showToast('✅ Réservation déjà confirmée !', 'success');
+    setTimeout(function() {
+      location.href = '/covoiturage-confirme.html?booking_id=' + encodeURIComponent(data.booking.id);
+    }, 1200);
     return;
   }
   await mountRidePayment(paymentData);
@@ -1033,8 +1035,11 @@ async function confirmRidePayment() {
   if (!syncRes.ok || sync.error || !sync.authorized) {
     throw new Error(sync.error || 'Paiement non autorise par Stripe');
   }
-  showToast('Reservation confirmee !', 'success');
-  setTimeout(function() { location.href = '/dashboard-covoiturage.html'; }, 1500);
+  showToast('✅ Paiement réussi ! Redirection vers ta confirmation...', 'success');
+  const bId = pendingRidePayment?.booking_id || sync?.booking_id;
+  setTimeout(function() {
+    location.href = bId ? ('/covoiturage-confirme.html?booking_id=' + encodeURIComponent(bId)) : '/dashboard.html';
+  }, 1200);
 }
 
 async function bookPackage() {

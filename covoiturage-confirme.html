@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Réservation confirmée — PorteàPorte</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root {
+      --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
+      --border:#1E2A3A; --primary:#5dbfff; --cyan:#00D9FF;
+      --text:#E8EDF5; --muted:#8A9BB0; --good:#7dffc1; --warn:#ffd700;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    .wrap { max-width:840px; margin:0 auto; padding:32px clamp(16px,4vw,32px) 60px; }
+
+    /* Success hero */
+    .success-hero {
+      background:linear-gradient(135deg,rgba(125,255,193,.15),rgba(125,255,193,.06));
+      border:1px solid rgba(125,255,193,.4); border-radius:18px;
+      padding:32px 28px; margin-bottom:24px; text-align:center;
+      animation:fadeIn .5s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-10px) } to { opacity:1; transform:translateY(0) } }
+    .success-hero .check {
+      width:70px; height:70px; border-radius:50%;
+      background:linear-gradient(135deg,#7dffc1,#5dbfff);
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:2.2rem; margin-bottom:14px; color:#051022; font-weight:900;
+      box-shadow:0 8px 30px rgba(125,255,193,.4);
+    }
+    .success-hero h1 { font-size:1.6rem; font-weight:900; margin-bottom:6px; }
+    .success-hero p { color:var(--muted); font-size:.95rem; }
+
+    /* Sections */
+    .card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:14px; padding:22px 24px; margin-bottom:16px;
+    }
+    .card h2 {
+      font-size:1.02rem; font-weight:800; margin-bottom:14px;
+      display:flex; align-items:center; gap:10px;
+      padding-bottom:12px; border-bottom:1px solid var(--border);
+    }
+
+    /* Driver */
+    .driver-row {
+      display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center;
+    }
+    .driver-avatar {
+      width:64px; height:64px; border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900; color:#051022; font-size:1.3rem; overflow:hidden;
+    }
+    .driver-avatar img { width:100%; height:100%; object-fit:cover; }
+    .driver-name { font-weight:800; font-size:1.05rem; }
+    .driver-meta { color:var(--muted); font-size:.82rem; margin-top:3px; }
+    .driver-badges { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .badge { display:inline-block; padding:2px 9px; border-radius:99px; font-size:.7rem; font-weight:700; }
+    .badge.verified { background:rgba(125,255,193,.15); color:var(--good); }
+    .badge.score { background:rgba(255,200,0,.12); color:var(--warn); }
+    .contact-btns { display:flex; flex-direction:column; gap:6px; }
+    .contact-btn {
+      padding:7px 14px; border-radius:7px; font-weight:700; font-size:.78rem;
+      text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center; gap:5px;
+    }
+    .contact-btn.email { background:rgba(93,191,255,.12); color:var(--primary); border:1px solid rgba(93,191,255,.3); }
+    .contact-btn.tel { background:rgba(125,255,193,.12); color:var(--good); border:1px solid rgba(125,255,193,.3); }
+
+    /* Vehicle */
+    .vehicle-info {
+      background:rgba(255,255,255,.03); border-radius:10px; padding:12px 14px;
+      margin-top:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    }
+    .vehicle-info .ico { font-size:1.8rem; }
+    .vehicle-info .txt { font-size:.92rem; }
+    .vehicle-info .txt strong { color:var(--text); }
+
+    /* Meeting points */
+    .meeting-block {
+      display:grid; grid-template-columns:36px 1fr; gap:14px;
+      padding:14px 0; border-bottom:1px solid rgba(255,255,255,.05);
+    }
+    .meeting-block:last-child { border-bottom:none; }
+    .meeting-pin {
+      width:32px; height:32px; border-radius:50%; display:flex;
+      align-items:center; justify-content:center; font-size:1rem;
+    }
+    .meeting-pin.pickup { background:rgba(93,191,255,.15); color:var(--primary); }
+    .meeting-pin.dropoff { background:rgba(125,255,193,.15); color:var(--good); }
+    .meeting-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; margin-bottom:3px; }
+    .meeting-name { font-weight:800; font-size:1rem; margin-bottom:4px; }
+    .meeting-address { color:var(--muted); font-size:.85rem; margin-bottom:8px; }
+    .meeting-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .meeting-actions a {
+      padding:6px 12px; background:rgba(93,191,255,.1);
+      border:1px solid rgba(93,191,255,.3); color:var(--primary);
+      border-radius:6px; font-size:.78rem; font-weight:700; text-decoration:none;
+    }
+    .meeting-extras { display:flex; gap:6px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:6px; }
+
+    /* Trip details */
+    .trip-route {
+      display:flex; align-items:center; gap:14px; font-weight:900;
+      font-size:1.2rem; margin-bottom:6px;
+    }
+    .trip-route .arrow { color:var(--primary); font-size:1.4rem; }
+    .trip-date { color:var(--muted); font-size:.92rem; }
+
+    /* Price */
+    .price-row { display:flex; justify-content:space-between; padding:7px 0; font-size:.9rem; }
+    .price-row.total { font-weight:900; color:var(--good); border-top:1px solid var(--border); padding-top:12px; margin-top:8px; font-size:1.05rem; }
+
+    /* Next steps */
+    .steps { display:flex; flex-direction:column; gap:10px; }
+    .step { display:flex; gap:12px; align-items:flex-start; padding:10px 12px; background:rgba(255,255,255,.02); border-radius:8px; }
+    .step-num { width:26px; height:26px; border-radius:50%; background:var(--primary); color:#051022; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:.85rem; flex-shrink:0; }
+    .step-body { font-size:.88rem; }
+
+    /* Actions */
+    .actions {
+      display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; justify-content:center;
+    }
+    .btn { padding:12px 22px; border-radius:9px; font-weight:800; font-size:.92rem; text-decoration:none; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .btn.primary { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; }
+    .btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+
+    .loading-state { text-align:center; padding:60px; color:var(--muted); }
+    .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<main class="wrap">
+  <div id="loading" class="loading-state">
+    <div class="spinner"></div>
+    Récupération de ta réservation...
+  </div>
+
+  <div id="content" style="display:none">
+    <!-- Success hero -->
+    <div class="success-hero">
+      <div class="check">✓</div>
+      <h1 id="success-title">Réservation confirmée !</h1>
+      <p id="success-sub">Tout est prêt. Voici les détails de ton trajet.</p>
+    </div>
+
+    <!-- Trajet -->
+    <div class="card">
+      <h2>🚗 Ton trajet</h2>
+      <div class="trip-route">
+        <span id="route-from">?</span>
+        <span class="arrow">→</span>
+        <span id="route-to">?</span>
+      </div>
+      <div class="trip-date" id="trip-date">—</div>
+    </div>
+
+    <!-- Conducteur -->
+    <div class="card">
+      <h2>👨‍✈️ Ton conducteur</h2>
+      <div class="driver-row" id="driver-row">
+        <div class="driver-avatar" id="driver-avatar"></div>
+        <div>
+          <div class="driver-name" id="driver-name">Conducteur</div>
+          <div class="driver-meta" id="driver-meta"></div>
+          <div class="driver-badges" id="driver-badges"></div>
+        </div>
+        <div class="contact-btns" id="contact-btns"></div>
+      </div>
+      <div class="vehicle-info" id="vehicle-info" style="display:none">
+        <span class="ico">🚙</span>
+        <div class="txt" id="vehicle-text"></div>
+      </div>
+    </div>
+
+    <!-- Points de rencontre -->
+    <div class="card">
+      <h2>📍 Points de rencontre</h2>
+      <div id="meeting-points"></div>
+    </div>
+
+    <!-- Prix -->
+    <div class="card">
+      <h2>💳 Récap paiement</h2>
+      <div class="price-row"><span>Prix du trajet</span><span id="price-base">—</span></div>
+      <div class="price-row" id="price-luggage-row" style="display:none"><span>🧳 Bagages</span><span id="price-luggage">—</span></div>
+      <div class="price-row" id="price-pet-row" style="display:none"><span>🐾 Animal</span><span id="price-pet">—</span></div>
+      <div class="price-row"><span>Frais plateforme</span><span id="price-fee">—</span></div>
+      <div class="price-row total"><span>Total payé</span><span id="price-total">—</span></div>
+      <div style="color:var(--muted);font-size:.78rem;margin-top:10px">💡 Le paiement est en attente sur Stripe. Le conducteur sera payé seulement après la livraison du trajet.</div>
+    </div>
+
+    <!-- Étapes suivantes -->
+    <div class="card">
+      <h2>📋 Étapes suivantes</h2>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Ton conducteur a été notifié. Il peut te contacter par <strong>email ou téléphone</strong> pour confirmer.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">Le jour du trajet, va au <strong>point de rencontre</strong> indiqué ci-dessus à l'heure prévue.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">À l'arrivée, le conducteur libère ton paiement. Tu pourras lui donner un avis.</div></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <a class="btn primary" href="/dashboard.html">📊 Voir mes réservations</a>
+      <a class="btn ghost" id="cancel-link" href="#">❌ Annuler la réservation</a>
+    </div>
+  </div>
+</main>
+
+<script src="/js/safe-points-map.js"></script>
+<script src="/js/auth-state.js"></script>
+<script src="/js/app-launcher.js" defer></script>
+<script src="/js/cookie-consent.js" defer></script>
+<script src="/js/support-widget.js"></script>
+
+<script>
+  const db = window.db || window.getSupabaseClient();
+  const params = new URLSearchParams(location.search);
+  const bookingId = params.get('booking_id') || params.get('id');
+
+  function fmt(n) { return Number(n||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+  function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function fmtDT(s) { if(!s) return '—'; return new Date(s).toLocaleString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+  async function loadConfirmation() {
+    if (!bookingId) { document.getElementById('loading').innerHTML = '<div style="color:#ff7a7a">⚠️ Aucune réservation à afficher.</div>'; return; }
+
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
+
+    // 1. Charge le booking
+    const { data: booking, error: bErr } = await db.from('ride_bookings').select('*').eq('id', bookingId).single();
+    if (bErr || !booking) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Réservation introuvable : ${bErr?.message || 'unknown'}</div>`; return; }
+
+    // 2. Charge le trajet + conducteur + safe points (via ride-detail endpoint)
+    const rideRes = await fetch('/api/platform?endpoint=ride-detail&ride_id=' + encodeURIComponent(booking.ride_id));
+    const rideData = await rideRes.json();
+    if (!rideRes.ok || rideData.error) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Trajet introuvable : ${rideData.error}</div>`; return; }
+
+    renderAll(booking, rideData);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
+
+  function renderAll(booking, rideData) {
+    const ride = rideData.ride || {};
+    const driver = rideData.driver || {};
+    const pickupPoint  = rideData.pickup_point || null;
+    const dropoffPoint = rideData.dropoff_point || null;
+
+    // Trajet
+    document.getElementById('route-from').textContent = ride.start_city || ride.departure_city || '?';
+    document.getElementById('route-to').textContent = ride.end_city || ride.destination_city || '?';
+    document.getElementById('trip-date').textContent = '📅 ' + fmtDT(ride.departure_time);
+
+    // Conducteur
+    const avatarEl = document.getElementById('driver-avatar');
+    if (driver.photo_url) {
+      avatarEl.innerHTML = `<img src="${esc(driver.photo_url)}" alt="${esc(driver.prenom)}">`;
+    } else {
+      avatarEl.textContent = (driver.prenom?.[0] || '?').toUpperCase();
+    }
+    document.getElementById('driver-name').textContent = driver.prenom || 'Conducteur';
+    document.getElementById('driver-meta').textContent = `Membre depuis ${driver.member_since || '—'} · ${ride.available_seats || 0} place(s) restante(s)`;
+
+    const badges = document.getElementById('driver-badges');
+    badges.innerHTML = '';
+    if (driver.verified) badges.innerHTML += '<span class="badge verified">✓ Identité vérifiée</span>';
+    if (driver.score) badges.innerHTML += `<span class="badge score">⭐ ${Number(driver.score).toFixed(1)}/5</span>`;
+
+    // Contact (email + téléphone du driver — récupéré depuis booking via cov-dashboard pattern)
+    const contacts = document.getElementById('contact-btns');
+    const driverEmail = booking.driver_email || rideData.driver_email;
+    const driverPhone = booking.driver_phone || rideData.driver_phone;
+    contacts.innerHTML = '';
+    if (driverEmail) contacts.innerHTML += `<a class="contact-btn email" href="mailto:${esc(driverEmail)}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent(ride.start_city+' → '+ride.end_city)}">💬 Email</a>`;
+    if (driverPhone) contacts.innerHTML += `<a class="contact-btn tel" href="tel:${esc(driverPhone)}">📞 Appeler</a>`;
+    if (!contacts.innerHTML) contacts.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Contact via messagerie</span>';
+
+    // Véhicule
+    if (driver.vehicle_make || driver.vehicle_model) {
+      const vEl = document.getElementById('vehicle-info');
+      const v = [driver.vehicle_year, driver.vehicle_make, driver.vehicle_model, driver.vehicle_color].filter(Boolean).join(' · ');
+      document.getElementById('vehicle-text').innerHTML = `<strong>${esc(v)}</strong>`;
+      vEl.style.display = 'flex';
+    }
+
+    // Points de rencontre
+    renderMeetingPoints(booking, ride, pickupPoint, dropoffPoint);
+
+    // Prix
+    document.getElementById('price-base').textContent = fmt(booking.base_share || booking.driver_amount);
+    if (booking.luggage_fee > 0) {
+      document.getElementById('price-luggage-row').style.display = 'flex';
+      document.getElementById('price-luggage').textContent = fmt(booking.luggage_fee);
+    }
+    if (booking.pet_fee > 0) {
+      document.getElementById('price-pet-row').style.display = 'flex';
+      document.getElementById('price-pet').textContent = fmt(booking.pet_fee);
+    }
+    document.getElementById('price-fee').textContent = fmt(booking.platform_fee);
+    document.getElementById('price-total').textContent = fmt(booking.total_passenger);
+
+    // Annulation
+    document.getElementById('cancel-link').onclick = (e) => {
+      e.preventDefault();
+      if (window.PapCancel) {
+        // À adapter si on a un widget cancel pour rides plutôt que livraisons
+        alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
+      } else {
+        alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
+      }
+    };
+  }
+
+  function renderMeetingPoints(booking, ride, pickup, dropoff) {
+    const container = document.getElementById('meeting-points');
+    const blocks = [];
+
+    // PICKUP
+    const pName = pickup?.name || ride.pickup_safe_label || booking.pickup_city || ride.start_city;
+    const pAddr = pickup?.address || '';
+    const pLat = pickup?.lat, pLng = pickup?.lng;
+    const pickupGmaps = (pLat && pLng) ? `https://www.google.com/maps/dir/?api=1&destination=${pLat},${pLng}` :
+                       pAddr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pAddr)}` : null;
+    const pExtras = [];
+    if (pickup?.has_cameras) pExtras.push('📹 Caméras');
+    if (pickup?.well_lit) pExtras.push('💡 Bien éclairé');
+    if (pickup?.parking_free) pExtras.push('🅿️ Stationnement');
+    if (pickup?.hours) pExtras.push('🕒 ' + pickup.hours);
+
+    blocks.push(`
+      <div class="meeting-block">
+        <div class="meeting-pin pickup">📍</div>
+        <div>
+          <div class="meeting-label">Embarquement</div>
+          <div class="meeting-name">${esc(pName)}</div>
+          ${pAddr ? `<div class="meeting-address">${esc(pAddr)}</div>` : ''}
+          ${pExtras.length ? `<div class="meeting-extras">${pExtras.join(' · ')}</div>` : ''}
+          ${pickupGmaps ? `<div class="meeting-actions"><a href="${pickupGmaps}" target="_blank" rel="noopener">🗺️ Itinéraire Google Maps</a></div>` : ''}
+        </div>
+      </div>
+    `);
+
+    // DROPOFF
+    const dName = dropoff?.name || ride.dropoff_safe_label || booking.dropoff_city || ride.end_city;
+    const dAddr = dropoff?.address || '';
+    const dLat = dropoff?.lat, dLng = dropoff?.lng;
+    const dropoffGmaps = (dLat && dLng) ? `https://www.google.com/maps/dir/?api=1&destination=${dLat},${dLng}` :
+                        dAddr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dAddr)}` : null;
+    const dExtras = [];
+    if (dropoff?.has_cameras) dExtras.push('📹 Caméras');
+    if (dropoff?.well_lit) dExtras.push('💡 Bien éclairé');
+    if (dropoff?.parking_free) dExtras.push('🅿️ Stationnement');
+    if (dropoff?.hours) dExtras.push('🕒 ' + dropoff.hours);
+
+    blocks.push(`
+      <div class="meeting-block">
+        <div class="meeting-pin dropoff">🏁</div>
+        <div>
+          <div class="meeting-label">Débarquement</div>
+          <div class="meeting-name">${esc(dName)}</div>
+          ${dAddr ? `<div class="meeting-address">${esc(dAddr)}</div>` : ''}
+          ${dExtras.length ? `<div class="meeting-extras">${dExtras.join(' · ')}</div>` : ''}
+          ${dropoffGmaps ? `<div class="meeting-actions"><a href="${dropoffGmaps}" target="_blank" rel="noopener">🗺️ Itinéraire Google Maps</a></div>` : ''}
+        </div>
+      </div>
+    `);
+
+    container.innerHTML = blocks.join('');
+
+    // Carte Leaflet en bonus si on a au moins 1 point avec GPS
+    if (window.PapSafeMap && (pLat || dLat)) {
+      const mapDiv = document.createElement('div');
+      mapDiv.style.marginTop = '14px';
+      container.appendChild(mapDiv);
+      setTimeout(() => window.PapSafeMap.render(mapDiv, { pickup, dropoff }), 100);
+    }
+  }
+
+  loadConfirmation().catch(e => {
+    document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">Erreur : ${e.message}</div>`;
+  });
+</script>
+
+</body>
+</html>
