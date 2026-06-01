@@ -945,7 +945,16 @@ async function bookPassenger() {
     })
   });
   var data = await res.json();
-  if (!res.ok || data.error) throw new Error(data.error || 'Erreur reservation');
+  if (!res.ok || data.error) {
+    // Cas spécial : déjà réservé → redirection vers le dashboard
+    if (res.status === 409 && data.existing_booking) {
+      if (confirm(data.error + '\n\n' + (data.action || 'Va voir ta réservation existante.'))) {
+        window.location.href = data.action_url || '/dashboard-covoiturage.html';
+      }
+      return;
+    }
+    throw new Error(data.error || 'Erreur réservation');
+  }
 
   var paymentRes = await fetch('/api/platform?endpoint=ride-payment-create', {
     method: 'POST',
