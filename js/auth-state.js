@@ -11,9 +11,9 @@
   window.__papAuthState = true;
 
   const DASH = {
-    livreur:    '/dashboard-livreur.html',
-    expediteur: '/dashboard-expediteur.html',
-    'les deux': '/role-choice.html',
+    livreur:    '/dashboard.html',
+    expediteur: '/dashboard.html',
+    'les deux': '/dashboard.html',
     admin:      '/admin/dashboard-admin.html'
   };
 

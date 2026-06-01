@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mon dashboard — PorteàPorte</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root {
+      --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
+      --border:#1E2A3A; --primary:#5dbfff; --cyan:#00D9FF;
+      --text:#E8EDF5; --muted:#8A9BB0; --good:#7dffc1; --warn:#ffd700; --danger:#ff7a7a;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      background:rgba(10,15,30,0.96); border-bottom:1px solid var(--border);
+      padding:14px clamp(18px,4vw,48px);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      position:sticky; top:0; z-index:90; backdrop-filter:blur(12px);
+    }
+    .brand { font-weight:900; color:var(--primary); font-size:1.05rem; letter-spacing:.02em; }
+    .topbar-actions { display:flex; gap:8px; align-items:center; }
+    .btn { padding:8px 16px; border-radius:8px; font-weight:700; font-size:.85rem; cursor:pointer; border:none; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    .btn.primary { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; }
+    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn.sm { padding:6px 12px; font-size:.78rem; }
+
+    .wrap { max-width:1200px; margin:0 auto; padding:28px clamp(16px,4vw,32px) 80px; }
+
+    /* HEADER */
+    .header-card {
+      background:linear-gradient(135deg, rgba(93,191,255,0.06), rgba(0,217,255,0.03));
+      border:1px solid var(--border); border-radius:18px;
+      padding:24px 28px; margin-bottom:22px;
+      display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center;
+    }
+    .avatar {
+      width:72px; height:72px; border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.8rem; font-weight:900; color:#051022;
+      overflow:hidden;
+    }
+    .avatar img { width:100%; height:100%; object-fit:cover; }
+    .greet h1 { font-size:1.5rem; font-weight:900; margin-bottom:4px; }
+    .greet .roles { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .role-chip { background:rgba(93,191,255,0.12); border:1px solid rgba(93,191,255,0.3); color:var(--primary); padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+    .role-chip.admin { background:rgba(255,200,0,0.12); border-color:rgba(255,200,0,0.3); color:var(--warn); }
+
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:22px; }
+    .stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+    .stat-val { font-size:1.6rem; font-weight:900; color:var(--primary); line-height:1; }
+    .stat-label { font-size:.75rem; color:var(--muted); margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+
+    /* QUICK ACTIONS */
+    .quick-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:28px; }
+    .qa { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 16px; display:flex; align-items:center; gap:12px; transition:all .15s; }
+    .qa:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 8px 24px rgba(93,191,255,0.15); }
+    .qa-ico { font-size:1.6rem; }
+    .qa-text { font-weight:700; font-size:.92rem; }
+
+    /* SECTIONS */
+    .section { margin-bottom:32px; }
+    .section h2 { font-size:1.05rem; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+    .section h2 .count { background:rgba(93,191,255,0.15); color:var(--primary); padding:2px 10px; border-radius:99px; font-size:.78rem; font-weight:700; }
+    .section h2 .actions-link { margin-left:auto; font-size:.78rem; color:var(--cyan); font-weight:600; }
+
+    .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:var(--surface2); font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:10px 14px; text-align:left; }
+    td { padding:11px 14px; font-size:.85rem; border-top:1px solid var(--border); }
+    .empty { text-align:center; padding:28px; color:var(--muted); font-size:.88rem; }
+    .empty a { color:var(--primary); font-weight:700; }
+
+    .status-pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:.7rem; font-weight:700; }
+    .pill-warn { background:rgba(255,200,0,0.12); color:var(--warn); }
+    .pill-good { background:rgba(125,255,193,0.12); color:var(--good); }
+    .pill-info { background:rgba(93,191,255,0.12); color:var(--primary); }
+    .pill-danger { background:rgba(255,90,90,0.12); color:var(--danger); }
+    .pill-muted { background:rgba(255,255,255,0.05); color:var(--muted); }
+
+    .row-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .row-actions a { padding:5px 11px; border-radius:6px; font-size:.75rem; font-weight:700; text-decoration:none; border:1px solid; white-space:nowrap; }
+    .ra-pay { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; border-color:transparent; }
+    .ra-view { background:rgba(93,191,255,0.08); color:var(--primary); border-color:rgba(93,191,255,0.3); }
+    .ra-cancel { background:rgba(255,90,90,0.08); color:var(--danger); border-color:rgba(255,90,90,0.3); }
+
+    .loading-state { text-align:center; padding:60px; color:var(--muted); }
+    .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media (max-width:640px) {
+      .header-card { grid-template-columns:1fr; text-align:center; }
+      .avatar { margin:0 auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/">PorteàPorte</a>
+  <div class="topbar-actions">
+    <a class="btn ghost sm" href="/profile.html">👤 Profil</a>
+    <button class="btn ghost sm" onclick="papLogout && papLogout()">↩ Déconnexion</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="loading" class="loading-state">
+    <div class="spinner"></div>
+    Chargement de ton dashboard...
+  </div>
+  <div id="dashboard-content" style="display:none">
+    <!-- Header utilisateur -->
+    <div class="header-card">
+      <div class="avatar" id="userAvatar"></div>
+      <div class="greet">
+        <h1 id="userGreet">Bonjour</h1>
+        <div id="userSub" style="color:var(--muted);font-size:.88rem"></div>
+        <div class="roles" id="userRoles"></div>
+      </div>
+      <div>
+        <div class="stat-val" id="userXp">0</div>
+        <div class="stat-label" style="margin-top:0">XP</div>
+      </div>
+    </div>
+
+    <!-- Stats globales -->
+    <div class="stats" id="globalStats"></div>
+
+    <!-- Actions rapides selon rôle -->
+    <div class="quick-actions" id="quickActions"></div>
+
+    <!-- Sections dynamiques -->
+    <div id="sectionPassager" class="section" style="display:none">
+      <h2>🎫 Mes réservations <span class="count" id="paxCount">0</span><a class="actions-link" href="/covoiturage.html">Chercher un trajet →</a></h2>
+      <div class="table-wrap" id="paxTable"></div>
+    </div>
+
+    <div id="sectionConducteur" class="section" style="display:none">
+      <h2>🚗 Mes trajets publiés <span class="count" id="drvCount">0</span><a class="actions-link" href="/covoiturage-publier.html">Publier un trajet →</a></h2>
+      <div class="table-wrap" id="drvTable"></div>
+    </div>
+
+    <div id="sectionExpediteur" class="section" style="display:none">
+      <h2>📦 Mes envois <span class="count" id="expCount">0</span><a class="actions-link" href="/create-mission.html">Envoyer un colis →</a></h2>
+      <div class="table-wrap" id="expTable"></div>
+    </div>
+
+    <div id="sectionLivreur" class="section" style="display:none">
+      <h2>🚚 Mes livraisons <span class="count" id="livCount">0</span><a class="actions-link" href="/browse-missions.html">Voir les missions →</a></h2>
+      <div class="table-wrap" id="livTable"></div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/auth-state.js"></script>
+<script src="/js/app-launcher.js" defer></script>
+<script src="/js/pending-payment-banner.js" defer></script>
+<script src="/js/onboarding-checklist.js" defer></script>
+<script src="/js/cookie-consent.js" defer></script>
+<script src="/js/support-widget.js"></script>
+
+<script>
+  const db = window.db || window.getSupabaseClient();
+  let currentUser = null;
+  let currentProfile = null;
+
+  function fmt(n) { return Number(n||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+  function fmtDate(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-CA',{day:'2-digit',month:'short',year:'numeric'}); }
+  function fmtDT(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleString('fr-CA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function statusPill(s) {
+    const x = String(s||'').toLowerCase();
+    const map = {
+      en_attente: ['pill-warn','En attente'], pending: ['pill-warn','En attente'], unpaid: ['pill-warn','À payer'],
+      confirme: ['pill-info','Confirmé'], confirmed: ['pill-info','Confirmé'], accepte: ['pill-info','Accepté'],
+      paye: ['pill-good','Payé'], payee: ['pill-good','Payé'], paid: ['pill-good','Payé'],
+      en_route: ['pill-info','En route'], livre: ['pill-info','Livré'], delivered: ['pill-info','Livré'], livree: ['pill-info','Livré'],
+      complete: ['pill-good','Complété'], completed: ['pill-good','Complété'], termine: ['pill-good','Terminé'],
+      annule: ['pill-muted','Annulé'], cancelled: ['pill-muted','Annulé'], rembourse: ['pill-muted','Remboursé'],
+      publie: ['pill-info','Publié'], complet: ['pill-good','Complet'],
+      litige: ['pill-danger','Litige']
+    };
+    const [cls, lbl] = map[x] || ['pill-muted', s||'?'];
+    return `<span class="status-pill ${cls}">${lbl}</span>`;
+  }
+
+  async function loadDashboard() {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname); return; }
+    currentUser = session.user;
+
+    const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+    if (!profile) { document.getElementById('loading').textContent = 'Profil introuvable.'; return; }
+    currentProfile = profile;
+
+    renderHeader(session, profile);
+    renderQuickActions(profile);
+    await Promise.all([
+      loadPassengerBookings(session),
+      loadDriverRides(session),
+      loadExpediteurDeliveries(session),
+      loadLivreurMissions(session, profile),
+    ]);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+  }
+
+  function renderHeader(session, profile) {
+    const name = profile.prenom || session.user.email?.split('@')[0] || 'Utilisateur';
+    const fullName = `${profile.prenom||''} ${profile.nom||''}`.trim();
+    document.getElementById('userGreet').textContent = `Bonjour ${name} 👋`;
+    document.getElementById('userSub').textContent = profile.ville ? `${profile.ville}, ${profile.province||'QC'}` : session.user.email;
+    document.getElementById('userXp').textContent = profile.xp || 0;
+
+    const av = document.getElementById('userAvatar');
+    if (profile.photo_url && profile.photo_status === 'approved') {
+      av.innerHTML = `<img src="${esc(profile.photo_url)}" alt="${esc(fullName)}">`;
+    } else {
+      const initials = (profile.prenom?.[0]||'').toUpperCase() + (profile.nom?.[0]||'').toUpperCase();
+      av.textContent = initials || '👤';
+    }
+
+    const roles = document.getElementById('userRoles');
+    const role = profile.role || 'expediteur';
+    const roleLabels = { expediteur: 'Expéditeur', livreur: 'Livreur', 'les deux': 'Passager + Conducteur', admin: 'Admin' };
+    roles.innerHTML = '';
+    if (role === 'admin') {
+      roles.innerHTML = `<span class="role-chip admin">⚡ ${roleLabels.admin}</span>`;
+    } else {
+      const isExp = role === 'expediteur' || role === 'les deux';
+      const isLiv = role === 'livreur' || role === 'les deux';
+      if (isExp) roles.innerHTML += '<span class="role-chip">📦 Expéditeur</span>';
+      if (isLiv) roles.innerHTML += '<span class="role-chip">🚚 Livreur</span>';
+      roles.innerHTML += '<span class="role-chip">🎫 Passager covoit</span><span class="role-chip">🚗 Conducteur covoit</span>';
+    }
+
+    // Stats globales
+    const stats = document.getElementById('globalStats');
+    stats.innerHTML = `
+      <div class="stat"><div class="stat-val">${profile.livraisons || profile.livraisons_count || 0}</div><div class="stat-label">Livraisons</div></div>
+      <div class="stat"><div class="stat-val">${Number(profile.score_confiance || profile.score || 0).toFixed(1)}</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-val">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
+      <div class="stat"><div class="stat-val">${profile.coins || 0}</div><div class="stat-label">Points impact</div></div>
+    `;
+  }
+
+  function renderQuickActions(profile) {
+    const role = profile.role || 'expediteur';
+    const isLiv = role === 'livreur' || role === 'les deux';
+    const isExp = role === 'expediteur' || role === 'les deux';
+    const isAdmin = role === 'admin';
+
+    const actions = [
+      { ico:'🔍', label:'Chercher un trajet', href:'/covoiturage.html' },
+      { ico:'🚗', label:'Publier un trajet', href:'/covoiturage-publier.html' },
+    ];
+    if (isExp || role === 'admin') actions.push({ ico:'📦', label:'Envoyer un colis', href:'/create-mission.html' });
+    if (isLiv || role === 'admin') actions.push({ ico:'🚚', label:'Livrer des colis', href:'/browse-missions.html' });
+    if (isAdmin) actions.push({ ico:'⚙️', label:'Centre admin', href:'/admin/dashboard-admin.html' });
+
+    document.getElementById('quickActions').innerHTML = actions.map(a => `
+      <a class="qa" href="${a.href}">
+        <span class="qa-ico">${a.ico}</span>
+        <span class="qa-text">${a.label}</span>
+      </a>
+    `).join('');
+  }
+
+  // ─── PASSAGER : mes réservations covoiturage ──────────────────────────
+  async function loadPassengerBookings(session) {
+    const { data: bookings } = await db.from('ride_bookings')
+      .select('id,ride_id,status,total_passenger,pickup_city,dropoff_city,created_at,seats_reserved')
+      .eq('passenger_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (!bookings?.length) return;
+
+    document.getElementById('sectionPassager').style.display = 'block';
+    document.getElementById('paxCount').textContent = bookings.length;
+
+    const rows = bookings.map(b => {
+      const isPending = ['en_attente','pending','unpaid'].includes(String(b.status||'').toLowerCase());
+      const actions = [];
+      if (isPending) actions.push(`<a class="ra-pay" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}&booking_id=${esc(b.id)}">💳 Payer</a>`);
+      actions.push(`<a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}">👁️ Voir</a>`);
+      return `<tr>
+        <td><strong>${esc(b.pickup_city||'?')} → ${esc(b.dropoff_city||'?')}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
+        <td>${b.seats_reserved||1} place${(b.seats_reserved||1)>1?'s':''}</td>
+        <td><strong>${fmt(b.total_passenger)}</strong></td>
+        <td>${statusPill(b.status)}</td>
+        <td><div class="row-actions">${actions.join('')}</div></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('paxTable').innerHTML = `
+      <table><thead><tr><th>Trajet</th><th>Places</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    `;
+  }
+
+  // ─── CONDUCTEUR : mes trajets publiés ─────────────────────────────────
+  async function loadDriverRides(session) {
+    const { data: rides } = await db.from('rides')
+      .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,is_recurring')
+      .eq('driver_id', session.user.id)
+      .order('departure_time', { ascending: false })
+      .limit(20);
+    if (!rides?.length) return;
+
+    document.getElementById('sectionConducteur').style.display = 'block';
+    document.getElementById('drvCount').textContent = rides.length;
+
+    const rows = rides.map(r => `
+      <tr>
+        <td><strong>${esc(r.start_city||'?')} → ${esc(r.end_city||'?')}</strong>${r.is_recurring ? ' <span class="status-pill pill-info">🔁</span>' : ''}</td>
+        <td>${fmtDT(r.departure_time)}</td>
+        <td>${r.available_seats||0} place${(r.available_seats||0)>1?'s':''}</td>
+        <td>${statusPill(r.status)}</td>
+        <td><div class="row-actions"><a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(r.id)}">👁️ Voir</a></div></td>
+      </tr>
+    `).join('');
+    document.getElementById('drvTable').innerHTML = `<table><thead><tr><th>Trajet</th><th>Date</th><th>Places</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ─── EXPÉDITEUR : mes envois ──────────────────────────────────────────
+  async function loadExpediteurDeliveries(session) {
+    const { data: livs } = await db.from('livraisons')
+      .select('id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le,livreur_id')
+      .eq('expediteur_id', session.user.id)
+      .order('cree_le', { ascending: false })
+      .limit(20);
+    if (!livs?.length) return;
+
+    document.getElementById('sectionExpediteur').style.display = 'block';
+    document.getElementById('expCount').textContent = livs.length;
+
+    const rows = livs.map(l => `
+      <tr>
+        <td><strong>${esc(l.ville_depart||'?')} → ${esc(l.ville_arrivee||'?')}</strong><div style="font-size:.7rem;color:var(--muted);font-family:monospace">${esc(l.code||l.id.slice(0,8))}</div></td>
+        <td>${fmtDT(l.cree_le)}</td>
+        <td><strong>${fmt(l.prix_total)}</strong></td>
+        <td>${statusPill(l.statut)}</td>
+        <td><div class="row-actions"><a class="ra-view" href="/suivi-livraison.html?id=${esc(l.id)}">👁️ Suivre</a></div></td>
+      </tr>
+    `).join('');
+    document.getElementById('expTable').innerHTML = `<table><thead><tr><th>Trajet</th><th>Créée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ─── LIVREUR : mes missions acceptées ─────────────────────────────────
+  async function loadLivreurMissions(session, profile) {
+    const role = profile.role || '';
+    if (!['livreur', 'les deux', 'admin'].includes(role)) return;
+    const { data: livs } = await db.from('livraisons')
+      .select('id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le')
+      .eq('livreur_id', session.user.id)
+      .order('cree_le', { ascending: false })
+      .limit(20);
+    if (!livs?.length) return;
+
+    document.getElementById('sectionLivreur').style.display = 'block';
+    document.getElementById('livCount').textContent = livs.length;
+
+    const rows = livs.map(l => `
+      <tr>
+        <td><strong>${esc(l.ville_depart||'?')} → ${esc(l.ville_arrivee||'?')}</strong><div style="font-size:.7rem;color:var(--muted);font-family:monospace">${esc(l.code||l.id.slice(0,8))}</div></td>
+        <td>${fmtDT(l.cree_le)}</td>
+        <td><strong>${fmt(l.prix_total)}</strong></td>
+        <td>${statusPill(l.statut)}</td>
+        <td><div class="row-actions"><a class="ra-view" href="/suivi-livraison.html?id=${esc(l.id)}">👁️ Suivre</a></div></td>
+      </tr>
+    `).join('');
+    document.getElementById('livTable').innerHTML = `<table><thead><tr><th>Mission</th><th>Acceptée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  loadDashboard().catch(e => {
+    document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">Erreur : ${e.message}</div>`;
+  });
+</script>
+
+</body>
+</html>

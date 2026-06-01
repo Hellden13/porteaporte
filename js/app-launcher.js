@@ -12,19 +12,19 @@
 
   // ─── Liens disponibles (tous rôles confondus) ─────────────────────────────
   const SECTIONS = [
+    { group: 'Mon espace', items: [
+      { href: '/dashboard.html',            icon: '✨', label: 'Mon dashboard',       desc: 'Tout en un seul endroit' },
+      { href: '/profile.html',              icon: '👤', label: 'Mon profil',          desc: 'Photo, infos, préférences' },
+    ]},
     { group: 'Covoiturage', items: [
       { href: '/covoiturage.html',          icon: '🔍', label: 'Chercher un trajet',  desc: 'Trouver un lift' },
       { href: '/covoiturage-publier.html',  icon: '🚗', label: 'Publier un trajet',   desc: 'J\'ai de la place dans mon auto' },
-      { href: '/dashboard-covoiturage.html',icon: '📊', label: 'Mes trajets',         desc: 'Réservations + trajets publiés' },
     ]},
     { group: 'Livraison de colis', items: [
       { href: '/create-mission.html',       icon: '📦', label: 'Envoyer un colis',    desc: 'Créer une mission' },
-      { href: '/dashboard-expediteur.html', icon: '📋', label: 'Mes expéditions',     desc: 'Suivi de mes envois' },
       { href: '/browse-missions.html',      icon: '🚚', label: 'Livrer des colis',    desc: 'Missions disponibles' },
-      { href: '/dashboard-livreur.html',    icon: '💼', label: 'Mes livraisons',      desc: 'Missions acceptées' },
     ]},
-    { group: 'Mon compte', items: [
-      { href: '/profile.html',              icon: '👤', label: 'Mon profil',          desc: 'Photo, infos, préférences' },
+    { group: 'Autres', items: [
       { href: '/badges.html',               icon: '🎖️', label: 'Mes badges',          desc: 'Récompenses et progression' },
       { href: '/parrainage.html',           icon: '🤝', label: 'Parrainage',          desc: 'Inviter des amis' },
       { href: '/index.html',                icon: '🏠', label: 'Accueil',             desc: 'Page d\'accueil' },
