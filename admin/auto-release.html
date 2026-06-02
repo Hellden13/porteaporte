@@ -73,9 +73,8 @@
         <h1>💰 Libération paiements livreurs</h1>
         <div class="sub">Livraisons marquées "livré" depuis plus de <strong>48h</strong> sans confirmation destinataire. Tu peux libérer manuellement le paiement vers le compte Stripe du livreur.</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px">
         <button class="btn ghost" onclick="loadList()">🔄 Rafraîchir</button>
-        <button class="btn" onclick="captureCovoit()" style="background:linear-gradient(135deg,#7dffc1,#5dbfff);color:#051022">🚗 Capturer paiements covoit</button>
         <a class="btn ghost btn-sm" href="/admin/dashboard-admin.html">← Admin</a>
       </div>
     </div>
@@ -230,30 +229,6 @@
     function openDispute(livraisonId) {
       if (!confirm('Ouvrir un litige sur cette livraison ?')) return;
       location.href = '/admin/manquements.html?livraison=' + livraisonId;
-    }
-
-    async function captureCovoit() {
-      if (!confirm('Capturer tous les paiements covoiturage éligibles (trajets passés depuis +4h, non encore capturés) ?')) return;
-      log('🚀 Capture covoit en cours...');
-      try {
-        const { data: { session } } = await db.auth.getSession();
-        const r = await fetch('/api/platform?endpoint=ride-capture-eligible', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-          body: JSON.stringify({ endpoint: 'ride-capture-eligible', grace_hours: 4 })
-        });
-        const d = await r.json();
-        if (!r.ok) { log(`❌ ${d.error || r.status}`, 'err'); return; }
-        const cap = d.captured?.length || 0;
-        const skp = d.skipped?.length || 0;
-        const err = d.errors?.length || 0;
-        log(`✅ Covoit : ${cap} capturé(s), ${skp} skippé(s), ${err} erreur(s) sur ${d.total} éligibles`, 'ok');
-        if (cap > 0) {
-          d.captured.forEach(c => log(`   💰 ${c.booking_id.slice(0,8)} : ${fmt((c.amount||0)*100)} → conducteur ${c.transfer_id ? '(transfer '+c.transfer_id.slice(0,12)+')' : '(no Connect account)'}`, 'ok'));
-        }
-      } catch (e) {
-        log(`❌ ${e.message}`, 'err');
-      }
     }
 
     loadList();
