@@ -6,10 +6,12 @@
         "api/capture-livraison.js": { "includeFiles": "lib/**" },
         "api/paiement-livraison.js": { "includeFiles": "lib/**" },
         "api/cron-cleanup.js": { "includeFiles": "lib/**" },
+        "api/cron-ride-capture.js": { "includeFiles": "lib/**" },
         "api/turnstile-verify.js": { "includeFiles": "lib/**" }
     },
     "crons": [
-        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
+        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" },
+        { "path": "/api/cron-ride-capture", "schedule": "0 * * * *" }
     ],
     "redirects": [
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
@@ -69,6 +71,10 @@
                      {
                          "source":  "/admin/pilotage",
                          "destination":  "/admin/pilotage.html"
+                     },
+                     {
+                         "source":  "/admin/points-rencontre",
+                         "destination":  "/admin/points-rencontre.html"
                      },
                      {
                          "source":  "/api/capture-payment",
@@ -261,6 +267,30 @@
                      {
                          "source":  "/api/safe-meeting-points",
                          "destination":  "/api/platform?endpoint=safe-meeting-points"
+                     },
+                     {
+                         "source":  "/api/meeting-point-suggest",
+                         "destination":  "/api/platform?endpoint=meeting-point-suggest"
+                     },
+                     {
+                         "source":  "/api/meeting-point-report",
+                         "destination":  "/api/platform?endpoint=meeting-point-report"
+                     },
+                     {
+                         "source":  "/api/admin-meeting-points",
+                         "destination":  "/api/platform?endpoint=admin-meeting-points"
+                     },
+                     {
+                         "source":  "/api/admin-meeting-point-save",
+                         "destination":  "/api/platform?endpoint=admin-meeting-point-save"
+                     },
+                     {
+                         "source":  "/api/admin-meeting-point-status",
+                         "destination":  "/api/platform?endpoint=admin-meeting-point-status"
+                     },
+                     {
+                         "source":  "/api/admin-meeting-point-stats",
+                         "destination":  "/api/platform?endpoint=admin-meeting-point-stats"
                      },
                      {
                          "source":  "/api/cov-dashboard",

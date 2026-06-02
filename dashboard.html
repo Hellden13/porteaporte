@@ -310,7 +310,7 @@
     `;
   }
 
-  // ─── CONDUCTEUR : mes trajets publiés ─────────────────────────────────
+  // ─── CONDUCTEUR : mes trajets publiés + capture paiement ──────────────
   async function loadDriverRides(session) {
     const { data: rides } = await db.from('rides')
       .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,is_recurring')
@@ -322,17 +322,67 @@
     document.getElementById('sectionConducteur').style.display = 'block';
     document.getElementById('drvCount').textContent = rides.length;
 
-    const rows = rides.map(r => `
+    // Charge aussi les bookings confirmés non payés sur ces trajets pour bouton "Capturer"
+    const rideIds = rides.map(r => r.id);
+    const { data: pendingPay } = await db.from('ride_bookings')
+      .select('id,ride_id,status,driver_amount')
+      .in('ride_id', rideIds)
+      .eq('status', 'confirme')
+      .is('paid_at', null);
+    const pendingByRide = {};
+    (pendingPay || []).forEach(b => {
+      pendingByRide[b.ride_id] = pendingByRide[b.ride_id] || [];
+      pendingByRide[b.ride_id].push(b);
+    });
+
+    const rows = rides.map(r => {
+      const pending = pendingByRide[r.id] || [];
+      const totalDue = pending.reduce((s, b) => s + Number(b.driver_amount || 0), 0);
+      const dep = r.departure_time ? new Date(r.departure_time).getTime() : 0;
+      const canCapture = pending.length > 0 && dep && dep < (Date.now() - 30 * 60 * 1000); // trajet passé +30min minimum
+      const captureBtn = canCapture
+        ? `<button class="ra-pay" onclick="captureRideTrip('${esc(r.id)}', ${pending.length}, ${totalDue.toFixed(2)})" style="border:none;cursor:pointer">💰 Recevoir mon paiement (${totalDue.toFixed(2)} $)</button>`
+        : (pending.length > 0 ? `<span class="status-pill pill-warn" title="Disponible après l'heure du trajet">⏳ ${pending.length} en attente</span>` : '');
+      return `
       <tr>
         <td><strong>${esc(r.start_city||'?')} → ${esc(r.end_city||'?')}</strong>${r.is_recurring ? ' <span class="status-pill pill-info">🔁</span>' : ''}</td>
         <td>${fmtDT(r.departure_time)}</td>
         <td>${r.available_seats||0} place${(r.available_seats||0)>1?'s':''}</td>
         <td>${statusPill(r.status)}</td>
-        <td><div class="row-actions"><a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(r.id)}">👁️ Voir</a></div></td>
+        <td><div class="row-actions">${captureBtn}<a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(r.id)}">👁️ Voir</a></div></td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
     document.getElementById('drvTable').innerHTML = `<table><thead><tr><th>Trajet</th><th>Date</th><th>Places</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
+
+  // Capture les paiements d'un trajet (côté conducteur)
+  window.captureRideTrip = async function (rideId, count, total) {
+    if (!confirm(`Confirmer que tu as fait ce trajet pour ${count} passager(s) ?\n\nTu recevras ${total} $ sur ton compte Stripe Connect (transfert sous 2 jours).`)) return;
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      // On capture chaque booking individuellement (le conducteur n'est pas admin)
+      const { data: bookings } = await db.from('ride_bookings')
+        .select('id')
+        .eq('ride_id', rideId)
+        .eq('status', 'confirme')
+        .is('paid_at', null);
+      let ok = 0, fail = 0;
+      for (const b of (bookings || [])) {
+        const r = await fetch('/api/platform?endpoint=ride-capture-eligible', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'ride-capture-eligible', booking_id: b.id })
+        });
+        const d = await r.json();
+        if (r.ok && (d.captured?.length || 0) > 0) ok++; else fail++;
+      }
+      alert(`✅ ${ok} paiement(s) capturé(s).\n${fail > 0 ? '⚠️ ' + fail + ' échec(s). Contacte le support.' : 'Le transfert vers ton compte bancaire prend ~2 jours ouvrés.'}`);
+      location.reload();
+    } catch (e) {
+      alert('❌ ' + e.message);
+    }
+  };
 
   // ─── EXPÉDITEUR : mes envois ──────────────────────────────────────────
   async function loadExpediteurDeliveries(session) {
