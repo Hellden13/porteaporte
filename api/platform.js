@@ -15,7 +15,7 @@ const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
-  ridePaymentCreate, ridePaymentSync, rideCaptureEligible,
+  ridePaymentCreate, ridePaymentSync,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
 } = require('../lib/_rides');
@@ -28,10 +28,6 @@ const {
   stripeConnectOnboard, stripeConnectStatus, stripeConnectDashboard,
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
 } = require('../lib/_connect');
-const {
-  adminMeetingPoints, adminMeetingPointSave, adminMeetingPointStatus,
-  meetingPointSuggest, meetingPointReport, adminMeetingPointStats,
-} = require('../lib/_meeting_points');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
 const FILE_ORIGIN_PUBLIC_ENDPOINTS = new Set([
@@ -76,10 +72,6 @@ async function createLivraison(req, res, ctx, body) {
     email_destinataire: body.email_destinataire || null,
     telephone_destinataire: body.telephone_destinataire || null,
     taille_colis: body.taille_colis || null,
-    pickup_point_id: body.pickup_point_id || null,
-    dropoff_point_id: body.dropoff_point_id || null,
-    pickup_safe_label: body.pickup_safe_label || null,
-    dropoff_safe_label: body.dropoff_safe_label || null,
     destinataire_dispo_jours: Array.isArray(body.destinataire_dispo_jours) && body.destinataire_dispo_jours.length ? body.destinataire_dispo_jours : null,
     destinataire_dispo_debut: body.destinataire_dispo_debut || null,
     destinataire_dispo_fin: body.destinataire_dispo_fin || null,
@@ -166,7 +158,7 @@ async function createLivraison(req, res, ctx, body) {
     `${ctx.sbUrl}/rest/v1/livraisons`,
     sbHeaders(ctx.sbKey),
     payload,
-    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'date_souhaitee', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'pickup_point_id', 'dropoff_point_id', 'pickup_safe_label', 'dropoff_safe_label', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
+    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'date_souhaitee', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
   );
 
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
@@ -5635,7 +5627,6 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
     if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
     if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
-    if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, { ...ctx, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY) }, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
@@ -5661,12 +5652,6 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'pet-photo-upload')         return await petPhotoUpload(req, res, ctx, body);
     if (endpoint === 'pet-card-get')             return await petCardGet(req, res, ctx, body);
     if (endpoint === 'safe-meeting-points')  return await safeMeetingPoints(req, res, ctx, body);
-    if (endpoint === 'meeting-point-suggest') return await meetingPointSuggest(req, res, ctx, body);
-    if (endpoint === 'meeting-point-report')  return await meetingPointReport(req, res, ctx, body);
-    if (endpoint === 'admin-meeting-points')  return await adminMeetingPoints(req, res, ctx, body);
-    if (endpoint === 'admin-meeting-point-save') return await adminMeetingPointSave(req, res, ctx, body);
-    if (endpoint === 'admin-meeting-point-status') return await adminMeetingPointStatus(req, res, ctx, body);
-    if (endpoint === 'admin-meeting-point-stats') return await adminMeetingPointStats(req, res, ctx, body);
     if (endpoint === 'cov-dashboard') return await covDashboard(req, res, ctx, body);
     if (endpoint === 'cov-onboard')   return await covOnboard(req, res, ctx, body);
     if (endpoint === 'cov-progress')  return await covProgress(req, res, ctx, body);
