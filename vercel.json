@@ -11,7 +11,7 @@
     },
     "crons": [
         { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" },
-        { "path": "/api/cron-ride-capture", "schedule": "0 4 * * *" }
+        { "path": "/api/cron-ride-capture", "schedule": "0 * * * *" }
     ],
     "redirects": [
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
