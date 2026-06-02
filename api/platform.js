@@ -15,7 +15,7 @@ const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
-  ridePaymentCreate, ridePaymentSync,
+  ridePaymentCreate, ridePaymentSync, rideCaptureEligible,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
 } = require('../lib/_rides');
@@ -5627,6 +5627,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
     if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
     if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
+    if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
