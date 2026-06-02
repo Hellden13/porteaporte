@@ -6,6 +6,7 @@
   <title>Détail du trajet — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/brand-uniform.css"/>
+  <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://js.stripe.com/v3/"></script>
@@ -321,7 +322,7 @@
             <textarea id="pkg-desc" placeholder="Ex: Boite fragile, vetements..."></textarea>
           </div>
           <div class="pkg-price-preview" id="pkg-price-preview">
-            Frais d'envoi estimes : <strong id="pkg-price-val"></strong>
+            Frais d&#39;envoi estimés : <strong id="pkg-price-val"></strong>
             <div style="font-size:.75rem;margin-top:4px;color:#7b74cc">100% verse au chauffeur</div>
           </div>
           <div class="pkg-unavail" id="pkg-unavail">Ce trajet n'accepte pas les colis.</div>
@@ -929,12 +930,12 @@ async function mountRidePayment(paymentData) {
   host.innerHTML = '';
   paymentElement.mount('#ride-payment-element');
   document.getElementById('ride-payment-title').textContent =
-    'Paiement securise - ' + Number(paymentData.montant_dollars || 0).toFixed(2) + ' $ ' + String(paymentData.currency || 'CAD').toUpperCase();
+    'Paiement sécurisé — ' + Number(paymentData.montant_dollars || 0).toFixed(2) + ' $ ' + String(paymentData.currency || 'CAD').toUpperCase();
   document.getElementById('ride-payment-box').classList.add('active');
   pendingRidePayment = paymentData;
   ridePaymentReady = true;
   document.getElementById('btn-reserve').textContent = 'Payer et confirmer';
-  showToast('Reservation creee. Confirme le paiement pour bloquer ta place.', 'success');
+  showToast('Réservation créée. Confirme le paiement pour bloquer ta place.', 'success');
 }
 
 async function bookPassenger() {
