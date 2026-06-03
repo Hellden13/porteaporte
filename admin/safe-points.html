@@ -4,334 +4,396 @@
   <meta charset="UTF-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>🗺️ Gestion des lieux safe — Admin</title>
+  <title>Points rencontre - Admin PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
-    body { padding:20px; min-height:100vh; background:#05080c; color:var(--brand-text); font-family:'Inter',system-ui,sans-serif; }
-    .wrap { max-width:1280px; margin:0 auto; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
-    h1 { margin:0 0 4px; font-size:1.45rem; }
-    .sub { color:var(--brand-muted); font-size:.9rem; margin-bottom:18px; }
-    .btn { padding:9px 16px; background:linear-gradient(135deg,#5dbfff,#3da9ff); color:#051022; border:0; border-radius:8px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
-    .btn.ghost { background:transparent; color:var(--brand-text); border:1px solid var(--brand-border); }
-    .btn.sm { padding:5px 11px; font-size:.78rem; }
-    .btn.danger { background:linear-gradient(135deg,#ff7a7a,#ff5252); color:#fff; }
-
-    .filters { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; padding:14px 16px; background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:10px; }
-    .filters input, .filters select { padding:8px 12px; background:var(--brand-bg-dark); color:var(--brand-text); border:1px solid var(--brand-border); border-radius:6px; font:inherit; }
-    .filters label { font-size:.85rem; color:var(--brand-muted); display:flex; gap:6px; align-items:center; }
-
-    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:18px; }
-    .stat { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:10px; padding:12px 14px; text-align:center; }
-    .stat .val { font-size:1.5rem; font-weight:900; color:#5dbfff; line-height:1; }
-    .stat .lbl { font-size:.72rem; color:var(--brand-muted); text-transform:uppercase; margin-top:4px; letter-spacing:.05em; }
-
-    .table-wrap { background:var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:10px; overflow:auto; }
-    table { width:100%; border-collapse:collapse; min-width:900px; }
-    th { background:rgba(255,255,255,.04); color:var(--brand-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; padding:9px 11px; text-align:left; font-weight:700; }
-    td { padding:10px 11px; font-size:.85rem; border-top:1px solid var(--brand-border); }
-    tr:hover td { background:rgba(255,255,255,.02); }
-    .pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:.7rem; font-weight:700; }
-    .pill.verified { background:rgba(125,255,193,.12); color:#7dffc1; }
-    .pill.inactive { background:rgba(255,90,90,.12); color:#ff7a7a; }
-    .row-actions { display:flex; gap:6px; }
-
-    /* Modal */
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.85); backdrop-filter:blur(8px); z-index:9990; display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; }
+    :root { color-scheme: dark; }
+    body { margin:0; min-height:100vh; padding:20px; background:#05080c; color:var(--brand-text,#eef5ff); font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .wrap { max-width:1240px; margin:0 auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    h1 { margin:0 0 5px; font-size:clamp(1.35rem,2vw,1.85rem); letter-spacing:0; }
+    .sub { color:var(--brand-muted,#9aa8ba); font-size:.9rem; max-width:720px; }
+    .actions, .row-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .btn { padding:9px 14px; background:#5dbfff; color:#051022; border:1px solid #5dbfff; border-radius:8px; font-weight:850; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:38px; }
+    .btn.ghost { background:transparent; color:var(--brand-text,#eef5ff); border-color:var(--brand-border,rgba(255,255,255,.15)); }
+    .btn.danger { background:rgba(255,90,90,.12); color:#ffb3b3; border-color:rgba(255,90,90,.38); }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .notice { margin:0 0 14px; padding:12px 14px; border:1px solid rgba(255,211,122,.28); border-radius:8px; background:rgba(255,211,122,.07); color:#ffe0a3; font-size:.88rem; }
+    .filters { display:flex; gap:10px; align-items:end; margin-bottom:14px; flex-wrap:wrap; padding:14px; background:var(--brand-bg-surface,#101724); border:1px solid var(--brand-border,rgba(255,255,255,.12)); border-radius:8px; }
+    .field { display:flex; flex-direction:column; gap:5px; min-width:210px; }
+    label { color:var(--brand-muted,#9aa8ba); font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; }
+    input, select, textarea { width:100%; box-sizing:border-box; padding:9px 11px; background:#05080c; color:var(--brand-text,#eef5ff); border:1px solid var(--brand-border,rgba(255,255,255,.15)); border-radius:7px; font:inherit; }
+    textarea { min-height:74px; resize:vertical; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:14px; }
+    .stat { background:var(--brand-bg-surface,#101724); border:1px solid var(--brand-border,rgba(255,255,255,.12)); border-radius:8px; padding:12px; }
+    .stat .val { font-size:1.45rem; line-height:1; font-weight:950; color:#5dbfff; }
+    .stat .lbl { margin-top:4px; color:var(--brand-muted,#9aa8ba); font-size:.72rem; text-transform:uppercase; }
+    .table-wrap { background:var(--brand-bg-surface,#101724); border:1px solid var(--brand-border,rgba(255,255,255,.12)); border-radius:8px; overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:860px; }
+    th, td { padding:10px; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top; }
+    th { color:var(--brand-muted,#9aa8ba); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }
+    td { font-size:.86rem; }
+    .muted { color:var(--brand-muted,#9aa8ba); font-size:.8rem; }
+    .pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:.72rem; font-weight:850; border:1px solid rgba(93,191,255,.28); color:#95d8ff; background:rgba(93,191,255,.08); }
+    .pill.good { color:#bfff70; border-color:rgba(191,255,112,.32); background:rgba(191,255,112,.09); }
+    .pill.bad { color:#ffb3b3; border-color:rgba(255,90,90,.34); background:rgba(255,90,90,.1); }
+    .empty { padding:34px 16px; text-align:center; color:var(--brand-muted,#9aa8ba); }
+    .modal-overlay { position:fixed; inset:0; z-index:9990; display:none; align-items:flex-start; justify-content:center; padding:26px 14px; overflow:auto; background:rgba(0,0,0,.78); }
     .modal-overlay.open { display:flex; }
-    .modal { background:#0a0f17; border:1px solid var(--brand-border); border-radius:14px; padding:24px 28px; max-width:680px; width:100%; }
-    .modal h2 { margin:0 0 16px; font-size:1.15rem; }
-    .modal .field { margin-bottom:12px; }
-    .modal label { display:block; font-size:.78rem; font-weight:700; color:var(--brand-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em; }
-    .modal input, .modal select, .modal textarea { width:100%; padding:9px 12px; background:#05080c; color:var(--brand-text); border:1px solid var(--brand-border); border-radius:6px; font:inherit; box-sizing:border-box; }
-    .modal .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .modal .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    .modal .check-row { display:flex; gap:14px; flex-wrap:wrap; margin:8px 0; font-size:.88rem; }
-    .modal .check-row label { display:flex; gap:6px; align-items:center; text-transform:none; letter-spacing:0; font-size:.88rem; color:var(--brand-text); cursor:pointer; }
-    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; padding-top:14px; border-top:1px solid var(--brand-border); }
-
-    .empty { text-align:center; padding:40px; color:var(--brand-muted); }
+    .modal { width:min(720px,100%); background:#0a0f17; border:1px solid var(--brand-border,rgba(255,255,255,.12)); border-radius:10px; padding:18px; box-shadow:0 22px 80px rgba(0,0,0,.45); }
+    .modal h2 { margin:0 0 14px; font-size:1.1rem; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .full { grid-column:1 / -1; }
+    .checks { display:flex; gap:12px; flex-wrap:wrap; margin-top:4px; }
+    .checks label { text-transform:none; letter-spacing:0; color:var(--brand-text,#eef5ff); font-size:.88rem; display:flex; align-items:center; gap:6px; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.1); }
+    @media (max-width:760px) { body { padding:14px; } .form-grid { grid-template-columns:1fr; } .full { grid-column:auto; } .field { min-width:100%; } .btn { width:100%; } .actions { width:100%; } }
   </style>
 </head>
 <body>
-
 <main class="wrap">
   <div class="topbar">
     <div>
-      <h1>🗺️ Gestion des lieux safe</h1>
-      <div class="sub">Ajoute, modifie ou désactive des lieux de rencontre sécuritaires.</div>
+      <h1>Points rencontre</h1>
+      <div class="sub">Gestion admin des lieux publics suggérés pour covoiturage et colis.</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" onclick="openModal()">+ Nouveau lieu</button>
-      <button class="btn ghost sm" onclick="loadList()">🔄 Rafraîchir</button>
-      <a class="btn ghost sm" href="/admin/dashboard-admin.html">← Admin</a>
+    <div class="actions">
+      <button class="btn" id="new-btn" type="button">Nouveau lieu</button>
+      <button class="btn ghost" id="refresh-btn" type="button">Rafraîchir</button>
+      <a class="btn ghost" href="/admin/dashboard-admin.html">Admin</a>
     </div>
   </div>
 
-  <div class="filters">
-    <label>Ville : <input id="filter-city" type="text" placeholder="Ex: Québec" oninput="debouncedReload()"></label>
-    <label><input type="checkbox" id="filter-inactive" onchange="loadList()"> Inclure désactivés</label>
-    <div style="margin-left:auto;color:var(--brand-muted);font-size:.78rem" id="last-load">—</div>
-  </div>
+  <p class="notice">Important : un commerce est un point public suggéré, pas un partenaire officiel, sauf autorisation explicite.</p>
 
-  <div class="stats" id="stats"></div>
+  <section class="filters">
+    <div class="field">
+      <label for="filter-city">Ville</label>
+      <input id="filter-city" type="text" placeholder="Québec, Lévis, Montréal">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:.88rem;color:var(--brand-text,#eef5ff)">
+      <input type="checkbox" id="filter-inactive" style="width:auto"> Inclure les désactivés
+    </label>
+    <div class="muted" id="last-load" style="margin-left:auto">-</div>
+  </section>
 
-  <div id="content">
-    <div class="empty">⏳ Chargement…</div>
-  </div>
+  <section class="stats" id="stats"></section>
+  <section id="content"><div class="empty">Chargement...</div></section>
 </main>
 
-<!-- Modal édition -->
-<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal">
     <h2 id="modal-title">Nouveau lieu</h2>
     <input type="hidden" id="pt-id">
-    <div class="row2">
-      <div class="field">
-        <label>Ville *</label>
-        <input id="pt-city" type="text" placeholder="Québec" required>
-      </div>
-      <div class="field">
-        <label>Secteur / Quartier</label>
-        <input id="pt-sector" type="text" placeholder="Sainte-Foy">
-      </div>
+    <div class="form-grid">
+      <div class="field"><label for="pt-city">Ville *</label><input id="pt-city" type="text" required placeholder="Québec"></div>
+      <div class="field"><label for="pt-sector">Secteur</label><input id="pt-sector" type="text" placeholder="Sainte-Foy"></div>
+      <div class="field full"><label for="pt-name">Nom *</label><input id="pt-name" type="text" required placeholder="Bibliothèque, terminus, stationnement public"></div>
+      <div class="field full"><label for="pt-address">Adresse *</label><input id="pt-address" type="text" required placeholder="Adresse complète"></div>
+      <div class="field"><label for="pt-lat">Latitude *</label><input id="pt-lat" type="number" step="0.000001" required placeholder="46.8139"></div>
+      <div class="field"><label for="pt-lng">Longitude *</label><input id="pt-lng" type="number" step="0.000001" required placeholder="-71.2080"></div>
+      <div class="field"><label for="pt-type">Type</label><select id="pt-type">
+        <option value="lieu_public">Lieu public</option>
+        <option value="stationnement">Stationnement</option>
+        <option value="gare">Gare</option>
+        <option value="terminus">Terminus</option>
+        <option value="bibliotheque">Bibliothèque</option>
+        <option value="hotel_ville">Hôtel de ville</option>
+        <option value="commerce">Commerce public suggéré</option>
+        <option value="station_essence">Station-service</option>
+        <option value="restaurant">Restaurant</option>
+        <option value="autre">Autre</option>
+      </select></div>
+      <div class="field"><label for="pt-hours">Heures</label><input id="pt-hours" type="text" placeholder="Ex: 7h-22h"></div>
+      <div class="field full"><label for="pt-notes">Note publique</label><textarea id="pt-notes" placeholder="Ex: Choisir la zone visible et éclairée."></textarea></div>
+      <div class="field full"><label for="pt-photo">URL photo HTTPS</label><input id="pt-photo" type="url" placeholder="https://..."></div>
     </div>
-    <div class="field">
-      <label>Nom du lieu *</label>
-      <input id="pt-name" type="text" placeholder="Tim Hortons Bd Laurier" required>
+    <div class="checks">
+      <label><input id="pt-cameras" type="checkbox"> Caméras possibles</label>
+      <label><input id="pt-lit" type="checkbox" checked> Éclairé</label>
+      <label><input id="pt-parking" type="checkbox" checked> Stationnement facile</label>
+      <label><input id="pt-verified" type="checkbox"> Vérifié</label>
+      <label><input id="pt-active" type="checkbox" checked> Actif</label>
     </div>
-    <div class="field">
-      <label>Adresse complète *</label>
-      <input id="pt-address" type="text" placeholder="2700 Bd Laurier, Québec, QC G1V 2L8" required>
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Latitude *</label>
-        <input id="pt-lat" type="number" step="0.000001" placeholder="46.7800" required>
-      </div>
-      <div class="field">
-        <label>Longitude *</label>
-        <input id="pt-lng" type="number" step="0.000001" placeholder="-71.2700" required>
-      </div>
-      <div class="field">
-        <label>Type</label>
-        <select id="pt-type">
-          <option value="restaurant">☕ Restaurant</option>
-          <option value="commerce">🛒 Commerce</option>
-          <option value="station_essence">⛽ Station essence</option>
-          <option value="gare">🚆 Gare</option>
-          <option value="metro">🚇 Métro</option>
-          <option value="stationnement">🅿️ Stationnement</option>
-          <option value="autre">📍 Autre</option>
-        </select>
-      </div>
-    </div>
-    <div class="field">
-      <label>Heures d'ouverture</label>
-      <input id="pt-hours" type="text" placeholder="24/7  ou  Lun-Dim 7h-23h">
-    </div>
-    <div class="field">
-      <label>Notes (visible aux users)</label>
-      <textarea id="pt-notes" rows="2" placeholder="Ex: Grand stationnement, accès Route 116"></textarea>
-    </div>
-    <div class="field">
-      <label>URL photo (optionnel)</label>
-      <input id="pt-photo" type="url" placeholder="https://...">
-    </div>
-    <div class="check-row">
-      <label><input id="pt-cameras" type="checkbox"> 📹 Caméras</label>
-      <label><input id="pt-lit" type="checkbox" checked> 💡 Bien éclairé</label>
-      <label><input id="pt-parking" type="checkbox" checked> 🅿️ Stationnement gratuit</label>
-      <label><input id="pt-verified" type="checkbox" checked> ✓ Vérifié</label>
-      <label><input id="pt-active" type="checkbox" checked> ✅ Actif</label>
-    </div>
-
-    <p style="font-size:.78rem;color:var(--brand-muted);margin-top:14px">💡 Astuce : récupère lat/lng en clic-droit sur <a href="https://www.google.com/maps" target="_blank" style="color:#5dbfff">Google Maps</a> → 1er menu = coordonnées copiables.</p>
-
+    <p class="muted">Astuce : dans Google Maps, clic droit sur le lieu pour copier les coordonnées.</p>
     <div class="modal-actions">
-      <button class="btn ghost" onclick="closeModal()">Annuler</button>
-      <button class="btn" id="save-btn" onclick="savePoint()">💾 Sauvegarder</button>
+      <button class="btn ghost" id="cancel-btn" type="button">Annuler</button>
+      <button class="btn" id="save-btn" type="button">Sauvegarder</button>
     </div>
   </div>
 </div>
 
 <script src="/js/admin-alert-bell.js" defer></script>
-
 <script>
-  const db = window.db || window.getSupabaseClient();
-  let allPoints = [];
-  let _reloadTimer = null;
+  const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+  const state = { points: [], session: null, timer: null };
+  const el = (id) => document.getElementById(id);
+  const typeLabel = {
+    restaurant: 'Restaurant', commerce: 'Commerce', station_essence: 'Station-service',
+    gare: 'Gare', metro: 'Métro', stationnement: 'Stationnement', terminus: 'Terminus',
+    bibliotheque: 'Bibliothèque', hotel_ville: 'Hôtel de ville', lieu_public: 'Lieu public', autre: 'Autre'
+  };
 
-  function debouncedReload() {
-    clearTimeout(_reloadTimer);
-    _reloadTimer = setTimeout(loadList, 350);
-  }
+  function setText(node, value) { node.textContent = value == null || value === '' ? '-' : String(value); }
+  function clearNode(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function validCoord(value) { const n = Number(value); return Number.isFinite(n) ? n : null; }
 
-  function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
-  const TYPE_ICON = { restaurant:'☕', commerce:'🛒', station_essence:'⛽', gare:'🚆', metro:'🚇', stationnement:'🅿️', autre:'📍' };
-
-  async function loadList() {
-    const { data: { session } } = await db.auth.getSession();
-    if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname); return; }
-
-    const city = document.getElementById('filter-city').value.trim();
-    const includeInactive = document.getElementById('filter-inactive').checked;
-
-    document.getElementById('content').innerHTML = '<div class="empty">⏳ Chargement…</div>';
-    try {
-      const r = await fetch('/api/platform?endpoint=admin-safe-points-list', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + session.access_token },
-        body: JSON.stringify({ endpoint: 'admin-safe-points-list', city, include_inactive: includeInactive })
-      });
-      const d = await r.json();
-      if (!r.ok) { document.getElementById('content').innerHTML = '<div class="empty">⚠️ ' + (d.error||r.status) + '</div>'; return; }
-      allPoints = d.points || [];
-      renderStats(d);
-      renderTable(allPoints);
-      document.getElementById('last-load').textContent = 'MAJ ' + new Date().toLocaleTimeString('fr-CA');
-    } catch (e) {
-      document.getElementById('content').innerHTML = '<div class="empty">⚠️ ' + e.message + '</div>';
+  async function getSessionOrRedirect() {
+    if (state.session) return state.session;
+    const { data } = await db.auth.getSession();
+    if (!data?.session) {
+      location.href = '/login.html?next=' + encodeURIComponent(location.pathname);
+      return null;
     }
+    state.session = data.session;
+    return state.session;
   }
 
-  function renderStats(d) {
-    const cityChips = Object.entries(d.by_city || {})
-      .sort((a,b) => b[1]-a[1])
-      .map(([city, n]) => '<div class="stat"><div class="val">' + n + '</div><div class="lbl">' + esc(city) + '</div></div>')
-      .join('');
-    document.getElementById('stats').innerHTML =
-      '<div class="stat" style="border-color:#5dbfff"><div class="val">' + d.total + '</div><div class="lbl">Total</div></div>' +
-      cityChips;
+  async function api(endpoint, body = {}) {
+    const session = await getSessionOrRedirect();
+    if (!session) throw new Error('Connexion requise');
+    const res = await fetch('/api/platform?endpoint=' + encodeURIComponent(endpoint), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint, ...body })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.details || 'Action impossible');
+    return data;
+  }
+
+  function renderStats(data) {
+    const stats = el('stats');
+    clearNode(stats);
+    const entries = [['Total', data.total || 0], ...Object.entries(data.by_city || {}).sort((a, b) => b[1] - a[1]).slice(0, 7)];
+    entries.forEach(([label, value]) => {
+      const card = document.createElement('div');
+      card.className = 'stat';
+      const val = document.createElement('div');
+      val.className = 'val';
+      setText(val, value);
+      const lbl = document.createElement('div');
+      lbl.className = 'lbl';
+      setText(lbl, label);
+      card.append(val, lbl);
+      stats.appendChild(card);
+    });
+  }
+
+  function appendCell(row, content) {
+    const td = document.createElement('td');
+    if (content instanceof Node) td.appendChild(content);
+    else td.textContent = content == null || content === '' ? '-' : String(content);
+    row.appendChild(td);
+    return td;
   }
 
   function renderTable(points) {
+    const content = el('content');
+    clearNode(content);
     if (!points.length) {
-      document.getElementById('content').innerHTML = '<div class="empty">Aucun lieu trouvé. <button class="btn sm" onclick="openModal()">+ En ajouter un</button></div>';
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'Aucun lieu trouvé.';
+      content.appendChild(empty);
       return;
     }
-    const rows = points.map(p => {
-      const gmaps = 'https://www.google.com/maps?q=' + p.lat + ',' + p.lng;
-      const pills = [];
-      if (!p.active) pills.push('<span class="pill inactive">Désactivé</span>');
-      if (p.verified) pills.push('<span class="pill verified">✓ Vérifié</span>');
-      return '<tr>' +
-        '<td>' + (TYPE_ICON[p.type]||'📍') + ' <strong>' + esc(p.name) + '</strong><br><span style="color:var(--brand-muted);font-size:.78rem">' + esc(p.address) + '</span></td>' +
-        '<td>' + esc(p.city) + (p.sector ? '<br><span style="color:var(--brand-muted);font-size:.78rem">' + esc(p.sector) + '</span>' : '') + '</td>' +
-        '<td><a href="' + gmaps + '" target="_blank" style="color:#5dbfff;font-family:monospace;font-size:.78rem">' + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4) + '</a></td>' +
-        '<td style="font-size:.78rem">' + (p.hours || '—') + '</td>' +
-        '<td>' + pills.join(' ') + '</td>' +
-        '<td><div class="row-actions">' +
-          '<button class="btn sm ghost" onclick="editPoint(\'' + p.id + '\')">✏️ Modifier</button>' +
-          '<button class="btn sm danger" onclick="deletePoint(\'' + p.id + '\', \'' + esc(p.name) + '\')">🗑️</button>' +
-        '</div></td>' +
-      '</tr>';
-    }).join('');
-    document.getElementById('content').innerHTML =
-      '<div class="table-wrap"><table><thead><tr><th>Lieu</th><th>Ville / Secteur</th><th>GPS</th><th>Horaires</th><th>Statuts</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Lieu</th><th>Ville</th><th>GPS</th><th>Type</th><th>Statut</th><th>Actions</th></tr>';
+    const tbody = document.createElement('tbody');
+
+    points.forEach((point) => {
+      const row = document.createElement('tr');
+      const nameBlock = document.createElement('div');
+      const strong = document.createElement('strong');
+      setText(strong, point.name);
+      const address = document.createElement('div');
+      address.className = 'muted';
+      setText(address, point.address);
+      nameBlock.append(strong, address);
+      appendCell(row, nameBlock);
+
+      const cityBlock = document.createElement('div');
+      const city = document.createElement('div');
+      setText(city, point.city);
+      const sector = document.createElement('div');
+      sector.className = 'muted';
+      setText(sector, point.sector || '');
+      cityBlock.append(city, sector);
+      appendCell(row, cityBlock);
+
+      const lat = Number(point.lat);
+      const lng = Number(point.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        const link = document.createElement('a');
+        link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.color = '#5dbfff';
+        link.textContent = lat.toFixed(4) + ', ' + lng.toFixed(4);
+        appendCell(row, link);
+      } else {
+        appendCell(row, 'À compléter');
+      }
+
+      appendCell(row, typeLabel[point.type] || point.type || 'Autre');
+
+      const status = document.createElement('div');
+      const active = document.createElement('span');
+      active.className = 'pill ' + (point.active === false ? 'bad' : 'good');
+      active.textContent = point.active === false ? 'Désactivé' : 'Actif';
+      status.appendChild(active);
+      if (point.verified) {
+        const verified = document.createElement('span');
+        verified.className = 'pill good';
+        verified.style.marginLeft = '5px';
+        verified.textContent = 'Vérifié';
+        status.appendChild(verified);
+      }
+      appendCell(row, status);
+
+      const actions = document.createElement('div');
+      actions.className = 'row-actions';
+      const edit = document.createElement('button');
+      edit.className = 'btn ghost';
+      edit.type = 'button';
+      edit.textContent = 'Modifier';
+      edit.addEventListener('click', () => openModal(point));
+      const disable = document.createElement('button');
+      disable.className = 'btn danger';
+      disable.type = 'button';
+      disable.textContent = 'Désactiver';
+      disable.addEventListener('click', () => disablePoint(point));
+      actions.append(edit, disable);
+      appendCell(row, actions);
+      tbody.appendChild(row);
+    });
+
+    table.append(thead, tbody);
+    wrap.appendChild(table);
+    content.appendChild(wrap);
   }
 
-  function openModal() {
-    document.getElementById('modal-title').textContent = 'Nouveau lieu';
-    ['pt-id','pt-city','pt-sector','pt-name','pt-address','pt-lat','pt-lng','pt-hours','pt-notes','pt-photo'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('pt-type').value = 'restaurant';
-    document.getElementById('pt-cameras').checked = false;
-    document.getElementById('pt-lit').checked = true;
-    document.getElementById('pt-parking').checked = true;
-    document.getElementById('pt-verified').checked = true;
-    document.getElementById('pt-active').checked = true;
-    document.getElementById('modal').classList.add('open');
+  async function loadList() {
+    el('content').innerHTML = '<div class="empty">Chargement...</div>';
+    try {
+      const data = await api('admin-safe-points-list', {
+        city: el('filter-city').value.trim(),
+        include_inactive: el('filter-inactive').checked
+      });
+      state.points = data.points || [];
+      renderStats(data);
+      renderTable(state.points);
+      el('last-load').textContent = 'MAJ ' + new Date().toLocaleTimeString('fr-CA');
+    } catch (error) {
+      el('content').innerHTML = '';
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = error.message;
+      el('content').appendChild(empty);
+    }
   }
 
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
+  function openModal(point = null) {
+    el('modal-title').textContent = point ? 'Modifier un lieu' : 'Nouveau lieu';
+    el('pt-id').value = point?.id || '';
+    el('pt-city').value = point?.city || '';
+    el('pt-sector').value = point?.sector || '';
+    el('pt-name').value = point?.name || '';
+    el('pt-address').value = point?.address || '';
+    el('pt-lat').value = point?.lat ?? '';
+    el('pt-lng').value = point?.lng ?? '';
+    el('pt-type').value = point?.type || 'lieu_public';
+    el('pt-hours').value = point?.hours || '';
+    el('pt-notes').value = point?.notes || '';
+    el('pt-photo').value = point?.photo_url || '';
+    el('pt-cameras').checked = !!point?.has_cameras;
+    el('pt-lit').checked = point ? point.well_lit !== false : true;
+    el('pt-parking').checked = point ? point.parking_free !== false : true;
+    el('pt-verified').checked = !!point?.verified;
+    el('pt-active').checked = point ? point.active !== false : true;
+    el('modal').classList.add('open');
+    el('pt-city').focus();
   }
 
-  function editPoint(id) {
-    const p = allPoints.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('modal-title').textContent = '✏️ Modifier : ' + p.name;
-    document.getElementById('pt-id').value = p.id;
-    document.getElementById('pt-city').value = p.city || '';
-    document.getElementById('pt-sector').value = p.sector || '';
-    document.getElementById('pt-name').value = p.name || '';
-    document.getElementById('pt-address').value = p.address || '';
-    document.getElementById('pt-lat').value = p.lat || '';
-    document.getElementById('pt-lng').value = p.lng || '';
-    document.getElementById('pt-type').value = p.type || 'autre';
-    document.getElementById('pt-hours').value = p.hours || '';
-    document.getElementById('pt-notes').value = p.notes || '';
-    document.getElementById('pt-photo').value = p.photo_url || '';
-    document.getElementById('pt-cameras').checked = !!p.has_cameras;
-    document.getElementById('pt-lit').checked = p.well_lit !== false;
-    document.getElementById('pt-parking').checked = p.parking_free !== false;
-    document.getElementById('pt-verified').checked = p.verified !== false;
-    document.getElementById('pt-active').checked = p.active !== false;
-    document.getElementById('modal').classList.add('open');
-  }
+  function closeModal() { el('modal').classList.remove('open'); }
 
   async function savePoint() {
-    const btn = document.getElementById('save-btn');
-    btn.disabled = true; btn.textContent = '⏳ Sauvegarde…';
+    const lat = validCoord(el('pt-lat').value);
+    const lng = validCoord(el('pt-lng').value);
+    if (!el('pt-city').value.trim() || !el('pt-name').value.trim() || !el('pt-address').value.trim()) {
+      alert('Ville, nom et adresse sont requis.');
+      return;
+    }
+    if (lat == null || lng == null) {
+      alert('Latitude et longitude doivent être valides.');
+      return;
+    }
+    const saveBtn = el('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Sauvegarde...';
     try {
-      const { data: { session } } = await db.auth.getSession();
-      const id = document.getElementById('pt-id').value;
-      const point = {
-        ...(id ? { id } : {}),
-        city: document.getElementById('pt-city').value.trim(),
-        sector: document.getElementById('pt-sector').value.trim() || null,
-        name: document.getElementById('pt-name').value.trim(),
-        address: document.getElementById('pt-address').value.trim(),
-        lat: parseFloat(document.getElementById('pt-lat').value),
-        lng: parseFloat(document.getElementById('pt-lng').value),
-        type: document.getElementById('pt-type').value,
-        hours: document.getElementById('pt-hours').value.trim() || null,
-        notes: document.getElementById('pt-notes').value.trim() || null,
-        photo_url: document.getElementById('pt-photo').value.trim() || null,
-        has_cameras: document.getElementById('pt-cameras').checked,
-        well_lit: document.getElementById('pt-lit').checked,
-        parking_free: document.getElementById('pt-parking').checked,
-        verified: document.getElementById('pt-verified').checked,
-        active: document.getElementById('pt-active').checked
-      };
-      const r = await fetch('/api/platform?endpoint=admin-safe-points-upsert', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + session.access_token },
-        body: JSON.stringify({ endpoint: 'admin-safe-points-upsert', point })
+      await api('admin-safe-points-upsert', {
+        point: {
+          id: el('pt-id').value || undefined,
+          city: el('pt-city').value.trim(),
+          sector: el('pt-sector').value.trim() || null,
+          name: el('pt-name').value.trim(),
+          address: el('pt-address').value.trim(),
+          lat,
+          lng,
+          type: el('pt-type').value,
+          hours: el('pt-hours').value.trim() || null,
+          notes: el('pt-notes').value.trim() || null,
+          photo_url: el('pt-photo').value.trim() || null,
+          has_cameras: el('pt-cameras').checked,
+          well_lit: el('pt-lit').checked,
+          parking_free: el('pt-parking').checked,
+          verified: el('pt-verified').checked,
+          active: el('pt-active').checked
+        }
       });
-      const d = await r.json();
-      if (!r.ok) { alert('❌ ' + (d.error || r.status) + (d.details ? '\n' + d.details : '')); return; }
       closeModal();
-      loadList();
-    } catch (e) {
-      alert('❌ ' + e.message);
+      await loadList();
+    } catch (error) {
+      alert(error.message);
     } finally {
-      btn.disabled = false; btn.textContent = '💾 Sauvegarder';
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Sauvegarder';
     }
   }
 
-  async function deletePoint(id, name) {
-    if (!confirm('Désactiver "' + name + '" ?\n(Les nouveaux trajets ne pourront plus le choisir.\nLes trajets existants l\'affichent toujours.)')) return;
+  async function disablePoint(point) {
+    if (!point?.id) return;
+    if (!confirm('Désactiver ce point rencontre ?')) return;
     try {
-      const { data: { session } } = await db.auth.getSession();
-      const r = await fetch('/api/platform?endpoint=admin-safe-points-delete', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + session.access_token },
-        body: JSON.stringify({ endpoint: 'admin-safe-points-delete', id })
-      });
-      const d = await r.json();
-      if (!r.ok) { alert('❌ ' + (d.error || r.status)); return; }
-      loadList();
-    } catch (e) {
-      alert('❌ ' + e.message);
+      await api('admin-safe-points-delete', { id: point.id });
+      await loadList();
+    } catch (error) {
+      alert(error.message);
     }
   }
+
+  el('new-btn').addEventListener('click', () => openModal());
+  el('refresh-btn').addEventListener('click', loadList);
+  el('cancel-btn').addEventListener('click', closeModal);
+  el('save-btn').addEventListener('click', savePoint);
+  el('modal').addEventListener('click', (event) => { if (event.target === el('modal')) closeModal(); });
+  el('filter-inactive').addEventListener('change', loadList);
+  el('filter-city').addEventListener('input', () => {
+    clearTimeout(state.timer);
+    state.timer = setTimeout(loadList, 350);
+  });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(); });
 
   loadList();
 </script>
-
 </body>
 </html>

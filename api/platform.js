@@ -3045,24 +3045,46 @@ async function adminSafePointsUpsert(req, res, ctx, body) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
 
   const point = body?.point || {};
+  const cleanText = (value, max = 160) => String(value || '').trim().slice(0, max);
+  const allowedTypes = new Set(['restaurant', 'commerce', 'station_essence', 'gare', 'metro', 'stationnement', 'autre', 'terminus', 'bibliotheque', 'hotel_ville', 'lieu_public']);
+  const lat = Number(point.lat);
+  const lng = Number(point.lng);
   // Validation minimale
-  if (!point.city || !point.name || !point.address) {
+  if (!cleanText(point.city, 80) || !cleanText(point.name, 120) || !cleanText(point.address, 220)) {
     return res.status(400).json({ error: 'city, name et address requis' });
   }
-  if (typeof point.lat !== 'number' || typeof point.lng !== 'number') {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ error: 'lat et lng (number) requis' });
   }
-  if (Math.abs(point.lat) > 90 || Math.abs(point.lng) > 180) {
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return res.status(400).json({ error: 'lat/lng hors plage valide' });
+  }
+  if (point.id && !/^[0-9a-f-]{8,64}$/i.test(String(point.id))) {
+    return res.status(400).json({ error: 'id invalide' });
+  }
+  const photoUrl = cleanText(point.photo_url, 300);
+  if (photoUrl && !/^https:\/\/[^\s]+$/i.test(photoUrl)) {
+    return res.status(400).json({ error: 'photo_url doit etre une URL https valide' });
   }
 
   // Whitelist des champs autorisés
-  const allowed = ['city','sector','name','address','lat','lng','type','hours','notes','photo_url','has_cameras','well_lit','parking_free','verified','active'];
-  const payload = {};
-  allowed.forEach(k => { if (point[k] !== undefined) payload[k] = point[k]; });
-  payload.type = payload.type || 'autre';
-  if (payload.active === undefined) payload.active = true;
-  if (payload.verified === undefined) payload.verified = true;
+  const payload = {
+    city: cleanText(point.city, 80),
+    sector: cleanText(point.sector, 80) || null,
+    name: cleanText(point.name, 120),
+    address: cleanText(point.address, 220),
+    lat,
+    lng,
+    type: allowedTypes.has(String(point.type || '')) ? String(point.type) : 'autre',
+    hours: cleanText(point.hours, 120) || null,
+    notes: cleanText(point.notes, 500) || null,
+    photo_url: photoUrl || null,
+    has_cameras: point.has_cameras === true,
+    well_lit: point.well_lit !== false,
+    parking_free: point.parking_free !== false,
+    verified: point.verified !== false,
+    active: point.active !== false,
+  };
 
   let r;
   if (point.id) {
@@ -3093,6 +3115,7 @@ async function adminSafePointsDelete(req, res, ctx, body) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
   const id = body?.id;
   if (!id) return res.status(400).json({ error: 'id requis' });
+  if (!/^[0-9a-f-]{8,64}$/i.test(String(id))) return res.status(400).json({ error: 'id invalide' });
   // Soft-delete par défaut (active=false), hard-delete si force=true
   if (body?.force === true) {
     const r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points?id=eq.' + encodeURIComponent(id), {

@@ -562,7 +562,7 @@
     <!-- STEP 4 : POINTS D'ARRÊT + SÉCURITAIRES -->
     <div class="step-panel" id="step-4">
       <div class="info-note">
-        📍 Définissez vos arrêts intermédiaires. Choisissez des <strong>points sécuritaires</strong> connus (Tim Hortons, Walmart, métro…) — ça rassure les passagers et augmente vos réservations.
+        📍 Définissez vos arrêts intermédiaires. Choisissez des <strong>points publics visibles</strong> et faciles d'accès. Les commerces suggérés ne sont pas présentés comme partenaires sans autorisation.
       </div>
 
       <div class="form-section">
@@ -582,7 +582,7 @@
         </div>
 
         <div class="field" style="margin-top:8px">
-          <label>📍 Lieu de rendez-vous (vérifié par PorteàPorte) *</label>
+          <label>📍 Lieu de rendez-vous public suggéré *</label>
           <select id="meeting-point-start" onchange="onSafePicked('start')" style="width:100%;padding:14px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:.95rem;font-weight:600;cursor:pointer;">
             <option value="">⏳ Saisis d'abord la ville de départ ci-dessus…</option>
           </select>
@@ -628,7 +628,7 @@
         </div>
 
         <div class="field" style="margin-top:8px">
-          <label>📍 Lieu de débarquement (vérifié par PorteàPorte) *</label>
+          <label>📍 Lieu de débarquement public suggéré *</label>
           <select id="meeting-point-end" onchange="onSafePicked('end')" style="width:100%;padding:14px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:.95rem;font-weight:600;cursor:pointer;">
             <option value="">⏳ Saisis d'abord la ville d'arrivée à l'étape 1…</option>
           </select>
@@ -896,7 +896,7 @@
         document.getElementById('accepts_packages').checked ? 'block' : 'none';
     }
 
-    // ── Points sécuritaires (NOUVEAU : catalogue pré-vérifié) ─────
+    // ── Points publics suggeres (catalogue modere) ─────
     const meetingPointsCache = {};      // { city: [points] }
     const typeFilters = { start: '', end: '' };
 
@@ -939,7 +939,7 @@
       const filtered = f ? all.filter(p => p.type === f) : all;
 
       if (!all.length) {
-        selEl.innerHTML = `<option value="">Aucun lieu vérifié pour ${city} — utilise "Mon lieu n'est pas dans la liste"</option>`;
+        selEl.innerHTML = `<option value="">Aucun point public suggere pour ${city} — utilise "Mon lieu n'est pas dans la liste"</option>`;
         return;
       }
 
@@ -956,7 +956,7 @@
         html += `<optgroup label="${sector}">`;
         bySector[sector].forEach(p => {
           const ic = TYPE_ICON[p.type] || '📍';
-          html += `<option value="${p.id}" data-info='${JSON.stringify({n:p.name, a:p.address, h:p.hours||'', t:p.type, c:!!p.has_cameras, l:!!p.well_lit, p:!!p.parking_free, sec:p.sector||''}).replace(/'/g,"&#39;")}'>${ic} ${p.name}</option>`;
+          html += `<option value="${p.id}" data-info='${JSON.stringify({n:p.name, a:p.address, h:p.hours||'', t:p.type, c:!!(p.has_cameras||p.camera_possible), l:!!p.well_lit, p:!!(p.parking_free||p.easy_parking), sec:p.sector||'', score:p.safety_score||'', label:p.public_label||'', disclaimer:p.disclaimer||''}).replace(/'/g,"&#39;")}'>${ic} ${p.name}</option>`;
         });
         html += '</optgroup>';
       });

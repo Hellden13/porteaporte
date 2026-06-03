@@ -431,6 +431,77 @@ describe('platform.js dispatcher', () => {
     assert.equal(res._status, 403);
   });
 
+  test('admin-pilotage exige le role admin', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user':    { ok: true, data: { id: 'u1' } },
+      '/rest/v1/profiles': { ok: true, data: [{ id: 'u1', role: 'livreur', suspendu: false }] }
+    });
+    const req = makeReq({
+      body: { endpoint: 'admin-pilotage' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+  });
+
+  test('admin-pilotage agrege les indicateurs proprietaire', async () => {
+    global.fetch = async (url) => {
+      const response = (rows) => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => `0-${Math.max(0, rows.length - 1)}/${rows.length}` },
+        json: async () => rows,
+        text: async () => JSON.stringify(rows),
+      });
+      if (url.includes('/auth/v1/user')) {
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => '0-0/1' },
+          json: async () => ({ id: 'admin-1', email: 'admin@test.com' }),
+          text: async () => JSON.stringify({ id: 'admin-1', email: 'admin@test.com' }),
+        };
+      }
+      if (url.includes('/rest/v1/profiles') && url.includes('id=eq.admin-1')) {
+        return response([{ id: 'admin-1', role: 'admin', suspendu: false }]);
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return response([
+          { id: 'admin-1', role: 'admin' },
+          { id: 'driver-1', role: 'livreur', driver_status: 'verified' },
+          { id: 'exp-1', role: 'expediteur' },
+          { id: 'pax-1', role: 'passager' }
+        ]);
+      }
+      if (url.includes('/rest/v1/rides')) {
+        return response([{ id: 'r1', status: 'publie', available_seats: 3, total_distance_km: 120 }]);
+      }
+      if (url.includes('/rest/v1/ride_bookings')) {
+        return response([{ id: 'b1', status: 'confirme', seats_reserved: 1, payment_status: 'requires_capture', total_passenger: 18 }]);
+      }
+      if (url.includes('/rest/v1/livraisons')) {
+        return response([{ id: 'l1', statut: 'paiement_autorise', prix_total: 20 }]);
+      }
+      if (url.includes('/rest/v1/transactions')) {
+        return response([{ id: 't1', amount_cents: 2000, commission_cents: 200, created_at: new Date().toISOString() }]);
+      }
+      if (url.includes('/rest/v1/impact_settings')) return response([{ total_km: 500, total_co2_kg: 60, repas_livres: 3, aides_effectuees: 2 }]);
+      return response([]);
+    };
+    const req = makeReq({
+      body: { endpoint: 'admin-pilotage' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.growth?.users, 4);
+    assert.equal(res._body?.rides?.published, 1);
+    assert.equal(res._body?.finances?.revenue_month_cents, 2000);
+  });
+
   test('available-livraisons bloque un livreur non verifie', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },
@@ -559,6 +630,68 @@ describe('platform.js dispatcher', () => {
 });
 
 // ─── Tests turnstile-verify.js ────────────────────────────────────────────────
+describe('platform ride-search public safeguards', () => {
+  const handler = require('../api/platform');
+
+  before(() => {
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key-fake';
+  });
+
+  test('ride-search accepte les alias from/to sans auth', async () => {
+    global.fetch = makeFetchMock({
+      '/rest/v1/rides': {
+        ok: true,
+        data: [
+          { id: 'ride-1', start_city: 'Levis', end_city: 'Quebec', departure_time: '2026-06-03T10:15:00Z', available_seats: 2, status: 'publie', driver_id: 'd1', is_recurring: true, recurrence_days: ['lun', 'mar', 'mer', 'jeu', 'ven'] },
+          { id: 'ride-2', start_city: 'Montreal', end_city: 'Laval', departure_time: '2026-06-03T10:15:00Z', available_seats: 2, status: 'publie', driver_id: 'd2' }
+        ]
+      },
+      '/rest/v1/profiles?id=in.': { ok: true, data: [] }
+    });
+    const req = makeReq({ body: { endpoint: 'ride-search', from: 'Levis', to: 'Quebec' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.rides?.length, 1);
+    assert.equal(res._body?.rides?.[0]?.id, 'ride-1');
+  });
+
+  test('ride-search tolere une petite faute et les secteurs', async () => {
+    global.fetch = makeFetchMock({
+      '/rest/v1/rides': {
+        ok: true,
+        data: [
+          { id: 'ride-1', start_city: 'Levis', start_sector: 'St-Nicolas', end_city: 'Quebec', end_sector: 'Vanier', departure_time: '2026-06-03T10:15:00Z', available_seats: 2, status: 'publie', driver_id: 'd1', is_recurring: true, recurrence_days: ['lun', 'mar', 'mer', 'jeu', 'ven'] }
+        ]
+      },
+      '/rest/v1/profiles?id=in.': { ok: true, data: [] }
+    });
+    const typoReq = makeReq({ body: { endpoint: 'ride-search', from: 'Levis', to: 'Quevec' } });
+    const typoRes = makeRes();
+    await handler(typoReq, typoRes);
+    assert.equal(typoRes._status, 200);
+    assert.equal(typoRes._body?.rides?.[0]?.id, 'ride-1');
+
+    const sectorReq = makeReq({ body: { endpoint: 'ride-search', from: 'Saint Nicolas', to: 'Vanier' } });
+    const sectorRes = makeRes();
+    await handler(sectorReq, sectorRes);
+    assert.equal(sectorRes._status, 200);
+    assert.equal(sectorRes._body?.rides?.[0]?.id, 'ride-1');
+  });
+
+  test('ride-search-log public ne retourne pas 401', async () => {
+    global.fetch = makeFetchMock({
+      '/rest/v1/ride_search_logs': { ok: true, data: [] }
+    });
+    const req = makeReq({ body: { endpoint: 'ride-search-log', from_city: 'Levis', to_city: 'Quebec', results_count: 1 } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.logged, true);
+  });
+});
+
 describe('turnstile-verify handler', () => {
   const handler = require('../api/turnstile-verify');
 
