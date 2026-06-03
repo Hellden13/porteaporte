@@ -3016,6 +3016,101 @@ async function activeDriversCount(req, res, ctx, body) {
 // Retourne 2 groupes :
 //   - clear : preuve photo + GPS dispo et accuracy < 100m → auto OK
 //   - ambiguous : pas de preuve ou preuve faible → demande validation admin
+// ─── ADMIN : Gestion des safe meeting points (CRUD sans SQL) ────────────
+async function adminSafePointsList(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const city = body?.city || '';
+  const includeInactive = body?.include_inactive === true;
+
+  let filter = 'select=*&order=city.asc,sector.asc,name.asc&limit=500';
+  if (!includeInactive) filter += '&active=eq.true';
+  if (city) filter += '&city=ilike.*' + encodeURIComponent(city) + '*';
+
+  const r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points?' + filter, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  if (!r.ok) return res.status(500).json({ error: 'Lecture impossible', details: await r.text().catch(() => '') });
+  const points = await r.json();
+
+  // Stats par ville
+  const byCity = {};
+  points.forEach(p => {
+    byCity[p.city] = (byCity[p.city] || 0) + 1;
+  });
+
+  return res.status(200).json({ points, total: points.length, by_city: byCity });
+}
+
+async function adminSafePointsUpsert(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+  const point = body?.point || {};
+  // Validation minimale
+  if (!point.city || !point.name || !point.address) {
+    return res.status(400).json({ error: 'city, name et address requis' });
+  }
+  if (typeof point.lat !== 'number' || typeof point.lng !== 'number') {
+    return res.status(400).json({ error: 'lat et lng (number) requis' });
+  }
+  if (Math.abs(point.lat) > 90 || Math.abs(point.lng) > 180) {
+    return res.status(400).json({ error: 'lat/lng hors plage valide' });
+  }
+
+  // Whitelist des champs autorisés
+  const allowed = ['city','sector','name','address','lat','lng','type','hours','notes','photo_url','has_cameras','well_lit','parking_free','verified','active'];
+  const payload = {};
+  allowed.forEach(k => { if (point[k] !== undefined) payload[k] = point[k]; });
+  payload.type = payload.type || 'autre';
+  if (payload.active === undefined) payload.active = true;
+  if (payload.verified === undefined) payload.verified = true;
+
+  let r;
+  if (point.id) {
+    // UPDATE
+    r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points?id=eq.' + encodeURIComponent(point.id), {
+      method: 'PATCH',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    // INSERT
+    payload.created_by = ctx.session.id;
+    r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points', {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(payload)
+    });
+  }
+  if (!r.ok) {
+    const errText = await r.text().catch(() => '');
+    return res.status(400).json({ error: 'Sauvegarde impossible', details: errText });
+  }
+  const saved = await r.json();
+  return res.status(200).json({ success: true, point: Array.isArray(saved) ? saved[0] : saved });
+}
+
+async function adminSafePointsDelete(req, res, ctx, body) {
+  if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+  const id = body?.id;
+  if (!id) return res.status(400).json({ error: 'id requis' });
+  // Soft-delete par défaut (active=false), hard-delete si force=true
+  if (body?.force === true) {
+    const r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: sbHeaders(ctx.sbKey)
+    });
+    if (!r.ok) return res.status(400).json({ error: 'Suppression impossible' });
+    return res.status(200).json({ success: true, hard_deleted: true });
+  }
+  const r = await fetch(ctx.sbUrl + '/rest/v1/safe_meeting_points?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ active: false })
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Désactivation impossible' });
+  return res.status(200).json({ success: true, soft_deleted: true });
+}
+
 async function adminAutoReleaseList(req, res, ctx, body) {
   if (!ctx.session || ctx.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
   const graceHours = Math.max(1, Math.min(168, Number(body?.grace_hours || 48)));
@@ -5628,6 +5723,9 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
     if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
     if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, ctx, body);
+    if (endpoint === 'admin-safe-points-list')   return await adminSafePointsList(req, res, ctx, body);
+    if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
+    if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
