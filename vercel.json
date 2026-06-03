@@ -6,10 +6,12 @@
         "api/capture-livraison.js": { "includeFiles": "lib/**" },
         "api/paiement-livraison.js": { "includeFiles": "lib/**" },
         "api/cron-cleanup.js": { "includeFiles": "lib/**" },
+        "api/cron-ride-capture.js": { "includeFiles": "lib/**" },
         "api/turnstile-verify.js": { "includeFiles": "lib/**" }
     },
     "crons": [
-        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
+        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" },
+        { "path": "/api/cron-ride-capture", "schedule": "0 4 * * *" }
     ],
     "redirects": [
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
