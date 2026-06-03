@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <style>
     body{padding:0}
+    /* Header avec logo controle */
+    .site-header{display:flex;align-items:center;justify-content:space-between;padding:14px clamp(18px,4vw,48px);background:rgba(10,12,16,.92);border-bottom:1px solid var(--brand-bg-surface-light);backdrop-filter:blur(12px);position:sticky;top:0;z-index:80}
+    .brand-mark{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--brand-text);font-weight:900;font-size:1.05rem}
+    .brand-mark img{width:32px;height:32px;object-fit:contain;flex-shrink:0}
     .hero{padding:56px 0 28px;border-bottom:1px solid var(--brand-bg-surface-light);background:linear-gradient(180deg,rgba(93,191,255,.06),transparent)}
     .hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1;margin:0 0 12px;color:var(--brand-text)}
     .hero p{max-width:760px;color:var(--brand-muted);font-size:1rem;line-height:1.7;margin:0}

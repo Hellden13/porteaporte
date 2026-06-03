@@ -73,3 +73,13 @@ a:focus-visible { text-decoration: underline; }
     min-width: 44px;
   }
 }
+
+/* ─── Logo header : taille max par défaut (anti-logo géant) ─── */
+.brand-mark img,
+.brand img,
+header img[src*="logo.svg"],
+header img[src*="logo.png"] {
+  max-width: 36px;
+  max-height: 36px;
+  object-fit: contain;
+}
