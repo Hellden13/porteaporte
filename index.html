@@ -175,7 +175,24 @@
       background: rgba(7,9,13,.76);
       backdrop-filter: blur(12px);
     }
-    .hero-stat strong { display: block; font-size: 1.05rem; }
+    .hero-stat {
+      display: grid;
+      gap: 4px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .hero-stat strong {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-stat strong::before { display: none; }
+    .hs-icon {
+      width: 18px; height: 18px; flex-shrink: 0;
+      fill: none; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+      filter: drop-shadow(0 0 5px rgba(0,217,255,.55));
+    }
+    .hero-stat strong { font-size: 1.05rem; }
     .hero-stat span { color: var(--muted); font-size: .78rem; }
 
     .quick-search {
@@ -248,6 +265,29 @@
       background: rgba(0,217,255,.12);
       color: var(--lime);
       font-size: 1.35rem;
+    }
+    .trust-icon {
+      width: 46px;
+      height: 46px;
+      margin: 0 auto 12px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--lime);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(184,245,62,.24), transparent 45%),
+        rgba(0,217,255,.1);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .trust-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .card p { color: var(--muted); line-height: 1.55; margin-bottom: 0; }
     .card .link { display: inline-block; margin-top: 18px; color: var(--cyan); font-weight: 900; }
@@ -342,6 +382,7 @@
       .choice-grid, .trust-grid, .route-grid, .impact-metrics { grid-template-columns: 1fr; }
       .routes-head { align-items: start; flex-direction: column; }
       .hero-card { grid-template-columns: 1fr; }
+      .search-box button { width: 100%; }
     }
   </style>
 
@@ -435,9 +476,9 @@
       <div class="hero-media hero-anim hero-anim-1" aria-label="Rencontre entre conducteur et passagère, Québec">
         <img src="/assets/photos/hero-rencontre-covoit.webp" alt="Rencontre entre un conducteur et une passagère devant une maison québécoise" loading="eager" onerror="this.src='/assets/photos/hero-covoiturage-confiance.png'">
         <div class="hero-card" aria-label="Points forts">
-          <div class="hero-stat"><strong>Stripe</strong><span>réservation protégée</span></div>
-          <div class="hero-stat"><strong>Profils</strong><span>identité vérifiée</span></div>
-          <div class="hero-stat"><strong>Colis</strong><span>bonus sur la route</span></div>
+          <div class="hero-stat"><strong><svg class="hs-icon" viewBox="0 0 24 24" stroke="#00d9ff"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stripe</strong><span>réservation protégée</span></div>
+          <div class="hero-stat"><strong><svg class="hs-icon" viewBox="0 0 24 24" stroke="#00d9ff"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>Profils</strong><span>identité vérifiée</span></div>
+          <div class="hero-stat"><strong><svg class="hs-icon" viewBox="0 0 24 24" stroke="#b8f53e"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.29 7 12 12l8.71-5"/><line x1="12" y1="22" x2="12" y2="12"/></svg>Colis</strong><span>bonus sur la route</span></div>
         </div>
       </div>
     </section>
@@ -526,7 +567,7 @@
             <img src="/assets/photos/hero-rencontre-covoit.webp" alt="Rencontre entre conducteur et passagère devant une maison" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
-              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">1</div>
+              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
               <h3 style="margin-top:14px;">Rencontrez votre conducteur</h3>
               <p style="color:#dbe5f3;">Réservez une place entre villes québécoises avec un conducteur vérifié. Montez à bord et partez.</p>
               <span class="link">Voir les trajets</span>
@@ -536,7 +577,7 @@
             <img src="/assets/photos/hero-publier-trajet.webp" alt="Conducteur québécois qui publie son trajet sur son téléphone" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
-              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">2</div>
+              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
               <h3 style="margin-top:14px;">Publier un trajet</h3>
               <p style="color:#dbe5f3;">Tu fais déjà la route ? Remplis tes sièges et réduis ton coût d'essence.</p>
               <span class="link">Publier</span>
@@ -546,9 +587,9 @@
             <img src="/assets/photos/hero-envoyer-colis.webp" alt="Colis en carton naturel déposé dans le coffre d'une voiture" loading="lazy" onerror="this.style.display='none';this.parentElement.style.padding='22px'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,13,0) 0%,rgba(7,9,13,.4) 50%,rgba(7,9,13,.94) 100%);z-index:1;"></div>
             <div style="position:relative;z-index:2;padding:22px;">
-              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);">3</div>
-              <h3 style="margin-top:14px;">Envoyer un colis</h3>
-              <p style="color:#dbe5f3;">Secondaire mais puissant : un colis peut voyager dans un coffre déjà en route.</p>
+              <div class="icon" style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.29 7 12 12l8.71-5"/><line x1="12" y1="22" x2="12" y2="12"/></svg></div>
+              <h3 style="margin-top:14px;">Ton trajet peut servir à plus</h3>
+              <p style="color:#dbe5f3;">Quand une route existe déjà, un colis peut suivre le mouvement sans devenir le cœur du service.</p>
               <span class="link">Option colis</span>
             </div>
           </a>
@@ -570,10 +611,10 @@
           </div>
         </div>
         <div class="trust-grid">
-          <div class="card trust-card"><div class="icon">ID</div><h3>Identité</h3><p>Profils vérifiés pour réduire l'anonymat.</p></div>
-          <div class="card trust-card"><div class="icon">$</div><h3>Paiement</h3><p>Autorisation Stripe avant confirmation.</p></div>
-          <div class="card trust-card"><div class="icon">GPS</div><h3>Suivi</h3><p>Partage et messages dans l'app.</p></div>
-          <div class="card trust-card"><div class="icon">★</div><h3>Avis</h3><p>Évaluations après chaque trajet.</p></div>
+          <div class="card trust-card"><div class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-2.9 8.4-7 10-4.1-1.6-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Identité</h3><p>Profils vérifiés pour réduire l'anonymat.</p></div>
+          <div class="card trust-card"><div class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/><path d="M7 15h3"/></svg></div><h3>Paiement</h3><p>Autorisation Stripe avant confirmation.</p></div>
+          <div class="card trust-card"><div class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.2 6-11a6 6 0 0 0-12 0c0 5.8 6 11 6 11z"/><circle cx="12" cy="10" r="2"/></svg></div><h3>Suivi</h3><p>Partage et messages dans l'app.</p></div>
+          <div class="card trust-card"><div class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 16.9 6.6 19.8l1-6.1-4.4-4.3 6.1-.9L12 3z"/></svg></div><h3>Avis</h3><p>Évaluations après chaque trajet.</p></div>
         </div>
         <p style="margin:22px 0 0;"><a href="/securite.html" style="color:var(--cyan);font-weight:900;text-decoration:none;">Voir la sécurité complète →</a></p>
       </div>
@@ -649,21 +690,12 @@
     </section>
 
     <section class="section" aria-labelledby="impact-title">
-      <div class="inner split">
-        <div class="mini-panel">
+      <div class="inner">
+        <div class="mini-panel" style="max-width:860px;margin:0 auto;text-align:center;">
           <div class="eyebrow">Impact</div>
           <h2 id="impact-title">Moins de trajets vides. Plus d'entraide locale.</h2>
-          <p class="lead">Chaque siège rempli et chaque coffre utile rendent le réseau plus efficace. Découvre l'impact concret et la transparence des frais dans les pages dédiées.</p>
-          <div class="impact-metrics">
-            <div class="metric"><strong>CO2</strong><span>moins de voitures seules</span></div>
-            <div class="metric"><strong>Local</strong><span>réseau québécois</span></div>
-            <div class="metric"><strong>Public</strong><span>suivi transparent</span></div>
-          </div>
-        </div>
-        <div>
-          <h3>Aller plus loin</h3>
-          <p class="lead">Découvre l'impact concret de la communauté PorteàPorte : kilomètres économisés, livreurs québécois rémunérés, transparence des frais.</p>
-          <div class="hero-actions">
+          <p class="lead" style="margin-left:auto;margin-right:auto;">Chaque siège partagé compte. Chaque kilomètre ensemble est une preuve que ça marche.</p>
+          <div class="hero-actions" style="justify-content:center;">
             <a class="btn secondary" href="/impact">Voir l'impact</a>
             <a class="btn ghost" href="/transparence">Transparence</a>
           </div>
@@ -675,7 +707,7 @@
       <div class="inner">
         <div class="eyebrow">Prêt ?</div>
         <h2 id="cta-title">La route existe déjà. Partage-la.</h2>
-        <p class="lead">Commence par le covoiturage. Ajoute les colis et l'impact quand c'est pertinent.</p>
+        <p class="lead">Chaque route part déjà quelque part. Ensemble, elle peut aller plus loin.</p>
         <div class="hero-actions" style="justify-content:center;">
           <a class="btn" href="/covoiturage.html">Trouver mon trajet</a>
           <a class="btn secondary" href="/covoiturage-publier.html">Publier mon trajet</a>
