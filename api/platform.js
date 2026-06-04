@@ -5035,8 +5035,9 @@ module.exports = async function handler(req, res) {
       }
       tpCode = String(tpCode || '').trim().toUpperCase();
       if (!tpCode) return res.status(400).json({ error: 'Code de suivi requis' });
-      const isUuid = /^[0-9a-f-]{36}$/i.test(tpCode);
-      const tpFilter = isUuid ? `id=eq.${encodeURIComponent(tpCode)}` : `code=eq.${encodeURIComponent(tpCode)}`;
+      // Sécurité : on suit UNIQUEMENT par code de suivi, jamais par UUID interne,
+      // pour qu'un id de livraison divulgué ne permette pas de pister une livraison.
+      const tpFilter = `code=eq.${encodeURIComponent(tpCode)}`;
       try {
         const tr = await fetch(
           `${sbUrl}/rest/v1/livraisons?${tpFilter}&select=id,code,statut,ville_depart,ville_arrivee,type,type_colis,created_at,cree_le&limit=1`,
