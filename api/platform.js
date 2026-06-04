@@ -3870,7 +3870,8 @@ async function impactPublic(req, res, ctx) {
     generated_at: state.generated_at,
     note: state.settings.public_note || 'Montants estimes en direct, confirmes mensuellement.',
     totals: state.totals,
-    allocations: state.allocations
+    allocations: state.allocations,
+    ride_redistribution: state.ride_redistribution
   };
   const protectionFund = {
     total_cents: fundTotalCents,
