@@ -5235,6 +5235,46 @@ module.exports = async function handler(req, res) {
       return await pushSend(req, res, ctx, body);
     }
 
+    // ── Endpoints publics (sans auth) : organismes + compteur d'impact ──
+    if (endpoint === 'organismes-list') {
+      const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+      const orgs = r.ok ? await r.json() : [];
+      return res.status(200).json({ success: true, organismes: orgs });
+    }
+    if (endpoint === 'public-impact-stats') {
+      // Stats publiques (pas d'auth requise) - pour compteur live
+      const stats = { livraisons: 0, livreurs: 0, dons_cause: 0, co2_evite_kg: 0, communautes: 0 };
+      try {
+        const lr = await fetch(`${sbUrl}/rest/v1/livraisons?statut=in.(payee,paid)&select=prix_total`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const livs = lr.ok ? await lr.json() : [];
+        stats.livraisons = livs.length;
+        const totalCAD = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
+        stats.dons_cause = Math.round(totalCAD * 0.05);
+        // Hypothèse : chaque livraison covoiturée évite ~3kg CO2 (vs courier dédié)
+        stats.co2_evite_kg = Math.round(stats.livraisons * 3);
+      } catch (e) {}
+      try {
+        const pr = await fetch(`${sbUrl}/rest/v1/profiles?driver_status=eq.verified&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+        });
+        const profs = pr.ok ? await pr.json() : [];
+        stats.livreurs = profs.length;
+      } catch (e) {}
+      try {
+        const cr = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const orgs = cr.ok ? await cr.json() : [];
+        stats.communautes = orgs.length;
+      } catch (e) { stats.communautes = 0; }
+      stats.updated_at = new Date().toISOString();
+      return res.status(200).json(stats);
+    }
+
     const session = await getSession(req, sbUrl, sbKey);
     if (!session) return res.status(401).json({ error: 'Session requise' });
     const profile = await getProfile(session.id, sbUrl, sbKey);
@@ -5726,44 +5766,6 @@ module.exports = async function handler(req, res) {
           }
         }
       });
-    }
-    if (endpoint === 'organismes-list') {
-      const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
-        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-      });
-      const orgs = r.ok ? await r.json() : [];
-      return res.status(200).json({ success: true, organismes: orgs });
-    }
-    if (endpoint === 'public-impact-stats') {
-      // Stats publiques (pas d'auth requise) - pour compteur live
-      const stats = { livraisons: 0, livreurs: 0, dons_cause: 0, co2_evite_kg: 0, communautes: 0 };
-      try {
-        const lr = await fetch(`${sbUrl}/rest/v1/livraisons?statut=in.(payee,paid)&select=prix_total`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
-        });
-        const livs = lr.ok ? await lr.json() : [];
-        stats.livraisons = livs.length;
-        const totalCAD = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
-        stats.dons_cause = Math.round(totalCAD * 0.05);
-        // Hypothèse : chaque livraison covoiturée évite ~3kg CO2 (vs courier dédié)
-        stats.co2_evite_kg = Math.round(stats.livraisons * 3);
-      } catch (e) {}
-      try {
-        const pr = await fetch(`${sbUrl}/rest/v1/profiles?driver_status=eq.verified&select=id`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-        });
-        const profs = pr.ok ? await pr.json() : [];
-        stats.livreurs = profs.length;
-      } catch (e) {}
-      try {
-        const cr = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=id`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
-        });
-        const orgs = cr.ok ? await cr.json() : [];
-        stats.communautes = orgs.length;
-      } catch (e) { stats.communautes = 0; }
-      stats.updated_at = new Date().toISOString();
-      return res.status(200).json(stats);
     }
     if (endpoint === 'expediteur-blocked-list') return await expediteurBlockedList(req, res, ctx, body);
     if (endpoint === 'address-intel-list') return await addressIntelList(req, res, ctx, body);
