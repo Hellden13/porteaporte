@@ -240,7 +240,7 @@
       const stepper = document.getElementById('stepper');
       stepper.innerHTML = (t.steps || []).map((s, i) => {
         const stepNum = i + 1;
-        const done   = t.current_step > stepNum || (t.statut === 'confirmee' || t.statut === 'livree');
+        const done   = t.current_step > stepNum || ['confirmee','livree','livre','payee','paid'].includes(t.statut);
         const active = t.current_step === stepNum;
         return `<div class="step ${done ? 'done' : active ? 'active' : ''}">
           <div class="step-dot">${done ? '✓' : stepNum}</div>

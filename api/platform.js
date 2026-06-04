@@ -5017,14 +5017,33 @@ module.exports = async function handler(req, res) {
 
     // ── tracking-public (public, suivi sans auth) ───────────────────
     if (endpoint === 'tracking-public') {
+      // Étapes canoniques de la barre de progression (5 étapes)
+      const TRACK_STEPS = [
+        { step: 1, label: 'Commandée',       icon: '🧾' },
+        { step: 2, label: 'Livreur assigné', icon: '✅' },
+        { step: 3, label: 'En route',        icon: '🚗' },
+        { step: 4, label: 'Livrée',          icon: '📦' },
+        { step: 5, label: 'Confirmée',       icon: '🎉' },
+      ];
+      // Correspondance statut RÉEL → libellé public + étape (avec alias legacy)
       const STATUS_LABELS_PUB = {
-        en_attente: { label: 'En attente de livreur', icon: '⏳', step: 1 },
-        acceptee:   { label: 'Livreur assigné',        icon: '✅', step: 2 },
-        en_route:   { label: 'En route',               icon: '🚗', step: 3 },
-        livree:     { label: 'Livrée',                 icon: '📦', step: 4 },
-        confirmee:  { label: 'Livraison confirmée',    icon: '🎉', step: 5 },
-        annulee:    { label: 'Annulée',                icon: '❌', step: 0 },
-        litige:     { label: 'En litige',              icon: '⚠️', step: 0 },
+        en_attente:        { label: 'En attente d\'un livreur', icon: '⏳', step: 1 },
+        paiement_autorise: { label: 'En attente d\'un livreur', icon: '💳', step: 1 },
+        confirme:          { label: 'Livreur assigné',          icon: '✅', step: 2 },
+        acceptee:          { label: 'Livreur assigné',          icon: '✅', step: 2 },
+        ramasse:           { label: 'En route',                 icon: '🚗', step: 3 },
+        en_route:          { label: 'En route',                 icon: '🚗', step: 3 },
+        livre:             { label: 'Livrée',                   icon: '📦', step: 4 },
+        livree:            { label: 'Livrée',                   icon: '📦', step: 4 },
+        payee:             { label: 'Livraison confirmée',      icon: '🎉', step: 5 },
+        paid:              { label: 'Livraison confirmée',      icon: '🎉', step: 5 },
+        confirmee:         { label: 'Livraison confirmée',      icon: '🎉', step: 5 },
+        conteste:          { label: 'En litige',                icon: '⚠️', step: 0 },
+        litige:            { label: 'En litige',                icon: '⚠️', step: 0 },
+        retour_expediteur: { label: 'Retour à l\'expéditeur',   icon: '↩️', step: 0 },
+        annule:            { label: 'Annulée',                  icon: '❌', step: 0 },
+        annulee:           { label: 'Annulée',                  icon: '❌', step: 0 },
+        rembourse:         { label: 'Remboursée',               icon: '💸', step: 0 },
       };
       let tpCode;
       if (req.method === 'GET') {
@@ -5049,7 +5068,7 @@ module.exports = async function handler(req, res) {
         const liv = tpRows[0];
         const si = STATUS_LABELS_PUB[liv.statut] || { label: liv.statut, icon: '📋', step: 1 };
         let position = null;
-        if (liv.statut === 'en_route') {
+        if (liv.statut === 'ramasse' || liv.statut === 'en_route') {
           const gr = await fetch(
             `${sbUrl}/rest/v1/delivery_locations?livraison_id=eq.${liv.id}&select=latitude,longitude,recorded_at&order=recorded_at.desc&limit=1`,
             { headers: sbHeaders(sbKey) }
@@ -5078,7 +5097,7 @@ module.exports = async function handler(req, res) {
             type: liv.type || liv.type_colis || 'colis',
             created_at: liv.created_at || liv.cree_le,
             position,
-            steps: Object.values(STATUS_LABELS_PUB).filter(s => s.step > 0).sort((a, b) => a.step - b.step),
+            steps: TRACK_STEPS,
             current_step: si.step,
           }
         });
