@@ -489,7 +489,7 @@
       </div>
       <div class="faq-item">
         <div class="faq-q">Quelle est la différence entre le niveau Standard et Plus ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Le niveau Standard prévoit un plafond de 250 $ pour les dossiers admissibles. Le niveau Plus prévoit un plafond de 1 000 $ et un suivi renforcé. Dans tous les cas, la couverture reste limitée à la valeur déclarée et aux preuves disponibles.</div>
+        <div class="faq-a">Le niveau Plus offre un plafond plus élevé et un suivi renforcé que le niveau Standard. Pendant la bêta, la couverture reste limitée au <strong>plafond en vigueur affiché en haut de cette page</strong>, à la valeur déclarée, aux preuves disponibles et aux fonds disponibles.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">La protection est-elle remboursée si j'annule ma mission ? <span class="arrow">▼</span></div>
@@ -507,7 +507,7 @@
 <section class="cta-section" style="border-top: 1px solid var(--brand-border);">
   <div class="container">
     <h2>Commence avec la protection Standard</h2>
-    <p>Pour seulement 2,99 $ par envoi, couvre ton colis jusqu'à 250 $. La meilleure valeur pour la tranquillité d'esprit totale.</p>
+    <p>Pour seulement 2,99 $ par envoi, couvre ton colis jusqu'au plafond en vigueur (<strong id="cta-cap">250 $</strong>). La meilleure valeur pour la tranquillité d'esprit totale.</p>
     <a href="/create-mission.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
       🛡️ Créer une livraison avec protection
     </a>
@@ -555,6 +555,8 @@
       if (pctEl && fund.insurance_pct != null) pctEl.textContent = (fund.insurance_pct * 100).toFixed(1).replace('.0','') + ' %';
       const capEl = document.getElementById('fund-cap');
       if (capEl && fund.max_colis_value_cents) capEl.textContent = fmt(fund.max_colis_value_cents);
+      const ctaCapEl = document.getElementById('cta-cap');
+      if (ctaCapEl && fund.max_colis_value_cents) ctaCapEl.textContent = fmt(fund.max_colis_value_cents);
 
       // Mettre à jour les plafonds des niveaux selon le fonds réel
       const caps = [

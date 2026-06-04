@@ -3913,7 +3913,7 @@ async function impactPublic(req, res, ctx) {
       ? `${pctProtection}% protection + ${pctProfit}% profit (redirigé bêta) = ${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`
       : `${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison confirmée + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`,
     note: profitToInsurance
-      ? 'Mode bêta : 100% du profit est redirigé vers le fonds litige/réclamation pour protéger la communauté. Plus de fonds = plus de sécurité.'
+      ? 'Mode bêta : toute la part « Pérennité » de la plateforme est redirigée vers le fonds de sécurité (litige/réclamation) pour protéger la communauté. Plus de fonds = plus de sécurité.'
       : 'Fonds volontaire bêta — pas un contrat d\'assurance.'
   };
 
