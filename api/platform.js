@@ -30,6 +30,37 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
+// ─── Redistribution commission covoiturage ───
+// Postes modifiables depuis le hub admin. Le conducteur garde déjà sa part
+// (transfert Stripe dans rideCaptureEligible). Ici on découpe SEULEMENT la
+// commission plateforme. Total normalisé/affiché doit viser 100%.
+const RIDE_REDISTRIBUTION_DEFAULT = [
+  { key: 'operations',  label: 'Frais & opérations', emoji: '⚙️', pct: 30 },
+  { key: 'securite',    label: 'Fond de sécurité',   emoji: '🛡️', pct: 35 },
+  { key: 'dons',        label: 'Dons organismes',    emoji: '❤️', pct: 25 },
+  { key: 'developpeur', label: 'Développeur',        emoji: '💻', pct: 10 }
+];
+
+function normalizeRideRedistribution(input) {
+  let arr = input;
+  if (typeof arr === 'string') {
+    try { arr = JSON.parse(arr); } catch (_) { arr = null; }
+  }
+  if (!Array.isArray(arr) || !arr.length) return RIDE_REDISTRIBUTION_DEFAULT;
+  const cleaned = [];
+  for (const raw of arr) {
+    if (!raw || typeof raw !== 'object') continue;
+    const label = String(raw.label || '').trim().slice(0, 60);
+    if (!label) continue;
+    const key = String(raw.key || label.toLowerCase().replace(/[^a-z0-9]+/g, '_'))
+      .slice(0, 40) || `poste_${cleaned.length + 1}`;
+    const pct = Math.max(0, Math.min(100, toNumber(raw.pct, 0)));
+    const emoji = String(raw.emoji || '•').slice(0, 4);
+    cleaned.push({ key, label, emoji, pct });
+  }
+  return cleaned.length ? cleaned : RIDE_REDISTRIBUTION_DEFAULT;
+}
+
 const FILE_ORIGIN_PUBLIC_ENDPOINTS = new Set([
   'ride-search',
   'ride-detail',
@@ -3744,10 +3775,14 @@ async function fetchImpactState(sbUrl, sbKey) {
     };
   });
 
+  // ─── Redistribution commission covoiturage (postes configurables) ───
+  const rideRedistribution = normalizeRideRedistribution(settings.ride_redistribution);
+
   return {
     month,
     generated_at: new Date().toISOString(),
     settings,
+    ride_redistribution: rideRedistribution,
     organisations,
     active_organisations: activeOrgs.length,
     totals: {
@@ -3972,6 +4007,7 @@ async function impactAdmin(req, res, ctx, body) {
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
+      ride_redistribution: normalizeRideRedistribution(body.ride_redistribution),
       public_note: String(body.public_note || '').slice(0, 400),
       updated_by: ctx.session.id,
       updated_at: new Date().toISOString()

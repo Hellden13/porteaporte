@@ -962,6 +962,24 @@
             <label for="impact-ride-stop">Frais arrêt supplémentaire ($)</label>
             <input id="impact-ride-stop" type="number" min="0" step="0.5" value="3">
 
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Redistribution de la commission covoiturage (total = 100%) —</div>
+            <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Le conducteur garde déjà sa part. Voici comment se découpe la <strong>commission plateforme</strong> uniquement.</div>
+            <div id="ride-redist-bar" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-border);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:.8rem;color:var(--brand-muted)">Total alloué</span>
+                <span id="ride-redist-pct" style="font-weight:800;font-size:1rem">—%</span>
+              </div>
+              <div style="background:var(--brand-bg-dark);border-radius:4px;height:8px;overflow:hidden">
+                <div id="ride-redist-bar-fill" style="height:100%;background:var(--brand-lime);width:0%;transition:width .3s"></div>
+              </div>
+              <div id="ride-redist-msg" style="font-size:.75rem;margin-top:4px;color:var(--brand-muted)">Reste: —%</div>
+            </div>
+            <div id="ride-redist-list"></div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button type="button" onclick="addRidePost()" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-cyan);color:var(--brand-cyan);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">+ Ajouter un poste</button>
+              <button type="button" onclick="autoBalanceRide()" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-lime);color:var(--brand-lime);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
+            </div>
+
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Affichage public —</div>
             <label for="impact-public-note">Note publique</label>
             <textarea id="impact-public-note" maxlength="400">Montants estimés en direct, confirmés mensuellement.</textarea>
@@ -1914,6 +1932,8 @@
       document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
       document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
       window.__platformSettings = settings;
+      window.__rideRedist = Array.isArray(impact.ride_redistribution) ? impact.ride_redistribution : [];
+      renderRideRedist();
       updateLivraisonTotal();
       document.getElementById('impact-admin-pool').textContent = money(impact.totals?.donation_pool_cents);
       document.getElementById('impact-admin-deliveries').textContent = impact.totals?.deliveries_count || 0;
@@ -2145,6 +2165,79 @@
     updateLivraisonTotal();
   }
 
+  // ─── Redistribution commission covoiturage (postes dynamiques) ───
+  window.__rideRedist = [];
+
+  function collectRideRedist() {
+    const rows = document.querySelectorAll('#ride-redist-list [data-redist-row]');
+    const out = [];
+    rows.forEach(row => {
+      const emoji = row.querySelector('[data-f="emoji"]').value.trim() || '•';
+      const label = row.querySelector('[data-f="label"]').value.trim();
+      const pct = Number(row.querySelector('[data-f="pct"]').value) || 0;
+      if (!label) return;
+      out.push({ key: label.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40) || ('poste_' + (out.length + 1)), label, emoji, pct });
+    });
+    return out;
+  }
+
+  function renderRideRedist() {
+    const list = document.getElementById('ride-redist-list');
+    if (!list) return;
+    const posts = window.__rideRedist || [];
+    list.innerHTML = posts.map((p, i) => `
+      <div data-redist-row style="display:grid;grid-template-columns:42px 1fr 78px 34px;gap:6px;align-items:center;margin-bottom:6px">
+        <input data-f="emoji" value="${(p.emoji || '•').replace(/"/g, '&quot;')}" maxlength="4" style="text-align:center;padding:6px">
+        <input data-f="label" value="${(p.label || '').replace(/"/g, '&quot;')}" placeholder="Nom du poste" oninput="updateRideRedistTotal()">
+        <div style="display:flex;align-items:center;gap:4px"><input data-f="pct" type="number" min="0" max="100" step="0.1" value="${Number(p.pct) || 0}" style="width:56px" oninput="updateRideRedistTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
+        <button type="button" onclick="removeRidePost(${i})" title="Retirer" style="background:rgba(255,85,85,.1);border:1px solid #FF5555;color:#FF5555;border-radius:6px;cursor:pointer;padding:6px 0">🗑️</button>
+      </div>`).join('');
+    updateRideRedistTotal();
+  }
+
+  function updateRideRedistTotal() {
+    window.__rideRedist = collectRideRedist();
+    const total = (window.__rideRedist || []).reduce((s, p) => s + (Number(p.pct) || 0), 0);
+    const rounded = Math.round(total * 10) / 10;
+    const el = document.getElementById('ride-redist-pct');
+    const bar = document.getElementById('ride-redist-bar-fill');
+    const msg = document.getElementById('ride-redist-msg');
+    if (!el) return;
+    el.textContent = rounded + '%';
+    el.style.color = Math.abs(rounded - 100) < 0.1 ? 'var(--brand-lime)' : rounded > 100 ? '#FF5555' : 'var(--brand-muted)';
+    if (bar) { bar.style.width = Math.min(100, rounded) + '%'; bar.style.background = rounded > 100 ? '#FF5555' : 'var(--brand-lime)'; }
+    if (msg) {
+      msg.textContent = rounded > 100 ? `⚠ Dépasse de ${Math.round((rounded - 100) * 10) / 10}%` : rounded < 100 ? `Reste à allouer : ${Math.round((100 - rounded) * 10) / 10}%` : '✓ 100% alloué';
+      msg.style.color = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-muted)';
+    }
+  }
+
+  function addRidePost() {
+    window.__rideRedist = collectRideRedist();
+    window.__rideRedist.push({ key: '', label: '', emoji: '•', pct: 0 });
+    renderRideRedist();
+  }
+
+  function removeRidePost(i) {
+    window.__rideRedist = collectRideRedist();
+    window.__rideRedist.splice(i, 1);
+    renderRideRedist();
+  }
+
+  function autoBalanceRide() {
+    const posts = collectRideRedist();
+    const total = posts.reduce((s, p) => s + Math.max(0, Number(p.pct) || 0), 0);
+    if (total === 0 || !posts.length) return;
+    const factor = 100 / total;
+    let allocated = 0;
+    posts.forEach((p, i) => {
+      if (i < posts.length - 1) { p.pct = Math.round(p.pct * factor * 10) / 10; allocated += p.pct; }
+      else { p.pct = Math.round((100 - allocated) * 10) / 10; }
+    });
+    window.__rideRedist = posts;
+    renderRideRedist();
+  }
+
   function updateOrgTotal() {
     const orgs = window.__impactOrgs || [];
     const editingId = document.getElementById('impact-org-id').value;
@@ -2226,6 +2319,7 @@
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),
+        ride_redistribution: collectRideRedist(),
         public_note: document.getElementById('impact-public-note').value.trim()
       });
       await loadImpact();
