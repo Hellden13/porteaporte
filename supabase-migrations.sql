@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS kyc_submissions (
   address       TEXT,
   transport_mode TEXT       NOT NULL,
   eco_bonus     INTEGER     NOT NULL DEFAULT 0,
-  doc_type      TEXT        NOT NULL,   -- 'permis' | 'assurance_maladie_ou_passeport'
+  doc_type      TEXT        NOT NULL,   -- 'permis' | 'piece_identite_avec_photo'
   doc1_path     TEXT,                   -- chemin dans kyc-documents bucket
   doc2_path     TEXT,                   -- recto/verso permis (null si carte maladie)
   selfie_path   TEXT,                   -- null si non requis
