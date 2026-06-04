@@ -150,6 +150,55 @@
     </div>
 
     <div class="panel">
+      <h2 style="margin:0 0 6px">📉 Sinistres versés (sorties du fonds)</h2>
+      <p style="color:var(--brand-muted);margin-bottom:16px">Chaque indemnisation que tu verses réellement est <strong>soustraite</strong> du fonds pour garder un solde exact.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+        <div style="background:rgba(125,255,193,.06);border:1px solid rgba(125,255,193,.3);border-radius:10px;padding:14px 16px;text-align:center">
+          <div style="font-size:.75rem;color:var(--brand-muted);font-weight:700;margin-bottom:6px">SOLDE NET DISPONIBLE</div>
+          <div id="fund-net" style="font-size:1.6rem;font-weight:900;color:#7dffc1">—</div>
+        </div>
+        <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;text-align:center">
+          <div style="font-size:.75rem;color:var(--brand-muted);font-weight:700;margin-bottom:6px">FONDS CUMULÉ (BRUT)</div>
+          <div id="fund-gross" style="font-size:1.6rem;font-weight:900;color:#5dbfff">—</div>
+        </div>
+        <div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:14px 16px;text-align:center">
+          <div style="font-size:.75rem;color:var(--brand-muted);font-weight:700;margin-bottom:6px">VERSÉ EN SINISTRES</div>
+          <div id="fund-payouts" style="font-size:1.6rem;font-weight:900;color:#ff6b6b">—</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Montant versé ($)</label>
+          <input id="po-amount" type="number" min="0" step="1" style="width:100%;padding:12px;background:#05080c;color:#ff9b9b;border:1px solid #1E2535;border-radius:8px;font-weight:900;font-size:1.1rem;text-align:center" placeholder="0">
+        </div>
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Bénéficiaire (email/nom) — optionnel</label>
+          <input id="po-benef" type="text" style="width:100%;padding:12px;background:#05080c;color:#fff;border:1px solid #1E2535;border-radius:8px" placeholder="ex: client@email.com">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Livraison liée (ID) — optionnel</label>
+          <input id="po-liv" type="text" style="width:100%;padding:12px;background:#05080c;color:#fff;border:1px solid #1E2535;border-radius:8px" placeholder="uuid de la livraison">
+        </div>
+        <div>
+          <label style="display:block;font-weight:700;color:#fff;margin-bottom:6px">Motif</label>
+          <input id="po-motif" type="text" style="width:100%;padding:12px;background:#05080c;color:#fff;border:1px solid #1E2535;border-radius:8px" placeholder="ex: colis brisé, preuve fournie">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="addPayout()">📉 Enregistrer le sinistre versé</button>
+      </div>
+      <div id="msg-po" class="msg"></div>
+
+      <h3 style="margin:20px 0 10px;font-size:1rem;color:#fff">Historique récent</h3>
+      <div id="po-list" style="font-size:.85rem;color:var(--brand-muted)">Chargement…</div>
+    </div>
+
+    <div class="panel">
       <h2 style="margin:0 0 14px">🗺️ Restriction Bêta — Zones géographiques</h2>
       <p style="color:var(--brand-muted);margin-bottom:14px">Limite les livraisons aux villes choisies. Les expéditeurs hors zone voient un message clair (avec ton email pour notification). <strong>Tu (admin) peux toujours créer des livraisons partout</strong>.</p>
 
@@ -202,6 +251,68 @@
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
       if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
       await load();
+      await loadFund();
+    }
+
+    const fmt$ = (cents) => ((Number(cents) || 0) / 100).toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+
+    async function loadFund() {
+      try {
+        const res = await fetch('/api/platform?endpoint=impact-public');
+        const data = await res.json();
+        const pf = data.protection_fund || {};
+        document.getElementById('fund-net').textContent = fmt$(pf.net_balance_cents != null ? pf.net_balance_cents : pf.total_cents);
+        document.getElementById('fund-gross').textContent = fmt$(pf.total_cents);
+        document.getElementById('fund-payouts').textContent = fmt$(pf.payouts_total_cents);
+      } catch (e) {
+        document.getElementById('fund-net').textContent = '—';
+      }
+      // Historique
+      try {
+        const r = await fetch('/api/platform?endpoint=fund-payouts-list', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        });
+        const out = await r.json();
+        const list = document.getElementById('po-list');
+        const rows = out.payouts || [];
+        if (!rows.length) { list.textContent = 'Aucun sinistre versé pour l’instant.'; return; }
+        list.innerHTML = rows.map(p => {
+          const d = new Date(p.created_at).toLocaleDateString('fr-CA');
+          return `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #1E2535">
+            <span><strong style="color:#ff9b9b">${fmt$(p.amount_cents)}</strong> — ${(p.motif || '').replace(/</g,'&lt;') || 'sans motif'} ${p.beneficiaire ? '· ' + String(p.beneficiaire).replace(/</g,'&lt;') : ''}</span>
+            <span style="color:var(--brand-muted);white-space:nowrap">${d}</span>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        document.getElementById('po-list').textContent = 'Historique indisponible.';
+      }
+    }
+
+    async function addPayout() {
+      const msg = document.getElementById('msg-po');
+      const amountCents = Math.round((Number(document.getElementById('po-amount').value) || 0) * 100);
+      if (!(amountCents > 0)) { msg.className = 'msg err'; msg.textContent = '❌ Montant invalide'; return; }
+      const payload = {
+        amount_cents: amountCents,
+        beneficiaire: document.getElementById('po-benef').value.trim() || null,
+        livraison_id: document.getElementById('po-liv').value.trim() || null,
+        motif: document.getElementById('po-motif').value.trim() || null
+      };
+      if (!confirm(`Enregistrer un sinistre versé de ${fmt$(amountCents)} ? Ce montant sera soustrait du fonds.`)) return;
+      const res = await fetch('/api/platform?endpoint=fund-payout-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.className = 'msg err'; msg.textContent = '❌ ' + (out.error || 'Erreur enregistrement'); return; }
+      msg.className = 'msg ok';
+      msg.textContent = '✅ Sinistre enregistré et soustrait du fonds.';
+      document.getElementById('po-amount').value = '';
+      document.getElementById('po-benef').value = '';
+      document.getElementById('po-liv').value = '';
+      document.getElementById('po-motif').value = '';
+      await loadFund();
     }
 
     async function load() {

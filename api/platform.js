@@ -3867,7 +3867,25 @@ async function impactPublic(req, res, ctx) {
   const fundFromCovoiturageCents = Math.round(rideCommissionCapturedCents * rideSecuritePct / 100);
 
   const fundTotalCents = fundFromDeliveriesCents + fundFromCovoiturageCents + fundTopupCents;
-  const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundTotalCents * 0.5));
+
+  // ─── Sinistres réellement versés (sorties du fonds) → solde NET honnête ───
+  let payoutsTotalCents = 0;
+  let payoutsCount = 0;
+  try {
+    const pr = await fetch(
+      `${ctx.sbUrl}/rest/v1/protection_fund_payouts?select=amount_cents`,
+      { headers: { ...sbHeaders(ctx.sbKey), Prefer: 'count=exact' } }
+    );
+    if (pr.ok) {
+      const prows = await pr.json().catch(() => []);
+      payoutsTotalCents = prows.reduce((sum, r) => sum + (Number(r.amount_cents) || 0), 0);
+      const cr = pr.headers.get('content-range') || '';
+      payoutsCount = Number(cr.split('/')[1]) || prows.length;
+    }
+  } catch (_) {}
+  const fundNetBalanceCents = Math.max(0, fundTotalCents - payoutsTotalCents);
+  // Plafond de réclamation basé sur le solde NET (jamais sur l'argent déjà sorti)
+  const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundNetBalanceCents * 0.5));
 
   const [drawsRes, winnersRes] = await Promise.all([
     fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
@@ -3898,6 +3916,9 @@ async function impactPublic(req, res, ctx) {
   };
   const protectionFund = {
     total_cents: fundTotalCents,
+    payouts_total_cents: payoutsTotalCents,
+    payouts_count: payoutsCount,
+    net_balance_cents: fundNetBalanceCents,
     from_deliveries_cents: fundFromDeliveriesCents,
     from_covoiturage_cents: fundFromCovoiturageCents,
     ride_securite_pct: rideSecuritePct,
@@ -4721,6 +4742,57 @@ module.exports = async function handler(req, res) {
         },
       });
     }
+    // ── Fonds de protection : enregistrer un sinistre versé (sortie du fonds) ──
+    if (endpoint === 'fund-payout-add') {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      const amountCents = Math.round(Number(body.amount_cents) || 0);
+      if (!(amountCents > 0)) return res.status(400).json({ error: 'Montant invalide' });
+
+      const rec = {
+        amount_cents: amountCents,
+        livraison_id: body.livraison_id || null,
+        booking_id: body.booking_id || null,
+        beneficiaire: body.beneficiaire ? String(body.beneficiaire).slice(0, 200) : null,
+        motif: body.motif ? String(body.motif).slice(0, 500) : null,
+        stripe_refund_id: body.stripe_refund_id ? String(body.stripe_refund_id).slice(0, 120) : null,
+        note: body.note ? String(body.note).slice(0, 1000) : null,
+        created_by: profile.email || session.id,
+        created_at: new Date().toISOString()
+      };
+      const ins = await fetch(`${sbUrl}/rest/v1/protection_fund_payouts`, {
+        method: 'POST',
+        headers: { ...sbHeaders(sbKey), Prefer: 'return=representation' },
+        body: JSON.stringify(rec)
+      });
+      if (!ins.ok) {
+        const err = await ins.json().catch(() => ({}));
+        return res.status(400).json({ error: 'Enregistrement impossible', details: err });
+      }
+      const created = await ins.json().catch(() => [rec]);
+      return res.status(200).json({ success: true, payout: Array.isArray(created) ? created[0] : created });
+    }
+
+    // ── Fonds de protection : historique des sinistres versés ──
+    if (endpoint === 'fund-payouts-list') {
+      const session = await getSession(req, sbUrl, sbKey);
+      if (!session) return res.status(401).json({ error: 'Connexion requise' });
+      const profile = await getProfile(session.id, sbUrl, sbKey);
+      if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+
+      const lr = await fetch(
+        `${sbUrl}/rest/v1/protection_fund_payouts?select=*&order=created_at.desc&limit=200`,
+        { headers: sbHeaders(sbKey) }
+      );
+      const rows = lr.ok ? await lr.json().catch(() => []) : [];
+      const totalCents = rows.reduce((sum, r) => sum + (Number(r.amount_cents) || 0), 0);
+      return res.status(200).json({ success: true, payouts: rows, total_cents: totalCents, count: rows.length });
+    }
+
     if (endpoint === 'admin-debug-rides') {
       // Diagnostic complet des trajets covoiturage existants
       const session = await getSession(req, sbUrl, sbKey);
