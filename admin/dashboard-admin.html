@@ -923,34 +923,12 @@
       <div class="impact-admin-grid">
         <div class="form-card">
           <form id="impact-settings-form" class="form-grid">
-            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin-bottom:8px">— Répartition livraisons (total doit = 100%) —</div>
-            <div id="livraison-total-bar" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-border);border-radius:8px;padding:10px 14px;margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <span style="font-size:.8rem;color:var(--brand-muted)">Total alloué</span>
-                <span id="livraison-total-pct" style="font-weight:800;font-size:1rem">—%</span>
-              </div>
-              <div style="background:var(--brand-bg-dark);border-radius:4px;height:8px;overflow:hidden">
-                <div id="livraison-total-bar-fill" style="height:100%;background:var(--brand-lime);width:0%;transition:width .3s"></div>
-              </div>
-              <div id="livraison-total-msg" style="font-size:.75rem;margin-top:4px;color:var(--brand-muted)">Reste: —%</div>
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin-bottom:8px">— Répartition livraisons —</div>
+            <div style="background:rgba(93,191,255,.06);border:1px solid var(--brand-border);border-radius:8px;padding:14px 16px;margin-bottom:8px;font-size:.85rem;color:var(--brand-muted);line-height:1.6">
+              📦 La répartition des livraisons (livreur, communauté, protection, profit…) se règle à <strong>un seul endroit</strong> pour rester cohérente partout :
+              <a href="/admin/parametres.html" style="display:inline-block;margin-top:8px;color:var(--brand-lime);font-weight:800;text-decoration:none">⚙️ Ouvrir Paramètres financiers →</a>
+              <div style="margin-top:6px;font-size:.78rem;color:var(--brand-muted)">Transparence (public) et Fondateur lisent automatiquement cette même source.</div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
-              <label for="pct-livreur">🚚 Livreur</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-livreur" type="number" min="0" max="100" step="0.1" value="85" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-plateforme">⚡ Plateforme</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-plateforme" type="number" min="0" max="100" step="0.1" value="15" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-don">❤️ Dons organismes</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-don" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-tirage">🎟 Fond tirage</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-tirage" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-developpeur">💻 Développeur</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-developpeur" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-securite">🛡 Fond de sécurité</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-securite" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-              <label for="pct-assurance">🔒 Protection colis beta</label>
-              <div style="display:flex;align-items:center;gap:6px"><input id="pct-assurance" type="number" min="0" max="100" step="0.1" value="0" style="width:80px" oninput="updateLivraisonTotal()"><span style="color:var(--brand-muted);font-size:.85rem">%</span></div>
-            </div>
-            <button type="button" onclick="autoBalancePct()" style="margin-top:4px;background:rgba(93,191,255,.08);border:1px solid var(--brand-lime);color:var(--brand-lime);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Covoiturage —</div>
             <label for="impact-ride-pct">Commission plateforme covoiturage (%)</label>
@@ -1919,13 +1897,6 @@
       const out = await impactRequest(null, 'GET');
       const impact = out.impact;
       const settings = impact.settings || {};
-      document.getElementById('pct-livreur').value     = settings.pct_livreur     ?? 85;
-      document.getElementById('pct-plateforme').value  = settings.pct_plateforme  ?? 15;
-      document.getElementById('pct-don').value         = settings.pct_don         ?? 0;
-      document.getElementById('pct-tirage').value      = settings.pct_tirage      ?? 0;
-      document.getElementById('pct-developpeur').value = settings.pct_developpeur ?? 0;
-      document.getElementById('pct-securite').value    = settings.pct_securite    ?? 0;
-      document.getElementById('pct-assurance').value   = settings.pct_assurance   ?? 0;
       document.getElementById('impact-ride-pct').value     = settings.ride_platform_fee ?? 1.50;
       document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
       document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
@@ -1934,7 +1905,6 @@
       window.__platformSettings = settings;
       window.__rideRedist = Array.isArray(impact.ride_redistribution) ? impact.ride_redistribution : [];
       renderRideRedist();
-      updateLivraisonTotal();
       document.getElementById('impact-admin-pool').textContent = money(impact.totals?.donation_pool_cents);
       document.getElementById('impact-admin-deliveries').textContent = impact.totals?.deliveries_count || 0;
       document.getElementById('impact-admin-allocation').textContent = (impact.totals?.allocation_total_percent || 0) + '%';
@@ -2130,40 +2100,6 @@
     } catch (err) { alert(err.message); }
   });
 
-  const PCT_IDS = ['pct-livreur','pct-plateforme','pct-don','pct-tirage','pct-developpeur','pct-securite','pct-assurance'];
-
-  function updateLivraisonTotal() {
-    const total = PCT_IDS.reduce((s, id) => s + (Number(document.getElementById(id)?.value) || 0), 0);
-    const rounded = Math.round(total * 10) / 10;
-    const el = document.getElementById('livraison-total-pct');
-    const bar = document.getElementById('livraison-total-bar-fill');
-    const msg = document.getElementById('livraison-total-msg');
-    if (!el) return;
-    el.textContent = rounded + '%';
-    el.style.color = Math.abs(rounded - 100) < 0.1 ? 'var(--brand-lime)' : rounded > 100 ? '#FF5555' : 'var(--brand-muted)';
-    if (bar) bar.style.width = Math.min(100, rounded) + '%';
-    if (bar) bar.style.background = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-lime)';
-    if (msg) msg.textContent = rounded > 100 ? `⚠ Dépasse de ${Math.round((rounded-100)*10)/10}%` : rounded < 100 ? `Reste à allouer : ${Math.round((100-rounded)*10)/10}%` : '✓ 100% alloué';
-    if (msg) msg.style.color = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-muted)';
-  }
-
-  function autoBalancePct() {
-    const vals = PCT_IDS.map(id => ({ id, v: Math.max(0, Number(document.getElementById(id)?.value) || 0) }));
-    const total = vals.reduce((s, x) => s + x.v, 0);
-    if (total === 0) return;
-    const factor = 100 / total;
-    let allocated = 0;
-    vals.forEach((x, i) => {
-      if (i < vals.length - 1) {
-        const adjusted = Math.round(x.v * factor * 10) / 10;
-        document.getElementById(x.id).value = adjusted;
-        allocated += adjusted;
-      } else {
-        document.getElementById(x.id).value = Math.round((100 - allocated) * 10) / 10;
-      }
-    });
-    updateLivraisonTotal();
-  }
 
   // ─── Redistribution commission covoiturage (postes dynamiques) ───
   window.__rideRedist = [];
@@ -2308,13 +2244,6 @@
     try {
       await impactRequest({
         mode: 'settings',
-        pct_livreur:     Number(document.getElementById('pct-livreur').value || 0),
-        pct_plateforme:  Number(document.getElementById('pct-plateforme').value || 0),
-        pct_don:         Number(document.getElementById('pct-don').value || 0),
-        pct_tirage:      Number(document.getElementById('pct-tirage').value || 0),
-        pct_developpeur: Number(document.getElementById('pct-developpeur').value || 0),
-        pct_securite:    Number(document.getElementById('pct-securite').value || 0),
-        pct_assurance:   Number(document.getElementById('pct-assurance').value || 0),
         ride_platform_pct:  Number(document.getElementById('impact-ride-pct').value || 0),
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),

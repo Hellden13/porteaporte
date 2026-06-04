@@ -177,8 +177,8 @@
         <tbody id="projTable"></tbody>
       </table>
       <p style="color:var(--brand-muted);font-size:.78rem;margin-top:14px;line-height:1.6">
-        💡 Calculs basés sur : ticket moyen <span id="projTicket">15 $</span>, modèle équilibré 60/5/3/2/4/4,6/13/3,4/5%.
-        Le salaire fondateur est ce qui reste après tous les autres postes payés.
+        💡 Calculs basés sur ton ticket moyen <span id="projTicket">15 $</span> et ta répartition <strong>en direct</strong> (réglée dans Paramètres financiers).
+        Commission = tout sauf le livreur · Salaire fondateur = Opérations + Profit − coûts infra.
       </p>
     </div>
   </main>
@@ -220,33 +220,33 @@
       const revBrut = all.reduce((s,l) => s + (Number(l.prix_total)||0), 0);
       const ticketAvg = txCount > 0 ? revBrut / txCount : 0;
 
-      // Calcul splits (modèle B)
-      const stripeFees = revBrut * 0.034;
-      const netDispo = revBrut - stripeFees;
-      const livreurPart = netDispo * 0.60;
-      const communaute = netDispo * 0.05;
-      const protection = netDispo * 0.03;
-      const urgence = netDispo * 0.02;
-      const developpement = netDispo * 0.04;
-      const marketing = netDispo * 0.046;
-      const operations = netDispo * 0.13;
-      const profit = netDispo * 0.05;
+      // ── Source UNIQUE : platform_settings (réglée dans /admin/parametres.html, lue aussi par Transparence) ──
+      const num = (v, d) => Number.isFinite(Number(v)) ? Number(v) : d;
+      let cfg = {};
+      try {
+        const cfgRes = await fetch('/api/platform?endpoint=platform-settings-get');
+        cfg = (await cfgRes.json()).settings || {};
+      } catch (_) {}
+      const P = {
+        livreur:       num(cfg.pct_livreur, 60),
+        communaute:    num(cfg.pct_communaute, 5),
+        protection:    num(cfg.pct_protection, 8),
+        urgence:       num(cfg.pct_urgence, 5),
+        developpement: num(cfg.pct_developpement, 5),
+        marketing:     num(cfg.pct_marketing, 3),
+        operations:    num(cfg.pct_operations, 4),
+        profit:        num(cfg.pct_profit, 10)
+      };
+      const commissionPct = Math.max(0, 100 - P.livreur) / 100;   // tout sauf le livreur
+      const founderPct = (P.operations + P.profit) / 100;          // ta part réaliste
 
       // Volume mensualisé pour projection
       const periodDays = days === 'all' ? Math.max(30, (Date.now() - new Date(all[all.length-1]?.cree_le || Date.now()).getTime()) / 86400000) : Number(days);
       const txPerMonth = Math.round(txCount / periodDays * 30);
       const revPerMonth = revBrut / periodDays * 30;
 
-      // Salaire possible ce mois
-      // En supposant que profit + part marketing/dev disponibles si tu choisis de réduire
-      // Salaire conservateur = profit seul, généreux = profit + une partie marketing si tu le veux
-      const profitMensuel = (profit + operations * 0.5) / periodDays * 30; // operations partiellement = ton salaire ops
-      // En réalité, ce qui peut aller à toi : profit (5%) + une partie operations (13%) qui couvre TON travail
-      // Disons que sur 13% ops, 8% peut être TON salaire (les autres 5% sont vrais coûts infra)
-      const salaireDispoMois = Math.max(0, (revPerMonth * 0.18 * 0.96) - 400 /* coûts infra fixes */);
-      // 18% = commission après Stripe
-      // 0.96 = après autres postes (com/prot/urg)
-      // -400 = coûts infra mensuels
+      // Salaire possible ce mois — basé sur ta config en direct (Opérations + Profit), moins coûts infra
+      const salaireDispoMois = Math.max(0, (revPerMonth * founderPct) - 400 /* coûts infra fixes */);
 
       // Hero
       document.getElementById('salaryPossible').textContent = salaireDispoMois.toFixed(0) + ' $';
@@ -258,34 +258,36 @@
       document.getElementById('txCount').textContent = txCount.toLocaleString('fr-CA');
       document.getElementById('txSub').textContent = `≈ ${txPerMonth}/mois extrapolé`;
       document.getElementById('revBrut').textContent = revBrut.toFixed(0) + ' $';
-      document.getElementById('commission').textContent = (revBrut * 0.18).toFixed(0) + ' $';
+      document.getElementById('commission').textContent = (revBrut * commissionPct).toFixed(0) + ' $';
+      document.querySelector('#commission + .sub').textContent = `${(commissionPct * 100).toFixed(1)}% (tout sauf le livreur)`;
       document.getElementById('ticketAvg').textContent = ticketAvg.toFixed(2) + ' $';
 
-      // Funds
+      // Funds — 8 postes lus EN DIRECT (identiques à la page Transparence)
       const fundsData = [
-        { icon: '🚗', name: 'Livreurs (60% net)', desc: 'Gains versés via Stripe Connect', amount: livreurPart, pct: '60%' },
-        { icon: '💳', name: 'Stripe (3,4%)', desc: 'Frais transaction incompressibles', amount: stripeFees, pct: '3,4%' },
-        { icon: '💚', name: 'Communauté (5%)', desc: 'Fonds PorteàPorte → organismes québécois', amount: communaute, pct: '5%' },
-        { icon: '🛡️', name: 'Protection colis (3%)', desc: 'Réserve dommages/pertes', amount: protection, pct: '3%' },
-        { icon: '🆘', name: 'Urgence (2%)', desc: 'Litiges majeurs, cas extrêmes', amount: urgence, pct: '2%' },
-        { icon: '🔧', name: 'Développement (4%)', desc: 'Maintenance + futurs devs', amount: developpement, pct: '4%' },
-        { icon: '📢', name: 'Marketing (4,6%)', desc: 'Croissance, pubs, partenariats', amount: marketing, pct: '4,6%' },
-        { icon: '🏛️', name: 'Opérations (13%)', desc: 'Support + équipe + TON salaire', amount: operations, pct: '13%' },
-        { icon: '💰', name: 'Profit net (5%)', desc: 'Réinvest ou TON bonus', amount: profit, pct: '5%' }
+        { icon: '🚗', name: 'Livreur québécois',                key: 'livreur',       desc: 'Gains versés via Stripe Connect' },
+        { icon: '💚', name: 'Communauté (Fonds PorteàPorte)',    key: 'communaute',    desc: 'Reversé aux organismes québécois' },
+        { icon: '🛡️', name: 'Protection colis bêta',            key: 'protection',    desc: 'Réserve dommages / pertes' },
+        { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'urgence',       desc: 'Litiges majeurs, cas extrêmes' },
+        { icon: '🔧', name: 'Maintenance + développement',       key: 'developpement', desc: 'Évolutions et futurs devs' },
+        { icon: '📢', name: 'Marketing & croissance',            key: 'marketing',     desc: 'Pubs, partenariats, acquisition' },
+        { icon: '🏛️', name: 'Opérations',                       key: 'operations',    desc: 'Support, équipe, salaire fondateur' },
+        { icon: '💰', name: 'Profit net',                        key: 'profit',        desc: 'Réinvest ou bonus fondateur' }
       ];
-      document.getElementById('fundsList').innerHTML = fundsData.map(f => `
-        <div class="fund-row">
+      document.getElementById('fundsList').innerHTML = fundsData.map(f => {
+        const pctVal = P[f.key];
+        const amount = revBrut * pctVal / 100;
+        return `<div class="fund-row">
           <div class="icon">${f.icon}</div>
           <div class="info">
             <div class="name">${f.name}</div>
             <div class="desc">${f.desc}</div>
           </div>
           <div>
-            <div class="amount">${f.amount.toFixed(0)} $</div>
-            <div class="pct">${f.pct}</div>
+            <div class="amount">${amount.toFixed(0)} $</div>
+            <div class="pct">${pctVal.toFixed(1)}%</div>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
 
       // Tiers
       let currentTier = TIERS[0];
@@ -317,8 +319,8 @@
       document.getElementById('projTicket').textContent = ticketProj.toFixed(2) + ' $';
       document.getElementById('projTable').innerHTML = projVolumes.map(v => {
         const rev = v * ticketProj;
-        const comm = rev * 0.18;
-        const sal = Math.max(0, comm * 0.96 - 400);
+        const comm = rev * commissionPct;
+        const sal = Math.max(0, rev * founderPct - 400);
         const isCurrent = Math.abs(v - txPerMonth) < (v * 0.2);
         return `<tr class="${isCurrent ? 'target' : ''}">
           <td>${v.toLocaleString('fr-CA')} tx${isCurrent ? ' (≈ toi)' : ''}</td>
