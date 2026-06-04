@@ -5090,7 +5090,7 @@ module.exports = async function handler(req, res) {
       const livId = body.user_id || url.searchParams.get('id');
       if (!livId) return res.status(400).json({ error: 'user_id requis' });
       const r = await fetch(
-        `${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livId)}&select=id,prenom,nom,avatar,score_confiance,driver_status,verification_status,role,ville,transport_mode,vehicule,cree_le`,
+        `${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livId)}&select=id,prenom,avatar,score_confiance,driver_status,verification_status,role,ville,transport_mode,vehicule,cree_le`,
         { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
       );
       const rows = r.ok ? await r.json().catch(() => []) : [];
