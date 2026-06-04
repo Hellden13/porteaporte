@@ -3891,7 +3891,8 @@ async function impactPublic(req, res, ctx) {
     note: state.settings.public_note || 'Montants estimes en direct, confirmes mensuellement.',
     totals: state.totals,
     allocations: state.allocations,
-    ride_redistribution: state.ride_redistribution
+    ride_redistribution: state.ride_redistribution,
+    ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10)))
   };
   const protectionFund = {
     total_cents: fundTotalCents,
@@ -4031,6 +4032,7 @@ async function impactAdmin(req, res, ctx, body) {
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
+      ride_free_trips:    Math.max(0, Math.floor(toNumber(body.ride_free_trips, 10))),
       ride_redistribution: normalizeRideRedistribution(body.ride_redistribution),
       public_note: String(body.public_note || '').slice(0, 400),
       updated_by: ctx.session.id,

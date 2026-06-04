@@ -8,6 +8,18 @@ if (!window.__PIA_LOADED__) {
   (function () {
     'use strict';
 
+    // Franchise « N premiers trajets sans commission » — source unique : /api/impact-public
+    if (window.__freeTrips == null) {
+      window.__freeTrips = 10;
+      fetch('/api/impact-public')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          var n = d && d.impact && Number(d.impact.ride_free_trips);
+          if (Number.isFinite(n) && n > 0) window.__freeTrips = n;
+        })
+        .catch(function () {});
+    }
+
     const KNOWLEDGE = [
       {
         keys: ['covoiturage', 'trajet', 'passager', 'conducteur', 'route', 'lift', 'siege', 'place', 'covoit', 'voyage', 'chauffeur'],
@@ -22,7 +34,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['publier', 'conduire', 'conducteur', 'chauffeur', 'gagner', 'essence', 'auto', 'voiture', 'siege libre'],
         title: 'Je conduis — publier un trajet',
-        answer: 'Tu fais deja la route ? Publie ton trajet en 60 secondes (mode express). Tu remplis ton auto, tu partages l essence. Bonus : active "j accepte les colis" et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre. 0 % de commission sur tes 10 premiers trajets en beta.',
+        answer: 'Tu fais deja la route ? Publie ton trajet en 60 secondes (mode express). Tu remplis ton auto, tu partages l essence. Bonus : active "j accepte les colis" et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre. 0 % de commission sur tes {{FREE_TRIPS}} premiers trajets en beta.',
         actions: [
           ['Publier un trajet', '/covoiturage-publier.html'],
           ['Guide chauffeur', '/covoiturage-info.html'],
@@ -77,7 +89,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['quebec', 'levis', 'beta', 'test', '50', 'lundi', 'tester', 'saguenay', 'montreal', 'sherbrooke', 'rimouski', 'riviere du loup', 'rivieredu loup', 'beauce', 'saint-georges', 'gatineau', 'trois-rivieres'],
         title: 'Beta — partout au Québec',
-        answer: 'Beta ouverte partout au Quebec : Quebec, Levis, Saguenay, Trois-Rivieres, Montreal, Sherbrooke, Rimouski, Riviere-du-Loup, Beauce (Saint-Georges), Gatineau et plus. 10 premiers trajets sans commission. Aucun engagement, annule quand tu veux.',
+        answer: 'Beta ouverte partout au Quebec : Quebec, Levis, Saguenay, Trois-Rivieres, Montreal, Sherbrooke, Rimouski, Riviere-du-Loup, Beauce (Saint-Georges), Gatineau et plus. {{FREE_TRIPS}} premiers trajets sans commission. Aucun engagement, annule quand tu veux.',
         actions: [
           ['Voir les trajets', '/covoiturage.html'],
           ['Beta Quebec', '/quebec-beta.html'],
@@ -427,7 +439,9 @@ if (!window.__PIA_LOADED__) {
       addBubble(escapeHtml(clean), 'user');
       const entry = findEntry(clean);
       if (entry) {
-        addBubble('<strong>' + escapeHtml(entry.title) + '</strong><br>' + escapeHtml(entry.answer) + actionHtml(entry.actions));
+        var freeTrips = String(window.__freeTrips || 10);
+        var answerText = escapeHtml(entry.answer).replace(/\{\{FREE_TRIPS\}\}/g, freeTrips);
+        addBubble('<strong>' + escapeHtml(entry.title) + '</strong><br>' + answerText + actionHtml(entry.actions));
       } else {
         addBubble('<strong>Je peux te guider.</strong><br>Essaie : envoyer un colis, devenir livreur, beta Quebec, paiement, GPS ou support.' + chipsHtml());
         body().querySelectorAll('[data-pia-question]').forEach(function (chip) {

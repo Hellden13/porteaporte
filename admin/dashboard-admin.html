@@ -939,6 +939,9 @@
             <input id="impact-ride-pet" type="number" min="0" step="0.5" value="8">
             <label for="impact-ride-stop">Frais arrêt supplémentaire ($)</label>
             <input id="impact-ride-stop" type="number" min="0" step="0.5" value="3">
+            <label for="impact-ride-free-trips">Trajets sans commission (franchise par conducteur)</label>
+            <input id="impact-ride-free-trips" type="number" min="0" step="1" value="10">
+            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Les N premiers trajets publiés par un conducteur sont sans commission (figé à la publication). 0 = désactivé.</div>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Redistribution de la commission covoiturage (total = 100%) —</div>
             <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Le conducteur garde déjà sa part. Voici comment se découpe la <strong>commission plateforme</strong> uniquement.</div>
@@ -1901,6 +1904,7 @@
       document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
       document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
       document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
+      document.getElementById('impact-ride-free-trips').value = settings.ride_free_trips ?? 10;
       document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
       window.__platformSettings = settings;
       window.__rideRedist = Array.isArray(impact.ride_redistribution) ? impact.ride_redistribution : [];
@@ -2248,6 +2252,7 @@
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),
+        ride_free_trips:    Math.max(0, Math.floor(Number(document.getElementById('impact-ride-free-trips').value || 0))),
         ride_redistribution: collectRideRedist(),
         public_note: document.getElementById('impact-public-note').value.trim()
       });

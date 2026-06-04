@@ -177,6 +177,30 @@ describe('calcRidePrice', () => {
     assert.ok(isRounded(price.totalPassenger), 'totalPassenger doit être arrondi');
     assert.ok(isRounded(price.driverAmount), 'driverAmount doit être arrondi');
   });
+
+  test('franchise commissionFree=true → platformFee = 0', () => {
+    const free = calcRidePrice({ ...base, commissionFree: true });
+    const paid = calcRidePrice({ ...base, commissionFree: false });
+    assert.equal(free.platformFee, 0, 'aucune commission quand commissionFree=true');
+    assert.equal(free.commissionFree, true);
+    // Le passager paie moins (économie = la commission)
+    assert.ok(free.totalPassenger < paid.totalPassenger, 'le passager paie moins sans commission');
+    // Le chauffeur garde la même part
+    assert.equal(free.driverAmount, paid.driverAmount, 'le chauffeur garde sa part entière');
+    // Le total passager = part chauffeur (plus de frais plateforme) quand pas de bagage
+    assert.equal(free.totalPassenger, free.driverAmount, 'sans commission, total = part chauffeur');
+  });
+
+  test('franchise sur 2 sièges → platformFee reste 0', () => {
+    const free = calcRidePrice({ ...base, seats: 2, commissionFree: true });
+    assert.equal(free.platformFee, 0);
+  });
+
+  test('par défaut (commissionFree absent) → commission normale', () => {
+    const price = calcRidePrice(base);
+    assert.equal(price.platformFee, RIDE_PLATFORM_FEE);
+    assert.equal(price.commissionFree, false);
+  });
 });
 
 // ─── missionQualifies ─────────────────────────────────────────────────────────
