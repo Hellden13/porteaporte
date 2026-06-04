@@ -158,6 +158,26 @@
       <div id="rideRedistList"><div class="empty-data">Aucune réservation covoiturage sur la période.</div></div>
     </div>
 
+    <!-- Fonds de sécurité unifié -->
+    <div class="funds-section" style="border-color:rgba(125,255,193,.3)">
+      <h2>🛡️ Fonds de sécurité (unifié)</h2>
+      <p style="color:var(--brand-muted);font-size:.82rem;margin:0 0 16px;line-height:1.6">
+        Un seul fonds, alimenté par la livraison + le covoiturage + tes apports directs. C'est l'argent réellement réservé pour protéger la communauté (réclamations, litiges).
+      </p>
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="stat-card green">
+          <div class="icon">🛡️</div>
+          <div class="lbl">Solde du fonds</div>
+          <div class="val" id="secFundTotal">0 $</div>
+          <div class="sub">total réservé</div>
+        </div>
+      </div>
+      <div id="secFundList"></div>
+      <p style="color:var(--brand-muted);font-size:.78rem;margin:12px 0 0;line-height:1.6">
+        💡 Pour ajouter de ta poche : <a href="/admin/parametres.html" style="color:var(--brand-cyan)">Paramètres → champ « Apport au fonds »</a>.
+      </p>
+    </div>
+
     <!-- Progression vers prochain palier -->
     <div class="salary-tier">
       <h2>🎯 Ta progression vers le prochain palier</h2>
@@ -368,11 +388,32 @@
 
         // Config de redistribution (postes configurés au hub, exposés en public)
         let posts = [];
+        let pf = null;
         try {
           const r = await fetch('/api/impact-public');
           const out = await r.json();
           posts = (out.impact && out.impact.ride_redistribution) || [];
+          pf = out.protection_fund || null;
         } catch (_) {}
+
+        // ─── Fonds de sécurité unifié ───
+        if (pf) {
+          const c = (cents) => (Number(cents) || 0) / 100;
+          const totalEl = document.getElementById('secFundTotal');
+          if (totalEl) totalEl.textContent = c(pf.total_cents).toFixed(2) + ' $';
+          const rows = [
+            { icon: '📦', name: 'Part livraison', desc: ((pf.insurance_pct || 0) * 100).toFixed(1) + '% des livraisons capturées', cents: pf.from_deliveries_cents },
+            { icon: '🚗', name: 'Part covoiturage', desc: (pf.ride_securite_pct || 0) + '% de la commission covoiturage capturée', cents: pf.from_covoiturage_cents },
+            { icon: '💙', name: 'Tes apports directs', desc: 'Argent ajouté de ta poche', cents: pf.topup_cents }
+          ];
+          const sfList = document.getElementById('secFundList');
+          if (sfList) sfList.innerHTML = rows.map(r => `
+            <div class="fund-row">
+              <div class="icon">${r.icon}</div>
+              <div class="info"><div class="name">${r.name}</div><div class="desc">${r.desc}</div></div>
+              <div><div class="amount">${c(r.cents).toFixed(2)} $</div></div>
+            </div>`).join('');
+        }
 
         const list = document.getElementById('rideRedistList');
         if (!posts.length) {

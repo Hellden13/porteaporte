@@ -3845,7 +3845,27 @@ async function impactPublic(req, res, ctx) {
   // Utilise effectiveInsurancePct (qui inclut profit si toggle ON)
   const fundFromDeliveriesCents = Math.round(totalRevenueCents * effectiveInsurancePct);
   const founderRevenueCents = Math.round(totalRevenueCents * founderRevenuePct);
-  const fundTotalCents = fundFromDeliveriesCents + fundTopupCents;
+
+  // ─── Contribution covoiturage au fonds de sécurité unifié ───
+  // % "sécurité" configuré dans la redistribution covoiturage (hub).
+  const rideSecuritePost = (state.ride_redistribution || []).find(
+    (p) => /secur|sécur/i.test(p.key || '') || /secur|sécur/i.test(p.label || '')
+  );
+  const rideSecuritePct = rideSecuritePost ? (Number(rideSecuritePost.pct) || 0) : 0;
+  // Commission covoiturage RÉELLEMENT capturée (status 'paye' ou paid_at rempli).
+  const rideFundRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/ride_bookings?select=platform_fee,status,paid_at&status=in.(confirme,paye)&limit=10000`,
+    { headers: sbHeaders(ctx.sbKey) }
+  ).catch(() => null);
+  const rideFundRows = rideFundRes?.ok ? await rideFundRes.json().catch(() => []) : [];
+  const rideCommissionCapturedCents = Math.round(
+    rideFundRows
+      .filter((r) => r.status === 'paye' || !!r.paid_at)
+      .reduce((sum, r) => sum + toNumber(r.platform_fee, 0) * 100, 0)
+  );
+  const fundFromCovoiturageCents = Math.round(rideCommissionCapturedCents * rideSecuritePct / 100);
+
+  const fundTotalCents = fundFromDeliveriesCents + fundFromCovoiturageCents + fundTopupCents;
   const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundTotalCents * 0.5));
 
   const [drawsRes, winnersRes] = await Promise.all([
@@ -3876,6 +3896,9 @@ async function impactPublic(req, res, ctx) {
   const protectionFund = {
     total_cents: fundTotalCents,
     from_deliveries_cents: fundFromDeliveriesCents,
+    from_covoiturage_cents: fundFromCovoiturageCents,
+    ride_securite_pct: rideSecuritePct,
+    ride_commission_captured_cents: rideCommissionCapturedCents,
     topup_cents: fundTopupCents,
     max_claim_cents: fundMaxClaimCents,
     max_colis_value_cents: maxColisValueCents,
@@ -3887,8 +3910,8 @@ async function impactPublic(req, res, ctx) {
     founder_revenue_pct: founderRevenuePct,
     founder_revenue_cents: founderRevenueCents,
     funded_by: profitToInsurance
-      ? `${pctProtection}% protection + ${pctProfit}% profit (redirigé bêta) = ${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison + apports directs PorteàPorte`
-      : `${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison confirmée + apports directs PorteàPorte`,
+      ? `${pctProtection}% protection + ${pctProfit}% profit (redirigé bêta) = ${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`
+      : `${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison confirmée + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`,
     note: profitToInsurance
       ? 'Mode bêta : 100% du profit est redirigé vers le fonds litige/réclamation pour protéger la communauté. Plus de fonds = plus de sécurité.'
       : 'Fonds volontaire bêta — pas un contrat d\'assurance.'

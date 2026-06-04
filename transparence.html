@@ -141,6 +141,19 @@
       </p>
     </div>
 
+    <div class="section-title">🛡️ Fonds de sécurité</div>
+    <div class="panel" style="padding:24px">
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Un <strong>seul fonds de sécurité</strong> protège la communauté. Il est alimenté par la livraison, le covoiturage et les apports directs de PorteàPorte — voici son solde et d'où il vient&nbsp;:</p>
+      <div style="text-align:center;margin:0 0 18px">
+        <div style="font-size:2.2rem;font-weight:900;color:var(--brand-lime);font-variant-numeric:tabular-nums" id="secfund-total">0,00 $</div>
+        <div style="color:var(--brand-muted);font-size:.85rem">solde estimé en direct</div>
+      </div>
+      <div id="secfund-breakdown" style="display:grid;gap:8px"></div>
+      <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)" id="secfund-note">
+        💡 Fonds volontaire bêta — ce n'est pas un contrat d'assurance.
+      </p>
+    </div>
+
     <div class="section-title">Organismes sélectionnés</div>
     <div id="impact-orgs" class="orgs">
       <div class="panel empty" style="grid-column:1/-1">🌱 Les organismes partenaires seront affichés ici dès les premières livraisons confirmées. Nous sommes en bêta.</div>
@@ -281,8 +294,25 @@
           document.getElementById('beta-notice').style.display='block';
         }
         // Compteur jours sans réclamation plateforme
-        if(out.protection_fund !== undefined){
-          // On récupère via RPC séparément
+        // ─── Fonds de sécurité unifié (livraison + covoiturage + apports) ───
+        if(out.protection_fund){
+          const pf=out.protection_fund;
+          const totalEl=document.getElementById('secfund-total');
+          if(totalEl) totalEl.textContent=money(pf.total_cents||0);
+          const rows=[
+            {icon:'📦',name:'Part livraison',sub:`${((pf.insurance_pct||0)*100).toFixed(1)}% des livraisons capturées`,cents:pf.from_deliveries_cents||0},
+            {icon:'🚗',name:'Part covoiturage',sub:`${(pf.ride_securite_pct||0)}% de la commission covoiturage capturée`,cents:pf.from_covoiturage_cents||0},
+            {icon:'💙',name:'Apports directs PorteàPorte',sub:'Argent ajouté par la plateforme',cents:pf.topup_cents||0}
+          ];
+          const bd=document.getElementById('secfund-breakdown');
+          if(bd) bd.innerHTML=rows.map(r=>`
+            <div style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 16px;background:rgba(255,255,255,.03);border-radius:8px">
+              <div style="font-size:1.3rem">${r.icon}</div>
+              <div><div style="font-weight:700;color:#fff;font-size:.92rem">${esc(r.name)}</div><div style="color:var(--brand-muted);font-size:.78rem">${esc(r.sub)}</div></div>
+              <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${money(r.cents)}</div>
+            </div>`).join('');
+          const noteEl=document.getElementById('secfund-note');
+          if(noteEl&&pf.note) noteEl.textContent='💡 '+pf.note;
         }
         (async()=>{
           try{
