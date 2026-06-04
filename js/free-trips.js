@@ -1,20 +1,35 @@
-/* PorteàPorte — synchronise le nombre de trajets sans commission (franchise)
-   Source unique : /api/impact-public → impact.ride_free_trips (réglable dans l'admin).
-   Met à jour tout élément portant la classe .free-trips-count. */
+/* PorteàPorte — synchronise les valeurs covoiturage depuis la source unique.
+   Source unique : /api/impact-public
+     • impact.ride_free_trips   → éléments .free-trips-count (nombre de trajets sans commission)
+     • impact.ride_platform_fee → éléments .ride-fee-amount   (frais plateforme par siège, ex. « 1,50 $ »)
+   Tout est réglable dans l'admin → un seul endroit, partout cohérent. */
 (function () {
   'use strict';
-  function apply(n) {
+  function applyFreeTrips(n) {
     if (!Number.isFinite(n) || n <= 0) return;
     window.__freeTrips = n;
     document.querySelectorAll('.free-trips-count').forEach(function (el) {
       el.textContent = String(n);
     });
   }
+  function fmtMoney(v) {
+    // 1.5 → "1,50 $"
+    return v.toFixed(2).replace('.', ',') + ' $';
+  }
+  function applyRideFee(v) {
+    if (!Number.isFinite(v) || v < 0) return;
+    window.__rideFee = v;
+    document.querySelectorAll('.ride-fee-amount').forEach(function (el) {
+      el.textContent = fmtMoney(v);
+    });
+  }
   fetch('/api/impact-public')
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
-      var n = d && d.impact && Number(d.impact.ride_free_trips);
-      apply(n);
+      var impact = d && d.impact;
+      if (!impact) return;
+      applyFreeTrips(Number(impact.ride_free_trips));
+      applyRideFee(Number(impact.ride_platform_fee));
     })
-    .catch(function () { /* garde la valeur par défaut affichée dans le HTML */ });
+    .catch(function () { /* garde les valeurs par défaut affichées dans le HTML */ });
 })();

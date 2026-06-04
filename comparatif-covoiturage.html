@@ -83,8 +83,8 @@
     <div class="price-row">
       <div class="price-card us">
         <div class="name us-name">PorteàPorte</div>
-        <div class="commission us-com">8 %</div>
-        <div class="note"><strong>0 %</strong> sur tes <span class="free-trips-count">10</span> premiers trajets (bêta)</div>
+        <div class="commission us-com"><span class="ride-fee-amount">1,50 $</span><span style="font-size:1rem;font-weight:700"> /siège</span></div>
+        <div class="note"><strong>0 $</strong> sur tes <span class="free-trips-count">10</span> premiers trajets (bêta)</div>
       </div>
       <div class="price-card">
         <div class="name">Amigo Express</div>
@@ -130,7 +130,7 @@
         </tr>
         <tr>
           <td>Commission</td>
-          <td class="us-cell"><span class="check">8 %</span></td>
+          <td class="us-cell"><span class="check"><span class="ride-fee-amount">1,50 $</span> /siège</span></td>
           <td><span class="meh">~15 %</span></td>
           <td><span class="check">0 %</span></td>
         </tr>
@@ -225,7 +225,7 @@
       <li>Aucun support si problème</li>
     </ul>
     <p style="color:var(--brand-muted);font-size:1rem;line-height:1.6;max-width:780px;">
-      Notre commission de 8 % représente ~2-4 $ par trajet — le prix d'un café <strong>pour ne plus stresser</strong>.
+      Notre frais plateforme est un montant fixe de <span class="ride-fee-amount">1,50 $</span> par siège — le prix d'un café <strong>pour ne plus stresser</strong>.
     </p>
 
     <div class="cta-final">
@@ -238,6 +238,7 @@
       Une question ? Texte directement le fondateur Denis au <a href="sms:+14384492023" style="color:var(--brand-lime);">📱 438-449-2023</a><br>
       Données comparatives basées sur les sites publics d'Amigo Express et Poparide en 2026. Sources sur demande.
     </p>
+    <p data-figures-disclaimer style="max-width:780px;margin:8px auto 0;text-align:center;color:var(--brand-muted);font-size:.8rem;opacity:.85"></p>
   </div>
   <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
@@ -245,5 +246,6 @@
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/free-trips.js" defer></script>
+  <script src="/js/figures-disclaimer.js" defer></script>
 </body>
 </html>

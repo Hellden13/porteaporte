@@ -105,7 +105,7 @@
       <div class="metric">
         <div class="metric-label">Livraisons comptées</div>
         <div class="metric-value" id="impact-deliveries">0</div>
-        <div class="metric-sub" id="impact-rate">5% de la commission reversés aux organismes</div>
+        <div class="metric-sub" id="impact-rate">Une part de la commission reversée aux organismes</div>
       </div>
       <div class="metric" style="border-color:rgba(93,191,255,.25);background:rgba(93,191,255,.04)">
         <div class="metric-label" style="color:var(--brand-lime)">🛡️ Jours sans réclamation</div>
@@ -365,7 +365,7 @@
         document.getElementById('impact-generated').textContent='Données disponibles après les premières livraisons.';
         document.getElementById('impact-pool').textContent='0,00 $';
         document.getElementById('impact-deliveries').textContent='0';
-        document.getElementById('impact-rate').textContent='5% de la commission plateforme reversés aux organismes';
+        document.getElementById('impact-rate').textContent='Une part de la commission plateforme reversée aux organismes';
       }
     }
     document.getElementById('impact-application-form').addEventListener('submit',async(event)=>{
@@ -421,5 +421,6 @@
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
+  <script src="/js/figures-disclaimer.js" defer></script>
 </body>
 </html>

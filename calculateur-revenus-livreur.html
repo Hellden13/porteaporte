@@ -341,9 +341,10 @@
       const livMois = state.livraisons * 4.33;
       const kmMois = state.kmSem * 4.33;
 
-      // Revenu brut (60% client = livreur)
-      const brutBase = livMois * mix.livreur;
-      const bonusFid = state.bonusFid ? brutBase * (10/60) : 0; // +10% sur les 60% = ratio 10/60
+      // Revenu brut (part livreur configurable, source : platform_settings.pct_livreur)
+      const driverPct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const brutBase = livMois * mix.client * driverPct / 100;
+      const bonusFid = state.bonusFid ? brutBase * (10/driverPct) : 0; // +10 points de % sur la part livreur
       const brutTotal = brutBase + bonusFid;
 
       // Coûts
@@ -405,8 +406,9 @@
       const mix = MIX[state.mix];
       const livMois = state.livraisons * 4.33;
       const kmMois = state.kmSem * 4.33;
-      const brutBase = livMois * mix.livreur;
-      const bonusFid = state.bonusFid ? brutBase * (10/60) : 0;
+      const driverPct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const brutBase = livMois * mix.client * driverPct / 100;
+      const bonusFid = state.bonusFid ? brutBase * (10/driverPct) : 0;
       const brutTotal = brutBase + bonusFid;
       const litres = kmMois * (veh.conso / 100);
       const essence = litres * state.gazPrice;
@@ -475,10 +477,14 @@
     // Init
     applyProfile('opportuniste');
     compute();
+    // Recalcule dès que la part livreur réelle est chargée (platform_settings)
+    document.addEventListener('platform-shares', () => compute());
   </script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
+  <script src="/js/platform-shares.js" defer></script>
+  <script src="/js/figures-disclaimer.js" defer></script>
 </body>
 </html>

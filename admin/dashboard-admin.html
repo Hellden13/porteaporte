@@ -620,7 +620,7 @@
         <div class="stat-card">
           <div class="stat-card-label">Payé aux livreurs</div>
           <div class="stat-card-value" id="rev-livreurs">—</div>
-          <div class="stat-card-sub">60% du prix</div>
+          <div class="stat-card-sub"><span id="rev-livreurs-pct">60</span>% du prix</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Livraisons payées</div>
@@ -931,8 +931,9 @@
             </div>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Covoiturage —</div>
-            <label for="impact-ride-pct">Commission plateforme covoiturage (%)</label>
-            <input id="impact-ride-pct" type="number" min="0" max="100" step="0.1" value="10">
+            <label for="impact-ride-pct">Frais plateforme par siège ($)</label>
+            <input id="impact-ride-pct" type="number" min="0" step="0.25" value="1.50">
+            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Montant fixe prélevé par siège réservé (ex. 1,50 $). Appliqué au moment de la réservation.</div>
             <label for="impact-ride-luggage">Frais bagages ($)</label>
             <input id="impact-ride-luggage" type="number" min="0" step="0.5" value="5">
             <label for="impact-ride-pet">Frais animal ($)</label>
@@ -1463,6 +1464,8 @@
     document.getElementById('rev-livreurs').textContent   = $m(livreurs);
     const pctEl = document.getElementById('rev-commission-pct');
     if (pctEl) pctEl.textContent = pctPlateforme;
+    const pctLivEl = document.getElementById('rev-livreurs-pct');
+    if (pctLivEl) pctLivEl.textContent = pctLivreur;
     document.getElementById('rev-count').textContent      = rows.length;
 
     // ─── Tableau complet répartition (avec fondateur 5%) ───
@@ -1516,8 +1519,8 @@
             <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
             <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}</td>
             <td style="color:#5dbfff;font-weight:700">${$m(prix)}</td>
-            <td style="color:#A8B0BA">${$m(prix * 0.15)}</td>
-            <td style="color:#A8B0BA">${$m(prix * 0.60)}</td>
+            <td style="color:#A8B0BA">${$m(prix * pctPlateforme / 100)}</td>
+            <td style="color:#A8B0BA">${$m(prix * pctLivreur / 100)}</td>
             <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
           </tr>`;
         }).join('');
@@ -1911,7 +1914,16 @@
       renderRideRedist();
       document.getElementById('impact-admin-pool').textContent = money(impact.totals?.donation_pool_cents);
       document.getElementById('impact-admin-deliveries').textContent = impact.totals?.deliveries_count || 0;
-      document.getElementById('impact-admin-allocation').textContent = (impact.totals?.allocation_total_percent || 0) + '%';
+      (function () {
+        const allocPct = Math.round((impact.totals?.allocation_total_percent || 0) * 100) / 100;
+        const el = document.getElementById('impact-admin-allocation');
+        const ok = Math.abs(allocPct - 100) < 0.01;
+        el.textContent = allocPct + '%' + (ok ? ' ✓' : ' ⚠️');
+        el.style.color = ok ? '#78d900' : '#ff6b6b';
+        el.title = ok
+          ? 'Parfait : la répartition des organismes actifs totalise 100 %.'
+          : 'La somme des « Répartition (%) » des organismes actifs doit faire 100 % (actuellement ' + allocPct + '%).';
+      })();
 
       const allocationMap = Object.fromEntries((impact.allocations || []).map(a => [a.id, a]));
       const orgs = impact.organisations || [];
@@ -2248,7 +2260,7 @@
     try {
       await impactRequest({
         mode: 'settings',
-        ride_platform_pct:  Number(document.getElementById('impact-ride-pct').value || 0),
+        ride_platform_fee:  Number(document.getElementById('impact-ride-pct').value || 0),
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),

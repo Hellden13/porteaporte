@@ -3789,6 +3789,7 @@ async function fetchImpactState(sbUrl, sbKey) {
       deliveries_count: livraisons.length,
       revenue_cents: revenueCents,
       donation_pool_cents: donationPoolCents,
+      donation_rate_percent: Math.round((slices.communaute || slices.don || 0) * 10) / 10,
       slices,
       slice_cents: Object.fromEntries(Object.entries(slices).map(([k, pct]) => [k, Math.round(revenueCents * pct / 100)])),
       allocation_total_percent: Math.round(allocationTotal * 100) / 100,
@@ -3892,7 +3893,8 @@ async function impactPublic(req, res, ctx) {
     totals: state.totals,
     allocations: state.allocations,
     ride_redistribution: state.ride_redistribution,
-    ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10)))
+    ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10))),
+    ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50))
   };
   const protectionFund = {
     total_cents: fundTotalCents,
@@ -4028,7 +4030,7 @@ async function impactAdmin(req, res, ctx, body) {
       pct_developpeur: pct(body.pct_developpeur, 0),
       pct_securite:    pct(body.pct_securite, 0),
       pct_assurance:   pct(body.pct_assurance, 0),
-      ride_platform_pct:  pct(body.ride_platform_pct, 10),
+      ride_platform_fee:  Math.max(0, toNumber(body.ride_platform_fee, 1.50)),
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),

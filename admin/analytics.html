@@ -66,7 +66,7 @@
 
     <div class="two-col" style="margin-top:18px">
       <div class="panel">
-        <h3>💰 Revenus par jour (60% livreur)</h3>
+        <h3>💰 Revenus par jour (part livreur)</h3>
         <canvas id="revChart" height="200"></canvas>
       </div>
       <div class="panel">
@@ -89,6 +89,7 @@
 
   <script>
     let session = null, db = null;
+    let PCT_LIVREUR = 60, PCT_COMMISSION = 12; // source unique : platform_settings
     async function init() {
       db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
       const { data: sess } = await db.auth.getSession();
@@ -96,6 +97,13 @@
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
       if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      try {
+        const { data: ps } = await db.from('platform_settings').select('pct_livreur,pct_plateforme').eq('id', 'default').single();
+        if (ps) {
+          if (Number.isFinite(Number(ps.pct_livreur)))    PCT_LIVREUR    = Number(ps.pct_livreur);
+          if (Number.isFinite(Number(ps.pct_plateforme))) PCT_COMMISSION = Number(ps.pct_plateforme);
+        }
+      } catch (_) {}
       await load();
     }
 
@@ -118,8 +126,8 @@
       const annulees = all.filter(l => ['annule','rembourse'].includes(l.statut)).length;
       const enCours = all.filter(l => !['payee','paid','annule','rembourse'].includes(l.statut)).length;
       const revenusTotal = all.filter(l => ['payee','paid'].includes(l.statut)).reduce((s,l) => s + (Number(l.prix_total)||0), 0);
-      const commissionPF = revenusTotal * 0.12;
-      const gainsLivreurs = revenusTotal * 0.60;
+      const commissionPF = revenusTotal * PCT_COMMISSION / 100;
+      const gainsLivreurs = revenusTotal * PCT_LIVREUR / 100;
       const tauxCompletion = total ? Math.round(payees / total * 100) : 0;
 
       // Profiles count
@@ -132,8 +140,8 @@
         <div class="stat"><div class="stat-lbl">En cours</div><div class="stat-val" style="color:#7de4ff">${enCours}</div></div>
         <div class="stat"><div class="stat-lbl">Annulées</div><div class="stat-val" style="color:#ffb0b0">${annulees}</div></div>
         <div class="stat"><div class="stat-lbl">Revenus bruts</div><div class="stat-val">${revenusTotal.toFixed(0)} $</div><div class="stat-sub">CAD</div></div>
-        <div class="stat"><div class="stat-lbl">Commission plateforme (12%)</div><div class="stat-val" style="color:#00d9ff">${commissionPF.toFixed(0)} $</div></div>
-        <div class="stat"><div class="stat-lbl">Gains livreurs (60%)</div><div class="stat-val">${gainsLivreurs.toFixed(0)} $</div></div>
+        <div class="stat"><div class="stat-lbl">Commission plateforme (${PCT_COMMISSION}%)</div><div class="stat-val" style="color:#00d9ff">${commissionPF.toFixed(0)} $</div></div>
+        <div class="stat"><div class="stat-lbl">Gains livreurs (${PCT_LIVREUR}%)</div><div class="stat-val">${gainsLivreurs.toFixed(0)} $</div></div>
         <div class="stat"><div class="stat-lbl">Utilisateurs total</div><div class="stat-val">${usersTotal||0}</div><div class="stat-sub">${livreursVerifies||0} livreurs vérifiés</div></div>
       `;
 
@@ -171,7 +179,7 @@
       const days = {};
       for (const l of all.filter(x => ['payee','paid'].includes(x.statut))) {
         const d = (l.cree_le || '').slice(0, 10);
-        days[d] = (days[d] || 0) + Number(l.prix_total || 0) * 0.60;
+        days[d] = (days[d] || 0) + Number(l.prix_total || 0) * PCT_LIVREUR / 100;
       }
       const sortedDays = Object.entries(days).sort();
       drawChart(sortedDays);
@@ -179,7 +187,7 @@
       // Top livreurs
       const livreurGains = {};
       for (const l of all.filter(x => ['payee','paid'].includes(x.statut) && x.livreur_id)) {
-        livreurGains[l.livreur_id] = (livreurGains[l.livreur_id] || 0) + Number(l.prix_total) * 0.60;
+        livreurGains[l.livreur_id] = (livreurGains[l.livreur_id] || 0) + Number(l.prix_total) * PCT_LIVREUR / 100;
       }
       const topLivIds = Object.entries(livreurGains).sort((a,b) => b[1] - a[1]).slice(0, 8);
       if (topLivIds.length) {

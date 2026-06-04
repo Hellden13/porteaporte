@@ -551,8 +551,10 @@
 
     if (m.eco > 0) {
       eco.className = 'eco-summary show';
+      const dShare = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const dRate = dShare / 100;
       title.textContent = `🌱 Bonus écologique : +${m.eco}%`;
-      desc.textContent = `En choisissant ${m.label}, tu reçois un bonus de ${m.eco}% sur chaque livraison effectuée. Ce bonus s'ajoute à ta part de 60% du prix total. Ex : pour une livraison à 30 $, tu gagnes ${(30 * 0.60 * (1 + m.eco / 100)).toFixed(2)} $ au lieu de ${(30 * 0.60).toFixed(2)} $.`;
+      desc.textContent = `En choisissant ${m.label}, tu reçois un bonus de ${m.eco}% sur chaque livraison effectuée. Ce bonus s'ajoute à ta part de ${dShare}% du prix total. Ex : pour une livraison à 30 $, tu gagnes ${(30 * dRate * (1 + m.eco / 100)).toFixed(2)} $ au lieu de ${(30 * dRate).toFixed(2)} $.`;
     } else {
       eco.className = 'eco-summary show';
       title.textContent = '⛽ Aucun bonus écologique';
@@ -869,5 +871,7 @@
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
+  <script src="/js/platform-shares.js" defer></script>
+  <script src="/js/figures-disclaimer.js" defer></script>
 </body>
 </html>
