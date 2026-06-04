@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Points Rencontre - Admin PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; min-height:100vh; background:#060910; color:#eef5ff; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .shell { max-width:1360px; margin:0 auto; padding:22px; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+    h1 { margin:0; font-size:clamp(1.5rem,2.4vw,2.2rem); letter-spacing:0; }
+    .muted { color:#9aa8ba; font-size:.9rem; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { border:1px solid rgba(93,191,255,.35); border-radius:8px; padding:10px 13px; background:rgba(93,191,255,.1); color:#eaf8ff; font-weight:800; cursor:pointer; text-decoration:none; }
+    .btn.primary { background:#5dbfff; color:#051018; border-color:#5dbfff; }
+    .btn.warn { border-color:rgba(255,190,80,.45); background:rgba(255,190,80,.12); }
+    .btn.danger { border-color:rgba(255,110,110,.5); background:rgba(255,110,110,.12); }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; }
+    .panel { grid-column:span 4; background:#101724; border:1px solid rgba(255,255,255,.08); border-radius:8px; padding:16px; min-width:0; }
+    .panel.wide { grid-column:span 8; }
+    .panel.full { grid-column:1 / -1; }
+    .metric { font-size:2rem; font-weight:950; color:#5dbfff; }
+    .metric-label { color:#a9b6c8; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; }
+    label { display:block; font-size:.78rem; color:#a9b6c8; margin:0 0 6px; font-weight:800; }
+    input, select, textarea { width:100%; box-sizing:border-box; border-radius:8px; border:1px solid rgba(255,255,255,.12); background:#0b111c; color:#eef5ff; padding:10px 11px; font:inherit; }
+    textarea { min-height:86px; resize:vertical; }
+    .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
+    .full-field { grid-column:1 / -1; }
+    .filters { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:12px; }
+    .filters > div { min-width:180px; }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    th, td { padding:10px 9px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:top; }
+    th { color:#9aa8ba; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+    .pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 8px; font-size:.72rem; font-weight:900; background:rgba(93,191,255,.12); color:#8fd4ff; border:1px solid rgba(93,191,255,.28); }
+    .pill.good { color:#caff73; border-color:rgba(202,255,115,.35); background:rgba(202,255,115,.1); }
+    .pill.warn { color:#ffd37a; border-color:rgba(255,211,122,.35); background:rgba(255,211,122,.1); }
+    .pill.bad { color:#ff9e9e; border-color:rgba(255,110,110,.35); background:rgba(255,110,110,.1); }
+    .row-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .notice { border:1px solid rgba(255,211,122,.26); background:rgba(255,211,122,.08); padding:12px 14px; border-radius:8px; color:#ffe1a3; margin-bottom:12px; }
+    #status { margin:10px 0; color:#9aa8ba; min-height:20px; }
+    @media (max-width:900px) { .panel,.panel.wide { grid-column:1 / -1; } .form-grid { grid-template-columns:1fr; } table { display:block; overflow:auto; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div>
+        <h1>Points Rencontre PorteaPorte</h1>
+        <div class="muted">Controle admin des lieux publics suggerees, verifies et partenaires officiels.</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/pilotage">Pilotage</a>
+        <a class="btn" href="/dashboard-covoiturage.html">Covoiturage</a>
+        <button class="btn primary" id="refresh-btn" type="button">Actualiser</button>
+      </div>
+    </div>
+
+    <div class="notice">
+      Ne jamais presenter un commerce comme partenaire sans autorisation. Par defaut, un lieu est seulement un "point public suggere".
+    </div>
+
+    <section class="grid" id="stats">
+      <div class="panel"><div class="metric" id="stat-total">0</div><div class="metric-label">points total</div></div>
+      <div class="panel"><div class="metric" id="stat-verified">0</div><div class="metric-label">verifies</div></div>
+      <div class="panel"><div class="metric" id="stat-suggested">0</div><div class="metric-label">a verifier</div></div>
+    </section>
+
+    <div id="status"></div>
+
+    <section class="grid">
+      <div class="panel wide">
+        <div class="filters">
+          <div><label for="filter-city">Ville</label><input id="filter-city" placeholder="Quebec, Levis, Montreal"></div>
+          <div><label for="filter-status">Statut</label><select id="filter-status"><option value="">Tous</option><option value="suggested">Suggere</option><option value="verified">Verifie</option><option value="official_partner">Partenaire officiel</option><option value="removed">Retire</option></select></div>
+          <button class="btn" id="filter-btn" type="button">Filtrer</button>
+        </div>
+        <table>
+          <thead><tr><th>Lieu</th><th>Ville</th><th>Usage</th><th>Securite</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="points-body"><tr><td colspan="6">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin:0 0 12px;font-size:1.1rem">Ajouter / modifier</h2>
+        <form id="point-form">
+          <input type="hidden" id="point-id">
+          <div class="form-grid">
+            <div class="full-field"><label for="point-name">Nom</label><input id="point-name" required></div>
+            <div class="full-field"><label for="point-address">Adresse</label><input id="point-address" required></div>
+            <div><label for="point-city">Ville</label><input id="point-city" required></div>
+            <div><label for="point-region">Region</label><input id="point-region"></div>
+            <div><label for="point-usage">Usage</label><select id="point-usage"><option value="both">Covoiturage + colis</option><option value="covoiturage">Covoiturage</option><option value="colis">Colis</option></select></div>
+            <div><label for="point-category">Categorie</label><select id="point-category"><option value="transport_collectif">Transport collectif</option><option value="lieu_public">Lieu public</option><option value="stationnement">Stationnement</option><option value="commerce_public">Commerce public suggere</option><option value="station_essence">Station-service</option><option value="autre">Autre</option></select></div>
+            <div><label for="point-score">Score securite</label><input id="point-score" type="number" min="0" max="100" value="75"></div>
+            <div><label for="point-status">Statut</label><select id="point-status"><option value="suggested">Suggere</option><option value="verified">Verifie</option><option value="official_partner">Partenaire officiel</option></select></div>
+            <div class="full-field"><label for="point-notes">Note publique</label><textarea id="point-notes" placeholder="Ex: utiliser la zone visible et eclairee."></textarea></div>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn primary" type="submit">Enregistrer</button>
+            <button class="btn" id="clear-btn" type="button">Vider</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let sessionToken = '';
+    let points = [];
+
+    function api(endpoint, body = {}) {
+      return fetch('/api/platform?endpoint=' + encodeURIComponent(endpoint), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+        body: JSON.stringify({ endpoint, ...body })
+      }).then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) throw new Error(data.error || data.message || 'Action impossible');
+        return data;
+      });
+    }
+
+    function setStatus(text) { document.getElementById('status').textContent = text || ''; }
+    function esc(value) {
+      return String(value || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+    function pill(status) {
+      const cls = status === 'verified' || status === 'official_partner' ? 'good' : status === 'removed' ? 'bad' : 'warn';
+      const label = status === 'official_partner' ? 'partenaire' : status || 'suggested';
+      return '<span class="pill ' + cls + '">' + esc(label) + '</span>';
+    }
+
+    function render() {
+      document.getElementById('points-body').innerHTML = points.length ? points.map((p) => `
+        <tr>
+          <td><strong>${esc(p.name)}</strong><div class="muted">${esc(p.address)}</div></td>
+          <td>${esc(p.city)}<div class="muted">${esc(p.region || p.sector)}</div></td>
+          <td>${esc(p.usage_type || p.type || 'both')}<div class="muted">${esc(p.place_category || p.type)}</div></td>
+          <td><strong>${p.safety_score || (p.verified ? 80 : 65)}/100</strong><div class="muted">${Number(p.report_count || 0)} signalement(s)</div></td>
+          <td>${pill(p.status || (p.verified ? 'verified' : 'suggested'))}<div class="muted">${esc(p.partnership_status || 'suggested_public_place')}</div></td>
+          <td><div class="row-actions">
+            <button class="btn" type="button" onclick="editPoint('${p.id}')">Modifier</button>
+            <button class="btn warn" type="button" onclick="setPointStatus('${p.id}','verified')">Verifier</button>
+            <button class="btn danger" type="button" onclick="setPointStatus('${p.id}','removed')">Retirer</button>
+          </div></td>
+        </tr>`).join('') : '<tr><td colspan="6">Aucun point trouve.</td></tr>';
+    }
+
+    function fillForm(p = {}) {
+      document.getElementById('point-id').value = p.id || '';
+      document.getElementById('point-name').value = p.name || '';
+      document.getElementById('point-address').value = p.address || '';
+      document.getElementById('point-city').value = p.city || '';
+      document.getElementById('point-region').value = p.region || '';
+      document.getElementById('point-usage').value = p.usage_type || 'both';
+      document.getElementById('point-category').value = p.place_category || 'lieu_public';
+      document.getElementById('point-score').value = p.safety_score || 75;
+      document.getElementById('point-status').value = p.status || (p.verified ? 'verified' : 'suggested');
+      document.getElementById('point-notes').value = p.notes_public || p.notes || '';
+    }
+
+    window.editPoint = function(id) {
+      const p = points.find((item) => item.id === id);
+      if (p) fillForm(p);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.setPointStatus = async function(id, status) {
+      setStatus('Mise a jour...');
+      await api('admin-meeting-point-status', { id, status });
+      await load();
+    };
+
+    async function load() {
+      setStatus('Chargement...');
+      const city = document.getElementById('filter-city').value.trim();
+      const status = document.getElementById('filter-status').value;
+      const [stats, list] = await Promise.all([
+        api('admin-meeting-point-stats'),
+        api('admin-meeting-points', { city, status })
+      ]);
+      document.getElementById('stat-total').textContent = stats.stats?.total || 0;
+      document.getElementById('stat-verified').textContent = stats.stats?.verified || 0;
+      document.getElementById('stat-suggested').textContent = stats.stats?.suggested || 0;
+      points = list.points || [];
+      render();
+      setStatus('A jour.');
+    }
+
+    document.getElementById('point-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setStatus('Enregistrement...');
+      await api('admin-meeting-point-save', {
+        id: document.getElementById('point-id').value || undefined,
+        name: document.getElementById('point-name').value,
+        address: document.getElementById('point-address').value,
+        city: document.getElementById('point-city').value,
+        region: document.getElementById('point-region').value,
+        usage_type: document.getElementById('point-usage').value,
+        place_category: document.getElementById('point-category').value,
+        safety_score: document.getElementById('point-score').value,
+        status: document.getElementById('point-status').value,
+        notes_public: document.getElementById('point-notes').value,
+        partnership_status: document.getElementById('point-status').value === 'official_partner' ? 'official_partner' : 'suggested_public_place'
+      });
+      fillForm();
+      await load();
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => fillForm());
+    document.getElementById('filter-btn').addEventListener('click', load);
+    document.getElementById('refresh-btn').addEventListener('click', load);
+
+    async function boot() {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+      const { data } = await db.auth.getSession();
+      if (!data?.session) {
+        window.location.href = '/login.html?redirect=/admin/points-rencontre';
+        return;
+      }
+      sessionToken = data.session.access_token;
+      try { await load(); } catch (error) { setStatus(error.message); }
+    }
+    boot();
+  </script>
+</body>
+</html>
