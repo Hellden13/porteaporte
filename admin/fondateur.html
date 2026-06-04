@@ -119,8 +119,37 @@
 
     <!-- Décomposition des fonds -->
     <div class="funds-section">
-      <h2>💸 Où va chaque dollar</h2>
+      <h2>💸 Où va chaque dollar <span style="font-size:.8rem;color:var(--brand-muted);font-weight:400">— Livraison</span></h2>
       <div id="fundsList"></div>
+    </div>
+
+    <!-- Covoiturage : commission & redistribution -->
+    <div class="funds-section" style="border-color:rgba(0,217,255,.3)">
+      <h2>🚗 Covoiturage — commission & redistribution</h2>
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="stat-card cyan">
+          <div class="icon">🚗</div>
+          <div class="lbl">Réservations covoiturage</div>
+          <div class="val" id="rideCount">0</div>
+          <div class="sub">période sélectionnée</div>
+        </div>
+        <div class="stat-card green">
+          <div class="icon">💵</div>
+          <div class="lbl">Versé aux conducteurs</div>
+          <div class="val" id="rideDriverPaid">0 $</div>
+          <div class="sub">part essence — pas tes revenus</div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="icon">🏛️</div>
+          <div class="lbl">Commission plateforme</div>
+          <div class="val" id="rideCommission">0 $</div>
+          <div class="sub">100% redistribué ci-dessous</div>
+        </div>
+      </div>
+      <p style="color:var(--brand-muted);font-size:.82rem;margin:0 0 12px;line-height:1.6">
+        Le conducteur <strong>garde sa part</strong> (essence partagée). Tu ne prends rien dessus. Ta commission plateforme est redistribuée intégralement selon les postes configurés au hub :
+      </p>
+      <div id="rideRedistList"><div class="empty-data">Aucune réservation covoiturage sur la période.</div></div>
     </div>
 
     <!-- Progression vers prochain palier -->
@@ -298,6 +327,63 @@
           <td class="amount" style="color:#fff">${sal.toFixed(0)} $/mois</td>
         </tr>`;
       }).join('');
+
+      await loadCovoiturage(cutoff);
+    }
+
+    async function loadCovoiturage(cutoff) {
+      try {
+        // Réservations covoiturage encaissées (passager a payé : confirme/paye)
+        let q = db.from('ride_bookings')
+          .select('id,platform_fee,driver_amount,status,created_at')
+          .in('status', ['confirme', 'paye']);
+        if (cutoff) q = q.gte('created_at', cutoff);
+        const { data: bookings } = await q;
+        const all = bookings || [];
+
+        const rideCount = all.length;
+        const driverPaid = all.reduce((s, b) => s + (Number(b.driver_amount) || 0), 0);
+        const commission = all.reduce((s, b) => s + (Number(b.platform_fee) || 0), 0);
+
+        document.getElementById('rideCount').textContent = rideCount.toLocaleString('fr-CA');
+        document.getElementById('rideDriverPaid').textContent = driverPaid.toFixed(0) + ' $';
+        document.getElementById('rideCommission').textContent = commission.toFixed(2) + ' $';
+
+        // Config de redistribution (postes configurés au hub, exposés en public)
+        let posts = [];
+        try {
+          const r = await fetch('/api/impact-public');
+          const out = await r.json();
+          posts = (out.impact && out.impact.ride_redistribution) || [];
+        } catch (_) {}
+
+        const list = document.getElementById('rideRedistList');
+        if (!posts.length) {
+          list.innerHTML = '<div class="empty-data">Aucun poste de redistribution configuré.</div>';
+          return;
+        }
+        const esc = (s) => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const isMine = (p) => /develop/i.test(p.key || '') || /develop/i.test(p.label || '');
+        list.innerHTML = posts.map(p => {
+          const pct = Number(p.pct) || 0;
+          const amount = commission * pct / 100;
+          const mine = isMine(p);
+          return `<div class="fund-row"${mine ? ' style="background:rgba(93,191,255,.06);border-radius:8px;padding:12px"' : ''}>
+            <div class="icon">${esc(p.emoji || '•')}</div>
+            <div class="info">
+              <div class="name">${esc(p.label)}${mine ? ' <span style="color:var(--brand-cyan);font-size:.72rem">← TA part</span>' : ''}</div>
+              <div class="desc">${pct.toFixed(1)}% de la commission covoiturage</div>
+            </div>
+            <div>
+              <div class="amount">${amount.toFixed(2)} $</div>
+              <div class="pct">${pct.toFixed(1)}%</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        const list = document.getElementById('rideRedistList');
+        if (list) list.innerHTML = '<div class="empty-data">Données covoiturage indisponibles.</div>';
+      }
     }
 
     init();
