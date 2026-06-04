@@ -36,6 +36,7 @@ const PUBLIC_TYPES = new Set([
   'ride_booking_confirmed',
   'ride_booking_to_driver',
   'bienvenue',
+  'sos_alert',
 ]);
 
 function safeCompareSecret(a, b) {
@@ -737,6 +738,28 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           { label: 'Ville', value: data.ville },
           { label: 'Rôle souhaité', value: data.role },
           { label: 'Code parrainage', value: data.parrain || 'Aucun' }
+        ])
+      });
+      break;
+    }
+
+    // ── SOS / URGENCE SÉCURITÉ ──
+    case 'sos_alert': {
+      emails.push({
+        to: adminEmail,
+        from: { email: fromEmail, name: fromName },
+        subject: '🆘 ALERTE SOS — un utilisateur a déclenché une urgence',
+        html: templateAdminNotif('🆘 Alerte SOS déclenchée', [
+          { label: 'Utilisateur', value: data.prenom || '(inconnu)' },
+          { label: 'Courriel', value: data.email || '—' },
+          { label: 'Téléphone', value: data.phone || '—' },
+          { label: 'Position GPS', value: data.maps_link || '—' },
+          { label: 'Précision', value: data.accuracy || '—' },
+          { label: 'Trajet (ride)', value: data.ride_id || '—' },
+          { label: 'Réservation', value: data.booking_id || '—' },
+          { label: 'Contexte', value: data.context || '—' },
+          { label: 'Page', value: data.page || '—' },
+          { label: 'Heure', value: data.when || '—' }
         ])
       });
       break;

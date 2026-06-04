@@ -231,6 +231,11 @@
 <script src="/js/app-launcher.js" defer></script>
 <script src="/js/cookie-consent.js" defer></script>
 <script src="/js/support-widget.js"></script>
+<script>
+  // Contexte SOS : trajet actif (renseigné après chargement de la réservation)
+  window.PAP_SOS_CONTEXT = { label: 'covoiturage', booking_id: new URLSearchParams(location.search).get('booking_id') || new URLSearchParams(location.search).get('id') || null };
+</script>
+<script src="/js/sos-button.js" defer></script>
 
 <script>
   const db = window.db || window.getSupabaseClient();
@@ -257,6 +262,7 @@
     if (!rideRes.ok || rideData.error) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Trajet introuvable : ${rideData.error}</div>`; return; }
 
     renderAll(booking, rideData);
+    if (window.PapSOS) window.PapSOS.setContext({ ride_id: booking.ride_id || null, booking_id: booking.id || null });
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
   }

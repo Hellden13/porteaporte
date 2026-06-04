@@ -1085,5 +1085,10 @@ async function bookPackage() {
   <script src="/js/ride-chat.js"></script>
   <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
+  <script>
+    var _sp = new URLSearchParams(location.search);
+    window.PAP_SOS_CONTEXT = { label: 'covoiturage', ride_id: _sp.get('id') || _sp.get('ride_id') || null };
+  </script>
+  <script src="/js/sos-button.js" defer></script>
 </body>
 </html>

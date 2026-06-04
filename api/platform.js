@@ -5284,6 +5284,65 @@ module.exports = async function handler(req, res) {
       }
       return await setUserRole(req, res, { sbUrl, sbKey, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY), session, profile }, body);
     }
+    // ── SOS / Urgence sécurité (placé avant le blocage suspension : critique) ──
+    if (endpoint === 'sos-alert') {
+      const lat = Number(body.latitude);
+      const lng = Number(body.longitude);
+      const acc = Number(body.accuracy);
+      const rec = {
+        user_id: session.id,
+        user_email: session.email || (profile && profile.email) || null,
+        user_prenom: (profile && profile.prenom) || null,
+        user_phone: (profile && (profile.telephone || profile.phone)) || null,
+        ride_id: safeIds([body.ride_id])[0] || null,
+        booking_id: safeIds([body.booking_id])[0] || null,
+        latitude: isFinite(lat) ? lat : null,
+        longitude: isFinite(lng) ? lng : null,
+        accuracy: isFinite(acc) ? acc : null,
+        context: String(body.context || '').slice(0, 60),
+        page: String(body.page || '').slice(0, 120),
+        status: 'open',
+        created_at: new Date().toISOString()
+      };
+      try {
+        await fetch(`${sbUrl}/rest/v1/sos_alerts`, {
+          method: 'POST',
+          headers: sbHeaders(sbKey),
+          body: JSON.stringify(rec)
+        });
+      } catch (e) { console.error('[sos-alert insert]', e.message); }
+
+      // Notifier le fondateur immédiatement (email)
+      try {
+        const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
+        const headers = { 'Content-Type': 'application/json' };
+        if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+        const mapsLink = (rec.latitude != null && rec.longitude != null)
+          ? `https://www.google.com/maps?q=${rec.latitude},${rec.longitude}` : null;
+        await fetch(`${origin}/api/notifier`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            type: 'sos_alert',
+            data: {
+              prenom: rec.user_prenom || '',
+              email: rec.user_email || '',
+              phone: rec.user_phone || '',
+              ride_id: rec.ride_id || '',
+              booking_id: rec.booking_id || '',
+              context: rec.context || '',
+              page: rec.page || '',
+              maps_link: mapsLink || 'Position non transmise',
+              accuracy: rec.accuracy != null ? Math.round(rec.accuracy) + ' m' : '—',
+              when: rec.created_at
+            }
+          })
+        }).catch(err => console.error('[notifier sos_alert]', err.message));
+      } catch (e) { console.error('[sos-alert notify]', e.message); }
+
+      return res.status(200).json({ success: true });
+    }
+
     if (!profile || profile.suspendu || profile.verification_status === 'suspended') {
       return res.status(403).json({ error: 'Profil invalide ou suspendu' });
     }
