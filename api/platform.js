@@ -5755,7 +5755,13 @@ module.exports = async function handler(req, res) {
         const profs = pr.ok ? await pr.json() : [];
         stats.livreurs = profs.length;
       } catch (e) {}
-      stats.communautes = 12; // partenaires actuels
+      try {
+        const cr = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=id`, {
+          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
+        });
+        const orgs = cr.ok ? await cr.json() : [];
+        stats.communautes = orgs.length;
+      } catch (e) { stats.communautes = 0; }
       stats.updated_at = new Date().toISOString();
       return res.status(200).json(stats);
     }
