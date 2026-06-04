@@ -223,6 +223,7 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const livraisonId = params.get('livraison_id') || params.get('id');
+    const linkToken = params.get('t') || '';
     const form = document.getElementById('confirm-form');
     const btn = document.getElementById('confirm-btn');
     const result = document.getElementById('result');
@@ -277,7 +278,7 @@
         const res = await fetch('/api/platform?endpoint=xl-confirmation-respond', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livraison_id: livraisonId, accept })
+          body: JSON.stringify({ livraison_id: livraisonId, accept, token: linkToken })
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
@@ -302,6 +303,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             livraison_id: livraisonId,
+            token: linkToken,
             reception_mode: document.getElementById('pref-mode').value || null,
             reception_heure_debut: document.getElementById('pref-debut').value || null,
             reception_heure_fin: document.getElementById('pref-fin').value || null,

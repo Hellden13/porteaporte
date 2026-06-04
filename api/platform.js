@@ -7,6 +7,7 @@ const {
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
   driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
+  livraisonLinkToken, verifyLivraisonToken,
   callNotifier, alertAdmin, computeDeliveryPrice, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
 } = require('../lib/_lib');
@@ -287,7 +288,7 @@ async function createLivraison(req, res, ctx, body) {
       type_colis: payload.type_colis || 'Colis',
       prix_total: livraison?.prix_total ?? payload.prix_total,
       recipient_code: receptionCode,
-      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}`
+      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}&t=${livraisonLinkToken(livraison?.id || '')}`
     }).catch((err) => console.error('[notifier livraison_creee_expediteur]', err.message));
   }
 
@@ -302,7 +303,7 @@ async function createLivraison(req, res, ctx, body) {
       ville_arrivee:      livraison?.ville_arrivee || payload.ville_arrivee || '',
       adresse_arrivee:    payload.adresse_arrivee || '',
       type_colis:         payload.type_colis || 'Colis',
-      confirm_link:       `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}`
+      confirm_link:       `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}&t=${livraisonLinkToken(livraison?.id || '')}`
     }).catch((err) => console.error('[notifier code_destinataire]', err.message));
   }
 
@@ -918,7 +919,7 @@ async function xlConfirmationRequest(req, res, ctx, body) {
       destinataire_nom: livraison.nom_destinataire || '',
       code: livraison.code || livraison_id.slice(0,8),
       ville_arrivee: livraison.ville_arrivee,
-      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison_id)}&xl=1`
+      confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison_id)}&xl=1&t=${livraisonLinkToken(livraison_id)}`
     }).catch(err => console.error('[notifier xl_confirmation_destinataire]', err.message));
   }
 
@@ -1403,7 +1404,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
 
     const adminLink = `${siteOrigin()}/admin/dashboard-admin.html`;
     const livraisonCode = fullLiv.code || livraisonId.slice(0, 8);
-    const confirmLink = `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}`;
+    const confirmLink = `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}&t=${livraisonLinkToken(livraisonId)}`;
 
     // 1. Notif admin — preuve soumise, action requise
     callNotifier('preuve_soumise_admin', {
@@ -5125,6 +5126,9 @@ module.exports = async function handler(req, res) {
       const livId = body.livraison_id;
       const accept = body.accept !== false;
       if (!livId) return res.status(400).json({ error: 'livraison_id requis' });
+      if (!verifyLivraisonToken(livId, body.token || body.t)) {
+        return res.status(403).json({ error: 'Lien invalide ou expiré' });
+      }
 
       const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,code,statut,livreur_id,taille_colis,xl_confirmation_demande_at`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
@@ -5190,6 +5194,9 @@ module.exports = async function handler(req, res) {
       if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
       const livId = body.livraison_id;
       if (!livId) return res.status(400).json({ error: 'livraison_id requis' });
+      if (!verifyLivraisonToken(livId, body.token || body.t)) {
+        return res.status(403).json({ error: 'Lien invalide ou expiré' });
+      }
       // Vérifier que la livraison existe et n'est pas finale
       const lr = await fetch(`${sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livId)}&select=id,code,statut,expediteur_id,livreur_id,ville_depart,ville_arrivee`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
