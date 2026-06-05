@@ -1191,9 +1191,16 @@ async function manquementContester(req, res, ctx, body) {
 async function manquementList(req, res, ctx, body) {
   const userId = ctx.session.id;
   const livraisonId = body.livraison_id;
-  let filter = `or=(signaleur_id.eq.${userId},accuse_id.eq.${userId})`;
-  if (livraisonId) filter = `livraison_id=eq.${encodeURIComponent(livraisonId)}`;
-  if (roleIn(ctx.profile, ['admin']) && body.all) filter = 'select=*';
+  const isAdmin = roleIn(ctx.profile, ['admin']);
+  const ownership = `or=(signaleur_id.eq.${userId},accuse_id.eq.${userId})`;
+  let filter = ownership;
+  if (livraisonId) {
+    // Non-admin : filtre par livraison MAIS toujours borné à ses propres manquements
+    filter = isAdmin
+      ? `livraison_id=eq.${encodeURIComponent(livraisonId)}`
+      : `${ownership}&livraison_id=eq.${encodeURIComponent(livraisonId)}`;
+  }
+  if (isAdmin && body.all) filter = 'select=*';
 
   const r = await fetch(`${ctx.sbUrl}/rest/v1/manquements?${filter}&select=*&order=signale_at.desc&limit=100`, {
     headers: sbHeaders(ctx.sbKey)
@@ -1203,7 +1210,8 @@ async function manquementList(req, res, ctx, body) {
 }
 
 async function fiabiliteGet(req, res, ctx, body) {
-  const userId = body.user_id || ctx.session.id;
+  const isAdmin = roleIn(ctx.profile, ['admin']);
+  const userId = (isAdmin && body.user_id) ? body.user_id : ctx.session.id;
   const r = await fetch(`${ctx.sbUrl}/rest/v1/v_user_fiabilite?id=eq.${encodeURIComponent(userId)}&select=*`, {
     headers: sbHeaders(ctx.sbKey)
   });
