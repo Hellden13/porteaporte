@@ -6171,18 +6171,19 @@ module.exports = async function handler(req, res) {
         return res.status(403).json({ error: 'Protection admin : confirmation spéciale requise pour supprimer un autre admin' });
       }
 
-      // Supprimer via l'API admin Supabase (cascade vers profiles si ON DELETE CASCADE)
-      const delRes = await fetch(`${sbUrl}/auth/v1/admin/users/${encodeURIComponent(delId)}`, {
-        method: 'DELETE',
-        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json' }
+      // Suppression complète via la fonction SQL admin_delete_user :
+      // elle efface automatiquement toutes les données liées (trajets, wallet,
+      // messages, etc.) puis le profil et le compte auth — pas besoin de cascade.
+      const delRes = await fetch(`${sbUrl}/rest/v1/rpc/admin_delete_user`, {
+        method: 'POST',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_uid: delId })
       });
-      if (!delRes.ok && delRes.status !== 404) {
+      if (!delRes.ok) {
         const t = await delRes.text().catch(() => '');
-        console.error('[user-delete] auth', delRes.status, t.slice(0, 300));
+        console.error('[user-delete] rpc', delRes.status, t.slice(0, 300));
         return res.status(400).json({ error: 'Suppression impossible (dépendances liées au compte ?)', details: t.slice(0, 300) });
       }
-      // Filet de sécurité : retirer le profil s'il subsiste (pas de cascade)
-      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(delId)}`, { method: 'DELETE', headers: sbHeaders(sbKey) }).catch(() => {});
 
       return res.status(200).json({ success: true, deleted: delId, email: target?.email || null });
     }
