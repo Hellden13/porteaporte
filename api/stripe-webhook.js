@@ -65,18 +65,7 @@ module.exports = async function handler(req, res) {
   try {
     await verifyStripeSignature(rawBody, sigHeader, whSecret);
   } catch (e) {
-    /* DIAGNOSTIC TEMPORAIRE — aucune valeur secrète exposée, juste des longueurs */
-    return res.status(400).json({
-      error: e.message,
-      _diag: {
-        rawBodyLen: rawBody.length,
-        secretSet: !!whSecret,
-        secretLen: whSecret ? whSecret.length : 0,
-        secretHead: whSecret ? whSecret.slice(0, 11) : null,
-        secretTail: whSecret ? whSecret.slice(-4) : null,
-        sigHeaderPresent: !!sigHeader,
-      }
-    });
+    return res.status(400).json({ error: e.message });
   }
 
   let event;
