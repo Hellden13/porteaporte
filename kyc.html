@@ -845,7 +845,7 @@
         body: JSON.stringify({})
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(out.error || 'Erreur Stripe Identity');
+      if (!res.ok) throw new Error((out.error || 'Erreur Stripe Identity') + (out.details ? ' — ' + out.details : ''));
       msgEl.style.color = '#5dbfff';
       msgEl.textContent = '✅ Redirection vers Stripe...';
       window.location.href = out.verification_url;
