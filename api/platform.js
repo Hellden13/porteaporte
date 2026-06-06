@@ -6073,6 +6073,112 @@ module.exports = async function handler(req, res) {
       }
       return res.status(200).json({ success: true, sent: pbSent, failed: pbFailed, total: pbSubs.length, stale_removed: pbStale.length });
     }
+    // ── admin-email-broadcast (envoi de masse par courriel via SendGrid) ──
+    if (endpoint === 'admin-email-broadcast') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
+      const SENDGRID_API_KEY = (process.env.SENDGRID_API_KEY || '').trim();
+      const FROM_EMAIL = (process.env.FROM_EMAIL || 'notifications@porteaporte.site').trim();
+      const FROM_NAME  = 'PorteàPorte 🍁';
+      if (!SENDGRID_API_KEY) return res.status(500).json({ error: 'SENDGRID_API_KEY non configurée' });
+
+      const ebSubject  = String(body?.subject || '').trim().slice(0, 200);
+      const ebBodyRaw  = String(body?.body || body?.html || '').trim();
+      const ebAudience = String(body?.audience || 'all').trim();   // all | livreur | expediteur
+      const ebExcludeTest = body?.exclude_test !== false;          // défaut: exclure les comptes test
+      const ebTestMode = body?.test_mode === true;                 // n'envoyer qu'à l'admin
+      if (!ebSubject) return res.status(400).json({ error: 'Sujet requis' });
+      if (!ebBodyRaw) return res.status(400).json({ error: 'Message requis' });
+
+      // Construire le HTML : si le corps n'a pas de balise, on l'enrobe dans un gabarit simple
+      const looksHtml = /<[a-z][\s\S]*>/i.test(ebBodyRaw);
+      const bodyHtml = looksHtml
+        ? ebBodyRaw
+        : ebBodyRaw.split(/\n{2,}/).map(p => `<p style="margin:0 0 16px;line-height:1.6">${p.replace(/\n/g, '<br>')}</p>`).join('');
+      const fullHtml = `<!DOCTYPE html><html lang="fr"><body style="margin:0;background:#f4f6fb;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a2233">`
+        + `<div style="max-width:600px;margin:0 auto;padding:24px">`
+        + `<div style="background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.06)">`
+        + `<div style="font-size:22px;font-weight:800;color:#5dbfff;margin-bottom:20px">PorteàPorte 🍁</div>`
+        + bodyHtml
+        + `</div>`
+        + `<div style="text-align:center;color:#8a93a6;font-size:12px;margin-top:18px">PorteàPorte — covoiturage et livraison au Québec<br>`
+        + `<a href="https://porteaporte.site" style="color:#8a93a6">porteaporte.site</a></div>`
+        + `</div></body></html>`;
+
+      // Destinataires
+      let recipients = [];
+      if (ebTestMode) {
+        const adminEmail = (ctx.profile?.email || process.env.ADMIN_EMAIL || 'denismorneaubtc@gmail.com').trim();
+        recipients = [adminEmail];
+      } else {
+        let profUrl = `${sbUrl}/rest/v1/profiles?select=email,role`;
+        if (ebAudience === 'livreur' || ebAudience === 'expediteur') profUrl += `&role=eq.${ebAudience}`;
+        const profRes = await fetch(profUrl, { headers: sbHeaders(sbKey) });
+        if (!profRes.ok) return res.status(500).json({ error: 'Erreur lecture profils' });
+        const profs = await profRes.json();
+        const seen = new Set();
+        for (const p of (profs || [])) {
+          const email = String(p.email || '').trim().toLowerCase();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue;
+          if (ebExcludeTest && /(test|example|seed|\+)/i.test(email)) continue;
+          if (seen.has(email)) continue;
+          seen.add(email);
+          recipients.push(email);
+        }
+      }
+      if (!recipients.length) return res.status(200).json({ success: true, sent: 0, failed: 0, total: 0, message: 'Aucun destinataire' });
+
+      // SendGrid : 1 personalization par destinataire (les destinataires ne se voient pas entre eux), max 1000/requête
+      let ebSent = 0, ebFailed = 0;
+      const CHUNK = 900;
+      for (let i = 0; i < recipients.length; i += CHUNK) {
+        const chunk = recipients.slice(i, i + CHUNK);
+        try {
+          const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              personalizations: chunk.map(to => ({ to: [{ email: to }] })),
+              from: { email: FROM_EMAIL, name: FROM_NAME },
+              subject: ebSubject,
+              content: [{ type: 'text/html', value: fullHtml }]
+            })
+          });
+          if (sgRes.status === 202) ebSent += chunk.length;
+          else { ebFailed += chunk.length; const t = await sgRes.text().catch(() => ''); console.error('[email-broadcast] SendGrid', sgRes.status, t.slice(0, 300)); }
+        } catch (e) { ebFailed += chunk.length; console.error('[email-broadcast]', e.message); }
+      }
+      return res.status(200).json({ success: true, sent: ebSent, failed: ebFailed, total: recipients.length, test_mode: ebTestMode });
+    }
+    // ── admin-user-delete (suppression définitive d'un compte) ──
+    if (endpoint === 'admin-user-delete') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
+      const delId = String(body?.user_id || body?.id || '').trim();
+      if (!delId) return res.status(400).json({ error: 'user_id requis' });
+      if (delId === ctx.session.id) return res.status(403).json({ error: 'Impossible de supprimer ton propre compte admin' });
+
+      // Vérifier la cible + protéger les autres admins
+      const tRes = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(delId)}&select=id,email,role`, { headers: sbHeaders(sbKey) });
+      const tRows = tRes.ok ? await tRes.json() : [];
+      const target = tRows[0];
+      if (target && normalizeRole(target.role) === 'admin' && body?.confirmation !== 'SUPPRIMER_ADMIN') {
+        return res.status(403).json({ error: 'Protection admin : confirmation spéciale requise pour supprimer un autre admin' });
+      }
+
+      // Supprimer via l'API admin Supabase (cascade vers profiles si ON DELETE CASCADE)
+      const delRes = await fetch(`${sbUrl}/auth/v1/admin/users/${encodeURIComponent(delId)}`, {
+        method: 'DELETE',
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json' }
+      });
+      if (!delRes.ok && delRes.status !== 404) {
+        const t = await delRes.text().catch(() => '');
+        console.error('[user-delete] auth', delRes.status, t.slice(0, 300));
+        return res.status(400).json({ error: 'Suppression impossible (dépendances liées au compte ?)', details: t.slice(0, 300) });
+      }
+      // Filet de sécurité : retirer le profil s'il subsiste (pas de cascade)
+      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(delId)}`, { method: 'DELETE', headers: sbHeaders(sbKey) }).catch(() => {});
+
+      return res.status(200).json({ success: true, deleted: delId, email: target?.email || null });
+    }
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);

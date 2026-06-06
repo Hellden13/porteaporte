@@ -137,6 +137,7 @@
                 <button class="btn-sm" style="background:rgba(0,217,255,.15);color:#7de4ff;border:1px solid rgba(0,217,255,.4)" onclick="setStatus('${u.id}','verified')">⚡ Force verified</button>
               ` : ''}
               <a class="btn-sm" style="background:rgba(93,191,255,.12);color:#5dbfff;border:1px solid rgba(93,191,255,.3);text-decoration:none" href="/livreur-card.html?id=${u.id}" target="_blank">🆔 Voir carte</a>
+              <button class="btn-sm" style="background:rgba(255,60,60,.18);color:#ff8a8a;border:1px solid rgba(255,60,60,.5)" onclick="deleteUser('${u.id}','${(u.email||'').replace(/'/g,'')}')">🗑️ Supprimer</button>
             </div>
           </div>
         `;
@@ -163,6 +164,25 @@
       if (u) u.suspendu = suspend;
       renderFilters();
       render();
+    }
+
+    async function deleteUser(id, email) {
+      if (!confirm('⚠️ SUPPRIMER définitivement ce compte ?\n\n' + (email || id) + '\n\nCette action est irréversible (compte + profil effacés).')) return;
+      try {
+        const res = await fetch('/api/platform?endpoint=admin-user-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ user_id: id })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Suppression impossible');
+        all = all.filter(u => u.id !== id);
+        renderFilters();
+        render();
+        alert('✅ Compte supprimé : ' + (out.email || email || id));
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
     }
 
     init();

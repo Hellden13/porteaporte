@@ -1141,6 +1141,29 @@
             <button class="action-btn" type="submit" id="email-test-btn">Tester SendGrid</button>
           </form>
         </div>
+        <div class="form-card" style="grid-column:1/-1">
+          <div style="font-size:.8rem;color:var(--brand-cyan);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.07em">✉️ Envoi de masse par courriel</div>
+          <form id="email-broadcast-form" class="form-grid">
+            <label for="eb-subject">Sujet</label>
+            <input id="eb-subject" placeholder="Nouveautés sur PorteàPorte" required>
+            <label for="eb-body">Message (texte simple ou HTML)</label>
+            <textarea id="eb-body" rows="6" placeholder="Bonjour,&#10;&#10;Voici les dernières nouvelles…" required></textarea>
+            <label for="eb-audience">Destinataires</label>
+            <select id="eb-audience">
+              <option value="all">Tous les utilisateurs</option>
+              <option value="livreur">Livreurs seulement</option>
+              <option value="expediteur">Expéditeurs seulement</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer">
+              <input type="checkbox" id="eb-exclude-test" checked style="width:auto"> Exclure les comptes test (test/example/seed/+)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer">
+              <input type="checkbox" id="eb-test-mode" style="width:auto"> Mode test — n'envoyer qu'à moi (admin)
+            </label>
+            <button class="action-btn" type="submit" id="eb-send-btn">📨 Envoyer le courriel de masse</button>
+          </form>
+          <div id="eb-result" style="font-size:.82rem;color:var(--brand-muted);margin-top:12px"></div>
+        </div>
       </div>
     </div>
 
@@ -2731,6 +2754,48 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Tester SendGrid';
+    }
+  });
+
+  document.getElementById('email-broadcast-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const btn = document.getElementById('eb-send-btn');
+    const resultBox = document.getElementById('eb-result');
+    const subject = document.getElementById('eb-subject').value.trim();
+    const body = document.getElementById('eb-body').value.trim();
+    const audience = document.getElementById('eb-audience').value;
+    const excludeTest = document.getElementById('eb-exclude-test').checked;
+    const testMode = document.getElementById('eb-test-mode').checked;
+    if (!subject || !body) return;
+
+    const audienceLabel = audience === 'all' ? 'tous les utilisateurs' : audience + 's';
+    const confirmMsg = testMode
+      ? `Mode test : le courriel "${subject}" ne sera envoyé qu'à toi (admin). Continuer ?`
+      : `Envoyer le courriel "${subject}" à ${audienceLabel}${excludeTest ? ' (hors comptes test)' : ''} ?\n\n⚠️ Cet envoi est réel et irréversible.`;
+    if (!confirm(confirmMsg)) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi en cours…';
+    resultBox.textContent = '';
+    try {
+      const user = AUTH_API.getUser();
+      const res = await fetch('/api/platform?endpoint=admin-email-broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user.session.access_token },
+        body: JSON.stringify({ subject, body, audience, exclude_test: excludeTest, test_mode: testMode })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur envoi');
+      const msg = `✅ Envoyé : ${out.sent || 0} / ${out.total || 0}${out.failed ? ' — échecs : ' + out.failed : ''}${out.test_mode ? ' (mode test)' : ''}`;
+      resultBox.innerHTML = `<span style="color:var(--brand-lime)">${msg}</span>`;
+      alert(msg);
+      if (!testMode) event.target.reset();
+    } catch (err) {
+      resultBox.innerHTML = `<span style="color:#ff8a8a">❌ ${err.message}</span>`;
+      alert('❌ ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📨 Envoyer le courriel de masse';
     }
   });
 
