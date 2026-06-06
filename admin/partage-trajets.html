@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partage trajets - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body { padding: 24px; min-height: 100vh; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; font-size: 1.5rem; }
+    h2 { font-size: 1.05rem; margin: 26px 0 12px; }
+    .intro { color: var(--brand-muted); font-size: .9rem; margin-bottom: 8px; }
+    .search { width: 100%; padding: 10px 14px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 8px; color: #fff; font-size: .9rem; margin-bottom: 14px; }
+    .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .route { font-weight: 800; font-size: 1.05rem; }
+    .meta { color: var(--brand-muted); font-size: .82rem; margin-top: 2px; }
+    .opts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .chip { background: rgba(93,191,255,.12); color: #7de4ff; border: 1px solid rgba(93,191,255,.3); padding: 2px 9px; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .btn-sm { padding: 8px 12px; border: none; border-radius: 7px; cursor: pointer; font-weight: 700; font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .b-copy { background: rgba(93,191,255,.15); color: #7dffc1; border: 1px solid rgba(93,191,255,.4); }
+    .b-text { background: rgba(168,176,186,.12); color: #cdd6e0; border: 1px solid rgba(168,176,186,.3); }
+    .b-fb   { background: #1877f2; color: #fff; }
+    .b-grp  { background: rgba(0,217,255,.12); color: #7de4ff; border: 1px solid rgba(0,217,255,.3); }
+    .empty { text-align: center; color: var(--brand-muted); padding: 40px; }
+    .gen { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 10px; padding: 16px; }
+    .gen label { display: block; font-size: .8rem; color: var(--brand-muted); margin: 8px 0 3px; font-weight: 700; }
+    .gen input, .gen select, .gen textarea { width: 100%; padding: 9px 12px; background: #0d1623; border: 1px solid var(--brand-border); border-radius: 7px; color: #fff; font-size: .88rem; box-sizing: border-box; }
+    .gen .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .gen .row > div { flex: 1; min-width: 180px; }
+    .gen-out { margin-top: 12px; background: #0d1623; border: 1px dashed var(--brand-border); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-size: .88rem; color: #e6edf5; min-height: 40px; }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--brand-lime); color: #071008; padding: 11px 20px; border-radius: 10px; font-weight: 800; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; }
+    .toast.show { opacity: 1; }
+    .quick-regions { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <h1>📣 Partage des trajets</h1>
+      <a class="btn secondary" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+    </div>
+    <p class="intro">Aide un usager à remplir sa voiture (ou à trouver un lift) en partageant son trajet sur les groupes Facebook régionaux. Copie le lien ou l'annonce, puis colle dans le bon groupe.</p>
+
+    <h2>🚗 Trajets actifs</h2>
+    <input class="search" id="search" placeholder="🔍 Filtrer par ville (départ ou arrivée)..." oninput="render()">
+    <div id="list"><p class="empty">Chargement des trajets…</p></div>
+
+    <h2>✍️ Annonce manuelle (demande de passager ou trajet hors-plateforme)</h2>
+    <p class="intro">Pour quelqu'un qui te contacte pour <strong>chercher un chauffeur</strong> ou <strong>offrir une place</strong> sans l'avoir publié. Génère une annonce prête à coller.</p>
+    <div class="gen">
+      <div class="row">
+        <div>
+          <label>Type</label>
+          <select id="g-type">
+            <option value="cherche">🙋 Cherche un chauffeur (passager)</option>
+            <option value="offre">🚗 Offre une place (conducteur)</option>
+          </select>
+        </div>
+        <div>
+          <label>Quand</label>
+          <input id="g-when" placeholder="Ex : dimanche 8 juin, vers 9h">
+        </div>
+      </div>
+      <div class="row">
+        <div><label>Départ</label><input id="g-from" placeholder="Ex : Rimouski" list="qc-cities"></div>
+        <div><label>Arrivée</label><input id="g-to" placeholder="Ex : Québec" list="qc-cities"></div>
+      </div>
+      <div class="row">
+        <div><label>Prix / détails (optionnel)</label><input id="g-price" placeholder="Ex : 20$/place, 1 place dispo"></div>
+        <div><label>Contact (optionnel)</label><input id="g-contact" placeholder="Ex : réserve sur porteaporte.site"></div>
+      </div>
+      <div class="gen-out" id="g-out">L'annonce apparaîtra ici…</div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn-sm b-text" onclick="copyGen()">📝 Copier l'annonce</button>
+        <span id="g-regions" class="quick-regions"></span>
+      </div>
+    </div>
+  </main>
+
+  <datalist id="qc-cities"></datalist>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var SITE = 'https://porteaporte.site';
+    var all = [];
+    var session = null;
+
+    function toast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 1600);
+    }
+
+    function copyText(txt, label) {
+      navigator.clipboard.writeText(txt).then(function () {
+        toast((label || 'Copié') + ' ✓');
+      }, function () {
+        window.prompt('Copie manuelle :', txt);
+      });
+    }
+
+    function fbShare(url) {
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url), '_blank', 'noopener,width=620,height=560');
+    }
+
+    function fbGroups(query) {
+      window.open('https://www.facebook.com/search/groups/?q=' + encodeURIComponent('covoiturage ' + query), '_blank', 'noopener');
+    }
+
+    function rideOptions(r) {
+      var o = [];
+      if (r.accepts_pets) o.push('Animaux acceptés');
+      if (r.accepts_large_luggage) o.push('Gros bagages');
+      if (r.trunk_size === 'grand') o.push('Grand coffre');
+      if (r.accepts_packages) o.push('Colis acceptés');
+      if (r.smoking_policy === 'non_fumeur' || r.non_smoker) o.push('Non-fumeur');
+      if (r.women_only) o.push('Entre femmes');
+      if (r.ac_available) o.push('Climatisé');
+      if (r.accepts_extra_stops) o.push('Arrêts possibles');
+      return o;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      try {
+        var d = new Date(iso);
+        return d.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' }) +
+               ' à ' + d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return iso; }
+    }
+
+    function caption(r) {
+      var opts = rideOptions(r);
+      var line = '🚗 Covoiturage ' + r.start_city + ' → ' + r.end_city;
+      if (r.departure_time) line += '\n📅 ' + fmtDate(r.departure_time);
+      if (r.available_seats) line += '\n💺 ' + r.available_seats + ' place(s) disponible(s)';
+      if (opts.length) line += '\n✅ ' + opts.join(', ');
+      line += '\n\n👉 Réserve en ligne (paiement sécurisé) : ' + SITE + '/trajet/' + r.id;
+      line += '\n#covoiturage #PorteàPorte #' + (r.start_city || '').replace(/[^A-Za-zÀ-ÿ]/g, '');
+      return line;
+    }
+
+    async function init() {
+      var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+      var sess = (await db.auth.getSession()).data;
+      if (!sess || !sess.session) { window.location.href = '/login.html'; return; }
+      session = sess.session;
+      var prof = (await db.from('profiles').select('role').eq('id', session.user.id).single()).data;
+      if (!prof || prof.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+
+      var rides = (await db.from('rides')
+        .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,trunk_size,accepts_pets,accepts_large_luggage,accepts_packages,accepts_extra_stops,smoking_policy,non_smoker,women_only,ac_available,driver_id')
+        .eq('status', 'publie')
+        .order('departure_time', { ascending: true })
+        .limit(200)).data || [];
+
+      // Noms des conducteurs
+      var ids = Array.from(new Set(rides.map(function (r) { return r.driver_id; }).filter(Boolean)));
+      var names = {};
+      if (ids.length) {
+        var profs = (await db.from('profiles').select('id,prenom,nom').in('id', ids)).data || [];
+        profs.forEach(function (p) { names[p.id] = [p.prenom, p.nom].filter(Boolean).join(' '); });
+      }
+      rides.forEach(function (r) { r._driver = names[r.driver_id] || ''; });
+      all = rides;
+      render();
+    }
+
+    function render() {
+      var q = document.getElementById('search').value.toLowerCase();
+      var rides = all;
+      if (q) rides = rides.filter(function (r) {
+        return (r.start_city || '').toLowerCase().indexOf(q) >= 0 ||
+               (r.end_city || '').toLowerCase().indexOf(q) >= 0;
+      });
+      var list = document.getElementById('list');
+      if (!rides.length) { list.innerHTML = '<div class="empty">Aucun trajet actif' + (q ? ' pour ce filtre.' : '.') + '</div>'; return; }
+
+      list.innerHTML = rides.map(function (r, i) {
+        var opts = rideOptions(r);
+        var url = SITE + '/trajet/' + r.id;
+        return '' +
+          '<div class="card">' +
+            '<div class="route">' + esc(r.start_city) + ' → ' + esc(r.end_city) + '</div>' +
+            '<div class="meta">' + esc(fmtDate(r.departure_time)) +
+              (r.available_seats ? ' · 💺 ' + r.available_seats + ' place(s)' : '') +
+              (r._driver ? ' · 👤 ' + esc(r._driver) : '') + '</div>' +
+            (opts.length ? '<div class="opts">' + opts.map(function (o) { return '<span class="chip">' + esc(o) + '</span>'; }).join('') + '</div>' : '') +
+            '<div class="actions">' +
+              '<button class="btn-sm b-copy" onclick="copyText(\'' + url + '\',\'Lien copié\')">📋 Copier le lien</button>' +
+              '<button class="btn-sm b-text" onclick="copyCaption(' + i + ')">📝 Copier l\'annonce</button>' +
+              '<button class="btn-sm b-fb" onclick="fbShare(\'' + url + '\')">📘 Partager Facebook</button>' +
+              '<button class="btn-sm b-grp" onclick="fbGroups(\'' + jsstr(r.start_city) + '\')">🔍 Groupes ' + esc(r.start_city) + '</button>' +
+              '<button class="btn-sm b-grp" onclick="fbGroups(\'' + jsstr(r.end_city) + '\')">🔍 Groupes ' + esc(r.end_city) + '</button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // index correspond au tableau filtré au moment du clic — on recalcule
+    function copyCaption(i) {
+      var q = document.getElementById('search').value.toLowerCase();
+      var rides = all;
+      if (q) rides = rides.filter(function (r) {
+        return (r.start_city || '').toLowerCase().indexOf(q) >= 0 ||
+               (r.end_city || '').toLowerCase().indexOf(q) >= 0;
+      });
+      var r = rides[i];
+      if (r) copyText(caption(r), 'Annonce copiée');
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+    }
+    function jsstr(s) { return String(s == null ? '' : s).replace(/['\\]/g, '\\$&'); }
+
+    // ── Générateur d'annonce manuelle ──────────────────────────────
+    function buildGen() {
+      var type = document.getElementById('g-type').value;
+      var from = document.getElementById('g-from').value.trim();
+      var to = document.getElementById('g-to').value.trim();
+      var when = document.getElementById('g-when').value.trim();
+      var price = document.getElementById('g-price').value.trim();
+      var contact = document.getElementById('g-contact').value.trim();
+      if (!from && !to) { document.getElementById('g-out').textContent = "L'annonce apparaîtra ici…"; renderGenRegions(''); return; }
+
+      var head = type === 'cherche'
+        ? '🙋 RECHERCHE COVOITURAGE'
+        : '🚗 OFFRE DE COVOITURAGE';
+      var txt = head + '\n' + (from || '?') + ' → ' + (to || '?');
+      if (when) txt += '\n📅 ' + when;
+      if (price) txt += '\n💲 ' + price;
+      txt += type === 'cherche'
+        ? '\n\nQuelqu\'un fait ce trajet ? Partage les frais de gaz !'
+        : '\n\nIl reste de la place — partageons les frais de gaz !';
+      txt += '\n👉 ' + (contact || 'Publie ton trajet gratuitement sur ' + SITE);
+      txt += '\n#covoiturage #PorteàPorte';
+      document.getElementById('g-out').textContent = txt;
+      renderGenRegions(from || to);
+    }
+
+    function renderGenRegions(region) {
+      var el = document.getElementById('g-regions');
+      if (!region) { el.innerHTML = ''; return; }
+      el.innerHTML = '<button class="btn-sm b-grp" onclick="fbGroups(\'' + jsstr(region) + '\')">🔍 Groupes FB ' + esc(region) + '</button>';
+    }
+
+    function copyGen() {
+      var txt = document.getElementById('g-out').textContent;
+      if (!txt || txt.indexOf('apparaîtra') >= 0) { toast('Remplis le formulaire d\'abord'); return; }
+      copyText(txt, 'Annonce copiée');
+    }
+
+    ['g-type', 'g-from', 'g-to', 'g-when', 'g-price', 'g-contact'].forEach(function (id) {
+      document.addEventListener('input', function (e) { if (e.target && e.target.id === id) buildGen(); });
+    });
+
+    init();
+  </script>
+  <script src="/js/qc-cities.js" defer></script>
+</body>
+</html>

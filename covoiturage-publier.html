@@ -212,38 +212,8 @@
         <h3>Destination</h3>
         <div class="form-grid">
           <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal" list="qc-cities-publier" autocomplete="off">
-              <datalist id="qc-cities-publier">
-                <option value="Québec"></option>
-                <option value="Lévis"></option>
-                <option value="Montréal"></option>
-                <option value="Laval"></option>
-                <option value="Trois-Rivières"></option>
-                <option value="Sherbrooke"></option>
-                <option value="Magog"></option>
-                <option value="Windsor"></option>
-                <option value="Coaticook"></option>
-                <option value="East Angus"></option>
-                <option value="Valcourt"></option>
-                <option value="Cowansville"></option>
-                <option value="Bromont"></option>
-                <option value="Saguenay"></option>
-                <option value="Chicoutimi"></option>
-                <option value="Jonquière"></option>
-                <option value="Rimouski"></option>
-                <option value="Rivière-du-Loup"></option>
-                <option value="Saint-Georges (Beauce)"></option>
-                <option value="Sainte-Marie (Beauce)"></option>
-                <option value="Drummondville"></option>
-                <option value="Victoriaville"></option>
-                <option value="Gatineau"></option>
-                <option value="Saint-Hyacinthe"></option>
-                <option value="Granby"></option>
-                <option value="Longueuil"></option>
-                <option value="Sept-Îles"></option>
-                <option value="Baie-Comeau"></option>
-                <option value="Matane"></option>
-                <option value="Gaspé"></option>
-              </datalist></div>
+              <!-- Villes peuplées par /js/qc-cities.js (liste centrale partagée) -->
+              <datalist id="qc-cities-publier"></datalist></div>
           <div class="field"><label>Secteur / Quartier</label><input type="text" id="end_sector" placeholder="Ex : Plateau"></div>
         </div>
       </div>
@@ -1223,6 +1193,7 @@
       }
     }
   </script>
+  <script src="/js/qc-cities.js" defer></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
