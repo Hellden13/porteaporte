@@ -403,7 +403,22 @@
                 // Redirect to appropriate dashboard or onboarding.
                 // Pour "les deux", on commence par la verification livreur,
                 // mais le dashboard livreur affiche aussi un lien clair vers l'espace expediteur.
-                if (role === 'livreur') {
+                // Si une destination a ete transmise (next/redirect/return), on y retourne.
+                let nextUrl = '';
+                try {
+                    const params = new URLSearchParams(window.location.search);
+                    const raw = params.get('next') || params.get('redirect') || params.get('return');
+                    if (raw) {
+                        const u = new URL(raw, window.location.origin);
+                        const p = u.pathname || '';
+                        if (u.origin === window.location.origin && p && p !== '/login.html' && p !== '/signup.html' && p !== '/role-choice.html' && !p.startsWith('/api/') && !p.startsWith('/admin/')) {
+                            nextUrl = u.pathname + u.search + u.hash;
+                        }
+                    }
+                } catch (_) {}
+                if (nextUrl) {
+                    window.location.href = nextUrl;
+                } else if (role === 'livreur') {
                     window.location.href = '/livreur.html';
                 } else if (role === 'expediteur') {
                     window.location.href = '/dashboard-expediteur.html';

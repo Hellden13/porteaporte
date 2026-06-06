@@ -386,7 +386,8 @@
     }
 
     function getSafeNextUrl() {
-      const raw = new URLSearchParams(window.location.search).get('next');
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('next') || params.get('redirect') || params.get('return');
       if (!raw) return '';
       try {
         const url = new URL(raw, window.location.origin);
@@ -398,6 +399,15 @@
         return '';
       }
     }
+
+    // Les liens "Créer un compte" gardent la destination (cohérent avec signup.html)
+    (function carryNextToSignup() {
+      const nextUrl = getSafeNextUrl();
+      if (!nextUrl) return;
+      document.querySelectorAll('a[href="/signup.html"]').forEach(a => {
+        a.href = '/signup.html?next=' + encodeURIComponent(nextUrl);
+      });
+    })();
 
     /* ---- Admin portal choice overlay ---- */
     function showAdminPortalChoice() {

@@ -84,6 +84,29 @@
     // Honeypot : enregistre le moment où le form est rendu (bots remplissent en <2s)
     document.getElementById('form-rendered-at').value = Date.now();
 
+    // Destination après inscription (cohérent avec login.html : next / redirect / return)
+    function getSafeNextUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('next') || params.get('redirect') || params.get('return');
+      if (!raw) return '';
+      try {
+        const url = new URL(raw, window.location.origin);
+        if (url.origin !== window.location.origin) return '';
+        const path = url.pathname || '';
+        if (!path || path === '/login.html' || path === '/signup.html' || path.startsWith('/api/') || path.startsWith('/admin/')) return '';
+        return url.pathname + url.search + url.hash;
+      } catch (_) { return ''; }
+    }
+    const nextUrl = getSafeNextUrl();
+
+    // Le lien "Se connecter" garde la destination
+    (function carryNextToLogin() {
+      if (!nextUrl) return;
+      document.querySelectorAll('.links a[href="/login.html"]').forEach(a => {
+        a.href = '/login.html?next=' + encodeURIComponent(nextUrl);
+      });
+    })();
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       btn.disabled = true;
@@ -112,7 +135,7 @@
         email,
         password: form.password.value,
         options: {
-          emailRedirectTo: window.location.origin + '/role-choice.html',
+          emailRedirectTo: window.location.origin + '/role-choice.html' + (nextUrl ? '?next=' + encodeURIComponent(nextUrl) : ''),
           data: { prenom, nom, role }
         }
       });
@@ -154,7 +177,7 @@
           btn.textContent = 'Email de confirmation envoyé';
           return;
         }
-        window.location.href = role === 'expediteur' ? '/dashboard-expediteur.html' : '/livreur.html';
+        window.location.href = nextUrl || (role === 'expediteur' ? '/dashboard-expediteur.html' : '/livreur.html');
         return;
       }
 
