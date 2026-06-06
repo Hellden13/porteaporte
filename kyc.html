@@ -746,6 +746,15 @@
       const userId = session.user.id;
       const m = MODES[selectedMode];
 
+      // Conversion clé FR -> valeur acceptée par la contrainte DB profiles (walking/bike/car/van)
+      const MODE_TO_DB = {
+        pieds:'walking',
+        velo:'bike', trottinette:'bike', skateboard:'bike',
+        voiture:'car', voiture_electrique:'car', moto:'car', moto_electrique:'car',
+        camion:'van', camion_electrique:'van'
+      };
+      const dbMode = MODE_TO_DB[selectedMode] || 'car';
+
       const upload = async (file, path) => {
         if (!file) return null;
         const { data, error } = await db.storage.from('kyc-documents').upload(path, file, { upsert: true });
@@ -780,7 +789,8 @@
 
       const { error: profileError } = await db.from('profiles').update({
         driver_status:  'pending_review',
-        transport_mode: selectedMode,
+        transport_mode: dbMode,
+        vehicule:       m.label,
         eco_bonus:      m.eco,
         nom: `${document.getElementById('firstName').value.trim()} ${document.getElementById('lastName').value.trim()}`
       }).eq('id', userId);

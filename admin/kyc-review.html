@@ -405,9 +405,16 @@
     if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
 
     try {
+      // Conversion clé FR -> valeur acceptée par la contrainte DB profiles (walking/bike/car/van)
+      const MODE_TO_DB = {
+        pieds:'walking',
+        velo:'bike', trottinette:'bike', skateboard:'bike',
+        voiture:'car', voiture_electrique:'car', moto:'car', moto_electrique:'car',
+        camion:'van', camion_electrique:'van'
+      };
       await Promise.all([
         db.from('kyc_submissions').update({ statut: 'verified', reviewed_at: new Date().toISOString(), reviewer_id: session.user.id }).eq('user_id', userId),
-        db.from('profiles').update({ driver_status: 'verified', transport_mode: transportMode, eco_bonus: ecoBonus }).eq('id', userId)
+        db.from('profiles').update({ driver_status: 'verified', transport_mode: MODE_TO_DB[transportMode] || 'car', eco_bonus: ecoBonus }).eq('id', userId)
       ]);
       await loadDossiers();
     } catch (err) {
