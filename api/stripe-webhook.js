@@ -72,7 +72,8 @@ module.exports = async function handler(req, res) {
         rawBodyLen: rawBody.length,
         secretSet: !!whSecret,
         secretLen: whSecret ? whSecret.length : 0,
-        secretPrefix: whSecret ? whSecret.slice(0, 6) : null,
+        secretHead: whSecret ? whSecret.slice(0, 11) : null,
+        secretTail: whSecret ? whSecret.slice(-4) : null,
         sigHeaderPresent: !!sigHeader,
       }
     });
