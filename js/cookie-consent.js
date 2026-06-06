@@ -44,6 +44,27 @@
     if (el) el.remove();
   }
 
+  // Charge la mesure d'audience (Plausible) UNIQUEMENT si l'utilisateur a consenti.
+  // Plausible est sans cookie / anonyme, mais on respecte le choix Loi 25.
+  function loadAnalytics() {
+    if (window.__papAnalyticsLoaded) return;
+    window.__papAnalyticsLoaded = true;
+    const s = document.createElement('script');
+    s.src = '/js/analytics.js';
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  function maybeLoadAnalytics() {
+    const c = getConsent();
+    if (c && c.analytics) loadAnalytics();
+  }
+
+  // Charger l'audience dès que l'utilisateur accepte (sans recharger la page)
+  window.addEventListener('pap-consent-changed', function (e) {
+    if (e.detail && e.detail.analytics) loadAnalytics();
+  });
+
   function showBanner() {
     const css = `
       .pap-cc-banner {
@@ -132,7 +153,7 @@
   // Auto-show si pas de consentement valide
   function init() {
     if (!document.body) { setTimeout(init, 50); return; }
-    if (getConsent()) return; // déjà consenti récemment
+    if (getConsent()) { maybeLoadAnalytics(); return; } // déjà consenti récemment
     showBanner();
   }
   init();
