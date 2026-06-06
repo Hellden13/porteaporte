@@ -690,6 +690,16 @@
       <div class="success-box" id="success-box">
         <h3>✅ Trajet publié avec succès !</h3>
         <p style="margin-bottom:20px">Votre trajet est maintenant visible par les passagers. Vous recevrez un email + notification dès qu'une réservation arrive.</p>
+
+        <div id="share-box" style="background:rgba(93,191,255,.08);border:1px solid #5dbfff;border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-weight:800;color:#5dbfff;margin-bottom:6px">📣 Remplis ton trajet plus vite</div>
+          <p style="color:var(--brand-muted);margin:0 0 14px;font-size:.9rem">Partage-le sur Facebook : plus de gens le voient, plus tu trouves des passagers.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+            <button type="button" class="btn" id="share-fb-btn" style="background:#1877F2;color:#fff">📘 Partager sur Facebook</button>
+            <button type="button" class="btn" id="share-copy-btn" style="background:#0A0F1E;color:#fff;border:1px solid #1E2535">🔗 Copier le lien</button>
+          </div>
+        </div>
+
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
           <a class="btn" href="/dashboard-covoiturage.html#trajets" style="background:var(--green);color:#0A0F1E">📋 Voir mes trajets publiés</a>
           <a class="btn" href="/covoiturage-publier.html" onclick="setTimeout(()=>location.reload(),100)" style="background:#0A0F1E;color:#fff;border:1px solid #1E2535">+ Publier un autre trajet</a>
@@ -1098,6 +1108,28 @@
       `;
     }
 
+    // ── Partage Facebook du trajet publié ───────────────────────
+    function setupShare(rideId) {
+      const box = document.getElementById('share-box');
+      if (!rideId) { if (box) box.style.display = 'none'; return; }
+      const shareUrl = 'https://porteaporte.site/trajet/' + encodeURIComponent(rideId);
+      const fbBtn = document.getElementById('share-fb-btn');
+      const copyBtn = document.getElementById('share-copy-btn');
+      if (fbBtn) fbBtn.onclick = function () {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl),
+          'fbshare', 'width=600,height=500,noopener');
+      };
+      if (copyBtn) copyBtn.onclick = async function () {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          copyBtn.textContent = '✅ Lien copié !';
+          setTimeout(() => { copyBtn.textContent = '🔗 Copier le lien'; }, 2500);
+        } catch (_) {
+          prompt('Copie ce lien :', shareUrl);
+        }
+      };
+    }
+
     // ── Publier ──────────────────────────────────────────────────
     async function publishRide() {
       const btn = document.getElementById('publish-btn');
@@ -1178,6 +1210,7 @@
         if (res.ok && data.success) {
           document.getElementById('publish-actions').style.display = 'none';
           document.getElementById('success-box').style.display = 'block';
+          setupShare(data.ride && data.ride.id);
         } else {
           document.getElementById('err-msg').style.display = 'block';
           document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || 'Erreur lors de la publication.');

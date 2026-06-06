@@ -19,6 +19,7 @@ const {
   ridePaymentCreate, ridePaymentSync, rideCaptureEligible,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
+  rideOgPage, rideOgImage,
 } = require('../lib/_rides');
 const {
   growthDashboard, referralGet, referralUse, badgesList, badgesGrant,
@@ -4732,6 +4733,12 @@ module.exports = async function handler(req, res) {
     }
     if (endpoint === 'ride-detail') {
       return await rideDetail(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'og-trajet') {
+      return await rideOgPage(req, res, { sbUrl, sbKey });
+    }
+    if (endpoint === 'og-trajet-image') {
+      return await rideOgImage(req, res, { sbUrl, sbKey });
     }
     if (endpoint === 'safe-meeting-points') {
       return await safeMeetingPoints(req, res, { sbUrl, sbKey, session: null, profile: null }, body);

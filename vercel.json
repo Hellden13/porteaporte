@@ -37,6 +37,10 @@
     ],
     "rewrites":  [
                      {
+                         "source":  "/trajet/:id",
+                         "destination":  "/api/platform?endpoint=og-trajet&id=:id"
+                     },
+                     {
                          "source":  "/livraison",
                          "destination":  "/livraison.html"
                      },

@@ -210,6 +210,10 @@
         </div>
         <div class="route-date" id="ride-date-line"></div>
         <div class="meta-grid" id="meta-grid"></div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" onclick="shareThisRideFb()" style="background:#1877F2;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">📘 Partager sur Facebook</button>
+          <button type="button" id="ride-copy-btn" onclick="shareThisRideCopy()" style="background:#f0f2f5;color:#1a1a2e;border:1px solid #d6dae2;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">🔗 Copier le lien</button>
+        </div>
       </div>
 
       <div class="card">
@@ -360,6 +364,24 @@ let ridePaymentReady = false;
 const params = new URLSearchParams(location.search);
 const rideId = params.get('id') || params.get('ride_id');
 const resumeBookingId = params.get('booking_id'); // si l'user revient depuis dashboard pour payer
+
+// ── Partage Facebook du trajet ──────────────────────────────
+function rideShareUrl() {
+  return 'https://porteaporte.site/trajet/' + encodeURIComponent(rideId || '');
+}
+function shareThisRideFb() {
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(rideShareUrl()),
+    'fbshare', 'width=600,height=500,noopener');
+}
+async function shareThisRideCopy() {
+  const btn = document.getElementById('ride-copy-btn');
+  try {
+    await navigator.clipboard.writeText(rideShareUrl());
+    if (btn) { btn.textContent = '✅ Lien copié !'; setTimeout(() => { btn.textContent = '🔗 Copier le lien'; }, 2500); }
+  } catch (_) {
+    prompt('Copie ce lien :', rideShareUrl());
+  }
+}
 
 // Si on a un booking_id dans l'URL → reprendre le paiement direct (skip booking)
 async function resumeBookingPayment(bookingId) {
