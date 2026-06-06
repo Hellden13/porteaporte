@@ -171,10 +171,6 @@ module.exports = async function handler(req, res) {
           payment_authorized_at: new Date().toISOString()
         }).catch(() => {});
 
-      await sbPatch(sbUrl, sbKey, 'transactions',
-        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
-        { statut: 'requires_capture' }).catch(() => {});
-
       await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         user_id: obj.metadata?.passenger_id || null,
         actor_id: obj.metadata?.passenger_id || null,
@@ -197,10 +193,6 @@ module.exports = async function handler(req, res) {
           payment_intent_id: obj.id
         }).catch(() => {});
 
-      await sbPatch(sbUrl, sbKey, 'transactions',
-        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
-        { statut: 'requires_capture' }).catch(() => {});
-
       await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         livraison_id: livraisonId,
         user_id: obj.metadata?.expediteur_id || null,
@@ -220,10 +212,6 @@ module.exports = async function handler(req, res) {
   if (type === 'payment_intent.succeeded') {
     const bookingId = obj.metadata?.booking_id;
     if (bookingId && obj.metadata?.type === 'ride_booking') {
-      await sbPatch(sbUrl, sbKey, 'transactions',
-        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
-        { statut: 'succeeded' }).catch(() => {});
-
       await sbPatch(sbUrl, sbKey, 'ride_bookings',
         `id=eq.${encodeURIComponent(bookingId)}`,
         {
@@ -245,10 +233,6 @@ module.exports = async function handler(req, res) {
 
     const livraisonId = obj.metadata?.livraison_id;
     if (livraisonId) {
-      await sbPatch(sbUrl, sbKey, 'transactions',
-        `stripe_payment_intent=eq.${encodeURIComponent(obj.id)}`,
-        { statut: 'succeeded' }).catch(() => {});
-
       await sbPatch(sbUrl, sbKey, 'livraisons',
         `id=eq.${encodeURIComponent(livraisonId)}`,
         { statut: 'payee' }).catch(() => {});
