@@ -29,6 +29,12 @@ desktop.ini
 ChatGPT*.png
 ChatGPT*.jpg
 
+# Secrets / codes de recuperation (ne jamais committer)
+stripe_backup_code.txt
+twilio_2FA_recovery_code.txt
+*_recovery_code.txt
+*_backup_code.txt
+
 # Logs
 *.log
 npm-debug.log*
