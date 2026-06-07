@@ -273,9 +273,10 @@
           <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Auto si Québec ↔ Lévis" min="1" oninput="updatePricePreview()"></div>
         </div>
         <style>
-          .quick-pick { padding: 8px 14px; background: rgba(0,217,255,.1); border: 1px solid rgba(0,217,255,.35); color: var(--brand-cyan); border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
-          .quick-pick:hover { background: rgba(0,217,255,.25); transform: translateY(-1px); }
-          .quick-pick.active { background: var(--brand-lime); color: #071006; border-color: var(--brand-lime); box-shadow: 0 0 0 2px rgba(93,191,255,.3); }
+          .quick-pick { padding: 8px 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.16); color: var(--brand-muted); border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
+          .quick-pick:hover { background: rgba(0,217,255,.15); border-color: rgba(0,217,255,.45); color: var(--brand-cyan); transform: translateY(-1px); }
+          .quick-pick.active { background: var(--brand-cyan); color: #00131a; border-color: var(--brand-cyan); box-shadow: 0 0 0 3px rgba(0,217,255,.35); transform: translateY(-1px); font-weight: 900; }
+          .quick-pick.active::before { content: '✓ '; }
         </style>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
@@ -352,7 +353,7 @@
               <option value="essence" selected>⛽ Essence</option>
               <option value="diesel">🛻 Diesel / gros VUS</option>
             </select>
-            <span class="hint">Le tarif/km suggéré s'ajuste selon ton énergie (plus juste pour tout le monde).</span>
+            <span class="hint" id="energy-hint">Le tarif/km suggéré s'ajuste selon ton énergie (plus juste pour tout le monde).</span>
           </div>
         </div>
         <div class="form-grid" style="margin-top:14px;">
@@ -1004,6 +1005,8 @@
       // Si déjà rempli (ex: retour navigateur)
       if (sc && sc.value) loadSafePoints('start');
       if (ec && ec.value) loadSafePoints('end');
+      // Affiche le tarif énergie dès le chargement
+      if (document.getElementById('energy_type')) applyEnergyRate();
     });
 
     // ── Points d'arrêt ──────────────────────────────────────────
@@ -1072,6 +1075,15 @@
       cpkInput.max   = r.max;
       const hint = cpkInput.parentElement.querySelector('.hint');
       if (hint) hint.textContent = `Suggéré pour ${r.label} : ${r.def.toFixed(2)} $/km · Maximum : ${r.max.toFixed(2)} $/km`;
+      // Feedback immédiat sous le menu énergie (exemple concret sur 200 km)
+      const eh = document.getElementById('energy-hint');
+      if (eh) {
+        const exempleParPax = (200 * r.def) / 4; // 200 km, auto pleine (3 passagers + conducteur)
+        const moinsCher = (sel && (sel.value === 'electrique' || sel.value === 'hybride'));
+        eh.innerHTML = `${r.label} → <strong style="color:var(--brand-cyan)">${r.def.toFixed(2)} $/km</strong>`
+          + ` · ex. 200 km ≈ <strong>${fmt(exempleParPax)}</strong>/passager`
+          + (moinsCher ? ` <span style="color:#7dffc1">🌱 trajets moins chers</span>` : '');
+      }
       updatePricePreview();
     }
 
