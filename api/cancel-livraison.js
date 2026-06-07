@@ -44,6 +44,16 @@ function fundPctForTier(tier, settings) {
   return 0;
 }
 
+async function sbPostJson(sbUrl, sbKey, table, payload) {
+  const r = await fetch(`${sbUrl}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -162,6 +172,7 @@ module.exports = async function handler(req, res) {
     let refundCents = 0;
     let livreurCompensationCents = 0;
     let fundCents = 0;
+    const reviewFlags = [];
     const totalCents = Math.round(Number(livraison.prix_total || 0) * 100);
     if (livraison.stripe_payment_intent && totalCents > 0) {
       if (!STRIPE_KEY) {
@@ -175,24 +186,7 @@ module.exports = async function handler(req, res) {
       fundCents = Math.min(retainedCents, Math.round(totalCents * fundPct / 100));
       livreurCompensationCents = Math.max(0, retainedCents - fundCents);
 
-      // Trace la part fonds de sécurité dans le grand livre (table transactions)
-      if (fundCents > 0) {
-        await fetch(`${SB_URL}/rest/v1/transactions`, {
-          method: 'POST',
-          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: null,
-            livraison_id: livraison.id,
-            type: 'fond_securite_livraison',
-            montant: fundCents / 100,
-            statut: 'complete',
-            description: `Fonds de sécurité — annulation livraison (${policy.tier})`,
-            stripe_payment_intent: livraison.stripe_payment_intent,
-            metadata: { livraison_id: livraison.id, tier: policy.tier, refund_pct: policy.refund_pct }
-          })
-        }).catch(() => {});
-      }
-
+      // Remboursement Stripe d'abord (bloquant) — on ne trace rien tant que l'argent n'est pas rendu
       if (refundCents > 0) {
         const stripe = require('stripe')(STRIPE_KEY);
         try {
@@ -210,23 +204,52 @@ module.exports = async function handler(req, res) {
         }
       }
 
+      // Trace la part fonds de sécurité dans le grand livre (après le remboursement réussi)
+      if (fundCents > 0) {
+        const fundLedger = await sbPostJson(SB_URL, SB_KEY, 'transactions', {
+          user_id: null,
+          livraison_id: livraison.id,
+          type: 'fond_securite_livraison',
+          montant: fundCents / 100,
+          statut: 'complete',
+          description: `Fonds de sécurité — annulation livraison (${policy.tier})`,
+          stripe_payment_intent: livraison.stripe_payment_intent,
+          metadata: { livraison_id: livraison.id, tier: policy.tier, refund_pct: policy.refund_pct }
+        });
+        if (!fundLedger.ok) {
+          reviewFlags.push('fond_securite_livraison');
+          log('ERROR', 'delivery_security_fund_ledger_failed', session.id, {
+            livraison_id,
+            status: fundLedger.status,
+            error: fundLedger.data?.message || fundLedger.data?.error || null,
+            amount_cents: fundCents
+          });
+        }
+      }
+
       // Crédit compensation au livreur si applicable
       if (livreurCompensationCents > 0 && livraison.livreur_id) {
-        await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
-          method: 'POST',
-          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const comp = await sbPostJson(SB_URL, SB_KEY, 'livreur_earnings', {
+          livreur_id: livraison.livreur_id,
+          livraison_id: livraison.id,
+          gross_amount: livreurCompensationCents / 100,
+          net_amount: livreurCompensationCents / 100,
+          currency: 'cad',
+          status: 'manual_review',
+          type: 'compensation_annulation',
+          notes: `Compensation annulation (${policy.refund_pct}% remboursé) : ${raison || 'sans raison'}`,
+          created_at: new Date().toISOString()
+        });
+        if (!comp.ok) {
+          reviewFlags.push('compensation_livreur');
+          log('ERROR', 'delivery_driver_compensation_failed', session.id, {
+            livraison_id,
             livreur_id: livraison.livreur_id,
-            livraison_id: livraison.id,
-            gross_amount: livreurCompensationCents / 100,
-            net_amount: livreurCompensationCents / 100,
-            currency: 'cad',
-            status: 'available',
-            type: 'compensation_annulation',
-            notes: `Compensation annulation (${policy.refund_pct}% remboursé) : ${raison || 'sans raison'}`,
-            created_at: new Date().toISOString()
-          })
-        }).catch(() => {});
+            status: comp.status,
+            error: comp.data?.message || comp.data?.error || null,
+            amount_cents: livreurCompensationCents
+          });
+        }
       }
     }
 
@@ -267,9 +290,9 @@ module.exports = async function handler(req, res) {
     const sev = livreurCompensationCents > 0 ? 'warning' : 'info';
     alertAdmin(
       `Annulation livraison`,
-      `${canceller} a annulé une livraison. ${refundCents > 0 ? `Remboursement ${(refundCents/100).toFixed(2)} $ traité` : 'Pas de remboursement (pas encore payée).'}`,
+      `${canceller} a annulé une livraison. ${refundCents > 0 ? `Remboursement ${(refundCents/100).toFixed(2)} $ traité` : 'Pas de remboursement (pas encore payée).'}${reviewFlags.length ? ' Revue admin requise pour les montants internes.' : ''}`,
       {
-        severity: sev,
+        severity: reviewFlags.length ? 'critical' : sev,
         details: {
           'Livraison': livraison.id?.slice(0, 8) || '?',
           'Annulée par': canceller,
@@ -278,7 +301,8 @@ module.exports = async function handler(req, res) {
           'Prix total': `${Number(livraison.prix_total || 0).toFixed(2)} $`,
           'Remboursement client': `${(refundCents/100).toFixed(2)} $ (${policy.refund_pct}%)`,
           'Compensation livreur': `${(livreurCompensationCents/100).toFixed(2)} $`,
-          'Fonds de sécurité': `${(fundCents/100).toFixed(2)} $`
+          'Fonds de sécurité': `${(fundCents/100).toFixed(2)} $`,
+          'Revue admin': reviewFlags.length ? reviewFlags.join(', ') : 'non'
         },
         cta_url: 'https://porteaporte.site/admin/operations.html',
         cta_label: '📋 Voir Operations →'
@@ -313,7 +337,9 @@ module.exports = async function handler(req, res) {
       refund_pct: policy.refund_pct,
       livreur_compensation_cents: livreurCompensationCents,
       security_fund_cents: fundCents,
-      policy_reason: policy.reason
+      policy_reason: policy.reason,
+      admin_review_required: reviewFlags.length > 0,
+      review_flags: reviewFlags
     });
 
   } catch (error) {

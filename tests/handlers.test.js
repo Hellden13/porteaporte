@@ -381,6 +381,39 @@ describe('platform.js dispatcher', () => {
     assert.ok(!requestedUrl.includes('select=*'));
   });
 
+  test('impact-admin refuse une politique annulation covoiturage invalide', async () => {
+    const settingsWrites = [];
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/impact_settings') && opts.method && opts.method !== 'GET') {
+        settingsWrites.push({ url, method: opts.method, body: opts.body });
+      }
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'admin-1', email: 'admin@test.com' }), text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'admin-1', role: 'admin', suspendu: false }], text: async () => '[]' };
+      }
+      return { ok: true, status: 200, json: async () => [{}], text: async () => '{}' };
+    };
+
+    const req = makeReq({
+      body: {
+        endpoint: 'impact-admin',
+        mode: 'settings',
+        ride_cancel_partial_refund_pct: 90,
+        ride_cancel_partial_driver_pct: 10,
+        ride_cancel_partial_fund_pct: 10,
+      },
+      headers: { authorization: 'Bearer admin-token' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 400);
+    assert.match(res._body.error, /100%/);
+    assert.equal(settingsWrites.length, 0);
+  });
+
   test('price-estimate est public et retourne un minimum livreur', async () => {
     global.fetch = makeFetchMock({});
     const req = makeReq({
@@ -737,10 +770,23 @@ describe('turnstile-verify handler', () => {
 // ─── Tests cancel-livraison.js ────────────────────────────────────────────────
 describe('cancel-livraison handler', () => {
   const handler = require('../api/cancel-livraison');
+  const Module = require('node:module');
+  const originalLoad = Module._load;
 
   before(() => {
     process.env.SUPABASE_URL = 'https://fake.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'service-key-fake';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
+    Module._load = function patchedLoad(request, parent, isMain) {
+      if (request === 'stripe') {
+        return () => ({ refunds: { create: async () => ({ id: 're_test_1' }) } });
+      }
+      return originalLoad.apply(this, arguments);
+    };
+  });
+
+  after(() => {
+    Module._load = originalLoad;
   });
 
   test('OPTIONS → 200', async () => {
@@ -768,6 +814,110 @@ describe('cancel-livraison handler', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 400);
+  });
+
+  test('annulation apres assignation inscrit la compensation livreur en revue manuelle', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      const method = opts.method || 'GET';
+      calls.push({ url, method, body: opts.body || null });
+      if (url.includes('/auth/v1/user')) return { ok: true, status: 200, json: async () => ({ id: 'exp-1' }) };
+      if (url.includes('/rest/v1/livraisons') && method === 'GET') {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'liv-1',
+          expediteur_id: 'exp-1',
+          livreur_id: 'drv-1',
+          statut: 'confirme',
+          prix_total: 10,
+          stripe_payment_intent: 'pi_live_like_1234567890'
+        }] };
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.exp-1')) {
+        return { ok: true, status: 200, json: async () => [{ role: 'expediteur' }] };
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.drv-1')) {
+        return { ok: true, status: 200, json: async () => [{ email: 'driver@test.ca', prenom: 'Driver' }] };
+      }
+      if (url.includes('/rest/v1/impact_settings')) {
+        return { ok: true, status: 200, json: async () => [{ delivery_cancel_assigned_fund_pct: 2 }] };
+      }
+      if (url.includes('/rest/v1/transactions')) return { ok: true, status: 201, json: async () => ({ id: 'tx-1' }) };
+      if (url.includes('/rest/v1/livreur_earnings')) return { ok: true, status: 201, json: async () => ({ id: 'earn-1' }) };
+      if (url.includes('/rest/v1/livraisons') && method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/api/notifier')) return { ok: true, status: 200, json: async () => ({ success: true }) };
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const req = makeReq({
+      body: { livraison_id: 'liv-1', raison: 'test' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body.success, true);
+    assert.equal(res._body.refund_cents, 900);
+    assert.equal(res._body.security_fund_cents, 20);
+    assert.equal(res._body.livreur_compensation_cents, 80);
+    assert.equal(res._body.admin_review_required, false);
+
+    const earningCall = calls.find(c => c.url.includes('/rest/v1/livreur_earnings'));
+    assert.ok(earningCall, 'compensation livreur attendue');
+    assert.equal(JSON.parse(earningCall.body).status, 'manual_review');
+  });
+
+  test('echec ecriture fonds ou compensation laisse une trace admin sans fausse disponibilite', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      const method = opts.method || 'GET';
+      calls.push({ url, method, body: opts.body || null });
+      if (url.includes('/auth/v1/user')) return { ok: true, status: 200, json: async () => ({ id: 'exp-1' }) };
+      if (url.includes('/rest/v1/livraisons') && method === 'GET') {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'liv-1',
+          expediteur_id: 'exp-1',
+          livreur_id: 'drv-1',
+          statut: 'confirme',
+          prix_total: 10,
+          stripe_payment_intent: 'pi_live_like_1234567890'
+        }] };
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.exp-1')) {
+        return { ok: true, status: 200, json: async () => [{ role: 'expediteur' }] };
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.drv-1')) {
+        return { ok: true, status: 200, json: async () => [{ email: 'driver@test.ca', prenom: 'Driver' }] };
+      }
+      if (url.includes('/rest/v1/impact_settings')) {
+        return { ok: true, status: 200, json: async () => [{ delivery_cancel_assigned_fund_pct: 2 }] };
+      }
+      if (url.includes('/rest/v1/transactions')) {
+        return { ok: false, status: 500, json: async () => ({ message: 'ledger down' }) };
+      }
+      if (url.includes('/rest/v1/livreur_earnings')) {
+        return { ok: false, status: 500, json: async () => ({ message: 'earnings down' }) };
+      }
+      if (url.includes('/rest/v1/livraisons') && method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/api/notifier')) return { ok: true, status: 200, json: async () => ({ success: true }) };
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const req = makeReq({
+      body: { livraison_id: 'liv-1', raison: 'test' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body.success, true);
+    assert.equal(res._body.admin_review_required, true);
+    assert.deepEqual(res._body.review_flags.sort(), ['compensation_livreur', 'fond_securite_livraison'].sort());
+
+    const earningCall = calls.find(c => c.url.includes('/rest/v1/livreur_earnings'));
+    assert.ok(earningCall, 'tentative compensation attendue');
+    assert.equal(JSON.parse(earningCall.body).status, 'manual_review');
   });
 });
 

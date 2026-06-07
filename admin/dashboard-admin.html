@@ -2322,6 +2322,21 @@
   document.getElementById('impact-settings-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
+      const pctVal = (id) => Math.max(0, Number(document.getElementById(id).value || 0));
+      const partialTotal = pctVal('impact-cxl-p-refund') + pctVal('impact-cxl-p-driver') + pctVal('impact-cxl-p-fund');
+      const lateTotal = pctVal('impact-cxl-l-refund') + pctVal('impact-cxl-l-driver') + pctVal('impact-cxl-l-fund');
+      if (Math.abs(partialTotal - 100) > 0.001) {
+        alert('Annulation partielle: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + partialTotal + '%.');
+        return;
+      }
+      if (Math.abs(lateTotal - 100) > 0.001) {
+        alert('Annulation tardive: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + lateTotal + '%.');
+        return;
+      }
+      if (pctVal('impact-cxl-free-h') < pctVal('impact-cxl-late-h')) {
+        alert('Le delai gratuit doit etre superieur ou egal au seuil tardif.');
+        return;
+      }
       await impactRequest({
         mode: 'settings',
         ride_platform_fee:  Number(document.getElementById('impact-ride-pct').value || 0),

@@ -3,7 +3,7 @@
 const { describe, test, after } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { ridePaymentCreate, ridePaymentSync } = require('../lib/_rides');
+const { ridePaymentCreate, ridePaymentSync, rideCancel } = require('../lib/_rides');
 
 function makeRes() {
   return {
@@ -284,6 +284,211 @@ describe('ride Stripe payments', () => {
 
     delete process.env.RIDE_LIVE_DOLLAR_TEST_ENABLED;
     delete process.env.RIDE_LIVE_DOLLAR_TEST_CODE;
+  });
+});
+
+describe('ride cancellation safeguards', () => {
+  test('annulation passager +24h libere autorisation Stripe et place', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/rest/v1/ride_bookings?id=eq.book-cancel-free')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'book-cancel-free',
+          ride_id: 'ride-free',
+          passenger_id: 'passenger-1',
+          status: 'confirme',
+          total_passenger: 12.50,
+          seats_reserved: 1,
+          stripe_payment_intent: 'pi_free_real_1234567890',
+          payment_currency: 'cad',
+        }] };
+      }
+      if (url.includes('/rest/v1/rides?id=eq.ride-free') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'ride-free',
+          driver_id: 'driver-1',
+          departure_time: new Date(Date.now() + 30 * 3600 * 1000).toISOString(),
+          available_seats: 1,
+        }] };
+      }
+      if (url.includes('/rest/v1/impact_settings')) {
+        return { ok: true, status: 200, json: async () => [{
+          ride_cancel_free_window_h: 24,
+          ride_cancel_late_window_h: 2,
+          ride_cancel_partial_refund_pct: 85,
+          ride_cancel_partial_driver_pct: 10,
+          ride_cancel_partial_fund_pct: 5,
+        }] };
+      }
+      if (url.includes('/v1/payment_intents/pi_free_real_1234567890') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_free_real_1234567890', status: 'requires_capture', currency: 'cad' }) };
+      }
+      if (url.includes('/v1/payment_intents/pi_free_real_1234567890/cancel') && opts.method === 'POST') {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_free_real_1234567890', status: 'canceled' }) };
+      }
+      if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, json: async () => ({}) };
+      }
+      if (url.includes('/rest/v1/rides') && opts.method === 'PATCH') {
+        return { ok: true, status: 204, json: async () => ({}) };
+      }
+      if (url.includes('/rest/v1/transactions') && opts.method === 'POST') {
+        return { ok: true, status: 201, json: async () => ({}) };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx(), { booking_id: 'book-cancel-free' });
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body.refund, 12.5);
+    assert.equal(res._body.driver_compensation, 0);
+    assert.equal(res._body.security_fund, 0);
+    assert.equal(res._body.stripe_action, 'autorisation_liberee');
+    assert.ok(calls.some(c => c.url.includes('/cancel') && c.method === 'POST'));
+    assert.ok(calls.some(c => c.url.includes('/rest/v1/rides?id=eq.ride-free') && c.method === 'PATCH'));
+  });
+
+  test('annulation passager entre 2h et 24h capture seulement la penalite', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/rest/v1/ride_bookings?id=eq.book-cancel-partial')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'book-cancel-partial',
+          ride_id: 'ride-partial',
+          passenger_id: 'passenger-1',
+          status: 'confirme',
+          total_passenger: 12.50,
+          seats_reserved: 1,
+          stripe_payment_intent: 'pi_partial_real_1234567890',
+          payment_currency: 'cad',
+        }] };
+      }
+      if (url.includes('/rest/v1/rides?id=eq.ride-partial') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'ride-partial',
+          driver_id: 'driver-1',
+          departure_time: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+          available_seats: 1,
+        }] };
+      }
+      if (url.includes('/rest/v1/impact_settings')) {
+        return { ok: true, status: 200, json: async () => [{
+          ride_cancel_free_window_h: 24,
+          ride_cancel_late_window_h: 2,
+          ride_cancel_partial_refund_pct: 85,
+          ride_cancel_partial_driver_pct: 10,
+          ride_cancel_partial_fund_pct: 5,
+        }] };
+      }
+      if (url.includes('/v1/payment_intents/pi_partial_real_1234567890') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_partial_real_1234567890', status: 'requires_capture', currency: 'cad' }) };
+      }
+      if (url.includes('/v1/payment_intents/pi_partial_real_1234567890/capture') && opts.method === 'POST') {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_partial_real_1234567890', status: 'succeeded', latest_charge: 'ch_partial' }) };
+      }
+      if (url.includes('/rest/v1/stripe_connect_accounts')) {
+        return { ok: true, status: 200, json: async () => [] };
+      }
+      if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/rest/v1/rides') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/rest/v1/transactions') && opts.method === 'POST') return { ok: true, status: 201, json: async () => ({}) };
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx(), { booking_id: 'book-cancel-partial' });
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body.refund, 10.62);
+    assert.equal(res._body.driver_compensation, 1.25);
+    assert.equal(res._body.security_fund, 0.63);
+    const captureCall = calls.find(c => c.url.includes('/capture'));
+    assert.ok(captureCall, 'capture partielle requise');
+    assert.equal(new URLSearchParams(captureCall.body).get('amount_to_capture'), '188');
+    const driverLedger = calls.find(c => c.url.includes('/rest/v1/transactions') && c.method === 'POST' && String(c.body).includes('dedommagement_covoiturage'));
+    assert.ok(driverLedger, 'grand livre conducteur requis');
+    assert.equal(JSON.parse(driverLedger.body).statut, 'manual_review');
+  });
+
+  test('annulation passager bloque le statut si Stripe echoue', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/rest/v1/ride_bookings?id=eq.book-cancel-fail')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'book-cancel-fail',
+          ride_id: 'ride-fail',
+          passenger_id: 'passenger-1',
+          status: 'confirme',
+          total_passenger: 12.50,
+          seats_reserved: 1,
+          stripe_payment_intent: 'pi_fail_real_1234567890',
+          payment_currency: 'cad',
+        }] };
+      }
+      if (url.includes('/rest/v1/rides?id=eq.ride-fail') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-fail', driver_id: 'driver-1', departure_time: new Date(Date.now() + 30 * 3600 * 1000).toISOString(), available_seats: 1 }] };
+      }
+      if (url.includes('/rest/v1/impact_settings')) return { ok: true, status: 200, json: async () => [{}] };
+      if (url.includes('/v1/payment_intents/pi_fail_real_1234567890') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_fail_real_1234567890', status: 'requires_capture' }) };
+      }
+      if (url.includes('/v1/payment_intents/pi_fail_real_1234567890/cancel')) {
+        return { ok: false, status: 402, json: async () => ({ error: { message: 'Stripe failure' } }) };
+      }
+      if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx(), { booking_id: 'book-cancel-fail' });
+
+    assert.equal(res._status, 502);
+    assert.equal(calls.some(c => c.url.includes('/rest/v1/ride_bookings') && c.method === 'PATCH'), false);
+  });
+
+  test('annulation conducteur rembourse/libere avant de marquer annule', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/rest/v1/rides?id=eq.ride-driver') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-driver', driver_id: 'driver-1', status: 'publie' }] };
+      }
+      if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-driver')) {
+        return { ok: true, status: 200, json: async () => [
+          { id: 'book-a', passenger_id: 'passenger-a', status: 'confirme', stripe_payment_intent: 'pi_a_real_1234567890' },
+          { id: 'book-b', passenger_id: 'passenger-b', status: 'confirme', stripe_payment_intent: 'pi_b_real_1234567890' },
+        ] };
+      }
+      if (url.includes('/v1/payment_intents/pi_a_real_1234567890') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_a_real_1234567890', status: 'requires_capture' }) };
+      }
+      if (url.includes('/v1/payment_intents/pi_a_real_1234567890/cancel')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_a_real_1234567890', status: 'canceled' }) };
+      }
+      if (url.includes('/v1/payment_intents/pi_b_real_1234567890') && (!opts.method || opts.method === 'GET')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'pi_b_real_1234567890', status: 'succeeded' }) };
+      }
+      if (url.includes('/v1/refunds')) {
+        return { ok: true, status: 200, json: async () => ({ id: 're_b', status: 'succeeded' }) };
+      }
+      if (url.includes('/rest/v1/rides') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx({ session: { id: 'driver-1' }, profile: { role: 'livreur' } }), { ride_id: 'ride-driver' });
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body.bookings_affected, 2);
+    const ridePatchIndex = calls.findIndex(c => c.url.includes('/rest/v1/rides?id=eq.ride-driver') && c.method === 'PATCH');
+    const refundIndex = calls.findIndex(c => c.url.includes('/v1/refunds'));
+    assert.ok(refundIndex > -1 && ridePatchIndex > refundIndex, 'le trajet est annule apres remboursement');
   });
 });
 

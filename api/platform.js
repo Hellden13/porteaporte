@@ -63,6 +63,18 @@ function normalizeRideRedistribution(input) {
   return cleaned.length ? cleaned : RIDE_REDISTRIBUTION_DEFAULT;
 }
 
+function validateCancelSplit(name, refundPct, driverPct, fundPct) {
+  const values = [refundPct, driverPct, fundPct].map(Number);
+  if (values.some((n) => !Number.isFinite(n) || n < 0 || n > 100)) {
+    return `${name}: chaque pourcentage doit etre entre 0 et 100`;
+  }
+  const total = values.reduce((sum, n) => sum + n, 0);
+  if (Math.abs(total - 100) > 0.001) {
+    return `${name}: le total doit etre exactement 100%`;
+  }
+  return null;
+}
+
 const FILE_ORIGIN_PUBLIC_ENDPOINTS = new Set([
   'ride-search',
   'ride-detail',
@@ -4108,6 +4120,26 @@ async function impactAdmin(req, res, ctx, body) {
   }
 
   if (body.mode === 'settings') {
+    const partialErr = validateCancelSplit(
+      'Annulation covoiturage partielle',
+      body.ride_cancel_partial_refund_pct ?? 85,
+      body.ride_cancel_partial_driver_pct ?? 10,
+      body.ride_cancel_partial_fund_pct ?? 5
+    );
+    if (partialErr) return res.status(400).json({ error: partialErr });
+    const lateErr = validateCancelSplit(
+      'Annulation covoiturage tardive',
+      body.ride_cancel_late_refund_pct ?? 50,
+      body.ride_cancel_late_driver_pct ?? 40,
+      body.ride_cancel_late_fund_pct ?? 10
+    );
+    if (lateErr) return res.status(400).json({ error: lateErr });
+    const freeH = toNumber(body.ride_cancel_free_window_h, 24);
+    const lateH = toNumber(body.ride_cancel_late_window_h, 2);
+    if (freeH < lateH) {
+      return res.status(400).json({ error: 'Le delai gratuit doit etre superieur ou egal au seuil tardif' });
+    }
+
     const pct = (v, def) => Math.max(0, Math.min(100, toNumber(v, def)));
     const payload = {
       id: 'default',
