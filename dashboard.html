@@ -33,6 +33,40 @@
     .btn.primary { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; }
     .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
     .btn.sm { padding:6px 12px; font-size:.78rem; }
+    .referral-card {
+      background:linear-gradient(135deg, rgba(0,217,255,.07), rgba(93,191,255,.035));
+      border:1px solid rgba(0,217,255,.22);
+      border-radius:12px;
+      padding:18px 20px;
+      margin:0 0 22px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:16px;
+      align-items:center;
+    }
+    .referral-card h2 { font-size:1rem; margin:0 0 6px; }
+    .referral-card p { color:var(--muted); font-size:.88rem; line-height:1.45; margin:0; }
+    .referral-link { margin-top:12px; display:flex; gap:8px; align-items:center; }
+    .referral-link input {
+      min-width:0;
+      flex:1;
+      background:var(--surface);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:10px 12px;
+      font-size:.84rem;
+    }
+    .chance-pill {
+      min-width:104px;
+      text-align:center;
+      border-radius:10px;
+      background:rgba(93,191,255,.11);
+      border:1px solid rgba(93,191,255,.34);
+      padding:12px;
+    }
+    .chance-pill strong { display:block; font-size:1.55rem; color:var(--cyan); line-height:1; }
+    .chance-pill span { color:var(--muted); font-size:.74rem; font-weight:800; text-transform:uppercase; }
 
     .wrap { max-width:1200px; margin:0 auto; padding:28px clamp(16px,4vw,32px) 80px; }
 
@@ -102,6 +136,8 @@
     @media (max-width:640px) {
       .header-card { grid-template-columns:1fr; text-align:center; }
       .avatar { margin:0 auto; }
+      .referral-card { grid-template-columns:1fr; }
+      .referral-link { flex-direction:column; align-items:stretch; }
     }
   </style>
 </head>
@@ -140,6 +176,21 @@
 
     <!-- Actions rapides selon rôle -->
     <div class="quick-actions" id="quickActions"></div>
+
+    <section class="referral-card" id="referralCard" style="display:none">
+      <div>
+        <h2>Mon lien de parrainage</h2>
+        <p>Invite tes proches au concours des 100 premiers membres. Chaque filleul inscrit ajoute deux chances.</p>
+        <div class="referral-link">
+          <input id="referralLink" readonly value="Chargement...">
+          <button class="btn primary sm" type="button" id="copyReferralBtn">Copier</button>
+        </div>
+      </div>
+      <div class="chance-pill">
+        <strong id="referralChances">1</strong>
+        <span>chance(s)</span>
+      </div>
+    </section>
 
     <!-- Sections dynamiques -->
     <div id="sectionPassager" class="section" style="display:none">
@@ -180,6 +231,41 @@
   function fmtDate(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-CA',{day:'2-digit',month:'short',year:'numeric'}); }
   function fmtDT(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleString('fr-CA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
   function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function cleanReferralCode(v) {
+    return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 32);
+  }
+  async function claimStoredReferral(session) {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = cleanReferralCode(params.get('ref'));
+    if (fromUrl) localStorage.setItem('PAP_REFERRAL_CODE', fromUrl);
+    const code = cleanReferralCode(localStorage.getItem('PAP_REFERRAL_CODE'));
+    if (!code) return;
+    try {
+      const r = await fetch('/api/platform?endpoint=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'referral', action: 'claim', code })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && out.success && out.claim && out.claim.reason !== 'insert_failed') {
+        localStorage.removeItem('PAP_REFERRAL_CODE');
+      }
+    } catch (_) {}
+  }
+  async function loadReferralCard(session) {
+    try {
+      const r = await fetch('/api/platform?endpoint=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'referral', action: 'my-link' })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok || !out.success) return;
+      document.getElementById('referralCard').style.display = 'grid';
+      document.getElementById('referralLink').value = out.link || '';
+      document.getElementById('referralChances').textContent = out.chances || 1;
+    } catch (_) {}
+  }
   function statusPill(s) {
     const x = String(s||'').toLowerCase();
     const map = {
@@ -204,10 +290,12 @@
     const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
     if (!profile) { document.getElementById('loading').textContent = 'Profil introuvable.'; return; }
     currentProfile = profile;
+    await claimStoredReferral(session);
 
     renderHeader(session, profile);
     renderQuickActions(profile);
     await Promise.all([
+      loadReferralCard(session),
       loadPassengerBookings(session),
       loadDriverRides(session),
       loadExpediteurDeliveries(session),
@@ -217,6 +305,18 @@
     document.getElementById('loading').style.display = 'none';
     document.getElementById('dashboard-content').style.display = 'block';
   }
+
+  document.getElementById('copyReferralBtn').addEventListener('click', async () => {
+    const input = document.getElementById('referralLink');
+    try {
+      await navigator.clipboard.writeText(input.value);
+      document.getElementById('copyReferralBtn').textContent = 'Copié';
+      setTimeout(() => { document.getElementById('copyReferralBtn').textContent = 'Copier'; }, 1600);
+    } catch (_) {
+      input.select();
+      document.execCommand('copy');
+    }
+  });
 
   function renderHeader(session, profile) {
     const name = profile.prenom || session.user.email?.split('@')[0] || 'Utilisateur';

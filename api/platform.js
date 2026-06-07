@@ -1,6 +1,8 @@
 // api/platform.js — Gestionnaire principal PorteaPorte
 // Modules extraits : _lib.js · _push.js · _rides.js · _growth.js · _connect.js
 
+const crypto = require('crypto');
+
 const {
   CORS, sanitizeEnv, safeIds, sbHeaders, parseDataUrl, uploadProofPhoto,
   signStorageUrl, getSession, getProfile, normalizeRole, roleIn, mergeUserRole,
@@ -4069,6 +4071,163 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
   return res.status(200).json({ success: true, settings: { ...defaults, ...(rows[0] || {}) } });
 }
 
+function contestCodeFromInput(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, '')
+    .slice(0, 32);
+}
+
+function missingReferralColumn(data) {
+  const msg = String(data?.message || data?.details || data?.hint || data?.error || '');
+  const match = msg.match(/'([^']+)' column|column "([^"]+)"/i);
+  return match ? (match[1] || match[2]) : '';
+}
+
+async function countPostgrestRows(url, sbKey) {
+  const r = await fetch(url, {
+    headers: { ...sbHeaders(sbKey), Prefer: 'count=exact', Range: '0-0' }
+  });
+  if (!r.ok) return { ok: false, count: 0, status: r.status };
+  const cr = r.headers.get('content-range') || '0-0/0';
+  return { ok: true, count: Number(cr.split('/')[1]) || 0, status: r.status };
+}
+
+async function memberCountPublic(req, res, ctx) {
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`member-count:${ip}`, 30, 60);
+  if (!rl.allowed) return res.status(429).json({ error: 'Trop de requetes. Reessayez dans une minute.' });
+
+  let counted = await countPostgrestRows(`${ctx.sbUrl}/rest/v1/profiles?select=id&suspendu=eq.false`, ctx.sbKey);
+  if (!counted.ok) {
+    counted = await countPostgrestRows(`${ctx.sbUrl}/rest/v1/profiles?select=id`, ctx.sbKey);
+  }
+
+  return res.status(200).json({
+    success: true,
+    members: counted.count,
+    goal: 100
+  });
+}
+
+async function ensureLaunchReferralCode(ctx) {
+  const uid = ctx.session.id;
+  const existingRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?user_id=eq.${encodeURIComponent(uid)}&select=code,total_uses,total_rewarded&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const existing = existingRes.ok ? await existingRes.json().catch(() => []) : [];
+  if (existing[0]?.code) return existing[0];
+
+  for (let i = 0; i < 8; i++) {
+    const code = 'PAP' + crypto.randomBytes(4).toString('hex').toUpperCase();
+    const insertRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify({ user_id: uid, code })
+    });
+    const data = await insertRes.json().catch(() => []);
+    if (insertRes.ok) return Array.isArray(data) ? data[0] : data;
+  }
+  throw new Error('Creation du code de parrainage impossible');
+}
+
+async function launchReferralStats(ctx) {
+  const uid = ctx.session.id;
+  const counted = await countPostgrestRows(
+    `${ctx.sbUrl}/rest/v1/referrals?select=id&referrer_id=eq.${encodeURIComponent(uid)}`,
+    ctx.sbKey
+  );
+  const referredCount = counted.ok ? counted.count : 0;
+  return {
+    referred_count: referredCount,
+    chances: 1 + (2 * referredCount)
+  };
+}
+
+async function claimLaunchReferral(ctx, code) {
+  const cleanCode = contestCodeFromInput(code);
+  if (!cleanCode) return { claimed: false, reason: 'missing_code' };
+
+  const uid = ctx.session.id;
+  const alreadyRes = await fetch(
+    `${ctx.sbUrl}/rest/v1/referrals?or=(referee_id.eq.${encodeURIComponent(uid)},referred_id.eq.${encodeURIComponent(uid)})&select=id&limit=1`,
+    { headers: sbHeaders(ctx.sbKey) }
+  );
+  const already = alreadyRes.ok ? await alreadyRes.json().catch(() => []) : [];
+  if (already.length) return { claimed: false, reason: 'already_claimed' };
+
+  const codeRes = await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${encodeURIComponent(cleanCode)}&select=user_id,code,total_uses&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const codes = codeRes.ok ? await codeRes.json().catch(() => []) : [];
+  const refCode = codes[0];
+  if (!refCode) return { claimed: false, reason: 'code_not_found' };
+  if (refCode.user_id === uid) return { claimed: false, reason: 'self_referral_blocked' };
+
+  const payload = {
+    referrer_id: refCode.user_id,
+    referee_id: uid,
+    referred_id: uid,
+    code: cleanCode,
+    status: 'pending',
+    action_type: 'contest_signup'
+  };
+
+  let ins = await fetch(`${ctx.sbUrl}/rest/v1/referrals`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(payload)
+  });
+  let details = await ins.json().catch(() => ({}));
+  if (!ins.ok && missingReferralColumn(details) === 'referred_id') {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.referred_id;
+    ins = await fetch(`${ctx.sbUrl}/rest/v1/referrals`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(fallbackPayload)
+    });
+    details = await ins.json().catch(() => ({}));
+  }
+  if (!ins.ok) {
+    const duplicate = [23505, '23505'].includes(details?.code) || String(details?.message || '').toLowerCase().includes('duplicate');
+    if (duplicate) return { claimed: false, reason: 'already_claimed' };
+    return { claimed: false, reason: 'insert_failed' };
+  }
+
+  const totalUses = Math.max(0, Number(refCode.total_uses || 0)) + 1;
+  await fetch(`${ctx.sbUrl}/rest/v1/referral_codes?code=eq.${encodeURIComponent(cleanCode)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ total_uses: totalUses })
+  }).catch(() => {});
+
+  return { claimed: true, referrer_id: refCode.user_id };
+}
+
+async function launchReferral(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+
+  const action = String(body.action || 'stats');
+  const codeRow = await ensureLaunchReferralCode(ctx);
+  const origin = siteOrigin();
+  const link = `${origin}/concours.html?ref=${encodeURIComponent(codeRow.code)}`;
+
+  if (action === 'my-link' || action === 'stats') {
+    const stats = await launchReferralStats(ctx);
+    return res.status(200).json({ success: true, code: codeRow.code, link, ...stats });
+  }
+
+  if (action === 'claim') {
+    const claimed = await claimLaunchReferral(ctx, body.code || body.ref);
+    const stats = await launchReferralStats(ctx);
+    return res.status(200).json({ success: true, code: codeRow.code, link, ...stats, claim: claimed });
+  }
+
+  return res.status(400).json({ error: 'Action referral inconnue' });
+}
+
 async function impactApplicationPublic(req, res, ctx, body) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
   const organisationName = String(body.organisation_name || body.name || '').trim().slice(0, 160);
@@ -4763,6 +4922,9 @@ module.exports = async function handler(req, res) {
 
     if (endpoint === 'impact-public') {
       return await impactPublic(req, res, { sbUrl, sbKey });
+    }
+    if (endpoint === 'member-count') {
+      return await memberCountPublic(req, res, { sbUrl, sbKey });
     }
     if (endpoint === 'platform-settings-get') {
       return await platformSettingsPublic(req, res, sbUrl, sbKey);
@@ -6145,6 +6307,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'cov-progress')  return await covProgress(req, res, ctx, body);
     // ── Systèmes de croissance v2 ──────────────────────────────
     if (endpoint === 'growth-dashboard')   return await growthDashboard(req, res, ctx);
+    if (endpoint === 'referral')           return await launchReferral(req, res, ctx, body);
     if (endpoint === 'referral-get')       return await referralGet(req, res, ctx);
     if (endpoint === 'referral-use')       return await referralUse(req, res, ctx, body);
     if (endpoint === 'badges-list')        return await badgesList(req, res, ctx);

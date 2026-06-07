@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v3
 // Stratégie : cache-first pour assets statiques, network-first pour API
-const SW_VERSION = 'pap-v75';
+const SW_VERSION = 'pap-v77';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
@@ -9,6 +9,8 @@ const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
 const PRECACHE = [
   '/',
   '/index.html',
+  '/concours.html',
+  '/concours-reglement.html',
   '/offline.html',
   '/logo.svg',
   '/assets/brand-uniform.css',

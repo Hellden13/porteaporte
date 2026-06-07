@@ -362,6 +362,38 @@
     <script>
         var db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
 
+        function cleanReferralCode(value) {
+            return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 32);
+        }
+
+        function captureReferralFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const ref = cleanReferralCode(params.get('ref'));
+            if (ref) localStorage.setItem('PAP_REFERRAL_CODE', ref);
+            return ref;
+        }
+
+        async function claimStoredReferral(session) {
+            const code = cleanReferralCode(localStorage.getItem('PAP_REFERRAL_CODE'));
+            if (!session || !code) return;
+            try {
+                const response = await fetch('/api/platform?endpoint=referral', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({ endpoint: 'referral', action: 'claim', code })
+                });
+                const out = await response.json().catch(() => ({}));
+                if (response.ok && out.success && out.claim && out.claim.reason !== 'insert_failed') {
+                    localStorage.removeItem('PAP_REFERRAL_CODE');
+                }
+            } catch (_) {}
+        }
+
+        captureReferralFromUrl();
+
         async function selectRole(role) {
             try {
                 if (!db) {
@@ -399,6 +431,7 @@
                     showError('❌ Erreur lors de la mise à jour du profil: ' + (result.error || 'profil impossible'));
                     return;
                 }
+                await claimStoredReferral(session);
 
                 // Redirect to appropriate dashboard or onboarding.
                 // Pour "les deux", on commence par la verification livreur,
@@ -446,6 +479,7 @@
 
         // Check if user is logged in
         window.addEventListener('load', async () => {
+            captureReferralFromUrl();
             const { data: { user } } = await db.auth.getUser();
             if (!user) {
                 window.location.href = '/login.html';
@@ -457,7 +491,6 @@
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>
-
 
 
 

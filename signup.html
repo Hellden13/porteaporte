@@ -84,6 +84,44 @@
     // Honeypot : enregistre le moment où le form est rendu (bots remplissent en <2s)
     document.getElementById('form-rendered-at').value = Date.now();
 
+    function getReferralCodeFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get('ref') || '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, '')
+        .slice(0, 32);
+    }
+
+    const incomingReferralCode = getReferralCodeFromUrl();
+    if (incomingReferralCode) {
+      localStorage.setItem('PAP_REFERRAL_CODE', incomingReferralCode);
+    }
+
+    function getStoredReferralCode() {
+      return String(localStorage.getItem('PAP_REFERRAL_CODE') || '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, '')
+        .slice(0, 32);
+    }
+
+    async function claimReferralIfPossible(session) {
+      const code = getStoredReferralCode();
+      if (!session || !code) return;
+      try {
+        const res = await fetch('/api/platform?endpoint=referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'referral', action: 'claim', code })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (res.ok && out.success && out.claim && out.claim.reason !== 'insert_failed') {
+          localStorage.removeItem('PAP_REFERRAL_CODE');
+        }
+      } catch (_) {}
+    }
+
     // Destination après inscription (cohérent avec login.html : next / redirect / return)
     function getSafeNextUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -130,13 +168,18 @@
       const prenom = form.prenom.value.trim();
       const nom = form.nom.value.trim();
       const email = form.email.value.trim();
+      const referralCode = getStoredReferralCode();
+      const redirectParams = new URLSearchParams();
+      if (nextUrl) redirectParams.set('next', nextUrl);
+      if (referralCode) redirectParams.set('ref', referralCode);
+      const redirectSuffix = redirectParams.toString() ? '?' + redirectParams.toString() : '';
 
       const { data, error } = await db.auth.signUp({
         email,
         password: form.password.value,
         options: {
-          emailRedirectTo: window.location.origin + '/role-choice.html' + (nextUrl ? '?next=' + encodeURIComponent(nextUrl) : ''),
-          data: { prenom, nom, role }
+          emailRedirectTo: window.location.origin + '/role-choice.html' + redirectSuffix,
+          data: { prenom, nom, role, referral_code: referralCode || null }
         }
       });
 
@@ -171,6 +214,7 @@
           driver_status: 'not_started',
           mis_a_jour_le: new Date().toISOString()
         }, { onConflict: 'id' }).catch(() => {});
+        await claimReferralIfPossible(data.session);
         if (!emailConfirmed) {
           await db.auth.signOut().catch(() => {});
           showSuccess('Compte créé. 📬 Vérifie ton email (et tes spams au cas où) avant d’ouvrir le dashboard.');

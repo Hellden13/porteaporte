@@ -381,6 +381,99 @@ describe('platform.js dispatcher', () => {
     assert.ok(!requestedUrl.includes('select=*'));
   });
 
+  test('member-count est public et ne selectionne aucune donnee personnelle', async () => {
+    let requestedUrl = '';
+    global.fetch = async (url) => {
+      if (url.includes('/rest/v1/rpc/check_rate_limit')) {
+        return { ok: true, status: 200, json: async () => ({ allowed: true, retryAfter: 0 }), headers: { get: () => null }, text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        requestedUrl = url;
+        return { ok: true, status: 206, json: async () => [], headers: { get: () => '0-0/42' }, text: async () => '[]' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), headers: { get: () => null }, text: async () => '' };
+    };
+    const req = makeReq({ method: 'GET', body: { endpoint: 'member-count' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.members, 42);
+    assert.ok(requestedUrl.includes('select=id'));
+    assert.ok(!requestedUrl.includes('email'));
+    assert.ok(!requestedUrl.includes('prenom'));
+    assert.ok(!requestedUrl.includes('nom'));
+  });
+
+  test('referral my-link cree un code et retourne les chances sans exposer les filleuls', async () => {
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rpc/check_rate_limit')) {
+        return { ok: true, status: 200, json: async () => ({ allowed: true, retryAfter: 0 }), headers: { get: () => null }, text: async () => '{}' };
+      }
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'u1', email: 'u1@test.com' }), headers: { get: () => null }, text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', role: 'expediteur', suspendu: false }], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referral_codes') && !opts.method) {
+        return { ok: true, status: 200, json: async () => [], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referral_codes') && opts.method === 'POST') {
+        return { ok: true, status: 201, json: async () => [{ user_id: 'u1', code: 'PAPABC123' }], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referrals') && url.includes('referrer_id=eq.u1')) {
+        return { ok: true, status: 206, json: async () => [], headers: { get: () => '0-0/3' }, text: async () => '[]' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), headers: { get: () => null }, text: async () => '' };
+    };
+    const req = makeReq({ body: { endpoint: 'referral', action: 'my-link' }, headers: { authorization: 'Bearer tok' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.code, 'PAPABC123');
+    assert.equal(res._body?.chances, 7);
+    assert.ok(res._body?.link?.includes('/concours.html?ref=PAPABC123'));
+    assert.equal(res._body?.email, undefined);
+  });
+
+  test('referral claim bloque auto-parrainage', async () => {
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rpc/check_rate_limit')) {
+        return { ok: true, status: 200, json: async () => ({ allowed: true, retryAfter: 0 }), headers: { get: () => null }, text: async () => '{}' };
+      }
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'u1', email: 'u1@test.com' }), headers: { get: () => null }, text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', role: 'expediteur', suspendu: false }], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referral_codes') && url.includes('user_id=eq.u1')) {
+        return { ok: true, status: 200, json: async () => [{ user_id: 'u1', code: 'PAPSELF', total_uses: 0 }], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referrals') && url.includes('or=')) {
+        return { ok: true, status: 200, json: async () => [], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referral_codes') && url.includes('code=eq.PAPSELF')) {
+        return { ok: true, status: 200, json: async () => [{ user_id: 'u1', code: 'PAPSELF', total_uses: 0 }], headers: { get: () => null }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referrals') && url.includes('referrer_id=eq.u1')) {
+        return { ok: true, status: 206, json: async () => [], headers: { get: () => '0-0/0' }, text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/referrals') && opts.method === 'POST') {
+        assert.fail('auto-parrainage ne doit pas inserer de referral');
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), headers: { get: () => null }, text: async () => '' };
+    };
+    const req = makeReq({ body: { endpoint: 'referral', action: 'claim', code: 'PAPSELF' }, headers: { authorization: 'Bearer tok' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.claim?.claimed, false);
+    assert.equal(res._body?.claim?.reason, 'self_referral_blocked');
+  });
+
   test('impact-admin refuse une politique annulation covoiturage invalide', async () => {
     const settingsWrites = [];
     global.fetch = async (url, opts = {}) => {
