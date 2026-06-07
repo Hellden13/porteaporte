@@ -211,6 +211,7 @@
         <div class="route-date" id="ride-date-line"></div>
         <div class="meta-grid" id="meta-grid"></div>
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" onclick="openShareCard()" style="background:linear-gradient(135deg,#00d9ff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.9rem">🖼️ Créer ma carte à partager</button>
           <button type="button" onclick="shareThisRideFb()" style="background:#1877F2;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">📘 Partager sur Facebook</button>
           <button type="button" id="ride-copy-btn" onclick="shareThisRideCopy()" style="background:#f0f2f5;color:#1a1a2e;border:1px solid #d6dae2;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">🔗 Copier le lien</button>
         </div>
@@ -346,6 +347,29 @@
 
 <div id="toast"></div>
 
+<!-- ── Modal : carte partageable (générée dans le navigateur) ─────────────── -->
+<div id="share-card-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(4,10,18,.82);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;overflow:auto">
+  <div style="background:#0e1a26;border:1px solid rgba(0,217,255,.25);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;color:#fff;font-size:1.05rem">🖼️ Ta carte à partager</h3>
+      <button type="button" onclick="closeShareCard()" style="background:none;border:none;color:#8aa;font-size:1.5rem;cursor:pointer;line-height:1">×</button>
+    </div>
+    <canvas id="share-card-canvas" width="1080" height="1080" style="width:100%;border-radius:12px;display:block;background:#0a1626"></canvas>
+    <div style="margin:14px 0 6px;color:#9db4c4;font-size:.82rem;font-weight:600">Photo de la carte&nbsp;:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" id="sc-photo-car"  onclick="setShareCardPhoto('car')"  style="flex:1;min-width:90px;background:rgba(255,255,255,.06);color:#cfe;border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:9px;font-weight:700;cursor:pointer;font-size:.82rem">🚗 Ma voiture</button>
+      <button type="button" onclick="document.getElementById('sc-file').click()" style="flex:1;min-width:90px;background:rgba(255,255,255,.06);color:#cfe;border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:9px;font-weight:700;cursor:pointer;font-size:.82rem">📷 Une photo (Fido…)</button>
+      <button type="button" onclick="setShareCardPhoto('none')" style="flex:1;min-width:90px;background:rgba(255,255,255,.06);color:#cfe;border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:9px;font-weight:700;cursor:pointer;font-size:.82rem">🚫 Aucune</button>
+      <input type="file" id="sc-file" accept="image/*" style="display:none" onchange="onShareCardFile(event)">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button type="button" onclick="downloadShareCard()" style="flex:1;background:#f0f2f5;color:#0e1a26;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer">📥 Télécharger</button>
+      <button type="button" onclick="shareShareCard()" style="flex:1;background:linear-gradient(135deg,#00d9ff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer">📤 Partager</button>
+    </div>
+    <p style="margin:12px 0 0;color:#7d96a6;font-size:.74rem;line-height:1.5;text-align:center">Astuce : poste l'image sur Facebook/Messenger avec le lien du trajet. La photo reste sur ton appareil.</p>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-config.js"></script>
 <script>
@@ -381,6 +405,206 @@ async function shareThisRideCopy() {
   } catch (_) {
     prompt('Copie ce lien :', rideShareUrl());
   }
+}
+
+// ── Carte partageable (générée dans le navigateur, aucun stockage serveur) ──
+let _scPhoto = null;        // image actuellement choisie
+let _scPhotoKind = 'none';  // 'car' | 'file' | 'none'
+
+function _carPhotoUrl() {
+  return (currentRide && ((currentRide.driver_profile && currentRide.driver_profile.vehicle_photos) || [])[0]) || null;
+}
+
+function openShareCard() {
+  if (!currentRide) { showToast('Trajet pas encore chargé', 'error'); return; }
+  document.getElementById('share-card-overlay').style.display = 'flex';
+  const carUrl = _carPhotoUrl();
+  const carBtn = document.getElementById('sc-photo-car');
+  if (carBtn) carBtn.style.display = carUrl ? '' : 'none';
+  setShareCardPhoto(carUrl ? 'car' : 'none');
+}
+function closeShareCard() {
+  document.getElementById('share-card-overlay').style.display = 'none';
+}
+
+function setShareCardPhoto(kind) {
+  if (kind === 'none') { _scPhoto = null; _scPhotoKind = 'none'; drawShareCard(); return; }
+  if (kind === 'car') {
+    const carUrl = _carPhotoUrl();
+    if (!carUrl) { _scPhoto = null; _scPhotoKind = 'none'; drawShareCard(); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = function () { _scPhoto = img; _scPhotoKind = 'car'; drawShareCard(); };
+    img.onerror = function () { _scPhoto = null; _scPhotoKind = 'none'; drawShareCard(); showToast('Photo de voiture indisponible', 'error'); };
+    img.src = carUrl;
+  }
+}
+function onShareCardFile(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = function () { _scPhoto = img; _scPhotoKind = 'file'; drawShareCard(); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+function _scRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function _scFitFont(ctx, text, maxW, size, weight) {
+  let s = size;
+  ctx.font = weight + ' ' + s + 'px system-ui, -apple-system, sans-serif';
+  while (ctx.measureText(text).width > maxW && s > 26) {
+    s -= 4;
+    ctx.font = weight + ' ' + s + 'px system-ui, -apple-system, sans-serif';
+  }
+}
+
+function drawShareCard() {
+  const cv = document.getElementById('share-card-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const r = currentRide || {};
+
+  // Fond
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0c1c2b'); g.addColorStop(1, '#071019');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // Liseré cyan
+  ctx.strokeStyle = 'rgba(0,217,255,.55)'; ctx.lineWidth = 8;
+  _scRoundRect(ctx, 24, 24, W - 48, H - 48, 36); ctx.stroke();
+
+  // Marque
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#00d9ff';
+  ctx.font = '700 54px system-ui, -apple-system, sans-serif';
+  ctx.fillText('PorteàPorte', 70, 70);
+  ctx.fillStyle = '#7d96a6';
+  ctx.font = '600 26px system-ui, -apple-system, sans-serif';
+  ctx.fillText('Covoiturage · porteaporte.site', 70, 134);
+
+  // Zone photo
+  const px = 70, py = 200, pw = W - 140, ph = 470;
+  ctx.save();
+  _scRoundRect(ctx, px, py, pw, ph, 28); ctx.clip();
+  if (_scPhoto) {
+    const ir = _scPhoto.width / _scPhoto.height, fr = pw / ph;
+    let dw, dh, dx, dy;
+    if (ir > fr) { dh = ph; dw = ph * ir; dx = px - (dw - pw) / 2; dy = py; }
+    else        { dw = pw; dh = pw / ir; dx = px; dy = py - (dh - ph) / 2; }
+    ctx.drawImage(_scPhoto, dx, dy, dw, dh);
+  } else {
+    const pg = ctx.createLinearGradient(px, py, px, py + ph);
+    pg.addColorStop(0, '#12324a'); pg.addColorStop(1, '#0c2030');
+    ctx.fillStyle = pg; ctx.fillRect(px, py, pw, ph);
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.font = '150px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🚗', px + pw / 2, py + ph / 2);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  }
+  ctx.restore();
+
+  // Badge vert
+  const energy = String(r.energy_type || '').toLowerCase();
+  if (energy === 'electrique' || energy === 'hybride') {
+    const label = energy === 'electrique' ? '⚡ 100% électrique' : '🌱 Hybride éco';
+    ctx.font = '700 30px system-ui, sans-serif';
+    const bw = ctx.measureText(label).width + 48, bh = 56;
+    const bx = px + 24, by = py + ph - bh - 24;
+    ctx.fillStyle = 'rgba(0,200,120,.95)';
+    _scRoundRect(ctx, bx, by, bw, bh, 28); ctx.fill();
+    ctx.fillStyle = '#04140c';
+    ctx.fillText(label, bx + 24, by + 13);
+  }
+
+  // Trajet
+  const from = r.departure_city || r.start_city || r.from_city || '?';
+  const to   = r.destination_city || r.end_city || r.to_city || '?';
+  const route = from + '  →  ' + to;
+  ctx.fillStyle = '#ffffff';
+  _scFitFont(ctx, route, W - 140, 64, '800');
+  ctx.fillText(route, 70, 720);
+
+  // Détails (date · places · prix)
+  const dateStr = (typeof formatDate === 'function' && (r.departure_time || r.date)) ? formatDate(r.departure_time || r.date) : '';
+  const seats = r.available_seats != null ? r.available_seats : (r.seats_available || 0);
+  const price = Number((r.price_breakdown && r.price_breakdown.totalPassenger) || r.price_per_seat || r.price || 0);
+  const parts = [];
+  if (dateStr) parts.push('📅 ' + dateStr);
+  parts.push('💺 ' + seats + ' place' + (seats > 1 ? 's' : ''));
+  if (price > 0) parts.push('💵 ' + price.toFixed(2) + ' $ / passager');
+  ctx.fillStyle = '#9db4c4';
+  _scFitFont(ctx, parts.join('   ·   '), W - 140, 34, '600');
+  ctx.fillText(parts.join('   ·   '), 70, 812);
+
+  // Conducteur
+  const prenom = (r.driver_info && r.driver_info.prenom) || (r.driver_profile && r.driver_profile.prenom) || '';
+  if (prenom) {
+    ctx.fillStyle = '#7d96a6';
+    ctx.font = '500 30px system-ui, sans-serif';
+    ctx.fillText('Avec ' + prenom, 70, 872);
+  }
+
+  // CTA bas
+  ctx.fillStyle = '#00d9ff';
+  ctx.font = '700 36px system-ui, sans-serif';
+  ctx.fillText('➡️ Réserve sur porteaporte.site', 70, H - 110);
+}
+
+function _scToBlob(cb) {
+  const cv = document.getElementById('share-card-canvas');
+  try {
+    cv.toBlob(function (blob) {
+      if (!blob) { showToast('Impossible de générer l\'image', 'error'); return; }
+      cb(blob);
+    }, 'image/png');
+  } catch (_) {
+    showToast('Photo non partageable — réessaie sans la photo de voiture', 'error');
+  }
+}
+
+function downloadShareCard() {
+  _scToBlob(function (blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'porteaporte-trajet.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  });
+}
+
+function shareShareCard() {
+  _scToBlob(async function (blob) {
+    const file = new File([blob], 'porteaporte-trajet.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Trajet PorteàPorte',
+          text: 'Regarde ce trajet en covoiturage 🚗',
+          url: rideShareUrl(),
+        });
+        return;
+      } catch (_) { return; /* l'utilisateur a annulé */ }
+    }
+    // Repli ordinateur : téléchargement + ouverture de Facebook
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'porteaporte-trajet.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    showToast('Image téléchargée — partage-la sur Facebook 📘', 'success');
+    shareThisRideFb();
+  });
 }
 
 // Si on a un booking_id dans l'URL → reprendre le paiement direct (skip booking)

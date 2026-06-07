@@ -2989,6 +2989,63 @@ async function profilePhotoUpload(req, res, ctx, body) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// PHOTO DE VOITURE — upload / suppression (ride_driver_profiles.vehicle_photos)
+// ─────────────────────────────────────────────────────────────────
+async function rideVehiclePhotoUpload(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
+  body = body || {};
+  const uid = ctx.session.id;
+
+  // Lire les photos actuelles du conducteur
+  const dpRes  = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles?user_id=eq.${uid}&select=vehicle_photos&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+  const dpRows = dpRes.ok ? await dpRes.json().catch(() => []) : [];
+  let photos = (dpRows[0] && Array.isArray(dpRows[0].vehicle_photos)) ? dpRows[0].vehicle_photos.slice() : [];
+
+  const removeUrl = String(body.remove_url || '').trim();
+  if (removeUrl) {
+    // Suppression d'une photo
+    photos = photos.filter(u => u !== removeUrl);
+  } else {
+    // Ajout d'une photo
+    const dataUrl = String(body.photo_data_url || body.data_url || '').trim();
+    if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+      return res.status(400).json({ error: 'photo_data_url (data:image/...) requis' });
+    }
+    if (photos.length >= 6) return res.status(400).json({ error: 'Maximum 6 photos de voiture' });
+
+    const rl = await checkRateLimit(`vehphotoup:${uid}`, 10, 3600);
+    if (!rl.allowed) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
+
+    try {
+      const uploaded = await uploadProofPhoto(ctx.sbUrl, ctx.sbKey, 'vehicle-' + uid + '-' + Date.now(), dataUrl, 'profile-photos');
+      if (!uploaded || !uploaded.path) return res.status(500).json({ error: 'Upload échoué — vérifier bucket profile-photos' });
+      const photoUrl = `${ctx.sbUrl}/storage/v1/object/public/${uploaded.bucket}/${uploaded.path}`;
+      photos.push(photoUrl);
+
+      alertAdmin('🚗 Nouvelle photo de voiture', 'Un conducteur a ajouté une photo de véhicule.', {
+        severity: 'info',
+        details: { 'User': uid.slice(0, 8), 'URL': photoUrl },
+        cta_url: 'https://porteaporte.site/admin/photos-moderation.html',
+        cta_label: '👀 Voir →'
+      });
+    } catch (e) {
+      return res.status(500).json({ error: 'Erreur upload : ' + (e.message || 'inconnue') });
+    }
+  }
+
+  // Sauvegarde (upsert sur user_id)
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_driver_profiles`, {
+    method: 'POST',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({ user_id: uid, vehicle_photos: photos }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.status(400).json({ error: 'Sauvegarde impossible', details: data });
+
+  return res.status(200).json({ success: true, vehicle_photos: photos });
+}
+
 async function profilePhotoVisibility(req, res, ctx, body) {
   if (!ctx.session) return res.status(401).json({ error: 'Connexion requise' });
   const visible = body.visible === true || body.visible === 'true';
@@ -6014,7 +6071,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-rewards') return await adminRewards(req, res, ctx, body);
     if (endpoint === 'push-subscribe') return await pushSubscribe(req, res, ctx, body);
     if (endpoint === 'push-send') return await pushSend(req, res, ctx, body);
-    if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx);
+    if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx, body);
+    if (endpoint === 'ride-vehicle-photo')   return await rideVehiclePhotoUpload(req, res, ctx, body);
     if (endpoint === 'ride-create')          return await rideCreate(req, res, ctx, body);
     if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
     if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
