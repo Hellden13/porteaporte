@@ -947,6 +947,34 @@
             <input id="impact-ride-free-trips" type="number" min="0" step="1" value="10">
             <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Les N premiers trajets publiés par un conducteur sont sans commission (figé à la publication). 0 = désactivé.</div>
 
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Politique d'annulation (passager) —</div>
+            <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Quand un passager annule, selon le délai avant départ : ce qu'il récupère, la part versée au conducteur (dédommagement), et la part gardée au fond de sécurité. Chaque palier doit totaliser 100%.</div>
+            <label for="impact-cxl-free-h">Délai annulation gratuite (heures avant départ)</label>
+            <input id="impact-cxl-free-h" type="number" min="0" step="1" value="24">
+            <label for="impact-cxl-late-h">Seuil annulation tardive (heures avant départ)</label>
+            <input id="impact-cxl-late-h" type="number" min="0" step="1" value="2">
+            <div style="color:var(--brand-cyan);font-size:.74rem;font-weight:700;margin:8px 0 2px">Palier « partiel » (entre les 2 délais)</div>
+            <label for="impact-cxl-p-refund">Remboursé au passager (%)</label>
+            <input id="impact-cxl-p-refund" type="number" min="0" max="100" step="1" value="85">
+            <label for="impact-cxl-p-driver">Au conducteur (%)</label>
+            <input id="impact-cxl-p-driver" type="number" min="0" max="100" step="1" value="10">
+            <label for="impact-cxl-p-fund">Au fond de sécurité (%)</label>
+            <input id="impact-cxl-p-fund" type="number" min="0" max="100" step="1" value="5">
+            <div style="color:var(--brand-cyan);font-size:.74rem;font-weight:700;margin:8px 0 2px">Palier « tardif » (sous le seuil / no-show)</div>
+            <label for="impact-cxl-l-refund">Remboursé au passager (%)</label>
+            <input id="impact-cxl-l-refund" type="number" min="0" max="100" step="1" value="50">
+            <label for="impact-cxl-l-driver">Au conducteur (%)</label>
+            <input id="impact-cxl-l-driver" type="number" min="0" max="100" step="1" value="40">
+            <label for="impact-cxl-l-fund">Au fond de sécurité (%)</label>
+            <input id="impact-cxl-l-fund" type="number" min="0" max="100" step="1" value="10">
+
+            <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Fonds de sécurité (livraison) —</div>
+            <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Part (% du total) prélevée sur le dédommagement du livreur lors d'une annulation, versée au fonds de sécurité. Le reste va au livreur.</div>
+            <label for="impact-liv-assigned-fund">Livreur assigné — part fonds (%)</label>
+            <input id="impact-liv-assigned-fund" type="number" min="0" max="100" step="1" value="2">
+            <label for="impact-liv-transit-fund">Livreur en route — part fonds (%)</label>
+            <input id="impact-liv-transit-fund" type="number" min="0" max="100" step="1" value="5">
+
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Redistribution de la commission covoiturage (total = 100%) —</div>
             <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Le conducteur garde déjà sa part. Voici comment se découpe la <strong>commission plateforme</strong> uniquement.</div>
             <div id="ride-redist-bar" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-border);border-radius:8px;padding:10px 14px;margin-bottom:8px">
@@ -1934,6 +1962,16 @@
       document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
       document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
       document.getElementById('impact-ride-free-trips').value = settings.ride_free_trips ?? 10;
+      document.getElementById('impact-cxl-free-h').value   = settings.ride_cancel_free_window_h     ?? 24;
+      document.getElementById('impact-cxl-late-h').value   = settings.ride_cancel_late_window_h     ?? 2;
+      document.getElementById('impact-cxl-p-refund').value = settings.ride_cancel_partial_refund_pct ?? 85;
+      document.getElementById('impact-cxl-p-driver').value = settings.ride_cancel_partial_driver_pct ?? 10;
+      document.getElementById('impact-cxl-p-fund').value   = settings.ride_cancel_partial_fund_pct   ?? 5;
+      document.getElementById('impact-cxl-l-refund').value = settings.ride_cancel_late_refund_pct    ?? 50;
+      document.getElementById('impact-cxl-l-driver').value = settings.ride_cancel_late_driver_pct    ?? 40;
+      document.getElementById('impact-cxl-l-fund').value   = settings.ride_cancel_late_fund_pct      ?? 10;
+      document.getElementById('impact-liv-assigned-fund').value = settings.delivery_cancel_assigned_fund_pct ?? 2;
+      document.getElementById('impact-liv-transit-fund').value  = settings.delivery_cancel_transit_fund_pct  ?? 5;
       document.getElementById('impact-public-note').value  = settings.public_note || 'Montants estimés en direct, confirmés mensuellement.';
       window.__platformSettings = settings;
       window.__rideRedist = Array.isArray(impact.ride_redistribution) ? impact.ride_redistribution : [];
@@ -2291,6 +2329,16 @@
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),
         ride_free_trips:    Math.max(0, Math.floor(Number(document.getElementById('impact-ride-free-trips').value || 0))),
+        ride_cancel_free_window_h:      Math.max(0, Number(document.getElementById('impact-cxl-free-h').value || 0)),
+        ride_cancel_late_window_h:      Math.max(0, Number(document.getElementById('impact-cxl-late-h').value || 0)),
+        ride_cancel_partial_refund_pct: Math.max(0, Number(document.getElementById('impact-cxl-p-refund').value || 0)),
+        ride_cancel_partial_driver_pct: Math.max(0, Number(document.getElementById('impact-cxl-p-driver').value || 0)),
+        ride_cancel_partial_fund_pct:   Math.max(0, Number(document.getElementById('impact-cxl-p-fund').value || 0)),
+        ride_cancel_late_refund_pct:    Math.max(0, Number(document.getElementById('impact-cxl-l-refund').value || 0)),
+        ride_cancel_late_driver_pct:    Math.max(0, Number(document.getElementById('impact-cxl-l-driver').value || 0)),
+        ride_cancel_late_fund_pct:      Math.max(0, Number(document.getElementById('impact-cxl-l-fund').value || 0)),
+        delivery_cancel_assigned_fund_pct: Math.max(0, Number(document.getElementById('impact-liv-assigned-fund').value || 0)),
+        delivery_cancel_transit_fund_pct:  Math.max(0, Number(document.getElementById('impact-liv-transit-fund').value || 0)),
         ride_redistribution: collectRideRedist(),
         public_note: document.getElementById('impact-public-note').value.trim()
       });

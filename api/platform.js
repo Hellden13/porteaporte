@@ -4066,6 +4066,16 @@ async function impactAdmin(req, res, ctx, body) {
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
       ride_free_trips:    Math.max(0, Math.floor(toNumber(body.ride_free_trips, 10))),
+      ride_cancel_free_window_h:      Math.max(0, toNumber(body.ride_cancel_free_window_h, 24)),
+      ride_cancel_late_window_h:      Math.max(0, toNumber(body.ride_cancel_late_window_h, 2)),
+      ride_cancel_partial_refund_pct: Math.max(0, Math.min(100, toNumber(body.ride_cancel_partial_refund_pct, 85))),
+      ride_cancel_partial_driver_pct: Math.max(0, Math.min(100, toNumber(body.ride_cancel_partial_driver_pct, 10))),
+      ride_cancel_partial_fund_pct:   Math.max(0, Math.min(100, toNumber(body.ride_cancel_partial_fund_pct, 5))),
+      ride_cancel_late_refund_pct:    Math.max(0, Math.min(100, toNumber(body.ride_cancel_late_refund_pct, 50))),
+      ride_cancel_late_driver_pct:    Math.max(0, Math.min(100, toNumber(body.ride_cancel_late_driver_pct, 40))),
+      ride_cancel_late_fund_pct:      Math.max(0, Math.min(100, toNumber(body.ride_cancel_late_fund_pct, 10))),
+      delivery_cancel_assigned_fund_pct: Math.max(0, Math.min(100, toNumber(body.delivery_cancel_assigned_fund_pct, 2))),
+      delivery_cancel_transit_fund_pct:  Math.max(0, Math.min(100, toNumber(body.delivery_cancel_transit_fund_pct, 5))),
       ride_redistribution: normalizeRideRedistribution(body.ride_redistribution),
       public_note: String(body.public_note || '').slice(0, 400),
       updated_by: ctx.session.id,
@@ -4986,26 +4996,47 @@ module.exports = async function handler(req, res) {
       }
       let policy;
       const s = liv.statut;
-      if (isAdmin) policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Admin override' };
+      if (isAdmin) policy = { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Admin override' };
       else if (['en_attente','publie','paiement_autorise','requires_capture','pending'].includes(s))
-        policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation avant assignation - remboursement TOTAL' };
+        policy = { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Annulation avant assignation - remboursement TOTAL' };
       else if (['confirme','accepted'].includes(s))
-        policy = { refund_pct: 90, livreur_compensation_pct: 10, allowed: true, reason: 'Livreur assigné mais pas parti - 10% compensation livreur' };
+        policy = { refund_pct: 90, livreur_compensation_pct: 10, tier: 'assigned', allowed: true, reason: 'Livreur assigné mais pas parti - 10% retenu (compensation livreur + fonds de sécurité)' };
       else if (['in_transit','en_route'].includes(s))
-        policy = { refund_pct: 50, livreur_compensation_pct: 50, allowed: true, reason: 'Livreur en route - 50% compensation livreur' };
+        policy = { refund_pct: 50, livreur_compensation_pct: 50, tier: 'transit', allowed: true, reason: 'Livreur en route - 50% retenu (compensation livreur + fonds de sécurité)' };
       else if (['livre','livree','payee','paid','confirmee'].includes(s))
-        policy = { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement' };
+        policy = { refund_pct: 0, livreur_compensation_pct: 0, tier: 'none', allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement' };
       else if (['annule','annulee'].includes(s))
-        policy = { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Déjà annulée' };
-      else policy = { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation autorisée' };
+        policy = { refund_pct: 0, livreur_compensation_pct: 0, tier: 'none', allowed: false, reason: 'Déjà annulée' };
+      else policy = { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Annulation autorisée' };
       const totalCents = Math.round(Number(liv.prix_total || 0) * 100);
+      // Le % retenu (livreur_compensation_pct) se répartit entre compensation livreur et fonds de sécurité.
+      let fundPct = 0;
+      try {
+        const setRes = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=*`, { headers: sbHeaders(sbKey) });
+        const setRow = setRes.ok ? (await setRes.json())[0] : null;
+        if (setRow) {
+          if (policy.tier === 'assigned') fundPct = Math.max(0, Number(setRow.delivery_cancel_assigned_fund_pct ?? 2));
+          else if (policy.tier === 'transit') fundPct = Math.max(0, Number(setRow.delivery_cancel_transit_fund_pct ?? 5));
+        } else {
+          if (policy.tier === 'assigned') fundPct = 2;
+          else if (policy.tier === 'transit') fundPct = 5;
+        }
+      } catch (_) {
+        if (policy.tier === 'assigned') fundPct = 2;
+        else if (policy.tier === 'transit') fundPct = 5;
+      }
+      const retainedCents = Math.round(totalCents * policy.livreur_compensation_pct / 100);
+      const fundCents = Math.min(retainedCents, Math.round(totalCents * fundPct / 100));
+      const livreurCompensationCents = Math.max(0, retainedCents - fundCents);
       return res.status(200).json({
         success: true,
         statut: s,
         prix_total_cents: totalCents,
         policy,
         refund_cents: Math.round(totalCents * policy.refund_pct / 100),
-        livreur_compensation_cents: Math.round(totalCents * policy.livreur_compensation_pct / 100)
+        livreur_compensation_cents: livreurCompensationCents,
+        security_fund_cents: fundCents,
+        security_fund_pct: fundPct
       });
     }
     if (endpoint === 'price-estimate') {

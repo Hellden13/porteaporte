@@ -2,35 +2,46 @@
 const { log } = require('../lib/logger');
 const { normalizeRole, alertAdmin, callNotifier } = require('../lib/_lib');
 
-// Politique de remboursement intelligente
+// Politique de remboursement intelligente.
+// `tier` sert à appliquer une part « fonds de sécurité » configurable (carvée dans le dédommagement livreur).
 function computeRefundPolicy(statut, isAdmin) {
-  if (isAdmin) return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Admin override' };
+  if (isAdmin) return { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Admin override' };
   switch (statut) {
     case 'en_attente':
     case 'publie':
     case 'paiement_autorise':
-      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation avant assignation - remboursement total' };
+      return { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Annulation avant assignation - remboursement total' };
     case 'requires_capture':
     case 'pending':
-      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Aucun livreur assigné encore - remboursement total' };
+      return { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Aucun livreur assigné encore - remboursement total' };
     case 'confirme':
     case 'accepted':
-      return { refund_pct: 90, livreur_compensation_pct: 10, allowed: true, reason: 'Livreur assigné mais pas encore parti - 10% compensation livreur (temps perdu)' };
+      return { refund_pct: 90, livreur_compensation_pct: 10, tier: 'assigned', allowed: true, reason: 'Livreur assigné mais pas encore parti - 10% compensation livreur (temps perdu)' };
     case 'in_transit':
     case 'en_route':
-      return { refund_pct: 50, livreur_compensation_pct: 50, allowed: true, reason: 'Livreur déjà parti - 50% compensation livreur (essence + temps)' };
+      return { refund_pct: 50, livreur_compensation_pct: 50, tier: 'transit', allowed: true, reason: 'Livreur déjà parti - 50% compensation livreur (essence + temps)' };
     case 'livre':
     case 'livree':
     case 'payee':
     case 'paid':
     case 'confirmee':
-      return { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement à la place' };
+      return { refund_pct: 0, livreur_compensation_pct: 0, tier: 'none', allowed: false, reason: 'Livraison déjà complétée - utiliser le système de manquement à la place' };
     case 'annule':
     case 'annulee':
-      return { refund_pct: 0, livreur_compensation_pct: 0, allowed: false, reason: 'Déjà annulée' };
+      return { refund_pct: 0, livreur_compensation_pct: 0, tier: 'none', allowed: false, reason: 'Déjà annulée' };
     default:
-      return { refund_pct: 100, livreur_compensation_pct: 0, allowed: true, reason: 'Annulation autorisée' };
+      return { refund_pct: 100, livreur_compensation_pct: 0, tier: 'none', allowed: true, reason: 'Annulation autorisée' };
   }
+}
+
+// Part « fonds de sécurité » (% du total) carvée dans le dédommagement livreur, selon le palier.
+// Configurable via impact_settings (admin). Plafonnée pour ne jamais dépasser le dédommagement.
+function fundPctForTier(tier, settings) {
+  const s = settings || {};
+  const num = (v, d) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+  if (tier === 'assigned') return Math.max(0, num(s.delivery_cancel_assigned_fund_pct, 2));
+  if (tier === 'transit')  return Math.max(0, num(s.delivery_cancel_transit_fund_pct, 5));
+  return 0;
 }
 
 const CORS = {
@@ -131,6 +142,15 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Non autorisé' });
     }
 
+    // Réglages plateforme (part fonds de sécurité configurable depuis l'admin)
+    let platformSettings = {};
+    try {
+      const setRes = await fetch(`${SB_URL}/rest/v1/impact_settings?id=eq.default&select=*&limit=1`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+      });
+      platformSettings = setRes.ok ? ((await setRes.json())[0] || {}) : {};
+    } catch (_) { platformSettings = {}; }
+
     // ─── POLITIQUE DE REMBOURSEMENT ───
     const policy = computeRefundPolicy(livraison.statut, isAdmin);
     if (!policy.allowed) {
@@ -141,6 +161,7 @@ module.exports = async function handler(req, res) {
     // Rembourser via Stripe selon la politique
     let refundCents = 0;
     let livreurCompensationCents = 0;
+    let fundCents = 0;
     const totalCents = Math.round(Number(livraison.prix_total || 0) * 100);
     if (livraison.stripe_payment_intent && totalCents > 0) {
       if (!STRIPE_KEY) {
@@ -148,7 +169,29 @@ module.exports = async function handler(req, res) {
         return res.status(503).json({ error: 'Remboursement impossible : Stripe non configuré' });
       }
       refundCents = Math.round(totalCents * policy.refund_pct / 100);
-      livreurCompensationCents = Math.round(totalCents * policy.livreur_compensation_pct / 100);
+      const retainedCents = Math.round(totalCents * policy.livreur_compensation_pct / 100);
+      // Part fonds de sécurité carvée dans le dédommagement (jamais plus que le dédommagement)
+      const fundPct = fundPctForTier(policy.tier, platformSettings);
+      fundCents = Math.min(retainedCents, Math.round(totalCents * fundPct / 100));
+      livreurCompensationCents = Math.max(0, retainedCents - fundCents);
+
+      // Trace la part fonds de sécurité dans le grand livre (table transactions)
+      if (fundCents > 0) {
+        await fetch(`${SB_URL}/rest/v1/transactions`, {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: null,
+            livraison_id: livraison.id,
+            type: 'fond_securite_livraison',
+            montant: fundCents / 100,
+            statut: 'complete',
+            description: `Fonds de sécurité — annulation livraison (${policy.tier})`,
+            stripe_payment_intent: livraison.stripe_payment_intent,
+            metadata: { livraison_id: livraison.id, tier: policy.tier, refund_pct: policy.refund_pct }
+          })
+        }).catch(() => {});
+      }
 
       if (refundCents > 0) {
         const stripe = require('stripe')(STRIPE_KEY);
@@ -234,7 +277,8 @@ module.exports = async function handler(req, res) {
           'Statut au moment': livraison.statut,
           'Prix total': `${Number(livraison.prix_total || 0).toFixed(2)} $`,
           'Remboursement client': `${(refundCents/100).toFixed(2)} $ (${policy.refund_pct}%)`,
-          'Compensation livreur': `${(livreurCompensationCents/100).toFixed(2)} $ (${policy.livreur_compensation_pct}%)`
+          'Compensation livreur': `${(livreurCompensationCents/100).toFixed(2)} $`,
+          'Fonds de sécurité': `${(fundCents/100).toFixed(2)} $`
         },
         cta_url: 'https://porteaporte.site/admin/operations.html',
         cta_label: '📋 Voir Operations →'
@@ -268,6 +312,7 @@ module.exports = async function handler(req, res) {
       refund_cents: refundCents,
       refund_pct: policy.refund_pct,
       livreur_compensation_cents: livreurCompensationCents,
+      security_fund_cents: fundCents,
       policy_reason: policy.reason
     });
 

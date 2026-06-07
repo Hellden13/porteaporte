@@ -34,6 +34,8 @@
       .pc-breakdown .val { color:#fff; font-weight:700; font-variant-numeric:tabular-nums; }
       .pc-breakdown .val.refund { color:#7dffc1; }
       .pc-breakdown .val.compensation { color:#ffd700; }
+      .pc-breakdown .val.fund { color:#9db4ff; }
+      .pc-breakdown .note { color:#7c8696; font-size:.78rem; line-height:1.5; padding-top:8px; }
       .pc-modal textarea { width:100%; box-sizing:border-box; padding:12px 14px; background:#05080c; border:1px solid #1e2535; border-radius:10px; color:#fff; font:inherit; min-height:70px; resize:vertical; margin-bottom:18px; }
       .pc-actions { display:flex; gap:10px; }
       .pc-actions button { flex:1; padding:14px 18px; border:none; border-radius:10px; font-weight:900; cursor:pointer; font-size:.92rem; }
@@ -109,7 +111,9 @@
       html += `<div class="pc-breakdown">
         <div class="row"><span class="lbl">Prix payé</span><span class="val">${fmt(data.prix_total_cents)}</span></div>
         <div class="row"><span class="lbl">Remboursement à toi</span><span class="val refund">${fmt(data.refund_cents)} (${pct(p.refund_pct)})</span></div>
-        ${data.livreur_compensation_cents > 0 ? `<div class="row"><span class="lbl">Compensation livreur</span><span class="val compensation">${fmt(data.livreur_compensation_cents)} (${pct(p.livreur_compensation_pct)})</span></div>` : ''}
+        ${data.livreur_compensation_cents > 0 ? `<div class="row"><span class="lbl">Compensation livreur</span><span class="val compensation">${fmt(data.livreur_compensation_cents)}</span></div>` : ''}
+        ${data.security_fund_cents > 0 ? `<div class="row"><span class="lbl">Fonds de sécurité</span><span class="val fund">${fmt(data.security_fund_cents)}</span></div>` : ''}
+        ${(data.livreur_compensation_cents > 0 || data.security_fund_cents > 0) ? `<div class="note">Le montant non remboursé dédommage le livreur pour le temps réservé et alimente le fonds de sécurité qui couvre les litiges.</div>` : ''}
       </div>`;
     }
 

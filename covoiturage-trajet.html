@@ -810,7 +810,13 @@ function renderRide(r) {
     (lugFee > 0 ? '<div class="pb-row"><span>Supplément bagage</span><span>' + lugFee.toFixed(2) + ' $</span></div>' : '') +
     '<div class="pb-row total"><span>Total passager</span><span>' + price.toFixed(2) + ' $</span></div>' +
     (driverAmt > 0 ? '<div class="pb-row" style="color:#7fe5a3;font-size:.78rem;"><span>↳ versé au conducteur</span><span>' + driverAmt.toFixed(2) + ' $</span></div>' : '') +
-    '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>';
+    '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>' +
+    '<div class="pb-note" style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #ea580c;border-radius:6px;color:#7c3a12;line-height:1.5;">' +
+      '<strong>Politique d\'annulation :</strong> remboursement intégral si tu annules plus de 24 h avant le départ. ' +
+      'Entre 2 h et 24 h : 85 % remboursé. Moins de 2 h ou absence : 50 % remboursé. ' +
+      'Le solde dédommage le conducteur et alimente le fonds de sécurité. ' +
+      'Si le conducteur annule, tu es remboursé à 100 %. ' +
+      '<a href="/cgv.html#annulation" style="color:#c2410c;font-weight:700;">Détails</a></div>';
 
   if (r.group_discount && parseFloat(r.group_discount) > 0) {
     var gb = document.getElementById('group-banner');

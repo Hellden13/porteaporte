@@ -130,6 +130,7 @@
   <a href="/" class="nav-logo">PorteàPorte</a>
   <div class="nav-links">
     <a href="/covoiturage.html">Trouver un trajet</a>
+    <a href="/dashboard-livreur.html">📦 Espace livreur</a>
     <a id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--green);color:#0A0F1E;padding:7px 14px;border-radius:8px;font-weight:800;font-size:.85rem">⚡ Admin</a>
     <a href="/covoiturage-publier.html" class="btn-green">+ Publier</a>
   </div>
@@ -202,6 +203,31 @@ async function init() {
 
   document.getElementById('initial-loading').remove();
   renderSection('overview');
+}
+
+// Annuler un trajet publié (conducteur)
+async function annulerTrajet(rideId) {
+  if (!confirm('Annuler ce trajet ?\n\nLes passagers en attente seront prévenus et leurs réservations annulées. Cette action est irréversible.')) return;
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const res = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ride_id: rideId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert('❌ Annulation impossible : ' + (err.error || ('erreur ' + res.status)));
+      return;
+    }
+    alert('✅ Trajet annulé.');
+    window.location.reload();
+  } catch (e) {
+    alert('❌ Erreur réseau. Réessaie dans un instant.');
+  }
 }
 
 function showSection(name) {
@@ -362,12 +388,15 @@ function buildTrajets() {
     const finishedStatuses = ['termine','completed','done','annule','cancelled'];
     const activeRides = rides.filter(r => !finishedStatuses.includes(String(r.status||'').toLowerCase()));
     const finishedRides = rides.filter(r => finishedStatuses.includes(String(r.status||'').toLowerCase()));
-    const rideRow = r => `<tr>
+    const rideRow = (r, canCancel) => `<tr>
       <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
       <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
       <td>${r.available_seats} pl.</td>
       <td>${statusChip(r.status)}</td>
-      <td><a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a></td>
+      <td>
+        <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
+        ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
+      </td>
     </tr>`;
     return `
     <div class="section-block">
@@ -375,14 +404,14 @@ function buildTrajets() {
       <div class="table-wrap">
         ${activeRides.length === 0
           ? `<p class="empty-msg">Aucun trajet en cours. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publier un nouveau trajet →</a></p>`
-          : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${activeRides.map(rideRow).join('')}</tbody></table>`}
+          : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${activeRides.map(r => rideRow(r, true)).join('')}</tbody></table>`}
       </div>
     </div>
     ${finishedRides.length > 0 ? `
     <details class="section-block" style="cursor:pointer">
       <summary style="font-weight:800;color:var(--green);padding:8px 0;list-style:none;font-size:1.05rem">✅ Trajets terminés (${finishedRides.length}) — cliquer pour voir</summary>
       <div class="table-wrap" style="margin-top:10px">
-        <table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${finishedRides.map(rideRow).join('')}</tbody></table>
+        <table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${finishedRides.map(r => rideRow(r, false)).join('')}</tbody></table>
       </div>
     </details>` : ''}`;
   })() : ''}
