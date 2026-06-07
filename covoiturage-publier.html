@@ -345,6 +345,15 @@
               <option value="autre">Autre</option>
             </select>
           </div>
+          <div class="field"><label>Énergie / motorisation *</label>
+            <select id="energy_type" onchange="applyEnergyRate()">
+              <option value="electrique">⚡ Électrique</option>
+              <option value="hybride">🔋 Hybride</option>
+              <option value="essence" selected>⛽ Essence</option>
+              <option value="diesel">🛻 Diesel / gros VUS</option>
+            </select>
+            <span class="hint">Le tarif/km suggéré s'ajuste selon ton énergie (plus juste pour tout le monde).</span>
+          </div>
         </div>
         <div class="form-grid" style="margin-top:14px;">
           <div class="field"><label>Nombre de places *</label>
@@ -637,8 +646,8 @@
         <div class="form-grid">
           <div class="field">
             <label>Coût estimé par km ($/km)</label>
-            <input type="number" id="cost_per_km" value="0.35" min="0.10" max="0.50" step="0.01" oninput="updatePricePreview()">
-            <span class="hint">Recommandé : 0,25 $ à 0,45 $/km · Maximum légal suggéré : 0,50 $/km</span>
+            <input type="number" id="cost_per_km" value="0.25" min="0.05" max="0.50" step="0.01" oninput="updatePricePreview()">
+            <span class="hint">Suggéré pour ⛽ Essence : 0,25 $/km · Maximum : 0,35 $/km</span>
           </div>
         </div>
       </div>
@@ -742,7 +751,7 @@
       document.getElementById('tab-'  + n).classList.add('active');
       document.getElementById('tab-'  + n).classList.remove('done');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (n === 5) updatePricePreview();
+      if (n === 5) applyEnergyRate();
     }
 
     function nextStep(from) {
@@ -1047,9 +1056,30 @@
     // ── Prix preview ─────────────────────────────────────────────
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
 
+    // Tarif/km suggéré + plafond selon l'énergie (juste = reflète le vrai coût du véhicule)
+    const ENERGY_RATES = {
+      electrique: { def: 0.12, max: 0.18, label: '⚡ Électrique' },
+      hybride:    { def: 0.16, max: 0.24, label: '🔋 Hybride' },
+      essence:    { def: 0.25, max: 0.35, label: '⛽ Essence' },
+      diesel:     { def: 0.40, max: 0.50, label: '🛻 Diesel / gros VUS' },
+    };
+
+    function applyEnergyRate() {
+      const sel = document.getElementById('energy_type');
+      const cpkInput = document.getElementById('cost_per_km');
+      const r = ENERGY_RATES[sel ? sel.value : 'essence'] || ENERGY_RATES.essence;
+      cpkInput.value = r.def.toFixed(2);
+      cpkInput.max   = r.max;
+      const hint = cpkInput.parentElement.querySelector('.hint');
+      if (hint) hint.textContent = `Suggéré pour ${r.label} : ${r.def.toFixed(2)} $/km · Maximum : ${r.max.toFixed(2)} $/km`;
+      updatePricePreview();
+    }
+
     function updatePricePreview() {
       const dist  = Number(document.getElementById('total_distance_km').value) || 0;
-      const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.35, 0.50);
+      const sel   = document.getElementById('energy_type');
+      const eMax  = (ENERGY_RATES[sel ? sel.value : 'essence'] || ENERGY_RATES.essence).max;
+      const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.25, eMax);
       const seats = Number(document.getElementById('available_seats').value) || 2;
       const lugFee = 5.00; // RIDE_FEE_LUGGAGE
       const platFeeFixed = 1.50;  // frais fixe par siège réservé
@@ -1059,22 +1089,22 @@
         return;
       }
 
+      // Partage légal : le coût est divisé entre TOUS les occupants, conducteur inclus (+1).
+      const occupants = seats + 1;
       const totalCost = dist * cpk;
-      const perPax    = totalCost / seats;
+      const perPax    = totalCost / occupants;
       const platFee   = platFeeFixed;
       const paxPays   = perPax + platFee;
-      const maxPax    = dist * 0.50 / seats;
-      const overLimit = paxPays > maxPax * 1.05;
 
       document.getElementById('price-rows').innerHTML = `
         <div class="price-row"><span>Distance estimée</span><span>${dist} km</span></div>
-        <div class="price-row"><span>Coût total estimé (${cpk} $/km)</span><span>${fmt(totalCost)}</span></div>
-        <div class="price-row"><span>Répartition par passager (${seats} place${seats>1?'s':''})</span><span>${fmt(perPax)}</span></div>
-        <div class="price-row"><span>Frais de service (10% — plateforme)</span><span>${fmt(platFee)}</span></div>
+        <div class="price-row"><span>Coût total estimé (${cpk.toFixed(2)} $/km)</span><span>${fmt(totalCost)}</span></div>
+        <div class="price-row"><span>Partagé entre ${occupants} occupants (vous + ${seats} passager${seats>1?'s':''})</span><span>${fmt(perPax)}</span></div>
+        <div class="price-row"><span>Frais de service (plateforme)</span><span>${fmt(platFee)}</span></div>
         <div class="price-row total"><span>Chaque passager paie</span><span>${fmt(paxPays)}</span></div>
         <div class="price-row driver-gets"><span>Vous recevez par passager</span><span>${fmt(perPax)}</span></div>
         <div class="price-row driver-gets"><span>+ Frais bagage si applicable (100% pour vous)</span><span>${fmt(lugFee)}</span></div>
-        ${overLimit ? '<div class="over-limit-warning">⚠️ Le prix dépasse le seuil recommandé de 0,50 $/km. Considérez de réduire le coût/km.</div>' : ''}
+        <div class="price-row" style="opacity:.8"><span>Auto pleine, vous récupérez</span><span>${fmt(perPax * seats)} / ${fmt(totalCost)}</span></div>
       `;
     }
 
@@ -1143,6 +1173,7 @@
           return v ? new Date(v).toISOString() : null;
         })(),
         vehicle_type:   document.getElementById('vehicle_type').value,
+        energy_type:    document.getElementById('energy_type').value,
         vehicle_make:   document.getElementById('vehicle_make').value.trim() || null,
         vehicle_model:  document.getElementById('vehicle_model').value.trim() || null,
         vehicle_year:   document.getElementById('vehicle_year').value || null,
