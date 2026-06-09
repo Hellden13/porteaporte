@@ -1556,13 +1556,17 @@
         `
         : `<button class="action-btn" onclick="setUserAccess('${p.id}','revision','${p.role || ''}')">Vérifier de nouveau</button>`;
     }
+    // Pour les utilisateurs DÉJÀ refusés : permettre de (re)envoyer la raison par courriel.
+    const resendAction = (p.driver_status === 'rejected' || p.verification_status === 'rejected')
+      ? `<button class="action-btn" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px" title="Envoyer la raison du refus par courriel">✉️ Renvoyer la raison</button>`
+      : '';
     const accessAction = p.suspendu
       ? `<button class="action-btn" onclick="setUserAccess('${p.id}','reactiver','${p.role || ''}')" style="margin-left:4px">Réactiver</button>`
       : `
         <button class="action-btn" onclick="setUserAccess('${p.id}','pause','${p.role || ''}')" style="margin-left:4px">Pause</button>
         <button class="action-btn danger" onclick="setUserAccess('${p.id}','retirer','${p.role || ''}')" style="margin-left:4px">Retirer</button>
       `;
-    return `<div class="action-cell">${driverActions}${accessAction}</div>`;
+    return `<div class="action-cell">${driverActions}${resendAction}${accessAction}</div>`;
   }
 
   function $m(v) {
