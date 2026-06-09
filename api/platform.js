@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const {
   CORS, sanitizeEnv, safeIds, sbHeaders, parseDataUrl, uploadProofPhoto,
-  signStorageUrl, getSession, getProfile, normalizeRole, roleIn, mergeUserRole,
+  signStorageUrl, getSession, getProfile, normalizeRole, hasCapability, deriveLegacyRole, roleIn, mergeUserRole,
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
   driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
@@ -327,15 +327,40 @@ async function createLivraison(req, res, ctx, body) {
 
 async function setUserRole(req, res, ctx, body) {
   const requested = body.role || body.requested_role;
-  const requestedNormalized = requested === 'both' ? 'les deux' : requested;
-  if (!['livreur', 'expediteur', 'les deux', 'both'].includes(String(requested || '').trim())) {
-    return res.status(400).json({ error: 'Role invalide' });
+  const hasCapabilityPayload = body.capabilities && typeof body.capabilities === 'object';
+  const capabilityKeys = ['est_livreur', 'est_expediteur', 'est_passager', 'est_conducteur'];
+  const currentCapabilities = {
+    est_livreur: hasCapability(ctx.profile, 'est_livreur'),
+    est_expediteur: hasCapability(ctx.profile, 'est_expediteur'),
+    est_passager: hasCapability(ctx.profile, 'est_passager'),
+    est_conducteur: hasCapability(ctx.profile, 'est_conducteur')
+  };
+
+  let nextCapabilities = { ...currentCapabilities };
+  if (hasCapabilityPayload) {
+    nextCapabilities = {};
+    for (const key of capabilityKeys) nextCapabilities[key] = body.capabilities[key] === true;
+    if (!Object.values(nextCapabilities).some(Boolean)) {
+      return res.status(400).json({ error: 'Au moins une activite doit etre active' });
+    }
+  } else {
+    const requestedNormalized = requested === 'both' ? 'les deux' : requested;
+    if (!['livreur', 'expediteur', 'les deux', 'both'].includes(String(requested || '').trim())) {
+      return res.status(400).json({ error: 'Role invalide' });
+    }
+    const legacyRole = mergeUserRole(ctx.profile?.role, requestedNormalized);
+    if (legacyRole === 'livreur' || legacyRole === 'les deux') nextCapabilities.est_livreur = true;
+    if (legacyRole === 'expediteur' || legacyRole === 'les deux') nextCapabilities.est_expediteur = true;
+    if (!nextCapabilities.est_passager && !nextCapabilities.est_conducteur && !nextCapabilities.est_livreur && !nextCapabilities.est_expediteur) {
+      nextCapabilities.est_expediteur = true;
+    }
   }
 
-  const nextRole = mergeUserRole(ctx.profile?.role, requestedNormalized);
+  const nextRole = deriveLegacyRole(nextCapabilities, ctx.profile?.role);
   const patch = {
     email: ctx.session.email || ctx.profile?.email || '',
     role: nextRole,
+    ...nextCapabilities,
     email_verified: isEmailVerified(ctx.session, ctx.profile),
     verification_status: ctx.profile?.verification_status || 'pending',
     driver_status: ctx.profile?.driver_status || 'not_started',
@@ -375,6 +400,7 @@ async function setUserRole(req, res, ctx, body) {
   return res.status(200).json({
     success: true,
     role: profile?.role || nextRole,
+    capabilities: nextCapabilities,
     driver_status: profile?.driver_status || patch.driver_status,
     profile
   });
@@ -2429,22 +2455,48 @@ async function adminUpdateDriverStatus(req, res, ctx, body) {
     return res.status(400).json({ error: 'user_id et driver_status valide requis' });
   }
 
+  // Raison de refus (obligatoire pour un refus : l'utilisateur doit savoir pourquoi)
+  const rejectionReason = String(body.reason || body.raison || '').trim().slice(0, 500);
+  if (status === 'rejected' && !rejectionReason) {
+    return res.status(400).json({ error: 'Une raison est requise pour refuser une vérification' });
+  }
+
   const patch = {
     driver_status: status,
     verification_status: status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : status === 'suspended' ? 'suspended' : 'pending',
     suspendu: status === 'suspended',
     mis_a_jour_le: new Date().toISOString()
   };
+  if (status === 'rejected') patch.rejection_reason = rejectionReason;
 
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
+  let r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey),
     body: JSON.stringify(patch)
   });
-  const data = await r.json().catch(() => ({}));
+  let data = await r.json().catch(() => ({}));
+  // Repli si la colonne rejection_reason n'existe pas encore (migration non lancée) : on garde le refus + l'email
+  if (!r.ok && 'rejection_reason' in patch && /column .*rejection_reason.* does not exist/i.test(JSON.stringify(data))) {
+    const fallback = { ...patch };
+    delete fallback.rejection_reason;
+    r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(ctx.sbKey),
+      body: JSON.stringify(fallback)
+    });
+    data = await r.json().catch(() => ({}));
+  }
   if (!r.ok) return res.status(400).json({ error: 'Mise a jour livreur impossible', details: data });
 
   const updated = Array.isArray(data) ? data[0] : data;
+  if (status === 'rejected' && updated?.email) {
+    await callNotifier('verification_refusee', {
+      user_id: updated.id,
+      email: updated.email,
+      prenom: updated.prenom || '',
+      reason: rejectionReason
+    }).catch(() => {});
+  }
   if (status === 'verified' && updated?.email) {
     await callNotifier('carte_livreur', {
       user_id: updated.id,

@@ -248,6 +248,76 @@
             text-decoration: underline;
         }
 
+        .capability-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .capability-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .capability-card .role-cta {
+            pointer-events: none;
+        }
+
+        .switch-line {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            color: var(--accent-cyan);
+            font-weight: 800;
+        }
+
+        .switch-dot {
+            width: 40px;
+            height: 22px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            position: relative;
+        }
+
+        .switch-dot::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            transition: transform .18s ease, background .18s ease;
+        }
+
+        .capability-card.selected .switch-dot {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 217, 255, .12);
+        }
+
+        .capability-card.selected .switch-dot::after {
+            transform: translateX(17px);
+            background: var(--accent-cyan);
+        }
+
+        #livreur-card,
+        #expediteur-card,
+        .bottom-section .bottom-text:first-child {
+            display: none;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
         @media (max-width: 768px) {
             .title {
                 font-size: 1.8rem;
@@ -288,8 +358,75 @@
 
     <div class="container">
         <div class="title-section">
-            <h1 class="title">Quel est ton rôle?</h1>
-            <p class="subtitle">Choisis pour continuer vers ton tableau de bord</p>
+            <h1 class="title">Je peux être...</h1>
+            <p class="subtitle">Coche toutes les activités qui te correspondent</p>
+        </div>
+
+        <div class="capabilities-grid" id="capabilitiesGrid">
+            <label class="role-card capability-card" data-capability="est_passager">
+                <input type="checkbox" name="capability" value="est_passager" checked>
+                <h2 class="role-title">Passager covoiturage</h2>
+                <p class="role-description">Je cherche des trajets et je peux reserver une place.</p>
+                <div class="role-features">
+                    <h4>Covoiturage</h4>
+                    <ul class="feature-list">
+                        <li>Rechercher un trajet</li>
+                        <li>Reserver une place</li>
+                        <li>Voir les details avant de payer</li>
+                    </ul>
+                </div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+            </label>
+
+            <label class="role-card capability-card" data-capability="est_conducteur">
+                <input type="checkbox" name="capability" value="est_conducteur">
+                <h2 class="role-title">Conducteur covoiturage</h2>
+                <p class="role-description">J'offre des places quand je fais deja la route.</p>
+                <div class="role-features">
+                    <h4>Covoiturage</h4>
+                    <ul class="feature-list">
+                        <li>Publier un trajet</li>
+                        <li>Recevoir des reservations</li>
+                        <li>Partager les frais de route</li>
+                    </ul>
+                </div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+            </label>
+
+            <label class="role-card capability-card" data-capability="est_expediteur">
+                <input type="checkbox" name="capability" value="est_expediteur">
+                <h2 class="role-title">Expediteur colis</h2>
+                <p class="role-description">J'envoie des colis avec un prix estime avant paiement.</p>
+                <div class="role-features">
+                    <h4>Livraison</h4>
+                    <ul class="feature-list">
+                        <li>Creer une livraison</li>
+                        <li>Suivre un colis</li>
+                        <li>Service humain et local</li>
+                    </ul>
+                </div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+            </label>
+
+            <label class="role-card capability-card" data-capability="est_livreur">
+                <input type="checkbox" name="capability" value="est_livreur">
+                <h2 class="role-title">Livreur colis</h2>
+                <p class="role-description">Je livre des colis selon mes disponibilites.</p>
+                <div class="role-features">
+                    <h4>Livraison</h4>
+                    <ul class="feature-list">
+                        <li>Voir les missions disponibles</li>
+                        <li>Accepter une livraison</li>
+                        <li>Activer Stripe Connect pour etre paye</li>
+                    </ul>
+                </div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+            </label>
+        </div>
+
+        <div class="capability-actions">
+            <button class="btn btn-select" type="button" onclick="saveCapabilities()">Continuer</button>
+            <button class="btn btn-learn" type="button" onclick="selectAllCapabilities()">Tout cocher</button>
         </div>
 
         <div class="roles-grid">
@@ -394,6 +531,93 @@
 
         captureReferralFromUrl();
 
+        function collectCapabilities() {
+            const caps = {
+                est_livreur: false,
+                est_expediteur: false,
+                est_passager: false,
+                est_conducteur: false
+            };
+            document.querySelectorAll('input[name="capability"]').forEach(input => {
+                caps[input.value] = input.checked === true;
+            });
+            return caps;
+        }
+
+        function syncCapabilityCards() {
+            document.querySelectorAll('.capability-card').forEach(card => {
+                const input = card.querySelector('input[name="capability"]');
+                card.classList.toggle('selected', input && input.checked);
+            });
+        }
+
+        function selectAllCapabilities() {
+            document.querySelectorAll('input[name="capability"]').forEach(input => { input.checked = true; });
+            syncCapabilityCards();
+        }
+
+        function preferredDestination(caps) {
+            let nextUrl = '';
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const raw = params.get('next') || params.get('redirect') || params.get('return');
+                if (raw) {
+                    const u = new URL(raw, window.location.origin);
+                    const p = u.pathname || '';
+                    if (u.origin === window.location.origin && p && p !== '/login.html' && p !== '/signup.html' && p !== '/role-choice.html' && !p.startsWith('/api/') && !p.startsWith('/admin/')) {
+                        nextUrl = u.pathname + u.search + u.hash;
+                    }
+                }
+            } catch (_) {}
+            if (nextUrl) return nextUrl;
+            if (caps.est_conducteur) return '/covoiturage-publier.html';
+            if (caps.est_passager) return '/covoiturage.html';
+            if (caps.est_livreur) return '/livreur.html';
+            if (caps.est_expediteur) return '/dashboard-expediteur.html';
+            return '/dashboard.html';
+        }
+
+        async function saveCapabilities() {
+            try {
+                const capabilities = collectCapabilities();
+                if (!Object.values(capabilities).some(Boolean)) {
+                    showError('Choisis au moins une activite pour continuer.');
+                    return;
+                }
+                const { data: sessionData } = await db.auth.getSession();
+                const session = sessionData?.session;
+                const { data: { user }, error: userError } = await db.auth.getUser();
+                if (userError || !user || !session?.access_token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const response = await fetch('/api/platform?endpoint=set-role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({ endpoint: 'set-role', capabilities })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    console.error('Erreur:', result);
+                    showError('Mise a jour impossible: ' + (result.error || 'profil impossible'));
+                    return;
+                }
+                await claimStoredReferral(session);
+                window.location.href = preferredDestination(capabilities);
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Une erreur est survenue');
+            }
+        }
+
+        document.querySelectorAll('input[name="capability"]').forEach(input => {
+            input.addEventListener('change', syncCapabilityCards);
+        });
+        syncCapabilityCards();
+
         async function selectRole(role) {
             try {
                 if (!db) {
@@ -491,7 +715,3 @@
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>
-
-
-
-

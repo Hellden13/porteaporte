@@ -543,6 +543,98 @@ describe('platform.js dispatcher', () => {
     assert.ok(res._body?.error?.includes('expediteur') || res._body?.error?.includes('Role'));
   });
 
+  test('set-role accepte les capacites cumulables et derive le role legacy', async () => {
+    let profilePatch = null;
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rpc/check_rate_limit')) {
+        return { ok: true, status: 200, json: async () => ({ allowed: true }), text: async () => '{}' };
+      }
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'u1', email: 'u1@test.ca', email_confirmed_at: new Date().toISOString() }), text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles') && opts.method === 'PATCH') {
+        profilePatch = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', suspendu: false, ...profilePatch }], text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', role: 'expediteur', suspendu: false, est_livreur: false, est_expediteur: true, est_passager: true, est_conducteur: false }], text: async () => '[]' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+
+    const req = makeReq({
+      body: {
+        endpoint: 'set-role',
+        capabilities: { est_livreur: true, est_expediteur: true, est_passager: true, est_conducteur: true }
+      },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(profilePatch.role, 'les deux');
+    assert.equal(profilePatch.est_livreur, true);
+    assert.equal(profilePatch.est_expediteur, true);
+    assert.equal(profilePatch.est_passager, true);
+    assert.equal(profilePatch.est_conducteur, true);
+    assert.deepEqual(res._body?.capabilities, {
+      est_livreur: true,
+      est_expediteur: true,
+      est_passager: true,
+      est_conducteur: true
+    });
+  });
+
+  test('set-role garde la retrocompatibilite ancien format role', async () => {
+    let profilePatch = null;
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rpc/check_rate_limit')) {
+        return { ok: true, status: 200, json: async () => ({ allowed: true }), text: async () => '{}' };
+      }
+      if (url.includes('/auth/v1/user')) {
+        return { ok: true, status: 200, json: async () => ({ id: 'u1', email: 'u1@test.ca', email_confirmed_at: new Date().toISOString() }), text: async () => '{}' };
+      }
+      if (url.includes('/rest/v1/profiles') && opts.method === 'PATCH') {
+        profilePatch = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', suspendu: false, ...profilePatch }], text: async () => '[]' };
+      }
+      if (url.includes('/rest/v1/profiles')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'u1', role: 'expediteur', suspendu: false, est_livreur: false, est_expediteur: true, est_passager: true, est_conducteur: false }], text: async () => '[]' };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };
+    };
+
+    const req = makeReq({
+      body: { endpoint: 'set-role', role: 'livreur' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(profilePatch.role, 'les deux');
+    assert.equal(profilePatch.est_livreur, true);
+    assert.equal(profilePatch.est_expediteur, true);
+    assert.equal(profilePatch.est_passager, true);
+    assert.equal(profilePatch.est_conducteur, false);
+  });
+
+  test('create-livraison refuse un role legacy expediteur sans capacite expediteur', async () => {
+    global.fetch = makeFetchMock({
+      '/auth/v1/user': { ok: true, data: { id: 'u1' } },
+      '/rest/v1/profiles': { ok: true, data: [{ id: 'u1', role: 'expediteur', suspendu: false, est_livreur: false, est_expediteur: false, est_passager: true, est_conducteur: true }] }
+    });
+    const req = makeReq({
+      body: { endpoint: 'create-livraison', ville_depart: 'Montreal', ville_arrivee: 'Quebec' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 403);
+    assert.ok(res._body?.error?.includes('expediteur') || res._body?.error?.includes('Role'));
+  });
+
   test('admin-dashboard exige le rôle admin', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user':    { ok: true, data: { id: 'u1' } },

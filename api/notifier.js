@@ -289,6 +289,28 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    case 'verification_refusee': {
+      const raison = String(data.reason || data.raison || '').trim();
+      emails.push({
+        to: data.email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Ta vérification PorteàPorte n'a pas été approuvée`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 14px;color:#fff">Ta vérification n'a pas pu être approuvée</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${data.prenom || ''},<br><br>Merci d'avoir soumis ta vérification. Pour l'instant, nous n'avons pas pu l'approuver.</p>
+            ${raison ? `<div style="background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);border-radius:10px;padding:16px;margin:18px 0"><div style="font-weight:800;color:#ffb0b0;margin-bottom:6px">Raison</div><div style="color:#d8dde6;font-size:.92rem;line-height:1.55">${escapeHtml(raison)}</div></div>` : ''}
+            <p style="color:#a8b0ba;line-height:1.6">Bonne nouvelle : tu peux corriger et soumettre à nouveau. Une fois la correction faite, nous reverrons ton dossier rapidement.</p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="https://porteaporte.site/dashboard.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">🔄 Reprendre ma vérification</a>
+            </div>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Une question ? Réponds à ce courriel, on est là pour t'aider. 💙</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── LIVRAISON PUBLIÉE ──
     case 'livraison_publiee': {
       emails.push({

@@ -67,6 +67,31 @@
     }
     .chance-pill strong { display:block; font-size:1.55rem; color:var(--cyan); line-height:1; }
     .chance-pill span { color:var(--muted); font-size:.74rem; font-weight:800; text-transform:uppercase; }
+    .activity-card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:18px 20px;
+      margin:0 0 22px;
+    }
+    .activity-card h2 { font-size:1rem; margin:0 0 6px; }
+    .activity-card p { color:var(--muted); font-size:.88rem; line-height:1.45; margin:0 0 14px; }
+    .activity-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+    .activity-toggle {
+      border:1px solid var(--border);
+      background:var(--bg);
+      border-radius:10px;
+      padding:12px;
+      cursor:pointer;
+      display:flex;
+      gap:9px;
+      align-items:center;
+      font-weight:800;
+      font-size:.86rem;
+    }
+    .activity-toggle input { width:18px; height:18px; accent-color:var(--cyan); }
+    .activity-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+    .activity-msg { color:var(--muted); font-size:.82rem; }
 
     .wrap { max-width:1200px; margin:0 auto; padding:28px clamp(16px,4vw,32px) 80px; }
 
@@ -180,7 +205,7 @@
     <section class="referral-card" id="referralCard" style="display:none">
       <div>
         <h2>Mon lien de parrainage</h2>
-        <p>Invite tes proches au concours des 100 premiers membres. Chaque filleul inscrit ajoute deux chances.</p>
+        <p>Invite tes proches au concours des 100 premiers membres. Chaque filleul inscrit ajoute une chance.</p>
         <div class="referral-link">
           <input id="referralLink" readonly value="Chargement...">
           <button class="btn primary sm" type="button" id="copyReferralBtn">Copier</button>
@@ -189,6 +214,21 @@
       <div class="chance-pill">
         <strong id="referralChances">1</strong>
         <span>chance(s)</span>
+      </div>
+    </section>
+
+    <section class="activity-card" id="activityCard">
+      <h2>Mes activités</h2>
+      <p>Choisis ce que tu veux faire sur PorteàPorte. Tu peux cumuler plusieurs activités.</p>
+      <div class="activity-grid">
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_passager"> Passager</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_conducteur"> Conducteur</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_expediteur"> Expéditeur</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_livreur"> Livreur</label>
+      </div>
+      <div class="activity-actions">
+        <button class="btn primary sm" type="button" id="saveActivitiesBtn">Enregistrer</button>
+        <span class="activity-msg" id="activityMsg"></span>
       </div>
     </section>
 
@@ -231,6 +271,27 @@
   function fmtDate(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-CA',{day:'2-digit',month:'short',year:'numeric'}); }
   function fmtDT(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleString('fr-CA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
   function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function profileCapabilities(profile) {
+    const role = String(profile?.role || '').toLowerCase();
+    const hasColumns = ['est_livreur','est_expediteur','est_passager','est_conducteur'].some(k => Object.prototype.hasOwnProperty.call(profile || {}, k));
+    return {
+      est_livreur: hasColumns ? profile.est_livreur === true : (role === 'livreur' || role === 'les deux' || role === 'admin'),
+      est_expediteur: hasColumns ? profile.est_expediteur === true : (role === 'expediteur' || role === 'les deux' || role === 'admin'),
+      est_passager: hasColumns ? profile.est_passager === true : role !== 'admin',
+      est_conducteur: hasColumns ? profile.est_conducteur === true : role !== 'admin'
+    };
+  }
+  function collectActivityCapabilities() {
+    const caps = { est_livreur:false, est_expediteur:false, est_passager:false, est_conducteur:false };
+    document.querySelectorAll('#activityCard [data-capability]').forEach(input => { caps[input.dataset.capability] = input.checked === true; });
+    return caps;
+  }
+  function renderActivityToggles(profile) {
+    const caps = profileCapabilities(profile);
+    document.querySelectorAll('#activityCard [data-capability]').forEach(input => {
+      input.checked = caps[input.dataset.capability] === true;
+    });
+  }
   function cleanReferralCode(v) {
     return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 32);
   }
@@ -294,6 +355,7 @@
 
     renderHeader(session, profile);
     renderQuickActions(profile);
+    renderActivityToggles(profile);
     await Promise.all([
       loadReferralCard(session),
       loadPassengerBookings(session),
@@ -318,6 +380,34 @@
     }
   });
 
+  document.getElementById('saveActivitiesBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('activityMsg');
+    const caps = collectActivityCapabilities();
+    if (!Object.values(caps).some(Boolean)) {
+      msg.textContent = 'Choisis au moins une activité.';
+      return;
+    }
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const r = await fetch('/api/platform?endpoint=set-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'set-role', capabilities: caps })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        msg.textContent = out.error || 'Mise à jour impossible.';
+        return;
+      }
+      currentProfile = { ...(currentProfile || {}), ...(out.profile || {}), ...caps, role: out.role || out.profile?.role || currentProfile?.role };
+      renderHeader(session, currentProfile);
+      renderQuickActions(currentProfile);
+      msg.textContent = 'Activités enregistrées.';
+    } catch (e) {
+      msg.textContent = 'Erreur réseau.';
+    }
+  });
+
   function renderHeader(session, profile) {
     const name = profile.prenom || session.user.email?.split('@')[0] || 'Utilisateur';
     const fullName = `${profile.prenom||''} ${profile.nom||''}`.trim();
@@ -336,15 +426,15 @@
     const roles = document.getElementById('userRoles');
     const role = profile.role || 'expediteur';
     const roleLabels = { expediteur: 'Expéditeur', livreur: 'Livreur', 'les deux': 'Passager + Conducteur', admin: 'Admin' };
+    const caps = profileCapabilities(profile);
     roles.innerHTML = '';
     if (role === 'admin') {
       roles.innerHTML = `<span class="role-chip admin">⚡ ${roleLabels.admin}</span>`;
     } else {
-      const isExp = role === 'expediteur' || role === 'les deux';
-      const isLiv = role === 'livreur' || role === 'les deux';
-      if (isExp) roles.innerHTML += '<span class="role-chip">📦 Expéditeur</span>';
-      if (isLiv) roles.innerHTML += '<span class="role-chip">🚚 Livreur</span>';
-      roles.innerHTML += '<span class="role-chip">🎫 Passager covoit</span><span class="role-chip">🚗 Conducteur covoit</span>';
+      if (caps.est_expediteur) roles.innerHTML += '<span class="role-chip">📦 Expéditeur</span>';
+      if (caps.est_livreur) roles.innerHTML += '<span class="role-chip">🚚 Livreur</span>';
+      if (caps.est_passager) roles.innerHTML += '<span class="role-chip">🎫 Passager</span>';
+      if (caps.est_conducteur) roles.innerHTML += '<span class="role-chip">🚗 Conducteur</span>';
     }
 
     // Stats globales
@@ -359,14 +449,14 @@
 
   function renderQuickActions(profile) {
     const role = profile.role || 'expediteur';
-    const isLiv = role === 'livreur' || role === 'les deux';
-    const isExp = role === 'expediteur' || role === 'les deux';
+    const caps = profileCapabilities(profile);
+    const isLiv = caps.est_livreur;
+    const isExp = caps.est_expediteur;
     const isAdmin = role === 'admin';
 
-    const actions = [
-      { ico:'🔍', label:'Chercher un trajet', href:'/covoiturage.html' },
-      { ico:'🚗', label:'Publier un trajet', href:'/covoiturage-publier.html' },
-    ];
+    const actions = [];
+    if (caps.est_passager || isAdmin) actions.push({ ico:'🔍', label:'Chercher un trajet', href:'/covoiturage.html' });
+    if (caps.est_conducteur || isAdmin) actions.push({ ico:'🚗', label:'Publier un trajet', href:'/covoiturage-publier.html' });
     if (isExp || role === 'admin') actions.push({ ico:'📦', label:'Envoyer un colis', href:'/create-mission.html' });
     if (isLiv || role === 'admin') actions.push({ ico:'🚚', label:'Livrer des colis', href:'/browse-missions.html' });
     if (isAdmin) actions.push({ ico:'⚙️', label:'Centre admin', href:'/admin/dashboard-admin.html' });

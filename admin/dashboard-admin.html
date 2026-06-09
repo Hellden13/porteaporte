@@ -188,6 +188,7 @@
     .badge-livreur   { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
     .badge-expediteur{ background: rgba(46,123,255,.15);  color: var(--brand-blue); }
     .badge-les-deux  { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
+    .badge-capability{ background: rgba(0,217,255,.08);   color: var(--brand-cyan); border: 1px solid rgba(0,217,255,.22); margin: 3px 3px 0 0; }
     .badge-verified  { background: rgba(16,185,129,.15);  color: var(--brand-success); }
     .badge-pending   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
     .badge-rejected  { background: rgba(239,68,68,.15);   color: var(--brand-danger); }
@@ -1224,6 +1225,25 @@
     return `<span class="badge ${map[role]||'badge-attente'}">${role||'—'}</span>`;
   }
 
+  function capabilityBadges(profile) {
+    const role = (profile?.role || '').toLowerCase();
+    const hasCapabilityColumns = ['est_livreur', 'est_expediteur', 'est_passager', 'est_conducteur']
+      .some((key) => Object.prototype.hasOwnProperty.call(profile || {}, key));
+    const caps = {
+      est_livreur: hasCapabilityColumns ? profile.est_livreur === true : ['livreur', 'les deux', 'admin'].includes(role),
+      est_expediteur: hasCapabilityColumns ? profile.est_expediteur === true : ['expediteur', 'expéditeur', 'les deux', 'admin'].includes(role),
+      est_passager: hasCapabilityColumns ? profile.est_passager === true : role !== 'admin',
+      est_conducteur: hasCapabilityColumns ? profile.est_conducteur === true : role !== 'admin'
+    };
+    const labels = [
+      ['est_livreur', 'Livreur'],
+      ['est_expediteur', 'Expéditeur'],
+      ['est_passager', 'Passager'],
+      ['est_conducteur', 'Conducteur']
+    ].filter(([key]) => caps[key]).map(([, label]) => `<span class="badge badge-capability">${label}</span>`);
+    return labels.length ? `<div style="margin-top:5px">${labels.join('')}</div>` : '';
+  }
+
   function driverBadge(s) {
     const map = {
       verified:       ['badge-verified', 'Vérifié'],
@@ -1404,18 +1424,70 @@
     sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
   }
 
+  const REJECTION_REASONS = [
+    "Photo du permis de conduire illisible ou floue",
+    "Pièce d'identité manquante ou expirée",
+    "Identité non vérifiable (informations incohérentes)",
+    "La photo ne correspond pas à la pièce d'identité",
+    "Document du véhicule manquant ou non conforme",
+    "Informations du profil incomplètes"
+  ];
+
+  // Fenêtre de raison de refus : boutons pré-programmés + champ libre.
+  function askRejectionReason() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:#111318;border:1px solid #2A313C;border-radius:14px;max-width:480px;width:100%;padding:22px;color:#f7f8fb;box-shadow:0 20px 60px rgba(0,0,0,.55)';
+      const presets = REJECTION_REASONS.map(r =>
+        `<button type="button" class="rej-preset" data-r="${r.replace(/"/g,'&quot;')}" style="display:block;width:100%;text-align:left;background:#1A1F28;border:1px solid #2A313C;color:#d8dde6;border-radius:8px;padding:10px 12px;margin:6px 0;cursor:pointer;font-size:.86rem">${r}</button>`
+      ).join('');
+      box.innerHTML = `
+        <h3 style="margin:0 0 4px;color:#fff;font-size:1.1rem">Raison du refus</h3>
+        <p style="margin:0 0 12px;color:#A8ACB1;font-size:.82rem">Clique une raison ou écris la tienne. L'utilisateur la recevra par courriel.</p>
+        <div>${presets}</div>
+        <textarea id="rej-text" rows="3" placeholder="Raison (modifiable)…" style="width:100%;box-sizing:border-box;margin-top:10px;background:#0A0C10;border:1px solid #2A313C;color:#fff;border-radius:8px;padding:10px;font-size:.9rem;resize:vertical"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+          <button type="button" id="rej-cancel" style="background:transparent;border:1px solid #2A313C;color:#A8ACB1;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">Annuler</button>
+          <button type="button" id="rej-ok" style="background:#00D9FF;border:none;color:#071016;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:800">Refuser & prévenir</button>
+        </div>`;
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      const ta = box.querySelector('#rej-text');
+      box.querySelectorAll('.rej-preset').forEach(btn => {
+        btn.onclick = () => { ta.value = btn.getAttribute('data-r'); ta.focus(); };
+      });
+      const close = (val) => { document.body.removeChild(overlay); resolve(val); };
+      box.querySelector('#rej-cancel').onclick = () => close(null);
+      overlay.onclick = (e) => { if (e.target === overlay) close(null); };
+      box.querySelector('#rej-ok').onclick = () => {
+        const v = (ta.value || '').trim();
+        if (!v) { ta.style.borderColor = '#FF5555'; ta.focus(); return; }
+        close(v);
+      };
+    });
+  }
+
   async function setDriverStatus(userId, newStatus) {
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
     if (!token) { alert('Session admin requise'); return; }
 
+    let reason = '';
+    if (newStatus === 'rejected') {
+      reason = await askRejectionReason();
+      if (reason === null) return; // annulé
+    }
+
     const res = await fetch(apiUrl('/api/admin-update-driver-status'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ user_id: userId, driver_status: newStatus })
+      body: JSON.stringify({ user_id: userId, driver_status: newStatus, reason })
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) { alert(out.error || 'Mise a jour impossible'); return; }
+    if (newStatus === 'rejected') alert('✅ Utilisateur refusé — il a été prévenu par courriel avec la raison.');
     await loadData();
   }
 
@@ -1781,7 +1853,7 @@
           <tr>
             <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
             <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
-            <td>${roleBadge(p.role)}</td>
+            <td>${roleBadge(p.role)}${capabilityBadges(p)}</td>
             <td>${driverBadge(p.driver_status)}</td>
             <td style="color:#5dbfff">${p.xp||0} XP</td>
             <td>${userActions(p, currentAdminId)}</td>
@@ -1793,7 +1865,7 @@
           <tr style="opacity:.7">
             <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
             <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
-            <td>${roleBadge(p.role)}</td>
+            <td>${roleBadge(p.role)}${capabilityBadges(p)}</td>
             <td style="color:#5A6A7A;font-size:.8rem">${p.raison_suspension||'—'}</td>
             <td><button class="action-btn" onclick="setUserAccess('${p.id}','reactiver','${p.role||''}')">Réactiver</button></td>
           </tr>`).join('');
