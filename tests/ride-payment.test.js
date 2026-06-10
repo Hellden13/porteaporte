@@ -3,7 +3,7 @@
 const { describe, test, after } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { ridePaymentCreate, ridePaymentSync, rideCancel } = require('../lib/_rides');
+const { ridePaymentCreate, ridePaymentSync, rideCancel, rideCaptureEligible } = require('../lib/_rides');
 
 function makeRes() {
   return {
@@ -489,6 +489,40 @@ describe('ride cancellation safeguards', () => {
     const ridePatchIndex = calls.findIndex(c => c.url.includes('/rest/v1/rides?id=eq.ride-driver') && c.method === 'PATCH');
     const refundIndex = calls.findIndex(c => c.url.includes('/v1/refunds'));
     assert.ok(refundIndex > -1 && ridePatchIndex > refundIndex, 'le trajet est annule apres remboursement');
+  });
+
+  test('rideCaptureEligible ne paie PAS un trajet pas encore passe (delai de grace)', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+      if (url.includes('/rest/v1/ride_bookings?status=eq.confirme')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'book-future', ride_id: 'ride-future', passenger_id: 'passenger-1',
+          status: 'confirme', driver_amount: 10,
+          stripe_payment_intent: 'pi_future_real_1234567890',
+        }] };
+      }
+      if (url.includes('/rest/v1/rides?id=eq.ride-future')) {
+        return { ok: true, status: 200, json: async () => [{
+          id: 'ride-future', driver_id: 'driver-1',
+          departure_time: new Date(Date.now() + 30 * 3600 * 1000).toISOString(), // trajet dans 30h
+        }] };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeRes();
+    await rideCaptureEligible(
+      { method: 'POST' },
+      res,
+      ctx({ session: { id: 'admin-1' }, profile: { role: 'admin' } }),
+      { grace_hours: 4 }
+    );
+
+    assert.equal(res._status, 200);
+    assert.equal((res._body.captured || []).length, 0, 'aucun paiement avant le trajet');
+    assert.ok((res._body.skipped || []).some(s => s.reason === 'trip_not_finished'), 'le trajet futur est saute');
+    assert.ok(!calls.some(c => c.url.includes('/capture')), 'pas de capture Stripe avant le trajet');
   });
 });
 

@@ -1959,7 +1959,7 @@ async function adminPilotage(req, res, ctx) {
     fetchRows('impact_settings', 'select=*&limit=1'),
     countRows('missions', 'select=id&status=in.(active,published,en_cours)'),
     countRows('push_subscriptions', 'select=id'),
-    countRows('transaction_audit_events', `select=id&created_at=gte.${since24h}`)
+    countRows('transaction_audit_events', `select=id&created_at=gte.${since24h}&status=in.(failed,error,erreur,echec)`)
   ]);
 
   const profiles = profilesAll.rows;
@@ -1999,14 +1999,17 @@ async function adminPilotage(req, res, ctx) {
   const co2Kg = soft(impact.total_co2_kg ?? impact.co2_saved_kg ?? impact.co2_economise_kg, kmFromRides ? Math.round(kmFromRides * 0.12) : null);
 
   const alerts = {
-    critical_errors: recentAudit.ok ? 0 : 1,
+    // recentAudit = nombre d'événements d'audit en ERREUR sur 24h (0 si table absente ou aucun)
+    critical_errors: Number(recentAudit) || 0,
     payments_blocked: ridePaymentsBlocked + deliveryPaymentsBlocked,
     litiges: manquementsOpen,
     kyc_pending: kycPending
   };
 
   const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
-  const supabaseHealthy = profilesAll.ok && deliveriesAll.ok;
+  // Santé Supabase = lecture de la table cœur (profiles). Évite une fausse alerte si une
+  // requête secondaire (ex. livraisons) échoue sur une colonne optionnelle.
+  const supabaseHealthy = profilesAll.ok;
   const apiHealthy = true;
   const notificationsHealthy = pushSubs >= 0;
 
