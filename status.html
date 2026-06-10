@@ -85,7 +85,7 @@
       { id: 'web',      name: 'Site web',           desc: 'Page d\'accueil + pages publiques', check: () => fetch('/', { method: 'HEAD' }).then(r => r.ok) },
       { id: 'api',      name: 'API plateforme',     desc: 'Création de livraisons, dashboards, recherche', check: () => fetch('/api/impact-public').then(r => r.ok) },
       { id: 'settings', name: 'Configuration',      desc: 'Paramètres financiers, plafond colis, zones bêta', check: () => fetch('/api/platform?endpoint=platform-settings-get').then(r => r.ok) },
-      { id: 'stripe',   name: 'Paiements Stripe',   desc: 'Escrow sécurisé, webhooks, captures', check: () => fetch('https://js.stripe.com/v3/', { method: 'HEAD', mode: 'no-cors' }).then(() => true).catch(() => false) },
+      { id: 'stripe',   name: 'Paiements Stripe',   desc: 'Escrow sécurisé, webhooks, captures', check: async () => { try { const r = await fetch('/api/platform?endpoint=platform-settings-get'); const d = await r.json(); return d.stripe_configured === true; } catch(_) { return false; } } },
       { id: 'supabase', name: 'Base de données',    desc: 'Profils, livraisons, transactions', check: async () => { try { const r = await fetch('/api/impact-public'); const d = await r.json(); return d.success === true; } catch(_) { return false; } } },
       { id: 'maps',     name: 'Cartes & géocodage', desc: 'OpenStreetMap pour suivi GPS et itinéraires', check: () => fetch('https://nominatim.openstreetmap.org/status', { mode: 'no-cors' }).then(() => true).catch(() => false) }
     ];

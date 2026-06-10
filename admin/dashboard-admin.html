@@ -1244,7 +1244,7 @@
     return labels.length ? `<div style="margin-top:5px">${labels.join('')}</div>` : '';
   }
 
-  function driverBadge(s) {
+  function driverBadge(s, p) {
     const map = {
       verified:       ['badge-verified', 'Vérifié'],
       pending_review: ['badge-pending',  'En attente'],
@@ -1253,7 +1253,13 @@
       suspended:      ['badge-rejected', 'Suspendu']
     };
     const [cls, label] = map[s] || ['badge-attente', s||'—'];
-    return `<span class="badge ${cls}">${label}</span>`;
+    let source = '';
+    if (s === 'verified' && p) {
+      source = p.stripe_identity_status === 'verified'
+        ? ' <span style="font-size:.66rem;color:#A8ACB1;font-weight:700" title="Identité validée automatiquement par Stripe">par Stripe</span>'
+        : ' <span style="font-size:.66rem;color:#A8ACB1;font-weight:700" title="Approuvé manuellement par un admin">(manuel)</span>';
+    }
+    return `<span class="badge ${cls}">${label}</span>${source}`;
   }
 
   function livBadge(s) {
@@ -1445,7 +1451,7 @@
       ).join('');
       box.innerHTML = `
         <h3 style="margin:0 0 4px;color:#fff;font-size:1.1rem">Raison du refus</h3>
-        <p style="margin:0 0 12px;color:#A8ACB1;font-size:.82rem">Clique une raison ou écris la tienne. L'utilisateur la recevra par courriel.</p>
+        <p style="margin:0 0 12px;color:#A8ACB1;font-size:.82rem">Clique une ou plusieurs raisons (elles s'ajoutent), et complète à la main au besoin. L'utilisateur recevra le tout par courriel.</p>
         <div>${presets}</div>
         <textarea id="rej-text" rows="3" placeholder="Raison (modifiable)…" style="width:100%;box-sizing:border-box;margin-top:10px;background:#0A0C10;border:1px solid #2A313C;color:#fff;border-radius:8px;padding:10px;font-size:.9rem;resize:vertical"></textarea>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
@@ -1456,7 +1462,24 @@
       document.body.appendChild(overlay);
       const ta = box.querySelector('#rej-text');
       box.querySelectorAll('.rej-preset').forEach(btn => {
-        btn.onclick = () => { ta.value = btn.getAttribute('data-r'); ta.focus(); };
+        btn.onclick = () => {
+          const r = btn.getAttribute('data-r');
+          const lines = (ta.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+          const bullet = '• ' + r;
+          const idx = lines.indexOf(bullet);
+          if (idx >= 0) {
+            // Deuxième clic = on retire la raison (toggle)
+            lines.splice(idx, 1);
+            btn.style.borderColor = '#2A313C';
+            btn.style.color = '#d8dde6';
+          } else {
+            lines.push(bullet);
+            btn.style.borderColor = '#00D9FF';
+            btn.style.color = '#00D9FF';
+          }
+          ta.value = lines.join('\n');
+          ta.focus();
+        };
       });
       const close = (val) => { document.body.removeChild(overlay); resolve(val); };
       box.querySelector('#rej-cancel').onclick = () => close(null);
@@ -1858,7 +1881,7 @@
             <td>${[p.prenom,p.nom].filter(Boolean).join(' ')||'—'}</td>
             <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
             <td>${roleBadge(p.role)}${capabilityBadges(p)}</td>
-            <td>${driverBadge(p.driver_status)}</td>
+            <td>${driverBadge(p.driver_status, p)}</td>
             <td style="color:#5dbfff">${p.xp||0} XP</td>
             <td>${userActions(p, currentAdminId)}</td>
           </tr>`).join('');
@@ -1883,7 +1906,7 @@
             <td style="color:#A8B0BA;font-size:.8rem">${p.email||'—'}</td>
             <td>${p.vehicule||'—'}</td>
             <td>${p.ville||'—'}</td>
-            <td>${driverBadge(p.driver_status)}</td>
+            <td>${driverBadge(p.driver_status, p)}</td>
             <td><div class="action-cell">
               <button class="action-btn" onclick="setDriverStatus('${p.id}','verified')">✓ Approuver</button>
               <button class="action-btn danger" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px">? Refuser</button>

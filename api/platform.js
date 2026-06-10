@@ -4120,7 +4120,11 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     }
   }
   const rows = r.ok ? await r.json() : [];
-  return res.status(200).json({ success: true, settings: { ...defaults, ...(rows[0] || {}) } });
+  return res.status(200).json({
+    success: true,
+    stripe_configured: Boolean(process.env.STRIPE_SECRET_KEY),
+    settings: { ...defaults, ...(rows[0] || {}) }
+  });
 }
 
 function contestCodeFromInput(value) {
