@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/platform-settings-defaults.js"></script>
   <style>
     body { padding: 24px; min-height: 100vh; }
     .wrap { max-width: 1280px; margin: 0 auto; }
@@ -89,7 +90,7 @@
 
   <script>
     let session = null, db = null;
-    let PCT_LIVREUR = 60, PCT_COMMISSION = 12; // source unique : platform_settings
+    let PCT_LIVREUR = 60, PCT_COMMISSION = 40; // source unique : platform_settings.default
     async function init() {
       db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
       const { data: sess } = await db.auth.getSession();
@@ -98,11 +99,12 @@
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
       if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
       try {
-        const { data: ps } = await db.from('platform_settings').select('pct_livreur,pct_plateforme').eq('id', 'default').single();
-        if (ps) {
-          if (Number.isFinite(Number(ps.pct_livreur)))    PCT_LIVREUR    = Number(ps.pct_livreur);
-          if (Number.isFinite(Number(ps.pct_plateforme))) PCT_COMMISSION = Number(ps.pct_plateforme);
-        }
+        const psRes = await fetch('/api/platform?endpoint=platform-settings-get');
+        const ps = (await psRes.json()).settings || {};
+        const canon = window.PAP_PLATFORM_SETTINGS;
+        const canonical = canon ? canon.canonicalPlatformSettings(ps) : { pct_livreur: 60 };
+        PCT_LIVREUR = Number(canonical.pct_livreur) || 60;
+        PCT_COMMISSION = Math.max(0, 100 - PCT_LIVREUR);
       } catch (_) {}
       await load();
     }

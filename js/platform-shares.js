@@ -7,10 +7,10 @@
 */
 (function () {
   'use strict';
-  var DEFAULTS = {
-    pct_livreur: 60, pct_communaute: 5, pct_protection: 8,
-    pct_urgence: 5, pct_developpement: 5, pct_marketing: 5,
-    pct_operations: 4, pct_profit: 10
+  var DEFAULTS = (window.PAP_PLATFORM_SETTINGS && window.PAP_PLATFORM_SETTINGS.PLATFORM_ALLOCATION_DEFAULTS) || {
+    pct_livreur: 60, pct_stripe: 7, pct_developpement: 5, pct_protection: 10,
+    pct_urgence: 6, pct_communaute: 5, pct_profit: 7,
+    pct_marketing: 0, pct_operations: 0
   };
   function apply(s) {
     window.__platformShares = s;

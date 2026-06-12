@@ -29,6 +29,18 @@
       border-radius: 8px; padding: 14px 18px; font-size: 0.85rem;
       color: var(--brand-lime); margin-bottom: 32px; line-height: 1.55;
     }
+    .driver-fee-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(0,217,255,.10), rgba(93,191,255,.05));
+      border: 1px solid rgba(0,217,255,.28);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: -16px 0 28px;
+      color: var(--brand-text);
+      line-height: 1.5;
+    }
+    .driver-fee-banner strong { color: var(--brand-cyan); }
+    .driver-fee-banner small { display:block; color: var(--brand-muted); margin-top:4px; }
     .info-note {
       background: rgba(99,210,255,0.07); border: 1px solid rgba(99,210,255,0.25);
       border-radius: 8px; padding: 12px 16px; font-size: 0.83rem;
@@ -153,6 +165,11 @@
     <div class="legal-note">
       🛡️ <strong>Rappel :</strong> Le covoiturage PorteàPorte est basé sur le <strong>partage des frais réels</strong>.
       Le prix maximum recommandé est de <strong>0,50 $/km</strong>. Vous ne pouvez pas réaliser de profit sur le transport de personnes.
+    </div>
+
+    <div class="driver-fee-banner" id="driver-fee-banner">
+      <strong>Tes <span class="free-trips-count">10</span> premiers trajets sans frais de plateforme.</strong>
+      <small>Ensuite, frais de service transparents : <span class="ride-fee-low">1,50 $</span> sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
     </div>
 
     <!-- MODE EXPRESS — pour publier en 1 minute -->
@@ -1107,6 +1124,7 @@
       if (ec && ec.value) loadSafePoints('end');
       // Affiche le tarif énergie dès le chargement
       if (document.getElementById('energy_type')) applyEnergyRate();
+      loadRideFeeSettings();
     });
 
     // ── Points d'arrêt ──────────────────────────────────────────
@@ -1158,6 +1176,30 @@
 
     // ── Prix preview ─────────────────────────────────────────────
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+    const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15, freeTrips: 10 };
+
+    function ridePlatformFeeForPreview(subtotal) {
+      return Number(subtotal || 0) >= rideFeeSettings.threshold ? rideFeeSettings.high : rideFeeSettings.low;
+    }
+
+    async function loadRideFeeSettings() {
+      try {
+        const r = await fetch('/api/platform?endpoint=platform-settings-get');
+        const out = await r.json().catch(() => ({}));
+        const s = out.settings || {};
+        if (Number.isFinite(Number(s.ride_platform_fee))) rideFeeSettings.low = Math.max(0, Number(s.ride_platform_fee));
+        if (Number.isFinite(Number(s.ride_platform_fee_high))) rideFeeSettings.high = Math.max(rideFeeSettings.low, Number(s.ride_platform_fee_high));
+        if (Number.isFinite(Number(s.ride_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(s.ride_fee_threshold));
+        if (Number.isFinite(Number(s.ride_free_trips))) rideFeeSettings.freeTrips = Math.max(0, Math.floor(Number(s.ride_free_trips)));
+        const banner = document.getElementById('driver-fee-banner');
+        if (banner) banner.style.display = rideFeeSettings.freeTrips > 0 ? 'block' : 'none';
+        document.querySelectorAll('.free-trips-count').forEach(el => { el.textContent = String(rideFeeSettings.freeTrips); });
+        document.querySelectorAll('.ride-fee-low').forEach(el => { el.textContent = fmt(rideFeeSettings.low); });
+        document.querySelectorAll('.ride-fee-high').forEach(el => { el.textContent = fmt(rideFeeSettings.high); });
+        document.querySelectorAll('.ride-fee-threshold').forEach(el => { el.textContent = fmt(rideFeeSettings.threshold); });
+        updatePricePreview();
+      } catch (_) {}
+    }
 
     // Tarif/km suggéré + plafond selon l'énergie (juste = reflète le vrai coût du véhicule)
     const ENERGY_RATES = {
@@ -1194,7 +1236,6 @@
       const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.25, eMax);
       const seats = Number(document.getElementById('available_seats').value) || 2;
       const lugFee = 5.00; // RIDE_FEE_LUGGAGE
-      const platFeeFixed = 1.50;  // frais fixe par siège réservé
 
       if (!dist) {
         document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>';
@@ -1205,7 +1246,7 @@
       const occupants = seats + 1;
       const totalCost = dist * cpk;
       const perPax    = totalCost / occupants;
-      const platFee   = platFeeFixed;
+      const platFee   = ridePlatformFeeForPreview(perPax);
       const paxPays   = perPax + platFee;
 
       document.getElementById('price-rows').innerHTML = `

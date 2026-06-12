@@ -11,6 +11,8 @@ const {
   missionQualifies,
   RIDE_COST_PER_KM,
   RIDE_PLATFORM_FEE,
+  RIDE_PLATFORM_FEE_HIGH,
+  RIDE_FEE_THRESHOLD,
   RIDE_FEE_LUGGAGE,
   RIDE_FEE_PET,
   RIDE_FEE_PACKAGE_BASE,
@@ -102,7 +104,7 @@ describe('calcRidePrice', () => {
     const price = calcRidePrice(base);
     const expectedBase = 100 * RIDE_COST_PER_KM; // 35.00
     assert.equal(price.totalCostBase, Math.round(expectedBase * 100) / 100);
-    assert.equal(price.platformFee, RIDE_PLATFORM_FEE);
+    assert.equal(price.platformFee, RIDE_PLATFORM_FEE_HIGH);
     assert.ok(price.totalPassenger > price.driverAmount, 'le passager paie plus que le chauffeur reçoit');
   });
 
@@ -126,8 +128,22 @@ describe('calcRidePrice', () => {
   test('2 sièges → platform fee doublé', () => {
     const un = calcRidePrice({ ...base, seats: 1 });
     const deux = calcRidePrice({ ...base, seats: 2 });
-    assert.equal(deux.platformFee, Math.round(RIDE_PLATFORM_FEE * 2 * 100) / 100);
+    assert.equal(deux.platformFee, Math.round(RIDE_PLATFORM_FEE_HIGH * 2 * 100) / 100);
     assert.ok(deux.totalPassenger > un.totalPassenger);
+  });
+
+  test('trajet sous le seuil → frais plateforme bas', () => {
+    const price = calcRidePrice({ ...base, totalDistanceKm: 20, passengerDistanceKm: 20 });
+    assert.ok(price.driverAmount < RIDE_FEE_THRESHOLD);
+    assert.equal(price.platformFee, RIDE_PLATFORM_FEE);
+    assert.equal(price.platformFeePerSeat, RIDE_PLATFORM_FEE);
+  });
+
+  test('trajet au-dessus du seuil → frais plateforme haut', () => {
+    const price = calcRidePrice(base);
+    assert.ok(price.driverAmount >= RIDE_FEE_THRESHOLD);
+    assert.equal(price.platformFee, RIDE_PLATFORM_FEE_HIGH);
+    assert.equal(price.platformFeePerSeat, RIDE_PLATFORM_FEE_HIGH);
   });
 
   test('bonus groupe 2 passagers → prix base réduit', () => {
@@ -198,7 +214,7 @@ describe('calcRidePrice', () => {
 
   test('par défaut (commissionFree absent) → commission normale', () => {
     const price = calcRidePrice(base);
-    assert.equal(price.platformFee, RIDE_PLATFORM_FEE);
+    assert.equal(price.platformFee, RIDE_PLATFORM_FEE_HIGH);
     assert.equal(price.commissionFree, false);
   });
 });

@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
+  <script src="/js/platform-settings-defaults.js"></script>
   <script>
     if (window.location.protocol === 'file:') {
       window.location.href = 'https://porteaporte.site/admin/dashboard-admin.html';
@@ -935,9 +936,14 @@
             </div>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Covoiturage —</div>
-            <label for="impact-ride-pct">Frais plateforme par siège ($)</label>
+            <label for="impact-ride-pct">Frais plateforme palier bas ($)</label>
             <input id="impact-ride-pct" type="number" min="0" step="0.25" value="1.50">
-            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Montant fixe prélevé par siège réservé (ex. 1,50 $). Appliqué au moment de la réservation.</div>
+            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Pour un sous-total passager sous le seuil (ex. 1,50 $).</div>
+            <label for="impact-ride-threshold">Seuil palier haut ($)</label>
+            <input id="impact-ride-threshold" type="number" min="0" step="0.5" value="15">
+            <label for="impact-ride-pct-high">Frais plateforme palier haut ($)</label>
+            <input id="impact-ride-pct-high" type="number" min="0" step="0.25" value="3.00">
+            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Si le sous-total passager atteint le seuil, le frais plateforme passe au palier haut. Le partage de frais reste inchangé.</div>
             <label for="impact-ride-luggage">Frais bagages ($)</label>
             <input id="impact-ride-luggage" type="number" min="0" step="0.5" value="5">
             <label for="impact-ride-pet">Frais animal ($)</label>
@@ -1607,8 +1613,22 @@
     const rows = data || [];
     const total      = rows.reduce((s, r) => s + Number(r.prix_total || 0), 0);
     const s = window.__platformSettings || {};
-    const pctPlateforme = Number(s.pct_plateforme) || 12;
-    const pctLivreur    = Number(s.pct_livreur)    || 60;
+    const canon = window.PAP_PLATFORM_SETTINGS;
+    const canonicalSettings = canon
+      ? canon.canonicalPlatformSettings(s)
+      : {
+        pct_livreur: 60,
+        pct_stripe: 7,
+        pct_developpement: 5,
+        pct_protection: 10,
+        pct_urgence: 6,
+        pct_communaute: 5,
+        pct_profit: 7,
+        pct_marketing: 0,
+        pct_operations: 0
+      };
+    const pctLivreur    = Number(canonicalSettings.pct_livreur) || 60;
+    const pctPlateforme = Math.max(0, 100 - pctLivreur);
     const commission = total * pctPlateforme / 100;
     const livreurs   = total * pctLivreur    / 100;
 
@@ -1621,35 +1641,38 @@
     if (pctLivEl) pctLivEl.textContent = pctLivreur;
     document.getElementById('rev-count').textContent      = rows.length;
 
-    // ─── Tableau complet répartition (avec fondateur 5%) ───
-    const POSTES_LIVE = [
-      { icon: '🚗', name: 'Livreur québécois',                key: 'pct_livreur',      def: 60, color: '#5dbfff' },
-      { icon: '💚', name: 'Communauté (Fonds → organismes)',  key: 'pct_communaute',   def: 5,  color: '#ff6b9d' },
-      { icon: '🛡️', name: 'Protection colis bêta',             key: 'pct_protection',   def: 8,  color: '#00D9FF' },
-      { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'pct_urgence',      def: 5,  color: '#ffa500' },
-      { icon: '🔧', name: 'Maintenance + développement',       key: 'pct_developpement',def: 5,  color: '#A8B0BA' },
-      { icon: '📢', name: 'Marketing & croissance',            key: 'pct_marketing',    def: 3,  color: '#A8B0BA' },
-      { icon: '🏛️', name: 'Opérations (support, équipe)',      key: 'pct_operations',   def: 4,  color: '#A8B0BA' },
-      { icon: '💰', name: 'Profit net', key: 'pct_profit', def: 10, color: '#A8B0BA', isProfit: true }
-    ];
+    // ─── Tableau complet répartition officielle ───
+    const POSTES_LIVE = canon
+      ? canon.platformAllocationPosts(s, { includeZero: false })
+      : [
+        { icon: '🚗', label: 'Livreur québécois', key: 'pct_livreur', pct: 60, color: '#5dbfff' },
+        { icon: '💳', label: 'Frais Stripe (traitement des paiements)', key: 'pct_stripe', pct: 7, color: '#A8ACB1' },
+        { icon: '🔧', label: 'Infrastructure & développement', key: 'pct_developpement', pct: 5, color: '#A8B0BA' },
+        { icon: '🛡️', label: 'Protection colis', key: 'pct_protection', pct: 10, color: '#00D9FF' },
+        { icon: '🆘', label: 'Fonds d\'urgence', key: 'pct_urgence', pct: 6, color: '#ffa500' },
+        { icon: '💚', label: 'Communauté (organismes d\'ici)', key: 'pct_communaute', pct: 5, color: '#7dffc1' },
+        { icon: '💪', label: 'Réserve / pérennité', key: 'pct_profit', pct: 7, color: '#A8B0BA' }
+      ];
     const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 5);
     const profitToInsurance = s.profit_to_insurance !== false;
     let repartHtml = POSTES_LIVE.map(p => {
-      const pct = Number(s[p.key]) || p.def;
+      const pct = Number(p.pct);
       const montant = total * pct / 100;
       // Si profit redirige vers fonds, indique-le visuellement
-      const redirected = p.isProfit && profitToInsurance;
+      const redirected = p.key === 'pct_profit' && profitToInsurance;
       const nameDisplay = redirected
-        ? `${p.name} <span style="color:#00d9ff;font-size:.75rem;background:rgba(0,217,255,.12);padding:2px 8px;border-radius:99px;margin-left:6px">🛡️ → Fonds litige (bêta)</span>`
-        : p.name;
+        ? `${p.label} <span style="color:#00d9ff;font-size:.75rem;background:rgba(0,217,255,.12);padding:2px 8px;border-radius:99px;margin-left:6px">🛡️ → Fonds litige (bêta)</span>`
+        : p.label;
       return `<tr ${redirected ? 'style="background:rgba(0,217,255,.04)"' : ''}>
-        <td><span style="font-size:1.1rem;margin-right:8px">${p.icon}</span><strong style="color:#fff">${nameDisplay}</strong></td>
+        <td><span style="font-size:1.1rem;margin-right:8px">${p.emoji || p.icon}</span><strong style="color:#fff">${nameDisplay}</strong></td>
         <td style="text-align:right;color:${redirected ? '#00d9ff' : p.color};font-weight:800;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</td>
         <td style="text-align:right;color:#fff;font-weight:900;font-variant-numeric:tabular-nums">${$m(montant)}</td>
       </tr>`;
     }).join('');
-    // Total des 8 postes
-    const sumPostes = POSTES_LIVE.reduce((s2, p) => s2 + (Number(s[p.key]) || p.def), 0);
+    // Total des postes canoniques, incluant ceux masqués à 0 %.
+    const sumPostes = canon
+      ? canon.platformAllocationTotal(s, { includeZero: true })
+      : POSTES_LIVE.reduce((s2, p) => s2 + (Number(p.pct) || 0), 0);
     repartHtml += `<tr style="background:rgba(255,255,255,.04);border-top:2px solid var(--brand-border)">
       <td><strong style="color:#A8B0BA">Total répartition (doit = 100%)</strong></td>
       <td style="text-align:right;color:${Math.abs(sumPostes-100) < 0.5 ? '#7dffc1' : '#ffb0b0'};font-weight:900">${sumPostes.toFixed(1)} %</td>
@@ -2057,6 +2080,8 @@
       const impact = out.impact;
       const settings = impact.settings || {};
       document.getElementById('impact-ride-pct').value     = settings.ride_platform_fee ?? 1.50;
+      document.getElementById('impact-ride-threshold').value = settings.ride_fee_threshold ?? 15;
+      document.getElementById('impact-ride-pct-high').value  = settings.ride_platform_fee_high ?? 3.00;
       document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
       document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
       document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
@@ -2439,6 +2464,8 @@
       await impactRequest({
         mode: 'settings',
         ride_platform_fee:  Number(document.getElementById('impact-ride-pct').value || 0),
+        ride_fee_threshold: Number(document.getElementById('impact-ride-threshold').value || 0),
+        ride_platform_fee_high: Number(document.getElementById('impact-ride-pct-high').value || 0),
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),

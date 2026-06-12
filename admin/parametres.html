@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/platform-settings-defaults.js"></script>
   <style>
     body { padding: 24px; min-height: 100vh; background: #05080c; }
     .wrap { max-width: 920px; margin: 0 auto; }
@@ -51,7 +52,7 @@
     </div>
 
     <div class="info-tip">
-      💡 <strong>Ces % s'appliquent au montant NET (après Stripe).</strong> La somme des 8 postes distribuables doit faire 100%. Tu peux ajuster en temps réel selon ta stratégie. La home et l'admin se mettent à jour automatiquement.
+      💡 <strong>Ces % forment la répartition officielle complète.</strong> La somme des postes doit faire 100%. Les postes à 0% sont masqués côté public. Tu peux ajuster en temps réel selon ta stratégie.
     </div>
 
     <div class="panel">
@@ -222,23 +223,25 @@
 
   <script>
     let session = null, db = null;
-    const POSTES = [
-      { key: 'pct_livreur', icon: '🚗', name: 'Livreur', desc: 'Part versée au livreur via Stripe Connect', min: 40, max: 75 },
-      { key: 'pct_communaute', icon: '💚', name: 'Communauté', desc: 'Fonds PorteàPorte → organismes québécois', min: 1, max: 15 },
-      { key: 'pct_protection', icon: '🛡️', name: 'Protection colis', desc: 'Provision pour dommages/pertes', min: 0, max: 10 },
-      { key: 'pct_urgence', icon: '🆘', name: 'Urgence', desc: 'Litiges majeurs, cas extrêmes', min: 0, max: 10 },
-      { key: 'pct_developpement', icon: '🔧', name: 'Développement', desc: 'Maintenance, futurs développeurs', min: 0, max: 15 },
-      { key: 'pct_marketing', icon: '📢', name: 'Marketing', desc: 'Croissance, publicités, partenariats', min: 0, max: 15 },
-      { key: 'pct_operations', icon: '🏛️', name: 'Opérations', desc: 'Support, équipe, salaire fondateur', min: 0, max: 30 },
-      { key: 'pct_profit', icon: '💪', name: 'Pérennité de la plateforme', desc: 'Réserve long terme, réinvest ou bonus', min: 0, max: 20 }
-    ];
+    const CANON = window.PAP_PLATFORM_SETTINGS;
+    const POSTES = (CANON ? CANON.PLATFORM_ALLOCATION_POSTS : [
+      { key: 'pct_livreur', emoji: '🚗', label: 'Livreur québécois' },
+      { key: 'pct_stripe', emoji: '💳', label: 'Frais Stripe (traitement des paiements)' },
+      { key: 'pct_developpement', emoji: '🔧', label: 'Infrastructure & développement' },
+      { key: 'pct_protection', emoji: '🛡️', label: 'Protection colis' },
+      { key: 'pct_urgence', emoji: '🆘', label: 'Fonds d’urgence' },
+      { key: 'pct_communaute', emoji: '💚', label: 'Communauté (organismes d’ici)' },
+      { key: 'pct_profit', emoji: '💪', label: 'Réserve / pérennité' },
+      { key: 'pct_marketing', emoji: '📢', label: 'Marketing & croissance' },
+      { key: 'pct_operations', emoji: '🏛️', label: 'Opérations' }
+    ]).map(p => ({ key: p.key, icon: p.emoji || p.icon, name: p.label || p.name, desc: p.label || p.name, min: 0, max: 100 }));
     const PRESETS = {
       // Config officielle Denis (lancement bêta Québec/Lévis 2026)
-      lancement:   { livreur:60, communaute:5, protection:8, urgence:5, developpement:5, marketing:3, operations:4, profit:10 },
+      lancement:   { livreur:60, stripe:7, developpement:5, protection:10, urgence:6, communaute:5, profit:7, marketing:0, operations:0 },
       // Equilibre: plus de marketing/dev quand traction
-      equilibre:   { livreur:60, communaute:5, protection:6, urgence:3, developpement:5, marketing:5, operations:8, profit:8 },
+      equilibre:   { livreur:60, stripe:7, developpement:5, protection:8, urgence:5, communaute:5, profit:5, marketing:3, operations:2 },
       // Rentable: plus de profit, moins protection (quand fonds bien rempli)
-      rentable:    { livreur:60, communaute:5, protection:3, urgence:2, developpement:4, marketing:4, operations:10, profit:12 }
+      rentable:    { livreur:60, stripe:7, developpement:4, protection:6, urgence:3, communaute:5, profit:10, marketing:3, operations:2 }
     };
     let current = {};
     let ticket = 15;
@@ -320,7 +323,8 @@
       const data = await res.json();
       const s = data.settings || {};
       current = {};
-      POSTES.forEach(p => current[p.key] = Number(s[p.key]) || 0);
+      const defaults = CANON ? CANON.PLATFORM_ALLOCATION_DEFAULTS : {};
+      POSTES.forEach(p => current[p.key] = Number.isFinite(Number(s[p.key])) ? Number(s[p.key]) : Number(defaults[p.key] || 0));
       ticket = Number(s.ticket_moyen_cad) || 15;
       document.getElementById('ticket').value = ticket;
       // Assurance + fondateur

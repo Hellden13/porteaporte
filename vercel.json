@@ -2,7 +2,7 @@
     "cleanUrls":  false,
     "trailingSlash":  false,
     "functions": {
-        "api/platform.js": { "includeFiles": "lib/**" },
+        "api/platform.js": { "includeFiles": "{lib/**,js/platform-settings-defaults.js}" },
         "api/capture-livraison.js": { "includeFiles": "lib/**" },
         "api/paiement-livraison.js": { "includeFiles": "lib/**" },
         "api/cron-cleanup.js": { "includeFiles": "lib/**" },

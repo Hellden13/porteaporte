@@ -126,7 +126,7 @@
         <div style="text-align:center;color:var(--brand-muted);padding:20px">La répartition apparaîtra ici dès que les données seront disponibles.</div>
       </div>
       <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)">
-        💡 La part livreur est <strong>nette</strong> (après frais Stripe). Le profit reste au Québec.
+        💡 Pour l’instant, le fondateur ne prend aucun salaire : le surplus est dirigé vers la protection, la communauté et la réserve.
       </p>
     </div>
 
@@ -220,6 +220,7 @@
     </section>
   </main>
 
+  <script src="/js/platform-settings-defaults.js"></script>
   <script>
     function money(cents){return (Number(cents||0)/100).toLocaleString('fr-CA',{style:'currency',currency:'CAD'});}
     function monthLabel(value){
@@ -232,19 +233,21 @@
         const r = await fetch('/api/platform?endpoint=platform-settings-get');
         const out = await r.json();
         const s = out.settings || {};
-        const POSTES = [
-          { icon: '🚗', name: 'Le livreur québécois', key: 'pct_livreur', def: 60, hl: true },
-          { icon: '💚', name: 'Causes communautaires (Fonds PorteàPorte)', key: 'pct_communaute', def: 5, cause: true },
-          { icon: '🛡️', name: 'Protection colis bêta', key: 'pct_protection', def: 8 },
-          { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', def: 5 },
-          { icon: '🔧', name: 'Maintenance + développement', key: 'pct_developpement', def: 5 },
-          { icon: '📢', name: 'Marketing & croissance', key: 'pct_marketing', def: 3 },
-          { icon: '🏛️', name: 'Opérations (support, équipe)', key: 'pct_operations', def: 4 },
-          { icon: '💪', name: 'Pérennité de la plateforme <span style="color:#00d9ff;font-size:.72rem;background:rgba(0,217,255,.12);padding:2px 8px;border-radius:99px;margin-left:6px">🛡️ Redirigé vers fonds litige (bêta)</span>', key: 'pct_profit', def: 10 }
-        ];
+        const canon = window.PAP_PLATFORM_SETTINGS;
+        const POSTES = canon
+          ? canon.platformAllocationPosts(s, { includeZero: false }).map(p => ({ icon: p.emoji, name: p.label, key: p.key, pct: p.pct, hl: p.key === 'pct_livreur', cause: p.key === 'pct_communaute' }))
+          : [
+            { icon: '🚗', name: 'Livreur québécois', key: 'pct_livreur', pct: 60, hl: true },
+            { icon: '💳', name: 'Frais Stripe (traitement des paiements)', key: 'pct_stripe', pct: 7 },
+            { icon: '🔧', name: 'Infrastructure & développement', key: 'pct_developpement', pct: 5 },
+            { icon: '🛡️', name: 'Protection colis', key: 'pct_protection', pct: 10 },
+            { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', pct: 6 },
+            { icon: '💚', name: 'Communauté (organismes d\'ici)', key: 'pct_communaute', pct: 5, cause: true },
+            { icon: '💪', name: 'Réserve / pérennité', key: 'pct_profit', pct: 7 }
+          ];
         const ticket = Number(s.ticket_moyen_cad) || 15;
         const html = POSTES.map(p => {
-          const pct = Number(s[p.key] != null ? s[p.key] : p.def);
+          const pct = Number(p.pct);
           const dollars = (ticket * pct / 100).toFixed(2);
           const bg = p.hl ? 'rgba(93,191,255,.12)' : p.cause ? 'rgba(255,107,157,.08)' : 'rgba(255,255,255,.03)';
           const border = p.hl ? '#5dbfff' : p.cause ? '#ff6b9d' : 'transparent';

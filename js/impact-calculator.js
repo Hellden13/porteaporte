@@ -8,14 +8,14 @@
 
   let settings = {
     pct_livreur: 60,
-    pct_communaute: 5,
-    pct_protection: 8,
-    pct_urgence: 5,
+    pct_stripe: 7,
     pct_developpement: 5,
-    pct_marketing: 3,
-    pct_operations: 4,
-    pct_profit: 10,
-    pct_stripe: 3.4,
+    pct_protection: 10,
+    pct_urgence: 6,
+    pct_communaute: 5,
+    pct_profit: 7,
+    pct_marketing: 0,
+    pct_operations: 0,
     founder_revenue_pct: 0.05,
     ticket_moyen_cad: 15
   };
@@ -123,28 +123,26 @@
   }
 
   function renderBreakdown(container, amount) {
-    const stripeFees = amount * (settings.pct_stripe / 100);
-    const net = amount - stripeFees;
     const posts = [
-      { icon: 'L', name: 'Livreur local', pct: settings.pct_livreur, highlight: true },
-      { icon: 'C', name: 'Causes communautaires', pct: settings.pct_communaute, cause: true },
-      { icon: 'P', name: 'Protection colis beta', pct: settings.pct_protection },
-      { icon: 'U', name: 'Fonds d urgence', pct: settings.pct_urgence },
-      { icon: 'D', name: 'Developpement et maintenance', pct: settings.pct_developpement },
-      { icon: 'M', name: 'Marketing et croissance', pct: settings.pct_marketing },
-      { icon: 'O', name: 'Operations et support', pct: settings.pct_operations },
-      { icon: 'N', name: 'Marge nette plateforme', pct: settings.pct_profit },
-      { icon: 'S', name: 'Frais Stripe estimes', pct: settings.pct_stripe, isStripe: true }
-    ];
+      { icon: '🚗', name: 'Livreur québécois', pct: settings.pct_livreur, highlight: true },
+      { icon: '💳', name: 'Frais Stripe (traitement des paiements)', pct: settings.pct_stripe, isStripe: true },
+      { icon: '🔧', name: 'Infrastructure & développement', pct: settings.pct_developpement },
+      { icon: '🛡️', name: 'Protection colis', pct: settings.pct_protection },
+      { icon: '🆘', name: 'Fonds d urgence', pct: settings.pct_urgence },
+      { icon: '💚', name: 'Communauté (organismes d ici)', pct: settings.pct_communaute, cause: true },
+      { icon: '💪', name: 'Réserve / pérennité', pct: settings.pct_profit },
+      { icon: '📢', name: 'Marketing & croissance', pct: settings.pct_marketing },
+      { icon: '🏛️', name: 'Opérations', pct: settings.pct_operations }
+    ].filter((p) => Number(p.pct) > 0);
     const html = posts.map((p) => {
-      const dollars = p.isStripe ? stripeFees : (net * p.pct / 100);
+      const dollars = amount * p.pct / 100;
       const cls = p.highlight ? 'highlight' : (p.cause ? 'cause' : '');
       return `
         <div class="row ${cls}">
           <div class="icon">${p.icon}</div>
           <div class="info">
             <div class="name">${p.name}</div>
-            <div class="pct">${Number(p.pct).toFixed(1)}%${p.isStripe ? ' du brut' : ' du net'}</div>
+            <div class="pct">${Number(p.pct).toFixed(1)}% du montant</div>
           </div>
           <div class="amount">${dollars.toFixed(2)} $</div>
         </div>
@@ -152,7 +150,7 @@
     }).join('');
     container.querySelector('.pap-calc-breakdown').innerHTML = html;
 
-    const livreurPaP = net * settings.pct_livreur / 100;
+    const livreurPaP = amount * settings.pct_livreur / 100;
     const livreurUber = amount * 0.32;
     const livreurDoorDash = amount * 0.30;
     container.querySelector('.comparison-content').innerHTML = `

@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/platform-settings-defaults.js"></script>
   <style>
     body { padding: 24px; min-height: 100vh; background: #05080c; }
     .wrap { max-width: 1280px; margin: 0 auto; }
@@ -253,15 +254,28 @@
         const cfgRes = await fetch('/api/platform?endpoint=platform-settings-get');
         cfg = (await cfgRes.json()).settings || {};
       } catch (_) {}
+      const canon = window.PAP_PLATFORM_SETTINGS;
+      const canonical = canon ? canon.canonicalPlatformSettings(cfg) : {
+        pct_livreur: num(cfg.pct_livreur, 60),
+        pct_stripe: num(cfg.pct_stripe, 7),
+        pct_developpement: num(cfg.pct_developpement, 5),
+        pct_protection: num(cfg.pct_protection, 10),
+        pct_urgence: num(cfg.pct_urgence, 6),
+        pct_communaute: num(cfg.pct_communaute, 5),
+        pct_profit: num(cfg.pct_profit, 7),
+        pct_marketing: num(cfg.pct_marketing, 0),
+        pct_operations: num(cfg.pct_operations, 0)
+      };
       const P = {
-        livreur:       num(cfg.pct_livreur, 60),
-        communaute:    num(cfg.pct_communaute, 5),
-        protection:    num(cfg.pct_protection, 8),
-        urgence:       num(cfg.pct_urgence, 5),
-        developpement: num(cfg.pct_developpement, 5),
-        marketing:     num(cfg.pct_marketing, 3),
-        operations:    num(cfg.pct_operations, 4),
-        profit:        num(cfg.pct_profit, 10)
+        livreur: canonical.pct_livreur,
+        stripe: canonical.pct_stripe,
+        developpement: canonical.pct_developpement,
+        protection: canonical.pct_protection,
+        urgence: canonical.pct_urgence,
+        communaute: canonical.pct_communaute,
+        profit: canonical.pct_profit,
+        marketing: canonical.pct_marketing,
+        operations: canonical.pct_operations
       };
       const commissionPct = Math.max(0, 100 - P.livreur) / 100;   // tout sauf le livreur
       const founderPct = (P.operations + P.profit) / 100;          // ta part réaliste
@@ -288,18 +302,28 @@
       document.querySelector('#commission + .sub').textContent = `${(commissionPct * 100).toFixed(1)}% (tout sauf le livreur)`;
       document.getElementById('ticketAvg').textContent = ticketAvg.toFixed(2) + ' $';
 
-      // Funds — 8 postes lus EN DIRECT (identiques à la page Transparence)
+      // Funds — postes officiels lus EN DIRECT (identiques à la page Transparence)
       const fundsData = [
-        { icon: '🚗', name: 'Livreur québécois',                key: 'livreur',       desc: 'Gains versés via Stripe Connect' },
-        { icon: '💚', name: 'Communauté (Fonds PorteàPorte)',    key: 'communaute',    desc: 'Reversé aux organismes québécois' },
-        { icon: '🛡️', name: 'Protection colis bêta',            key: 'protection',    desc: 'Réserve dommages / pertes' },
-        { icon: '🆘', name: 'Fonds d\'urgence',                  key: 'urgence',       desc: 'Litiges majeurs, cas extrêmes' },
-        { icon: '🔧', name: 'Maintenance + développement',       key: 'developpement', desc: 'Évolutions et futurs devs' },
-        { icon: '📢', name: 'Marketing & croissance',            key: 'marketing',     desc: 'Pubs, partenariats, acquisition' },
-        { icon: '🏛️', name: 'Opérations',                       key: 'operations',    desc: 'Support, équipe, salaire fondateur' },
-        { icon: '💪', name: 'Pérennité de la plateforme',        key: 'profit',        desc: 'Réserve long terme / bonus fondateur' }
+        { icon: '🚗', name: 'Livreur québécois', key: 'livreur', desc: 'Livreur québécois' },
+        { icon: '💳', name: 'Frais Stripe (traitement des paiements)', key: 'stripe', desc: 'Frais Stripe (traitement des paiements)' },
+        { icon: '🔧', name: 'Infrastructure & développement', key: 'developpement', desc: 'Infrastructure & développement' },
+        { icon: '🛡️', name: 'Protection colis', key: 'protection', desc: 'Protection colis' },
+        { icon: '🆘', name: 'Fonds d\'urgence', key: 'urgence', desc: 'Fonds d\'urgence' },
+        { icon: '💚', name: 'Communauté (organismes d\'ici)', key: 'communaute', desc: 'Communauté (organismes d\'ici)' },
+        { icon: '💪', name: 'Réserve / pérennité', key: 'profit', desc: 'Réserve / pérennité' }
       ];
-      document.getElementById('fundsList').innerHTML = fundsData.map(f => {
+      const officialFundsData = canon
+        ? canon.platformAllocationPosts(cfg, { includeZero: false }).map(p => ({ icon: p.emoji, name: p.label, key: p.slug, desc: p.label }))
+        : [
+          { icon: '🚗', name: 'Livreur québécois', key: 'livreur', desc: 'Livreur québécois' },
+          { icon: '💳', name: 'Frais Stripe (traitement des paiements)', key: 'stripe', desc: 'Frais Stripe (traitement des paiements)' },
+          { icon: '🔧', name: 'Infrastructure & développement', key: 'developpement', desc: 'Infrastructure & développement' },
+          { icon: '🛡️', name: 'Protection colis', key: 'protection', desc: 'Protection colis' },
+          { icon: '🆘', name: 'Fonds d\'urgence', key: 'urgence', desc: 'Fonds d\'urgence' },
+          { icon: '💚', name: 'Communauté (organismes d\'ici)', key: 'communaute', desc: 'Communauté (organismes d\'ici)' },
+          { icon: '💪', name: 'Réserve / pérennité', key: 'profit', desc: 'Réserve / pérennité' }
+        ];
+      document.getElementById('fundsList').innerHTML = officialFundsData.map(f => {
         const pctVal = P[f.key];
         const amount = revBrut * pctVal / 100;
         return `<div class="fund-row">

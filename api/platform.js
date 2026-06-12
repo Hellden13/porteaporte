@@ -2,6 +2,10 @@
 // Modules extraits : _lib.js · _push.js · _rides.js · _growth.js · _connect.js
 
 const crypto = require('crypto');
+const {
+  PLATFORM_ALLOCATION_DEFAULTS,
+  platformAllocationPosts,
+} = require('../js/platform-settings-defaults');
 
 const {
   CORS, sanitizeEnv, safeIds, sbHeaders, parseDataUrl, uploadProofPhoto,
@@ -3810,9 +3814,11 @@ async function fetchImpactState(sbUrl, sbKey) {
   const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
   const impactSettings = settingsRows[0] || {
     id: 'default',
-    pct_livreur: 85, pct_plateforme: 15, pct_don: 0,
-    pct_tirage: 0, pct_developpeur: 0, pct_securite: 0, pct_assurance: 0,
-    ride_platform_fee: 1.50, ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
+    ...PLATFORM_ALLOCATION_DEFAULTS,
+    pct_plateforme: 40, pct_don: 5,
+    pct_tirage: 0, pct_developpeur: 5, pct_securite: 10, pct_assurance: 10,
+    ride_platform_fee: 1.50, ride_platform_fee_high: 3, ride_fee_threshold: 15,
+    ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
     public_note: 'Montants estimes en direct, confirmes mensuellement.'
   };
   let settings = impactSettings;
@@ -3867,32 +3873,33 @@ async function fetchImpactState(sbUrl, sbKey) {
   if (hasNewModel) {
     slices = {
       // Nouveaux noms officiels (défauts = configuration prod actuelle)
-      livreur:       Math.max(0, toNumber(settings.pct_livreur, 60)),
-      communaute:    Math.max(0, toNumber(settings.pct_communaute, 5)),
-      protection:    Math.max(0, toNumber(settings.pct_protection, 8)),
-      urgence:       Math.max(0, toNumber(settings.pct_urgence, 5)),
-      developpement: Math.max(0, toNumber(settings.pct_developpement, 5)),
-      marketing:     Math.max(0, toNumber(settings.pct_marketing, 3)),
-      operations:    Math.max(0, toNumber(settings.pct_operations, 4)),
-      profit:        Math.max(0, toNumber(settings.pct_profit, 10)),
+      livreur:       Math.max(0, toNumber(settings.pct_livreur, PLATFORM_ALLOCATION_DEFAULTS.pct_livreur)),
+      stripe:        Math.max(0, toNumber(settings.pct_stripe, PLATFORM_ALLOCATION_DEFAULTS.pct_stripe)),
+      communaute:    Math.max(0, toNumber(settings.pct_communaute, PLATFORM_ALLOCATION_DEFAULTS.pct_communaute)),
+      protection:    Math.max(0, toNumber(settings.pct_protection, PLATFORM_ALLOCATION_DEFAULTS.pct_protection)),
+      urgence:       Math.max(0, toNumber(settings.pct_urgence, PLATFORM_ALLOCATION_DEFAULTS.pct_urgence)),
+      developpement: Math.max(0, toNumber(settings.pct_developpement, PLATFORM_ALLOCATION_DEFAULTS.pct_developpement)),
+      marketing:     Math.max(0, toNumber(settings.pct_marketing, PLATFORM_ALLOCATION_DEFAULTS.pct_marketing)),
+      operations:    Math.max(0, toNumber(settings.pct_operations, PLATFORM_ALLOCATION_DEFAULTS.pct_operations)),
+      profit:        Math.max(0, toNumber(settings.pct_profit, PLATFORM_ALLOCATION_DEFAULTS.pct_profit)),
       // Alias retro-compat (clients qui lisent les anciens noms ne cassent pas)
-      plateforme:    Math.max(0, toNumber(settings.pct_operations, 4)) + Math.max(0, toNumber(settings.pct_developpement, 5)),
-      don:           Math.max(0, toNumber(settings.pct_communaute, 5)),
+      plateforme:    Math.max(0, toNumber(settings.pct_operations, PLATFORM_ALLOCATION_DEFAULTS.pct_operations)) + Math.max(0, toNumber(settings.pct_developpement, PLATFORM_ALLOCATION_DEFAULTS.pct_developpement)),
+      don:           Math.max(0, toNumber(settings.pct_communaute, PLATFORM_ALLOCATION_DEFAULTS.pct_communaute)),
       tirage:        0,
-      developpeur:   Math.max(0, toNumber(settings.pct_developpement, 5)),
-      securite:      Math.max(0, toNumber(settings.pct_protection, 8)),
-      assurance:     Math.max(0, toNumber(settings.pct_protection, 8))
+      developpeur:   Math.max(0, toNumber(settings.pct_developpement, PLATFORM_ALLOCATION_DEFAULTS.pct_developpement)),
+      securite:      Math.max(0, toNumber(settings.pct_protection, PLATFORM_ALLOCATION_DEFAULTS.pct_protection)),
+      assurance:     Math.max(0, toNumber(settings.pct_protection, PLATFORM_ALLOCATION_DEFAULTS.pct_protection))
     };
   } else {
     slices = {
-      livreur:     Math.max(0, toNumber(settings.pct_livreur, 85)),
-      plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 15)),
-      don:         Math.max(0, toNumber(settings.pct_don, 0)),
+      livreur:     Math.max(0, toNumber(settings.pct_livreur, PLATFORM_ALLOCATION_DEFAULTS.pct_livreur)),
+      plateforme:  Math.max(0, toNumber(settings.pct_plateforme, 100 - PLATFORM_ALLOCATION_DEFAULTS.pct_livreur)),
+      don:         Math.max(0, toNumber(settings.pct_don, PLATFORM_ALLOCATION_DEFAULTS.pct_communaute)),
       tirage:      Math.max(0, toNumber(settings.pct_tirage, 0)),
-      developpeur: Math.max(0, toNumber(settings.pct_developpeur, 0)),
-      securite:    Math.max(0, toNumber(settings.pct_securite, 0)),
-      assurance:   Math.max(0, toNumber(settings.pct_assurance, 0)),
-      communaute:  Math.max(0, toNumber(settings.pct_don, 0))
+      developpeur: Math.max(0, toNumber(settings.pct_developpeur, PLATFORM_ALLOCATION_DEFAULTS.pct_developpement)),
+      securite:    Math.max(0, toNumber(settings.pct_securite, PLATFORM_ALLOCATION_DEFAULTS.pct_protection)),
+      assurance:   Math.max(0, toNumber(settings.pct_assurance, PLATFORM_ALLOCATION_DEFAULTS.pct_protection)),
+      communaute:  Math.max(0, toNumber(settings.pct_don, PLATFORM_ALLOCATION_DEFAULTS.pct_communaute))
     };
   }
   // donationPoolCents = part communauté (Fonds PorteàPorte → organismes)
@@ -3964,8 +3971,8 @@ async function impactPublic(req, res, ctx) {
 
   // ─── BÊTA MODE : si profitToInsurance ON, le pct_profit ET pct_protection alimentent le fonds ───
   // Insurance effective = pct_protection (toujours) + pct_profit (si toggle ON)
-  const pctProtection = Number(allSettings.pct_protection != null ? allSettings.pct_protection : 8);
-  const pctProfit = Number(allSettings.pct_profit != null ? allSettings.pct_profit : 10);
+  const pctProtection = Number(allSettings.pct_protection != null ? allSettings.pct_protection : PLATFORM_ALLOCATION_DEFAULTS.pct_protection);
+  const pctProfit = Number(allSettings.pct_profit != null ? allSettings.pct_profit : PLATFORM_ALLOCATION_DEFAULTS.pct_profit);
   const effectiveInsurancePct = profitToInsurance
     ? (pctProtection + pctProfit) / 100  // ex: 8% + 10% = 18%
     : insurancePct;
@@ -4048,7 +4055,9 @@ async function impactPublic(req, res, ctx) {
     allocations: state.allocations,
     ride_redistribution: state.ride_redistribution,
     ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10))),
-    ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50))
+    ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50)),
+    ride_fee_threshold: Math.max(0, Number(state.settings.ride_fee_threshold != null ? state.settings.ride_fee_threshold : 15)),
+    ride_platform_fee_high: Math.max(0, Number(state.settings.ride_platform_fee_high != null ? state.settings.ride_platform_fee_high : 3))
   };
   const protectionFund = {
     total_cents: fundTotalCents,
@@ -4082,20 +4091,16 @@ async function impactPublic(req, res, ctx) {
 
 async function platformSettingsPublic(req, res, sbUrl, sbKey) {
   const defaults = {
-    pct_livreur: 60,
-    pct_communaute: 5,
-    pct_protection: 3,
-    pct_urgence: 2,
-    pct_developpement: 4,
-    pct_marketing: 4.6,
-    pct_operations: 13,
-    pct_profit: 8.4,
-    pct_stripe: 0,
+    ...PLATFORM_ALLOCATION_DEFAULTS,
     ticket_moyen_cad: 15,
     max_colis_value_cents: 25000,
     insurance_pct: 0.02,
     insurance_fund_topup_cents: 0,
     founder_revenue_pct: 0.05,
+    ride_free_trips: 10,
+    ride_platform_fee: 1.50,
+    ride_fee_threshold: 15,
+    ride_platform_fee_high: 3,
     beta_cities: ['quebec', 'levis'],
     beta_cities_active: false
   };
@@ -4123,10 +4128,26 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     }
   }
   const rows = r.ok ? await r.json() : [];
+  let rideSettings = {};
+  try {
+    const rideFields = 'ride_free_trips,ride_platform_fee,ride_fee_threshold,ride_platform_fee_high';
+    let rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=${rideFields}&limit=1`, {
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+    });
+    if (!rr.ok) {
+      rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_free_trips,ride_platform_fee&limit=1`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+      });
+    }
+    const rideRows = rr.ok ? await rr.json() : [];
+    rideSettings = rideRows[0] || {};
+  } catch (_) {}
+  const mergedSettings = { ...defaults, ...(rows[0] || {}), ...rideSettings };
   return res.status(200).json({
     success: true,
     stripe_configured: Boolean(process.env.STRIPE_SECRET_KEY),
-    settings: { ...defaults, ...(rows[0] || {}) }
+    settings: mergedSettings,
+    allocation_posts: platformAllocationPosts(mergedSettings, { includeZero: false })
   });
 }
 
@@ -4362,13 +4383,15 @@ async function impactAdmin(req, res, ctx, body) {
     const payload = {
       id: 'default',
       pct_livreur:     pct(body.pct_livreur, 60),
-      pct_plateforme:  pct(body.pct_plateforme, 15),
-      pct_don:         pct(body.pct_don, 0),
+      pct_plateforme:  pct(body.pct_plateforme, 40),
+      pct_don:         pct(body.pct_don, 5),
       pct_tirage:      pct(body.pct_tirage, 0),
-      pct_developpeur: pct(body.pct_developpeur, 0),
-      pct_securite:    pct(body.pct_securite, 0),
-      pct_assurance:   pct(body.pct_assurance, 0),
+      pct_developpeur: pct(body.pct_developpeur, 5),
+      pct_securite:    pct(body.pct_securite, 10),
+      pct_assurance:   pct(body.pct_assurance, 10),
       ride_platform_fee:  Math.max(0, toNumber(body.ride_platform_fee, 1.50)),
+      ride_fee_threshold: Math.max(0, toNumber(body.ride_fee_threshold, 15)),
+      ride_platform_fee_high: Math.max(0, toNumber(body.ride_platform_fee_high, 3)),
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
@@ -5069,6 +5092,8 @@ module.exports = async function handler(req, res) {
         success: true,
         settings: {
           ride_platform_fee: 1.5,
+          ride_fee_threshold: 15,
+          ride_platform_fee_high: 3,
           ride_fee_luggage: 5,
           ride_fee_pet: 8,
           ride_fee_stop: 3,
@@ -5869,7 +5894,7 @@ module.exports = async function handler(req, res) {
       if (typeof body.beta_cities_active === 'boolean') patch.beta_cities_active = body.beta_cities_active;
       if (typeof body.profit_to_insurance === 'boolean') patch.profit_to_insurance = body.profit_to_insurance;
       // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
-      const distribFields = ['pct_livreur','pct_communaute','pct_protection','pct_urgence','pct_developpement','pct_marketing','pct_operations','pct_profit'];
+      const distribFields = ['pct_livreur','pct_stripe','pct_developpement','pct_protection','pct_urgence','pct_communaute','pct_profit','pct_marketing','pct_operations'];
       const hasAnyDistrib = distribFields.some(f => patch[f] != null);
       if (hasAnyDistrib) {
         const sum = distribFields.reduce((s,f) => s + Number(patch[f] != null ? patch[f] : 0), 0);
