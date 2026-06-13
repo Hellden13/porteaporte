@@ -151,7 +151,7 @@
           <div class="input-row">
             <label>📍 Km parcourus / semaine pour PàP <span class="val"><span id="kmVal">10</span> km</span></label>
             <input type="range" id="kmSem" min="0" max="2000" value="10" step="5">
-            <div class="hint" id="kmHint">Si trajet déjà fait : mets 0. Sinon : km supplémentaires.</div>
+            <div class="hint" id="kmHint">Compte ton détour réaliste (cueillette + dépôt) : ~5 km/livraison sur un trajet déjà fait, plus si tu dévies (15, 25 km…).</div>
           </div>
           <div class="input-row">
             <label>📐 Type moyen de colis</label>
@@ -295,8 +295,8 @@
     function applyProfile(p) {
       if (p === 'opportuniste') {
         state.livraisons = 5;
-        state.kmSem = 0;
-        document.getElementById('kmHint').textContent = 'Trajet déjà fait → 0 km supplémentaire (recommandé pour Opportuniste)';
+        state.kmSem = state.livraisons * 5; // ~5 km de détour réaliste par cueillette+livraison
+        document.getElementById('kmHint').textContent = 'Même sur un trajet déjà fait, compte un petit détour cueillette+dépôt (~5 km/livraison). Ajuste le curseur si tu dévies plus (15, 25 km…).';
       } else if (p === 'mixte') {
         state.livraisons = 12;
         state.kmSem = 200;
