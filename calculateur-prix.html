@@ -144,7 +144,7 @@
         </div>
 
         <div class="panel">
-          <h3>📊 Détail de la répartition (où va ton $)</h3>
+          <h3>📊 Détail de la répartition — 📦 Livraison (où va ton $)</h3>
           <div id="breakdown" style="font-size:.85rem;line-height:1.7"></div>
         </div>
       </div>
@@ -337,22 +337,21 @@
       // Breakdown répartition
       const livreur = totalPap * 0.60;
       const communaute = totalPap * 0.05;
-      const protection = totalPap * 0.08;
-      const profit = totalPap * 0.10;
-      const ops = totalPap * 0.04;
+      // Répartition OFFICIELLE livraison (= platform_settings). Total = 100 %.
+      const stripe = totalPap * 0.07;
       const dev = totalPap * 0.05;
-      const marketing = totalPap * 0.03;
-      const urgenceFund = totalPap * 0.05;
+      const protection = totalPap * 0.10;
+      const urgenceFund = totalPap * 0.06;
+      const profit = totalPap * 0.07; // réserve / pérennité
       const fmt2 = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 2 });
       document.getElementById('breakdown').innerHTML = `
         <div style="display:flex;justify-content:space-between"><span>🚗 Livreur québécois (60%)</span><strong style="color:var(--brand-lime)">${fmt2(livreur)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>💚 Causes communautaires (5%)</span><strong style="color:#ff6b9d">${fmt2(communaute)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🛡️ Protection colis (8%)</span><strong>${fmt2(protection)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🆘 Fonds urgence (5%)</span><strong>${fmt2(urgenceFund)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🔧 Développement (5%)</span><strong>${fmt2(dev)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>📢 Marketing (3%)</span><strong>${fmt2(marketing)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🏛️ Opérations (4%)</span><strong>${fmt2(ops)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>💰 Profit → fonds litige bêta (10%)</span><strong style="color:var(--brand-cyan)">${fmt2(profit)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>💳 Frais Stripe (7%)</span><strong>${fmt2(stripe)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🔧 Infrastructure + développement (5%)</span><strong>${fmt2(dev)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🛡️ Protection colis (10%)</span><strong>${fmt2(protection)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>🆘 Fonds d'urgence (6%)</span><strong>${fmt2(urgenceFund)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>💚 Communauté (5%)</span><strong style="color:#ff6b9d">${fmt2(communaute)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span>💪 Réserve / pérennité (7%)</span><strong style="color:var(--brand-cyan)">${fmt2(profit)}</strong></div>
       `;
     }
 
