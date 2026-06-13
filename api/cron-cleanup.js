@@ -150,6 +150,26 @@ module.exports = async function handler(req, res) {
     results.daily_summary = 'exception: ' + e.message;
   }
 
+  // ─── 5. CAPTURE PAIEMENTS COVOITURAGE (fusionné ici : plan Hobby ne lance qu'un cron) ───
+  // Capture les réservations 'confirme' dont le trajet est passé (+grâce) → paie les conducteurs.
+  try {
+    const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
+    if (stripeKey) {
+      const { rideCaptureEligible } = require('../lib/_rides');
+      const ctx = { sbUrl, sbKey, stripeKey, session: { id: '__cron__' }, profile: { role: 'admin' } };
+      let capData = null;
+      const fakeRes = { status: () => ({ json: (d) => { capData = d; return d; } }) };
+      await rideCaptureEligible({ url: '/api/cron-cleanup' }, fakeRes, ctx, { grace_hours: 4 });
+      results.ride_capture = capData
+        ? `captured ${(capData.captured || []).length}, skipped ${(capData.skipped || []).length}, errors ${(capData.errors || []).length}`
+        : 'no-result';
+    } else {
+      results.ride_capture = 'stripe non configuré';
+    }
+  } catch (e) {
+    results.ride_capture = 'exception: ' + e.message;
+  }
+
   console.log('[cron-cleanup]', results);
   return res.status(200).json({ success: true, results, ts: new Date().toISOString() });
 };
