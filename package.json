@@ -8,6 +8,7 @@
     "test:rides": "node --test tests/rides.test.js",
     "test:growth": "node --test tests/growth.test.js",
     "test:handlers": "node --test tests/handlers.test.js",
+    "test:stripe": "node --test tests/stripe-integration.test.js",
     "test:watch": "node --test --watch tests/**/*.test.js"
   },
   "dependencies": {

@@ -312,6 +312,23 @@ describe('ride cancellation safeguards', () => {
     assert.match(res._body.error, /ride_id invalide/);
   });
 
+  test('rideCaptureEligible refuse un booking_id trafique avant Supabase', async () => {
+    global.fetch = async () => {
+      throw new Error('Supabase ne doit pas etre appele avec un ID invalide');
+    };
+
+    const res = makeRes();
+    await rideCaptureEligible(
+      { method: 'POST' },
+      res,
+      ctx({ session: { id: 'admin-1' }, profile: { role: 'admin' } }),
+      { booking_id: 'book-1&select=*' }
+    );
+
+    assert.equal(res._status, 400);
+    assert.match(res._body.error, /booking_id invalide/);
+  });
+
   test('annulation passager +24h libere autorisation Stripe et place', async () => {
     const calls = [];
     global.fetch = async (url, opts = {}) => {
