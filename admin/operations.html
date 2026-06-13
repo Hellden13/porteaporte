@@ -227,7 +227,7 @@
       // Actions
       const actEl = document.getElementById('health-actions');
       const acts = [];
-      if (p.alerts.kyc_livreur_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/kyc-review.html">Voir KYC livreur</a>`);
+      if (p.alerts.kyc_livreur_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/dashboard-admin.html#section-users">Voir livreur à valider</a>`);
       if (p.alerts.photos_pending > 0 || p.alerts.pet_photos_pending > 0) acts.push(`<a class="btn btn-sm" href="/admin/photos-moderation.html">Modérer photos</a>`);
       if (p.alerts.manquements_open > 0) acts.push(`<a class="btn btn-sm" href="/admin/manquements.html">Voir manquements</a>`);
       if (p.alerts.webhook_silent) acts.push(`<a class="btn btn-sm" href="/admin/diagnostic.html">Diagnostic</a>`);
@@ -238,7 +238,7 @@
         <div class="stat ${p.alerts.kyc_pending > 0 ? 'alert' : ''} ${p.alerts.kyc_pending > 5 ? 'high' : ''}">
           <div class="lbl">KYC en attente</div>
           <div class="val">${p.alerts.kyc_pending}</div>
-          <a href="/admin/kyc-review.html">Vérifier →</a>
+          <a href="/admin/dashboard-admin.html#section-users">Vérifier →</a>
         </div>
         <div class="stat ${p.alerts.manquements_open > 0 ? 'alert' : ''} ${p.alerts.manquements_open > 2 ? 'high' : ''}">
           <div class="lbl">Manquements ouverts</div>
