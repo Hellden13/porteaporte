@@ -4,6 +4,8 @@
 
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const { Readable } = require('node:stream');
 
 // ─── Mock fetch global ────────────────────────────────────────────────────────
 // On remplace fetch globalement par un mock contrôlable avant chaque test.
@@ -42,6 +44,18 @@ function makeRes() {
     setHeader(k, v) { this._headers[k] = v; },
   };
   return res;
+}
+
+function makeStripeWebhookReq(event, secret = 'whsec_test') {
+  const raw = JSON.stringify(event);
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = crypto.createHmac('sha256', secret).update(`${ts}.${raw}`, 'utf8').digest('hex');
+  const req = Readable.from([Buffer.from(raw)]);
+  req.method = 'POST';
+  req.headers = { 'stripe-signature': `t=${ts},v1=${sig}` };
+  req.body = undefined;
+  req.url = '/api/stripe-webhook';
+  return req;
 }
 
 // ─── Tests _lib.js: insertWithSchemaFallback ──────────────────────────────────
@@ -1001,6 +1015,25 @@ describe('cancel-livraison handler', () => {
     assert.equal(res._status, 400);
   });
 
+  test('livraison_id trafique refuse avant requete Supabase livraison', async () => {
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(url);
+      if (url.includes('/auth/v1/user')) return { ok: true, status: 200, json: async () => ({ id: 'u1' }) };
+      throw new Error('Aucune requete livraison ne doit etre faite avec un ID invalide');
+    };
+    const req = makeReq({
+      body: { livraison_id: 'liv-1&select=*' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 400);
+    assert.match(res._body?.error || '', /livraison_id/);
+    assert.equal(calls.some(url => url.includes('/rest/v1/livraisons')), false);
+  });
+
   test('annulation apres assignation inscrit la compensation livreur en revue manuelle', async () => {
     const calls = [];
     global.fetch = async (url, opts = {}) => {
@@ -1257,6 +1290,61 @@ describe('capture-livraison handler — confirmation destinataire + escrow', () 
     assert.equal(res._body?.status, 'succeeded');
     assert.ok(calls.some(c => c.url.includes('/capture')), 'Stripe capture doit être appelée');
     assert.ok(calls.some(c => c.url.includes('/transaction_audit_events')), 'Audit transaction doit être enregistré');
+  });
+});
+
+describe('stripe-webhook hardening', () => {
+  const handler = require('../api/stripe-webhook');
+
+  test('refuse de traiter sans SUPABASE_SERVICE_KEY', async () => {
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    delete process.env.SUPABASE_SERVICE_KEY;
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+
+    const req = makeStripeWebhookReq({ id: 'evt_no_service', type: 'account.updated', data: { object: { id: 'acct_1' } } });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 503);
+    assert.match(res._body?.error || '', /service role/);
+  });
+
+  test('retourne 500 si un paiement Stripe critique ne peut pas etre persiste', async () => {
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key-fake';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') {
+        return { ok: false, status: 500, text: async () => 'db down', json: async () => ({ message: 'db down' }) };
+      }
+      return { ok: true, status: 201, text: async () => '', json: async () => ({}) };
+    };
+
+    const event = {
+      id: 'evt_auth_fail',
+      type: 'payment_intent.amount_capturable_updated',
+      data: {
+        object: {
+          id: 'pi_auth_fail',
+          status: 'requires_capture',
+          amount: 1250,
+          amount_capturable: 1250,
+          currency: 'cad',
+          metadata: {
+            type: 'ride_booking',
+            booking_id: 'book-1',
+            ride_id: 'ride-1',
+            passenger_id: 'passenger-1'
+          }
+        }
+      }
+    };
+    const req = makeStripeWebhookReq(event);
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 500);
+    assert.match(res._body?.error || '', /Webhook Stripe/);
   });
 });
 

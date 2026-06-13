@@ -288,6 +288,30 @@ describe('ride Stripe payments', () => {
 });
 
 describe('ride cancellation safeguards', () => {
+  test('rideCancel refuse un booking_id trafique avant Supabase', async () => {
+    global.fetch = async () => {
+      throw new Error('Supabase ne doit pas etre appele avec un ID invalide');
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx(), { booking_id: 'book-1&select=*' });
+
+    assert.equal(res._status, 400);
+    assert.match(res._body.error, /booking_id invalide/);
+  });
+
+  test('rideCancel refuse un ride_id trafique avant Supabase', async () => {
+    global.fetch = async () => {
+      throw new Error('Supabase ne doit pas etre appele avec un ID invalide');
+    };
+
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx({ session: { id: 'driver-1' } }), { ride_id: 'ride-1,ride-2' });
+
+    assert.equal(res._status, 400);
+    assert.match(res._body.error, /ride_id invalide/);
+  });
+
   test('annulation passager +24h libere autorisation Stripe et place', async () => {
     const calls = [];
     global.fetch = async (url, opts = {}) => {

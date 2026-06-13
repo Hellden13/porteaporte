@@ -54,6 +54,11 @@ async function sbPostJson(sbUrl, sbKey, table, payload) {
   return { ok: r.ok, status: r.status, data };
 }
 
+function safeRestId(value) {
+  const id = String(value || '').trim();
+  return /^[A-Za-z0-9_-]{1,80}$/.test(id) ? id : null;
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -105,11 +110,12 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: 'Session requise' });
     }
 
-    const { livraison_id, raison } = req.body || {};
+    const { raison } = req.body || {};
+    const livraison_id = safeRestId((req.body || {}).livraison_id);
 
     if (!livraison_id) {
       log('WARN', 'cancel_livraison_missing_id', session.id, {});
-      return res.status(400).json({ error: 'livraison_id requis' });
+      return res.status(400).json({ error: 'livraison_id requis ou invalide' });
     }
 
     log('INFO', 'cancel_livraison_started', session.id, {
@@ -119,7 +125,7 @@ module.exports = async function handler(req, res) {
 
     // Récupérer la livraison
     const livRes = await fetch(
-      `${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}&select=id,expediteur_id,livreur_id,statut,prix_total,stripe_payment_intent`,
+      `${SB_URL}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,expediteur_id,livreur_id,statut,prix_total,stripe_payment_intent`,
       {
         headers: {
           apikey: SB_KEY,
@@ -141,7 +147,7 @@ module.exports = async function handler(req, res) {
     const isDriver = livraison.livreur_id === session.id;
 
     // Vérifier si l'utilisateur est admin
-    const profileRes = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${session.id}&select=role`, {
+    const profileRes = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(session.id)}&select=role`, {
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
     });
     const profileRows = profileRes.ok ? await profileRes.json() : [];
@@ -255,7 +261,7 @@ module.exports = async function handler(req, res) {
 
     // Marquer comme annulée
     const cancelRes = await fetch(
-      `${SB_URL}/rest/v1/livraisons?id=eq.${livraison_id}`,
+      `${SB_URL}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}`,
       {
         method: 'PATCH',
         headers: {
@@ -312,7 +318,7 @@ module.exports = async function handler(req, res) {
     // Notifier le livreur si assigné
     if (livraison.livreur_id && livraison.livreur_id !== session.id) {
       try {
-        const lvr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${livraison.livreur_id}&select=email,prenom`, {
+        const lvr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.livreur_id)}&select=email,prenom`, {
           headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
         });
         const lvrProfile = lvr.ok ? (await lvr.json())[0] : null;

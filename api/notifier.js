@@ -311,6 +311,26 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    case 'verification_rappel': {
+      emails.push({
+        to: data.email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Il te reste une étape pour livrer avec PorteàPorte 🚗`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 14px;color:#fff">Tu es inscrit — il te reste une étape ! ✅</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${data.prenom || ''},<br><br>Merci de t'être inscrit comme livreur/conducteur sur PorteàPorte ! 🙌<br>Pour commencer à <strong>livrer, conduire et gagner</strong>, il te reste juste à <strong>compléter ta vérification</strong> — c'est rapide et sécurisé.</p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="https://porteaporte.site/livreur.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">🚀 Compléter ma vérification</a>
+            </div>
+            <p style="color:#a8b0ba;font-size:.9rem;line-height:1.6">Une fois vérifié, tu accèdes aux trajets et livraisons près de chez toi. On a hâte de t'avoir dans la communauté ! 💙🍁</p>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Tu ne souhaites plus livrer ? Ignore simplement ce courriel.</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── LIVRAISON PUBLIÉE ──
     case 'livraison_publiee': {
       emails.push({

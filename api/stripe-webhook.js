@@ -5,6 +5,8 @@
  *                      SUPABASE_URL, SUPABASE_SERVICE_KEY
  */
 
+const crypto = require('node:crypto');
+
 const CORS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -27,22 +29,32 @@ async function sbGet(url, key, path) {
 
 /* Verification signature Stripe (HMAC-SHA256) */
 async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  if (!sigHeader) throw new Error('Signature manquante');
   const parts = sigHeader.split(',');
-  const ts    = parts.find(p => p.startsWith('t=')).slice(2);
-  const v1    = parts.find(p => p.startsWith('v1=')).slice(3);
+  const tsPart = parts.find(p => p.startsWith('t='));
+  const signatures = parts.filter(p => p.startsWith('v1=')).map(p => p.slice(3)).filter(Boolean);
+  if (!tsPart || !signatures.length) throw new Error('Signature Stripe mal formee');
+  const ts = tsPart.slice(2);
 
-  const enc     = new TextEncoder();
-  const keyData = enc.encode(secret);
-  const msgData = enc.encode(`${ts}.${rawBody}`);
-
-  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig       = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
-  const computed  = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  if (computed !== v1) throw new Error('Signature invalide');
+  const computed = crypto
+    .createHmac('sha256', secret)
+    .update(`${ts}.${rawBody}`, 'utf8')
+    .digest();
+  const valid = signatures.some((sig) => {
+    const incoming = Buffer.from(sig, 'hex');
+    return incoming.length === computed.length && crypto.timingSafeEqual(incoming, computed);
+  });
+  if (!valid) throw new Error('Signature invalide');
 
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(ts)) > 300) throw new Error('Webhook expire');
+}
+
+async function requireOk(response, label) {
+  if (response && response.ok) return response;
+  const status = response?.status || 0;
+  const body = response ? await response.text().catch(() => '') : '';
+  throw new Error(`${label} failed (${status}) ${body.slice(0, 200)}`.trim());
 }
 
 module.exports = async function handler(req, res) {
@@ -51,10 +63,11 @@ module.exports = async function handler(req, res) {
 
   const _san = s => { let v = (s || '').trim(); while (v.length > 0 && v.charCodeAt(0) > 127) v = v.slice(1); return v.trim(); };
   const sbUrl    = _san(process.env.SUPABASE_URL);
-  const sbKey    = _san(process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY);
+  const sbKey    = _san(process.env.SUPABASE_SERVICE_KEY);
   const whSecret = _san(process.env.STRIPE_WEBHOOK_SECRET);
 
   if (!whSecret) return res.status(503).json({ error: 'STRIPE_WEBHOOK_SECRET non configure' });
+  if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase service role non configure' });
 
   /* Lire le body brut */
   const chunks = [];
@@ -155,12 +168,13 @@ module.exports = async function handler(req, res) {
       { status: 'available', stripe_transfer_id: null });
   }
 
+  try {
   /* ── payment_intent.amount_capturable_updated ──────────── */
   /* Carte confirmée, fonds autorisés, capture manuelle prête */
   if (type === 'payment_intent.amount_capturable_updated') {
     const bookingId = obj.metadata?.booking_id;
     if (bookingId && obj.metadata?.type === 'ride_booking' && obj.status === 'requires_capture') {
-      await sbPatch(sbUrl, sbKey, 'ride_bookings',
+      await requireOk(await sbPatch(sbUrl, sbKey, 'ride_bookings',
         `id=eq.${encodeURIComponent(bookingId)}`,
         {
           status: 'confirme',
@@ -169,9 +183,9 @@ module.exports = async function handler(req, res) {
           payment_status: 'requires_capture',
           payment_currency: obj.currency || 'cad',
           payment_authorized_at: new Date().toISOString()
-        }).catch(() => {});
+        }), 'ride booking authorize webhook patch');
 
-      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         user_id: obj.metadata?.passenger_id || null,
         actor_id: obj.metadata?.passenger_id || null,
         event_type: 'ride_payment_authorized_requires_capture_webhook',
@@ -180,20 +194,20 @@ module.exports = async function handler(req, res) {
         stripe_payment_intent: obj.id,
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id, ride_id: obj.metadata?.ride_id || null, booking_id: bookingId }
-      }).catch(() => {});
+      }), 'ride payment authorize audit insert');
     }
 
     const livraisonId = obj.metadata?.livraison_id;
     if (livraisonId && obj.status === 'requires_capture') {
-      await sbPatch(sbUrl, sbKey, 'livraisons',
+      await requireOk(await sbPatch(sbUrl, sbKey, 'livraisons',
         `id=eq.${encodeURIComponent(livraisonId)}`,
         {
           statut: 'paiement_autorise',
           stripe_payment_intent: obj.id,
           payment_intent_id: obj.id
-        }).catch(() => {});
+        }), 'delivery authorize webhook patch');
 
-      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         livraison_id: livraisonId,
         user_id: obj.metadata?.expediteur_id || null,
         actor_id: obj.metadata?.expediteur_id || null,
@@ -203,7 +217,7 @@ module.exports = async function handler(req, res) {
         stripe_payment_intent: obj.id,
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id }
-      }).catch(() => {});
+      }), 'delivery payment authorize audit insert');
     }
   }
 
@@ -212,14 +226,14 @@ module.exports = async function handler(req, res) {
   if (type === 'payment_intent.succeeded') {
     const bookingId = obj.metadata?.booking_id;
     if (bookingId && obj.metadata?.type === 'ride_booking') {
-      await sbPatch(sbUrl, sbKey, 'ride_bookings',
+      await requireOk(await sbPatch(sbUrl, sbKey, 'ride_bookings',
         `id=eq.${encodeURIComponent(bookingId)}`,
         {
           payment_status: 'succeeded',
           paid_at: new Date().toISOString()
-        }).catch(() => {});
+        }), 'ride booking succeeded webhook patch');
 
-      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         user_id: obj.metadata?.passenger_id || null,
         actor_id: null,
         event_type: 'ride_payment_intent_succeeded_webhook_reconciled',
@@ -228,16 +242,16 @@ module.exports = async function handler(req, res) {
         stripe_payment_intent: obj.id,
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id, ride_id: obj.metadata?.ride_id || null, booking_id: bookingId }
-      }).catch(() => {});
+      }), 'ride payment succeeded audit insert');
     }
 
     const livraisonId = obj.metadata?.livraison_id;
     if (livraisonId) {
-      await sbPatch(sbUrl, sbKey, 'livraisons',
+      await requireOk(await sbPatch(sbUrl, sbKey, 'livraisons',
         `id=eq.${encodeURIComponent(livraisonId)}`,
-        { statut: 'payee' }).catch(() => {});
+        { statut: 'payee' }), 'delivery succeeded webhook patch');
 
-      await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
         livraison_id: livraisonId,
         user_id: obj.metadata?.expediteur_id || null,
         actor_id: null,
@@ -247,8 +261,12 @@ module.exports = async function handler(req, res) {
         stripe_payment_intent: obj.id,
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id }
-      }).catch(() => {});
+      }), 'delivery payment succeeded audit insert');
     }
+  }
+  } catch (e) {
+    console.error('[stripe-webhook] critical payment event failed', type, e.message);
+    return res.status(500).json({ error: 'Webhook Stripe non traite', details: e.message });
   }
 
   /* ── payout.paid ────────────────────────────────────────── */

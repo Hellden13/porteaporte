@@ -2521,6 +2521,29 @@ async function adminUpdateDriverStatus(req, res, ctx, body) {
   return res.status(200).json({ success: true, profile: updated });
 }
 
+// Admin : renvoie un courriel invitant un inscrit "non démarré" à compléter sa vérification.
+async function adminVerificationReminder(req, res, ctx, body) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  const userId = body.user_id || body.id;
+  if (!userId) return res.status(400).json({ error: 'user_id requis' });
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,prenom,driver_status&limit=1`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = r.ok ? await r.json() : [];
+  const profile = rows[0];
+  if (!profile || !profile.email) return res.status(404).json({ error: 'Utilisateur ou courriel introuvable' });
+  if (profile.driver_status === 'verified') return res.status(400).json({ error: 'Cet utilisateur est déjà vérifié' });
+
+  await callNotifier('verification_rappel', {
+    user_id: profile.id,
+    email: profile.email,
+    prenom: profile.prenom || ''
+  }).catch(() => {});
+
+  return res.status(200).json({ success: true, sent_to: profile.email });
+}
+
 async function adminSetUserAccess(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) {
     return res.status(403).json({ error: 'Admin requis' });
@@ -6335,6 +6358,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'submit-driver-verification') return await submitDriverVerification(req, res, ctx, body);
     if (endpoint === 'request-driver-card') return await requestDriverCard(req, res, ctx, body);
     if (endpoint === 'admin-update-driver-status') return await adminUpdateDriverStatus(req, res, ctx, body);
+    if (endpoint === 'verification-reminder') return await adminVerificationReminder(req, res, ctx, body);
     if (endpoint === 'retirer') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'retirer' });
     if (endpoint === 'pause-user') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'pause' });
     if (endpoint === 'reactiver-user') return await adminSetUserAccess(req, res, ctx, { ...body, action: 'reactiver' });

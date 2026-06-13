@@ -1520,6 +1520,20 @@
     await loadData();
   }
 
+  async function sendVerifReminder(userId) {
+    const session = await window.db.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) { alert('Session admin requise'); return; }
+    const res = await fetch(apiUrl('/api/platform?endpoint=verification-reminder'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ endpoint: 'verification-reminder', user_id: userId })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(out.error || 'Envoi impossible'); return; }
+    alert('📨 Invitation à se vérifier envoyée à ' + (out.sent_to || 'l\'utilisateur') + ' !');
+  }
+
   async function setUserAccess(userId, action, role) {
     const me = AUTH_API.getUser();
     if (userId === me?.id) {
@@ -1589,13 +1603,17 @@
     const resendAction = (p.driver_status === 'rejected' || p.verification_status === 'rejected')
       ? `<button class="action-btn" onclick="setDriverStatus('${p.id}','rejected')" style="margin-left:4px" title="Envoyer la raison du refus par courriel">✉️ Renvoyer la raison</button>`
       : '';
+    // Pour les inscrits "Non démarré" (livreur/conducteur) : inviter à compléter leur vérification.
+    const reminderAction = (['livreur', 'les deux'].includes(p.role) && p.driver_status === 'not_started')
+      ? `<button class="action-btn" onclick="sendVerifReminder('${p.id}')" style="margin-left:4px" title="Renvoyer l'invitation à se vérifier">📨 Relancer</button>`
+      : '';
     const accessAction = p.suspendu
       ? `<button class="action-btn" onclick="setUserAccess('${p.id}','reactiver','${p.role || ''}')" style="margin-left:4px">Réactiver</button>`
       : `
         <button class="action-btn" onclick="setUserAccess('${p.id}','pause','${p.role || ''}')" style="margin-left:4px">Pause</button>
         <button class="action-btn danger" onclick="setUserAccess('${p.id}','retirer','${p.role || ''}')" style="margin-left:4px">Retirer</button>
       `;
-    return `<div class="action-cell">${driverActions}${resendAction}${accessAction}</div>`;
+    return `<div class="action-cell">${driverActions}${reminderAction}${resendAction}${accessAction}</div>`;
   }
 
   function $m(v) {
