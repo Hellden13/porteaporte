@@ -494,7 +494,7 @@
           const d = await r.json();
           const a = d.pulse?.alerts || {};
           const items = [
-            { lbl: '🪪 KYC livreur',  n: a.kyc_livreur_pending || 0, href: '/admin/kyc-review.html' },
+            { lbl: '🪪 Vérif. livreur (en attente)',  n: a.kyc_livreur_pending || 0, href: '#section-users' },
             { lbl: '📷 Photos profil', n: a.photos_pending      || 0, href: '/admin/photos-moderation.html' },
             { lbl: '🐾 Photos animal', n: a.pet_photos_pending  || 0, href: '/admin/photos-moderation.html' },
             { lbl: '⚠️ Manquements',   n: a.manquements_open    || 0, href: '/admin/manquements.html' },
@@ -533,6 +533,11 @@
         <div class="stat-card-label">En attente vérif.</div>
         <div class="stat-card-value" id="stat-pending-verif">—</div>
         <div class="stat-card-sub">livreurs à valider</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">🟢 Disponibles maintenant</div>
+        <div class="stat-card-value" id="stat-dispo">—</div>
+        <div class="stat-card-sub">livreurs en ligne</div>
       </div>
     </div>
 
@@ -1913,6 +1918,7 @@
       document.getElementById('stat-users').textContent = actifs.length;
       document.getElementById('stat-livreurs').textContent = profiles.filter(p => p.driver_status === 'verified').length;
       document.getElementById('stat-pending-verif').textContent = profiles.filter(p => p.driver_status === 'pending_review').length;
+      document.getElementById('stat-dispo').textContent = profiles.filter(p => p.disponible === true && p.driver_status === 'verified').length;
       document.getElementById('archives-count').textContent = archives.length;
 
       document.getElementById('users-body').innerHTML = actifs.length === 0
