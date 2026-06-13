@@ -230,6 +230,31 @@ async function annulerTrajet(rideId) {
   }
 }
 
+// Annuler une réservation (passager)
+async function annulerReservation(bookingId) {
+  if (!confirm('Annuler ta réservation ?\n\nUn remboursement s\'applique selon le délai avant le départ (politique d\'annulation). Cette action est irréversible.')) return;
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const res = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status)));
+      return;
+    }
+    alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : ''));
+    window.location.reload();
+  } catch (e) {
+    alert('❌ Erreur réseau. Réessaie dans un instant.');
+  }
+}
+
 function showSection(name) {
   currentSection = name;
   document.querySelectorAll('.sidebar-item').forEach((el,i) => {
@@ -451,11 +476,15 @@ function buildTrajets() {
             const payBtn = isPending
               ? `<a href="/covoiturage-trajet.html?ride_id=${encodeURIComponent(b.ride_id)}&booking_id=${encodeURIComponent(b.id)}" style="display:inline-block;padding:7px 13px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border-radius:7px;font-weight:900;font-size:.82rem;text-decoration:none;margin:2px;box-shadow:0 4px 12px rgba(93,191,255,.4)">💳 Payer maintenant</a>`
               : '';
+            const canCancel = !['annule','annule_passager','annule_chauffeur','complete','cancelled','refunded','rembourse','termine','completed','done'].includes(String(b.status||'').toLowerCase());
+            const cancelBtn = canCancel
+              ? `<button onclick="annulerReservation('${b.id}')" style="margin:2px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:6px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>`
+              : '';
             return `<tr>
               <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
               <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-              <td>${statusChip(b.status)} ${payBtn}</td>
+              <td>${statusChip(b.status)} ${payBtn} ${cancelBtn}</td>
               <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
             </tr>`;
           };
