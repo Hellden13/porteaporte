@@ -106,7 +106,7 @@
     <div class="hero">
       <div class="eyebrow">💰 Calculateur transparent · Données 2026</div>
       <h1>Combien tu gagnerais<br><span>comme livreur PorteàPorte ?</span></h1>
-      <p class="sub">Joue avec les sliders. Tu vois une estimation de revenu net, comparée à d'autres plateformes connues. <strong style="color:var(--brand-lime)">Calcul transparent</strong> — essence et usure sont incluses.</p>
+      <p class="sub">PorteàPorte, ce n'est pas un <em>shift</em> : c'est de l'argent <strong style="color:var(--brand-lime)">EN PLUS</strong> sur des trajets que tu fais <strong>déjà</strong> (essence ≈ 0), <strong>près de chez toi</strong>, dans ta communauté. <strong style="color:var(--brand-lime)">Calcul transparent</strong> — essence et usure incluses.</p>
     </div>
 
     <!-- ─── 3 PROFILS ─── -->
@@ -218,9 +218,12 @@
         </div>
 
         <div class="panel">
-          <h3>⚖️ Comparé aux compétiteurs (même nb d'heures)</h3>
+          <h3>⚖️ Comparé aux autres (à titre indicatif)</h3>
+          <div class="hint" style="margin:0 0 12px;color:var(--brand-muted);font-size:.78rem;line-height:1.55">
+            ⚠️ Comparaison « à nombre d'heures égal » seulement. <strong style="color:#5dbfff">Les autres : tu conduis EXPRÈS</strong> (essence, usure, temps mort entre commandes). <strong style="color:var(--brand-lime)">PorteàPorte : tu es déjà sur la route</strong> → c'est de l'argent <strong>EN PLUS</strong>, profit presque pur, près de chez toi. 🍁
+          </div>
           <div id="compareTable"></div>
-          <div class="hint" style="margin-top:12px;color:var(--brand-muted);font-size:.74rem">Sources : études gig economy QC 2024-2025, salaires bureau Statistique Canada.</div>
+          <div class="hint" style="margin-top:12px;color:var(--brand-muted);font-size:.74rem">Sources : études gig economy QC 2024-2025, salaires bureau Statistique Canada. Les autres plateformes = travail dédié (tu roules pour livrer).</div>
         </div>
       </div>
     </div>
@@ -387,13 +390,10 @@
 
       const compRows = COMPETITORS.map(c => {
         const compMonth = c.netPerHour * hoursTotal;
-        const diff = net - compMonth;
-        const diffStr = diff >= 0 ? '+' + fmt(diff) : fmt(diff);
-        const diffColor = diff >= 0 ? 'var(--brand-lime)' : '#ff9999';
         return `<div class="compare-row">
-          <div class="name">${c.name}<small>${c.sub}</small></div>
+          <div class="name">${c.name}<small>${c.sub} · tu conduis exprès</small></div>
           <div class="rate">${c.netPerHour.toFixed(1)} $/h</div>
-          <div class="net" style="color:${diffColor}">${fmt(compMonth)}<br><span style="font-size:.7rem;font-weight:600">${diffStr}</span></div>
+          <div class="net" style="color:var(--brand-muted)">${fmt(compMonth)}</div>
         </div>`;
       }).join('');
 
