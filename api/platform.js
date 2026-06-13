@@ -6245,6 +6245,7 @@ module.exports = async function handler(req, res) {
 
       const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       const since7d = new Date(Date.now() - 7 * 86400 * 1000).toISOString();
+      const since5d = new Date(Date.now() - 5 * 86400 * 1000).toISOString();
       const h = { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' };
 
       async function count(path) {
@@ -6265,7 +6266,7 @@ module.exports = async function handler(req, res) {
 
       const [
         kycLivreurPending, photosPending, petPhotosPending, manquementsOpen, livreursTotal, expediteursTotal,
-        livraisons24h, livraisonsActives, inscriptions24h, webhookEvents24h,
+        livraisons24h, livraisonsActives, inscriptions24h, webhookEvents24h, capturesLate,
         recentLivraisons, recentInscriptions, recentManquements, recentWebhooks
       ] = await Promise.all([
         // KYC livreur soumis et en attente de revue (vrai actionnable, pas default au signup)
@@ -6281,6 +6282,8 @@ module.exports = async function handler(req, res) {
         count(`livraisons?select=id&statut=in.(paiement_autorise,confirme,en_route)`),
         count(`profiles?select=id&created_at=gte.${since24h}`),
         count(`transaction_audit_events?select=id&event_type=like.*webhook*&created_at=gte.${since24h}`),
+        // Réservations confirmées (autorisées) mais NON capturées depuis +5j → risque d'expiration 7j (conducteur non payé)
+        count(`ride_bookings?select=id&status=eq.confirme&paid_at=is.null&created_at=lt.${since5d}`),
         rows(`livraisons?select=id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le&order=cree_le.desc`, 8),
         rows(`profiles?select=id,email,prenom,nom,role,created_at,driver_status,photo_status&order=created_at.desc`, 6),
         rows(`manquements?select=*&order=created_at.desc&statut=eq.signale`, 5),
@@ -6307,6 +6310,7 @@ module.exports = async function handler(req, res) {
             photos_pending: photosPending,
             pet_photos_pending: petPhotosPending,
             moderation_total: totalModerationPending,
+            captures_late: capturesLate,
             manquements_open: manquementsOpen,
             webhook_silent: webhookEvents24h === 0 && livraisons24h > 0
           },

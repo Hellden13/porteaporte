@@ -494,6 +494,7 @@
           const d = await r.json();
           const a = d.pulse?.alerts || {};
           const items = [
+            { lbl: '💰 Captures en retard (conducteur non payé !)', n: a.captures_late || 0, href: '#section-covoiturage' },
             { lbl: '🪪 Vérif. livreur (en attente)',  n: a.kyc_livreur_pending || 0, href: '#section-users' },
             { lbl: '📷 Photos profil', n: a.photos_pending      || 0, href: '/admin/photos-moderation.html' },
             { lbl: '🐾 Photos animal', n: a.pet_photos_pending  || 0, href: '/admin/photos-moderation.html' },
@@ -1539,6 +1540,26 @@
     alert('📨 Invitation à se vérifier envoyée à ' + (out.sent_to || 'l\'utilisateur') + ' !');
   }
 
+  async function captureBooking(bookingId) {
+    if (!confirm('Capturer le paiement maintenant ? Le conducteur sera payé.\n(À faire seulement APRÈS le trajet.)')) return;
+    const session = await window.db.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) { alert('Session admin requise'); return; }
+    const res = await fetch(apiUrl('/api/platform?endpoint=ride-capture-eligible'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ endpoint: 'ride-capture-eligible', booking_id: bookingId, force: true })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(out.error || 'Capture impossible'); return; }
+    const cap = (out.captured || []).length;
+    const errs = (out.errors || []);
+    if (cap > 0) alert('💰 Paiement capturé — conducteur payé ! ✅');
+    else if (errs.length) alert('⚠️ Échec capture : ' + (errs[0].error || 'erreur Stripe — l\'autorisation a peut-être expiré (>7 jours).'));
+    else alert('Rien à capturer (déjà fait ou non éligible).');
+    location.reload();
+  }
+
   async function setUserAccess(userId, action, role) {
     const me = AUTH_API.getUser();
     if (userId === me?.id) {
@@ -1844,14 +1865,19 @@
       document.getElementById('cov-bookings-body').innerHTML = bookings.length === 0
         ? '<tr><td colspan="6" class="empty-msg">Aucune réservation</td></tr>'
         : bookings.map(b => {
-            const statusColor = { confirme: '#5dbfff', en_attente: '#FFB347', annule_passager: '#FF6B6B', annule_chauffeur: '#FF6B6B', complete: '#5A6A7A' }[b.status] || '#A8B0BA';
+            const statusColor = { confirme: '#5dbfff', en_attente: '#FFB347', paye: '#7dffc1', annule_passager: '#FF6B6B', annule_chauffeur: '#FF6B6B', complete: '#5A6A7A' }[b.status] || '#A8B0BA';
+            const canCapture = b.status === 'confirme';
+            const dateStr = b.created_at ? new Date(b.created_at).toLocaleDateString('fr-CA') : '—';
             return `<tr>
               <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${b.id.slice(0,8)}…</td>
               <td style="font-family:monospace;color:#A8B0BA;font-size:.75rem">${b.ride_id?.slice(0,8) || '—'}…</td>
               <td style="color:#A8B0BA;font-size:.8rem">${b.passenger_prenom || b.passenger_id?.slice(0,8) || '—'}</td>
+              <td style="color:#A8B0BA">${b.seats_reserved ?? '—'}</td>
               <td style="color:#5dbfff;font-weight:700">${b.total_passenger ? Number(b.total_passenger).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}) : '—'}</td>
               <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${b.status}</span></td>
-              <td style="color:#5A6A7A;font-size:.8rem">${b.created_at ? new Date(b.created_at).toLocaleDateString('fr-CA') : '—'}</td>
+              <td>${canCapture
+                ? `<button class="action-btn" onclick="captureBooking('${b.id}')" title="Capturer le paiement et payer le conducteur (après le trajet)">💰 Capturer</button>`
+                : `<span style="color:#5A6A7A;font-size:.78rem">${dateStr}</span>`}</td>
             </tr>`;
           }).join('');
 
