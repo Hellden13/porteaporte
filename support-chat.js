@@ -54,7 +54,7 @@
     {
       keys: ['prix covoiturage','combien covoiturage','tarif covoiturage','cout trajet'],
       title: '💰 Prix du covoiturage',
-      response: 'Le prix est calculé automatiquement :\n\n📐 Formule :\nPrix de base = Distance totale × 0,35$/km\nTa part = Prix × (ta portion / trajet total)\n\n➕ Options :\n• Gros bagage : +5$\n• Animal : +8$\n• Arrêt supplémentaire : +3$\n• Frais plateforme : 10%\n\n🎉 Bonus groupe :\n• 2 passagers : −5% chacun\n• 3 passagers : −10% chacun\n• Auto pleine : −15% chacun\n\n➡️ <a href="/covoiturage-info.html" style="color:#B8F53E">Simuler mon prix</a>'
+      response: 'Le prix est calculé automatiquement :\n\n📐 Formule :\nCoût du trajet = Distance totale × 0,35$/km\nTa part = coût partagé entre les occupants, conducteur inclus\n\n➕ Options :\n• Gros bagage : +5$\n• Animal : +8$\n• Arrêt supplémentaire : +3$\n• Frais de service : 1,50 $ ou 3,00 $ selon le palier\n\n🎉 Bonus groupe :\n• 2 passagers : −5% chacun\n• 3 passagers : −10% chacun\n• Auto pleine : −15% chacun\n\n➡️ <a href="/covoiturage-info.html" style="color:#B8F53E">Simuler mon prix</a>'
     },
     {
       keys: ['inscription covoiturage','creer profil covoiturage','m inscrire','sinscrire'],

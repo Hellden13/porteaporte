@@ -196,7 +196,7 @@
         <div class="panel">
           <h3>📊 Détail mensuel</h3>
           <div class="breakdown-row pos">
-            <span class="lbl">Revenu brut PàP (60% du prix client)</span>
+            <span class="lbl">Revenu brut PàP (<span data-share="livreur">60</span>% du prix client)</span>
             <span class="amt" id="brutVal">0 $</span>
           </div>
           <div class="breakdown-row pos">
@@ -273,7 +273,7 @@
       camion:  { conso: 16, usure: 0.10, label: 'Camion' }         // 16 L/100km
     };
 
-    // ─── Prix moyen par mix de colis (livreur 60%) ───
+    // ─── Prix moyen par mix de colis (part livreur configuree) ───
     const MIX = {
       petit: { client: 7,   livreur: 4.20  },  // boîte chaussures, lettre
       moyen: { client: 15,  livreur: 9.00  },  // boîte normale, fragile

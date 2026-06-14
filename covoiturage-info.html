@@ -289,7 +289,7 @@
         <div class="price-row"><span>Part de base</span><span class="val" id="r-base">—</span></div>
         <div class="price-row" id="r-bonus-row" style="display:none"><span>🎉 Bonus groupe (−<span id="r-bonus-pct">0</span>%)</span><span class="val" id="r-bonus" style="color:#5dbfff">—</span></div>
         <div class="price-row" id="r-extras-row" style="display:none"><span>Options</span><span class="val" id="r-extras">—</span></div>
-        <div class="price-row"><span>Frais plateforme (10%)</span><span class="val" id="r-fee">—</span></div>
+        <div class="price-row"><span>Frais de service PorteaPorte</span><span class="val" id="r-fee">—</span></div>
         <div class="price-row total"><span>Vous payez</span><span class="val" id="r-total">—</span></div>
       </div>
       <div class="price-warn" id="price-warn">⚠️ Le montant dépasse le seuil recommandé de 0,50$/km. Vérifiez votre saisie.</div>
@@ -568,6 +568,26 @@
 </footer>
 
 <script>
+  const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15 };
+
+  async function loadRideFeeSettings() {
+    try {
+      const r = await fetch('/api/platform?endpoint=platform-settings-get');
+      const out = r.ok ? await r.json() : null;
+      const s = out && out.settings ? out.settings : {};
+      if (Number.isFinite(Number(s.ride_platform_fee))) rideFeeSettings.low = Math.max(0, Number(s.ride_platform_fee));
+      if (Number.isFinite(Number(s.ride_platform_fee_high))) rideFeeSettings.high = Math.max(rideFeeSettings.low, Number(s.ride_platform_fee_high));
+      if (Number.isFinite(Number(s.ride_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(s.ride_fee_threshold));
+    } catch (_) {
+      /* Garde les paliers publics par defaut. */
+    }
+    calcDemo();
+  }
+
+  function fmtCad(v) {
+    return '$' + Number(v || 0).toFixed(2);
+  }
+
   function toggleOpt(el) {
     el.classList.toggle('active');
     calcDemo();
@@ -584,7 +604,8 @@
     const arret  = document.getElementById('opt-arret').checked  ? 3 : 0;
 
     const totalCost  = distTotal * coutKm;
-    const paxBase    = totalCost * (distPax / distTotal);
+    const occupants  = Math.max(1, nbPax) + 1; // conducteur inclus, comme calcRidePrice()
+    const paxBase    = (totalCost * (distPax / distTotal)) / occupants;
 
     const bonusPct   = nbPax === 1 ? 0 : nbPax === 2 ? 5 : nbPax === 3 ? 10 : 15;
     const bonusAmt   = paxBase * (bonusPct / 100);
@@ -592,12 +613,12 @@
 
     const extras  = bagage + animal + arret;
     const subtotal = paxAfterBonus + extras;
-    const fee     = subtotal * 0.10;
+    const fee     = subtotal >= rideFeeSettings.threshold ? rideFeeSettings.high : rideFeeSettings.low;
     const total   = subtotal + fee;
 
     document.getElementById('r-dist-total').textContent = distTotal + ' km';
     document.getElementById('r-dist-pax').textContent   = distPax + ' km';
-    document.getElementById('r-base').textContent       = '$' + paxBase.toFixed(2);
+    document.getElementById('r-base').textContent       = fmtCad(paxBase);
 
     const bonusRow = document.getElementById('r-bonus-row');
     bonusRow.style.display = bonusPct > 0 ? 'flex' : 'none';
@@ -606,16 +627,19 @@
 
     const extrasRow = document.getElementById('r-extras-row');
     extrasRow.style.display = extras > 0 ? 'flex' : 'none';
-    document.getElementById('r-extras').textContent = '+$' + extras.toFixed(2);
+    document.getElementById('r-extras').textContent = '+' + fmtCad(extras);
 
-    document.getElementById('r-fee').textContent   = '$' + fee.toFixed(2);
-    document.getElementById('r-total').textContent = '$' + total.toFixed(2);
+    const feeLabel = document.getElementById('r-fee')?.previousElementSibling;
+    if (feeLabel) feeLabel.textContent = `Frais de service PorteaPorte (${fmtCad(rideFeeSettings.low)} / ${fmtCad(rideFeeSettings.high)})`;
+    document.getElementById('r-fee').textContent   = fmtCad(fee);
+    document.getElementById('r-total').textContent = fmtCad(total);
 
     const warn = document.getElementById('price-warn');
     warn.style.display = coutKm >= 0.50 ? 'block' : 'none';
   }
 
   calcDemo();
+  loadRideFeeSettings();
 </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>

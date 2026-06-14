@@ -3,6 +3,8 @@
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   calcRidePrice,
@@ -17,6 +19,7 @@ const {
   RIDE_FEE_PET,
   RIDE_FEE_PACKAGE_BASE,
   RIDE_FEE_PACKAGE_PER_KG,
+  rideOgPage,
 } = require('../lib/_rides');
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -259,5 +262,102 @@ describe('missionQualifies', () => {
 
   test('slug inconnu → false', () => {
     assert.equal(missionQualifies('mission_inexistante', 'ride_complete', {}), false);
+  });
+});
+
+describe('rideOgPage', () => {
+  test('la carte Facebook affiche le total passager, pas le cout total du trajet', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes('/rest/v1/rides?')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{
+            start_city: 'Lévis',
+            end_city: 'Québec',
+            departure_time: '2026-06-01T10:00:00Z',
+            available_seats: 2,
+            total_seats: null,
+            total_distance_km: 20,
+            cost_per_km: 0.35,
+            commission_free: false,
+            status: 'publie',
+          }],
+        };
+      }
+      if (u.includes('/rest/v1/impact_settings')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{
+            ride_platform_fee: 1.50,
+            ride_fee_threshold: 15,
+            ride_platform_fee_high: 3,
+          }],
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+
+    const res = {
+      _status: 200,
+      _body: '',
+      _headers: {},
+      status(code) { this._status = code; return this; },
+      send(body) { this._body = body; return this; },
+      setHeader(key, value) { this._headers[key] = value; },
+    };
+
+    try {
+      await rideOgPage(
+        { url: '/api/platform?endpoint=og-trajet&id=ride-1' },
+        res,
+        { sbUrl: 'https://fake.supabase.co', sbKey: 'service-key' }
+      );
+
+      assert.equal(res._status, 200);
+      assert.match(res._body, /3\.83 \$ \/ passager/);
+      assert.doesNotMatch(res._body, /7\$ \/place|7 \$ \/ place/);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
+
+describe('coherence affichages prix et pourcentages', () => {
+  const root = path.join(__dirname, '..');
+  const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+
+  test('calculateur prix livraison utilise la source canonique des pourcentages', () => {
+    const html = read('calculateur-prix.html');
+    assert.match(html, /platform-settings-defaults\.js/);
+    assert.match(html, /platform-settings-get/);
+    assert.match(html, /platformAllocationPosts/);
+  });
+
+  test('simulateur covoiturage info n utilise plus le frais 10 pourcent', () => {
+    const html = read('covoiturage-info.html');
+    assert.match(html, /rideFeeSettings/);
+    assert.match(html, /ride_fee_threshold/);
+    assert.match(html, /conducteur inclus, comme calcRidePrice/);
+    assert.doesNotMatch(html, /subtotal\s*\*\s*0\.10/);
+  });
+
+  test('textes aide et securite ne promettent plus un frais covoiturage en pourcentage', () => {
+    const support = read('support-chat.js');
+    const securite = read('securite.html');
+    assert.doesNotMatch(support, /Frais plateforme\s*:\s*10%/);
+    assert.doesNotMatch(securite, /8 % au conducteur/);
+  });
+
+  test('paiement et mur missions lisent la part livreur configuree', () => {
+    const paiement = read('paiement.html');
+    const browse = read('browse-missions.html');
+    assert.match(paiement, /deliverySharePct/);
+    assert.match(paiement, /platform-shares\.js/);
+    assert.match(browse, /basePct/);
+    assert.match(browse, /platform-shares\.js/);
   });
 });

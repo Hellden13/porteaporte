@@ -199,7 +199,8 @@
       }
 
       // Price attractiveness
-      const gain = (m.prix_total || 0) * 0.60;
+      const scoreBasePct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const gain = (m.prix_total || 0) * scoreBasePct / 100;
       if (gain >= 30) { score += 15; tags.push({t:'Bon gain', c:'green'}); }
       else if (gain >= 15) { score += 7; tags.push({t:'Gain correct', c:'yellow'}); }
 
@@ -253,13 +254,14 @@
         const { score, tags } = m._match;
         const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
 
-        const baseGain = (m.prix_total || 0) * 0.60;
+        const basePct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+        const baseGain = (m.prix_total || 0) * basePct / 100;
         const ecoGain  = baseGain * (ecoBonus / 100);
         const totalGain = baseGain + ecoGain;
 
-        const gainHtml = ecoBonus > 0
+        let gainHtml = ecoBonus > 0
           ? `<div class="eco-gain">
-               <span class="eco-gain-left">🌱 Ton gain (60% + ${ecoBonus}% éco)</span>
+               <span class="eco-gain-left">🌱 Ton gain (${basePct}% + ${ecoBonus}% éco)</span>
                <span class="eco-gain-right">${money(totalGain)}</span>
              </div>`
           : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
@@ -444,6 +446,7 @@
     });
   </script>
   <script src="/js/support-widget.js"></script>
+  <script src="/js/platform-shares.js" defer></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/gps-tracker.js"></script>

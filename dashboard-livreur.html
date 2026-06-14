@@ -446,15 +446,15 @@
     <!-- Section CONFIG (modes, carte, route) -->
     <div data-section="config">
 
-    <!-- Bonus fidélité (60% → 70% max) -->
+    <!-- Bonus fidélité -->
     <div id="loyaltyPanel" style="margin-bottom:18px;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(255,200,0,.08),rgba(93,191,255,.06));border:2px solid rgba(255,200,0,.35);display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
         <div style="flex:1;min-width:220px">
           <div style="font-weight:900;color:#ffd700;font-size:.95rem;margin-bottom:4px">🏆 Bonus Fidélité actif</div>
-          <div style="color:#a8b0ba;font-size:.82rem">Plus tu es engagé, plus tu gagnes — jusqu'à <strong style="color:#fff">70% par livraison</strong>.</div>
+          <div style="color:#a8b0ba;font-size:.82rem">Plus tu es engagé, plus ta part bonifiée devient intéressante.</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:2rem;font-weight:900;color:var(--brand-lime);line-height:1" id="loyaltyPart">60%</div>
+          <div style="font-size:2rem;font-weight:900;color:var(--brand-lime);line-height:1" id="loyaltyPart">—</div>
           <div style="font-size:.78rem;color:#a8b0ba">part par livraison</div>
         </div>
       </div>
@@ -647,8 +647,8 @@
         <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
           <div class="card-title" style="margin-bottom:12px">Répartition revenus</div>
           <div class="rev-bar">
-            <span class="rev-label" id="revYouLabel">Toi (60%)</span>
-            <div class="rev-track"><div class="rev-fill" id="revYouBar" style="width:60%;background:var(--brand-lime)"></div></div>
+            <span class="rev-label" id="revYouLabel">Toi (base configurée)</span>
+            <div class="rev-track"><div class="rev-fill" id="revYouBar" style="width:0%;background:var(--brand-lime)"></div></div>
             <span class="rev-amount" id="revYou">—</span>
           </div>
           <!-- Eco bonus row — shown only if eco_bonus > 0 -->
@@ -793,6 +793,11 @@
     let profile = null;
     let pendingMissionId = null;
     let availableMissions = [];
+
+    function deliverySharePct() {
+      const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
+      return Number.isFinite(pct) && pct > 0 ? pct : 60;
+    }
 
     function showError(message) {
       showBanner(message, '#EF4444', null, null, 'Erreur');
@@ -945,6 +950,7 @@
       const streak     = profile.streak_jours || 0;
       const ecoBonus   = profile.eco_bonus || 0;          // e.g. 20, 15, 10, 5, 0
       const mode       = profile.transport_mode || null;
+      const basePct    = deliverySharePct();
 
       /* --- Eco banner --- */
       const banner = document.getElementById('ecoBanner');
@@ -952,7 +958,7 @@
         banner.style.display = 'flex';
         document.getElementById('ecoIcon').textContent = ECO_ICONS[mode] || '🌱';
         document.getElementById('ecoBannerTitle').textContent = `Bonus écologique +${ecoBonus}% actif · ${ECO_LABELS[mode] || mode}`;
-        document.getElementById('ecoBannerDesc').textContent = `Sur chaque livraison, tu reçois 60% + ${ecoBonus}% de bonus éco, soit ${60 + ecoBonus}% du prix total.`;
+        document.getElementById('ecoBannerDesc').textContent = `Sur chaque livraison, tu reçois ${basePct}% + ${ecoBonus}% de bonus éco, soit ${basePct + ecoBonus}% du prix total.`;
         document.getElementById('ecoKycLink').style.display = 'none';
       } else if (!mode || profile.driver_status !== 'verified') {
         banner.style.display = 'flex';
@@ -984,13 +990,13 @@
       }
 
       /* --- Revenue breakdown with eco bonus --- */
-      const base    = earnings * 0.60;
+      const base    = earnings * (basePct / 100);
       const eco     = earnings * (ecoBonus / 100);
       const total   = base + eco;
-      const pct     = 60 + ecoBonus;
+      const pct     = basePct + ecoBonus;
 
-      document.getElementById('revYouLabel').textContent = `Toi (60%)`;
-      document.getElementById('revYouBar').style.width   = '60%';
+      document.getElementById('revYouLabel').textContent = `Toi (${basePct}%)`;
+      document.getElementById('revYouBar').style.width   = Math.min(basePct, 100) + '%';
       document.getElementById('revYou').textContent      = money(base);
       document.getElementById('revPlat').textContent     = money(earnings * 0.12);
       document.getElementById('revCause').textContent    = money(earnings * 0.05);
@@ -1007,6 +1013,10 @@
         document.getElementById('revTotalRow').style.display = 'none';
       }
     }
+
+    document.addEventListener('platform-shares', () => {
+      if (profile) renderStats();
+    });
 
     /* ============================
        TOGGLE EN LIGNE
@@ -2565,8 +2575,12 @@
   <!-- Graphe revenus mensuels -->
   <script>
   (function initRevenueChart() {
-    const LIVREUR_SHARE = 0.60;
     const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+    function livreurShareRatio() {
+      const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
+      return (Number.isFinite(pct) && pct > 0 ? pct : 60) / 100;
+    }
 
     async function loadChart() {
       const db = window.getSupabaseClient?.();
@@ -2598,7 +2612,7 @@
           const date = new Date(l.created_at || l.cree_le || 0);
           const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
           const m = months.find(m => m.key === key);
-          if (m) m.total += Number(l.prix_total) * LIVREUR_SHARE;
+          if (m) m.total += Number(l.prix_total) * livreurShareRatio();
         });
 
         renderChart(months);
@@ -2634,6 +2648,7 @@
     } else {
       setTimeout(loadChart, 1200);
     }
+    document.addEventListener('platform-shares', loadChart);
   })();
   </script>
 

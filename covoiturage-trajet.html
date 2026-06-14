@@ -538,11 +538,11 @@ function drawShareCard() {
   const dateStr = (typeof formatDate === 'function' && (r.departure_time || r.date)) ? formatDate(r.departure_time || r.date) : '';
   const seats = r.available_seats != null ? r.available_seats : (r.seats_available || 0);
   // Prix RÉEL = celui affiché au passager sur la page (price-total). Évite d'afficher
-  // un vieux price_per_seat incohérent (ex. 7 $ sur la carte vs 3,83 $ réel).
+  // un vieux prix brut incohérent (ex. 7 $ sur la carte vs 3,83 $ réel).
   let price = 0;
   const _ptEl = document.getElementById('price-total');
   if (_ptEl && _ptEl.textContent) price = parseFloat(_ptEl.textContent.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
-  if (!price) price = Number((r.price_breakdown && r.price_breakdown.totalPassenger) || r.price_per_seat || r.price || 0);
+  if (!price) price = Number((r.price_breakdown && r.price_breakdown.totalPassenger) || r.estimated_price || r.total_passenger || r.price || 0);
   const parts = [];
   if (dateStr) parts.push('📅 ' + dateStr);
   parts.push('💺 ' + seats + ' place' + (seats > 1 ? 's' : ''));
@@ -1025,7 +1025,7 @@ function renderRide(r) {
 
   // Lecture du price_breakdown retourné par calcRidePrice (vraie source de vérité)
   var pb = r.price_breakdown || {};
-  var price   = Number(pb.totalPassenger || r.price_per_seat || r.price || 0);
+  var price   = Number(pb.totalPassenger || r.estimated_price || r.total_passenger || r.price || 0);
   var paxBase = Number(pb.paxBase        || r.pax_base_price || 0);
   var platFee = Number(pb.platformFee    || r.platform_fee   || 0);
   var lugFee  = Number(pb.luggageFee     || r.luggage_fee    || 0);

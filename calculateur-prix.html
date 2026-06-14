@@ -78,6 +78,7 @@
     .copied-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#7dffc1; color:#0a1006; padding:13px 24px; border-radius:99px; font-weight:900; box-shadow:0 8px 30px rgba(93,191,255,.4); z-index:1000; opacity:0; transition:opacity .25s; pointer-events:none; font-size:.92rem; }
     .copied-toast.show { opacity:1; }
   </style>
+  <script src="/js/platform-settings-defaults.js"></script>
 </head>
 <body>
   <header style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
@@ -176,6 +177,24 @@
   </main>
 
   <script>
+    const PLATFORM_CANON = window.PAP_PLATFORM_SETTINGS;
+    let platformShares = PLATFORM_CANON
+      ? PLATFORM_CANON.canonicalPlatformSettings()
+      : { pct_livreur: 60, pct_stripe: 7, pct_developpement: 5, pct_protection: 10, pct_urgence: 6, pct_communaute: 5, pct_profit: 7, pct_marketing: 0, pct_operations: 0 };
+
+    async function loadPlatformShares() {
+      try {
+        const r = await fetch('/api/platform?endpoint=platform-settings-get');
+        const out = r.ok ? await r.json() : null;
+        platformShares = PLATFORM_CANON
+          ? PLATFORM_CANON.canonicalPlatformSettings(out && out.settings)
+          : { ...platformShares, ...((out && out.settings) || {}) };
+      } catch (_) {
+        /* Les valeurs de secours restent celles de la source canonique locale. */
+      }
+      compute();
+    }
+
     // ─── État ───
     let colis = [
       { id: Date.now(), poids: 3, taille: 'moyen', type: 'colis' }
@@ -335,24 +354,17 @@
       document.getElementById('compareTable').innerHTML = papRow + compRows;
 
       // Breakdown répartition
-      const livreur = totalPap * 0.60;
-      const communaute = totalPap * 0.05;
+      const posts = PLATFORM_CANON
+        ? PLATFORM_CANON.platformAllocationPosts(platformShares, { includeZero: false })
+        : Object.keys(platformShares).map(k => ({ key: k, pct: platformShares[k], emoji: '', label: k.replace('pct_', '') })).filter(p => Number(p.pct) > 0);
       // Répartition OFFICIELLE livraison (= platform_settings). Total = 100 %.
-      const stripe = totalPap * 0.07;
-      const dev = totalPap * 0.05;
-      const protection = totalPap * 0.10;
-      const urgenceFund = totalPap * 0.06;
-      const profit = totalPap * 0.07; // réserve / pérennité
       const fmt2 = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 2 });
-      document.getElementById('breakdown').innerHTML = `
-        <div style="display:flex;justify-content:space-between"><span>🚗 Livreur québécois (60%)</span><strong style="color:var(--brand-lime)">${fmt2(livreur)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>💳 Frais Stripe (7%)</span><strong>${fmt2(stripe)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🔧 Infrastructure + développement (5%)</span><strong>${fmt2(dev)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🛡️ Protection colis (10%)</span><strong>${fmt2(protection)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>🆘 Fonds d'urgence (6%)</span><strong>${fmt2(urgenceFund)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>💚 Communauté (5%)</span><strong style="color:#ff6b9d">${fmt2(communaute)}</strong></div>
-        <div style="display:flex;justify-content:space-between"><span>💪 Réserve / pérennité (7%)</span><strong style="color:var(--brand-cyan)">${fmt2(profit)}</strong></div>
-      `;
+      document.getElementById('breakdown').innerHTML = posts.map(p => {
+        const pct = Number(p.pct) || 0;
+        const amount = totalPap * pct / 100;
+        const color = p.key === 'pct_livreur' ? 'var(--brand-lime)' : (p.key === 'pct_communaute' ? '#ff6b9d' : (p.key === 'pct_profit' ? 'var(--brand-cyan)' : ''));
+        return `<div style="display:flex;justify-content:space-between"><span>${p.emoji || ''} ${p.label} (${pct}%)</span><strong style="${color ? 'color:' + color : ''}">${fmt2(amount)}</strong></div>`;
+      }).join('');
     }
 
     document.getElementById('villeDepart').addEventListener('input', tryAutoDistance);
@@ -416,6 +428,7 @@
     if (navigator.share) document.getElementById('nativeBtn').style.display = 'inline-flex';
 
     renderColis();
+    loadPlatformShares();
   </script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/app-launcher.js" defer></script>

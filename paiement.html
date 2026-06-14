@@ -279,7 +279,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(245,240,232,.07)">
         <div style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Distribution du paiement</div>
         <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Livreur (base 60%, bonus possible)</span><span id="dist-livreur" style="color:var(--lime)">?</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Livreur (base configurée, bonus possible)</span><span id="dist-livreur" style="color:var(--lime)">?</span></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Frais plateforme / operations</span><span id="dist-comm" style="color:var(--muted)">?</span></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Impact communautaire (si actif)</span><span id="dist-dons" style="color:var(--teal)">Selon le mois</span></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">→ Tirage / bonus (si actif)</span><span id="dist-tirage" style="color:var(--muted)">Selon le mois</span></div>
@@ -295,6 +295,16 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
 const db = window.getSupabaseClient();
 let stripe = null;
 let cardElement = null;
+
+function deliverySharePct() {
+  const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
+  return Number.isFinite(pct) && pct > 0 ? pct : 60;
+}
+
+function refreshDistributionLabel() {
+  const label = document.getElementById('dist-livreur')?.previousElementSibling;
+  if (label) label.textContent = `-> Livreur (base ${deliverySharePct()}%, bonus possible)`;
+}
 
 async function initStripeElements(){
   const errEl = document.getElementById('card-errors');
@@ -362,7 +372,7 @@ function updatePrix(){
   const tps=Math.round(sousTotal*0.05*100)/100;
   const tvq=Math.round(sousTotal*0.09975*100)/100;
   const total=Math.round((sousTotal+tps+tvq)*100)/100;
-  const partLivreur=Math.round(prixLivraison*0.60*100)/100;
+  const partLivreur=Math.round(prixLivraison*(deliverySharePct()/100)*100)/100;
 
   const fmt=n=>n.toFixed(2)+' $';
   document.getElementById('sum-trajet').textContent=(dep&&arr)?dep+' → '+arr:'?';
@@ -372,6 +382,7 @@ function updatePrix(){
   document.getElementById('sum-tps').textContent=fmt(tps);
   document.getElementById('sum-tvq').textContent=fmt(tvq);
   document.getElementById('sum-total').textContent=fmt(total);
+  refreshDistributionLabel();
   document.getElementById('dist-livreur').textContent=fmt(partLivreur);
   document.getElementById('dist-comm').textContent='Selon reglages admin';
   document.getElementById('dist-dons').textContent='Selon le mois';
@@ -466,7 +477,7 @@ function applyExistingLivraison(livraison) {
 
   prixLivraison = Number(livraison.prix_total || 0);
   const total = prixLivraison;
-  const partLivreur = Math.round(total * 0.60 * 100) / 100;
+  const partLivreur = Math.round(total * (deliverySharePct()/100) * 100) / 100;
   const fmt = n => Number(n || 0).toFixed(2) + ' $';
 
   const finalDep = livraison.ville_depart || livraison.adresse_depart || document.getElementById('ville-dep').value || '-';
@@ -479,6 +490,7 @@ function applyExistingLivraison(livraison) {
   document.getElementById('sum-tps').textContent = 'Inclus';
   document.getElementById('sum-tvq').textContent = 'Inclus';
   document.getElementById('sum-total').textContent = fmt(total);
+  refreshDistributionLabel();
   document.getElementById('dist-livreur').textContent = fmt(partLivreur);
   document.getElementById('dist-comm').textContent = 'Selon reglages admin';
   document.getElementById('dist-dons').textContent = 'Selon le mois';
@@ -655,14 +667,16 @@ loadExistingLivraison().catch(err => {
   errEl.textContent = err.message;
   errEl.style.display = 'block';
 });
+document.addEventListener('platform-shares', () => {
+  updatePrix();
+  if (livraisonChargee) applyExistingLivraison(livraisonChargee);
+});
 
 </script>
+  <script src="/js/platform-shares.js" defer></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>
-
-
-
