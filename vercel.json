@@ -132,6 +132,10 @@
                          "destination":  "/api/platform?endpoint=create-livraison"
                      },
                      {
+                         "source":  "/api/livraison-withdraw",
+                         "destination":  "/api/platform?endpoint=livraison-withdraw"
+                     },
+                     {
                          "source":  "/api/ride-update",
                          "destination":  "/api/platform?endpoint=ride-update"
                      },

@@ -679,6 +679,102 @@ async function adminBackupExport(req, res, ctx, body) {
 
 // ── REFUS / RESCUE — système d'entraide entre livreurs ──
 
+async function livraisonWithdraw(req, res, ctx, body) {
+  if (!ctx.session) return res.status(401).json({ error: 'Session requise' });
+  const livraisonId = safeRestId(body.livraison_id || body.livraisonId);
+  const raison = body.raison || body.reason || '';
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis ou invalide' });
+
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,statut,livreur_id,expediteur_id,refus_history,refus_count,stripe_payment_intent,payment_intent_id`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const livraison = lr.ok ? (await lr.json())[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  const currentStatus = String(livraison.statut || '').toLowerCase();
+  if (!livraison.livreur_id && ['publie', 'paiement_autorise'].includes(currentStatus)) {
+    return res.status(200).json({
+      success: true,
+      idempotent: true,
+      relisted: true,
+      refunded: false,
+      transferred: false,
+      status: livraison.statut,
+      message: 'La livraison est deja disponible pour les autres livreurs.'
+    });
+  }
+
+  if (livraison.livreur_id !== ctx.session.id) return res.status(403).json({ error: 'Livreur assigne requis' });
+
+  if (['ramasse', 'picked_up', 'en_route', 'in_transit', 'livre', 'livree', 'delivered', 'payee', 'paid', 'confirmee'].includes(currentStatus)) {
+    return res.status(409).json({
+      error: 'Retrait impossible : tu as deja le colis ou la livraison est trop avancee. Utilise le flux imprevu/rescue.',
+      requires_rescue: true
+    });
+  }
+
+  if (!['confirme', 'accepted', 'assigne', 'assigned', 'paiement_autorise'].includes(currentStatus)) {
+    return res.status(409).json({ error: 'Retrait impossible dans l etat actuel' });
+  }
+
+  const nextStatus = (livraison.stripe_payment_intent || livraison.payment_intent_id || currentStatus !== 'publie')
+    ? 'paiement_autorise'
+    : 'publie';
+  const history = Array.isArray(livraison.refus_history) ? livraison.refus_history : [];
+  history.push({ livreur_id: ctx.session.id, raison: raison || '', at: new Date().toISOString() });
+
+  let patchBody = {
+    livreur_id: null,
+    statut: nextStatus,
+    refus_count: (livraison.refus_count || 0) + 1,
+    refus_history: history
+  };
+  let pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+    body: JSON.stringify(patchBody)
+  });
+  let pdata = await pr.json().catch(() => ({}));
+  if (!pr.ok && /refus_|schema cache|column/i.test(JSON.stringify(pdata || {}))) {
+    patchBody = { livreur_id: null, statut: nextStatus };
+    pr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
+      body: JSON.stringify(patchBody)
+    });
+    pdata = await pr.json().catch(() => ({}));
+  }
+  if (!pr.ok) {
+    return res.status(502).json({ error: 'Retrait impossible : la livraison n a pas pu etre remise sur le mur.', details: pdata });
+  }
+
+  try {
+    const exp = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.expediteur_id)}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+    const expProfile = exp.ok ? (await exp.json())[0] : null;
+    if (expProfile?.email) {
+      callNotifier('livraison_imprevu', {
+        expediteur_email: expProfile.email,
+        prenom: expProfile.prenom || '',
+        code: livraison.code,
+        action: 'refus_livreur',
+        raison: raison || 'Le livreur s est retire avant le ramassage. La livraison retourne aux autres livreurs.',
+        fautif: 'livreur'
+      }).catch(() => {});
+    }
+  } catch (_) {}
+
+  const updated = Array.isArray(pdata) ? pdata[0] : pdata;
+  return res.status(200).json({
+    success: true,
+    relisted: true,
+    refunded: false,
+    transferred: false,
+    status: updated?.statut || nextStatus,
+    livraison: updated || null,
+    message: 'Mission retiree. La livraison retourne aux autres livreurs.'
+  });
+}
+
 async function livreurRefuserMission(req, res, ctx, body) {
   const { livraison_id, raison } = body;
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
@@ -5863,7 +5959,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
-    if (endpoint === 'livreur-refuser-mission') return await livreurRefuserMission(req, res, ctx, body);
+    if (endpoint === 'livraison-withdraw') return await livraisonWithdraw(req, res, ctx, body);
+    if (endpoint === 'livreur-refuser-mission') return await livraisonWithdraw(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-request') return await livreurRescueRequest(req, res, ctx, body);
     if (endpoint === 'livreur-rescue-accept') return await livreurRescueAccept(req, res, ctx, body);
     if (endpoint === 'admin-backup-export') return await adminBackupExport(req, res, ctx, body);

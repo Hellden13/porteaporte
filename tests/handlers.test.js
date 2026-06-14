@@ -763,6 +763,96 @@ describe('platform.js dispatcher', () => {
     assert.ok(String(res._body?.error || '').includes('verifie') || String(res._body?.error || '').includes('vérifié'));
   });
 
+  test('livraison-withdraw remet une mission avant ramassage sur le mur sans Stripe', async () => {
+    const calls = [];
+    let patchBody = null;
+    const response = (rows, status = 200) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => rows,
+      text: async () => JSON.stringify(rows)
+    });
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || null });
+      if (url.includes('/auth/v1/user')) {
+        return response({ id: 'driver-1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() });
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.driver-1')) {
+        return response([{ id: 'driver-1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'verified' }]);
+      }
+      if (url.includes('/rest/v1/livraisons?id=eq.liv-1') && !opts.method) {
+        return response([{
+          id: 'liv-1',
+          code: 'ABC123',
+          statut: 'confirme',
+          livreur_id: 'driver-1',
+          expediteur_id: 'exp-1',
+          stripe_payment_intent: 'pi_escrow_123',
+          refus_history: [],
+          refus_count: 0
+        }]);
+      }
+      if (url.includes('/rest/v1/livraisons?id=eq.liv-1') && opts.method === 'PATCH') {
+        patchBody = JSON.parse(opts.body);
+        return response([{ id: 'liv-1', ...patchBody }]);
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.exp-1')) {
+        return response([{ id: 'exp-1', email: 'exp@test.com', prenom: 'Exp' }]);
+      }
+      return response([]);
+    };
+
+    const req = makeReq({
+      body: { endpoint: 'livraison-withdraw', livraison_id: 'liv-1', raison: 'Test indisponible' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 200);
+    assert.equal(res._body?.success, true);
+    assert.equal(res._body?.relisted, true);
+    assert.equal(res._body?.refunded, false);
+    assert.equal(res._body?.transferred, false);
+    assert.equal(patchBody.livreur_id, null);
+    assert.equal(patchBody.statut, 'paiement_autorise');
+    assert.equal(calls.some(c => c.url.includes('api.stripe.com')), false, 'aucun appel Stripe ne doit etre fait');
+  });
+
+  test('livraison-withdraw refuse apres ramassage', async () => {
+    let patched = false;
+    const response = (rows, status = 200) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => rows,
+      text: async () => JSON.stringify(rows)
+    });
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/auth/v1/user')) {
+        return response({ id: 'driver-1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() });
+      }
+      if (url.includes('/rest/v1/profiles?id=eq.driver-1')) {
+        return response([{ id: 'driver-1', role: 'livreur', suspendu: false, email_verified: true, driver_status: 'verified' }]);
+      }
+      if (url.includes('/rest/v1/livraisons?id=eq.liv-1') && !opts.method) {
+        return response([{ id: 'liv-1', statut: 'ramasse', livreur_id: 'driver-1', expediteur_id: 'exp-1' }]);
+      }
+      if (opts.method === 'PATCH') patched = true;
+      return response([]);
+    };
+
+    const req = makeReq({
+      body: { endpoint: 'livraison-withdraw', livraison_id: 'liv-1' },
+      headers: { authorization: 'Bearer tok' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    assert.equal(res._status, 409);
+    assert.equal(res._body?.requires_rescue, true);
+    assert.equal(patched, false);
+  });
+
   test('dashboard expediteur: my-livraisons refuse un compte livreur seulement', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'driver@test.com', email_confirmed_at: new Date().toISOString() } },

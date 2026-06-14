@@ -2028,20 +2028,20 @@
     }
 
     async function cancelAssignedDelivery(id) {
-      if (!confirm('Te retirer de cette mission ?\n\nLa politique d’annulation PorteàPorte s’appliquera et Denis verra une trace admin si une revue est nécessaire.')) return;
+      if (!confirm('Te retirer de cette mission ?\n\nLa livraison retournera sur le mur pour les autres livreurs. L’expéditeur ne sera pas remboursé et son paiement restera bloqué en sécurité.')) return;
       const raison = prompt('Raison courte pour l’historique admin (optionnel) :', 'Livreur indisponible');
       try {
-        const res = await fetch('/api/cancel-livraison', {
+        const res = await fetch('/api/livraison-withdraw', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
           body: JSON.stringify({ livraison_id: id, raison: raison || 'Retrait livreur depuis dashboard' })
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) {
-          alert(out.error || 'Annulation impossible pour cette mission.');
+          alert(out.error || 'Retrait impossible pour cette mission.');
           return;
         }
-        showSuccess(out.message || 'Mission annulée.');
+        showSuccess(out.message || 'Mission remise sur le mur.');
         await loadMyDeliveries();
         if (typeof loadAvailableMissions === 'function') await loadAvailableMissions();
       } catch (err) {
