@@ -657,16 +657,8 @@
             <div class="rev-track"><div class="rev-fill" id="revEcoBar" style="width:0%;background:linear-gradient(90deg,#5dbfff,#57ffbc)"></div></div>
             <span class="rev-amount" id="revEco" style="color:var(--brand-lime)">—</span>
           </div>
-          <div class="rev-bar">
-            <span class="rev-label">Plateforme (12%)</span>
-            <div class="rev-track"><div class="rev-fill" style="width:12%;background:var(--brand-cyan)"></div></div>
-            <span class="rev-amount" id="revPlat">—</span>
-          </div>
-          <div class="rev-bar">
-            <span class="rev-label">Cause (5%)</span>
-            <div class="rev-track"><div class="rev-fill" style="width:5%;background:rgba(93,191,255,0.4)"></div></div>
-            <span class="rev-amount" id="revCause">—</span>
-          </div>
+          <!-- Postes plateforme officiels — générés depuis la source canonique (platform_settings), somme = 100% -->
+          <div id="revPlatformRows"></div>
           <div id="revTotalRow" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--brand-border);display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:.82rem;font-weight:800;color:var(--brand-text)">Total pour toi</span>
             <span style="font-weight:900;color:var(--brand-lime);font-size:1rem" id="revTotal">—</span>
@@ -942,6 +934,40 @@
       }
     }
 
+    /* Postes plateforme officiels (hors livreur). Les % viennent de la source canonique
+       (window.__platformShares = platform_settings). Le bonus éco s'ajoute à la part du
+       livreur et réduit proportionnellement la portion plateforme → l'ensemble fait 100%. */
+    const REV_PLATFORM_POSTS = [
+      { key: 'pct_protection',    emoji: '🛡️', label: 'Protection colis',    color: '#00D9FF' },
+      { key: 'pct_profit',        emoji: '💪', label: 'Réserve / pérennité', color: '#A8ACB1' },
+      { key: 'pct_stripe',        emoji: '💳', label: 'Frais Stripe',        color: '#A8ACB1' },
+      { key: 'pct_urgence',       emoji: '🆘', label: 'Fonds d’urgence',     color: '#ffa500' },
+      { key: 'pct_communaute',    emoji: '💚', label: 'Communauté',          color: 'rgba(125,255,193,.7)' },
+      { key: 'pct_developpement', emoji: '🔧', label: 'Infrastructure',      color: '#A8ACB1' },
+    ];
+    const REV_PLATFORM_FALLBACK = { pct_protection:10, pct_profit:7, pct_stripe:7, pct_urgence:6, pct_communaute:5, pct_developpement:5 };
+
+    function renderRevenuePosts(earnings, basePct, ecoBonus) {
+      const container = document.getElementById('revPlatformRows');
+      if (!container) return;
+      const shares = window.__platformShares || {};
+      const platformBase = Math.max(0, 100 - basePct);                 // ex. 40
+      const platformLeft = Math.max(0, 100 - basePct - ecoBonus);      // ex. 20 si éco +20%
+      const scale = platformBase > 0 ? platformLeft / platformBase : 0;
+      container.innerHTML = REV_PLATFORM_POSTS.map(p => {
+        const raw   = Number(shares[p.key]);
+        const canon = Number.isFinite(raw) ? raw : REV_PLATFORM_FALLBACK[p.key];
+        const pct   = Math.round(canon * scale * 10) / 10;             // % effectif (1 décimale)
+        if (!(pct > 0)) return '';
+        const amount = earnings * pct / 100;
+        return `<div class="rev-bar">
+            <span class="rev-label">${p.emoji} ${p.label} (${pct}%)</span>
+            <div class="rev-track"><div class="rev-fill" style="width:${Math.min(pct,100)}%;background:${p.color}"></div></div>
+            <span class="rev-amount">${money(amount)}</span>
+          </div>`;
+      }).join('');
+    }
+
     function renderStats() {
       renderSubscriptionBanner();
       const deliveries = profile.livraisons || 0;
@@ -998,20 +1024,23 @@
       document.getElementById('revYouLabel').textContent = `Toi (${basePct}%)`;
       document.getElementById('revYouBar').style.width   = Math.min(basePct, 100) + '%';
       document.getElementById('revYou').textContent      = money(base);
-      document.getElementById('revPlat').textContent     = money(earnings * 0.12);
-      document.getElementById('revCause').textContent    = money(earnings * 0.05);
 
+      // Bonus éco (ligne affichée seulement si actif)
       if (ecoBonus > 0) {
-        document.getElementById('revEcoRow').style.display   = 'flex';
-        document.getElementById('revEcoLabel').textContent   = `Éco (+${ecoBonus}%)`;
-        document.getElementById('revEcoBar').style.width     = ecoBonus + '%';
-        document.getElementById('revEco').textContent        = money(eco);
-        document.getElementById('revTotalRow').style.display = 'flex';
-        document.getElementById('revTotal').textContent      = money(total) + ` (${pct}%)`;
+        document.getElementById('revEcoRow').style.display = 'flex';
+        document.getElementById('revEcoLabel').textContent = `Éco (+${ecoBonus}%)`;
+        document.getElementById('revEcoBar').style.width   = ecoBonus + '%';
+        document.getElementById('revEco').textContent      = money(eco);
       } else {
-        document.getElementById('revEcoRow').style.display   = 'none';
-        document.getElementById('revTotalRow').style.display = 'none';
+        document.getElementById('revEcoRow').style.display = 'none';
       }
+
+      // Postes plateforme officiels (somme = 100% avec la part livreur)
+      renderRevenuePosts(earnings, basePct, ecoBonus);
+
+      // Total reçu par le livreur (base + éco) — toujours affiché
+      document.getElementById('revTotalRow').style.display = 'flex';
+      document.getElementById('revTotal').textContent      = money(total) + ` (${pct}%)`;
     }
 
     document.addEventListener('platform-shares', () => {
