@@ -5,6 +5,7 @@
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const { Readable } = require('node:stream');
 
 // ─── Mock fetch global ────────────────────────────────────────────────────────
@@ -310,6 +311,16 @@ describe('paiement-livraison handler', () => {
 });
 
 // ─── Tests platform.js dispatcher ─────────────────────────────────────────────
+describe('vercel routing guards', () => {
+  test('plan Hobby: un seul cron actif et tracking-public passe par platform', () => {
+    const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+    assert.deepEqual((config.crons || []).map((cron) => cron.path), ['/api/cron-cleanup']);
+    const tracking = (config.rewrites || []).filter((rw) => rw.source === '/api/tracking-public');
+    assert.equal(tracking.length, 1);
+    assert.equal(tracking[0].destination, '/api/platform?endpoint=tracking-public');
+  });
+});
+
 describe('platform.js dispatcher', () => {
   const handler = require('../api/platform');
 
@@ -921,6 +932,17 @@ describe('platform ride-search public safeguards', () => {
     await handler(req, res);
     assert.equal(res._status, 200);
     assert.equal(res._body?.logged, true);
+  });
+
+  test('livreur-ratings-get refuse un id trafique avant Supabase', async () => {
+    global.fetch = async () => {
+      throw new Error('Supabase ne doit pas etre appele avec un ID invalide');
+    };
+    const req = makeReq({ body: { endpoint: 'livreur-ratings-get', livreur_id: 'livreur-1&select=*' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 400);
+    assert.match(res._body?.error || '', /livreur_id requis/);
   });
 });
 

@@ -41,6 +41,17 @@
     }
     .driver-fee-banner strong { color: var(--brand-cyan); }
     .driver-fee-banner small { display:block; color: var(--brand-muted); margin-top:4px; }
+    .edit-safety-note {
+      display: none;
+      background: rgba(0,217,255,0.08);
+      border: 1px solid rgba(0,217,255,0.28);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: -12px 0 24px;
+      color: var(--brand-cyan);
+      font-size: .86rem;
+      line-height: 1.55;
+    }
     .info-note {
       background: rgba(99,210,255,0.07); border: 1px solid rgba(99,210,255,0.25);
       border-radius: 8px; padding: 12px 16px; font-size: 0.83rem;
@@ -170,6 +181,10 @@
     <div class="driver-fee-banner" id="driver-fee-banner">
       <strong>Tes <span class="free-trips-count">10</span> premiers trajets sans frais de plateforme.</strong>
       <small>Ensuite, frais de service transparents : <span class="ride-fee-low">1,50 $</span> sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
+    </div>
+
+    <div class="edit-safety-note" id="edit-safety-note">
+      Mode modification : la route reste verrouillée. Si une réservation active existe déjà, PorteàPorte bloque la modification pour protéger le passager et le conducteur.
     </div>
 
     <!-- MODE EXPRESS — pour publier en 1 minute -->
@@ -736,13 +751,18 @@
   <script>
     let currentStep = 1;
     let stopCount = 0;
+    const editRideIdRaw = new URLSearchParams(window.location.search).get('edit') || '';
+    const editRideId = /^[A-Za-z0-9_-]{1,80}$/.test(editRideIdRaw) ? editRideIdRaw : '';
+    const isEditMode = !!editRideId;
+    const publishPagePath = isEditMode ? '/covoiturage-publier.html?edit=' + encodeURIComponent(editRideId) : '/covoiturage-publier.html';
 
     // Auth guard + pré-remplir depuis profil chauffeur existant
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-      if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
+      if (!db) { window.location.href = '/login.html?redirect=' + encodeURIComponent(publishPagePath); return; }
+      if (editRideIdRaw && !editRideId) { showEditLoadError('Identifiant de trajet invalide.'); return; }
       const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
-      if (!session) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
+      if (!session) { window.location.href = '/login.html?redirect=' + encodeURIComponent(publishPagePath); return; }
 
       // Pré-remplir depuis le profil chauffeur sauvegardé
       try {
@@ -754,6 +774,8 @@
           if (profile) prefillFromProfile(profile);
         }
       } catch(_) {}
+
+      if (isEditMode) await loadRideForEdit(session.access_token);
     })();
 
     function prefillFromProfile(p) {
@@ -768,6 +790,101 @@
       if (p.perfume_free)   setCheck('perfume_free', p.perfume_free);
       if (p.bio) setVal('personal_rules', p.bio);
       renderVehiclePhotos(p.vehicle_photos || []);
+    }
+
+    function toDateTimeLocal(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (!Number.isFinite(d.getTime())) return '';
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    }
+
+    function showEditLoadError(message) {
+      const err = document.getElementById('err-msg');
+      if (err) {
+        err.style.display = 'block';
+        err.textContent = '⚠️ ' + message;
+      }
+      const btn = document.getElementById('publish-btn');
+      if (btn) btn.disabled = true;
+    }
+
+    function setEditUi() {
+      document.title = 'Modifier un trajet · Covoiturage PorteàPorte';
+      const title = document.querySelector('.page-title');
+      const subtitle = document.querySelector('.page-subtitle');
+      const note = document.getElementById('edit-safety-note');
+      const fee = document.getElementById('driver-fee-banner');
+      const btn = document.getElementById('publish-btn');
+      const express = document.getElementById('express-toggle');
+      if (title) title.textContent = 'Modifier un trajet';
+      if (subtitle) subtitle.textContent = 'Ajustez l’heure, les places, le tarif et les options tant qu’aucune réservation active n’existe.';
+      if (note) note.style.display = 'block';
+      if (fee) fee.style.display = 'none';
+      if (express) express.style.display = 'none';
+      if (btn) btn.textContent = '✏️ Modifier le trajet';
+      ['start_city','start_sector','end_city','end_sector','total_distance_km'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.readOnly = true;
+        el.style.opacity = '.72';
+      });
+    }
+
+    function prefillFromRide(ride) {
+      setEditUi();
+      setVal('start_city', ride.start_city || '');
+      setVal('start_sector', ride.start_sector || '');
+      setVal('end_city', ride.end_city || '');
+      setVal('end_sector', ride.end_sector || '');
+      setVal('departure_time', toDateTimeLocal(ride.departure_time));
+      setVal('return_departure_time', toDateTimeLocal(ride.return_departure_time));
+      setVal('flexibility_minutes', ride.flexibility_minutes ?? 0);
+      setVal('total_distance_km', ride.total_distance_km || '');
+      setVal('vehicle_type', ride.vehicle_type || 'berline');
+      setVal('energy_type', ride.energy_type || 'essence');
+      setVal('trunk_size', ride.trunk_size || 'moyen');
+      setVal('available_seats', ride.available_seats || 1);
+      setVal('personal_rules', ride.personal_rules || '');
+      setVal('package_max_kg', ride.package_max_kg || 10);
+      setVal('package_max_dim_cm', ride.package_max_dim_cm || 60);
+      setCheck('is_recurring', !!ride.is_recurring);
+      setCheck('is_return_trip', !!ride.is_return_trip);
+      setCheck('accepts_pets', !!ride.accepts_pets);
+      setCheck('accepts_large_luggage', !!ride.accepts_large_luggage);
+      setCheck('accepts_extra_stops', !!ride.accepts_extra_stops);
+      setCheck('accepts_packages', !!ride.accepts_packages);
+      setCheck('child_seat_available', !!ride.child_seat_available);
+      setCheck('accessible', !!ride.accessible);
+      setCheck('ac_available', !!ride.ac_available);
+      setCheck('women_only', !!ride.women_only);
+      setRadio('smoking_policy', ride.smoking_policy || 'non_fumeur');
+      setRadio('music_policy', ride.music_policy || 'selon_humeur');
+      setRadio('chat_policy', ride.chat_policy || 'selon_humeur');
+      if (Array.isArray(ride.recurrence_days)) {
+        document.querySelectorAll('.recur-day').forEach((el) => { el.checked = ride.recurrence_days.includes(el.value); });
+      }
+      applyEnergyRate();
+      setVal('cost_per_km', ride.cost_per_km || '');
+      updatePricePreview();
+    }
+
+    async function loadRideForEdit(token) {
+      setEditUi();
+      try {
+        const res = await fetch('/api/platform?endpoint=ride-detail&ride_id=' + encodeURIComponent(editRideId), {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ride) {
+          showEditLoadError(data.error || 'Impossible de charger ce trajet.');
+          return;
+        }
+        prefillFromRide(data.ride);
+      } catch (e) {
+        showEditLoadError(e.message || 'Erreur reseau pendant le chargement du trajet.');
+      }
     }
 
     // ── Photos de voiture (upload / suppression) ──────────────────
@@ -1192,7 +1309,7 @@
         if (Number.isFinite(Number(s.ride_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(s.ride_fee_threshold));
         if (Number.isFinite(Number(s.ride_free_trips))) rideFeeSettings.freeTrips = Math.max(0, Math.floor(Number(s.ride_free_trips)));
         const banner = document.getElementById('driver-fee-banner');
-        if (banner) banner.style.display = rideFeeSettings.freeTrips > 0 ? 'block' : 'none';
+        if (banner) banner.style.display = rideFeeSettings.freeTrips > 0 && !isEditMode ? 'block' : 'none';
         document.querySelectorAll('.free-trips-count').forEach(el => { el.textContent = String(rideFeeSettings.freeTrips); });
         document.querySelectorAll('.ride-fee-low').forEach(el => { el.textContent = fmt(rideFeeSettings.low); });
         document.querySelectorAll('.ride-fee-high').forEach(el => { el.textContent = fmt(rideFeeSettings.high); });
@@ -1286,10 +1403,10 @@
     // ── Publier ──────────────────────────────────────────────────
     async function publishRide() {
       const btn = document.getElementById('publish-btn');
-      btn.disabled = true; btn.textContent = 'Publication...';
+      btn.disabled = true; btn.textContent = isEditMode ? 'Modification...' : 'Publication...';
 
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-      if (!db) { window.location.href = '/login.html?redirect=/covoiturage-publier.html'; return; }
+      if (!db) { window.location.href = '/login.html?redirect=' + encodeURIComponent(publishPagePath); return; }
       const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
       if (!session) { window.location.href = '/login.html'; return; }
 
@@ -1298,7 +1415,7 @@
       const chat    = document.querySelector('input[name=chat_policy]:checked')?.value    || 'selon_humeur';
 
       const body = {
-        endpoint: 'ride-create',
+        endpoint: isEditMode ? 'ride-update' : 'ride-create',
         start_city:     document.getElementById('start_city').value.trim(),
         start_sector:   document.getElementById('start_sector').value.trim(),
         end_city:       document.getElementById('end_city').value.trim(),
@@ -1353,6 +1470,7 @@
         pickup_point_id:    document.getElementById('meeting-point-start').value || null,
         dropoff_point_id:   document.getElementById('meeting-point-end').value || null,
       };
+      if (isEditMode) body.ride_id = editRideId;
 
       try {
         const res  = await fetch('/api/platform', {
@@ -1362,18 +1480,24 @@
         });
         const data = await res.json();
         if (res.ok && data.success) {
+          if (isEditMode) {
+            const h = document.querySelector('#success-box h3');
+            const p = document.querySelector('#success-box > p');
+            if (h) h.textContent = '✅ Trajet modifié avec succès !';
+            if (p) p.textContent = 'Vos changements sont sauvegardés. Si une réservation active existe, PorteàPorte bloque la modification pour éviter une mauvaise surprise.';
+          }
           document.getElementById('publish-actions').style.display = 'none';
           document.getElementById('success-box').style.display = 'block';
           setupShare(data.ride && data.ride.id);
         } else {
           document.getElementById('err-msg').style.display = 'block';
-          document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || 'Erreur lors de la publication.');
-          btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+          document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || (isEditMode ? 'Erreur lors de la modification.' : 'Erreur lors de la publication.'));
+          btn.disabled = false; btn.textContent = isEditMode ? '✏️ Modifier le trajet' : '🚗 Publier mon trajet';
         }
       } catch(e) {
         document.getElementById('err-msg').style.display = 'block';
         document.getElementById('err-msg').textContent = '⚠️ ' + (e.message || 'Erreur réseau. Réessayez.');
-        btn.disabled = false; btn.textContent = '🚗 Publier mon trajet';
+        btn.disabled = false; btn.textContent = isEditMode ? '✏️ Modifier le trajet' : '🚗 Publier mon trajet';
       }
     }
   </script>

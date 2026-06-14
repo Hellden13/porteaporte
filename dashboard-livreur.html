@@ -1264,6 +1264,7 @@
       };
       el.innerHTML = data.map(row => {
         const canMark = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
+        const canLeave = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
         const delivered = ['livre','livree','delivered','confirmee','payee','succeeded'].includes(row.statut);
         const hasPrefs = row.reception_mode || row.reception_heure_debut || row.reception_lieu_repli || row.reception_note_livreur;
         const prefsHtml = hasPrefs ? `
@@ -1285,6 +1286,7 @@
             <div class="delivery-actions">
               <a class="btn-sm" href="/suivi-livraison.html?id=${row.id}">Suivi</a>
               <a class="btn-sm" href="/depot-preuve.html?id=${row.id}">Depot preuve</a>
+              ${canLeave ? `<button class="btn-sm" style="background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.35);color:#ffb0b0" onclick="cancelAssignedDelivery('${row.id}')">❌ Me retirer</button>` : ''}
               <button class="btn-sm primary" ${canMark ? '' : 'disabled'} onclick="markDelivered('${row.id}')">
                 ${delivered ? 'Livre ✓' : 'Marquer livre'}
               </button>
@@ -2022,6 +2024,28 @@
       else {
         const out = await res.json().catch(() => ({}));
         alert(out.error || 'Erreur lors de la mise à jour');
+      }
+    }
+
+    async function cancelAssignedDelivery(id) {
+      if (!confirm('Te retirer de cette mission ?\n\nLa politique d’annulation PorteàPorte s’appliquera et Denis verra une trace admin si une revue est nécessaire.')) return;
+      const raison = prompt('Raison courte pour l’historique admin (optionnel) :', 'Livreur indisponible');
+      try {
+        const res = await fetch('/api/cancel-livraison', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ livraison_id: id, raison: raison || 'Retrait livreur depuis dashboard' })
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(out.error || 'Annulation impossible pour cette mission.');
+          return;
+        }
+        showSuccess(out.message || 'Mission annulée.');
+        await loadMyDeliveries();
+        if (typeof loadAvailableMissions === 'function') await loadAvailableMissions();
+      } catch (err) {
+        alert('Erreur réseau. Réessaie dans un instant.');
       }
     }
 

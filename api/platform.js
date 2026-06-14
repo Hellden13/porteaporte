@@ -21,7 +21,7 @@ const {
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
-  rideDriverProfile, rideCreate, rideSearch, rideDetail, rideBook, rideCancel,
+  rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
   ridePaymentCreate, ridePaymentSync, rideCaptureEligible,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
@@ -88,6 +88,11 @@ const FILE_ORIGIN_PUBLIC_ENDPOINTS = new Set([
   'ride-search-log',
   'safe-meeting-points'
 ]);
+
+function safeRestId(value) {
+  const v = String(value || '').trim();
+  return /^[A-Za-z0-9_-]{1,80}$/.test(v) ? v : null;
+}
 
 function applyPlatformCors(req, res) {
   const headers = { ...CORS };
@@ -5694,22 +5699,22 @@ module.exports = async function handler(req, res) {
 
     // Public: ratings d'un livreur (badge etoiles sur livreur-card.html)
     if (endpoint === 'livreur-ratings-get') {
-      const livreurId = body.livreur_id || body.user_id;
+      const livreurId = safeRestId(body.livreur_id || body.user_id);
       if (!livreurId) return res.status(400).json({ error: 'livreur_id requis' });
       let reviews = [];
       try {
-        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${livreurId}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+        const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${encodeURIComponent(livreurId)}&reviewed_role=eq.livreur&select=rating,comment,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
         if (r.ok) reviews = await r.json();
       } catch (_) {}
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${encodeURIComponent(livreurId)}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
           if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
         } catch (_) {}
       }
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${livreurId}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${encodeURIComponent(livreurId)}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
           if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
         } catch (_) {}
       }
@@ -6380,6 +6385,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-driver-profile')  return await rideDriverProfile(req, res, ctx, body);
     if (endpoint === 'ride-vehicle-photo')   return await rideVehiclePhotoUpload(req, res, ctx, body);
     if (endpoint === 'ride-create')          return await rideCreate(req, res, ctx, body);
+    if (endpoint === 'ride-update')          return await rideUpdate(req, res, ctx, body);
     if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
     if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);

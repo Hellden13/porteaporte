@@ -64,7 +64,7 @@ function makeMockCtx() {
   };
 }
 
-const { rideCreate } = (() => {
+const { rideCreate, rideUpdate } = (() => {
   // On doit instancier le module en isolation pour ré-importer après chaque mock
   delete require.cache[require.resolve('../lib/_rides.js')];
   return require('../lib/_rides.js');
@@ -146,6 +146,111 @@ describe('rideCreate schema fallback', () => {
     assert.equal(res.statusCode, 400);
     assert.ok(res.data.error.includes('Création trajet impossible'));
     assert.ok(res.data.hint, 'Doit fournir un hint pour debug');
+  });
+});
+
+describe('rideUpdate securite', () => {
+  test('refuse un utilisateur qui n est ni conducteur ni admin', async () => {
+    let patched = false;
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && !opts.method) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', driver_id: 'other-driver', status: 'publie' }] };
+      }
+      if (opts.method === 'PATCH') patched = true;
+      return { ok: true, status: 200, json: async () => [] };
+    };
+
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', available_seats: 3 });
+    assert.equal(res.statusCode, 403);
+    assert.equal(patched, false);
+  });
+
+  test('bloque la modification si une reservation active existe', async () => {
+    let patched = false;
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && !opts.method) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', driver_id: 'user_test_123', status: 'publie' }] };
+      }
+      if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-1')) {
+        return { ok: true, status: 200, json: async () => [{ id: 'book-1', status: 'confirme', seats_reserved: 1 }] };
+      }
+      if (opts.method === 'PATCH') patched = true;
+      return { ok: true, status: 200, json: async () => [] };
+    };
+
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', departure_time: new Date(Date.now() + 86400000).toISOString() });
+    assert.equal(res.statusCode, 409);
+    assert.match(res.data.error, /reservation active/i);
+    assert.equal(patched, false);
+  });
+
+  test('bloque la modification si la verification des reservations echoue', async () => {
+    let patched = false;
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && !opts.method) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', driver_id: 'user_test_123', status: 'publie' }] };
+      }
+      if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-1')) {
+        return { ok: false, status: 500, json: async () => ({ message: 'db down' }) };
+      }
+      if (opts.method === 'PATCH') patched = true;
+      return { ok: true, status: 200, json: async () => [] };
+    };
+
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', available_seats: 3 });
+    assert.equal(res.statusCode, 503);
+    assert.match(res.data.error, /bloquee par securite/i);
+    assert.equal(patched, false);
+  });
+
+  test('met a jour les champs permis quand aucune reservation active n existe', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET', body: opts.body || null });
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && !opts.method) {
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', driver_id: 'user_test_123', status: 'publie' }] };
+      }
+      if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-1')) {
+        return { ok: true, status: 200, json: async () => [] };
+      }
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && opts.method === 'PATCH') {
+        const body = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', ...body }] };
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
+    };
+
+    const res = makeMockRes();
+    const departure = new Date(Date.now() + 2 * 86400000).toISOString();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), {
+      ride_id: 'ride-1',
+      departure_time: departure,
+      available_seats: 4,
+      accepts_pets: true,
+      cost_per_km: 0.30,
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.data.success, true);
+    const patchCall = calls.find(c => c.method === 'PATCH');
+    assert.ok(patchCall, 'rides doit etre patche');
+    const patch = JSON.parse(patchCall.body);
+    assert.equal(patch.available_seats, 4);
+    assert.equal(patch.total_seats, 4);
+    assert.equal(patch.accepts_pets, true);
+    assert.equal(patch.cost_per_km, 0.30);
+  });
+
+  test('refuse un ride_id invalide avant Supabase', async () => {
+    let called = false;
+    global.fetch = async () => { called = true; return { ok: true, json: async () => [] }; };
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'bad/id', available_seats: 3 });
+    assert.equal(res.statusCode, 400);
+    assert.equal(called, false);
   });
 });
 

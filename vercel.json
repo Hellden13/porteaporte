@@ -10,8 +10,7 @@
         "api/turnstile-verify.js": { "includeFiles": "lib/**" }
     },
     "crons": [
-        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" },
-        { "path": "/api/cron-ride-capture", "schedule": "0 4 * * *" }
+        { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
     ],
     "redirects": [
         { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
@@ -133,6 +132,10 @@
                          "destination":  "/api/platform?endpoint=create-livraison"
                      },
                      {
+                         "source":  "/api/ride-update",
+                         "destination":  "/api/platform?endpoint=ride-update"
+                     },
+                     {
                          "source":  "/api/set-role",
                          "destination":  "/api/platform?endpoint=set-role"
                      },
@@ -171,10 +174,6 @@
                      {
                          "source":  "/api/tracking",
                          "destination":  "/api/platform?endpoint=tracking"
-                     },
-                     {
-                         "source":  "/api/tracking-public",
-                         "destination":  "/api/tracking-public"
                      },
                      {
                          "source":  "/api/confirm-delivery",
