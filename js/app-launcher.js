@@ -89,6 +89,13 @@
     }
     .pap-launcher-close:hover { background: rgba(255,90,90,0.18); border-color: #ff7a7a; }
 
+    /* Mobile : ferme facilement (✕ plus gros, du fond tapable autour du panneau) */
+    @media (max-width: 768px) {
+      .pap-launcher-overlay { padding: 14px; align-items: flex-start; padding-top: 54px; }
+      .pap-launcher-panel { max-height: 78vh; padding: 20px; }
+      .pap-launcher-close { width: 46px; height: 46px; font-size: 22px; }
+    }
+
     .pap-launcher-group { margin-bottom: 22px; }
     .pap-launcher-group:last-child { margin-bottom: 0; }
     .pap-launcher-group-title {
@@ -184,8 +191,14 @@
   }
 
   btn.addEventListener('click', open);
+  // Fermeture robuste au tactile : taper HORS du panneau (ou sur ✕) ferme.
+  // Avant : exigeait de taper pile le fond, quasi impossible sur mobile (panneau plein écran) → on restait coincé + flou.
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target.classList.contains('pap-launcher-close')) close();
+    if (!e.target.closest('.pap-launcher-panel') || e.target.closest('.pap-launcher-close')) close();
+  });
+  // Sécurité : un lien (tuile) ferme le lanceur avant de naviguer.
+  overlay.addEventListener('click', (e) => {
+    if (e.target.closest('a[href]')) close();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && overlay.classList.contains('open')) close();
