@@ -187,22 +187,35 @@ function getLevel(xp) {
 }
 
 async function init() {
-  const db = getSupabaseClient();
-  const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
-  if (!session) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+  const il = document.getElementById('initial-loading');
+  try {
+    const db = getSupabaseClient();
+    if (!db) throw new Error('Client Supabase indisponible (script non chargé)');
+    const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
+    if (!session) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
 
-  const [profileRes, dashRes] = await Promise.all([
-    db.from('profiles').select('*').eq('id', session.user.id).single(),
-    fetch('/api/cov-dashboard', { headers: { 'Authorization': 'Bearer ' + session.access_token } })
-  ]);
+    // Timeout pour ne JAMAIS rester figé si le réseau traîne (surtout sur mobile)
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 15000);
+    let profileRes, dashRes;
+    try {
+      [profileRes, dashRes] = await Promise.all([
+        db.from('profiles').select('*').eq('id', session.user.id).single(),
+        fetch('/api/cov-dashboard', { headers: { 'Authorization': 'Bearer ' + session.access_token }, signal: ctrl.signal })
+      ]);
+    } finally { clearTimeout(to); }
 
-  userProfile = profileRes.data || {};
-  dashData    = dashRes.ok ? await dashRes.json() : {};
+    userProfile = (profileRes && profileRes.data) || {};
+    dashData    = (dashRes && dashRes.ok) ? await dashRes.json() : {};
 
-  if (userProfile.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
+    if (userProfile.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
 
-  document.getElementById('initial-loading').remove();
-  renderSection('overview');
+    if (il) il.remove();
+    renderSection('overview');
+  } catch (e) {
+    console.error('[dashboard-covoiturage init]', e);
+    if (il) il.innerHTML = '⚠️ Chargement impossible. Vérifie ta connexion.<br><button onclick="location.reload()" style="margin-top:12px;background:#5dbfff;color:#051022;border:none;padding:10px 18px;border-radius:8px;font-weight:800;cursor:pointer">🔄 Réessayer</button>';
+  }
 }
 
 // Annuler un trajet publié (conducteur)
