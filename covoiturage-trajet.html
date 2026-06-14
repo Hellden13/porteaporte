@@ -537,7 +537,12 @@ function drawShareCard() {
   // Détails (date · places · prix)
   const dateStr = (typeof formatDate === 'function' && (r.departure_time || r.date)) ? formatDate(r.departure_time || r.date) : '';
   const seats = r.available_seats != null ? r.available_seats : (r.seats_available || 0);
-  const price = Number((r.price_breakdown && r.price_breakdown.totalPassenger) || r.price_per_seat || r.price || 0);
+  // Prix RÉEL = celui affiché au passager sur la page (price-total). Évite d'afficher
+  // un vieux price_per_seat incohérent (ex. 7 $ sur la carte vs 3,83 $ réel).
+  let price = 0;
+  const _ptEl = document.getElementById('price-total');
+  if (_ptEl && _ptEl.textContent) price = parseFloat(_ptEl.textContent.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
+  if (!price) price = Number((r.price_breakdown && r.price_breakdown.totalPassenger) || r.price_per_seat || r.price || 0);
   const parts = [];
   if (dateStr) parts.push('📅 ' + dateStr);
   parts.push('💺 ' + seats + ' place' + (seats > 1 ? 's' : ''));
@@ -1029,11 +1034,12 @@ function renderRide(r) {
   document.getElementById('price-total').textContent = price.toFixed(2) + ' $';
 
   document.getElementById('price-breakdown').innerHTML =
-    '<div class="pb-row"><span>Trajet de base</span><span>' + paxBase.toFixed(2) + ' $</span></div>' +
-    '<div class="pb-row"><span>Frais de plateforme</span><span>' + platFee.toFixed(2) + ' $</span></div>' +
+    '<div class="pb-row"><span>Part du trajet</span><span>' + paxBase.toFixed(2) + ' $</span></div>' +
+    '<div class="pb-row"><span>Frais de service PorteàPorte</span><span>' + platFee.toFixed(2) + ' $</span></div>' +
     (lugFee > 0 ? '<div class="pb-row"><span>Supplément bagage</span><span>' + lugFee.toFixed(2) + ' $</span></div>' : '') +
     '<div class="pb-row total"><span>Total passager</span><span>' + price.toFixed(2) + ' $</span></div>' +
     (driverAmt > 0 ? '<div class="pb-row" style="color:#7fe5a3;font-size:.78rem;"><span>↳ versé au conducteur</span><span>' + driverAmt.toFixed(2) + ' $</span></div>' : '') +
+    '<div class="pb-note">Total passager = part du trajet + frais de service' + (lugFee > 0 ? ' + bagage' : '') + '.</div>' +
     '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>' +
     '<div class="pb-note" style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #ea580c;border-radius:6px;color:#7c3a12;line-height:1.5;">' +
       '<strong>Politique d\'annulation :</strong> remboursement intégral si tu annules plus de 24 h avant le départ. ' +
