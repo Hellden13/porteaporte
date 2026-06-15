@@ -4073,7 +4073,7 @@ async function impactPublic(req, res, ctx) {
   let insurancePct = 0.02;
   let fundTopupCents = 0;
   let maxColisValueCents = 25000;
-  let founderRevenuePct = 0.05;
+  let founderRevenuePct = 0; // 0 par défaut : pas de salaire fondateur tant que pas rentable
   let profitToInsurance = true; // Bêta mode : profit redirigé vers fonds litige (par défaut ON)
   let allSettings = {};
   try {
@@ -4220,7 +4220,7 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     max_colis_value_cents: 25000,
     insurance_pct: 0.02,
     insurance_fund_topup_cents: 0,
-    founder_revenue_pct: 0.05,
+    founder_revenue_pct: 0,
     ride_free_trips: 10,
     ride_platform_fee: 1.50,
     ride_fee_threshold: 15,

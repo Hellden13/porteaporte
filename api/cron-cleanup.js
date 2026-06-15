@@ -120,7 +120,23 @@ module.exports = async function handler(req, res) {
       revenueCad = livs.reduce((s, l) => s + (Number(l.prix_total) || 0), 0);
     } catch (_) {}
 
-    const founderShare = revenueCad * 0.05;
+    // Part fondateur — % configurable (0 par défaut tant que la plateforme n'est pas rentable)
+    let founderPct = 0;
+    try {
+      const fsr = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=founder_revenue_pct`, { headers: sbHeaders(sbKey) });
+      if (fsr.ok) { const fRows = await fsr.json(); if (fRows[0] && Number.isFinite(Number(fRows[0].founder_revenue_pct))) founderPct = Number(fRows[0].founder_revenue_pct); }
+    } catch (_) {}
+    const founderShare = revenueCad * founderPct;
+    const dailyDetails = {
+      '📦 Nouvelles livraisons': newLivraisons,
+      '✅ Livraisons payées': paidLivraisons,
+      '👤 Nouvelles inscriptions': newInscriptions,
+      '⚠️ Manquements ouverts': openManquements,
+      '💰 Revenu 24h': revenueCad.toFixed(2) + ' $'
+    };
+    if (founderPct > 0) {
+      dailyDetails['👑 Ta part fondateur (' + (founderPct * 100).toFixed(1).replace(/\.0$/, '') + '%)'] = founderShare.toFixed(2) + ' $';
+    }
     const hasActivity = newLivraisons > 0 || newInscriptions > 0 || openManquements > 0;
 
     if (hasActivity || (new Date().getDay() === 1)) { // Activité OU lundi matin (récap silencieux)
@@ -130,14 +146,7 @@ module.exports = async function handler(req, res) {
         `Voici ce qui s'est passé sur PorteàPorte depuis 24 heures.`,
         {
           severity,
-          details: {
-            '📦 Nouvelles livraisons': newLivraisons,
-            '✅ Livraisons payées': paidLivraisons,
-            '👤 Nouvelles inscriptions': newInscriptions,
-            '⚠️ Manquements ouverts': openManquements,
-            '💰 Revenu 24h': revenueCad.toFixed(2) + ' $',
-            '👑 Ta part fondateur (5%)': founderShare.toFixed(2) + ' $'
-          },
+          details: dailyDetails,
           cta_url: 'https://porteaporte.site/admin/operations.html',
           cta_label: '📊 Centre Opérations →'
         }

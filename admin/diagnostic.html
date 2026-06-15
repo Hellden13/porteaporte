@@ -73,7 +73,7 @@
 
       // Calcul fonds attendu
       const insPct = Number(settings.insurance_pct || 0.02);
-      const founderPct = Number(settings.founder_revenue_pct || 0.05);
+      const founderPct = Number(settings.founder_revenue_pct || 0);
       const topup = Number(settings.insurance_fund_topup_cents || 0);
       const totalRevCad = d.grand_total_cad || 0;
       // Total uniquement sur statuts post-paiement

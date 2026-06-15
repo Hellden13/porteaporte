@@ -16,7 +16,7 @@
     pct_profit: 7,
     pct_marketing: 0,
     pct_operations: 0,
-    founder_revenue_pct: 0.05,
+    founder_revenue_pct: 0,
     ticket_moyen_cad: 15
   };
 

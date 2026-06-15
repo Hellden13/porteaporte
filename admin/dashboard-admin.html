@@ -1697,7 +1697,7 @@
         { icon: '💚', label: 'Communauté (organismes d\'ici)', key: 'pct_communaute', pct: 5, color: '#7dffc1' },
         { icon: '💪', label: 'Réserve / pérennité', key: 'pct_profit', pct: 7, color: '#A8B0BA' }
       ];
-    const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 5);
+    const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 0);
     const profitToInsurance = s.profit_to_insurance !== false;
     let repartHtml = POSTES_LIVE.map(p => {
       const pct = Number(p.pct);
@@ -1722,12 +1722,14 @@
       <td style="text-align:right;color:${Math.abs(sumPostes-100) < 0.5 ? '#7dffc1' : '#ffb0b0'};font-weight:900">${sumPostes.toFixed(1)} %</td>
       <td style="text-align:right;color:#fff;font-weight:900">${$m(total)}</td>
     </tr>`;
-    // Part fondateur (en plus, sur CA brut)
-    repartHtml += `<tr style="background:linear-gradient(90deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border-top:2px solid rgba(255,215,0,.3)">
-      <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (sur CA brut)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">S'ajoute au-dessus des 100%. Configurable dans Paramètres → Fonds Assurance.</div></td>
-      <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${founderPct.toFixed(1)} %</td>
-      <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${$m(total * founderPct / 100)}</td>
-    </tr>`;
+    // Part fondateur (rémunération personnelle, prélevée sur la marge plateforme hors livreur) — masquée si 0 %
+    if (founderPct > 0) {
+      repartHtml += `<tr style="background:linear-gradient(90deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border-top:2px solid rgba(255,215,0,.3)">
+        <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (% du CA)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">Rémunération personnelle, prélevée sur la marge plateforme (hors livreur) — pas en plus du prix client. Configurable dans Paramètres → Fonds Assurance.</div></td>
+        <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${founderPct.toFixed(1)} %</td>
+        <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${$m(total * founderPct / 100)}</td>
+      </tr>`;
+    }
     document.getElementById('repartition-complet-body').innerHTML = repartHtml;
 
     document.getElementById('rev-body').innerHTML = rows.length === 0

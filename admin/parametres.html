@@ -100,17 +100,17 @@
           🛡️ Mode bêta : rediriger le profit vers le fonds litige/réclamation
         </label>
         <small style="display:block;margin-top:8px;color:var(--brand-muted);font-size:.78rem;line-height:1.5">
-          Quand activé, le <strong style="color:#00d9ff">% Profit net (10% par défaut)</strong> alimente automatiquement le fonds d'assurance/réclamation en plus du <strong style="color:#00d9ff">% Protection (8%)</strong>. Soit <strong>~18% du CA</strong> qui protège la communauté. À désactiver quand prêt à prendre du profit personnel.
+          Quand activé, le <strong style="color:#00d9ff">% Réserve/profit (<span id="betaProfitPct">7</span>% configuré)</strong> alimente automatiquement le fonds d'assurance/réclamation en plus du <strong style="color:#00d9ff">% Protection (<span id="betaProtectionPct">10</span>%)</strong>. Soit <strong>~<span id="betaProtectSum">17</span>% du CA</strong> qui protège la communauté. À désactiver quand prêt à prendre du profit personnel.
         </small>
       </div>
 
       <div style="background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
         <label style="display:block;font-weight:700;color:#ffd700;margin-bottom:6px">💰 Ta part fondateur (% du chiffre d'affaires)</label>
         <div style="display:flex;align-items:center;gap:8px;max-width:200px">
-          <input id="founder-pct" type="number" min="0" max="20" step="0.1" style="width:100%;padding:12px;background:#05080c;color:#ffd700;border:1px solid rgba(255,215,0,.4);border-radius:8px;font-weight:900;font-size:1.2rem;text-align:center" value="5">
+          <input id="founder-pct" type="number" min="0" max="20" step="0.1" style="width:100%;padding:12px;background:#05080c;color:#ffd700;border:1px solid rgba(255,215,0,.4);border-radius:8px;font-weight:900;font-size:1.2rem;text-align:center" value="0">
           <span style="color:#ffd700;font-weight:700">%</span>
         </div>
-        <small style="display:block;margin-top:8px;color:var(--brand-muted);font-size:.78rem">Calculé sur chaque livraison payée. Visible en direct sur <a href="/admin/diagnostic.html" style="color:#ffd700">/admin/diagnostic.html</a> et <a href="/admin/fondateur.html" style="color:#ffd700">/admin/fondateur.html</a>. <strong>S'ajoute</strong> aux % de répartition ci-dessus (c'est ta part personnelle, pas un poste de la plateforme).</small>
+        <small style="display:block;margin-top:8px;color:var(--brand-muted);font-size:.78rem">Calculé sur chaque livraison payée (% du CA). C'est ta rémunération personnelle, <strong>prélevée sur la marge plateforme</strong> (les % hors livreur ci-dessus) — pas de l'argent en plus du prix payé par le client. Visible en direct sur <a href="/admin/diagnostic.html" style="color:#ffd700">/admin/diagnostic.html</a> et <a href="/admin/fondateur.html" style="color:#ffd700">/admin/fondateur.html</a>.</small>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
@@ -331,7 +331,7 @@
       document.getElementById('cap').value = Number(s.max_colis_value_cents != null ? s.max_colis_value_cents : 25000) / 100;
       document.getElementById('ins-pct').value = ((Number(s.insurance_pct != null ? s.insurance_pct : 0.02)) * 100).toFixed(1).replace(/\.0$/, '');
       document.getElementById('topup').value = Number(s.insurance_fund_topup_cents || 0) / 100;
-      document.getElementById('founder-pct').value = ((Number(s.founder_revenue_pct != null ? s.founder_revenue_pct : 0.05)) * 100).toFixed(1).replace(/\.0$/, '');
+      document.getElementById('founder-pct').value = ((Number(s.founder_revenue_pct != null ? s.founder_revenue_pct : 0)) * 100).toFixed(1).replace(/\.0$/, '');
       document.getElementById('profit-to-insurance').checked = s.profit_to_insurance !== false;
       // Beta cities
       const cities = Array.isArray(s.beta_cities) && s.beta_cities.length ? s.beta_cities : ['Québec', 'Lévis'];
@@ -413,6 +413,16 @@
       const bar = document.getElementById('totalBar');
       const val = document.getElementById('totalVal');
       val.textContent = sum.toFixed(1) + '%';
+      // Texte "Mode bêta" — reflète en direct les % Protection + Réserve/profit configurés
+      const fmtPct = n => (Math.round((Number(n) || 0) * 10) / 10).toString();
+      const _prof = Number(current.pct_profit) || 0;
+      const _prot = Number(current.pct_protection) || 0;
+      const _bp = document.getElementById('betaProfitPct');
+      const _bt = document.getElementById('betaProtectionPct');
+      const _bs = document.getElementById('betaProtectSum');
+      if (_bp) _bp.textContent = fmtPct(_prof);
+      if (_bt) _bt.textContent = fmtPct(_prot);
+      if (_bs) _bs.textContent = fmtPct(_prof + _prot);
       if (Math.abs(sum - 100) < 0.5) {
         bar.className = 'total-bar ok';
       } else {
