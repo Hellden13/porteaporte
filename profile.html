@@ -567,6 +567,9 @@
                             document.getElementById('pref-luggage').checked = !!p.luggage;
                             document.getElementById('pref-ac').checked = !!p.ac;
                             document.getElementById('pref-nonsmoker').checked = !!p.nonsmoker;
+                            if (new URLSearchParams(location.search).get('pet') === '1' || location.hash === '#pet-card-section') {
+                                document.getElementById('pref-pet').checked = true;
+                            }
                         } catch (e) {}
                     }
                     window.savePrefs = function () {
@@ -582,6 +585,7 @@
                         setTimeout(() => ok.style.display = 'none', 2000);
                     };
                     loadPrefs();
+                    document.getElementById('pref-pet').dispatchEvent(new Event('change'));
                 })();
             </script>
 

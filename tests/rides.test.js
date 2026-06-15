@@ -360,4 +360,28 @@ describe('coherence affichages prix et pourcentages', () => {
     assert.match(browse, /basePct/);
     assert.match(browse, /platform-shares\.js/);
   });
+
+  test('email de bienvenue oriente le nouveau membre vers le covoiturage', () => {
+    const notifier = read('api/notifier.js');
+    const signup = read('signup.html');
+    const firstWelcome = notifier.indexOf("case 'bienvenue'");
+    assert.notEqual(firstWelcome, -1);
+    assert.match(notifier.slice(firstWelcome, firstWelcome + 500), /templateBienvenueP2/);
+    assert.match(notifier, /PorteaPorte est une plateforme quebecoise qui commence par le covoiturage/);
+    assert.match(signup, /type:\s*'bienvenue'/);
+  });
+
+  test('reservation covoiturage avec animal exige une carte et une photo approuvee', () => {
+    const rides = read('lib/_rides.js');
+    const detail = read('covoiturage-trajet.html');
+    const profile = read('profile.html');
+    assert.match(rides, /select=pet_name,pet_species,pet_photo_url,pet_photo_status/);
+    assert.match(rides, /pet_photo_status !== 'approved'/);
+    assert.match(rides, /Carte animal requise avant de reserver avec un animal/);
+    assert.match(detail, /ensurePetCardApprovedForRide/);
+    assert.match(detail, /pet-card-get/);
+    assert.match(detail, /profile\.html\?pet=1#pet-card-section/);
+    assert.match(profile, /new URLSearchParams\(location\.search\)\.get\('pet'\) === '1'/);
+    assert.match(profile, /dispatchEvent\(new Event\('change'\)\)/);
+  });
 });

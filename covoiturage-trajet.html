@@ -109,6 +109,8 @@
     .form-group textarea { resize: vertical; min-height: 70px; }
     .check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: .88rem; color: #444; cursor: pointer; }
     .check-row input[type=checkbox] { width: 17px; height: 17px; accent-color: #6c63ff; cursor: pointer; }
+    .pet-card-hint { display:none; margin:-2px 0 12px 25px; padding:9px 11px; border-radius:9px; background:#fff7e6; border:1px solid #ffd166; color:#7a4a00; font-size:.78rem; line-height:1.45; }
+    .pet-card-hint a { color:#4b44cc; font-weight:800; }
     .pkg-price-preview { background: #f0edff; border-radius: 10px; padding: 10px 14px; font-size: .83rem; color: #4b44cc; margin-bottom: 14px; display: none; }
     .pkg-price-preview strong { font-size: 1.1rem; }
     .pkg-unavail { text-align: center; color: #aaa; font-size: .85rem; padding: 16px 0; display: none; }
@@ -301,8 +303,12 @@
             <input type="checkbox" id="pax-luggage"> Bagage en soute
           </label>
           <label class="check-row" id="pet-row" style="display:none">
-            <input type="checkbox" id="pax-pet"> Voyage avec un animal
+            <input type="checkbox" id="pax-pet" onchange="updatePetCardHint()"> Voyage avec un animal
           </label>
+          <div id="pet-card-hint" class="pet-card-hint">
+            Pour voyager avec un animal, sa carte et sa photo doivent etre approuvees.
+            <a href="/profile.html?pet=1#pet-card-section">Completer la carte animal</a>
+          </div>
           <div class="form-group">
             <label>Remarque pour le chauffeur <span style="font-weight:400;color:#aaa">(optionnel)</span></label>
             <textarea id="pax-note" placeholder="Ex: Je suis a l'entree principale..."></textarea>
@@ -1196,6 +1202,50 @@ async function mountRidePayment(paymentData) {
   showToast('Réservation créée. Confirme le paiement pour bloquer ta place.', 'success');
 }
 
+function updatePetCardHint(message, ok) {
+  var petBox = document.getElementById('pax-pet');
+  var hint = document.getElementById('pet-card-hint');
+  if (!petBox || !hint) return;
+  hint.style.display = petBox.checked ? 'block' : 'none';
+  if (message) {
+    hint.innerHTML = message + ' <a href="/profile.html?pet=1#pet-card-section">Completer la carte animal</a>';
+    hint.style.background = ok ? '#e8f5e9' : '#fff7e6';
+    hint.style.borderColor = ok ? '#7fe5a3' : '#ffd166';
+    hint.style.color = ok ? '#1b5e20' : '#7a4a00';
+  }
+}
+
+async function ensurePetCardApprovedForRide() {
+  var petBox = document.getElementById('pax-pet');
+  if (!petBox || !petBox.checked) return;
+  if (!currentSession || !currentSession.access_token) {
+    throw new Error('Connecte-toi pour verifier la carte animal.');
+  }
+
+  var res = await fetch('/api/platform?endpoint=pet-card-get', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ endpoint: 'pet-card-get' })
+  });
+  var data = await res.json().catch(function(){ return {}; });
+  if (!res.ok || data.error) {
+    throw new Error(data.error || 'Verification de la carte animal impossible.');
+  }
+  var pet = data.pet || {};
+  if (!pet.pet_name || !pet.pet_species) {
+    updatePetCardHint('Complete le nom et le type de ton animal avant de reserver.', false);
+    throw new Error('Complete la carte animal avant de reserver avec un animal.');
+  }
+  if (pet.pet_photo_status !== 'approved' || !pet.pet_photo_url) {
+    var msg = pet.pet_photo_status === 'pending'
+      ? 'La photo de ton animal attend l approbation admin.'
+      : 'Ajoute une photo claire de ton animal et fais-la approuver.';
+    updatePetCardHint(msg, false);
+    throw new Error(msg);
+  }
+  updatePetCardHint('Carte animal approuvee. Le conducteur pourra voir la fiche de ton animal.', true);
+}
+
 async function bookPassenger() {
   var seats   = parseInt(document.getElementById('pax-seats').value) || 1;
   var luggage = document.getElementById('pax-luggage').checked;
@@ -1226,6 +1276,7 @@ async function bookPassenger() {
   if (!pickup || !dropoff) {
     throw new Error('Choisis un point d\'embarquement et un point de débarquement avant de réserver.');
   }
+  await ensurePetCardApprovedForRide();
 
   var res = await fetch('/api/platform?endpoint=ride-book', {
     method: 'POST',

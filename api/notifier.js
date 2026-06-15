@@ -239,6 +239,18 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
   switch (type) {
 
+    case 'bienvenue': {
+      const prenom = data.prenom || 'toi';
+      const role = data.role || '';
+      emails.push({
+        to: data.to || data.email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Bienvenue sur PorteaPorte, ${prenom}`,
+        html: templateBienvenueP2({ ...data, prenom, role })
+      });
+      break;
+    }
+
     // ── NOUVELLE INSCRIPTION ──
     case 'inscription': {
       // 1. Courriel de bienvenue à l'utilisateur
@@ -934,37 +946,6 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
-    // ─── BIENVENUE NOUVEAU COMPTE ──────────────────────────────────
-    case 'bienvenue': {
-      const prenom = data.prenom || 'toi';
-      const role = data.role || 'expediteur';
-      const roleLabel = role === 'livreur' ? 'livreur' : role === 'les deux' ? 'membre (les deux côtés)' : 'expéditeur';
-      emails.push({
-        to: data.to || data.email,
-        from: { email: fromEmail, name: fromName },
-        subject: `🎉 Bienvenue sur PorteàPorte, ${prenom} !`,
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
-            <div style="color:#5dbfff;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
-            <h1 style="color:#fff;font-size:1.5rem;margin:0 0 12px">Bienvenue ${prenom} ! 🎉</h1>
-            <p style="color:#a8b0ba;line-height:1.6;margin:0 0 18px">Ton compte ${roleLabel} est créé. Tu peux maintenant utiliser PorteàPorte pour le covoiturage et la livraison de colis au Québec.</p>
-            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:18px;margin-bottom:18px">
-              <strong style="color:#5dbfff;display:block;margin-bottom:8px">🚀 Prochaines étapes</strong>
-              <ol style="color:#d8dde6;padding-left:20px;margin:0">
-                <li style="margin-bottom:6px">Complète ton profil (photo, ville, téléphone)</li>
-                <li style="margin-bottom:6px">Explore le tableau de bord</li>
-                ${role !== 'expediteur' ? '<li style="margin-bottom:6px"><strong>Important :</strong> finalise ton compte Stripe Connect pour recevoir tes paiements</li>' : ''}
-                <li>Publie ton premier trajet ou ta première livraison</li>
-              </ol>
-            </div>
-            <a href="https://porteaporte.site/dashboard.html" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📊 Ouvrir mon dashboard</a>
-            <p style="color:#6d7886;font-size:.78rem;margin-top:20px">Une question ? <a href="mailto:bonjour@porteaporte.site" style="color:#5dbfff">bonjour@porteaporte.site</a></p>
-            <p style="color:#6d7886;font-size:.72rem;margin-top:14px;padding-top:14px;border-top:1px solid #1e2535;line-height:1.5">💡 <strong>Astuce :</strong> ajoute notre adresse à tes contacts pour ne plus jamais manquer nos courriels (confirmations, paiements, livraisons).</p>
-          </div>`
-      });
-      break;
-    }
-
     // ─── COVOITURAGE : RÉSERVATION CONFIRMÉE (au passager) ────────
     case 'ride_booking_confirmed': {
       const route = `${data.ville_depart || '?'} → ${data.ville_arrivee || '?'}`;
@@ -1214,6 +1195,43 @@ const FOOTER_HTML = `
 
 function wrap(header, body) {
   return `<html><body style="${CSS_BASE}"><div style="${CONTAINER}">${header}<div style="${BODY_WRAP}">${body}</div>${FOOTER_HTML}</div></body></html>`;
+}
+
+function templateBienvenueP2(d) {
+  const prenom = escapeHtml(d.prenom || 'toi');
+  const role = String(d.role || '').toLowerCase();
+  const showDriver = role.includes('livreur') || role.includes('conducteur') || role.includes('deux') || role.includes('both');
+  return `
+    <html><body style="margin:0;background:#0A0C10;font-family:Arial,sans-serif;color:#f7f8fb">
+      <div style="max-width:620px;margin:0 auto;padding:28px 18px">
+        <div style="background:#111318;border:1px solid rgba(93,191,255,.24);border-radius:14px;padding:28px">
+          <div style="color:#5dbfff;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">PorteaPorte</div>
+          <h1 style="font-size:26px;line-height:1.15;margin:0 0 14px;color:#fff">Bienvenue, ${prenom}.</h1>
+          <p style="color:#c9d1dc;line-height:1.7;margin:0 0 18px">
+            PorteaPorte est une plateforme quebecoise qui commence par le covoiturage:
+            une personne voyage deja, une autre embarque, et parfois un colis peut profiter de la meme route.
+          </p>
+          <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.28);border-radius:12px;padding:18px;margin:22px 0">
+            <div style="font-weight:900;color:#7dffc1;margin-bottom:10px">Pourquoi on existe</div>
+            <p style="color:#d8dde6;line-height:1.65;margin:0">
+              Pour rendre les routes deja parcourues plus utiles: partager les frais, reduire les trajets vides,
+              aider localement et garder une relation humaine entre membres.
+            </p>
+          </div>
+          <div style="display:grid;gap:10px;margin:20px 0">
+            <a href="https://porteaporte.site/covoiturage.html" style="display:block;background:#5dbfff;color:#051022;text-decoration:none;font-weight:900;border-radius:10px;padding:14px 16px">Trouver un trajet</a>
+            <a href="https://porteaporte.site/covoiturage-publier.html" style="display:block;background:rgba(255,255,255,.06);color:#f7f8fb;text-decoration:none;font-weight:800;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:13px 16px">Publier un trajet</a>
+            <a href="https://porteaporte.site/dashboard.html" style="display:block;background:rgba(125,255,193,.10);color:#7dffc1;text-decoration:none;font-weight:800;border:1px solid rgba(125,255,193,.28);border-radius:10px;padding:13px 16px">Ouvrir mon tableau de bord</a>
+          </div>
+          ${showDriver ? `<p style="color:#a8acb1;line-height:1.6;margin:18px 0 0;font-size:13px">Si tu veux recevoir des paiements comme conducteur ou livreur, tu devras finaliser la verification et Stripe Connect dans ton espace membre.</p>` : ''}
+          <p style="color:#6d7886;font-size:12px;line-height:1.6;margin:22px 0 0;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+            Question ou idee de trajet? Reponds simplement a ce courriel ou ecris a
+            <a href="mailto:bonjour@porteaporte.site" style="color:#5dbfff">bonjour@porteaporte.site</a>.
+          </p>
+        </div>
+      </div>
+    </body></html>
+  `;
 }
 
 function templateBienvenue(d) {
