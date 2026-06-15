@@ -1646,6 +1646,20 @@
     return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
   }
 
+  // Source unique de vérité pour la répartition officielle (mêmes valeurs que /admin/parametres.html
+  // et /transparence.html). Évite de mélanger avec impact_settings (covoiturage) qui a ses propres %.
+  async function getCanonicalPlatformSettings() {
+    if (window.__papPublicSettings) return window.__papPublicSettings;
+    try {
+      const res = await fetch('/api/platform?endpoint=platform-settings-get');
+      const out = await res.json();
+      window.__papPublicSettings = out.settings || {};
+    } catch (_) {
+      window.__papPublicSettings = {};
+    }
+    return window.__papPublicSettings;
+  }
+
   async function loadRevenus(db) {
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const { data } = await db.from('livraisons')
@@ -1656,7 +1670,7 @@
 
     const rows = data || [];
     const total      = rows.reduce((s, r) => s + Number(r.prix_total || 0), 0);
-    const s = window.__platformSettings || {};
+    const s = await getCanonicalPlatformSettings();
     const canon = window.PAP_PLATFORM_SETTINGS;
     const canonicalSettings = canon
       ? canon.canonicalPlatformSettings(s)

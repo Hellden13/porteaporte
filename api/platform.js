@@ -4221,6 +4221,7 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     insurance_pct: 0.02,
     insurance_fund_topup_cents: 0,
     founder_revenue_pct: 0,
+    profit_to_insurance: true,
     ride_free_trips: 10,
     ride_platform_fee: 1.50,
     ride_fee_threshold: 15,
@@ -4233,23 +4234,22 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     'pct_developpement','pct_marketing','pct_operations','pct_profit',
     'pct_stripe','ticket_moyen_cad','max_colis_value_cents',
     'insurance_pct','insurance_fund_topup_cents','founder_revenue_pct',
-    'beta_cities','beta_cities_active'
+    'profit_to_insurance','beta_cities','beta_cities_active'
   ].join(',');
-  let r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${safeFields}`, {
+  // Retire au besoin les colonnes pas encore migrées (ex: profit_to_insurance, beta_cities...)
+  // pour ne jamais faire planter cet endpoint public à cause d'une colonne manquante.
+  let fields = safeFields.split(',');
+  let r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${fields.join(',')}`, {
     headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
   });
-  if (!r.ok) {
+  for (let attempt = 0; !r.ok && attempt < fields.length; attempt += 1) {
     const data = await r.json().catch(() => ({}));
     const missing = missingColumn(data);
-    if (missing && ['beta_cities', 'beta_cities_active'].includes(missing)) {
-      const legacyFields = safeFields
-        .split(',')
-        .filter((field) => !['beta_cities', 'beta_cities_active'].includes(field))
-        .join(',');
-      r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${legacyFields}`, {
-        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-      });
-    }
+    if (!missing || !fields.includes(missing)) break;
+    fields = fields.filter((field) => field !== missing);
+    r = await fetch(`${sbUrl}/rest/v1/platform_settings?id=eq.default&select=${fields.join(',')}`, {
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+    });
   }
   const rows = r.ok ? await r.json() : [];
   let rideSettings = {};
