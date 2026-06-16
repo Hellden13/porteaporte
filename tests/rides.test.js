@@ -367,7 +367,7 @@ describe('coherence affichages prix et pourcentages', () => {
     const firstWelcome = notifier.indexOf("case 'bienvenue'");
     assert.notEqual(firstWelcome, -1);
     assert.match(notifier.slice(firstWelcome, firstWelcome + 500), /templateBienvenueP2/);
-    assert.match(notifier, /PorteaPorte est une plateforme quebecoise qui commence par le covoiturage/);
+    assert.match(notifier, /PorteàPorte est une plateforme quebecoise qui commence par le covoiturage/);
     assert.match(signup, /type:\s*'bienvenue'/);
   });
 

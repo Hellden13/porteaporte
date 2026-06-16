@@ -245,7 +245,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.to || data.email,
         from: { email: fromEmail, name: fromName },
-        subject: `Bienvenue sur PorteaPorte, ${prenom}`,
+        subject: `Bienvenue sur PorteàPorte, ${prenom}`,
         html: templateBienvenueP2({ ...data, prenom, role })
       });
       break;
@@ -282,7 +282,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.email,
         from: { email: fromEmail, name: fromName },
-        subject: `Carte livreur PorteaPorte — ${data.card_id || 'profil livreur'}`,
+        subject: `Carte livreur PorteàPorte — ${data.card_id || 'profil livreur'}`,
         html: templateCarteLivreur(data)
       });
       emails.push({
@@ -1118,7 +1118,7 @@ async function sendAuthConfirmationEmail(data, config) {
   return sendEmail({
     to: email,
     from: { email: config.fromEmail, name: config.fromName },
-    subject: 'Confirme ton compte PorteaPorte',
+    subject: 'Confirme ton compte PorteàPorte',
     html: templateAuthConfirmation({ email, link })
   }, config.sendgridKey);
 }
@@ -1131,11 +1131,11 @@ async function sendTestEmail(data, config) {
   const result = await sendEmail({
     to: email,
     from: { email: config.fromEmail, name: config.fromName },
-    subject: 'Test PorteaPorte - Verification SendGrid',
+    subject: 'Test PorteàPorte - Verification SendGrid',
     html: wrap(
       `<div style="${HEADER()}">${LOGO_HTML}</div>`,
       `<h2 style="font-size:22px;margin:0 0 16px;">Email de test recu</h2>
-      <p style="color:#555;line-height:1.7;">SendGrid fonctionne correctement pour PorteaPorte.</p>
+      <p style="color:#555;line-height:1.7;">SendGrid fonctionne correctement pour PorteàPorte.</p>
       <p style="font-size:12px;color:#777;">Timestamp: ${new Date().toISOString()}</p>`
     )
   }, config.sendgridKey);
@@ -1205,10 +1205,10 @@ function templateBienvenueP2(d) {
     <html><body style="margin:0;background:#0A0C10;font-family:Arial,sans-serif;color:#f7f8fb">
       <div style="max-width:620px;margin:0 auto;padding:28px 18px">
         <div style="background:#111318;border:1px solid rgba(93,191,255,.24);border-radius:14px;padding:28px">
-          <div style="color:#5dbfff;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">PorteaPorte</div>
+          <div style="color:#5dbfff;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">PorteàPorte</div>
           <h1 style="font-size:26px;line-height:1.15;margin:0 0 14px;color:#fff">Bienvenue, ${prenom}.</h1>
           <p style="color:#c9d1dc;line-height:1.7;margin:0 0 18px">
-            PorteaPorte est une plateforme quebecoise qui commence par le covoiturage:
+            PorteàPorte est une plateforme quebecoise qui commence par le covoiturage:
             une personne voyage deja, une autre embarque, et parfois un colis peut profiter de la meme route.
           </p>
           <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.28);border-radius:12px;padding:18px;margin:22px 0">
@@ -1257,16 +1257,16 @@ function templateBienvenue(d) {
 function templateAuthConfirmation(d) {
   return wrap(
     `<div style="${HEADER()}">${LOGO_HTML}</div>`,
-    `<h2 style="font-size:22px;margin:0 0 16px;">Confirme ton compte PorteaPorte</h2>
-    <p style="color:#555;line-height:1.7;">Tu recois ce courriel parce qu'un compte PorteaPorte a ete cree avec cette adresse.</p>
+    `<h2 style="font-size:22px;margin:0 0 16px;">Confirme ton compte PorteàPorte</h2>
+    <p style="color:#555;line-height:1.7;">Tu recois ce courriel parce qu'un compte PorteàPorte a ete cree avec cette adresse.</p>
     <p style="color:#555;line-height:1.7;">Clique sur le bouton ci-dessous pour confirmer ton courriel et ouvrir ta session.</p>
     <div style="text-align:center;margin:26px 0;">
       <a href="${d.link}" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:6px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">Confirmer mon courriel</a>
     </div>
     <p style="font-size:12px;color:#777;line-height:1.6;">Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :</p>
     <p style="font-size:11px;line-height:1.5;word-break:break-all;color:#555;">${d.link}</p>
-    <p style="font-size:12px;color:#aaa;line-height:1.6;">Si tu n'as pas cree de compte PorteaPorte, tu peux ignorer ce message.</p>
-    <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:18px;">PorteaPorte, plateforme de livraison collaborative au Quebec.</p>`
+    <p style="font-size:12px;color:#aaa;line-height:1.6;">Si tu n'as pas cree de compte PorteàPorte, tu peux ignorer ce message.</p>
+    <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:18px;">PorteàPorte, plateforme de livraison collaborative au Quebec.</p>`
   );
 }
 
@@ -1276,10 +1276,10 @@ function templateCarteLivreur(d) {
   const cardId = d.card_id || 'PP-DR-' + String(d.user_id || '').slice(0, 8).toUpperCase();
   return wrap(
     `<div style="${HEADER('#1D6B3A')}">${LOGO_HTML}</div>`,
-    `<h2 style="font-size:22px;margin:0 0 16px;">Ta carte livreur PorteaPorte</h2>
-    <p style="color:#555;line-height:1.7;">Bonjour ${d.prenom || ''}, voici ta carte livreur numerique. Elle confirme ton profil PorteaPorte, mais l'acces aux colis reels reste limite tant que la verification n'est pas complete.</p>
+    `<h2 style="font-size:22px;margin:0 0 16px;">Ta carte livreur PorteàPorte</h2>
+    <p style="color:#555;line-height:1.7;">Bonjour ${d.prenom || ''}, voici ta carte livreur numerique. Elle confirme ton profil PorteàPorte, mais l'acces aux colis reels reste limite tant que la verification n'est pas complete.</p>
     <div style="background:#0A1628;color:#fff;border-radius:12px;padding:22px;margin:20px 0;">
-      <div style="font-size:12px;color:#B8F53E;text-transform:uppercase;letter-spacing:1px;">PorteaPorte</div>
+      <div style="font-size:12px;color:#B8F53E;text-transform:uppercase;letter-spacing:1px;">PorteàPorte</div>
       <div style="font-size:24px;font-weight:800;margin:14px 0 4px;">${d.prenom || ''} ${d.nom || ''}</div>
       <div style="font-size:13px;color:#d7dfd0;">${statusLabel}</div>
       <div style="height:1px;background:rgba(255,255,255,.18);margin:16px 0;"></div>
