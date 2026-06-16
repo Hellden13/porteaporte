@@ -116,8 +116,16 @@
     @keyframes spin{to{transform:rotate(360deg);}}
 
     /* MOBILE TAB BAR */
-    .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom);z-index:99;}
-    @media(max-width:768px){.mobile-tabs{display:flex;}}
+    /* z-index:1000 : au-dessus des composants premium-system (max 851) et du reste.
+       brand-uniform.css ciblait <nav> globalement → fond semi-transparent + mauvais border.
+       Corrigé dans brand-uniform.css (exclusion .mobile-tabs), confirmé ici par specifité. */
+    .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface) !important;border-top:1px solid var(--border) !important;border-bottom:none !important;padding:8px 0 env(safe-area-inset-bottom);z-index:1000;}
+    @media(max-width:768px){
+      .mobile-tabs{display:flex;}
+      /* Espace sous le contenu = hauteur approx de la bottom nav (65px) + safe area,
+         pour que le bas de page ne reste pas caché derrière la barre fixe. */
+      .main{padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));}
+    }
     .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.65rem;color:var(--muted);padding:6px 4px;cursor:pointer;transition:color .15s;}
     .mob-tab.active{color:var(--green);}
     .mob-tab .ico{font-size:1.2rem;}

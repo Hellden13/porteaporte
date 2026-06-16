@@ -122,7 +122,9 @@ img, svg, video, canvas {
   max-width: 100%;
 }
 
-nav,
+/* Exclut les bottom nav bars mobiles (ex: <nav class="mobile-tabs">)
+   qui ont besoin d'un fond opaque et d'un border-top, pas bottom. */
+nav:not(.mobile-tabs):not(.bottom-nav):not(.tab-bar),
 .navbar,
 header,
 .dashboard-header {
