@@ -13,14 +13,14 @@
         { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
     ],
     "redirects": [
-        { "source": "/(.*\\.sql)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.bat)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.ps1)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.backup)", "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.env)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.log)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.key)",    "destination": "/404.html", "permanent": false },
-        { "source": "/(.*\\.pem)",    "destination": "/404.html", "permanent": false },
+        { "source": "/(.*\\.sql)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.bat)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.ps1)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.backup)", "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.env)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.log)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.key)",    "destination": "/__not-found", "permanent": false },
+        { "source": "/(.*\\.pem)",    "destination": "/__not-found", "permanent": false },
         { "source": "/backups/(.*)",    "destination": "/404.html", "permanent": false },
         { "source": "/_archived/(.*)", "destination": "/404.html", "permanent": false },
         { "source": "/save/(.*)",      "destination": "/404.html", "permanent": false },
@@ -29,6 +29,11 @@
         { "source": "/BACKEND-(.*\\.md)",  "destination": "/404.html", "permanent": false },
         { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },
         { "source": "/presse.html", "destination": "/admin/presse-kit.html", "permanent": false },
+        { "source": "/register.html", "destination": "/signup.html", "permanent": true },
+        { "source": "/inscription.html", "destination": "/signup.html", "permanent": true },
+        { "source": "/missions.html", "destination": "/dashboard-livreur.html", "permanent": false },
+        { "source": "/reservations.html", "destination": "/dashboard-covoiturage.html", "permanent": false },
+        { "source": "/trajets.html", "destination": "/dashboard-covoiturage.html", "permanent": false },
         { "source": "/demo.html",            "destination": "/404.html", "permanent": false },
         { "source": "/admin/admin-legacy.html", "destination": "/404.html", "permanent": false },
         { "source": "/admin-dashboard.html",    "destination": "/404.html", "permanent": false },
@@ -553,6 +558,19 @@
                                         {
                                             "key":  "Cache-Control",
                                             "value":  "public, max-age=86400, stale-while-revalidate=604800"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/admin/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "X-Robots-Tag",
+                                            "value":  "noindex, nofollow"
+                                        },
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
                                         }
                                     ]
                     }

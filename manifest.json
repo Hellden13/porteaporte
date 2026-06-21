@@ -46,9 +46,9 @@
   ],
   "screenshots": [
     {
-      "src": "/hero-center.jpg",
-      "sizes": "512x1024",
-      "type": "image/jpeg",
+      "src": "/assets/photos/hero-covoiturage-confiance.png",
+      "sizes": "1536x1024",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "PorteÀPorte — Livraison collaborative"
     }
