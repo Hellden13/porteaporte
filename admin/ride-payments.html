@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💳 Paiements Covoiturage — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/design-system.css">
+  <link rel="stylesheet" href="/premium-overrides.css">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { padding: 0; margin: 0; background: #05080c; color: var(--brand-text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
@@ -18,12 +21,12 @@
     .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
     /* ── Boutons ── */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .85rem; font-weight: 700; transition: all .15s; text-decoration: none; }
-    .btn-primary { background: var(--brand-cyan, #5dbfff); color: #000; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px !important; border-radius: 8px !important; border: none !important; cursor: pointer; font-size: .85rem; font-weight: 700; transition: all .15s; text-decoration: none; box-shadow: none !important; }
+    .btn-primary { background: var(--brand-cyan, #5dbfff) !important; color: #000 !important; }
     .btn-primary:hover { opacity: .85; }
-    .btn-secondary { background: transparent; border: 1px solid var(--brand-border); color: var(--brand-muted); }
-    .btn-secondary:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
-    .btn-danger { background: rgba(255,90,90,.12); border: 1px solid rgba(255,90,90,.35); color: #ff9999; }
+    .btn-secondary { background: transparent !important; border: 1px solid var(--brand-border) !important; color: var(--brand-muted) !important; }
+    .btn-secondary:hover { border-color: var(--brand-cyan) !important; color: var(--brand-cyan) !important; }
+    .btn-danger { background: rgba(255,90,90,.12) !important; border: 1px solid rgba(255,90,90,.35) !important; color: #ff9999 !important; }
     .btn-danger:hover { background: rgba(255,90,90,.22); }
     .btn-sm { padding: 5px 11px; font-size: .78rem; }
     .btn:disabled { opacity: .4; cursor: not-allowed; }
@@ -41,9 +44,9 @@
 
     /* ── Barre de filtres ── */
     .filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
-    .filter-btn { padding: 7px 15px; border-radius: 999px; border: 1px solid var(--brand-border); background: transparent; color: var(--brand-muted); cursor: pointer; font-size: .82rem; font-weight: 600; transition: all .15s; }
-    .filter-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
-    .filter-btn.active { background: rgba(93,191,255,.12); border-color: var(--brand-cyan); color: var(--brand-cyan); }
+    .filter-btn { padding: 7px 15px !important; border-radius: 999px !important; border: 1px solid var(--brand-border) !important; background: transparent !important; color: var(--brand-muted) !important; cursor: pointer; font-size: .82rem; font-weight: 600; transition: all .15s; box-shadow: none !important; }
+    .filter-btn:hover { border-color: var(--brand-cyan) !important; color: var(--brand-cyan) !important; }
+    .filter-btn.active { background: rgba(93,191,255,.12) !important; border-color: var(--brand-cyan) !important; color: var(--brand-cyan) !important; }
     .search-box { flex: 1; min-width: 200px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--brand-border); background: var(--brand-bg-surface); color: var(--brand-text); font-size: .85rem; outline: none; }
     .search-box:focus { border-color: var(--brand-cyan); }
 
@@ -120,7 +123,7 @@
       <span id="cron-last" style="margin-left:8px;font-style:italic"></span>
     </div>
     <button id="btn-cron" class="btn btn-primary btn-sm" onclick="lancerCron()" title="">
-      ⚡ Lancer cron maintenant
+      Lancer cron capture maintenant
     </button>
   </div>
 
@@ -129,7 +132,7 @@
     <div class="stat-card accent-blue">
       <div class="stat-label">Bookings confirmés</div>
       <div class="stat-value" id="stat-total">—</div>
-      <div class="stat-sub">avec PaymentIntent Stripe</div>
+      <div class="stat-sub">status = confirme</div>
     </div>
     <div class="stat-card accent-yellow">
       <div class="stat-label">En attente capture</div>
@@ -142,20 +145,19 @@
       <div class="stat-sub" id="stat-captured-amt"></div>
     </div>
     <div class="stat-card accent-green">
-      <div class="stat-label">Payés aux chauffeurs</div>
+      <div class="stat-label">Transféré aux chauffeurs</div>
       <div class="stat-value" id="stat-paid">—</div>
-      <div class="stat-sub" id="stat-paid-amt"></div>
+      <div class="stat-sub" id="stat-paid-amt">avec Transfer ID</div>
     </div>
   </div>
 
   <!-- Filtres -->
   <div class="filters">
     <button class="filter-btn active" data-filter="tous" onclick="setFilter('tous',this)">Tous</button>
-    <button class="filter-btn" data-filter="requires_capture" onclick="setFilter('requires_capture',this)">⏳ À capturer</button>
-    <button class="filter-btn" data-filter="succeeded" onclick="setFilter('succeeded',this)">Capturés</button>
-    <button class="filter-btn" data-filter="paye" onclick="setFilter('paye',this)">✅ Payés</button>
-    <button class="filter-btn" data-filter="annule" onclick="setFilter('annule',this)">Annulés</button>
-    <button class="filter-btn" data-filter="aucun" onclick="setFilter('aucun',this)">❌ Sans paiement</button>
+    <button class="filter-btn" data-filter="requires_capture" onclick="setFilter('requires_capture',this)">requires_capture</button>
+    <button class="filter-btn" data-filter="succeeded" onclick="setFilter('succeeded',this)">succeeded</button>
+    <button class="filter-btn" data-filter="paye" onclick="setFilter('paye',this)">paye</button>
+    <button class="filter-btn" data-filter="annule" onclick="setFilter('annule',this)">annule</button>
     <input class="search-box" type="text" id="search" placeholder="🔍 Recherche ville, prénom…" oninput="renderTable()">
   </div>
 
@@ -178,6 +180,7 @@
           <th>Statut paiement</th>
           <th>Statut booking</th>
           <th>PaymentIntent</th>
+          <th>Transfer ID</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -199,20 +202,27 @@
   let activeFilter = 'tous';
 
   async function init() {
-    db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-    const { data: sess } = await db.auth.getSession();
-    if (!sess?.session) { window.location.href = '/login.html'; return; }
-    session = sess.session;
-
-    // Vérifie rôle admin
-    const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-    if (!profile || profile.role !== 'admin') { window.location.href = '/'; return; }
-
-    // Bouton cron : désactivé si pas de CRON_SECRET accessible
-    // On ne peut pas lire les env server-side, donc on tente un appel à blanc
-    document.getElementById('btn-cron').title = 'Lance la capture immédiate de tous les paiements éligibles';
+    if (!await AUTH_API.requireAuth('admin')) return;
+    db = window.getSupabaseClient ? window.getSupabaseClient() : (window.db || window.supabase);
+    session = AUTH_API.getUser()?.session;
+    configureCronButton();
 
     await load();
+  }
+
+  function clientCronSecret() {
+    return window.PORTEAPORTE_CRON_SECRET || window.CRON_SECRET || '';
+  }
+
+  function configureCronButton() {
+    const btn = document.getElementById('btn-cron');
+    if (!clientCronSecret()) {
+      btn.disabled = true;
+      btn.title = 'CRON_SECRET non configuré';
+      return;
+    }
+    btn.disabled = false;
+    btn.title = 'Lance la capture immédiate de tous les paiements éligibles';
   }
 
   async function load() {
@@ -235,7 +245,7 @@
         .limit(300);
 
       if (error) throw error;
-      allData = data || [];
+      allData = await hydrateTransfers(data || []);
       updateStats();
       renderTable();
     } catch (e) {
@@ -245,22 +255,56 @@
     }
   }
 
+  async function hydrateTransfers(bookings) {
+    const piIds = [...new Set(bookings.map(b => b.stripe_payment_intent).filter(Boolean))];
+    const rideIds = [...new Set(bookings.map(b => b.ride_id).filter(Boolean))];
+    const txByPi = new Map();
+    const earningByRide = new Map();
+
+    if (piIds.length) {
+      const { data: txs } = await db
+        .from('transactions')
+        .select('stripe_payment_intent,metadata')
+        .in('stripe_payment_intent', piIds);
+      (txs || []).forEach(t => {
+        if (t.stripe_payment_intent) txByPi.set(t.stripe_payment_intent, t);
+      });
+    }
+
+    if (rideIds.length) {
+      const { data: earnings } = await db
+        .from('livreur_earnings')
+        .select('source_type,source_id,stripe_transfer_id')
+        .in('source_id', rideIds);
+      (earnings || []).filter(e => e.source_type === 'ride').forEach(e => {
+        if (!earningByRide.has(e.source_id) || e.stripe_transfer_id) earningByRide.set(e.source_id, e);
+      });
+    }
+
+    return bookings.map(b => {
+      const transferId = txByPi.get(b.stripe_payment_intent)?.metadata?.transfer_id
+        || earningByRide.get(b.ride_id)?.stripe_transfer_id
+        || '';
+      return { ...b, transfer_id: transferId };
+    });
+  }
+
   function updateStats() {
-    const withPI = allData.filter(b => b.stripe_payment_intent && !b.stripe_payment_intent.match(/pi_X{4,}|pi_TEST/i) && b.stripe_payment_intent.length >= 20);
+    const confirmed = allData.filter(b => b.status === 'confirme');
     const authorized = allData.filter(b => b.payment_status === 'requires_capture');
     const captured   = allData.filter(b => b.payment_status === 'succeeded');
-    const paid       = allData.filter(b => b.status === 'paye');
+    const transferred = allData.filter(b => b.transfer_id);
 
     const sumAmt = arr => arr.reduce((s, b) => s + (Number(b.total_passenger) || 0), 0);
     const sumDrv = arr => arr.reduce((s, b) => s + (Number(b.driver_amount)   || 0), 0);
 
-    document.getElementById('stat-total').textContent = withPI.length;
-    document.getElementById('stat-authorized').textContent = authorized.length;
-    document.getElementById('stat-authorized-amt').textContent = authorized.length ? fmt(sumAmt(authorized)) + ' $ autorisé' : '0,00 $';
-    document.getElementById('stat-captured').textContent = captured.length;
-    document.getElementById('stat-captured-amt').textContent = captured.length ? fmt(sumAmt(captured)) + ' $ capturé' : '0,00 $';
-    document.getElementById('stat-paid').textContent = paid.length;
-    document.getElementById('stat-paid-amt').textContent = paid.length ? fmt(sumDrv(paid)) + ' $ versés' : '0,00 $';
+    document.getElementById('stat-total').textContent = confirmed.length;
+    document.getElementById('stat-authorized').textContent = fmt(sumAmt(authorized)) + ' $';
+    document.getElementById('stat-authorized-amt').textContent = authorized.length + ' booking(s) autorisé(s)';
+    document.getElementById('stat-captured').textContent = fmt(sumAmt(captured)) + ' $';
+    document.getElementById('stat-captured-amt').textContent = captured.length + ' booking(s) capturé(s)';
+    document.getElementById('stat-paid').textContent = fmt(sumDrv(transferred)) + ' $';
+    document.getElementById('stat-paid-amt').textContent = transferred.length + ' transfer(s)';
   }
 
   function setFilter(f, el) {
@@ -279,7 +323,6 @@
       if (activeFilter === 'succeeded')        return b.payment_status === 'succeeded';
       if (activeFilter === 'paye')             return b.status === 'paye';
       if (activeFilter === 'annule')           return (b.status || '').startsWith('annule');
-      if (activeFilter === 'aucun')            return !b.stripe_payment_intent;
       return true;
     });
 
@@ -313,12 +356,16 @@
       const noCapture  = pStatus === 'requires_capture';
       const isSucceeded = pStatus === 'succeeded';
       const noPayment  = !isReal;
+      const transferId = b.transfer_id || '';
 
       // Badge paiement
       let payBadge = '';
-      if (noPayment)        payBadge = '<span class="badge badge-red">❌ Aucun paiement</span>';
+      if (isAnnule)         payBadge = '<span class="badge badge-gray">Annulé</span>';
+      else if (isPaid)      payBadge = '<span class="badge badge-green">✅ Payé</span>';
+      else if (noPayment)   payBadge = '<span class="badge badge-red">❌ Aucun paiement</span>';
       else if (noCapture)   payBadge = '<span class="badge badge-yellow">⏳ En attente capture</span>';
-      else if (isSucceeded && !isPaid) payBadge = '<span class="badge badge-orange">⚠️ Capturé, pas transféré</span>';
+      else if (isSucceeded && !b.paid_at) payBadge = '<span class="badge badge-orange">⚠️ Capturé, pas transféré</span>';
+      else if (isSucceeded && !transferId) payBadge = '<span class="badge badge-orange">⚠️ Capturé, pas transféré</span>';
       else if (isSucceeded) payBadge = '<span class="badge badge-blue">💳 Succeeded</span>';
       else                  payBadge = '<span class="badge badge-gray">' + (pStatus || 'inconnu') + '</span>';
 
@@ -337,8 +384,8 @@
       let action = '';
       if (noCapture && isReal) {
         action = `<button class="btn btn-primary btn-sm" onclick="forcerCapture('${b.id}')">⚡ Forcer capture</button>`;
-      } else if (isSucceeded && !isPaid) {
-        action = `<span class="badge badge-orange" title="Transfer manquant — à vérifier manuellement dans Stripe">⚠️ Transfer manquant</span>`;
+      } else if (isSucceeded && !transferId) {
+        action = `<span class="badge badge-orange" title="Transfer manquant — à vérifier manuellement dans Stripe">⚠️ Transfer manquant — revue manuelle</span>`;
       }
 
       // PI raccourci cliquable
@@ -346,6 +393,7 @@
 
       // ID booking
       const bookId = `<span class="mono" onclick="copy('${b.id}')" title="${b.id}">${b.id.slice(0,8)}…</span>`;
+      const transferShort = transferId ? `<span class="mono" onclick="copy('${transferId}')" title="${transferId}">${transferId.slice(0,16)}…</span>` : '<span style="color:#56657d">—</span>';
 
       return `<tr>
         <td>${bookId}</td>
@@ -359,6 +407,7 @@
         <td>${payBadge}</td>
         <td>${bookBadge}</td>
         <td>${piShort}</td>
+        <td>${transferShort}</td>
         <td style="white-space:nowrap">${action}</td>
       </tr>`;
     }).join('');
@@ -392,13 +441,15 @@
   }
 
   async function lancerCron() {
+    const secret = clientCronSecret();
+    if (!secret) return;
     const btn = document.getElementById('btn-cron');
     btn.disabled = true;
     btn.textContent = '⏳ En cours…';
     try {
       const r = await fetch('/api/cron-ride-capture', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + session.access_token }
+        headers: { 'Authorization': 'Bearer ' + secret }
       });
       const data = await r.json();
       if (!r.ok) {
@@ -416,7 +467,8 @@
       showToast('Erreur cron : ' + e.message, 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = '⚡ Lancer cron maintenant';
+      btn.textContent = 'Lancer cron capture maintenant';
+      configureCronButton();
     }
   }
 
