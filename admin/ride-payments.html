@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiements covoiturage - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    body { padding: 0; background: var(--brand-bg-dark); color: var(--brand-text); }
+    .admin-layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar {
+      background: var(--brand-bg-dark);
+      border-right: 1px solid var(--brand-bg-surface-light);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--brand-lime);
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--brand-bg-surface-light);
+      margin-bottom: 16px;
+    }
+    .sidebar-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--brand-muted-dark);
+      padding: 8px 20px 4px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: var(--brand-muted);
+      text-decoration: none;
+      font-size: .875rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--brand-text);
+      background: rgba(93,191,255,.06);
+      border-left-color: var(--brand-lime);
+    }
+    .nav-link .icon { width: 20px; text-align: center; }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--brand-bg-surface-light);
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--brand-border);
+      color: var(--brand-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .875rem;
+    }
+    .logout-btn:hover { border-color: var(--brand-danger); color: var(--brand-danger); }
+    .main { padding: 32px; min-width: 0; overflow: auto; }
+    .mobile-admin-nav {
+      display: none;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    .mobile-admin-nav a {
+      flex: 0 0 auto;
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 999px;
+      color: var(--brand-muted);
+      text-decoration: none;
+      padding: 8px 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      background: var(--brand-bg-surface);
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0; font-size: 1.45rem; color: #fff; }
+    .page-sub { margin-top: 5px; color: var(--brand-muted-dark); font-size: .86rem; }
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid rgba(93,191,255,.32);
+      background: rgba(93,191,255,.1);
+      color: var(--brand-lime);
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: .84rem;
+      text-decoration: none;
+    }
+    .btn.secondary { background: transparent; color: var(--brand-muted); border-color: var(--brand-border); }
+    .btn:disabled { opacity: .55; cursor: wait; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .stat-label {
+      color: var(--brand-muted-dark);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 9px;
+    }
+    .stat-value { color: var(--brand-lime); font-size: 1.65rem; font-weight: 900; line-height: 1; }
+    .stat-sub { color: var(--brand-muted-dark); font-size: .78rem; margin-top: 8px; }
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 190px 190px auto;
+      gap: 10px;
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 18px;
+      align-items: center;
+    }
+    input, select {
+      width: 100%;
+      border: 1px solid var(--brand-border);
+      background: #070b10;
+      color: var(--brand-text);
+      border-radius: 8px;
+      padding: 10px 11px;
+      font-size: .88rem;
+    }
+    .auto-refresh {
+      color: var(--brand-muted);
+      font-size: .83rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .auto-refresh input { width: auto; }
+    .table-card {
+      background: var(--brand-bg-surface);
+      border: 1px solid var(--brand-bg-surface-light);
+      border-radius: 10px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100%; min-width: 1460px; border-collapse: collapse; }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #080c12;
+      color: var(--brand-muted-dark);
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 12px 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      border-top: 1px solid var(--brand-bg-surface-light);
+      color: var(--brand-text);
+      padding: 12px 14px;
+      font-size: .84rem;
+      vertical-align: top;
+    }
+    tr:hover td { background: rgba(255,255,255,.018); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .76rem; }
+    .copy-chip {
+      border: 1px solid rgba(93,191,255,.25);
+      background: rgba(93,191,255,.07);
+      color: var(--brand-lime);
+      border-radius: 999px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .name { color: #fff; font-weight: 800; }
+    .muted { color: var(--brand-muted-dark); }
+    .amount { text-align: right; white-space: nowrap; font-weight: 800; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .72rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .badge.ok { background: rgba(16,185,129,.14); color: #7dffc1; }
+    .badge.warn { background: rgba(245,158,11,.16); color: #ffcf7a; }
+    .badge.danger { background: rgba(239,68,68,.14); color: #ff8a8a; }
+    .badge.neutral { background: rgba(168,176,186,.12); color: var(--brand-muted); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; min-width: 180px; }
+    .action-btn {
+      border: 1px solid var(--brand-border);
+      background: rgba(255,255,255,.03);
+      color: var(--brand-muted);
+      border-radius: 7px;
+      padding: 7px 9px;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: .76rem;
+    }
+    .action-btn:hover { color: var(--brand-lime); border-color: rgba(93,191,255,.38); }
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--brand-muted-dark);
+      font-size: .8rem;
+      margin: 10px 2px 0;
+      flex-wrap: wrap;
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      background: #101720;
+      color: #fff;
+      border: 1px solid rgba(93,191,255,.32);
+      border-radius: 9px;
+      padding: 10px 13px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.35);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s, transform .18s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 900px) {
+      .admin-layout { display: block; }
+      .sidebar { display: none; }
+      .main { padding: 18px; }
+      .mobile-admin-nav { display: flex; }
+      .filters { grid-template-columns: 1fr; }
+      h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">⚡ PorteàPorte</div>
+      <div class="sidebar-label">Admin</div>
+      <a href="/admin/dashboard-admin.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+      <a href="/admin/operations.html" class="nav-link"><span class="icon">🚨</span> Operations</a>
+      <a href="/admin/stripe-health.html" class="nav-link"><span class="icon">💳</span> Stripe Health</a>
+      <div class="sidebar-label" style="margin-top:16px">Finances</div>
+      <a href="/admin/ride-payments.html" class="nav-link active"><span class="icon">🚗</span> Paiements covoit</a>
+      <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètres financiers</a>
+      <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Dashboard Fondateur</a>
+      <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
+      <div class="sidebar-label" style="margin-top:16px">Covoiturage</div>
+      <a href="/admin/partage-trajets.html" class="nav-link"><span class="icon">📘</span> Partage trajets</a>
+      <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">🚗</span> Espace covoiturage</a>
+      <div class="sidebar-bottom">
+        <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
+        <button class="logout-btn" onclick="AUTH_API.logout()">Se déconnecter</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
+        <a href="/admin/dashboard-admin.html">📊 Dashboard</a>
+        <a href="/admin/operations.html">🚨 OPS</a>
+        <a href="/admin/stripe-health.html">💳 Stripe</a>
+        <a href="/admin/ride-payments.html" style="color:#5dbfff;font-weight:900">🚗 Paiements</a>
+        <a href="/admin/fondateur.html">👑 Fondateur</a>
+      </nav>
+
+      <header class="page-header">
+        <div>
+          <h1>Paiements covoiturage</h1>
+          <div class="page-sub">Vue temps réel des réservations, autorisations Stripe, captures et virements chauffeur.</div>
+        </div>
+        <div class="header-actions">
+          <span class="auto-refresh"><input id="auto-refresh" type="checkbox" checked> Auto 30 s</span>
+          <button class="btn secondary" id="refresh-btn" type="button" onclick="loadRidePayments()">Rafraîchir</button>
+        </div>
+      </header>
+
+      <section class="stats-grid" aria-label="Résumé paiements covoiturage">
+        <div class="stat-card">
+          <div class="stat-label">Réservations</div>
+          <div class="stat-value" id="stat-count">—</div>
+          <div class="stat-sub">lignes chargées</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Montant passagers</div>
+          <div class="stat-value" id="stat-passenger">—</div>
+          <div class="stat-sub">total passager</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Chauffeurs</div>
+          <div class="stat-value" id="stat-driver">—</div>
+          <div class="stat-sub">driver_amount</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Frais plateforme</div>
+          <div class="stat-value" id="stat-platform">—</div>
+          <div class="stat-sub">platform_fee</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">À capturer</div>
+          <div class="stat-value" id="stat-capture">—</div>
+          <div class="stat-sub">payment_status requires_capture</div>
+        </div>
+      </section>
+
+      <section class="filters" aria-label="Filtres paiements covoiturage">
+        <input id="search" type="search" placeholder="Rechercher booking, ville, prénom, PI, transfer..." autocomplete="off">
+        <select id="filter-payment">
+          <option value="">Tous les paiements</option>
+          <option value="requires_capture">requires_capture</option>
+          <option value="succeeded">succeeded</option>
+          <option value="canceled">canceled</option>
+          <option value="null">null</option>
+        </select>
+        <select id="filter-booking">
+          <option value="">Tous les bookings</option>
+          <option value="en_attente">en_attente</option>
+          <option value="confirme">confirme</option>
+          <option value="paye">paye</option>
+          <option value="annule">annule_*</option>
+        </select>
+        <div class="muted" id="live-status">Connexion...</div>
+      </section>
+
+      <section class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>Trajet</th>
+              <th>Date départ</th>
+              <th>Passager</th>
+              <th>Chauffeur</th>
+              <th>Montant passager</th>
+              <th>Montant chauffeur</th>
+              <th>Frais plateforme</th>
+              <th>Stripe Payment Intent ID</th>
+              <th>Payment Status</th>
+              <th>Transfer ID</th>
+              <th>Statut booking</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="payments-body">
+            <tr><td colspan="13" class="muted">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <div class="status-line">
+        <span id="last-refresh">—</span>
+        <span>Les ID tronqués sont cliquables pour copier la valeur complète.</span>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    let db = null;
+    let rows = [];
+    let realtimeChannel = null;
+    let refreshTimer = null;
+
+    const money = (value) => {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return '—';
+      return n.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+    };
+    const text = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+    const shortId = (value, front = 10, back = 4) => {
+      const s = String(value || '');
+      if (!s) return '—';
+      return s.length <= front + back + 1 ? s : s.slice(0, front) + '…' + s.slice(-back);
+    };
+    const dateFmt = (value) => value
+      ? new Date(value).toLocaleString('fr-CA', { dateStyle: 'medium', timeStyle: 'short' })
+      : '—';
+
+    function badgeClass(value, type) {
+      const v = String(value || '').toLowerCase();
+      if (type === 'payment') {
+        if (v === 'succeeded') return 'ok';
+        if (v === 'requires_capture') return 'warn';
+        if (v === 'canceled' || v.includes('failed')) return 'danger';
+        return 'neutral';
+      }
+      if (v === 'paye' || v === 'complete' || v === 'completed') return 'ok';
+      if (v === 'confirme' || v === 'en_attente') return 'warn';
+      if (v.startsWith('annule') || v === 'cancelled') return 'danger';
+      return 'neutral';
+    }
+
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    async function copyValue(value) {
+      if (!value) return;
+      try {
+        await navigator.clipboard.writeText(value);
+        showToast('Copié');
+      } catch (_) {
+        prompt('Copier cette valeur', value);
+      }
+    }
+
+    async function fetchTable(table, select, options = {}) {
+      let query = db.from(table).select(select);
+      if (options.inColumn && options.inValues?.length) query = query.in(options.inColumn, options.inValues);
+      if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending });
+      if (options.limit) query = query.limit(options.limit);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
+
+    async function loadRidePayments() {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true;
+      btn.textContent = 'Chargement...';
+      try {
+        const bookings = await fetchTable(
+          'ride_bookings',
+          'id,ride_id,passenger_id,status,total_passenger,driver_amount,platform_fee,stripe_payment_intent,payment_status,paid_at,created_at',
+          { order: { column: 'created_at', ascending: false }, limit: 500 }
+        );
+
+        const rideIds = [...new Set(bookings.map(b => b.ride_id).filter(Boolean))];
+        const rides = rideIds.length
+          ? await fetchTable('rides', 'id,start_city,end_city,departure_time,driver_id', { inColumn: 'id', inValues: rideIds })
+          : [];
+        const rideById = new Map(rides.map(r => [r.id, r]));
+
+        const profileIds = [...new Set([
+          ...bookings.map(b => b.passenger_id),
+          ...rides.map(r => r.driver_id)
+        ].filter(Boolean))];
+        const profiles = profileIds.length
+          ? await fetchTable('profiles', 'id,prenom', { inColumn: 'id', inValues: profileIds })
+          : [];
+        const profileById = new Map(profiles.map(p => [p.id, p]));
+
+        const paymentIntentIds = [...new Set(bookings.map(b => b.stripe_payment_intent).filter(Boolean))];
+        const transactions = paymentIntentIds.length
+          ? await fetchTable('transactions', 'stripe_payment_intent,statut,metadata', { inColumn: 'stripe_payment_intent', inValues: paymentIntentIds })
+          : [];
+        const transactionByPaymentIntent = new Map();
+        transactions.forEach(t => {
+          if (t.stripe_payment_intent) transactionByPaymentIntent.set(t.stripe_payment_intent, t);
+        });
+
+        const earnings = rideIds.length
+          ? await fetchTable('livreur_earnings', 'source_type,source_id,stripe_transfer_id,status', { inColumn: 'source_id', inValues: rideIds })
+          : [];
+        const transferByRideId = new Map();
+        earnings.filter(e => e.source_type === 'ride').forEach(e => {
+          if (!transferByRideId.has(e.source_id) || e.stripe_transfer_id) {
+            transferByRideId.set(e.source_id, e);
+          }
+        });
+
+        rows = bookings.map(b => {
+          const ride = rideById.get(b.ride_id) || {};
+          return {
+            ...b,
+            ride,
+            passenger: profileById.get(b.passenger_id) || {},
+            driver: profileById.get(ride.driver_id) || {},
+            transaction: transactionByPaymentIntent.get(b.stripe_payment_intent) || null,
+            transfer: transferByRideId.get(b.ride_id) || null
+          };
+        });
+
+        renderStats(rows);
+        renderTable();
+        document.getElementById('last-refresh').textContent = 'Dernière mise à jour : ' + new Date().toLocaleTimeString('fr-CA');
+        document.getElementById('live-status').textContent = 'Live actif';
+      } catch (error) {
+        document.getElementById('payments-body').innerHTML = `<tr><td colspan="13" style="color:#ff8a8a">${text(error.message || error)}</td></tr>`;
+        document.getElementById('live-status').textContent = 'Erreur';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Rafraîchir';
+      }
+    }
+
+    function renderStats(data) {
+      const passenger = data.reduce((s, b) => s + (Number(b.total_passenger) || 0), 0);
+      const driver = data.reduce((s, b) => s + (Number(b.driver_amount) || 0), 0);
+      const platform = data.reduce((s, b) => s + (Number(b.platform_fee) || 0), 0);
+      const capture = data.filter(b => b.payment_status === 'requires_capture').length;
+      document.getElementById('stat-count').textContent = data.length.toLocaleString('fr-CA');
+      document.getElementById('stat-passenger').textContent = money(passenger);
+      document.getElementById('stat-driver').textContent = money(driver);
+      document.getElementById('stat-platform').textContent = money(platform);
+      document.getElementById('stat-capture').textContent = capture.toLocaleString('fr-CA');
+    }
+
+    function filteredRows() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const payment = document.getElementById('filter-payment').value;
+      const booking = document.getElementById('filter-booking').value;
+      return rows.filter(row => {
+        if (payment === 'null' && row.payment_status) return false;
+        if (payment && payment !== 'null' && row.payment_status !== payment) return false;
+        if (booking === 'annule' && !String(row.status || '').startsWith('annule')) return false;
+        if (booking && booking !== 'annule' && row.status !== booking) return false;
+        if (!q) return true;
+        const haystack = [
+          row.id, row.ride?.start_city, row.ride?.end_city, row.passenger?.prenom,
+          row.driver?.prenom, row.stripe_payment_intent, row.payment_status,
+          row.transaction?.metadata?.transfer_id, row.transfer?.stripe_transfer_id, row.status
+        ].join(' ').toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
+    function renderTable() {
+      const body = document.getElementById('payments-body');
+      const data = filteredRows();
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="13" class="muted">Aucun paiement covoiturage pour ces filtres.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = data.map(row => {
+        const start = row.ride?.start_city || row.pickup_city || '—';
+        const end = row.ride?.end_city || row.dropoff_city || '—';
+        const pi = row.stripe_payment_intent || '';
+        const transferId = row.transaction?.metadata?.transfer_id || row.transfer?.stripe_transfer_id || '';
+        const stripeUrl = pi ? `https://dashboard.stripe.com/payments/${encodeURIComponent(pi)}` : '';
+        return `<tr>
+          <td><button class="copy-chip mono" onclick="copyValue('${text(row.id)}')" title="${text(row.id)}">${text(shortId(row.id))}</button></td>
+          <td><div class="name">${text(start)} → ${text(end)}</div><div class="muted mono">${text(shortId(row.ride_id || '', 8, 4))}</div></td>
+          <td>${text(dateFmt(row.ride?.departure_time))}</td>
+          <td><div class="name">${text(row.passenger?.prenom || '—')}</div><div class="muted mono">${text(shortId(row.passenger_id || '', 8, 4))}</div></td>
+          <td><div class="name">${text(row.driver?.prenom || '—')}</div><div class="muted mono">${text(shortId(row.ride?.driver_id || '', 8, 4))}</div></td>
+          <td class="amount">${text(money(row.total_passenger))}</td>
+          <td class="amount">${text(money(row.driver_amount))}</td>
+          <td class="amount">${text(money(row.platform_fee))}</td>
+          <td>${pi ? `<button class="copy-chip mono" onclick="copyValue('${text(pi)}')" title="${text(pi)}">${text(shortId(pi, 13, 6))}</button>` : '<span class="muted">—</span>'}</td>
+          <td><span class="badge ${badgeClass(row.payment_status, 'payment')}">${text(row.payment_status || 'null')}</span></td>
+          <td>${transferId ? `<button class="copy-chip mono" onclick="copyValue('${text(transferId)}')" title="${text(transferId)}">${text(shortId(transferId, 12, 6))}</button>` : '<span class="muted">—</span>'}</td>
+          <td><span class="badge ${badgeClass(row.status, 'booking')}">${text(row.status || '—')}</span></td>
+          <td>
+            <div class="actions">
+              ${pi ? `<button class="action-btn" onclick="copyValue('${text(pi)}')">Copier PI</button>` : ''}
+              ${stripeUrl ? `<a class="action-btn" href="${stripeUrl}" target="_blank" rel="noopener">Stripe</a>` : ''}
+              ${transferId ? `<button class="action-btn" onclick="copyValue('${text(transferId)}')">Copier transfer</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function setupRealtime() {
+      if (!db.channel) {
+        document.getElementById('live-status').textContent = 'Auto-refresh actif';
+        return;
+      }
+      realtimeChannel = db.channel('admin-ride-payments')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ride_bookings' }, () => loadRidePayments())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'livreur_earnings' }, () => loadRidePayments())
+        .subscribe((status) => {
+          document.getElementById('live-status').textContent = status === 'SUBSCRIBED' ? 'Live actif' : 'Live: ' + status;
+        });
+    }
+
+    function setupAutoRefresh() {
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        if (document.getElementById('auto-refresh').checked) loadRidePayments();
+      }, 30000);
+    }
+
+    async function init() {
+      if (!await AUTH_API.requireAuth('admin')) return;
+      db = window.getSupabaseClient ? window.getSupabaseClient() : (window.db || window.supabase);
+      const user = AUTH_API.getUser();
+      document.getElementById('admin-email').textContent = user.email || '';
+      document.getElementById('search').addEventListener('input', renderTable);
+      document.getElementById('filter-payment').addEventListener('change', renderTable);
+      document.getElementById('filter-booking').addEventListener('change', renderTable);
+      await loadRidePayments();
+      setupRealtime();
+      setupAutoRefresh();
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (realtimeChannel && db?.removeChannel) db.removeChannel(realtimeChannel);
+      clearInterval(refreshTimer);
+    });
+
+    init();
+  </script>
+  <script src="/js/admin-alert-bell.js" defer></script>
+</body>
+</html>

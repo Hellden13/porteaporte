@@ -77,6 +77,10 @@
                          "destination":  "/admin/dashboard-admin.html"
                      },
                      {
+                         "source":  "/admin/ride-payments",
+                         "destination":  "/admin/ride-payments.html"
+                     },
+                     {
                          "source":  "/admin/pilotage",
                          "destination":  "/admin/pilotage.html"
                      },
