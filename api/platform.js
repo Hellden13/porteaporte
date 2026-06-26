@@ -5114,7 +5114,7 @@ module.exports = async function handler(req, res) {
 
     if (endpoint === 'stripe-public-config') {
       const publishableKey = sanitizeEnv(process.env.STRIPE_PUBLIC_KEY)
-        || 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a';
+        || 'pk_live_51TNnGvGmtI41WMZSF2YASCjM7OytCs5v5AphI0wEC6LuVqTVwPWkCaUlL5OPmVChc3ywBJ89SoHlswaerhJ5hJiy006cGQG8fq';
       return res.status(200).json({
         publishable_key: publishableKey,
         mode: publishableKey.includes('_test_') ? 'test' : 'live'
@@ -6693,3 +6693,4 @@ module.exports = async function handler(req, res) {
   }
 };
 // trigger redeploy Tue May 26 20:09:54     2026
+
