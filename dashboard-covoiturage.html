@@ -591,7 +591,7 @@ function buildReservations() {
   <div class="table-wrap">
     ${allBookings.length === 0
       ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son nom + contact apparaîtront ici.</p>`
-      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Contact</th></tr></thead><tbody>
+      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
         ${allBookings.map(b=>{
           const contactInfo = [];
           if (b.passenger_email) contactInfo.push(`<a href="mailto:${b.passenger_email}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
@@ -613,6 +613,10 @@ function buildReservations() {
             petCell = '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__showPet(\'' + b.id + '\')" title="Voir la carte animal">' + petAvatar + '<div><div style="font-weight:700;font-size:.82rem">' + speciesIcon + ' ' + petLabel + '</div>' + (sizeWeight ? '<div style="font-size:.7rem;color:var(--muted)">' + sizeWeight + '</div>' : '') + '</div></div>';
           }
 
+          const canComplete = ['confirme','driver_completed'].includes(String(b.status||'').toLowerCase());
+          const completeBtn = canComplete
+            ? `<button onclick="openRideCodeModal('${b.id}')" style="margin:2px;background:rgba(0,217,255,.14);color:var(--cyan);border:1px solid rgba(0,217,255,.45);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:900;cursor:pointer">Valider trajet</button>`
+            : '<span style="color:var(--muted);font-size:.75rem">—</span>';
           return `<tr>
             <td><strong>${b.passenger_prenom||'—'}</strong>${b.passenger_email ? `<div style="font-size:.72rem;color:var(--muted)">${b.passenger_email}</div>` : ''}</td>
             <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
@@ -620,6 +624,7 @@ function buildReservations() {
             <td>${petCell}</td>
             <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
             <td>${statusChip(b.status)}</td>
+            <td>${completeBtn}</td>
             <td>${contactInfo.length ? contactInfo.join(' ') : '<span style="color:var(--muted);font-size:.78rem">—</span>'}</td>
           </tr>`;
         }).join('')}
@@ -638,10 +643,77 @@ function buildReservations() {
       </div>
     </div>
   </div>
+  <div id="ride-code-modal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,.94);z-index:10000;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)closeRideCodeModal()">
+    <div style="background:var(--brand-bg-surface,#0f1320);border:1px solid rgba(0,217,255,.3);border-radius:18px;width:min(420px,100%);padding:22px;box-shadow:0 22px 70px rgba(0,0,0,.45)">
+      <h3 style="margin:0 0 8px;color:var(--brand-cyan,#00d9ff);font-size:1.25rem">Code sécurité passager</h3>
+      <p style="margin:0 0 16px;color:#aab2c5;font-size:.9rem;line-height:1.45">Entre le code remis par le passager pour valider et libérer le paiement. Sans code, le trajet sera marqué terminé et auto-validé après 4h si aucune alerte n’est déclenchée.</p>
+      <input id="ride-code-booking-id" type="hidden">
+      <input id="ride-code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:2rem;letter-spacing:.25em;text-align:center;background:#080d16;color:#fff;border:1px solid rgba(0,217,255,.45);border-radius:14px;padding:14px 12px;margin-bottom:14px">
+      <button onclick="submitRideCodeModal()" style="width:100%;background:var(--brand-cyan,#00d9ff);color:#061018;border:0;padding:13px;border-radius:12px;font-weight:900;font-size:1rem;cursor:pointer">Valider avec le code</button>
+      <button onclick="submitRideDriverCompletedOnly()" style="width:100%;margin-top:10px;background:transparent;color:#ffcf7a;border:1px solid rgba(255,207,122,.45);padding:12px;border-radius:12px;font-weight:800;cursor:pointer">Je n'ai pas le code</button>
+      <button onclick="closeRideCodeModal()" style="width:100%;margin-top:10px;background:transparent;color:#aab2c5;border:0;padding:10px;font-weight:700;cursor:pointer">Annuler</button>
+    </div>
+  </div>
   `;
 }
 
 // ── MISSIONS ──
+function openRideCodeModal(bookingId) {
+  const modal = document.getElementById('ride-code-modal');
+  const input = document.getElementById('ride-code-input');
+  document.getElementById('ride-code-booking-id').value = bookingId || '';
+  input.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 80);
+}
+
+function closeRideCodeModal() {
+  const modal = document.getElementById('ride-code-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function rideCodeRequest(endpoint, body) {
+  const db = getSupabaseClient();
+  const { data: _sd } = await db.auth.getSession();
+  const token = _sd?.session?.access_token;
+  if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return null; }
+  const res = await fetch('/api/platform?endpoint=' + endpoint, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, ...body })
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error || 'Erreur validation');
+  return out;
+}
+
+async function submitRideCodeModal() {
+  const bookingId = document.getElementById('ride-code-booking-id').value;
+  const code = document.getElementById('ride-code-input').value.replace(/\D/g, '');
+  if (code.length < 4) { alert('Entre un code de 4 à 8 chiffres.'); return; }
+  try {
+    await rideCodeRequest('ride-driver-complete', { booking_id: bookingId, code });
+    closeRideCodeModal();
+    alert('Trajet validé. Le paiement est libéré.');
+    await init();
+  } catch (e) {
+    alert('Validation impossible : ' + e.message);
+  }
+}
+
+async function submitRideDriverCompletedOnly() {
+  const bookingId = document.getElementById('ride-code-booking-id').value;
+  if (!confirm('Marquer ce trajet terminé sans code ? Le passager aura 4h pour confirmer ou signaler un problème.')) return;
+  try {
+    await rideCodeRequest('ride-driver-complete', { booking_id: bookingId });
+    closeRideCodeModal();
+    alert('Trajet marqué terminé. Auto-validation après 4h sans alerte passager.');
+    await init();
+  } catch (e) {
+    alert('Action impossible : ' + e.message);
+  }
+}
+
 function buildMissions() {
   const missions = dashData.missions || [];
   const done   = missions.filter(m=>m.done);

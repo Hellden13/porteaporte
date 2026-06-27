@@ -3,7 +3,8 @@
  * Schedule : 1×/jour à 4h du matin (limite plan Hobby)
  * Configuré dans vercel.json
  */
-const { rideCaptureEligible } = require('../lib/_rides');
+const { rideCaptureEligible, rideComplete } = require('../lib/_rides');
+const { sbHeaders } = require('../lib/_lib');
 
 function sanitize(s) {
   let v = (s || '').trim();
@@ -50,16 +51,53 @@ module.exports = async function handler(req, res) {
   }
 
   const result = (captured && captured.data) || {};
+  const autoValidated = [];
+  const autoErrors = [];
+  try {
+    const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    const url = `${sbUrl}/rest/v1/ride_bookings?status=eq.driver_completed&updated_at=lt.${encodeURIComponent(cutoff)}&safety_alert_triggered=eq.false&select=id&limit=100`;
+    const pendingRes = await fetch(url, { headers: sbHeaders(sbKey) });
+    const pending = pendingRes.ok ? await pendingRes.json().catch(() => []) : [];
+    for (const booking of pending) {
+      let done = null;
+      const completeRes = {
+        status: (code) => ({
+          json: (data) => { done = { code, data }; return data; }
+        })
+      };
+      try {
+        await rideComplete({ url: '/api/cron-ride-capture' }, completeRes, ctx, {
+          booking_id: booking.id,
+          actor: 'auto_timeout'
+        });
+        if (done && done.code >= 200 && done.code < 300) {
+          console.log(`Auto-validé après 4h sans confirmation passager — booking_id: ${booking.id}`);
+          autoValidated.push(booking.id);
+        } else {
+          autoErrors.push({ booking_id: booking.id, error: done?.data?.error || 'auto-validation failed' });
+        }
+      } catch (e) {
+        autoErrors.push({ booking_id: booking.id, error: e.message });
+      }
+    }
+  } catch (e) {
+    autoErrors.push({ booking_id: null, error: e.message });
+  }
+
   console.log('[cron-ride-capture]', JSON.stringify({
     total: result.total || 0,
     captured: (result.captured || []).length,
     skipped: (result.skipped || []).length,
     errors: (result.errors || []).length,
+    auto_validated: autoValidated.length,
+    auto_errors: autoErrors.length,
   }));
 
   return res.status(200).json({
     success: true,
     ran_at: new Date().toISOString(),
+    auto_validated: autoValidated,
+    auto_errors: autoErrors,
     ...result
   });
 };

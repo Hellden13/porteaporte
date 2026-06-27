@@ -343,6 +343,11 @@
           <div class="payment-title" id="ride-payment-title">Paiement sécurisé</div>
           <div id="ride-payment-element"></div>
           <div class="payment-note">La carte est autorisée maintenant. Le paiement est capturé seulement après validation du trajet.</div>
+          <div style="margin-top:12px;background:var(--brand-bg-surface,#f7f8ff);border:1px solid rgba(0,217,255,.25);border-radius:12px;padding:12px">
+            <label for="ride-custom-safety-code" style="display:block;font-weight:800;color:#1a1a2e;margin-bottom:6px">Code sécurité personnalisé</label>
+            <input id="ride-custom-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:1.4rem;letter-spacing:.2em;text-align:center;border:1px solid rgba(0,217,255,.35);border-radius:10px;padding:10px">
+            <div class="payment-note">Optionnel. Si vide, ton code sécurité par défaut sera utilisé.</div>
+          </div>
         </div>
 
         <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Reserver ma place</button>
@@ -1345,11 +1350,26 @@ async function confirmRidePayment() {
   if (!syncRes.ok || sync.error || !sync.authorized) {
     throw new Error(sync.error || 'Paiement non autorise par Stripe');
   }
+  await saveCustomRideSafetyCode(pendingRidePayment?.booking_id || sync?.booking_id);
   showToast('✅ Paiement réussi ! Redirection vers ta confirmation...', 'success');
   const bId = pendingRidePayment?.booking_id || sync?.booking_id;
   setTimeout(function() {
     location.href = bId ? ('/covoiturage-confirme.html?booking_id=' + encodeURIComponent(bId)) : '/dashboard.html';
   }, 1200);
+}
+
+async function saveCustomRideSafetyCode(bookingId) {
+  var input = document.getElementById('ride-custom-safety-code');
+  var code = input ? input.value.replace(/\D/g, '') : '';
+  if (!bookingId || !code) return;
+  if (code.length < 4) throw new Error('Le code sécurité doit contenir 4 à 8 chiffres.');
+  var res = await fetch('/api/platform?endpoint=ride-safety-code-set', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ endpoint: 'ride-safety-code-set', booking_id: bookingId, code })
+  });
+  var out = await res.json().catch(function(){ return {}; });
+  if (!res.ok) throw new Error(out.error || 'Code sécurité non enregistré');
 }
 
 async function bookPackage() {

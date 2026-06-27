@@ -1,23 +1,105 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="1; url=/profile.html">
-  <title>Mon compte - PorteàPorte</title>
+  <title>Mon compte - PorteaPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;display:grid;place-items:center;padding:24px}.box{max-width:560px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px;text-align:center}.btn{display:inline-flex;width:auto;text-decoration:none;margin-top:14px}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; padding: 24px; background: var(--brand-bg-dark); color: var(--brand-text); display: grid; place-items: center; }
+    .wrap { width: min(720px, 100%); display: grid; gap: 16px; }
+    .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 24px; }
+    h1, h2 { margin: 0 0 10px; }
+    p { color: var(--brand-muted); line-height: 1.55; }
+    label { display: block; color: var(--brand-muted); font-size: .85rem; font-weight: 800; margin-bottom: 8px; }
+    input { width: 100%; background: #080d16; color: #fff; border: 1px solid rgba(0,217,255,.35); border-radius: 14px; padding: 14px; font-size: 2rem; letter-spacing: .25em; text-align: center; }
+    .btn { display: inline-flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 900; cursor: pointer; }
+    .btn-primary { background: var(--brand-cyan); color: #061018; }
+    .btn-secondary { background: transparent; color: var(--brand-cyan); border: 1px solid rgba(0,217,255,.35); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .status { margin-top: 12px; color: var(--brand-muted); font-size: .9rem; }
+  </style>
 </head>
-<body><main class="box"><h1>Mon compte a déménagé</h1><p>Redirection vers ton profil sécurisé.</p><a class="btn" href="/profile.html">Ouvrir mon profil</a></main>  <script src="/js/support-widget.js"></script>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Mon compte</h1>
+      <p>Ton profil complet reste disponible dans l'espace profil sécurisé.</p>
+      <a class="btn btn-secondary" href="/profile.html">Ouvrir mon profil</a>
+    </section>
+
+    <section class="card">
+      <h2>Code sécurité trajet</h2>
+      <p>Ce code numérique sert à confirmer la fin d'un covoiturage. Il est stocké uniquement sous forme de hash bcrypt.</p>
+      <label for="ride-safety-code">Code par défaut (4 à 8 chiffres)</label>
+      <input id="ride-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000">
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveRideSafetyCode()">Enregistrer</button>
+        <a class="btn btn-secondary" href="/dashboard-covoiturage.html">Retour covoiturage</a>
+      </div>
+      <div class="status" id="ride-safety-status">Chargement...</div>
+    </section>
+  </main>
+
+  <script>
+    let currentSession = null;
+
+    async function initCompte() {
+      if (!await AUTH_API.requireAuth()) return;
+      currentSession = AUTH_API.getUser()?.session;
+      await loadRideSafetyStatus();
+    }
+
+    async function rideSafetyApi(endpoint, body) {
+      const res = await fetch('/api/platform?endpoint=' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+        body: JSON.stringify({ endpoint, ...body })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur');
+      return out;
+    }
+
+    async function loadRideSafetyStatus() {
+      try {
+        const out = await rideSafetyApi('ride-safety-code-status', {});
+        document.getElementById('ride-safety-status').textContent = out.has_profile_code
+          ? 'Code sécurité configuré.'
+          : 'Aucun code configuré.';
+      } catch (e) {
+        document.getElementById('ride-safety-status').textContent = 'Statut indisponible : ' + e.message;
+      }
+    }
+
+    async function saveRideSafetyCode() {
+      const code = document.getElementById('ride-safety-code').value.replace(/\D/g, '');
+      if (code.length < 4) { alert('Entre un code de 4 à 8 chiffres.'); return; }
+      try {
+        await rideSafetyApi('ride-safety-code-set', { code });
+        document.getElementById('ride-safety-code').value = '';
+        document.getElementById('ride-safety-status').textContent = 'Code sécurité configuré.';
+        alert('Code enregistré.');
+      } catch (e) {
+        alert('Impossible d enregistrer le code : ' + e.message);
+      }
+    }
+
+    initCompte();
+  </script>
+  <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>
-
