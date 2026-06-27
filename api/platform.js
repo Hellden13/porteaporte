@@ -6697,8 +6697,11 @@ module.exports = async function handler(req, res) {
 
 // ── Fin de course — confirmation chauffeur + passager ──────────────────────
 async function rideComplete(req, res, ctx, body) {
-  const { sbUrl, sbKey, userId } = ctx;
+  const { sbUrl, sbKey } = ctx;
+  const userId = ctx.session?.id;
   const { ride_id, booking_id, actor } = body || {};
+
+  if (!userId) return res.status(401).json({ error: 'Non authentifié' });
 
   if (!actor || !['driver','passenger'].includes(actor)) {
     return res.status(400).json({ error: 'actor requis : driver ou passenger' });
