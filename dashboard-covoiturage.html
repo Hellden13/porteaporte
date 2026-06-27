@@ -58,6 +58,7 @@
     .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
     .section-head h2{font-size:1rem;font-weight:800;}
     .section-head a,.section-head button{font-size:.8rem;color:var(--cyan);background:none;border:none;cursor:pointer;font-weight:600;padding:0;}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(125,255,193,.4)}50%{box-shadow:0 0 0 6px rgba(125,255,193,0)}}
 
     /* XP BAR */
     .xp-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;margin-bottom:28px;}
@@ -276,6 +277,51 @@ async function annulerReservation(bookingId) {
   }
 }
 
+// Terminer un trajet (conducteur)
+async function terminerTrajet(rideId) {
+  if (!confirm('Confirmer la fin de ce trajet ?\n\nLes passagers seront notifiés et devront confirmer leur arrivée. Le paiement sera capturé automatiquement.')) return;
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const res = await fetch('/api/platform', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'ride-complete', ride_id: rideId, actor: 'driver' })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert('❌ ' + (out.error || 'Erreur ' + res.status)); return; }
+    alert('✅ Trajet marqué comme terminé !\n\nLes passagers vont recevoir une notification pour confirmer leur arrivée.');
+    window.location.reload();
+  } catch (e) {
+    alert('❌ Erreur réseau. Réessaie dans un instant.');
+  }
+}
+
+// Confirmer l'arrivée (passager)
+async function confirmerArrivee(bookingId) {
+  if (!confirm('Confirmer ton arrivée à destination ?\n\nCela complètera ta réservation et déclenchera le paiement au chauffeur.')) return;
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const res = await fetch('/api/platform', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'ride-complete', booking_id: bookingId, actor: 'passenger' })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { alert('❌ ' + (out.error || 'Erreur ' + res.status)); return; }
+    alert('✅ Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.');
+    window.location.reload();
+  } catch (e) {
+    alert('❌ Erreur réseau. Réessaie dans un instant.');
+  }
+}
+
+
 function showSection(name) {
   currentSection = name;
   document.querySelectorAll('.sidebar-item').forEach((el,i) => {
@@ -443,6 +489,7 @@ function buildTrajets() {
         <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
         ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
         ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
+        ${(canCancel && r.status === 'publie' && new Date(r.departure_time) <= new Date()) ? `<button onclick="terminerTrajet('${r.id}')" style="margin-left:10px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Terminer</button>` : ''}
       </td>
     </tr>`;
     return `
@@ -502,11 +549,15 @@ function buildTrajets() {
             const cancelBtn = canCancel
               ? `<button onclick="annulerReservation('${b.id}')" style="margin:2px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:6px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>`
               : '';
+            const canConfirm = b.status === 'driver_completed' || b.status === 'confirme';
+            const confirmBtn = canConfirm
+              ? `<button onclick="confirmerArrivee('${b.id}')" style="margin:2px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:800;cursor:pointer;animation:pulse 1.5s infinite">✅ Confirmer mon arrivée</button>`
+              : '';
             return `<tr>
               <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
               <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-              <td>${statusChip(b.status)} ${payBtn} ${cancelBtn}</td>
+              <td>${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</td>
               <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
             </tr>`;
           };
@@ -748,3 +799,4 @@ init();
   <script src="/js/pending-payment-banner.js" defer></script>
 </body>
 </html>
+
