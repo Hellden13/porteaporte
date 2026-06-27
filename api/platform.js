@@ -6493,6 +6493,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
+    if (endpoint === 'ride-complete')        return await rideComplete(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
@@ -6693,4 +6694,99 @@ module.exports = async function handler(req, res) {
   }
 };
 // trigger redeploy Tue May 26 20:09:54     2026
+
+// ── Fin de course — confirmation chauffeur + passager ──────────────────────
+async function rideComplete(req, res, ctx, body) {
+  const { sbUrl, sbKey, userId } = ctx;
+  const { ride_id, booking_id, actor } = body || {};
+
+  if (!actor || !['driver','passenger'].includes(actor)) {
+    return res.status(400).json({ error: 'actor requis : driver ou passenger' });
+  }
+
+  const headers = { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+  try {
+    if (actor === 'driver') {
+      // Chauffeur termine le trajet → status publie → driver_completed
+      if (!ride_id) return res.status(400).json({ error: 'ride_id requis' });
+
+      // Vérifier que l'utilisateur est bien le chauffeur
+      const rideRes = await fetch(`${sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(ride_id)}&select=id,driver_id,status,departure_time`, { headers });
+      const rides = await rideRes.json();
+      if (!rides?.length) return res.status(404).json({ error: 'Trajet introuvable' });
+      const ride = rides[0];
+      if (ride.driver_id !== userId) return res.status(403).json({ error: 'Non autorisé' });
+      if (!['publie','complet'].includes(ride.status)) return res.status(400).json({ error: 'Trajet déjà terminé ou annulé' });
+
+      // Vérifier que l'heure de départ est passée
+      if (new Date(ride.departure_time) > new Date()) {
+        return res.status(400).json({ error: 'Impossible de terminer un trajet avant son heure de départ' });
+      }
+
+      // Mettre à jour le statut du trajet
+      await fetch(`${sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(ride_id)}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ status: 'termine' })
+      });
+
+      // Mettre à jour toutes les réservations confirmées → driver_completed
+      await fetch(`${sbUrl}/rest/v1/ride_bookings?ride_id=eq.${encodeURIComponent(ride_id)}&status=eq.confirme`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ status: 'driver_completed' })
+      });
+
+      return res.status(200).json({ ok: true, message: 'Trajet terminé — passagers notifiés' });
+
+    } else {
+      // Passager confirme l'arrivée → déclenche capture Stripe
+      if (!booking_id) return res.status(400).json({ error: 'booking_id requis' });
+
+      // Vérifier que l'utilisateur est bien le passager
+      const bookRes = await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}&select=id,passenger_id,ride_id,status,stripe_payment_intent,total_passenger,driver_amount,platform_fee`, { headers });
+      const bookings = await bookRes.json();
+      if (!bookings?.length) return res.status(404).json({ error: 'Réservation introuvable' });
+      const booking = bookings[0];
+      if (booking.passenger_id !== userId) return res.status(403).json({ error: 'Non autorisé' });
+      if (!['confirme','driver_completed'].includes(booking.status)) {
+        return res.status(400).json({ error: 'Réservation déjà complétée ou annulée' });
+      }
+
+      // Capturer le paiement Stripe si PaymentIntent en requires_capture
+      let transferId = null;
+      if (booking.stripe_payment_intent) {
+        try {
+          const stripeKey = process.env.STRIPE_SECRET_KEY;
+          // Capturer
+          const captureRes = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(booking.stripe_payment_intent)}/capture`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Basic ' + Buffer.from(stripeKey + ':').toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' }
+          });
+          const captured = await captureRes.json();
+          if (captured.status === 'succeeded' || captured.status === 'requires_capture') {
+            // Mettre à jour statut paiement
+            await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}`, {
+              method: 'PATCH', headers,
+              body: JSON.stringify({ status: 'paye', payment_status: 'succeeded', paid_at: new Date().toISOString() })
+            });
+          }
+        } catch(stripeErr) {
+          console.error('[rideComplete] Stripe capture error:', stripeErr.message);
+        }
+      } else {
+        // Pas de paiement Stripe — marquer comme complété directement
+        await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}`, {
+          method: 'PATCH', headers,
+          body: JSON.stringify({ status: 'paye', paid_at: new Date().toISOString() })
+        });
+      }
+
+      return res.status(200).json({ ok: true, message: 'Arrivée confirmée — paiement déclenché', transfer_id: transferId });
+    }
+  } catch (e) {
+    console.error('[rideComplete]', e.message);
+    return res.status(500).json({ error: 'Erreur serveur : ' + e.message });
+  }
+}
+
 
