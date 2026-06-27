@@ -22,7 +22,8 @@ const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
-  ridePaymentCreate, ridePaymentSync, rideSafetyCodeStatus, rideSafetyCodeSet, rideDriverComplete, rideComplete, rideCaptureEligible,
+  ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
+  rideSafetyCodeStatus, rideSafetyCodeSet, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
   rideOgPage, rideOgImage,
@@ -6488,16 +6489,20 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
     if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
     if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
+    if (endpoint === 'emergency-contacts-get') return await emergencyContactsGet(req, res, ctx, body);
+    if (endpoint === 'emergency-contacts-set') return await emergencyContactsSet(req, res, ctx, body);
+    if (endpoint === 'ride-gps-update')      return await rideGpsUpdate(req, res, ctx, body);
+    if (endpoint === 'ride-safety-alert')    return await rideSafetyAlert(req, res, ctx, body);
     if (endpoint === 'ride-safety-code-status') return await rideSafetyCodeStatus(req, res, ctx, body);
     if (endpoint === 'ride-safety-code-set') return await rideSafetyCodeSet(req, res, ctx, body);
     if (endpoint === 'ride-driver-complete') return await rideDriverComplete(req, res, ctx, body);
-    if (endpoint === 'ride-complete')        return await rideComplete(req, res, ctx, body);
+    if (endpoint === 'ride-complete')        return await rideCompleteSecure(req, res, ctx, body);
     if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-list')   return await adminSafePointsList(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
-    if (endpoint === 'ride-complete')        return await rideComplete(req, res, ctx, body);
+    if (endpoint === 'ride-complete')        return await rideCompleteSecure(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
