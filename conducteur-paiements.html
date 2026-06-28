@@ -2,80 +2,200 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
-  <title>Mes paiements conducteur - PorteaPorte</title>
+  <title>💳 Mes paiements — Conducteur PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
-    body{margin:0;background:var(--brand-bg,#0A0F1E);color:var(--brand-text,#E8EDF5);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-    .wrap{max-width:760px;margin:0 auto;padding:28px 18px 80px}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
-    .back{color:var(--brand-cyan,#00D9FF);font-weight:800;text-decoration:none}
-    .card{background:var(--brand-bg-surface,#111827);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px;margin-bottom:16px}
-    h1{font-size:1.6rem;margin:0 0 6px;font-weight:900}
-    p{color:var(--brand-muted,#8A9BB0);line-height:1.55}
-    .status{display:inline-flex;border-radius:999px;padding:5px 12px;font-size:.82rem;font-weight:900;background:rgba(0,217,255,.12);color:var(--brand-cyan,#00D9FF)}
-    button{width:100%;border:0;border-radius:10px;padding:13px 18px;font-weight:900;cursor:pointer;background:var(--brand-cyan,#00D9FF);color:#051022}
-    .muted{color:var(--brand-muted,#8A9BB0);font-size:.88rem}
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #05080c; color: var(--brand-text, #e8edf5); font-family: "Inter", system-ui, sans-serif; min-height: 100vh; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 40px 24px 100px; }
+    .back { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-muted, #8a9bb0); font-size: .85rem; text-decoration: none; margin-bottom: 32px; }
+    .back:hover { color: var(--brand-cyan, #5dbfff); }
+    h1 { font-size: 1.8rem; font-weight: 900; margin: 0 0 8px; }
+    .subtitle { color: var(--brand-muted); font-size: .9rem; margin-bottom: 36px; }
+    .card { background: var(--brand-bg-surface, #111827); border: 1px solid var(--brand-border, #1f2d40); border-radius: 16px; padding: 28px; margin-bottom: 20px; }
+    .card-title { font-size: 1.05rem; font-weight: 800; margin: 0 0 6px; }
+    .card-desc { color: var(--brand-muted); font-size: .88rem; line-height: 1.6; margin: 0 0 20px; }
+    .status-bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; }
+    .status-bar.none { background: rgba(138,155,176,.1); border: 1px solid rgba(138,155,176,.2); }
+    .status-bar.incomplete { background: rgba(245,200,66,.08); border: 1px solid rgba(245,200,66,.25); }
+    .status-bar.pending { background: rgba(255,140,66,.08); border: 1px solid rgba(255,140,66,.25); }
+    .status-bar.active { background: rgba(125,255,193,.08); border: 1px solid rgba(125,255,193,.25); }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.none { background: #56657d; }
+    .status-dot.incomplete { background: #f5c842; }
+    .status-dot.pending { background: #ff8c42; }
+    .status-dot.active { background: #7dffc1; }
+    .status-text { font-size: .88rem; font-weight: 600; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; border-radius: 10px; border: none; cursor: pointer; font-size: .95rem; font-weight: 800; transition: all .15s; text-decoration: none; width: 100%; }
+    .btn-primary { background: linear-gradient(135deg, #5dbfff, #3da9ff); color: #000; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-secondary { background: transparent; border: 1px solid var(--brand-border); color: var(--brand-muted); }
+    .btn-secondary:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .steps { counter-reset: step; list-style: none; padding: 0; margin: 0 0 24px; }
+    .steps li { counter-increment: step; display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+    .steps li::before { content: counter(step); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(93,191,255,.15); color: #5dbfff; font-size: .8rem; font-weight: 800; flex-shrink: 0; }
+    .step-text { font-size: .88rem; color: var(--brand-muted); line-height: 1.5; }
+    .step-text strong { color: var(--brand-text); }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--brand-muted); }
+    .info-value { font-weight: 600; }
+    .loading { text-align: center; padding: 60px 20px; color: var(--brand-muted); }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: #1a2435; border: 1px solid var(--brand-border); border-radius: 10px; padding: 12px 18px; font-size: .85rem; z-index: 9999; transform: translateY(80px); opacity: 0; transition: all .25s; max-width: 320px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: #7dffc1; color: #7dffc1; }
+    #toast.error { border-color: #ff9999; color: #ff9999; }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <div class="top">
-      <a class="back" href="/dashboard-covoiturage.html">Retour dashboard</a>
-      <a class="back" href="/dashboard-livreur.html">Espace livreur</a>
-    </div>
-    <section class="card">
-      <h1>Mes paiements</h1>
-      <p>Statut Stripe Connect et virements conducteur.</p>
-      <div id="status" class="muted">Chargement...</div>
-    </section>
-    <section class="card">
-      <button id="onboard-btn" type="button">Configurer mes paiements Stripe</button>
-      <p class="muted">Au retour de Stripe, le statut est resynchronise automatiquement.</p>
-    </section>
-  </main>
+<main class="wrap">
+  <a href="/dashboard-covoiturage.html" class="back">← Retour au dashboard</a>
+  <h1>💳 Mes paiements conducteur</h1>
+  <p class="subtitle">Configurez votre compte bancaire pour recevoir vos gains de covoiturage directement.</p>
+  <div id="loading" class="loading">⏳ Chargement...</div>
+  <div id="content" style="display:none"></div>
+</main>
+<div id="toast"></div>
+<script src="/js/auth-api.js"></script>
+<script>
+let db, session;
 
-  <script src="/js/auth-api.js"></script>
-  <script>
-    let currentSession = null;
-    async function platform(endpoint, body) {
-      const res = await fetch('/api/platform?endpoint=' + encodeURIComponent(endpoint), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + currentSession.access_token },
-        body: JSON.stringify(body || {})
-      });
-      const out = await res.json().catch(() => ({}));
-      if (!res.ok || out.error) throw new Error(out.error || 'Erreur ' + res.status);
-      return out;
-    }
-    function badge(status) {
-      const label = status === 'active' ? 'Actif' : status === 'onboarding' ? 'En configuration' : 'En attente';
-      return '<span class="status">' + label + '</span>';
-    }
-    async function loadStatus() {
-      const area = document.getElementById('status');
-      const out = await platform('stripe-connect-status-conducteur');
-      const account = out.account || null;
-      area.innerHTML = account
-        ? badge(account.status) + '<p>Disponible: ' + Number(out.balance?.available || 0).toFixed(2) + ' $</p>'
-        : '<p>Aucun compte Stripe Connect configure.</p>';
-    }
-    document.getElementById('onboard-btn').addEventListener('click', async function() {
-      const out = await platform('stripe-connect-onboard');
-      if (out.onboarding_url) window.location.href = out.onboarding_url;
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("stripe") === "success") {
+    showToast("✅ Configuration Stripe réussie ! Votre compte est en cours de vérification.", "success");
+    history.replaceState({}, "", "/conducteur-paiements.html");
+  } else if (params.get("stripe") === "refresh") {
+    showToast("⚠️ Session expirée — relancez la configuration.", "");
+    history.replaceState({}, "", "/conducteur-paiements.html");
+  }
+
+  db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+  const { data: sess } = await db.auth.getSession();
+  if (!sess?.session) { window.location.href = "/login.html?redirect=/conducteur-paiements.html"; return; }
+  session = sess.session;
+  await loadStatus();
+}
+
+async function loadStatus() {
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("content").style.display = "none";
+  try {
+    const res = await fetch("/api/platform", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + session.access_token, "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: "stripe-connect-status-conducteur" })
     });
-    (async function init() {
-      if (!await AUTH_API.requireAuth()) return;
-      currentSession = AUTH_API.getUser()?.session;
-      await loadStatus();
-      if (new URLSearchParams(location.search).get('stripe') === 'success') await loadStatus();
-    })().catch(function(e) {
-      document.getElementById('status').textContent = e.message;
+    const data = await res.json();
+    renderContent(data);
+  } catch (e) {
+    renderContent({ status: "none" });
+  }
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("content").style.display = "block";
+}
+
+function renderContent(data) {
+  const status = data.status || "none";
+  const statusLabels = {
+    none: "Aucun compte configuré",
+    incomplete: "Configuration incomplète",
+    pending: "En cours de vérification",
+    active: "Compte actif — prêt à recevoir des paiements"
+  };
+  const statusHtml = `<div class="status-bar ${status}"><div class="status-dot ${status}"></div><div class="status-text">${statusLabels[status] || status}</div></div>`;
+
+  let mainCard = "";
+  if (status === "active") {
+    mainCard = `<div class="card" style="border-color:rgba(125,255,193,.25)">
+      <div class="card-title" style="color:#7dffc1">✅ Compte bancaire configuré</div>
+      <div class="card-desc">Vos gains de covoiturage sont versés automatiquement dans votre compte bancaire.</div>
+      <div class="info-row"><span class="info-label">ID Stripe Connect</span><span class="info-value" style="font-family:monospace;font-size:.78rem">${data.stripe_account_id || "—"}</span></div>
+      <div class="info-row"><span class="info-label">Virements activés</span><span class="info-value" style="color:#7dffc1">✅ Oui</span></div>
+      <div class="info-row"><span class="info-label">Fréquence</span><span class="info-value">Quotidienne</span></div>
+      <br><button class="btn btn-secondary" onclick="ouvrirDashboardStripe()">📊 Voir mon tableau de bord Stripe</button>
+    </div>`;
+  } else if (status === "none") {
+    mainCard = `<div class="card">
+      <div class="card-title">🏦 Configurer votre compte bancaire</div>
+      <div class="card-desc">Pour recevoir vos gains, liez votre compte bancaire via Stripe. C'est rapide, sécurisé, et gratuit.</div>
+      <ul class="steps">
+        <li><div class="step-text"><strong>Cliquez "Configurer mes paiements"</strong> ci-dessous</div></li>
+        <li><div class="step-text"><strong>Entrez vos informations</strong> sur la page Stripe sécurisée</div></li>
+        <li><div class="step-text"><strong>Revenez ici</strong> — votre compte sera vérifié en quelques minutes</div></li>
+        <li><div class="step-text"><strong>Recevez vos gains</strong> quotidiennement dans votre compte</div></li>
+      </ul>
+      <button class="btn btn-primary" id="btn-onboard" onclick="lancerOnboarding()">🚀 Configurer mes paiements</button>
+    </div>`;
+  } else if (status === "incomplete") {
+    mainCard = `<div class="card" style="border-color:rgba(245,200,66,.25)">
+      <div class="card-title" style="color:#f5c842">⚠️ Configuration incomplète</div>
+      <div class="card-desc">Cliquez ci-dessous pour compléter votre profil Stripe.</div>
+      <button class="btn btn-primary" id="btn-onboard" onclick="lancerOnboarding()" style="background:linear-gradient(135deg,#f5c842,#e0a800);color:#000">Compléter ma configuration →</button>
+    </div>`;
+  } else {
+    mainCard = `<div class="card" style="border-color:rgba(255,140,66,.25)">
+      <div class="card-title" style="color:#ff8c42">⏳ Vérification en cours</div>
+      <div class="card-desc">Stripe vérifie vos informations. Ce processus prend quelques minutes à 24h.</div>
+      <button class="btn btn-secondary" onclick="loadStatus()">🔄 Actualiser le statut</button>
+    </div>`;
+  }
+
+  const infoCard = `<div class="card" style="background:rgba(93,191,255,.04);border-color:rgba(93,191,255,.15)">
+    <div class="card-title" style="font-size:.9rem">ℹ️ Comment fonctionnent les paiements</div>
+    <div class="info-row"><span class="info-label">Votre part</span><span class="info-value" style="color:#7dffc1">Montant affiché lors de la réservation</span></div>
+    <div class="info-row"><span class="info-label">Timing</span><span class="info-value">Dès que le passager confirme son arrivée</span></div>
+    <div class="info-row"><span class="info-label">Virement bancaire</span><span class="info-value">Quotidiennement automatique</span></div>
+  </div>`;
+
+  document.getElementById("content").innerHTML = statusHtml + mainCard + infoCard;
+}
+
+async function lancerOnboarding() {
+  const btn = document.getElementById("btn-onboard");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Connexion à Stripe..."; }
+  try {
+    const res = await fetch("/api/platform", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + session.access_token, "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: "stripe-connect-onboard-conducteur" })
     });
-  </script>
+    const data = await res.json();
+    if (!res.ok || !data.onboarding_url) { showToast("❌ " + (data.error || "Erreur"), "error"); if (btn) { btn.disabled = false; btn.textContent = "🚀 Configurer mes paiements"; } return; }
+    window.location.href = data.onboarding_url;
+  } catch (e) {
+    showToast("❌ Erreur réseau", "error");
+    if (btn) { btn.disabled = false; btn.textContent = "🚀 Configurer mes paiements"; }
+  }
+}
+
+async function ouvrirDashboardStripe() {
+  try {
+    const res = await fetch("/api/platform", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + session.access_token, "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: "stripe-connect-dashboard" })
+    });
+    const data = await res.json();
+    if (data.url) window.open(data.url, "_blank");
+    else showToast("❌ " + (data.error || "Erreur"), "error");
+  } catch (e) { showToast("❌ Erreur réseau", "error"); }
+}
+
+function showToast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "show " + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = ""; }, 5000);
+}
+
+init();
+</script>
 </body>
 </html>
