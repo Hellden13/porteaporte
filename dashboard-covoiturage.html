@@ -308,9 +308,15 @@ async function terminerTrajet(rideId) {
   }
 }
 
-// Confirmer l'arrivée (passager)
+// Confirmer l'arrivée (passager) — demande le code de sécurité
 async function confirmerArrivee(bookingId) {
-  if (!confirm('Confirmer ton arrivée à destination ?\n\nCela complètera ta réservation et déclenchera le paiement au chauffeur.')) return;
+  // Demander le code de sécurité
+  const code = window.prompt('🔐 Entre ton code de sécurité (4-6 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :');
+  if (code === null) return; // Annulé
+  if (!code || !/^[0-9]{4,6}$/.test(code.trim())) {
+    alert('❌ Code invalide. Entre un code de 4 à 6 chiffres.');
+    return;
+  }
   try {
     const db = getSupabaseClient();
     const { data: _sd } = await db.auth.getSession();
@@ -319,10 +325,18 @@ async function confirmerArrivee(bookingId) {
     const res = await fetch('/api/platform', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'ride-complete', booking_id: bookingId, actor: 'passenger' })
+      body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, code: code.trim() })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert('❌ ' + (out.error || 'Erreur ' + res.status)); return; }
+    if (!res.ok) {
+      const remaining = out.attempts_remaining;
+      if (typeof remaining !== 'undefined') {
+        alert('❌ Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\n⚠️ Alerte de sécurité déclenchée.' : ''));
+      } else {
+        alert('❌ ' + (out.error || 'Erreur ' + res.status));
+      }
+      return;
+    }
     alert('✅ Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.');
     window.location.reload();
   } catch (e) {
@@ -880,6 +894,7 @@ init();
   <script src="/js/pending-payment-banner.js" defer></script>
 </body>
 </html>
+
 
 
 
