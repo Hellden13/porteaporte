@@ -6697,6 +6697,97 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({ success: true, deleted: delId, email: target?.email || null });
     }
+
+    // ── Stripe Connect conducteurs covoiturage ──────────────────────────────────
+    if (endpoint === 'stripe-connect-onboard-conducteur') {
+      const uid = ctx.session?.id;
+      if (!uid) return res.status(401).json({ error: 'Non authentifié' });
+      if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configuré' });
+      const { sbUrl, sbKey } = ctx;
+      const profRes = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${uid}&select=email,prenom,cov_role,role`, {
+        headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey }
+      });
+      const profs = await profRes.json();
+      const prof = profs[0];
+      if (!prof) return res.status(404).json({ error: 'Profil introuvable' });
+      if (!['conducteur','les_deux','admin'].includes(prof.cov_role) && prof.role !== 'admin') {
+        return res.status(403).json({ error: 'Rôle conducteur requis.' });
+      }
+      const existing = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
+        headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey }
+      }).then(r => r.ok ? r.json() : []);
+      let stripeAccountId = existing[0]?.stripe_account_id;
+      if (!stripeAccountId) {
+        const params = new URLSearchParams({ type: 'express', country: 'CA', email: prof.email || '',
+          'capabilities[card_payments][requested]': 'true', 'capabilities[transfers][requested]': 'true',
+          'settings[payouts][schedule][interval]': 'daily' });
+        const acctRes = await fetch('https://api.stripe.com/v1/accounts', {
+          method: 'POST',
+          headers: { 'Authorization': 'Basic ' + Buffer.from(ctx.stripeKey + ':').toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params
+        });
+        const acct = await acctRes.json();
+        if (!acct.id) return res.status(500).json({ error: 'Erreur création compte Stripe : ' + (acct.error?.message || 'inconnue') });
+        stripeAccountId = acct.id;
+        await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts`, {
+          method: 'POST',
+          headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ user_id: uid, stripe_account_id: stripeAccountId, status: 'pending', country: 'CA' })
+        });
+      }
+      const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
+      const linkParams = new URLSearchParams({ account: stripeAccountId,
+        refresh_url: `${baseUrl}/conducteur-paiements.html?stripe=refresh`,
+        return_url: `${baseUrl}/conducteur-paiements.html?stripe=success`,
+        type: 'account_onboarding' });
+      const linkRes = await fetch('https://api.stripe.com/v1/account_links', {
+        method: 'POST',
+        headers: { 'Authorization': 'Basic ' + Buffer.from(ctx.stripeKey + ':').toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: linkParams
+      });
+      const link = await linkRes.json();
+      if (!link.url) return res.status(500).json({ error: 'Erreur génération lien : ' + (link.error?.message || 'inconnue') });
+      return res.status(200).json({ success: true, onboarding_url: link.url, stripe_account_id: stripeAccountId });
+    }
+
+    if (endpoint === 'stripe-connect-status-conducteur') {
+      const uid = ctx.session?.id;
+      if (!uid) return res.status(401).json({ error: 'Non authentifié' });
+      if (!ctx.stripeKey) return res.status(503).json({ error: 'Stripe non configuré' });
+      const { sbUrl, sbKey } = ctx;
+      const existing = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}&select=*`, {
+        headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey }
+      }).then(r => r.ok ? r.json() : []);
+      if (!existing[0]) return res.status(200).json({ status: 'none' });
+      const acctId = existing[0].stripe_account_id;
+      const stripeRes = await fetch(`https://api.stripe.com/v1/accounts/${acctId}`, {
+        headers: { 'Authorization': 'Basic ' + Buffer.from(ctx.stripeKey + ':').toString('base64') }
+      });
+      const stripeAcct = await stripeRes.json();
+      const isActive = stripeAcct.payouts_enabled && stripeAcct.details_submitted;
+      const status = isActive ? 'active' : (stripeAcct.details_submitted ? 'pending' : 'incomplete');
+      if (isActive && existing[0].status !== 'active') {
+        await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}`, {
+          method: 'PATCH',
+          headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'active', payouts_enabled: true, details_submitted: true })
+        });
+      }
+      return res.status(200).json({ status, payouts_enabled: stripeAcct.payouts_enabled, details_submitted: stripeAcct.details_submitted, stripe_account_id: acctId });
+    }
+
+    if (endpoint === 'admin-trigger-cron-capture') {
+      if (!ctx.profile || ctx.profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
+      try {
+        const cronUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '') + '/api/cron-ride-capture';
+        const cronRes = await fetch(cronUrl, { method: 'POST', headers: { 'Authorization': 'Bearer ' + (process.env.CRON_SECRET || '') } });
+        const cronData = await cronRes.json().catch(() => ({}));
+        return res.status(200).json(cronData);
+      } catch (e) {
+        return res.status(500).json({ error: 'Erreur cron : ' + e.message });
+      }
+    }
+
     return res.status(400).json({ error: 'Endpoint plateforme inconnu: ' + endpoint });
   } catch (err) {
     console.error('[platform]', endpoint, err.message, err.stack);
@@ -6801,5 +6892,6 @@ async function rideComplete(req, res, ctx, body) {
     return res.status(500).json({ error: 'Erreur serveur : ' + e.message });
   }
 }
+
 
 
