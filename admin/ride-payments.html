@@ -211,16 +211,11 @@
   }
 
   function clientCronSecret() {
-    return window.PORTEAPORTE_CRON_SECRET || window.CRON_SECRET || '';
+    return 'use-auth-token';
   }
 
   function configureCronButton() {
     const btn = document.getElementById('btn-cron');
-    if (!clientCronSecret()) {
-      btn.disabled = true;
-      btn.title = 'CRON_SECRET non configuré';
-      return;
-    }
     btn.disabled = false;
     btn.title = 'Lance la capture immédiate de tous les paiements éligibles';
   }
@@ -441,23 +436,18 @@
   }
 
   async function lancerCron() {
-    const secret = clientCronSecret();
-    if (!secret) return;
     const btn = document.getElementById('btn-cron');
     btn.disabled = true;
     btn.textContent = '⏳ En cours…';
     try {
-      const r = await fetch('/api/cron-ride-capture', {
+      const r = await fetch('/api/platform', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + secret }
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'admin-trigger-cron-capture' })
       });
       const data = await r.json();
       if (!r.ok) {
-        if (r.status === 401) {
-          showToast('⚠️ CRON_SECRET requis — non configuré côté serveur', 'error');
-          return;
-        }
-        throw new Error(data.error || 'Erreur cron');
+        throw new Error(data.error || 'Erreur ' + r.status);
       }
       const msg = `✅ Cron terminé — ${(data.captured||[]).length} capturés, ${(data.skipped||[]).length} skippés, ${(data.errors||[]).length} erreurs`;
       showToast(msg, 'success');
@@ -493,3 +483,4 @@
 <script src="/js/admin-alert-bell.js" defer></script>
 </body>
 </html>
+
