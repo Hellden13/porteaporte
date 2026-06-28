@@ -118,6 +118,14 @@
     .payment-box.active { display:block; }
     .payment-title { font-size:.86rem; font-weight:700; color:#1a1a2e; margin-bottom:8px; }
     .payment-note { font-size:.76rem; color:#666; margin-top:8px; line-height:1.35; }
+    .post-confirm-card { display:none; background:var(--brand-bg-surface,#111827); border:1px solid var(--brand-border,#1f2d40); border-radius:14px; padding:18px; margin:14px 0; color:var(--brand-text,#E8EDF5); }
+    .post-confirm-card.active { display:block; }
+    .post-confirm-card h3 { margin:0 0 12px; font-size:1.05rem; color:var(--brand-cyan,#00D9FF); }
+    .post-confirm-grid { display:grid; gap:10px; }
+    .post-confirm-row { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:11px 12px; font-size:.88rem; }
+    .post-confirm-row strong { display:block; color:#fff; margin-bottom:3px; }
+    .post-confirm-actions { display:grid; gap:8px; margin-top:14px; }
+    .post-confirm-actions a { text-align:center; border-radius:10px; padding:11px 14px; font-weight:900; text-decoration:none; background:linear-gradient(135deg,#5dbfff,#3da9ff); color:#000; }
     .btn-reserve { width: 100%; background: linear-gradient(135deg,#6c63ff,#8b7fff); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 15px rgba(108,99,255,.35); }
     .btn-reserve:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.45); }
     .btn-reserve:disabled { opacity: .6; cursor: not-allowed; transform: none; }
@@ -349,6 +357,7 @@
             <div class="payment-note">Optionnel. Si vide, ton code sécurité par défaut sera utilisé.</div>
           </div>
         </div>
+        <div class="post-confirm-card" id="post-confirm-card"></div>
 
         <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Reserver ma place</button>
       </div>
@@ -395,6 +404,7 @@ let pendingRidePayment = null;
 let stripeClient = null;
 let stripeElements = null;
 let ridePaymentReady = false;
+let lastRideBookingResponse = null;
 
 const params = new URLSearchParams(location.search);
 const rideId = params.get('id') || params.get('ride_id');
@@ -683,8 +693,50 @@ function resetRidePayment() {
   ridePaymentReady = false;
   var box = document.getElementById('ride-payment-box');
   var el = document.getElementById('ride-payment-element');
+  var confirm = document.getElementById('post-confirm-card');
   if (box) box.classList.remove('active');
   if (el) el.innerHTML = '';
+  if (confirm) { confirm.classList.remove('active'); confirm.innerHTML = ''; }
+}
+
+async function getRideSafetyCodeStatus(bookingId) {
+  try {
+    var res = await fetch('/api/platform?endpoint=ride-safety-code-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+      body: JSON.stringify({ booking_id: bookingId })
+    });
+    var out = await res.json().catch(function(){ return {}; });
+    return !!(out.has_code || out.has_profile_code || out.has_booking_code);
+  } catch (_) {
+    return false;
+  }
+}
+
+async function showPostPaymentConfirmation(bookingId) {
+  var card = document.getElementById('post-confirm-card');
+  if (!card) return;
+  var source = lastRideBookingResponse || {};
+  var ride = source.ride || currentRide || {};
+  var driver = source.driver || {};
+  var booking = source.booking || {};
+  var hasCode = await getRideSafetyCodeStatus(bookingId);
+  card.innerHTML = `
+    <h3>✅ Réservation confirmée</h3>
+    <div class="post-confirm-grid">
+      <div class="post-confirm-row"><strong>🛣️ Trajet</strong>${esc(ride.start_city || booking.pickup_city || '?')} → ${esc(ride.end_city || booking.dropoff_city || '?')}</div>
+      <div class="post-confirm-row"><strong>📅 Départ</strong>${esc(formatDate(ride.departure_time || currentRide?.departure_time || ''))}</div>
+      <div class="post-confirm-row"><strong>📍 Embarquement</strong>${esc(ride.pickup_city || booking.pickup_city || '?')}${ride.pickup_sector || booking.pickup_sector ? ' · ' + esc(ride.pickup_sector || booking.pickup_sector) : ''}</div>
+      <div class="post-confirm-row"><strong>🏁 Débarquement</strong>${esc(ride.dropoff_city || booking.dropoff_city || '?')}${ride.dropoff_sector || booking.dropoff_sector ? ' · ' + esc(ride.dropoff_sector || booking.dropoff_sector) : ''}</div>
+      <div class="post-confirm-row"><strong>🚗 Chauffeur</strong>${esc(driver.prenom || 'Chauffeur')}${driver.telephone ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
+      <div class="post-confirm-row"><strong>🔐 Code sécurité</strong>${hasCode ? 'Code configuré' : 'Aucun code par défaut détecté. Ajoute un code dans ton compte pour sécuriser les prochains trajets.'}</div>
+    </div>
+    <div class="post-confirm-actions">
+      <a href="/covoiturage-confirme.html?booking_id=${encodeURIComponent(bookingId || '')}">Voir ma confirmation</a>
+      <a href="/dashboard-covoiturage.html">Ouvrir mon dashboard</a>
+    </div>`;
+  card.classList.add('active');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function updatePkgPrice() {
@@ -1307,6 +1359,7 @@ async function bookPassenger() {
     }
     throw new Error(data.error || 'Erreur réservation');
   }
+  lastRideBookingResponse = data;
 
   var paymentRes = await fetch('/api/platform?endpoint=ride-payment-create', {
     method: 'POST',
@@ -1321,9 +1374,10 @@ async function bookPassenger() {
   if (!paymentRes.ok || paymentData.error) throw new Error(paymentData.error || 'Erreur paiement');
   if (paymentData.already_authorized) {
     showToast('✅ Réservation déjà confirmée !', 'success');
+    await showPostPaymentConfirmation(data.booking.id);
     setTimeout(function() {
       location.href = '/covoiturage-confirme.html?booking_id=' + encodeURIComponent(data.booking.id);
-    }, 1200);
+    }, 3500);
     return;
   }
   await mountRidePayment(paymentData);
@@ -1350,12 +1404,13 @@ async function confirmRidePayment() {
   if (!syncRes.ok || sync.error || !sync.authorized) {
     throw new Error(sync.error || 'Paiement non autorise par Stripe');
   }
-  await saveCustomRideSafetyCode(pendingRidePayment?.booking_id || sync?.booking_id);
-  showToast('✅ Paiement réussi ! Redirection vers ta confirmation...', 'success');
   const bId = pendingRidePayment?.booking_id || sync?.booking_id;
+  await saveCustomRideSafetyCode(bId);
+  await showPostPaymentConfirmation(bId);
+  showToast('✅ Paiement réussi ! Réservation confirmée.', 'success');
   setTimeout(function() {
     location.href = bId ? ('/covoiturage-confirme.html?booking_id=' + encodeURIComponent(bId)) : '/dashboard.html';
-  }, 1200);
+  }, 3500);
 }
 
 async function saveCustomRideSafetyCode(bookingId) {
