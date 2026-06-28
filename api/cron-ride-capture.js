@@ -3,7 +3,7 @@
  * Schedule : 1×/jour à 4h du matin (limite plan Hobby)
  * Configuré dans vercel.json
  */
-const { rideCaptureEligible, rideComplete } = require('../lib/_rides');
+const { rideCaptureEligible, rideComplete, adminCleanupPhantomBookings } = require('../lib/_rides');
 const { sbHeaders } = require('../lib/_lib');
 
 function sanitize(s) {
@@ -51,6 +51,17 @@ module.exports = async function handler(req, res) {
   }
 
   const result = (captured && captured.data) || {};
+  let cleanup = null;
+  try {
+    const cleanupRes = {
+      status: (code) => ({
+        json: (data) => { cleanup = { code, data }; return data; }
+      })
+    };
+    await adminCleanupPhantomBookings({ url: '/api/cron-ride-capture' }, cleanupRes, ctx, {});
+  } catch (e) {
+    cleanup = { code: 500, data: { error: e.message } };
+  }
   const autoValidated = [];
   const autoErrors = [];
   try {
@@ -91,11 +102,13 @@ module.exports = async function handler(req, res) {
     errors: (result.errors || []).length,
     auto_validated: autoValidated.length,
     auto_errors: autoErrors.length,
+    phantom_cleaned: cleanup?.data?.cleaned || 0,
   }));
 
   return res.status(200).json({
     success: true,
     ran_at: new Date().toISOString(),
+    phantom_cleanup: cleanup?.data || null,
     auto_validated: autoValidated,
     auto_errors: autoErrors,
     ...result

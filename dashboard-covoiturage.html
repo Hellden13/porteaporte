@@ -70,12 +70,18 @@
     .xp-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:7px;}
 
     /* RIDES TABLE */
-    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;overflow-y:hidden;}
     table{width:100%;border-collapse:collapse;}
     th{background:var(--surface2);font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left;}
     td{padding:12px 14px;font-size:.87rem;border-top:1px solid var(--border);}
     .empty-msg{text-align:center;color:var(--muted);font-size:.85rem;padding:32px;}
     .status-chip{display:inline-block;border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+    .ride-action{display:inline-block;margin-left:10px;}
+    @media(max-width:768px){
+      .table-wrap table{min-width:680px;}
+      .ride-action,.table-wrap td:last-child a,.table-wrap td:last-child button{display:block;width:100%;margin:6px 0 0!important;text-align:center;}
+      td:last-child{min-width:150px;}
+    }
 
     /* BADGES */
     .badges-row{display:flex;flex-wrap:wrap;gap:10px;}
@@ -154,6 +160,7 @@
     <div class="sidebar-item" onclick="showSection('missions')"><span class="sidebar-icon">🎯</span> Missions</div>
     <div class="sidebar-item" onclick="showSection('badges')"><span class="sidebar-icon">🏆</span> Badges</div>
     <div class="sidebar-item" onclick="showSection('avis')"><span class="sidebar-icon">⭐</span> Avis</div>
+    <div id="payments-sidebar-link" class="sidebar-item" style="display:none" onclick="window.location.href='/conducteur-paiements.html'"><span class="sidebar-icon">💳</span> Mes paiements</div>
     <hr class="sidebar-sep">
     <div class="sidebar-item" onclick="showSection('signalements')"><span class="sidebar-icon">🚩</span> Signalements</div>
     <div class="sidebar-item" onclick="window.location.href='/covoiturage-info.html'"><span class="sidebar-icon">ℹ️</span> Guide</div>
@@ -218,6 +225,8 @@ async function init() {
     dashData    = (dashRes && dashRes.ok) ? await dashRes.json() : {};
 
     if (userProfile.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
+    const payLink = document.getElementById('payments-sidebar-link');
+    if (payLink && (userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux')) payLink.style.display = '';
 
     if (il) il.remove();
     renderSection('overview');
@@ -324,7 +333,7 @@ async function confirmerArrivee(bookingId) {
 
 function showSection(name) {
   currentSection = name;
-  document.querySelectorAll('.sidebar-item').forEach((el,i) => {
+  document.querySelectorAll('.sidebar-item[onclick^="showSection"]').forEach((el,i) => {
     const sections = ['overview','trajets','reservations','missions','badges','avis','signalements'];
     el.classList.toggle('active', sections[i] === name);
   });

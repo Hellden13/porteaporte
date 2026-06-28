@@ -35,6 +35,7 @@ const PUBLIC_TYPES = new Set([
   'xl_confirmation_resultat',
   'ride_booking_confirmed',
   'ride_booking_to_driver',
+  'ride_driver_completed_to_passenger',
   'bienvenue',
   'sos_alert',
 ]);
@@ -1031,6 +1032,32 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           { label: 'Total payé', value: `${data.total_price || '—'} $` },
           { label: 'Montant conducteur', value: `${data.driver_amount || '—'} $` }
         ])
+      });
+      break;
+    }
+
+    case 'ride_driver_completed_to_passenger': {
+      const route = `${data.ville_depart || '?'} -> ${data.ville_arrivee || '?'}`;
+      emails.push({
+        to: data.passenger_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Confirme ton arrivee : ${route}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEAPORTE - ARRIVEE A CONFIRMER</div>
+            <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">Ton chauffeur a termine le trajet</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px">${route} - ${data.departure_time || 'Date du trajet'}</p>
+
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#5dbfff;display:block;margin-bottom:8px">Confirmation requise</strong>
+              <div>Si tu es bien arrive a destination, confirme ton arrivee pour liberer le paiement au chauffeur.</div>
+              <div style="color:#a8b0ba;margin-top:8px">Chauffeur : <strong style="color:#fff">${data.driver_name || 'Conducteur'}</strong></div>
+            </div>
+
+            <a href="https://porteaporte.site/dashboard-covoiturage.html?section=reservations&booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Confirmer mon arrivee</a>
+
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Si quelque chose ne va pas, ne confirme pas l'arrivee et contacte PorteaPorte depuis ton tableau de bord.</p>
+          </div>`
       });
       break;
     }

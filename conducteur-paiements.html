@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Mes paiements conducteur - PorteaPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body{margin:0;background:var(--brand-bg,#0A0F1E);color:var(--brand-text,#E8EDF5);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    .wrap{max-width:760px;margin:0 auto;padding:28px 18px 80px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+    .back{color:var(--brand-cyan,#00D9FF);font-weight:800;text-decoration:none}
+    .card{background:var(--brand-bg-surface,#111827);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px;margin-bottom:16px}
+    h1{font-size:1.6rem;margin:0 0 6px;font-weight:900}
+    p{color:var(--brand-muted,#8A9BB0);line-height:1.55}
+    .status{display:inline-flex;border-radius:999px;padding:5px 12px;font-size:.82rem;font-weight:900;background:rgba(0,217,255,.12);color:var(--brand-cyan,#00D9FF)}
+    button{width:100%;border:0;border-radius:10px;padding:13px 18px;font-weight:900;cursor:pointer;background:var(--brand-cyan,#00D9FF);color:#051022}
+    .muted{color:var(--brand-muted,#8A9BB0);font-size:.88rem}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <a class="back" href="/dashboard-covoiturage.html">Retour dashboard</a>
+      <a class="back" href="/dashboard-livreur.html">Espace livreur</a>
+    </div>
+    <section class="card">
+      <h1>Mes paiements</h1>
+      <p>Statut Stripe Connect et virements conducteur.</p>
+      <div id="status" class="muted">Chargement...</div>
+    </section>
+    <section class="card">
+      <button id="onboard-btn" type="button">Configurer mes paiements Stripe</button>
+      <p class="muted">Au retour de Stripe, le statut est resynchronise automatiquement.</p>
+    </section>
+  </main>
+
+  <script src="/js/auth-api.js"></script>
+  <script>
+    let currentSession = null;
+    async function platform(endpoint, body) {
+      const res = await fetch('/api/platform?endpoint=' + encodeURIComponent(endpoint), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + currentSession.access_token },
+        body: JSON.stringify(body || {})
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || out.error) throw new Error(out.error || 'Erreur ' + res.status);
+      return out;
+    }
+    function badge(status) {
+      const label = status === 'active' ? 'Actif' : status === 'onboarding' ? 'En configuration' : 'En attente';
+      return '<span class="status">' + label + '</span>';
+    }
+    async function loadStatus() {
+      const area = document.getElementById('status');
+      const out = await platform('stripe-connect-status-conducteur');
+      const account = out.account || null;
+      area.innerHTML = account
+        ? badge(account.status) + '<p>Disponible: ' + Number(out.balance?.available || 0).toFixed(2) + ' $</p>'
+        : '<p>Aucun compte Stripe Connect configure.</p>';
+    }
+    document.getElementById('onboard-btn').addEventListener('click', async function() {
+      const out = await platform('stripe-connect-onboard');
+      if (out.onboarding_url) window.location.href = out.onboarding_url;
+    });
+    (async function init() {
+      if (!await AUTH_API.requireAuth()) return;
+      currentSession = AUTH_API.getUser()?.session;
+      await loadStatus();
+      if (new URLSearchParams(location.search).get('stripe') === 'success') await loadStatus();
+    })().catch(function(e) {
+      document.getElementById('status').textContent = e.message;
+    });
+  </script>
+</body>
+</html>

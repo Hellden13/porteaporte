@@ -23,7 +23,7 @@ const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
   ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
-  rideSafetyCodeStatus, rideSafetyCodeSet, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible,
+  rideSafetyCodeStatus, rideSafetyCodeSet, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
   rideOgPage, rideOgImage,
@@ -6498,6 +6498,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-driver-complete') return await rideDriverComplete(req, res, ctx, body);
     if (endpoint === 'ride-complete')        return await rideCompleteSecure(req, res, ctx, body);
     if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, ctx, body);
+    if (endpoint === 'admin-cleanup-phantom-bookings') return await adminCleanupPhantomBookings(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-list')   return await adminSafePointsList(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
@@ -6545,7 +6546,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badge-campaign-toggle')return await badgeCampaignToggle(req, res, ctx, body);
     if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
     if (endpoint === 'stripe-connect-onboard')   return await stripeConnectOnboard(req, res, ctx, body);
-    if (endpoint === 'stripe-connect-status')    return await stripeConnectStatus(req, res, ctx);
+    if (endpoint === 'stripe-connect-status' || endpoint === 'stripe-connect-status-conducteur') return await stripeConnectStatus(req, res, ctx);
     if (endpoint === 'stripe-connect-dashboard') return await stripeConnectDashboard(req, res, ctx);
     if (endpoint === 'stripe-connect-payout')    return await stripeConnectPayout(req, res, ctx, body);
     if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);
