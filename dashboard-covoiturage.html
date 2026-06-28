@@ -310,11 +310,11 @@ async function terminerTrajet(rideId) {
 
 // Confirmer l'arrivée (passager) — demande le code de sécurité
 async function confirmerArrivee(bookingId) {
-  // Demander le code de sécurité
-  const code = window.prompt('🔐 Entre ton code de sécurité (4-6 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :');
-  if (code === null) return; // Annulé
-  if (!code || !/^[0-9]{4,6}$/.test(code.trim())) {
-    alert('❌ Code invalide. Entre un code de 4 à 6 chiffres.');
+  const code = window.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :');
+  if (code === null) return;
+  const cleanCode = String(code || '').replace(/\D/g, '');
+  if (!/^[0-9]{4,8}$/.test(cleanCode)) {
+    alert('Code invalide. Entre un code de 4 à 8 chiffres.');
     return;
   }
   try {
@@ -325,22 +325,22 @@ async function confirmerArrivee(bookingId) {
     const res = await fetch('/api/platform', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, code: code.trim() })
+      body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, actor: 'passenger', code: cleanCode })
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) {
       const remaining = out.attempts_remaining;
       if (typeof remaining !== 'undefined') {
-        alert('❌ Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\n⚠️ Alerte de sécurité déclenchée.' : ''));
+        alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : ''));
       } else {
-        alert('❌ ' + (out.error || 'Erreur ' + res.status));
+        alert('Erreur : ' + (out.error || 'Erreur ' + res.status));
       }
       return;
     }
-    alert('✅ Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.');
+    alert('Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.');
     window.location.reload();
   } catch (e) {
-    alert('❌ Erreur réseau. Réessaie dans un instant.');
+    alert('Erreur réseau. Réessaie dans un instant.');
   }
 }
 

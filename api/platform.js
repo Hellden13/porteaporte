@@ -23,7 +23,7 @@ const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
   ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
-  rideSafetyCodeStatus, rideSafetyCodeSet, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
+  rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
   rideOgPage, rideOgImage,
@@ -6495,103 +6495,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-safety-alert')    return await rideSafetyAlert(req, res, ctx, body);
     if (endpoint === 'ride-safety-code-status') return await rideSafetyCodeStatus(req, res, ctx, body);
     if (endpoint === 'ride-safety-code-set') return await rideSafetyCodeSet(req, res, ctx, body);
-    if (endpoint === 'ride-safety-code-verify') {
-      // Vérification du code de sécurité passager + confirmation arrivée
-      const uid = ctx.session?.id;
-      if (!uid) return res.status(401).json({ error: 'Non authentifié' });
-      const { booking_id, code } = body || {};
-      if (!booking_id || !code) return res.status(400).json({ error: 'booking_id et code requis' });
-      const { sbUrl, sbKey } = ctx;
-      const headers = { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-
-      // Charger le booking
-      const bRes = await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}&select=id,passenger_id,ride_id,status,stripe_payment_intent,total_passenger,driver_amount,safety_code_hash,safety_code_failed_attempts,safety_alert_triggered`, { headers });
-      const bookings = await bRes.json();
-      const booking = bookings[0];
-      if (!booking) return res.status(404).json({ error: 'Réservation introuvable' });
-      if (booking.passenger_id !== uid) return res.status(403).json({ error: 'Non autorisé' });
-      if (!['confirme','driver_completed'].includes(booking.status)) return res.status(400).json({ error: 'Réservation déjà complétée ou annulée' });
-
-      // Récupérer le hash depuis le profil passager si pas sur le booking
-      let codeHash = booking.safety_code_hash;
-      if (!codeHash) {
-        const pRes = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${uid}&select=ride_safety_code_hash`, { headers });
-        const profiles = await pRes.json();
-        codeHash = profiles[0]?.ride_safety_code_hash;
-      }
-
-      // Si pas de code configuré, permettre la confirmation directe
-      if (!codeHash) {
-        // Pas de code configuré — confirmer directement
-        await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}`, {
-          method: 'PATCH', headers,
-          body: JSON.stringify({ status: 'paye', payment_status: 'succeeded', paid_at: new Date().toISOString() })
-        });
-        return res.status(200).json({ ok: true, confirmed: true, message: 'Arrivée confirmée (aucun code configuré)' });
-      }
-
-      // Vérifier le code via bcrypt
-      let bcrypt;
-      try { bcrypt = require('bcryptjs'); } catch(e) { bcrypt = null; }
-      const codeStr = String(code).replace(/\D/g, '');
-      let codeOk = false;
-      if (bcrypt) {
-        try { codeOk = await bcrypt.compare(codeStr, codeHash); } catch(e) { codeOk = false; }
-      } else {
-        // Fallback sans bcrypt — comparaison directe (moins sécurisé)
-        codeOk = codeStr === codeHash;
-      }
-
-      if (codeOk) {
-        // Code correct — confirmer l'arrivée + capturer paiement Stripe si possible
-        await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}`, {
-          method: 'PATCH', headers,
-          body: JSON.stringify({ status: 'paye', payment_status: 'succeeded', paid_at: new Date().toISOString(), safety_confirmed_at: new Date().toISOString() })
-        });
-        // Capturer Stripe si requires_capture
-        if (booking.stripe_payment_intent && ctx.stripeKey) {
-          try {
-            await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(booking.stripe_payment_intent)}/capture`, {
-              method: 'POST',
-              headers: { 'Authorization': 'Basic ' + Buffer.from(ctx.stripeKey + ':').toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-          } catch(e) { console.error('[safety-verify] Stripe capture error:', e.message); }
-        }
-        return res.status(200).json({ ok: true, confirmed: true, message: 'Arrivée confirmée — paiement déclenché' });
-      } else {
-        // Code incorrect — incrémenter les tentatives
-        const attempts = (booking.safety_code_failed_attempts || 0) + 1;
-        const alertTriggered = attempts >= 3;
-        await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(booking_id)}`, {
-          method: 'PATCH', headers,
-          body: JSON.stringify({ safety_code_failed_attempts: attempts, safety_alert_triggered: alertTriggered })
-        });
-        if (alertTriggered) {
-          // Envoyer alerte email
-          try {
-            await fetch(`${sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(booking.ride_id)}&select=start_city,end_city,departure_time,driver_id,driver:profiles!driver_id(prenom)`, { headers })
-              .then(r => r.json()).then(async rides => {
-                const ride = rides[0];
-                const lastGps = booking.last_gps_lat ? `${booking.last_gps_lat},${booking.last_gps_lng}` : 'non disponible';
-                const alertEmail = process.env.ADMIN_ALERT_EMAIL || process.env.ADMIN_EMAIL || '';
-                if (alertEmail) {
-                  await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + (process.env.RESEND_API_KEY || ''), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      from: 'alerte@porteaporte.site',
-                      to: alertEmail,
-                      subject: '🚨 ALERTE SÉCURITÉ — Code erroné 3× — PorteàPorte',
-                      html: `<h2>🚨 Alerte sécurité PorteàPorte</h2><p>Un passager a entré un code incorrect 3 fois de suite.</p><p><strong>Trajet :</strong> ${ride?.start_city} → ${ride?.end_city}</p><p><strong>Chauffeur :</strong> ${ride?.driver?.prenom}</p><p><strong>Dernier GPS :</strong> ${lastGps}</p><p><strong>Google Maps :</strong> <a href="https://maps.google.com/?q=${lastGps}">Voir la position</a></p>`
-                    })
-                  });
-                }
-              });
-          } catch(e) { console.error('[safety-verify] Alert email error:', e.message); }
-        }
-        return res.status(400).json({ ok: false, confirmed: false, attempts_remaining: Math.max(0, 3 - attempts), alert_triggered: alertTriggered });
-      }
-    }
+    if (endpoint === 'ride-safety-code-reset') return await rideSafetyCodeReset(req, res, ctx, body);
+    if (endpoint === 'ride-safety-code-verify') return await rideCompleteSecure(req, res, ctx, { ...body, actor: body?.actor || 'passenger' });
     if (endpoint === 'ride-driver-complete') return await rideDriverComplete(req, res, ctx, body);
     if (endpoint === 'ride-complete')        return await rideCompleteSecure(req, res, ctx, body);
     if (endpoint === 'ride-capture-eligible') return await rideCaptureEligible(req, res, ctx, body);
@@ -6643,7 +6548,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badge-campaign-toggle')return await badgeCampaignToggle(req, res, ctx, body);
     if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
     if (endpoint === 'stripe-connect-onboard')   return await stripeConnectOnboard(req, res, ctx, body);
-    if (endpoint === 'stripe-connect-status' || endpoint === 'stripe-connect-status-conducteur') return await stripeConnectStatus(req, res, ctx);
+    if (endpoint === 'stripe-connect-status') return await stripeConnectStatus(req, res, ctx);
     if (endpoint === 'stripe-connect-dashboard') return await stripeConnectDashboard(req, res, ctx);
     if (endpoint === 'stripe-connect-payout')    return await stripeConnectPayout(req, res, ctx, body);
     if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);

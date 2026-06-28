@@ -210,14 +210,10 @@
     await load();
   }
 
-  function clientCronSecret() {
-    return 'use-auth-token';
-  }
-
   function configureCronButton() {
     const btn = document.getElementById('btn-cron');
     btn.disabled = false;
-    btn.title = 'Lance la capture immédiate de tous les paiements éligibles';
+    btn.title = 'Lance la capture immédiate via ton accès admin';
   }
 
   async function load() {

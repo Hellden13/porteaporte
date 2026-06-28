@@ -16,17 +16,23 @@
   <style>
     * { box-sizing: border-box; }
     body { min-height: 100vh; margin: 0; padding: 24px; background: var(--brand-bg-dark); color: var(--brand-text); display: grid; place-items: center; }
-    .wrap { width: min(720px, 100%); display: grid; gap: 16px; }
+    .wrap { width: min(760px, 100%); display: grid; gap: 16px; }
     .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 24px; }
     h1, h2 { margin: 0 0 10px; }
     p { color: var(--brand-muted); line-height: 1.55; }
     label { display: block; color: var(--brand-muted); font-size: .85rem; font-weight: 800; margin-bottom: 8px; }
-    input { width: 100%; background: #080d16; color: #fff; border: 1px solid rgba(0,217,255,.35); border-radius: 14px; padding: 14px; font-size: 2rem; letter-spacing: .25em; text-align: center; }
+    input, select { width: 100%; background: #080d16; color: #fff; border: 1px solid rgba(0,217,255,.35); border-radius: 14px; padding: 14px; font-size: 1rem; }
+    #ride-safety-code { font-size: 2rem; letter-spacing: .25em; text-align: center; }
     .btn { display: inline-flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 900; cursor: pointer; }
     .btn-primary { background: var(--brand-cyan); color: #061018; }
     .btn-secondary { background: transparent; color: var(--brand-cyan); border: 1px solid rgba(0,217,255,.35); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .status { margin-top: 12px; color: var(--brand-muted); font-size: .9rem; }
+    .grid { display: grid; gap: 12px; }
+    .contact-row { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--brand-border); border-radius: 14px; background: rgba(255,255,255,.03); margin-top: 10px; }
+    .contact-row strong { color: var(--brand-cyan); }
+    .check-row { display: flex; align-items: center; gap: 8px; color: var(--brand-muted); font-weight: 800; }
+    .check-row input { width: auto; }
   </style>
 </head>
 <body>
@@ -38,15 +44,42 @@
     </section>
 
     <section class="card">
-      <h2>Code sécurité trajet</h2>
+      <h2>🔐 Code de sécurité trajet</h2>
       <p>Ce code numérique sert à confirmer la fin d'un covoiturage. Il est stocké uniquement sous forme de hash bcrypt.</p>
       <label for="ride-safety-code">Code par défaut (4 à 8 chiffres)</label>
       <input id="ride-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000">
+      <div class="grid" style="margin-top:14px">
+        <div>
+          <label for="safety-secret-question">Question secrète</label>
+          <select id="safety-secret-question">
+            <option value="">Choisir une question</option>
+            <option value="ville_naissance">Dans quelle ville es-tu né ?</option>
+            <option value="premier_animal">Quel était le nom de ton premier animal ?</option>
+            <option value="rue_enfance">Quel est le nom de ta rue d'enfance ?</option>
+            <option value="ecole_primaire">Quel était le nom de ton école primaire ?</option>
+            <option value="plat_prefere">Quel est ton plat préféré ?</option>
+          </select>
+        </div>
+        <div>
+          <label for="safety-secret-answer">Réponse secrète</label>
+          <input id="safety-secret-answer" type="text" autocomplete="off" placeholder="Réponse">
+        </div>
+      </div>
       <div class="actions">
         <button class="btn btn-primary" onclick="saveRideSafetyCode()">Enregistrer</button>
         <a class="btn btn-secondary" href="/dashboard-covoiturage.html">Retour covoiturage</a>
       </div>
       <div class="status" id="ride-safety-status">Chargement...</div>
+    </section>
+
+    <section class="card">
+      <h2>🆘 Contacts d'urgence</h2>
+      <p>Ajoute jusqu'à 3 contacts. Si aucun contact n'est configuré, PorteàPorte sera alerté par défaut.</p>
+      <div id="emergency-contacts"></div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveEmergencyContacts()">Enregistrer les contacts</button>
+      </div>
+      <div class="status" id="emergency-status">Chargement...</div>
     </section>
   </main>
 
@@ -56,7 +89,9 @@
     async function initCompte() {
       if (!await AUTH_API.requireAuth()) return;
       currentSession = AUTH_API.getUser()?.session;
+      renderEmergencyContacts([]);
       await loadRideSafetyStatus();
+      await loadEmergencyContacts();
     }
 
     async function rideSafetyApi(endpoint, body) {
@@ -73,7 +108,7 @@
     async function loadRideSafetyStatus() {
       try {
         const out = await rideSafetyApi('ride-safety-code-status', {});
-        document.getElementById('ride-safety-status').textContent = out.has_profile_code
+        document.getElementById('ride-safety-status').textContent = out.has_code || out.has_profile_code
           ? 'Code sécurité configuré.'
           : 'Aucun code configuré.';
       } catch (e) {
@@ -84,14 +119,70 @@
     async function saveRideSafetyCode() {
       const code = document.getElementById('ride-safety-code').value.replace(/\D/g, '');
       if (code.length < 4) { alert('Entre un code de 4 à 8 chiffres.'); return; }
+      const question = document.getElementById('safety-secret-question').value;
+      const answer = document.getElementById('safety-secret-answer').value.trim();
       try {
-        await rideSafetyApi('ride-safety-code-set', { code });
+        await rideSafetyApi('ride-safety-code-set', {
+          code,
+          safety_secret_question: question || undefined,
+          safety_secret_answer: answer || undefined
+        });
         document.getElementById('ride-safety-code').value = '';
+        document.getElementById('safety-secret-answer').value = '';
         document.getElementById('ride-safety-status').textContent = 'Code sécurité configuré.';
         alert('Code enregistré.');
       } catch (e) {
         alert('Impossible d enregistrer le code : ' + e.message);
       }
+    }
+
+    function renderEmergencyContacts(contacts) {
+      const byPriority = new Map((contacts || []).map(c => [Number(c.priority), c]));
+      document.getElementById('emergency-contacts').innerHTML = [1, 2, 3].map(priority => {
+        const c = byPriority.get(priority) || {};
+        return `<div class="contact-row" data-priority="${priority}">
+          <strong>Contact ${priority}</strong>
+          <input class="ec-name" type="text" placeholder="Nom" value="${esc(c.name || '')}">
+          <input class="ec-phone" type="tel" placeholder="Téléphone" value="${esc(c.phone || '')}">
+          <input class="ec-email" type="email" placeholder="Email" value="${esc(c.email || '')}">
+          <label class="check-row"><input class="ec-pap" type="checkbox" ${c.is_porteaporte ? 'checked' : ''}> Alerter PorteàPorte à la place</label>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadEmergencyContacts() {
+      try {
+        const out = await rideSafetyApi('emergency-contacts-get', {});
+        renderEmergencyContacts(out.contacts || []);
+        document.getElementById('emergency-status').textContent = (out.contacts || []).length
+          ? 'Contacts configurés.'
+          : 'Aucun contact configuré : PorteàPorte sera alerté par défaut.';
+      } catch (e) {
+        document.getElementById('emergency-status').textContent = 'Contacts indisponibles : ' + e.message;
+      }
+    }
+
+    async function saveEmergencyContacts() {
+      const contacts = Array.from(document.querySelectorAll('.contact-row')).map(row => ({
+        priority: Number(row.dataset.priority),
+        name: row.querySelector('.ec-name').value.trim(),
+        phone: row.querySelector('.ec-phone').value.trim(),
+        email: row.querySelector('.ec-email').value.trim(),
+        is_porteaporte: row.querySelector('.ec-pap').checked
+      })).filter(c => c.name || c.phone || c.email || c.is_porteaporte);
+      try {
+        await rideSafetyApi('emergency-contacts-set', { contacts });
+        document.getElementById('emergency-status').textContent = 'Contacts enregistrés.';
+        alert('Contacts enregistrés.');
+      } catch (e) {
+        alert('Impossible d enregistrer les contacts : ' + e.message);
+      }
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
     }
 
     initCompte();
