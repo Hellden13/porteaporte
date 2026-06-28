@@ -374,7 +374,10 @@
     const blocks = [];
 
     // PICKUP
-    const pName = pickup?.name || ride.pickup_safe_label || booking.pickup_city || ride.start_city;
+    const pCity = booking.pickup_city || ride.start_city;
+    const pSector = booking.pickup_sector || ride.start_sector;
+    const pName = [pCity, pSector].filter(Boolean).join(' · ') || pCity || '?';
+    const pMeeting = ride.start_meeting_point || ride.pickup_safe_label || pickup?.name || '';
     const pAddr = pickup?.address || '';
     const pLat = pickup?.lat, pLng = pickup?.lng;
     const pickupGmaps = (pLat && pLng) ? `https://www.google.com/maps/dir/?api=1&destination=${pLat},${pLng}` :
@@ -391,6 +394,7 @@
         <div>
           <div class="meeting-label">Embarquement</div>
           <div class="meeting-name">${esc(pName)}</div>
+          ${pMeeting ? `<div class="meeting-address">Point de rencontre : ${esc(pMeeting)}</div>` : ''}
           ${pAddr ? `<div class="meeting-address">${esc(pAddr)}</div>` : ''}
           ${pExtras.length ? `<div class="meeting-extras">${pExtras.join(' · ')}</div>` : ''}
           ${pickupGmaps ? `<div class="meeting-actions"><a href="${pickupGmaps}" target="_blank" rel="noopener">🗺️ Itinéraire Google Maps</a></div>` : ''}
@@ -399,7 +403,10 @@
     `);
 
     // DROPOFF
-    const dName = dropoff?.name || ride.dropoff_safe_label || booking.dropoff_city || ride.end_city;
+    const dCity = booking.dropoff_city || ride.end_city;
+    const dSector = booking.dropoff_sector || ride.end_sector;
+    const dName = [dCity, dSector].filter(Boolean).join(' · ') || dCity || '?';
+    const dMeeting = ride.end_meeting_point || ride.dropoff_safe_label || dropoff?.name || '';
     const dAddr = dropoff?.address || '';
     const dLat = dropoff?.lat, dLng = dropoff?.lng;
     const dropoffGmaps = (dLat && dLng) ? `https://www.google.com/maps/dir/?api=1&destination=${dLat},${dLng}` :
@@ -416,6 +423,7 @@
         <div>
           <div class="meeting-label">Débarquement</div>
           <div class="meeting-name">${esc(dName)}</div>
+          ${dMeeting ? `<div class="meeting-address">Point de rencontre : ${esc(dMeeting)}</div>` : ''}
           ${dAddr ? `<div class="meeting-address">${esc(dAddr)}</div>` : ''}
           ${dExtras.length ? `<div class="meeting-extras">${dExtras.join(' · ')}</div>` : ''}
           ${dropoffGmaps ? `<div class="meeting-actions"><a href="${dropoffGmaps}" target="_blank" rel="noopener">🗺️ Itinéraire Google Maps</a></div>` : ''}

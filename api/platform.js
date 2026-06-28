@@ -22,7 +22,7 @@ const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
-  rideDriverContact, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
+  rideDriverContact, rideSendMeetupMessage, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
   rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
@@ -6488,6 +6488,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
     if (endpoint === 'ride-driver-contact')  return await rideDriverContact(req, res, ctx, body);
+    if (endpoint === 'ride-send-meetup-message') return await rideSendMeetupMessage(req, res, ctx, body);
     if (endpoint === 'ride-payment-create')  return await ridePaymentCreate(req, res, ctx, body);
     if (endpoint === 'ride-payment-sync')    return await ridePaymentSync(req, res, ctx, body);
     if (endpoint === 'emergency-contacts-get') return await emergencyContactsGet(req, res, ctx, body);

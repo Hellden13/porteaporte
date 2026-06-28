@@ -377,6 +377,47 @@ async function openDriverContact(bookingId, type) {
   alert('Coordonnee non disponible pour ce conducteur.');
 }
 
+function escHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function toggleMeetupForm(rideId) {
+  const el = document.getElementById('meetup-form-' + rideId);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function sendMeetupToRide(rideId) {
+  const textarea = document.getElementById('meetup-message-' + rideId);
+  const message = (textarea?.value || '').trim();
+  if (!message) { alert('Entre un court message de point de rencontre.'); return; }
+  if (message.length > 300) { alert('Maximum 300 caracteres.'); return; }
+  const bookings = (dashData.ride_bookings || []).filter(b => b.ride_id === rideId && String(b.status || '').toLowerCase() === 'confirme');
+  if (!bookings.length) { alert('Aucun passager confirme pour ce trajet.'); return; }
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    let sent = 0;
+    const errors = [];
+    for (const booking of bookings) {
+      const res = await fetch('/api/platform', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'ride-send-meetup-message', booking_id: booking.id, message })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.success) sent += 1;
+      else errors.push(out.error || ('Erreur ' + res.status));
+    }
+    if (sent) alert('Message envoye a ' + sent + ' passager(s) confirme(s).');
+    if (errors.length) alert('Certains messages n ont pas ete envoyes : ' + errors[0]);
+    window.location.reload();
+  } catch (e) {
+    alert('Erreur reseau. Reessaie dans un instant.');
+  }
+}
+
 
 function showSection(name) {
   currentSection = name;
@@ -523,6 +564,7 @@ function buildOverview() {
 function buildTrajets() {
   const rides    = dashData.my_rides    || [];
   const bookings = dashData.my_bookings || [];
+  const receivedBookings = dashData.ride_bookings || [];
   // Affiche les trajets publiés si role conducteur OU s'il existe déjà des trajets publiés (sécurité)
   const isConducteur = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux' || rides.length > 0;
 
@@ -536,7 +578,19 @@ function buildTrajets() {
     const finishedStatuses = ['termine','completed','done','annule','cancelled'];
     const activeRides = rides.filter(r => !finishedStatuses.includes(String(r.status||'').toLowerCase()));
     const finishedRides = rides.filter(r => finishedStatuses.includes(String(r.status||'').toLowerCase()));
-    const rideRow = (r, canCancel) => `<tr>
+    const rideRow = (r, canCancel) => {
+      const confirmedForRide = receivedBookings.filter(b => b.ride_id === r.id && String(b.status || '').toLowerCase() === 'confirme');
+      const meetupBox = (canCancel && confirmedForRide.length)
+        ? `<div style="margin-top:8px">
+            <button type="button" onclick="toggleMeetupForm('${r.id}')" style="display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📍 Envoyer point de rencontre</button>
+            <div id="meetup-form-${r.id}" style="display:none;margin-top:8px;max-width:360px">
+              <div style="font-size:.78rem;color:var(--cyan);font-weight:800;margin-bottom:5px">📍 Message aux passagers</div>
+              <textarea id="meetup-message-${r.id}" maxlength="300" placeholder="Je serai au stationnement IGA, voiture rouge Toyota" style="width:100%;min-height:78px;background:#080d16;color:#fff;border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:9px;resize:vertical"></textarea>
+              <button type="button" onclick="sendMeetupToRide('${r.id}')" style="margin-top:6px;width:100%;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border:0;padding:8px 12px;border-radius:8px;font-weight:900;cursor:pointer">Envoyer à tous les passagers confirmés (${confirmedForRide.length})</button>
+            </div>
+          </div>`
+        : '';
+      return `<tr>
       <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
       <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
       <td>${r.available_seats} pl.</td>
@@ -546,8 +600,10 @@ function buildTrajets() {
         ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
         ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
         ${(canCancel && r.status === 'publie' && new Date(r.departure_time) <= new Date()) ? `<button onclick="terminerTrajet('${r.id}')" style="margin-left:10px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Terminer</button>` : ''}
+        ${meetupBox}
       </td>
     </tr>`;
+    };
     return `
     <div class="section-block">
       <div class="section-head"><h2>🚀 Trajets en cours (${activeRides.length})</h2></div>
@@ -612,11 +668,14 @@ function buildTrajets() {
             const confirmBtn = canConfirm
               ? `<button onclick="confirmerArrivee('${b.id}')" style="margin:2px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:800;cursor:pointer;animation:pulse 1.5s infinite">✅ Confirmer mon arrivée</button>`
               : '';
+            const meetupMessage = b.meetup_message
+              ? `<div style="margin-top:7px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
+              : '';
             return `<tr>
               <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
               <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-              <td>${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</td>
+              <td>${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}${meetupMessage}</td>
               <td><strong>${b.driver_prenom||'Chauffeur'}</strong><br>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
             </tr>`;
           };
@@ -931,7 +990,3 @@ init();
   <script src="/js/pending-payment-banner.js" defer></script>
 </body>
 </html>
-
-
-
-

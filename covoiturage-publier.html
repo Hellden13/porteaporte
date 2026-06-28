@@ -237,7 +237,7 @@
         <h3>Point de départ</h3>
         <div class="form-grid">
           <div class="field"><label>Ville de départ *</label><input type="text" id="start_city" placeholder="Ex : Québec" list="qc-cities-publier" autocomplete="off"></div>
-          <div class="field"><label>Secteur / Quartier</label><input type="text" id="start_sector" placeholder="Ex : Saint-Roch"></div>
+          <div class="field"><label>Secteur de départ *</label><input type="text" id="start_sector" placeholder="Ex : Saint-Nicolas, Centre-Ville" required></div>
         </div>
       </div>
       <div class="form-section">
@@ -246,7 +246,7 @@
           <div class="field"><label>Ville d'arrivée *</label><input type="text" id="end_city" placeholder="Ex : Montréal" list="qc-cities-publier" autocomplete="off">
               <!-- Villes peuplées par /js/qc-cities.js (liste centrale partagée) -->
               <datalist id="qc-cities-publier"></datalist></div>
-          <div class="field"><label>Secteur / Quartier</label><input type="text" id="end_sector" placeholder="Ex : Plateau"></div>
+          <div class="field"><label>Secteur d'arrivée *</label><input type="text" id="end_sector" placeholder="Ex : Sainte-Foy, Vieux-Québec" required></div>
         </div>
       </div>
       <div class="form-section">
@@ -1403,6 +1403,15 @@
     // ── Publier ──────────────────────────────────────────────────
     async function publishRide() {
       const btn = document.getElementById('publish-btn');
+      const startSector = document.getElementById('start_sector').value.trim();
+      const endSector = document.getElementById('end_sector').value.trim();
+      if (!startSector || !endSector) {
+        const err = document.getElementById('err-msg');
+        err.style.display = 'block';
+        err.textContent = "⚠️ Le secteur de départ et d'arrivée sont obligatoires pour que les passagers sachent où vous retrouver.";
+        return;
+      }
+
       btn.disabled = true; btn.textContent = isEditMode ? 'Modification...' : 'Publication...';
 
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
@@ -1417,9 +1426,9 @@
       const body = {
         endpoint: isEditMode ? 'ride-update' : 'ride-create',
         start_city:     document.getElementById('start_city').value.trim(),
-        start_sector:   document.getElementById('start_sector').value.trim(),
+        start_sector:   startSector,
         end_city:       document.getElementById('end_city').value.trim(),
-        end_sector:     document.getElementById('end_sector').value.trim(),
+        end_sector:     endSector,
         departure_time: (() => {
           const v = document.getElementById('departure_time').value;
           // datetime-local renvoie en local time naive (ex "2026-05-26T06:15").
@@ -1435,6 +1444,8 @@
           : null,
         pickup_safe_label: document.getElementById('meeting-point-label-start')?.value?.trim() || null,
         dropoff_safe_label: document.getElementById('meeting-point-label-end')?.value?.trim() || null,
+        start_meeting_point: document.getElementById('meeting-point-label-start')?.value?.trim() || null,
+        end_meeting_point: document.getElementById('meeting-point-label-end')?.value?.trim() || null,
         flexibility_minutes: document.getElementById('flexibility_minutes').value,
         total_distance_km: document.getElementById('total_distance_km').value || null,
         is_return_trip: document.getElementById('is_return_trip').checked,
