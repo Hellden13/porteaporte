@@ -241,6 +241,7 @@
   const db = window.db || window.getSupabaseClient();
   const params = new URLSearchParams(location.search);
   const bookingId = params.get('booking_id') || params.get('id');
+  let currentSession = null;
 
   function fmt(n) { return Number(n||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
   function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
@@ -251,6 +252,7 @@
 
     const { data: { session } } = await db.auth.getSession();
     if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    currentSession = session;
 
     // 1. Charge le booking
     const { data: booking, error: bErr } = await db.from('ride_bookings').select('*').eq('id', bookingId).single();
@@ -265,6 +267,35 @@
     if (window.PapSOS) window.PapSOS.setContext({ ride_id: booking.ride_id || null, booking_id: booking.id || null });
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
+  }
+
+  async function fetchDriverContact() {
+    if (!currentSession) return null;
+    const res = await fetch('/api/platform', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+      body: JSON.stringify({ endpoint: 'ride-driver-contact', booking_id: bookingId })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status));
+      return null;
+    }
+    return out;
+  }
+
+  async function openDriverContact(type) {
+    const contact = await fetchDriverContact();
+    if (!contact) return;
+    if (type === 'phone' && contact.telephone) {
+      location.href = 'tel:' + contact.telephone;
+      return;
+    }
+    if (type === 'email' && contact.email) {
+      location.href = 'mailto:' + contact.email;
+      return;
+    }
+    alert('Coordonnee non disponible pour ce conducteur.');
   }
 
   function renderAll(booking, rideData) {
@@ -293,14 +324,14 @@
     if (driver.verified) badges.innerHTML += '<span class="badge verified">✓ Identité vérifiée</span>';
     if (driver.score) badges.innerHTML += `<span class="badge score">⭐ ${Number(driver.score).toFixed(1)}/5</span>`;
 
-    // Contact (email + téléphone du driver — récupéré depuis booking via cov-dashboard pattern)
+    // Contact conducteur: coordonnées récupérées seulement au clic après autorisation serveur.
     const contacts = document.getElementById('contact-btns');
-    const driverEmail = booking.driver_email || rideData.driver_email;
-    const driverPhone = booking.driver_phone || rideData.driver_phone;
-    contacts.innerHTML = '';
-    if (driverEmail) contacts.innerHTML += `<a class="contact-btn email" href="mailto:${esc(driverEmail)}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent(ride.start_city+' → '+ride.end_city)}">💬 Email</a>`;
-    if (driverPhone) contacts.innerHTML += `<a class="contact-btn tel" href="tel:${esc(driverPhone)}">📞 Appeler</a>`;
-    if (!contacts.innerHTML) contacts.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Contact via messagerie</span>';
+    contacts.innerHTML = `
+      <button type="button" class="contact-btn tel" onclick="openDriverContact('phone')">📞 Appeler le chauffeur</button>
+      <button type="button" class="contact-btn email" onclick="openDriverContact('email')">✉️ Contacter</button>
+      <span style="color:var(--muted);font-size:.72rem;line-height:1.35">Vos informations personnelles sont protégées conformément à la Loi 25.</span>
+      <a href="/confidentialite.html" style="font-size:.75rem;color:var(--brand-muted,var(--muted));text-decoration:none">🔒 Protection des données — Loi 25</a>
+    `;
 
     // Véhicule
     if (driver.vehicle_make || driver.vehicle_model) {

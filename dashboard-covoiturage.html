@@ -345,6 +345,39 @@ async function confirmerArrivee(bookingId) {
 }
 
 
+async function fetchDriverContact(bookingId) {
+  const db = getSupabaseClient();
+  const { data: _sd } = await db.auth.getSession();
+  const token = _sd?.session?.access_token;
+  if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return null; }
+  const res = await fetch('/api/platform', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: 'ride-driver-contact', booking_id: bookingId })
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status));
+    return null;
+  }
+  return out;
+}
+
+async function openDriverContact(bookingId, type) {
+  const contact = await fetchDriverContact(bookingId);
+  if (!contact) return;
+  if (type === 'phone' && contact.telephone) {
+    window.location.href = 'tel:' + contact.telephone;
+    return;
+  }
+  if (type === 'email' && contact.email) {
+    window.location.href = 'mailto:' + contact.email;
+    return;
+  }
+  alert('Coordonnee non disponible pour ce conducteur.');
+}
+
+
 function showSection(name) {
   currentSection = name;
   document.querySelectorAll('.sidebar-item[onclick^="showSection"]').forEach((el,i) => {
@@ -561,8 +594,11 @@ function buildTrajets() {
         : (() => {
           const bookingRow = b => {
             const drvContact = [];
-            if (b.driver_email) drvContact.push(`<a href="mailto:${b.driver_email}?subject=PorteàPorte%20-%20Réservation%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
-            if (b.driver_phone) drvContact.push(`<a href="tel:${b.driver_phone}" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.driver_phone}</a>`);
+            const canContactDriver = ['confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
+            if (canContactDriver) {
+              drvContact.push(`<button type="button" onclick="openDriverContact('${b.id}','phone')" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">📞 Appeler le chauffeur</button>`);
+              drvContact.push(`<button type="button" onclick="openDriverContact('${b.id}','email')" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">✉️ Contacter</button>`);
+            }
             // Bouton "Payer maintenant" si reservation en attente de paiement
             const isPending = ['en_attente', 'pending', 'unpaid'].includes(String(b.status||'').toLowerCase());
             const payBtn = isPending
@@ -581,13 +617,14 @@ function buildTrajets() {
               <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
               <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
               <td>${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</td>
-              <td>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Voir email confirmation</span>'}</td>
+              <td><strong>${b.driver_prenom||'Chauffeur'}</strong><br>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
             </tr>`;
           };
           window.__bookingRowFn = bookingRow;
           return `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__activeBookings.map(bookingRow).join('')}</tbody></table>`;
         })()}
     </div>
+    <a href="/confidentialite.html" style="font-size:.75rem;color:var(--brand-muted,var(--muted));display:inline-block;margin-top:8px">🔒 Protection des données — Loi 25</a>
   </div>
   ${window.__finishedBookings && window.__finishedBookings.length > 0 ? `
   <details class="section-block" style="cursor:pointer">
@@ -618,7 +655,7 @@ function buildReservations() {
         ${allBookings.map(b=>{
           const contactInfo = [];
           if (b.passenger_email) contactInfo.push(`<a href="mailto:${b.passenger_email}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
-          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 ${b.passenger_phone}</a>`);
+          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 Appeler</a>`);
 
           // Carte animal (visible si passager a un animal sur ce trajet)
           let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';
@@ -641,7 +678,7 @@ function buildReservations() {
             ? `<button onclick="openRideCodeModal('${b.id}')" style="margin:2px;background:rgba(0,217,255,.14);color:var(--cyan);border:1px solid rgba(0,217,255,.45);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:900;cursor:pointer">Valider trajet</button>`
             : '<span style="color:var(--muted);font-size:.75rem">—</span>';
           return `<tr>
-            <td><strong>${b.passenger_prenom||'—'}</strong>${b.passenger_email ? `<div style="font-size:.72rem;color:var(--muted)">${b.passenger_email}</div>` : ''}</td>
+            <td><strong>${b.passenger_prenom||'—'}</strong></td>
             <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
             <td>${b.seats_reserved} pl.</td>
             <td>${petCell}</td>
