@@ -1172,6 +1172,8 @@
       renderSafeSelect(side);
     }
 
+    const escapeHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
     function renderSafeSelect(side) {
       const city = document.getElementById(side === 'start' ? 'start_city' : 'end_city').value.trim();
       const selEl = document.getElementById('meeting-point-' + side);
