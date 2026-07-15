@@ -929,7 +929,8 @@ async function livreurRescueAccept(req, res, ctx, body) {
   // Compensation au livreur original (30% de sa part)
   if (livraison.rescue_livreur_original && Number(livraison.prix_total) > 0) {
     const grossCad = Number(livraison.prix_total) * 0.30;
-    const netCad = grossCad * 0.60;
+    const driverShareRate = Math.max(0, toNumber(PLATFORM_ALLOCATION_DEFAULTS.pct_livreur, 60)) / 100;
+    const netCad = grossCad * driverShareRate;
     await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
       method: 'POST',
       headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=minimal' },
@@ -1165,7 +1166,8 @@ async function livraisonImprevu(req, res, ctx, body) {
   let compensationAmount = 0;
   if (compensationPct > 0 && livraison.livreur_id && Number(livraison.prix_total) > 0) {
     const grossCad = Number(livraison.prix_total) * compensationPct;
-    const netCad = grossCad * 0.60; // 60% au livreur (même règle que livraison normale)
+    const driverShareRate = Math.max(0, toNumber(PLATFORM_ALLOCATION_DEFAULTS.pct_livreur, 60)) / 100;
+    const netCad = grossCad * driverShareRate;
     compensationAmount = Number(netCad.toFixed(2));
     await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
       method: 'POST',
@@ -1854,7 +1856,8 @@ async function myDriverLivraisons(req, res, ctx) {
       // Crédit compensation 30% au livreur
       if (Number(liv.prix_total) > 0) {
         const grossCad = Number(liv.prix_total) * 0.50;
-        const netCad = grossCad * 0.60;
+        const driverShareRate = Math.max(0, toNumber(PLATFORM_ALLOCATION_DEFAULTS.pct_livreur, 60)) / 100;
+        const netCad = grossCad * driverShareRate;
         await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
           method: 'POST',
           headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
@@ -4435,6 +4438,11 @@ async function launchReferral(req, res, ctx, body) {
 
 async function impactApplicationPublic(req, res, ctx, body) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`impact-application:${ip}`, 5, 3600);
+  if (!rl.allowed) {
+    return res.status(429).json({ error: 'Trop de demandes. Réessayez plus tard.' });
+  }
   const organisationName = String(body.organisation_name || body.name || '').trim().slice(0, 160);
   const contactName = String(body.contact_name || '').trim().slice(0, 120);
   const email = String(body.email || '').trim().toLowerCase().slice(0, 180);

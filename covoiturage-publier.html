@@ -756,6 +756,16 @@
     const isEditMode = !!editRideId;
     const publishPagePath = isEditMode ? '/covoiturage-publier.html?edit=' + encodeURIComponent(editRideId) : '/covoiturage-publier.html';
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[ch]));
+    }
+
     // Auth guard + pré-remplir depuis profil chauffeur existant
     (async function() {
       const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
@@ -1170,7 +1180,7 @@
       const filtered = f ? all.filter(p => p.type === f) : all;
 
       if (!all.length) {
-        selEl.innerHTML = `<option value="">Aucun point public suggere pour ${city} — utilise "Mon lieu n'est pas dans la liste"</option>`;
+        selEl.innerHTML = `<option value="">Aucun point public suggere pour ${escapeHtml(city)} — utilise "Mon lieu n'est pas dans la liste"</option>`;
         return;
       }
 
@@ -1184,15 +1194,16 @@
 
       let html = '<option value="">— Sélectionne un lieu sécuritaire —</option>';
       Object.keys(bySector).sort().forEach(sector => {
-        html += `<optgroup label="${sector}">`;
+        html += `<optgroup label="${escapeHtml(sector)}">`;
         bySector[sector].forEach(p => {
           const ic = TYPE_ICON[p.type] || '📍';
-          html += `<option value="${p.id}" data-info='${JSON.stringify({n:p.name, a:p.address, h:p.hours||'', t:p.type, c:!!(p.has_cameras||p.camera_possible), l:!!p.well_lit, p:!!(p.parking_free||p.easy_parking), sec:p.sector||'', score:p.safety_score||'', label:p.public_label||'', disclaimer:p.disclaimer||''}).replace(/'/g,"&#39;")}'>${ic} ${p.name}</option>`;
+          const dataInfo = escapeHtml(JSON.stringify({n:p.name, a:p.address, h:p.hours||'', t:p.type, c:!!(p.has_cameras||p.camera_possible), l:!!p.well_lit, p:!!(p.parking_free||p.easy_parking), sec:p.sector||'', score:p.safety_score||'', label:p.public_label||'', disclaimer:p.disclaimer||''}));
+          html += `<option value="${escapeHtml(p.id)}" data-info='${dataInfo}'>${ic} ${escapeHtml(p.name)}</option>`;
         });
         html += '</optgroup>';
       });
       if (!filtered.length && f) {
-        html += `<option disabled>(Aucun lieu de type "${f}" — change le filtre)</option>`;
+        html += `<option disabled>(Aucun lieu de type "${escapeHtml(f)}" — change le filtre)</option>`;
       }
       selEl.innerHTML = html;
     }

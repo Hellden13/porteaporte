@@ -645,7 +645,7 @@ async function resumeBookingPayment(bookingId) {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ booking_id: bookingId })
     });
-    const paymentData = await paymentRes.json();
+    const paymentData = await paymentRes.json().catch(function(){ return {}; });
     if (!paymentRes.ok || paymentData.error) {
       showToast('❌ ' + (paymentData.error || 'Reprise paiement impossible'), 'error');
       return;
@@ -1161,8 +1161,8 @@ async function loadRide() {
       fetch('/api/platform?endpoint=ride-detail&ride_id=' + rideId),
       fetch('/api/platform?endpoint=ride-settings')
     ]);
-    var rideData     = await rideRes.json();
-    var settingsData = await settingsRes.json();
+    var rideData     = await rideRes.json().catch(function(){ return {}; });
+    var settingsData = settingsRes.ok ? await settingsRes.json().catch(function(){ return {}; }) : {};
     if (!rideRes.ok || rideData.error) throw new Error(rideData.error || 'Trajet introuvable');
     const ridePayload = rideData.ride ? {
       ...rideData.ride,
@@ -1232,7 +1232,7 @@ async function loadStripeClient() {
   if (stripeClient) return stripeClient;
   if (!window.Stripe) throw new Error('Stripe.js indisponible');
   var cfgRes = await fetch('/api/platform?endpoint=stripe-public-config');
-  var cfg = await cfgRes.json();
+  var cfg = await cfgRes.json().catch(function(){ return {}; });
   if (!cfgRes.ok || !cfg.publishable_key) {
     throw new Error('Stripe public non configure');
   }
@@ -1348,7 +1348,7 @@ async function bookPassenger() {
       dropoff_city: dropoff
     })
   });
-  var data = await res.json();
+  var data = await res.json().catch(function(){ return {}; });
   if (!res.ok || data.error) {
     // Cas spécial : déjà réservé → redirection vers le dashboard
     if (res.status === 409 && data.existing_booking) {
@@ -1370,7 +1370,7 @@ async function bookPassenger() {
       live_test_code: localStorage.getItem('PAP_RIDE_LIVE_1CAD_CODE') || undefined
     })
   });
-  var paymentData = await paymentRes.json();
+  var paymentData = await paymentRes.json().catch(function(){ return {}; });
   if (!paymentRes.ok || paymentData.error) throw new Error(paymentData.error || 'Erreur paiement');
   if (paymentData.already_authorized) {
     showToast('✅ Réservation déjà confirmée !', 'success');
@@ -1400,7 +1400,7 @@ async function confirmRidePayment() {
       payment_intent_id: pi.id || pendingRidePayment.payment_intent_id
     })
   });
-  var sync = await syncRes.json();
+  var sync = await syncRes.json().catch(function(){ return {}; });
   if (!syncRes.ok || sync.error || !sync.authorized) {
     throw new Error(sync.error || 'Paiement non autorise par Stripe');
   }
@@ -1438,7 +1438,7 @@ async function bookPackage() {
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
     body: JSON.stringify({ ride_id: rideId, user_id: currentUser.id, package_weight_kg: weight, package_description: desc, pickup_city: pickup, dropoff_city: dropoff })
   });
-  var data = await res.json();
+  var data = await res.json().catch(function(){ return {}; });
   if (!res.ok || data.error) throw new Error(data.error || 'Erreur envoi colis');
   showToast('Colis enregistre !', 'success');
   setTimeout(function() { location.href = '/dashboard-expediteur.html'; }, 2000);

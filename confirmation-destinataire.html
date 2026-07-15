@@ -229,6 +229,16 @@
     const result = document.getElementById('result');
     const codeInput = document.getElementById('recipient-code');
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[ch]));
+    }
+
     function show(type, message) {
       result.className = 'result ' + type;
       result.innerHTML = message;
@@ -286,7 +296,7 @@
           ? '<span style="color:#7dffc1">✅ Le livreur a été notifié de ta présence. Bonne réception !</span>'
           : '<span style="color:#ffb74d">↩️ La livraison sera retournée à l\'expéditeur. Tu peux recommander si besoin.</span>';
       } catch (err) {
-        resultEl.innerHTML = '<span style="color:#ffb0b0">❌ ' + err.message + '</span>';
+        resultEl.innerHTML = '<span style="color:#ffb0b0">❌ ' + escapeHtml(err.message || 'Erreur') + '</span>';
       }
     }
 
@@ -352,7 +362,7 @@
           document.getElementById('review-section').style.display = 'block';
         }, 800);
       } catch (err) {
-        show('err', '❌ ' + (err.message || 'Confirmation impossible'));
+        show('err', '❌ ' + escapeHtml(err.message || 'Confirmation impossible'));
       } finally {
         btn.disabled = false;
         btn.textContent = 'Confirmer la réception';
