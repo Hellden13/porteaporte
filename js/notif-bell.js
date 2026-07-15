@@ -188,7 +188,7 @@
   function safeUrl(url) {
     if (!url) return '#';
     const s = String(url).trim();
-    if (s.startsWith('/') || s.startsWith('https://') || s.startsWith('http://')) return s;
+    if (s.startsWith('/') || s.startsWith('https://')) return s;
     return '#';
   }
 
@@ -292,7 +292,8 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // ── Supabase calls ────────────────────────────────────────────────────────

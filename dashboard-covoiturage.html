@@ -216,7 +216,7 @@ async function init() {
     let profileRes, dashRes;
     try {
       [profileRes, dashRes] = await Promise.all([
-        db.from('profiles').select('*').eq('id', session.user.id).single(),
+        db.from('profiles').select('id,role,cov_role,xp,prenom').eq('id', session.user.id).single(),
         fetch('/api/cov-dashboard', { headers: { 'Authorization': 'Bearer ' + session.access_token }, signal: ctrl.signal })
       ]);
     } finally { clearTimeout(to); }

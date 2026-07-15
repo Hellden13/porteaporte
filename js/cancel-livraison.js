@@ -53,6 +53,14 @@
 
   function fmt(cents) { return ((cents || 0) / 100).toLocaleString('fr-CA', { style:'currency', currency:'CAD' }); }
   function pct(n) { return Math.round(n) + ' %'; }
+  function escHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   let ctx = null;
 
@@ -85,17 +93,17 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ctx.accessToken },
         body: JSON.stringify({ endpoint: 'cancel-policy-preview', livraison_id: ctx.livraisonId })
       });
-      const out = await r.json();
+      const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out.error || 'Politique introuvable');
       renderPolicy(out);
     } catch (e) {
-      document.getElementById('pc-content').innerHTML = `<div class="pc-msg err">❌ ${e.message}</div><div class="pc-actions"><button class="pc-cancel-btn" onclick="PapCancel.closeModal()">Fermer</button></div>`;
+      document.getElementById('pc-content').innerHTML = `<div class="pc-msg err">❌ ${escHtml(e.message || 'Erreur')}</div><div class="pc-actions"><button class="pc-cancel-btn" onclick="PapCancel.closeModal()">Fermer</button></div>`;
       document.getElementById('pc-content').className = '';
     }
   }
 
   function renderPolicy(data) {
-    const p = data.policy;
+    const p = data.policy || {};
     const cssClass = p.refund_pct === 100 ? 'full' : p.refund_pct > 0 ? 'partial' : 'none';
     const icon = p.refund_pct === 100 ? '✅' : p.refund_pct > 0 ? '⚠️' : '❌';
     const title = p.refund_pct === 100 ? 'Remboursement TOTAL' : p.refund_pct > 0 ? `Remboursement PARTIEL (${pct(p.refund_pct)})` : 'Annulation impossible';
@@ -103,7 +111,7 @@
     let html = `
       <div class="pc-status-card ${cssClass}">
         <strong>${icon} ${title}</strong>
-        <div class="reason">${p.reason}</div>
+        <div class="reason">${escHtml(p.reason || '')}</div>
       </div>
     `;
 
@@ -154,14 +162,14 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ctx.accessToken },
         body: JSON.stringify({ livraison_id: ctx.livraisonId, raison: reason })
       });
-      const out = await r.json();
+      const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out.error || 'Annulation impossible');
       document.querySelector('.pc-modal').innerHTML = `
         <div style="text-align:center;padding:30px 10px">
           <div style="font-size:3rem;line-height:1;margin-bottom:14px">✅</div>
           <h2 style="margin:0 0 8px;color:#fff">Livraison annulée</h2>
           <p style="color:#a8b0ba;margin:0 0 8px;line-height:1.6">${out.refund_cents > 0 ? `Remboursement de <strong style="color:#7dffc1">${fmt(out.refund_cents)}</strong> traité par Stripe. Tu vas le voir sur ta carte d'ici 5-10 jours ouvrés.` : 'Livraison marquée comme annulée.'}</p>
-          ${out.livreur_compensation_cents > 0 ? `<p style="color:#ffd700;font-size:.85rem;margin:8px 0 0">Une compensation de ${fmt(out.livreur_compensation_cents)} a été versée au livreur (${out.policy_reason}).</p>` : ''}
+          ${out.livreur_compensation_cents > 0 ? `<p style="color:#ffd700;font-size:.85rem;margin:8px 0 0">Une compensation de ${fmt(out.livreur_compensation_cents)} a été versée au livreur (${escHtml(out.policy_reason || '')}).</p>` : ''}
         </div>
       `;
       // Sauvegarde onSuccess AVANT closeModal (qui nullifie ctx)

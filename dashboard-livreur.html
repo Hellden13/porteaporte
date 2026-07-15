@@ -830,7 +830,10 @@
       if (!data?.session) { window.location.href = '/login.html'; return; }
       session = data.session;
 
-      const { data: p } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+      const { data: p } = await db.from('profiles')
+        .select('id,role,suspendu,driver_status,nom,prenom,disponible,subscription_status,subscription_plan,subscription_end_at,livraisons,coins,score,streak_jours,eco_bonus,transport_mode,niveau_livreur')
+        .eq('id', session.user.id)
+        .single();
       if (!p) { showBanner('Profil introuvable. Reconnecte-toi.', '#EF4444'); return; }
       profile = p;
 
@@ -2523,7 +2526,7 @@
           }
         }
       } catch (e) {
-        area.innerHTML = `<p style="color:#ff4d4d;font-size:.83rem">Impossible d'afficher cette section : ${e.message}</p>`;
+        area.innerHTML = `<p style="color:#ff4d4d;font-size:.83rem">Impossible d'afficher cette section : ${esc(e.message || 'Erreur')}</p>`;
       }
     }
 

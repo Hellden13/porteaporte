@@ -63,7 +63,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({ endpoint: 'ride-message-thread', ride_id: opts.ride_id, other_user_id: opts.other_user_id })
     });
-    const d = await r.json();
+    const d = await r.json().catch(() => ({}));
     if (!r.ok) return { error: d.error || 'Erreur', messages: [] };
     return d;
   }
@@ -79,6 +79,15 @@
     } catch { return ''; }
   }
 
+  function escHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function renderMessages(myId, messages) {
     const body = document.querySelector('#rc-overlay .rc-body');
     if (!body) return;
@@ -88,7 +97,7 @@
     }
     body.innerHTML = messages.map(m => {
       const mine = m.sender_id === myId;
-      const safe = String(m.body || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const safe = escHtml(m.body || '');
       return `
         <div class="rc-msg ${mine ? 'mine' : 'theirs'}">${safe}</div>
         <div class="rc-time ${mine ? 'mine' : 'theirs'}">${fmtTime(m.created_at)}</div>
@@ -110,7 +119,7 @@
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ endpoint: 'ride-message-send', ride_id: opts.ride_id, recipient_id: opts.other_user_id, body: text })
       });
-      const d = await r.json();
+      const d = await r.json().catch(() => ({}));
       if (!r.ok) { alert('Erreur : ' + (d.error || 'envoi impossible')); btn.disabled = false; return; }
       ta.value = '';
       // Refresh thread
@@ -148,7 +157,7 @@
       <div class="rc-box" role="dialog" aria-modal="true">
         <div class="rc-header">
           <div>
-            <div class="name">💬 ${opts.other_name || 'Conversation'}</div>
+            <div class="name">💬 ${escHtml(opts.other_name || 'Conversation')}</div>
             <div class="sub">À propos du trajet</div>
           </div>
           <button class="rc-close" id="rc-close" aria-label="Fermer">✕</button>
@@ -195,7 +204,7 @@
         body: JSON.stringify({ endpoint: 'ride-message-unread' })
       });
       if (!r.ok) return { total: 0, threads: {} };
-      return await r.json();
+      return await r.json().catch(() => ({ total: 0, threads: {} }));
     } catch { return { total: 0, threads: {} }; }
   }
 

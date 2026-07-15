@@ -21,7 +21,10 @@
     if (!db) return null;
     const { data: { session } } = await db.auth.getSession();
     if (!session) return null;
-    const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+    const { data: profile } = await db.from('profiles')
+      .select('id,role,email_verified,prenom,nom,ville,telephone,photo_url,photo_status,driver_status,livraisons,livraisons_count')
+      .eq('id', session.user.id)
+      .single();
     return { session, profile };
   }
 
