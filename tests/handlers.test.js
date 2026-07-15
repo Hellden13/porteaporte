@@ -7,6 +7,7 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const { Readable } = require('node:stream');
+const { PLATFORM_ALLOCATION_DEFAULTS } = require('../js/platform-settings-defaults');
 
 // ─── Mock fetch global ────────────────────────────────────────────────────────
 // On remplace fetch globalement par un mock contrôlable avant chaque test.
@@ -391,7 +392,7 @@ describe('platform.js dispatcher', () => {
         return {
           ok: true,
           status: 200,
-          json: async () => [{ pct_livreur: 60, pct_communaute: 5, ticket_moyen_cad: 15 }]
+          json: async () => [{ pct_livreur: PLATFORM_ALLOCATION_DEFAULTS.pct_livreur, pct_communaute: 5, ticket_moyen_cad: 15 }]
         };
       }
       return { ok: false, status: 404, json: async () => ({ error: 'not found' }), text: async () => '' };

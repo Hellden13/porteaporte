@@ -25,6 +25,7 @@
         { "source": "/_archived/(.*)", "destination": "/404.html", "permanent": false },
         { "source": "/save/(.*)",      "destination": "/404.html", "permanent": false },
         { "source": "/lib/(.*)",       "destination": "/404.html", "permanent": false },
+        { "source": "/scripts/(.*)",   "destination": "/404.html", "permanent": false },
         { "source": "/livreur-levels-release.js", "destination": "/404.html", "permanent": false },
         { "source": "/BACKEND-(.*\\.md)",  "destination": "/404.html", "permanent": false },
         { "source": "/SECURITY-(.*\\.md)", "destination": "/404.html", "permanent": false },

@@ -1,6 +1,6 @@
 // ═════════════════════════════════════════════════════════════════════════════
 // SYSTÈME DÉBLOCAGE AUTOMATIQUE PAR NIVEAUX - PorteàPorte
-// Fichier: api/livreur-levels-release.js (À copier dans Vercel)
+// Fichier: scripts/livreur-levels-release.js (script interne, non servi publiquement)
 // ═════════════════════════════════════════════════════════════════════════════
 
 const { createClient } = require('@supabase/supabase-js');

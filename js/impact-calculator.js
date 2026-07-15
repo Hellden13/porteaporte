@@ -6,16 +6,9 @@
   if (window.__papCalc) return;
   window.__papCalc = true;
 
+  const canon = window.PAP_PLATFORM_SETTINGS;
   let settings = {
-    pct_livreur: 60,
-    pct_stripe: 7,
-    pct_developpement: 5,
-    pct_protection: 10,
-    pct_urgence: 6,
-    pct_communaute: 5,
-    pct_profit: 7,
-    pct_marketing: 0,
-    pct_operations: 0,
+    ...(canon ? canon.canonicalPlatformSettings() : {}),
     founder_revenue_pct: 0,
     ticket_moyen_cad: 15
   };

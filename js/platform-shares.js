@@ -7,11 +7,26 @@
 */
 (function () {
   'use strict';
-  var DEFAULTS = (window.PAP_PLATFORM_SETTINGS && window.PAP_PLATFORM_SETTINGS.PLATFORM_ALLOCATION_DEFAULTS) || {
-    pct_livreur: 60, pct_stripe: 7, pct_developpement: 5, pct_protection: 10,
-    pct_urgence: 6, pct_communaute: 5, pct_profit: 7,
-    pct_marketing: 0, pct_operations: 0
-  };
+  function ensureCanonicalDefaults() {
+    if (window.PAP_PLATFORM_SETTINGS) return Promise.resolve(window.PAP_PLATFORM_SETTINGS);
+    return new Promise(function (resolve) {
+      var existing = document.querySelector('script[src="/js/platform-settings-defaults.js"]');
+      if (existing) {
+        existing.addEventListener('load', function () { resolve(window.PAP_PLATFORM_SETTINGS || null); }, { once: true });
+        existing.addEventListener('error', function () { resolve(null); }, { once: true });
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = '/js/platform-settings-defaults.js';
+      s.onload = function () { resolve(window.PAP_PLATFORM_SETTINGS || null); };
+      s.onerror = function () { resolve(null); };
+      document.head.appendChild(s);
+    });
+  }
+  function canonical(settings) {
+    var api = window.PAP_PLATFORM_SETTINGS;
+    return api ? api.canonicalPlatformSettings(settings) : (settings || {});
+  }
   function apply(s) {
     window.__platformShares = s;
     var els = document.querySelectorAll('[data-share]');
@@ -28,10 +43,18 @@
     ready: fetch('/api/platform?endpoint=platform-settings-get')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
-        var s = (d && d.settings) ? d.settings : DEFAULTS;
-        apply(s);
-        return s;
+        return ensureCanonicalDefaults().then(function () {
+          var s = canonical(d && d.settings);
+          apply(s);
+          return s;
+        });
       })
-      .catch(function () { apply(DEFAULTS); return DEFAULTS; })
+      .catch(function () {
+        return ensureCanonicalDefaults().then(function () {
+          var s = canonical();
+          apply(s);
+          return s;
+        });
+      })
   };
 })();

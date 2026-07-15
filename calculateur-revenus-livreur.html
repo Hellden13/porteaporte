@@ -253,6 +253,7 @@
     </div>
   </main>
 
+  <script src="/js/platform-settings-defaults.js"></script>
   <script>
     // ─── État ───
     const state = {
@@ -290,6 +291,12 @@
       { name: 'Pizza salarié',      sub: 'avec tips',         netPerHour: 16   },
       { name: 'Purolator employé',  sub: 'salarié contrat',   netPerHour: 24   }
     ];
+    const PLATFORM_CANON = window.PAP_PLATFORM_SETTINGS;
+    function getDriverPct() {
+      const configured = window.__platformShares && Number(window.__platformShares.pct_livreur);
+      if (Number.isFinite(configured) && configured > 0) return configured;
+      return PLATFORM_CANON.PLATFORM_ALLOCATION_DEFAULTS.pct_livreur;
+    }
 
     // ─── Profils par défaut ───
     function applyProfile(p) {
@@ -345,7 +352,7 @@
       const kmMois = state.kmSem * 4.33;
 
       // Revenu brut (part livreur configurable, source : platform_settings.pct_livreur)
-      const driverPct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const driverPct = getDriverPct();
       const brutBase = livMois * mix.client * driverPct / 100;
       const bonusFid = state.bonusFid ? brutBase * (10/driverPct) : 0; // +10 points de % sur la part livreur
       const brutTotal = brutBase + bonusFid;
@@ -406,7 +413,7 @@
       const mix = MIX[state.mix];
       const livMois = state.livraisons * 4.33;
       const kmMois = state.kmSem * 4.33;
-      const driverPct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
+      const driverPct = getDriverPct();
       const brutBase = livMois * mix.client * driverPct / 100;
       const bonusFid = state.bonusFid ? brutBase * (10/driverPct) : 0;
       const brutTotal = brutBase + bonusFid;
