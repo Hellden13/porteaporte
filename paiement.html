@@ -332,7 +332,7 @@ async function initStripeElements(){
       if(e.error){errEl.textContent=e.error.message;errEl.style.display='block'}
       else{errEl.style.display='none'}
     });
-    console.log('[paiement] Stripe initialise en mode', cfg.mode || (publishableKey.includes('_test_') ? 'test' : 'live'));
+    if (window.PAP_DEBUG) console.log('[paiement] Stripe initialise en mode', cfg.mode || (publishableKey.includes('_test_') ? 'test' : 'live'));
   } catch (err) {
     console.error('[paiement] Stripe init impossible:', err);
     if (errEl) {
@@ -607,7 +607,7 @@ async function handlePayment(){
     });
 
     const piData = await piRes.json().catch(() => ({}));
-    console.log('[paiement] API response status=' + piRes.status, piData);
+    if (window.PAP_DEBUG) console.log('[paiement] API response status=' + piRes.status, piData);
     if(!piRes.ok || !piData.client_secret) {
       const parts = [piData.error, piData.details].filter(Boolean);
       const msg = parts.length ? parts.join(' — ') : ('Erreur HTTP ' + piRes.status + (piData.message ? ': ' + piData.message : ''));
@@ -616,7 +616,7 @@ async function handlePayment(){
 
     // 2a. Si le PI est deja autorise (requires_capture), pas besoin de confirmer a nouveau
     if (piData.already_authorized || piData.status === 'requires_capture') {
-      console.log('[paiement] PI deja autorise, redirection directe vers confirmation');
+      if (window.PAP_DEBUG) console.log('[paiement] PI deja autorise, redirection directe vers confirmation');
       const montant = piData.montant_dollars || '0.00';
       window.location.href = `/confirmation.html?type=livraison&livraison_id=${encodeURIComponent(livraisonId)}&montant=${montant}&pi=${piData.payment_intent_id}`;
       return;

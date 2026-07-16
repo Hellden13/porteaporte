@@ -68,7 +68,7 @@
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === 'accepted') {
-        console.log('[PWA] App installée');
+        if (window.PAP_DEBUG) console.log('[PWA] App installée');
       } else {
         localStorage.setItem(DISMISS_KEY, String(Date.now()));
       }
@@ -82,7 +82,7 @@
 
   // Détection installation réussie
   window.addEventListener('appinstalled', () => {
-    console.log('[PWA] App installée avec succès');
+    if (window.PAP_DEBUG) console.log('[PWA] App installée avec succès');
     localStorage.removeItem(DISMISS_KEY);
   });
 })();

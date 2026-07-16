@@ -48,6 +48,8 @@
 
   <script>
     let session = null;
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function jsstr(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' '); }
     function openModal(src) {
       document.getElementById('modal-img').src = src;
       document.getElementById('modal').classList.add('open');
@@ -86,10 +88,10 @@
         return `
           <div class="card" data-id="${safeId}" data-kind="profile">
             <div style="background:#5dbfff;color:#051022;padding:6px 12px;font-size:.72rem;font-weight:900;text-transform:uppercase;">👤 Photo profil</div>
-            <img class="photo" src="${safePhoto}" alt="Photo de ${name}" onclick="openModal('${safePhoto}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
+            <img class="photo" loading="lazy" decoding="async" src="${esc(safePhoto)}" alt="Photo de ${esc(name)}" onclick="openModal('${jsstr(safePhoto)}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
             <div class="info">
-              <div class="name">${name.trim() || 'Sans nom'}</div>
-              <div class="meta">${role} · ${p.ville || 'Ville inconnue'} · ${dateStr}</div>
+              <div class="name">${esc(name.trim() || 'Sans nom')}</div>
+              <div class="meta">${esc(role)} · ${esc(p.ville || 'Ville inconnue')} · ${esc(dateStr)}</div>
             </div>
             <div class="actions">
               <button class="btn-reject" onclick="moderate('${safeId}', 'reject', 'profile')">✗ Refuser</button>
@@ -106,10 +108,10 @@
         return `
           <div class="card" data-id="${safeId}" data-kind="pet">
             <div style="background:#ffd166;color:#1a1100;padding:6px 12px;font-size:.72rem;font-weight:900;text-transform:uppercase;">🐾 Photo animal</div>
-            <img class="photo" src="${safePhoto}" alt="Animal de ${name}" onclick="openModal('${safePhoto}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
+            <img class="photo" loading="lazy" decoding="async" src="${esc(safePhoto)}" alt="Animal de ${esc(name)}" onclick="openModal('${jsstr(safePhoto)}')" onerror="this.style.background='#3a1414';this.alt='Image non chargée'">
             <div class="info">
-              <div class="name">${petInfo}</div>
-              <div class="meta">Passager : ${name.trim() || 'Anonyme'}</div>
+              <div class="name">${esc(petInfo)}</div>
+              <div class="meta">Passager : ${esc(name.trim() || 'Anonyme')}</div>
             </div>
             <div class="actions">
               <button class="btn-reject" onclick="moderate('${safeId}', 'reject', 'pet')">✗ Refuser</button>

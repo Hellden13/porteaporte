@@ -38,7 +38,7 @@
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
         ]);
         modelsLoaded = true;
-        console.log('[PapFace] Modèles chargés');
+        if (window.PAP_DEBUG) console.log('[PapFace] Modèles chargés');
         return true;
       } catch (e) {
         loadingPromise = null;

@@ -83,6 +83,7 @@
   </div>
 
   <script>
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     async function load() {
       const id = new URLSearchParams(location.search).get('id');
       if (!id) { document.getElementById('content').innerHTML = '<div class="err">❌ Lien invalide</div>'; return; }
@@ -96,7 +97,7 @@
         out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Profil introuvable');
       } catch (e) {
-        document.getElementById('content').innerHTML = '<div class="err">❌ ' + e.message + '</div>';
+        document.getElementById('content').innerHTML = '<div class="err">❌ ' + esc(e.message || 'Erreur') + '</div>';
         return;
       }
       const p = out.profile;
@@ -104,9 +105,9 @@
       const fiabilite = out.fiabilite;
       const verified = p.driver_status === 'verified';
       const photo = p.photo_url
-        ? `<img loading="lazy" decoding="async" src="${p.photo_url}" class="photo" alt="Photo livreur">`
+        ? `<img loading="lazy" decoding="async" src="${esc(p.photo_url)}" class="photo" alt="Photo livreur">`
         : `<div class="photo-placeholder">🚚</div>`;
-      const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || 'Livreur';
+      const nom = esc([p.prenom, p.nom].filter(Boolean).join(' ') || 'Livreur');
       const since = p.cree_le ? new Date(p.cree_le).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long' }) : '—';
       const transport = p.transport_mode === 'car' ? '🚗 Voiture' : p.transport_mode === 'truck' ? '🚛 Camion' : p.transport_mode === 'bike' ? '🚴 Vélo' : p.transport_mode === 'walking' ? '🚶 À pied' : p.transport_mode || '—';
       const idCourt = (p.id || '').slice(0,4).toUpperCase() + '-' + (p.id || '').slice(4,8).toUpperCase();
@@ -116,7 +117,7 @@
       document.getElementById('content').innerHTML = `
         <div class="photo-wrap">${photo}</div>
         <h1 class="name">${nom}</h1>
-        <div class="role">${transport}</div>
+        <div class="role">${esc(transport)}</div>
         ${verified ? `<div class="verified-banner">✓ IDENTITÉ VÉRIFIÉE PAR PORTEÀPORTE</div>` : `<div class="verified-banner" style="background:rgba(255,200,0,.1);border-color:rgba(255,200,0,.35);color:#ffd700">⏳ Vérification en cours</div>`}
 
         <div class="stats">

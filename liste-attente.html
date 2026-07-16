@@ -105,6 +105,7 @@
   </main>
 
   <script>
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     // Radio cards visual
     document.querySelectorAll('.radio-card input').forEach(r => {
       r.addEventListener('change', () => {
@@ -131,10 +132,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint: 'waitlist-signup', email, ville, role, message })
         });
-        const out = await r.json();
+        const out = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(out.error || 'Erreur');
         msg.className = 'msg ok';
-        msg.innerHTML = '✅ <strong>Inscription enregistrée !</strong><br>On te contactera à <strong>' + email + '</strong> dès qu\'on lance à <strong>' + ville + '</strong>. En attendant, partage avec tes voisins — plus on est, plus vite on arrive 🤝';
+        msg.innerHTML = '✅ <strong>Inscription enregistrée !</strong><br>On te contactera à <strong>' + esc(email) + '</strong> dès qu\'on lance à <strong>' + esc(ville) + '</strong>. En attendant, partage avec tes voisins — plus on est, plus vite on arrive 🤝';
         btn.textContent = '✅ Merci !';
         setTimeout(() => { btn.disabled = false; btn.textContent = '🔔 M\'inscrire à nouveau'; }, 5000);
       } catch (err) {

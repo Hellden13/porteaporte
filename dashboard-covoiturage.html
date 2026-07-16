@@ -727,7 +727,7 @@ function buildReservations() {
             const petLabel = [pet.name, pet.breed].filter(Boolean).join(' · ') || pet.species || 'Animal';
             const sizeWeight = pet.size ? (pet.size + (pet.weight_kg ? ' · ' + pet.weight_kg + ' kg' : '')) : '';
             const petAvatar = pet.photo_url
-              ? '<img src="' + pet.photo_url + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffd166;flex-shrink:0;">'
+              ? '<img loading="lazy" decoding="async" src="' + escHtml(pet.photo_url) + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffd166;flex-shrink:0;">'
               : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,209,102,.12);border:2px dashed rgba(255,209,102,.4);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">' + speciesIcon + '</div>';
             petCell = '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__showPet(\'' + b.id + '\')" title="Voir la carte animal">' + petAvatar + '<div><div style="font-weight:700;font-size:.82rem">' + speciesIcon + ' ' + petLabel + '</div>' + (sizeWeight ? '<div style="font-size:.7rem;color:var(--muted)">' + sizeWeight + '</div>' : '') + '</div></div>';
           }
@@ -752,7 +752,7 @@ function buildReservations() {
   <!-- Modal carte animal complète -->
   <div id="pet-modal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,.92);z-index:9999;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:#0f1320;border:1px solid #2a3142;border-radius:18px;max-width:420px;width:100%;overflow:hidden;">
-      <div id="pet-modal-img-wrap" style="width:100%;height:280px;background:#1a2032;display:flex;align-items:center;justify-content:center;"><img id="pet-modal-img" src="" style="width:100%;height:100%;object-fit:cover;display:none"><div id="pet-modal-emoji" style="font-size:5rem">🐾</div></div>
+      <div id="pet-modal-img-wrap" style="width:100%;height:280px;background:#1a2032;display:flex;align-items:center;justify-content:center;"><img id="pet-modal-img" loading="lazy" decoding="async" src="" style="width:100%;height:100%;object-fit:cover;display:none"><div id="pet-modal-emoji" style="font-size:5rem">🐾</div></div>
       <div style="padding:20px;">
         <h3 id="pet-modal-name" style="margin:0 0 4px;color:#5dbfff;font-size:1.2rem;"></h3>
         <p id="pet-modal-meta" style="margin:0 0 14px;color:#aab2c5;font-size:.88rem;"></p>

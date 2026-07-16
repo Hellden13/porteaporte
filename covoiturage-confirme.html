@@ -256,12 +256,12 @@
 
     // 1. Charge le booking
     const { data: booking, error: bErr } = await db.from('ride_bookings').select('*').eq('id', bookingId).single();
-    if (bErr || !booking) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Réservation introuvable : ${bErr?.message || 'unknown'}</div>`; return; }
+    if (bErr || !booking) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Réservation introuvable : ${esc(bErr?.message || 'unknown')}</div>`; return; }
 
     // 2. Charge le trajet + conducteur + safe points (via ride-detail endpoint)
     const rideRes = await fetch('/api/platform?endpoint=ride-detail&ride_id=' + encodeURIComponent(booking.ride_id));
-    const rideData = await rideRes.json();
-    if (!rideRes.ok || rideData.error) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Trajet introuvable : ${rideData.error}</div>`; return; }
+    const rideData = await rideRes.json().catch(() => ({}));
+    if (!rideRes.ok || rideData.error) { document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">⚠️ Trajet introuvable : ${esc(rideData.error || 'Erreur ' + rideRes.status)}</div>`; return; }
 
     renderAll(booking, rideData);
     if (window.PapSOS) window.PapSOS.setContext({ ride_id: booking.ride_id || null, booking_id: booking.id || null });
@@ -312,7 +312,7 @@
     // Conducteur
     const avatarEl = document.getElementById('driver-avatar');
     if (driver.photo_url) {
-      avatarEl.innerHTML = `<img src="${esc(driver.photo_url)}" alt="${esc(driver.prenom)}">`;
+      avatarEl.innerHTML = `<img loading="lazy" decoding="async" src="${esc(driver.photo_url)}" alt="${esc(driver.prenom)}">`;
     } else {
       avatarEl.textContent = (driver.prenom?.[0] || '?').toUpperCase();
     }
@@ -443,7 +443,7 @@
   }
 
   loadConfirmation().catch(e => {
-    document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">Erreur : ${e.message}</div>`;
+    document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">Erreur : ${esc(e.message || 'Erreur')}</div>`;
   });
 </script>
 

@@ -417,7 +417,7 @@
 
     const av = document.getElementById('userAvatar');
     if (profile.photo_url && profile.photo_status === 'approved') {
-      av.innerHTML = `<img src="${esc(profile.photo_url)}" alt="${esc(fullName)}">`;
+      av.innerHTML = `<img loading="lazy" decoding="async" src="${esc(profile.photo_url)}" alt="${esc(fullName)}">`;
     } else {
       const initials = (profile.prenom?.[0]||'').toUpperCase() + (profile.nom?.[0]||'').toUpperCase();
       av.textContent = initials || '👤';

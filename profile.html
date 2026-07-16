@@ -404,7 +404,7 @@
                 <p style="color:var(--brand-muted);font-size:.85rem;margin:0 0 14px;">Le conducteur verra cette carte avant d'accepter ta réservation. Photo soumise à modération (24-48 h).</p>
                 <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
                     <div style="position:relative;width:140px;height:140px;border-radius:14px;background:rgba(255,255,255,.04);border:2px dashed var(--brand-bg-surface-light);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="document.getElementById('petPhotoUpload').click()" title="Cliquer pour changer la photo">
-                        <img id="pet-photo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+                        <img id="pet-photo-img" loading="lazy" decoding="async" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
                         <div id="pet-photo-placeholder" style="text-align:center;color:var(--brand-muted);font-size:.78rem;">📷<br>Photo animal</div>
                     </div>
                     <input type="file" id="petPhotoUpload" accept="image/*" style="display:none" onchange="handlePetPhotoUpload(event)">
@@ -545,7 +545,7 @@
                                 body: JSON.stringify({ endpoint: 'pet-photo-upload', photo_data_url: dataUrl })
                             });
                             const d = await r.json();
-                            if (!r.ok) { statusEl.innerHTML = '<span style="color:#ff8c8c;">' + (d.error || 'Erreur') + '</span>'; return; }
+                            if (!r.ok) { statusEl.innerHTML = '<span style="color:#ff8c8c;">' + esc(d.error || 'Erreur') + '</span>'; return; }
                             statusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48 h)</span>';
                             const img = document.getElementById('pet-photo-img');
                             img.src = dataUrl;
@@ -553,7 +553,7 @@
                             img.style.display = 'block';
                             document.getElementById('pet-photo-placeholder').style.display = 'none';
                         } catch (err) {
-                            statusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + err.message + '</span>';
+                            statusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + esc(err.message || 'Erreur') + '</span>';
                         }
                     };
                 })();
@@ -656,7 +656,7 @@
                     if (profile.photo_status === 'pending') {
                         photoStatusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48h)</span>';
                     } else if (profile.photo_status === 'rejected') {
-                        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">✗ Photo refusée' + (profile.photo_moderation_reason ? ' : ' + profile.photo_moderation_reason : '') + '. Tu peux en soumettre une autre.</span>';
+                        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">✗ Photo refusée' + (profile.photo_moderation_reason ? ' : ' + esc(profile.photo_moderation_reason) : '') + '. Tu peux en soumettre une autre.</span>';
                     } else if (profile.photo_status === 'approved') {
                         photoStatusEl.innerHTML = '<span style="color:#7fe5a3;">✓ Photo approuvée</span>';
                         visToggleWrap.style.display = 'block';
@@ -829,7 +829,7 @@
         });
         const d = await r.json();
         if (!r.ok) {
-          photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + (d.error || 'upload échoué') + '</span>';
+          photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + esc(d.error || 'upload échoué') + '</span>';
           return;
         }
         photoStatusEl.innerHTML = '<span style="color:#ffd166;">⏳ Photo en attente d\'approbation (24-48h)</span>';
@@ -844,7 +844,7 @@
         newImg.style.opacity = '0.6';
         avatarBox.insertBefore(newImg, avatarBox.firstChild);
       } catch (err) {
-        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + (err.message || err) + '</span>';
+        photoStatusEl.innerHTML = '<span style="color:#ff8c8c;">Erreur : ' + esc(err.message || err) + '</span>';
       }
     }
     window.handlePhotoUpload = handlePhotoUpload;

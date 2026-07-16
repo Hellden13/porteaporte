@@ -25,7 +25,7 @@ async function registerPush(userId) {
     await navigator.serviceWorker.ready;
 
     const permission = await Notification.requestPermission();
-    console.log('[push] Permission :', permission);
+    if (window.PAP_DEBUG) console.log('[push] Permission :', permission);
     if (permission !== 'granted') return null;
 
     let sub = await reg.pushManager.getSubscription();
@@ -35,7 +35,7 @@ async function registerPush(userId) {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
-    console.log('[push] Abonnement :', sub.endpoint.slice(0, 60) + '…');
+    if (window.PAP_DEBUG) console.log('[push] Abonnement :', sub.endpoint.slice(0, 60) + '…');
 
     // Enregistrer l'abonnement côté serveur
     const token = (await window.getSupabaseClient().auth.getSession())?.data?.session?.access_token;

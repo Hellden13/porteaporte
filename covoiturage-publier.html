@@ -905,7 +905,7 @@
       g.innerHTML = photos.map(function(u) {
         const safe = u.replace(/'/g, "\\'");
         return '<div style="position:relative;width:104px;height:78px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.18)">' +
-          '<img src="' + u + '" style="width:100%;height:100%;object-fit:cover" alt="voiture">' +
+          '<img loading="lazy" decoding="async" src="' + escapeHtml(u) + '" style="width:100%;height:100%;object-fit:cover" alt="voiture">' +
           '<button type="button" onclick="removeVehiclePhoto(\'' + safe + '\')" title="Supprimer" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-weight:700;line-height:1">×</button>' +
           '</div>';
       }).join('');
