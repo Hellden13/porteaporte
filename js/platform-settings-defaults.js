@@ -4,6 +4,12 @@
 (function (root) {
   'use strict';
 
+  // Silencer les logs de debug en production (navigateur uniquement)
+  if (typeof window !== 'undefined' && window.location &&
+      !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+    ['log', 'warn', 'info', 'debug'].forEach(function (m) { console[m] = function () {}; });
+  }
+
   const PLATFORM_ALLOCATION_DEFAULTS = Object.freeze({
     pct_livreur: 60,
     pct_stripe: 7,

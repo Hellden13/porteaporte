@@ -177,7 +177,7 @@
       return `
         <div class="liv-card ${cls}">
           <div class="liv-photo">
-            ${photo ? `<a href="${photo}" target="_blank"><img src="${photo}" alt="Preuve" onerror="this.parentNode.innerHTML='<div class=no-photo>📷</div>'"></a>` : '<div class="no-photo">📷</div>'}
+            ${photo ? `<a href="${photo}" target="_blank"><img loading="lazy" decoding="async" src="${photo}" alt="Preuve" onerror="this.parentNode.innerHTML='<div class=no-photo>📷</div>'"></a>` : '<div class="no-photo">📷</div>'}
           </div>
           <div class="liv-info">
             <div class="liv-code">${it.code || it.livraison_id.slice(0,8)}</div>
