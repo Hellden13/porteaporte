@@ -98,6 +98,11 @@ function normalizeNotifierBody(body) {
       return null;
     }
   }
+  // Fusionner to/email du niveau racine dans data si absents
+  if (data && typeof data === 'object') {
+    if (body.to && !data.to) data = { ...data, to: body.to };
+    if (body.email && !data.email) data = { ...data, email: body.email };
+  }
   return { type, data };
 }
 
