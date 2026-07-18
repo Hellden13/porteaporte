@@ -1084,7 +1084,7 @@ async function sendEmail(emailData, apiKey) {
     },
     body: JSON.stringify({
       from: `${emailData.from.name} <${emailData.from.email}>`,
-      to: [emailData.to],
+      to: emailData.to,
       subject: emailData.subject,
       html: emailData.html
     })
