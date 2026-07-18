@@ -213,7 +213,7 @@
           verification_status: 'pending',
           driver_status: 'not_started',
           mis_a_jour_le: new Date().toISOString()
-        }, { onConflict: 'id' }).catch(() => {});
+        }, { onConflict: 'id' });
         await claimReferralIfPossible(data.session);
         if (!emailConfirmed) {
           await db.auth.signOut().catch(() => {});
