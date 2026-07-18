@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Test Email — Admin</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#05080c;color:#f7f8fb;display:grid;place-items:center;min-height:100vh;padding:24px}
+    .card{background:#0d1117;border:1px solid #2a3142;border-radius:12px;padding:32px;max-width:480px;width:100%}
+    h1{margin:0 0 8px;font-size:1.3rem}
+    p{color:#a8b0ba;margin:0 0 24px;font-size:.9rem}
+    button{background:#b8f53e;color:#071006;border:none;padding:14px 28px;border-radius:8px;font-weight:900;font-size:1rem;cursor:pointer;width:100%}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    #result{margin-top:20px;padding:16px;border-radius:8px;font-size:.88rem;display:none;word-break:break-all;white-space:pre-wrap}
+    .ok{background:rgba(0,255,100,.08);border:1px solid rgba(0,255,100,.3);color:#7dffc1}
+    .err{background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);color:#ffb0b0}
+    label{display:block;margin-bottom:6px;font-weight:700;font-size:.9rem}
+    input{width:100%;padding:10px;background:#151c28;border:1px solid #2a3142;border-radius:6px;color:#f7f8fb;font-size:.9rem;box-sizing:border-box;margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧪 Test Email Resend</h1>
+    <p>Envoie un email de bienvenue de test pour vérifier que Resend fonctionne.</p>
+
+    <label for="email">Adresse de réception</label>
+    <input type="email" id="email" value="denismorneaubtc@gmail.com">
+
+    <label for="prenom">Prénom</label>
+    <input type="text" id="prenom" value="Denis">
+
+    <button id="btn" onclick="sendTest()">📨 Envoyer email de test</button>
+
+    <div id="result"></div>
+
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #2a3142">
+      <p style="margin:0 0 8px">Vérifier config Resend :</p>
+      <button style="background:#1a2232;color:#a8b0ba;font-weight:700" onclick="checkConfig()">🔍 Check /api/notifier</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendTest() {
+      const btn = document.getElementById('btn');
+      const result = document.getElementById('result');
+      const email = document.getElementById('email').value.trim();
+      const prenom = document.getElementById('prenom').value.trim() || 'Denis';
+
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours...';
+      result.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/notifier', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'bienvenue',
+            to: email,
+            data: { prenom: prenom, role: 'expediteur' }
+          })
+        });
+        const json = await res.json();
+        result.style.display = 'block';
+        if (json.success) {
+          result.className = 'ok';
+          result.textContent = '✅ Email envoyé !\n\n' + JSON.stringify(json, null, 2);
+        } else {
+          result.className = 'err';
+          result.textContent = '❌ Échec\n\n' + JSON.stringify(json, null, 2);
+        }
+      } catch(e) {
+        result.style.display = 'block';
+        result.className = 'err';
+        result.textContent = '❌ Erreur réseau : ' + e.message;
+      }
+
+      btn.disabled = false;
+      btn.textContent = '📨 Envoyer email de test';
+    }
+
+    async function checkConfig() {
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+      result.className = '';
+      result.style.background = 'rgba(0,217,255,.06)';
+      result.style.border = '1px solid rgba(0,217,255,.2)';
+      result.style.color = '#a8b0ba';
+      result.textContent = 'Chargement...';
+      try {
+        const res = await fetch('/api/notifier');
+        const json = await res.json();
+        result.textContent = JSON.stringify(json, null, 2);
+      } catch(e) {
+        result.textContent = 'Erreur : ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
