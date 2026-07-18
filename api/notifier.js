@@ -131,7 +131,7 @@ module.exports = async function handler(req, res) {
     const fromDomain = fromEmail.includes('@') ? fromEmail.split('@').pop() : '';
     return res.status(200).json({
       success: true,
-      sendgrid_configured: Boolean(process.env.SENDGRID_API_KEY),
+      sendgrid_configured: Boolean(process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY),
       from_email_configured: Boolean(process.env.FROM_EMAIL),
       admin_email_configured: Boolean(process.env.ADMIN_EMAIL),
       supabase_configured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
@@ -154,20 +154,20 @@ module.exports = async function handler(req, res) {
   const auth = assertNotifierAuth(req, type);
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
-  const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+  const SENDGRID_API_KEY = process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY;
   const ADMIN_EMAIL      = process.env.ADMIN_EMAIL || 'denismorneaubtc@gmail.com';
   const FROM_EMAIL       = process.env.FROM_EMAIL  || 'notifications@porteaporte.site';
   const FROM_NAME        = 'PorteàPorte 🍁';
 
   if (!SENDGRID_API_KEY) {
-    console.error('SENDGRID_API_KEY manquante');
+    console.error('RESEND_API_KEY manquante');
     return res.status(500).json({ error: 'Configuration manquante' });
   }
 
   try {
     if (type === 'auth_confirmation') {
       const result = await sendAuthConfirmationEmail(data, {
-        sendgridKey: SENDGRID_API_KEY,
+        resendKey: SENDGRID_API_KEY,
         fromEmail: FROM_EMAIL,
         fromName: FROM_NAME
       });
@@ -181,7 +181,7 @@ module.exports = async function handler(req, res) {
 
     if (type === 'test_email') {
       const result = await sendTestEmail(data, {
-        sendgridKey: SENDGRID_API_KEY,
+        resendKey: SENDGRID_API_KEY,
         fromEmail: FROM_EMAIL,
         fromName: FROM_NAME
       });
@@ -1073,20 +1073,20 @@ function truncateField(val, max) {
 }
 
 // ============================================================
-// ENVOI VIA SENDGRID API
+// ENVOI VIA RESEND API
 // ============================================================
 async function sendEmail(emailData, apiKey) {
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+  const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: emailData.to }] }],
-      from: emailData.from,
+      from: `${emailData.from.name} <${emailData.from.email}>`,
+      to: [emailData.to],
       subject: emailData.subject,
-      content: [{ type: 'text/html', value: emailData.html }]
+      html: emailData.html
     })
   });
   const text = await response.text().catch(() => '');
@@ -1098,13 +1098,13 @@ async function sendEmail(emailData, apiKey) {
       details = text.slice(0, 500);
     }
   }
-  const message = details?.errors?.[0]?.message || (typeof details === 'string' ? details : undefined);
+  const message = details?.message || details?.name || (typeof details === 'string' ? details : undefined);
   return {
-    ok: response.status === 202,
+    ok: response.status === 200,
     status: response.status,
     to: emailData.to,
-    error: response.status === 202 ? undefined : (message || 'SendGrid a refuse le message'),
-    sendgrid_message_id: response.headers.get('x-message-id') || null
+    error: response.status === 200 ? undefined : (message || 'Resend a refuse le message'),
+    resend_message_id: details?.id || null
   };
 }
 
@@ -1147,7 +1147,7 @@ async function sendAuthConfirmationEmail(data, config) {
     from: { email: config.fromEmail, name: config.fromName },
     subject: 'Confirme ton compte PorteàPorte',
     html: templateAuthConfirmation({ email, link })
-  }, config.sendgridKey);
+  }, config.resendKey);
 }
 
 async function sendTestEmail(data, config) {
@@ -1165,7 +1165,7 @@ async function sendTestEmail(data, config) {
       <p style="color:#555;line-height:1.7;">SendGrid fonctionne correctement pour PorteàPorte.</p>
       <p style="font-size:12px;color:#777;">Timestamp: ${new Date().toISOString()}</p>`
     )
-  }, config.sendgridKey);
+  }, config.resendKey);
   return {
     ...result,
     email_masked: email.replace(/^(.)(.*)(@.*)$/, '$1***$3')
