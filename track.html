@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi de livraison — PorteàPorte</title>
+  <meta name="description" content="Suivez votre livraison PorteàPorte en temps réel, sans compte requis.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <style>
+    body{min-height:100vh;background:var(--brand-bg-dark);color:var(--brand-text);font-family:Inter,system-ui,sans-serif;margin:0;padding:0}
+    .page{max-width:600px;margin:0 auto;padding:32px 20px 60px}
+    .brand{font-weight:900;color:var(--brand-lime);font-size:1.2rem;text-decoration:none;display:block;text-align:center;margin-bottom:32px}
+
+    /* Recherche */
+    .search-card{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:28px}
+    .search-title{font-size:1.3rem;font-weight:800;margin:0 0 6px}
+    .search-sub{color:var(--brand-muted);font-size:.9rem;margin:0 0 20px}
+    .search-row{display:flex;gap:10px}
+    .search-input{flex:1;padding:13px 16px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-text);font-size:1rem;font-family:inherit;letter-spacing:.05em}
+    .search-input:focus{outline:none;border-color:var(--brand-cyan)}
+    .search-btn{padding:13px 20px;background:var(--brand-lime);color:#071008;border:none;border-radius:8px;font-weight:800;font-size:.95rem;cursor:pointer;white-space:nowrap}
+    .search-btn:disabled{opacity:.5;cursor:wait}
+    .search-hint{font-size:.78rem;color:var(--brand-muted);margin-top:10px}
+
+    /* Résultat */
+    #result{margin-top:24px;display:none}
+    .track-header{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:22px;margin-bottom:14px}
+    .track-code{font-size:.75rem;color:var(--brand-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .track-route{font-size:1.1rem;font-weight:800;color:#fff;margin:0 0 16px}
+    .track-route span{color:var(--brand-cyan)}
+
+    /* Timeline steps */
+    .steps{display:flex;justify-content:space-between;position:relative;margin:20px 0 8px}
+    .steps::before{content:'';position:absolute;top:16px;left:0;right:0;height:3px;background:rgba(255,255,255,.08);z-index:0}
+    .steps-fill{position:absolute;top:16px;left:0;height:3px;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));z-index:1;transition:width .6s ease}
+    .step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;z-index:2}
+    .step-dot{width:34px;height:34px;border-radius:50%;background:var(--brand-bg-dark);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .3s}
+    .step-dot.done{background:var(--brand-lime);border-color:var(--brand-lime)}
+    .step-dot.active{background:rgba(93,191,255,.2);border-color:var(--brand-cyan);box-shadow:0 0 0 5px rgba(93,191,255,.15)}
+    .step-label{font-size:.68rem;color:var(--brand-muted);text-align:center;line-height:1.2;font-weight:600}
+    .step-label.done{color:var(--brand-lime)}
+    .step-label.active{color:var(--brand-cyan)}
+
+    /* Statut badge */
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;font-weight:800;font-size:.95rem;margin:12px 0}
+    .status-badge.en_attente,.status-badge.paiement_autorise{background:rgba(255,200,0,.1);color:#ffd700;border:1px solid rgba(255,200,0,.3)}
+    .status-badge.confirme,.status-badge.acceptee{background:rgba(93,191,255,.1);color:var(--brand-cyan);border:1px solid rgba(93,191,255,.3)}
+    .status-badge.ramasse,.status-badge.en_route{background:rgba(184,245,62,.1);color:var(--brand-lime);border:1px solid rgba(184,245,62,.3)}
+    .status-badge.livre,.status-badge.livree{background:rgba(0,255,159,.1);color:#7dffc1;border:1px solid rgba(0,255,159,.3)}
+    .status-badge.payee,.status-badge.confirmee,.status-badge.paid{background:rgba(0,255,159,.1);color:#7dffc1;border:1px solid rgba(0,255,159,.3)}
+    .status-badge.annule,.status-badge.annulee{background:rgba(255,90,90,.08);color:#ffb0b0;border:1px solid rgba(255,90,90,.3)}
+    .status-badge.conteste,.status-badge.litige{background:rgba(255,150,0,.1);color:#ffb845;border:1px solid rgba(255,150,0,.3)}
+
+    /* GPS */
+    .gps-card{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:18px;margin-bottom:14px;display:none}
+    .gps-card h3{margin:0 0 10px;font-size:.95rem;display:flex;align-items:center;gap:8px}
+    .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--brand-lime);animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    .maps-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;font-size:.88rem;text-decoration:none;margin-top:10px}
+
+    /* Info card */
+    .info-card{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:18px;margin-bottom:14px}
+    .info-card h3{margin:0 0 12px;font-size:.95rem;color:var(--brand-muted);text-transform:uppercase;letter-spacing:.06em;font-size:.75rem}
+    .kv-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.9rem}
+    .kv-row:last-child{border-bottom:none}
+    .kv-row .k{color:var(--brand-muted)}
+    .kv-row .v{font-weight:700;color:#fff}
+
+    /* Share */
+    .share-card{background:rgba(93,191,255,.04);border:1px solid rgba(93,191,255,.2);border-radius:14px;padding:18px;margin-bottom:14px}
+    .share-card p{margin:0 0 12px;font-size:.88rem;color:var(--brand-muted)}
+    .share-row{display:flex;gap:8px}
+    .share-url{flex:1;padding:10px 12px;background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:8px;color:var(--brand-muted);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .copy-btn{padding:10px 14px;background:var(--brand-lime);color:#071008;border:none;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap}
+
+    /* Error / loading */
+    .msg-box{padding:16px;border-radius:10px;font-size:.9rem;margin-top:18px;display:none}
+    .msg-box.err{background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.3);color:#ffb0b0}
+    .msg-box.loading{background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.2);color:var(--brand-cyan)}
+
+    .footer-link{text-align:center;margin-top:32px}
+    .footer-link a{color:var(--brand-muted);font-size:.85rem;text-decoration:none}
+    .footer-link a:hover{color:var(--brand-cyan)}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="brand" href="/">PorteàPorte 🍁</a>
+
+    <div class="search-card">
+      <h1 class="search-title">📦 Suivre une livraison</h1>
+      <p class="search-sub">Entre ton code de suivi pour voir l'état de ta livraison en temps réel.</p>
+      <div class="search-row">
+        <input class="search-input" id="codeInput" type="text" placeholder="PAP-XXXXX" autocomplete="off" spellcheck="false" autocapitalize="characters" maxlength="20">
+        <button class="search-btn" id="trackBtn" onclick="doTrack()">Suivre →</button>
+      </div>
+      <p class="search-hint">Le code de suivi t'a été envoyé par email ou texto à la création de la livraison.</p>
+    </div>
+
+    <div class="msg-box loading" id="loadingBox">🔍 Recherche en cours...</div>
+    <div class="msg-box err" id="errorBox"></div>
+
+    <div id="result">
+      <!-- Header -->
+      <div class="track-header">
+        <div class="track-code" id="tCode"></div>
+        <div class="track-route" id="tRoute"></div>
+        <div id="tBadge"></div>
+
+        <!-- Steps timeline -->
+        <div class="steps" id="stepsWrap">
+          <div class="steps-fill" id="stepsFill"></div>
+        </div>
+      </div>
+
+      <!-- GPS live -->
+      <div class="gps-card" id="gpsCard">
+        <h3><span class="pulse"></span> Position en temps réel</h3>
+        <div id="gpsText"></div>
+        <a class="maps-btn" id="mapsBtn" href="#" target="_blank" rel="noopener">🗺️ Ouvrir dans Google Maps</a>
+      </div>
+
+      <!-- Infos livraison -->
+      <div class="info-card">
+        <h3>Détails</h3>
+        <div id="infoRows"></div>
+      </div>
+
+      <!-- Partager -->
+      <div class="share-card">
+        <p>📤 Partager ce lien de suivi (sans compte requis) :</p>
+        <div class="share-row">
+          <div class="share-url" id="shareUrl"></div>
+          <button class="copy-btn" onclick="copyLink()">📋 Copier</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-link">
+      <a href="/dashboard-expediteur.html">Tableau de bord expéditeur →</a>
+    </div>
+  </main>
+
+  <script>
+    const codeInput = document.getElementById('codeInput');
+    const trackBtn  = document.getElementById('trackBtn');
+    const loadingBox = document.getElementById('loadingBox');
+    const errorBox  = document.getElementById('errorBox');
+    const resultEl  = document.getElementById('result');
+
+    // Pré-remplir si code dans URL
+    const urlCode = new URLSearchParams(window.location.search).get('code') || '';
+    if (urlCode) {
+      codeInput.value = urlCode.toUpperCase();
+      window.addEventListener('DOMContentLoaded', () => doTrack());
+    }
+
+    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') doTrack(); });
+    codeInput.addEventListener('input', () => {
+      codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    });
+
+    async function doTrack() {
+      const code = codeInput.value.trim().toUpperCase();
+      if (!code) { showError('Entre un code de suivi.'); return; }
+
+      trackBtn.disabled = true;
+      resultEl.style.display = 'none';
+      errorBox.style.display = 'none';
+      loadingBox.style.display = 'block';
+
+      try {
+        const res = await fetch(`/api/platform?endpoint=tracking-public&code=${encodeURIComponent(code)}`);
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          showError(json.error || 'Code introuvable. Vérifie le code et réessaie.');
+          return;
+        }
+        renderTracking(json.tracking);
+        // Mise à jour auto toutes les 30 secondes si en route
+        const s = json.tracking.statut;
+        if (s === 'ramasse' || s === 'en_route') {
+          setTimeout(doTrack, 30000);
+        }
+      } catch (e) {
+        showError('Erreur réseau. Réessaie dans quelques secondes.');
+      } finally {
+        loadingBox.style.display = 'none';
+        trackBtn.disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      loadingBox.style.display = 'none';
+      errorBox.textContent = '❌ ' + msg;
+      errorBox.style.display = 'block';
+      resultEl.style.display = 'none';
+    }
+
+    function renderTracking(t) {
+      errorBox.style.display = 'none';
+      resultEl.style.display = 'block';
+
+      // Header
+      document.getElementById('tCode').textContent = 'Code de suivi : ' + t.code;
+      document.getElementById('tRoute').innerHTML =
+        `<span>${esc(t.ville_depart)}</span> → <span>${esc(t.ville_arrivee)}</span>`;
+
+      // Badge statut
+      const badge = document.getElementById('tBadge');
+      badge.innerHTML = `<span class="status-badge ${t.statut}">${t.statut_icon} ${esc(t.statut_label)}</span>`;
+
+      // Steps
+      renderSteps(t.steps || [], t.current_step);
+
+      // GPS
+      const gpsCard = document.getElementById('gpsCard');
+      if (t.position) {
+        gpsCard.style.display = 'block';
+        const lat = t.position.lat;
+        const lng = t.position.lng;
+        const age = t.position.updated_at ? ageLabel(t.position.updated_at) : '—';
+        document.getElementById('gpsText').textContent =
+          `Dernière position reçue il y a ${age} — environs ${lat.toFixed(2)}°N, ${lng.toFixed(2)}°O`;
+        const mapsBtn = document.getElementById('mapsBtn');
+        mapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      } else {
+        gpsCard.style.display = 'none';
+      }
+
+      // Info rows
+      const rows = [
+        ['Type', esc(t.type || 'Colis')],
+        ['Commandée', t.created_at ? new Date(t.created_at).toLocaleDateString('fr-CA', {day:'numeric',month:'long',year:'numeric'}) : '—'],
+      ];
+      document.getElementById('infoRows').innerHTML = rows.map(([k, v]) =>
+        `<div class="kv-row"><span class="k">${k}</span><span class="v">${v}</span></div>`
+      ).join('');
+
+      // Lien de partage
+      const shareUrl = `${location.origin}/track?code=${encodeURIComponent(t.code)}`;
+      document.getElementById('shareUrl').textContent = shareUrl;
+      document.getElementById('shareUrl').dataset.url = shareUrl;
+
+      // Màj URL sans rechargement
+      history.replaceState(null, '', `/track?code=${encodeURIComponent(t.code)}`);
+    }
+
+    function renderSteps(steps, current) {
+      const wrap = document.getElementById('stepsWrap');
+      const fill = document.getElementById('stepsFill');
+
+      const stepsHtml = steps.map(s => {
+        const isDone   = current > 0 && s.step < current;
+        const isActive = s.step === current;
+        const cls = isDone ? 'done' : (isActive ? 'active' : '');
+        return `
+          <div class="step">
+            <div class="step-dot ${cls}">${isDone ? '✓' : s.icon}</div>
+            <div class="step-label ${cls}">${esc(s.label)}</div>
+          </div>`;
+      }).join('');
+
+      // Injecter sans écraser la barre fill
+      wrap.innerHTML = '<div class="steps-fill" id="stepsFill"></div>' + stepsHtml;
+
+      // Largeur de la barre
+      const total = steps.length;
+      const pct = current > 0 && total > 1
+        ? Math.min(100, Math.round(((current - 1) / (total - 1)) * 100))
+        : 0;
+      document.getElementById('stepsFill').style.width = pct + '%';
+    }
+
+    function copyLink() {
+      const url = document.getElementById('shareUrl').dataset.url || document.getElementById('shareUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✅ Copié !';
+        setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
+      }).catch(() => {
+        prompt('Copie ce lien :', url);
+      });
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function ageLabel(iso) {
+      const secs = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+      if (secs < 60) return secs + ' sec';
+      const mins = Math.round(secs / 60);
+      if (mins < 60) return mins + ' min';
+      return Math.round(mins / 60) + ' h';
+    }
+  </script>
+  <script src="/js/cookie-consent.js" defer></script>
+</body>
+</html>
