@@ -22,6 +22,14 @@
     .actions{display:flex;gap:12px;margin-top:24px}.btn{border:0;border-radius:8px;padding:13px 18px;font-weight:850;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center;align-items:center}.primary{background:var(--brand-lime);color:#071008;flex:1}.ghost{background:#151b21;color:var(--brand-text);border:1px solid var(--brand-border)}.btn:disabled{opacity:.6;cursor:wait}
     .msg{display:none;border-radius:8px;padding:16px 18px;margin:18px 0;line-height:1.45}.msg.show{display:block}.err{background:#2a1012;border:1px solid var(--brand-danger);color:var(--brand-danger)}.ok{background:#102417;border:1px solid var(--brand-success);color:var(--brand-lime)}
     @media(max-width:640px){.grid{grid-template-columns:1fr}.actions{flex-direction:column}.top{align-items:flex-start;gap:10px;flex-direction:column}}
+    .addr-wrap{position:relative}
+    .addr-sugg{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#12171d;border:1px solid #1e2535;border-radius:8px;z-index:100;max-height:220px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .addr-sugg.open{display:block}
+    .addr-sugg-item{padding:11px 14px;cursor:pointer;font-size:.88rem;line-height:1.35;border-bottom:1px solid #1e2535;color:#d8dde6}
+    .addr-sugg-item:last-child{border-bottom:0}
+    .addr-sugg-item:hover{background:#1e2535;color:#fff}
+    .addr-sugg-main{font-weight:600}
+    .addr-sugg-sub{color:#8fa0b4;font-size:.8rem}
   </style>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
@@ -85,11 +93,11 @@
       <section class="panel">
         <div class="section-title">Localisation</div>
         <div class="grid">
-          <div class="full"><label for="pickup-address">Adresse de départ *</label><input id="pickup-address" required placeholder="123 rue Exemple, Quebec"></div>
+          <div class="full"><label for="pickup-address">Adresse de départ *</label><div class="addr-wrap"><input id="pickup-address" required placeholder="123 rue Exemple, Quebec" autocomplete="off"><div class="addr-sugg" id="pickup-sugg"></div></div></div>
           <div><label for="pickup-city">Ville départ *</label><input id="pickup-city" required placeholder="Quebec"></div>
           <div><label for="pickup-postal">Code postal départ *</label><input id="pickup-postal" required placeholder="G1A 1A1"></div>
           <div class="full"><label for="pickup-point">Point rencontre départ (facultatif)</label><select id="pickup-point"><option value="">Saisir une ville pour voir les lieux publics suggérés</option></select><small style="display:block;margin-top:5px;color:#8fa0b4">Option secondaire: choisir un lieu public visible et éclairé. Les commerces ne sont pas présentés comme partenaires sans autorisation préalable.</small></div>
-          <div class="full"><label for="delivery-address">Adresse de livraison *</label><input id="delivery-address" required placeholder="456 rue Exemple, Montreal"></div>
+          <div class="full"><label for="delivery-address">Adresse de livraison *</label><div class="addr-wrap"><input id="delivery-address" required placeholder="456 rue Exemple, Montreal" autocomplete="off"><div class="addr-sugg" id="delivery-sugg"></div></div></div>
           <div><label for="delivery-city">Ville livraison *</label><input id="delivery-city" required placeholder="Montreal"></div>
           <div><label for="delivery-postal">Code postal livraison *</label><input id="delivery-postal" required placeholder="H1A 1A1"></div>
           <div class="full"><label for="delivery-point">Point rencontre arrivée (facultatif)</label><select id="delivery-point"><option value="">Saisir une ville pour voir les lieux publics suggérés</option></select></div>
@@ -339,6 +347,64 @@
       // Premier appel sans ville pour montrer l'état global
       updateDriversCountBanner();
     });
+
+    // ── Autocomplete adresse — Nominatim (OpenStreetMap, sans clé API) ──
+    (function () {
+      function debounce(fn, ms) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }
+
+      function initAC(inputId, suggId, cityId, postalId) {
+        const inp = document.getElementById(inputId);
+        const box = document.getElementById(suggId);
+        if (!inp || !box) return;
+
+        const fetch_ = debounce(async function (q) {
+          if (q.length < 4) { box.classList.remove('open'); return; }
+          try {
+            const r = await fetch(
+              'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) +
+              '&format=json&countrycodes=ca&addressdetails=1&limit=5',
+              { headers: { 'Accept-Language': 'fr' } }
+            );
+            const items = await r.json();
+            if (!items.length) { box.classList.remove('open'); return; }
+            box.innerHTML = items.map(it => {
+              const a = it.address || {};
+              const num  = a.house_number || '';
+              const road = a.road || a.pedestrian || a.path || '';
+              const city = a.city || a.town || a.village || a.municipality || '';
+              const prov = a.state || '';
+              const post = a.postcode || '';
+              const main = [num, road].filter(Boolean).join(' ') || it.display_name.split(',')[0];
+              const sub  = [city, prov, post].filter(Boolean).join(', ');
+              return '<div class="addr-sugg-item" data-city="' + city.replace(/"/g,'') +
+                '" data-postal="' + post + '" data-main="' + main.replace(/"/g,'') + '">' +
+                '<div class="addr-sugg-main">' + main + '</div>' +
+                '<div class="addr-sugg-sub">' + sub + '</div></div>';
+            }).join('');
+            box.classList.add('open');
+            box.querySelectorAll('.addr-sugg-item').forEach(function (el) {
+              el.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                inp.value = this.dataset.main;
+                const cityEl   = document.getElementById(cityId);
+                const postalEl = document.getElementById(postalId);
+                if (cityEl   && this.dataset.city)   cityEl.value   = this.dataset.city;
+                if (postalEl && this.dataset.postal) postalEl.value = this.dataset.postal;
+                box.classList.remove('open');
+              });
+            });
+          } catch (e) { box.classList.remove('open'); }
+        }, 600);
+
+        inp.addEventListener('input', function () { fetch_(this.value.trim()); });
+        inp.addEventListener('blur',  function () { setTimeout(() => box.classList.remove('open'), 200); });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        initAC('pickup-address',   'pickup-sugg',   'pickup-city',   'pickup-postal');
+        initAC('delivery-address', 'delivery-sugg', 'delivery-city', 'delivery-postal');
+      });
+    })();
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>

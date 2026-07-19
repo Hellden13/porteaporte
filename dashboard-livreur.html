@@ -441,6 +441,7 @@
       <button class="liv-tab" data-tab="config" onclick="switchTab('config')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">⚙️ Profil</button>
       <button class="liv-tab" data-tab="stats" onclick="switchTab('stats')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📊 Stats</button>
       <button class="liv-tab" data-tab="paiements" onclick="switchTab('paiements')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">💰 Paiements</button>
+      <button class="liv-tab" data-tab="fiscal" onclick="switchTab('fiscal')" style="flex-shrink:0;padding:10px 16px;background:rgba(255,255,255,.04);border:1px solid #1E2535;color:#a8b0ba;font-weight:800;border-radius:8px;cursor:pointer;font-size:.88rem;white-space:nowrap">📋 Fiscal</button>
     </nav>
 
     <!-- Section CONFIG (modes, carte, route) -->
@@ -776,6 +777,60 @@
       </div>
     </div>
     </div><!-- /paiements -->
+
+    <!-- ===== Onglet Fiscal ===== -->
+    <div data-section="fiscal" style="display:none;padding:20px">
+      <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:16px;color:var(--brand-text)">📋 Rapport fiscal annuel</h2>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+        <label style="font-size:.9rem;font-weight:700;color:var(--brand-muted)">Année fiscale :</label>
+        <select id="fiscalYear" onchange="loadFiscal()" style="background:#12171d;border:1px solid #1e2535;color:#d8dde6;border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer"></select>
+        <button onclick="exportFiscalCSV()" style="padding:8px 14px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.3);color:#5dbfff;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">⬇️ Exporter CSV</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+        <div style="background:#12171d;border:1px solid #1e2535;border-radius:10px;padding:16px">
+          <div style="font-size:.72rem;font-weight:700;color:#8fa0b4;margin-bottom:6px;letter-spacing:.05em">LIVRAISONS</div>
+          <div id="fiscalCount" style="font-size:1.8rem;font-weight:900;color:#d8dde6">—</div>
+        </div>
+        <div style="background:#12171d;border:1px solid #1e2535;border-radius:10px;padding:16px">
+          <div style="font-size:.72rem;font-weight:700;color:#8fa0b4;margin-bottom:6px;letter-spacing:.05em">REVENUS BRUTS</div>
+          <div id="fiscalGross" style="font-size:1.8rem;font-weight:900;color:#c4f135">—</div>
+        </div>
+        <div style="background:#12171d;border:1px solid #1e2535;border-radius:10px;padding:16px">
+          <div style="font-size:.72rem;font-weight:700;color:#8fa0b4;margin-bottom:6px;letter-spacing:.05em">COMMISSION PAP (15%)</div>
+          <div id="fiscalComm" style="font-size:1.8rem;font-weight:900;color:#ff9090">—</div>
+        </div>
+        <div style="background:rgba(196,241,53,.06);border:1px solid rgba(196,241,53,.25);border-radius:10px;padding:16px">
+          <div style="font-size:.72rem;font-weight:700;color:#8fa0b4;margin-bottom:6px;letter-spacing:.05em">REVENUS NETS</div>
+          <div id="fiscalNet" style="font-size:1.8rem;font-weight:900;color:#c4f135">—</div>
+        </div>
+      </div>
+
+      <div style="background:#12171d;border:1px solid #1e2535;border-radius:10px;overflow:hidden;margin-bottom:20px;overflow-x:auto">
+        <table id="fiscalTable" style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:520px">
+          <thead>
+            <tr style="background:#1a2130">
+              <th style="padding:12px 16px;text-align:left;color:#8fa0b4;font-weight:700;white-space:nowrap">Mois</th>
+              <th style="padding:12px 16px;text-align:right;color:#8fa0b4;font-weight:700">Livraisons</th>
+              <th style="padding:12px 16px;text-align:right;color:#8fa0b4;font-weight:700;white-space:nowrap">Brut (CAD)</th>
+              <th style="padding:12px 16px;text-align:right;color:#8fa0b4;font-weight:700;white-space:nowrap">Commission</th>
+              <th style="padding:12px 16px;text-align:right;color:#8fa0b4;font-weight:700;white-space:nowrap">Net (CAD)</th>
+            </tr>
+          </thead>
+          <tbody id="fiscalBody">
+            <tr><td colspan="5" style="padding:24px;text-align:center;color:#8fa0b4">Sélectionner l'onglet pour charger…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.25);border-radius:8px;padding:14px 16px;font-size:.8rem;color:#a8b0ba;line-height:1.6">
+        <strong style="color:#ffc107">⚠️ Avis fiscal</strong> — Ce rapport est fourni à titre indicatif uniquement.
+        Les revenus de livraison sont imposables à titre de travailleur autonome (Revenu Québec + ARC).
+        Si vos revenus bruts dépassent <strong style="color:#d8dde6">30 000 $ CAD</strong> sur 4 trimestres consécutifs, vous devez vous inscrire aux TPS/TVQ.
+        Consultez un comptable pour vos déclarations RL-1 / T4A et vos cotisations au RRQ / RQAP.
+      </div>
+    </div><!-- /fiscal -->
 
   </main>
 
@@ -1665,6 +1720,7 @@
       // Sauvegarder la prefs tab
       try { localStorage.setItem('pap_livreur_tab', tab); } catch (e) {}
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab === 'fiscal' && typeof loadFiscal === 'function') loadFiscal();
     }
 
     // Restaurer l'onglet au demarrage
@@ -2747,6 +2803,112 @@
     }
     document.addEventListener('platform-shares', loadChart);
   })();
+
+  // ── Rapport fiscal annuel livreur ──
+  const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  function fmtCAD(n) {
+    return n.toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+  }
+
+  function initFiscalYears() {
+    const sel = document.getElementById('fiscalYear');
+    if (!sel || sel.options.length > 0) return;
+    const cur = new Date().getFullYear();
+    for (let y = cur; y >= 2024; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      sel.appendChild(opt);
+    }
+  }
+
+  async function loadFiscal() {
+    if (!session) return;
+    initFiscalYears();
+    const year = parseInt(document.getElementById('fiscalYear')?.value) || new Date().getFullYear();
+    const from = year + '-01-01';
+    const to   = (year + 1) + '-01-01';
+    const body = document.getElementById('fiscalBody');
+    if (body) body.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:#8fa0b4">Chargement…</td></tr>';
+
+    const { data, error } = await db
+      .from('livraisons')
+      .select('prix_total, prix_final, livre_le, created_at')
+      .eq('livreur_id', session.user.id)
+      .in('statut', ['livre', 'payee'])
+      .gte('created_at', from)
+      .lt('created_at', to)
+      .order('created_at', { ascending: true });
+
+    if (error || !data) {
+      if (body) body.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:#ff6b6b">Erreur de chargement.</td></tr>';
+      return;
+    }
+
+    const COMM = 0.15;
+    const months = Array.from({ length: 12 }, (_, i) => ({ idx: i, count: 0, gross: 0 }));
+    data.forEach(function (liv) {
+      const d = new Date(liv.livre_le || liv.created_at);
+      const m = d.getMonth();
+      const amt = parseFloat(liv.prix_final || liv.prix_total || 0);
+      months[m].count++;
+      months[m].gross += amt;
+    });
+
+    let totalCount = 0, totalGross = 0;
+    const rows = months.map(function (m) {
+      totalCount += m.count;
+      totalGross += m.gross;
+      const comm = m.gross * COMM;
+      const net  = m.gross - comm;
+      if (m.count === 0) {
+        return '<tr style="border-top:1px solid #1e2535;opacity:.35"><td style="padding:10px 16px;color:#d8dde6">' + MOIS_FR[m.idx] + '</td>' +
+          '<td style="padding:10px 16px;text-align:right;color:#8fa0b4">0</td>' +
+          '<td style="padding:10px 16px;text-align:right;color:#8fa0b4">0,00 $</td>' +
+          '<td style="padding:10px 16px;text-align:right;color:#8fa0b4">0,00 $</td>' +
+          '<td style="padding:10px 16px;text-align:right;color:#8fa0b4">0,00 $</td></tr>';
+      }
+      return '<tr style="border-top:1px solid #1e2535"><td style="padding:10px 16px;color:#d8dde6;font-weight:600">' + MOIS_FR[m.idx] + '</td>' +
+        '<td style="padding:10px 16px;text-align:right;color:#d8dde6">' + m.count + '</td>' +
+        '<td style="padding:10px 16px;text-align:right;color:#d8dde6">' + fmtCAD(m.gross) + '</td>' +
+        '<td style="padding:10px 16px;text-align:right;color:#ff9090">' + fmtCAD(comm) + '</td>' +
+        '<td style="padding:10px 16px;text-align:right;color:#c4f135;font-weight:700">' + fmtCAD(net) + '</td></tr>';
+    });
+
+    const totalComm = totalGross * COMM;
+    const totalNet  = totalGross - totalComm;
+    rows.push('<tr style="border-top:2px solid #5dbfff;background:#1a2130"><td style="padding:12px 16px;color:#fff;font-weight:800">TOTAL ' + year + '</td>' +
+      '<td style="padding:12px 16px;text-align:right;color:#fff;font-weight:800">' + totalCount + '</td>' +
+      '<td style="padding:12px 16px;text-align:right;color:#fff;font-weight:800">' + fmtCAD(totalGross) + '</td>' +
+      '<td style="padding:12px 16px;text-align:right;color:#ff6b6b;font-weight:800">' + fmtCAD(totalComm) + '</td>' +
+      '<td style="padding:12px 16px;text-align:right;color:#c4f135;font-weight:800">' + fmtCAD(totalNet) + '</td></tr>');
+
+    if (body) body.innerHTML = rows.join('');
+
+    const setEl = function (id, v) { const e = document.getElementById(id); if (e) e.textContent = v; };
+    setEl('fiscalCount', totalCount);
+    setEl('fiscalGross', fmtCAD(totalGross));
+    setEl('fiscalComm',  fmtCAD(totalComm));
+    setEl('fiscalNet',   fmtCAD(totalNet));
+  }
+
+  function exportFiscalCSV() {
+    const year = document.getElementById('fiscalYear')?.value || new Date().getFullYear();
+    const rows = [['Mois', 'Livraisons', 'Brut (CAD)', 'Commission (CAD)', 'Net (CAD)']];
+    document.querySelectorAll('#fiscalBody tr').forEach(function (tr) {
+      const cells = Array.from(tr.querySelectorAll('td')).map(function (td) { return td.textContent.trim().replace(/\s+/g, ' '); });
+      if (cells.length === 5) rows.push(cells);
+    });
+    const csv = rows.map(function (r) { return r.map(function (c) { return '"' + c.replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+    a.download = 'rapport-fiscal-porteaporte-' + year + '.csv';
+    a.click();
+  }
+
+  window.loadFiscal = loadFiscal;
+  window.exportFiscalCSV = exportFiscalCSV;
   </script>
 
   <script src="/js/push-manager.js"></script>
