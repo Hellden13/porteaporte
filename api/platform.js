@@ -129,6 +129,7 @@ async function createLivraison(req, res, ctx, body) {
     email_destinataire: body.email_destinataire || null,
     telephone_destinataire: body.telephone_destinataire || null,
     taille_colis: body.taille_colis || null,
+    quantite_colis: Math.max(1, parseInt(body.quantite_colis) || 1),
     destinataire_dispo_jours: Array.isArray(body.destinataire_dispo_jours) && body.destinataire_dispo_jours.length ? body.destinataire_dispo_jours : null,
     destinataire_dispo_debut: body.destinataire_dispo_debut || null,
     destinataire_dispo_fin: body.destinataire_dispo_fin || null,
@@ -215,7 +216,7 @@ async function createLivraison(req, res, ctx, body) {
     `${ctx.sbUrl}/rest/v1/livraisons`,
     sbHeaders(ctx.sbKey),
     payload,
-    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'date_souhaitee', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
+    ['description', 'type_colis', 'poids_kg', 'valeur_declaree', 'date_souhaitee', 'assurance_plan', 'notes', 'nom_destinataire', 'email_destinataire', 'telephone_destinataire', 'taille_colis', 'quantite_colis', 'destinataire_dispo_jours', 'destinataire_dispo_debut', 'destinataire_dispo_fin']
   );
 
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });

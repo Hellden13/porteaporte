@@ -127,6 +127,12 @@
               <option value="xl">XL / Électroménager (lave-vaisselle, meuble) — camionnette requise</option>
             </select>
           </div>
+          <div class="full"><label for="quantite-colis">Nombre de colis</label>
+            <div style="display:flex;align-items:center;gap:14px">
+              <input id="quantite-colis" type="number" min="1" max="20" value="1" style="width:90px;text-align:center">
+              <span style="color:#a8b0ba;font-size:.85rem">+2,00 $ par colis supplémentaire (2e colis et +)</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -195,7 +201,7 @@
     }
     const INSURANCE_PLANS={none:{premium:0,coverage:0,label:'Aucune protection'},base:{premium:1,coverage:50,label:'Base'},standard:{premium:2.99,coverage:250,label:'Standard'},plus:{premium:5.99,coverage:1000,label:'Plus'}};
     function selectedInsurance(){const key=el('insurance-plan').value||'none'; const plan=INSURANCE_PLANS[key]||INSURANCE_PLANS.none; const declared=parseFloat(el('declared-value').value)||0; return {...plan,key,covered:Math.min(declared,plan.coverage)}}
-    function updatePrice(){const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=base+platFee+priority+insurance.premium; el('total-price').textContent='$'+total.toFixed(2)}
+    function updatePrice(){const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const total=base+platFee+priority+insurance.premium+extra; el('total-price').textContent='$'+total.toFixed(2)}
     function missingField(){return Array.from(document.querySelectorAll('#create-mission-form [required]')).find(f=>!String(f.value||'').trim())}
     function labelFor(field){const label=document.querySelector('label[for="'+field.id+'"]'); return label?label.textContent.replace('*','').trim():field.id}
     async function initPage(){if(!await AUTH_API.requireAuth('expediteur')) return; const user=AUTH_API.getUser(); el('auth-user-name').textContent=((user.prenom||'')+' '+(user.nom||'')).trim()}
@@ -206,14 +212,14 @@
       try{
         const client=window.getSupabaseClient&&window.getSupabaseClient(); if(!client) throw new Error('Client Supabase indisponible. Recharge la page.');
         const {data,error}=await client.auth.getSession(); if(error) throw new Error(error.message); if(!data.session) throw new Error('Session expiree. Reconnecte-toi.');
-        const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=Math.round((base+platFee+priority+insurance.premium)*100)/100;
+        const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=Math.round((base+platFee+priority+insurance.premium+extra)*100)/100;
         const isScheduled=document.getElementById('timing-scheduled')?.checked;
         const dateSouhaitee=isScheduled&&el('date-souhaitee')?.value?new Date(el('date-souhaitee').value).toISOString():null;
         const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',dateSouhaitee?'Programmé pour: '+new Date(dateSouhaitee).toLocaleString('fr-CA'):'Dès que possible','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
         const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
-        const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen';
+        const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen'; const quantiteColis=qty;
         const pickupPoint=el('pickup-point'); const deliveryPoint=el('delivery-point');
-        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,quantite_colis:quantiteColis,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison créée, mais ID introuvable.');
@@ -332,7 +338,7 @@
     }
 
     document.addEventListener('DOMContentLoaded',()=>{
-      ['base-price','is-priority','insurance-plan','declared-value'].forEach(id=>el(id).addEventListener('input',updatePrice));
+      ['base-price','is-priority','insurance-plan','declared-value','quantite-colis'].forEach(id=>el(id)?.addEventListener('input',updatePrice));
       ['pickup-city','delivery-city','weight','taille-colis','category'].forEach(id=>el(id) && el(id).addEventListener('input',debouncedRecompute));
       document.querySelectorAll('input[name="pickup-timing"]').forEach(r=>r.addEventListener('change',debouncedRecompute));
       // Compteur livreurs actifs : update à chaque changement de ville

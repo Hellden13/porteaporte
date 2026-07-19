@@ -1229,7 +1229,7 @@
     async function loadMissions() {
       const { data, error } = await db
         .from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,distance_km')
+        .select('id,code,ville_depart,ville_arrivee,type_colis,poids_kg,prix_total,distance_km,quantite_colis')
         .in('statut', ['publie', 'paiement_autorise'])
         .is('livreur_id', null)
         .order('created_at', { ascending: false })
@@ -1245,7 +1245,7 @@
         <div class="mission-card">
           <div class="mission-info">
             <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
-            <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
+            <div class="mission-meta">${m.type_colis || 'Colis'}${m.quantite_colis > 1 ? ' <strong>×' + m.quantite_colis + '</strong>' : ''}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
           </div>
           <span class="mission-price">${money(m.prix_total)}</span>
           <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
@@ -1406,7 +1406,7 @@
     async function loadMyDeliveries() {
       const { data, error } = await db
         .from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,type_colis,taille_colis,prix_total,statut,reception_mode,reception_heure_debut,reception_heure_fin,reception_photo_obligatoire,reception_lieu_repli,reception_note_livreur')
+        .select('id,code,ville_depart,ville_arrivee,type_colis,taille_colis,quantite_colis,prix_total,statut,reception_mode,reception_heure_debut,reception_heure_fin,reception_photo_obligatoire,reception_lieu_repli,reception_note_livreur')
         .eq('livreur_id', session.user.id)
         .not('statut', 'in', '(livre,annule,payee,livre_confirme,payee_livreur)')
         .order('created_at', { ascending: false })
@@ -1441,7 +1441,7 @@
         return `
           <div class="delivery-row">
             <div>
-              <div class="delivery-route">${row.type_colis || 'Colis'}${row.taille_colis ? ` (${row.taille_colis})` : ''} · ${row.code || row.id.slice(0,8)}</div>
+              <div class="delivery-route">${row.type_colis || 'Colis'}${row.taille_colis ? ` (${row.taille_colis})` : ''}${row.quantite_colis > 1 ? ` <strong>×${row.quantite_colis}</strong>` : ''} · ${row.code || row.id.slice(0,8)}</div>
               <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
               ${prefsHtml}
             </div>
