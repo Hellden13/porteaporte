@@ -69,7 +69,16 @@
           <div><label for="weight">Poids estimé (kg) *</label><input id="weight" type="number" min="0.1" step="0.1" required placeholder="0.5"></div>
           <div><label for="declared-value">Valeur déclarée (CAD) <span style="font-size:.75rem;color:#888;font-weight:400">— max 250 $ en bêta</span></label><input id="declared-value" type="number" min="0" max="250" step="0.01" placeholder="50"><small style="display:block;margin-top:4px;font-size:.72rem;color:#888">Pour les colis de plus grande valeur, écrivez à bonjour@porteaporte.site</small></div>
           <div><label for="category">Catégorie *</label><select id="category" required><option value="">Choisir</option><option value="colis">Colis</option><option value="document">Document</option><option value="nourriture">Nourriture</option><option value="meuble">Meuble</option><option value="electronique">Electronique</option><option value="autre">Autre</option></select></div>
-          <div><label for="deadline">Délai souhaité *</label><select id="deadline" required><option value="">Choisir</option><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="3-7days">3 a 7 jours</option><option value="flexible">Flexible</option></select></div>
+          <div class="full"><label>Quand récupérer le colis ? *</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+              <label class="check"><input type="radio" name="pickup-timing" id="timing-asap" value="asap" checked onchange="toggleSchedule()"> 🚀 Dès que possible</label>
+              <label class="check"><input type="radio" name="pickup-timing" id="timing-scheduled" value="scheduled" onchange="toggleSchedule()"> 📅 Choisir une date</label>
+            </div>
+            <div id="date-souhaitee-wrap" style="display:none">
+              <input id="date-souhaitee" type="datetime-local" style="width:100%;box-sizing:border-box;border:1px solid var(--brand-border);background:var(--brand-bg-dark);color:var(--brand-text);border-radius:8px;padding:12px 14px;font:inherit">
+              <p class="hint" style="margin-top:6px">Le livreur verra la date et pourra accepter à l'avance. Délai minimum : 2 heures.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -148,6 +157,17 @@
   <script src="/js/auth-complete.js"></script>
   <script>
     function el(id){return document.getElementById(id)}
+    function toggleSchedule(){
+      const scheduled=document.getElementById('timing-scheduled').checked;
+      const wrap=el('date-souhaitee-wrap');
+      wrap.style.display=scheduled?'block':'none';
+      if(scheduled){
+        const min=new Date(Date.now()+2*3600000);
+        const pad=n=>String(n).padStart(2,'0');
+        el('date-souhaitee').min=min.getFullYear()+'-'+pad(min.getMonth()+1)+'-'+pad(min.getDate())+'T'+pad(min.getHours())+':'+pad(min.getMinutes());
+        if(!el('date-souhaitee').value) el('date-souhaitee').value=el('date-souhaitee').min;
+      }
+    }
     function showError(message){const box=el('error-message'); box.textContent='ERREUR: '+message; box.classList.add('show'); box.scrollIntoView({behavior:'smooth',block:'center'})}
     function hideMessages(){
       el('error-message').classList.remove('show');
@@ -179,11 +199,13 @@
         const client=window.getSupabaseClient&&window.getSupabaseClient(); if(!client) throw new Error('Client Supabase indisponible. Recharge la page.');
         const {data,error}=await client.auth.getSession(); if(error) throw new Error(error.message); if(!data.session) throw new Error('Session expiree. Reconnecte-toi.');
         const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=Math.round((base+platFee+priority+insurance.premium)*100)/100;
-        const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',el('deadline').value?'Delai: '+el('deadline').value:'','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
+        const isScheduled=document.getElementById('timing-scheduled')?.checked;
+        const dateSouhaitee=isScheduled&&el('date-souhaitee')?.value?new Date(el('date-souhaitee').value).toISOString():null;
+        const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',dateSouhaitee?'Programmé pour: '+new Date(dateSouhaitee).toLocaleString('fr-CA'):'Dès que possible','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
         const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
         const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen';
         const pickupPoint=el('pickup-point'); const deliveryPoint=el('delivery-point');
-        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison créée, mais ID introuvable.');
@@ -206,7 +228,7 @@
       const poids = parseFloat(el('weight')?.value) || 0;
       const taille = el('taille-colis')?.value || 'moyen';
       const type = el('category')?.value || 'colis';
-      const deadline = el('deadline')?.value || 'flexible';
+      const deadline = document.getElementById('timing-scheduled')?.checked ? 'scheduled' : 'asap';
       if (!ville_depart || !ville_arrivee || !poids) {
         el('price-min').textContent = '— $';
         el('price-explain').textContent = 'Remplis villes + poids + taille + catégorie pour le prix.';
@@ -303,7 +325,8 @@
 
     document.addEventListener('DOMContentLoaded',()=>{
       ['base-price','is-priority','insurance-plan','declared-value'].forEach(id=>el(id).addEventListener('input',updatePrice));
-      ['pickup-city','delivery-city','weight','taille-colis','category','deadline'].forEach(id=>el(id) && el(id).addEventListener('input',debouncedRecompute));
+      ['pickup-city','delivery-city','weight','taille-colis','category'].forEach(id=>el(id) && el(id).addEventListener('input',debouncedRecompute));
+      document.querySelectorAll('input[name="pickup-timing"]').forEach(r=>r.addEventListener('change',debouncedRecompute));
       // Compteur livreurs actifs : update à chaque changement de ville
       ['pickup-city','delivery-city'].forEach(id=>el(id)?.addEventListener('input', updateDriversCountBanner));
       el('pickup-city')?.addEventListener('input',()=>loadPackageMeetingPoints('pickup-city','pickup-point'));

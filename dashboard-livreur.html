@@ -463,6 +463,22 @@
       <div style="margin-top:6px;text-align:right;font-size:.76rem;color:#a8b0ba">Encore <span id="loyaltyRemaining">10</span>% pour atteindre le max 70%</div>
     </div>
 
+    <!-- ── Disponibilité hebdomadaire ── -->
+    <div style="margin-bottom:18px;padding:18px 20px;border-radius:14px;background:var(--brand-bg-surface);border:1px solid var(--brand-border)">
+      <div style="font-weight:900;color:#fff;font-size:.95rem;margin-bottom:4px">📅 Mes disponibilités habituelles</div>
+      <div style="color:#a8b0ba;font-size:.8rem;margin-bottom:14px">Le matching t'envoie des missions aux heures où tu es disponible.</div>
+      <div id="availGrid" style="display:grid;grid-template-columns:auto repeat(3,1fr);gap:6px;align-items:center;font-size:.82rem">
+        <div></div>
+        <div style="text-align:center;font-weight:800;color:#a8b0ba;font-size:.75rem">Matin<br><span style="font-weight:400">7h–12h</span></div>
+        <div style="text-align:center;font-weight:800;color:#a8b0ba;font-size:.75rem">Après-midi<br><span style="font-weight:400">12h–18h</span></div>
+        <div style="text-align:center;font-weight:800;color:#a8b0ba;font-size:.75rem">Soir<br><span style="font-weight:400">18h–23h</span></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button onclick="saveAvailability()" style="padding:10px 18px;background:var(--brand-lime);color:#071008;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:.88rem">💾 Enregistrer</button>
+        <span id="availSaveStatus" style="font-size:.82rem;color:#a8b0ba"></span>
+      </div>
+    </div>
+
     <!-- Mode de transport ACTIF aujourd'hui -->
     <div style="margin-bottom:18px;padding:14px 16px;border-radius:12px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25)">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -875,7 +891,7 @@
       updateToggleLabel(isOnline);
 
       renderStats();
-      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm(), loadModes(), loadLoyaltyBonus()]);
+      await Promise.all([loadMissions(), loadMyDeliveries(), loadComments(), loadRewards(), loadFiabilite(), loadRouteIntoForm(), loadModes(), loadLoyaltyBonus(), loadAvailability()]);
       // Lien vers ma carte
       const cardLink = document.getElementById('myCardLink');
       if (cardLink) cardLink.href = '/livreur-card.html?id=' + encodeURIComponent(session.user.id);
@@ -1074,6 +1090,55 @@
       clearTimeout(t._timer);
       t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
     }
+
+    // ── Disponibilité hebdomadaire ──
+    const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const SLOTS = ['matin','apres_midi','soir'];
+
+    function buildAvailGrid(saved) {
+      const grid = document.getElementById('availGrid');
+      if (!grid) return;
+      const slots = (saved && saved.slots) ? saved.slots : [];
+      const rows = JOURS.map((j, i) => {
+        const key = j.toLowerCase();
+        const cells = SLOTS.map(s => {
+          const id = `av_${i}_${s}`;
+          const checked = slots.includes(`${key}_${s}`) ? 'checked' : '';
+          return `<div style="text-align:center"><label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <input type="checkbox" id="${id}" data-jour="${key}" data-slot="${s}" ${checked}
+              style="width:18px;height:18px;accent-color:var(--brand-lime);cursor:pointer">
+          </label></div>`;
+        }).join('');
+        return `<div style="font-weight:700;color:#fff;padding:4px 0">${j}</div>${cells}`;
+      }).join('');
+      // Garder les 4 headers, remplacer le reste
+      const headers = Array.from(grid.children).slice(0, 4).map(h => h.outerHTML).join('');
+      grid.innerHTML = headers + rows;
+    }
+
+    async function loadAvailability() {
+      try {
+        const { data } = await db.from('profiles').select('availability_schedule').eq('id', session.user.id).single();
+        buildAvailGrid(data?.availability_schedule || { asap: true, slots: [] });
+      } catch (_) { buildAvailGrid({ slots: [] }); }
+    }
+
+    async function saveAvailability() {
+      const checks = document.querySelectorAll('#availGrid input[type=checkbox]:checked');
+      const slots = Array.from(checks).map(c => `${c.dataset.jour}_${c.dataset.slot}`);
+      const schedule = { asap: slots.length === 0, slots };
+      const statusEl = document.getElementById('availSaveStatus');
+      try {
+        await db.from('profiles').update({ availability_schedule: schedule }).eq('id', session.user.id);
+        statusEl.textContent = '✅ Sauvegardé';
+        statusEl.style.color = 'var(--brand-lime)';
+      } catch (_) {
+        statusEl.textContent = '❌ Erreur — réessaie';
+        statusEl.style.color = '#ffb0b0';
+      }
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    }
+    window.saveAvailability = saveAvailability;
 
     async function setOnlineStatus(on) {
       updateToggleLabel(on);
