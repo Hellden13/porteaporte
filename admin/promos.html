@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codes promo — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); padding: 32px clamp(16px,4vw,48px); min-height: 100vh; }
+    h1 { margin: 0 0 8px; font-size: 1.4rem; }
+    .sub { color: var(--brand-muted); font-size: .88rem; margin: 0 0 32px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    @media(max-width:860px){ .grid2 { grid-template-columns: 1fr; } }
+
+    /* Carte */
+    .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 24px; }
+    .card h2 { margin: 0 0 18px; font-size: 1rem; color: var(--brand-lime); }
+
+    /* Formulaire */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--brand-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+    .field input, .field select, .field textarea { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--brand-border); border-radius: 8px; color: var(--brand-text); padding: 10px 12px; font-size: .9rem; box-sizing: border-box; }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--brand-lime); }
+    .field .hint { font-size: .75rem; color: var(--brand-muted); margin-top: 4px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Bouton */
+    .btn { padding: 11px 20px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .88rem; }
+    .btn-lime { background: var(--brand-lime); color: #071006; }
+    .btn-lime:hover { opacity: .88; }
+    .btn-ghost { background: transparent; color: var(--brand-muted); border: 1px solid var(--brand-border); }
+
+    /* Table codes */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    th { text-align: left; color: var(--brand-lime); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; padding: 8px 10px; border-bottom: 1px solid var(--brand-border); white-space: nowrap; }
+    td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    .code-badge { font-family: monospace; background: rgba(93,191,255,.1); border: 1px solid rgba(93,191,255,.3); border-radius: 6px; padding: 3px 8px; color: var(--brand-lime); font-size: .9rem; letter-spacing: .1em; }
+    .type-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+    .type-fixed_price { background: rgba(196,241,53,.12); color: var(--brand-lime); }
+    .type-discount_pct { background: rgba(93,191,255,.12); color: #5dbfff; }
+    .type-discount_cad { background: rgba(93,191,255,.12); color: #5dbfff; }
+    .type-insurance_upgrade { background: rgba(251,191,36,.12); color: #fbbf24; }
+    .type-free_delivery { background: rgba(52,211,153,.12); color: #34d399; }
+    .badge-active { background: rgba(52,211,153,.12); color: #34d399; border-radius: 999px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
+    .badge-inactive { background: rgba(239,68,68,.1); color: #ef4444; border-radius: 999px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
+
+    .toggle-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--brand-border); background: transparent; cursor: pointer; font-size: .75rem; font-weight: 700; color: var(--brand-muted); }
+    .toggle-btn:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+
+    #create-status { margin-top: 12px; font-size: .85rem; display: none; }
+    #create-status.ok { color: #34d399; }
+    #create-status.err { color: #ef4444; }
+
+    .empty { text-align: center; color: var(--brand-muted); padding: 32px; font-size: .9rem; }
+    .uses-bar { display: flex; align-items: center; gap: 6px; }
+    .uses-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; min-width: 60px; }
+    .uses-bar-fill { height: 4px; background: var(--brand-lime); border-radius: 2px; }
+
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-muted); text-decoration: none; font-size: .85rem; margin-bottom: 24px; }
+    .back-link:hover { color: var(--brand-lime); }
+
+    .conditions-badge { font-size: .72rem; color: var(--brand-muted); background: rgba(255,255,255,.05); border-radius: 4px; padding: 2px 6px; margin-top: 3px; display: inline-block; }
+  </style>
+</head>
+<body>
+
+<a class="back-link" href="/admin/dashboard-admin.html">← Dashboard admin</a>
+
+<h1>🎟️ Codes promotionnels</h1>
+<p class="sub">Créer et gérer les codes promo partenaires. Chaque code est validé côté serveur à la création de livraison.</p>
+
+<div class="grid2">
+
+  <!-- ── CRÉER UN CODE ── -->
+  <div class="card">
+    <h2>Créer un nouveau code</h2>
+
+    <div class="field">
+      <label>Code *</label>
+      <input id="f-code" type="text" placeholder="Ex: INTACT2026" style="text-transform:uppercase;font-family:monospace;letter-spacing:.08em">
+      <div class="hint">Majuscules uniquement, pas d'espace. Ex: PARTENAIRE50, LIVRAISON1CAD</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Type *</label>
+        <select id="f-type" onchange="onTypeChange()">
+          <option value="fixed_price">Prix fixe total</option>
+          <option value="discount_pct">Rabais en %</option>
+          <option value="discount_cad">Rabais en $</option>
+          <option value="insurance_upgrade">Assurance Plus offerte</option>
+          <option value="free_delivery">Livraison gratuite</option>
+        </select>
+      </div>
+      <div class="field" id="value-field">
+        <label id="value-label">Valeur ($) *</label>
+        <input id="f-value" type="number" min="0" step="0.01" placeholder="Ex: 1.00">
+        <div class="hint" id="value-hint">Ex: 1.00 = client paie 1 $ total</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description (affiché au client)</label>
+      <input id="f-description" type="text" placeholder="Ex: Livraison à 1$ pour les assurés Intact">
+    </div>
+
+    <div class="field">
+      <label>Partenaire</label>
+      <input id="f-partner" type="text" placeholder="Ex: Intact Assurance, Chambre de commerce Laval">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Max utilisations total</label>
+        <input id="f-max-uses" type="number" min="1" step="1" placeholder="Vide = illimité">
+      </div>
+      <div class="field">
+        <label>Expiration</label>
+        <input id="f-valid-until" type="date">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Condition : distance max (km)</label>
+      <input id="f-max-dist" type="number" min="1" step="1" placeholder="Vide = aucune limite">
+      <div class="hint">Ex: 50 → code valide uniquement si livraison ≤ 50 km</div>
+    </div>
+
+    <button class="btn btn-lime" onclick="createCode()" style="width:100%">Créer le code</button>
+    <div id="create-status"></div>
+  </div>
+
+  <!-- ── LISTE DES CODES ── -->
+  <div class="card" style="padding:20px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="margin:0">Codes existants</h2>
+      <button class="btn btn-ghost" onclick="loadCodes()" style="padding:7px 14px;font-size:.8rem">↻ Rafraîchir</button>
+    </div>
+    <div id="codes-list"><div class="empty">Chargement...</div></div>
+  </div>
+
+</div>
+
+<!-- ── AIDE TYPES ── -->
+<div class="card" style="margin-top:24px;padding:20px 24px">
+  <h2 style="margin:0 0 14px">Guide des types de codes</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;font-size:.82rem">
+    <div><strong style="color:#c4f135">prix fixe</strong><br><span style="color:var(--brand-muted)">Le client paie un montant fixe total. Ex: INTACT2026 → 1,00 $. Idéal pour offres partenaires premium.</span></div>
+    <div><strong style="color:#5dbfff">rabais %</strong><br><span style="color:var(--brand-muted)">Pourcentage de réduction sur le total. Ex: PARTNER20 → -20 %. Flexible pour promotions.</span></div>
+    <div><strong style="color:#5dbfff">rabais $</strong><br><span style="color:var(--brand-muted)">Montant fixe déduit du total. Ex: BIENVENUE5 → -5,00 $. Simple à communiquer.</span></div>
+    <div><strong style="color:#fbbf24">assurance Plus</strong><br><span style="color:var(--brand-muted)">Upgrade automatique vers la couverture Plus (1 000 $) sans frais. Parfait pour assureurs partenaires.</span></div>
+    <div><strong style="color:#34d399">gratuit</strong><br><span style="color:var(--brand-muted)">Livraison à 0 $. Utiliser seulement pour des tests ou des offres très ciblées (max_uses = 1).</span></div>
+  </div>
+</div>
+
+<script>
+  let _token = null;
+
+  async function init() {
+    if (!await AUTH_API.requireAuth('admin')) return;
+    const user = AUTH_API.getUser();
+    _token = user?.session?.access_token;
+    if (!_token) { document.body.innerHTML = '<p style="color:#ef4444;padding:40px">Accès refusé.</p>'; return; }
+    await loadCodes();
+  }
+
+  async function api(endpoint, body) {
+    const r = await fetch('/api/platform?endpoint=' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
+      body: JSON.stringify(body || {})
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Erreur API');
+    return d;
+  }
+
+  async function loadCodes() {
+    const wrap = document.getElementById('codes-list');
+    wrap.innerHTML = '<div class="empty">Chargement...</div>';
+    try {
+      const d = await api('admin-promo-list');
+      const codes = d.codes || [];
+      if (!codes.length) { wrap.innerHTML = '<div class="empty">Aucun code créé.</div>'; return; }
+      wrap.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Code</th><th>Type</th><th>Valeur</th><th>Utilisations</th><th>Statut</th><th></th></tr></thead><tbody id="codes-tbody"></tbody></table></div>';
+      const tbody = document.getElementById('codes-tbody');
+      codes.forEach(c => {
+        const pct = c.max_uses ? Math.round(c.uses_count / c.max_uses * 100) : 0;
+        const usesLabel = c.max_uses ? `${c.uses_count} / ${c.max_uses}` : `${c.uses_count} / ∞`;
+        const bar = c.max_uses
+          ? `<div class="uses-bar-track"><div class="uses-bar-fill" style="width:${Math.min(100,pct)}%"></div></div>`
+          : '';
+        const valueDisplay = c.type === 'fixed_price' ? `${Number(c.value).toFixed(2)} $`
+          : c.type === 'discount_pct' ? `-${c.value} %`
+          : c.type === 'discount_cad' ? `-${Number(c.value).toFixed(2)} $`
+          : c.type === 'insurance_upgrade' ? 'Assurance Plus'
+          : 'Gratuit';
+        const typeLabel = { fixed_price: 'Prix fixe', discount_pct: 'Rabais %', discount_cad: 'Rabais $', insurance_upgrade: 'Assurance', free_delivery: 'Gratuit' }[c.type] || c.type;
+        const conds = c.conditions || {};
+        const condBadge = conds.max_distance_km ? `<span class="conditions-badge">≤${conds.max_distance_km} km</span>` : '';
+        const expiry = c.valid_until ? `<div style="font-size:.72rem;color:var(--brand-muted);margin-top:2px">Exp: ${new Date(c.valid_until).toLocaleDateString('fr-CA')}</div>` : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <span class="code-badge">${esc(c.code)}</span>
+            ${condBadge}
+            ${expiry}
+            ${c.partner_name ? `<div style="font-size:.72rem;color:var(--brand-muted);margin-top:3px">${esc(c.partner_name)}</div>` : ''}
+          </td>
+          <td><span class="type-pill type-${c.type}">${typeLabel}</span></td>
+          <td style="font-weight:700;color:var(--brand-lime)">${valueDisplay}</td>
+          <td>
+            <div class="uses-bar">
+              <span style="white-space:nowrap">${usesLabel}</span>${bar}
+            </div>
+          </td>
+          <td><span class="${c.active ? 'badge-active' : 'badge-inactive'}">${c.active ? 'Actif' : 'Inactif'}</span></td>
+          <td>
+            <button class="toggle-btn" onclick="toggleCode('${c.id}', ${!c.active})">${c.active ? 'Désactiver' : 'Activer'}</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch(e) {
+      wrap.innerHTML = '<div class="empty" style="color:#ef4444">Erreur: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  async function createCode() {
+    const status = document.getElementById('create-status');
+    const code = (document.getElementById('f-code').value || '').trim().toUpperCase();
+    const type = document.getElementById('f-type').value;
+    const value = document.getElementById('f-value').value;
+    const description = document.getElementById('f-description').value.trim();
+    const partner_name = document.getElementById('f-partner').value.trim();
+    const max_uses = document.getElementById('f-max-uses').value;
+    const valid_until = document.getElementById('f-valid-until').value;
+    const max_dist = document.getElementById('f-max-dist').value;
+
+    if (!code) { showStatus('Le code est requis.', 'err'); return; }
+    if (!type) { showStatus('Le type est requis.', 'err'); return; }
+    if (['fixed_price','discount_pct','discount_cad'].includes(type) && !value) {
+      showStatus('La valeur est requise pour ce type.', 'err'); return;
+    }
+
+    const conditions = {};
+    if (max_dist) conditions.max_distance_km = Number(max_dist);
+
+    try {
+      await api('admin-promo-create', {
+        code, type,
+        value: value ? Number(value) : 0,
+        description: description || null,
+        partner_name: partner_name || null,
+        max_uses: max_uses ? Number(max_uses) : null,
+        valid_until: valid_until ? new Date(valid_until + 'T23:59:59').toISOString() : null,
+        conditions,
+        per_user_limit: 1,
+      });
+      showStatus('✅ Code "' + code + '" créé avec succès !', 'ok');
+      document.getElementById('f-code').value = '';
+      document.getElementById('f-description').value = '';
+      document.getElementById('f-partner').value = '';
+      document.getElementById('f-max-uses').value = '';
+      document.getElementById('f-valid-until').value = '';
+      document.getElementById('f-max-dist').value = '';
+      document.getElementById('f-value').value = '';
+      await loadCodes();
+    } catch(e) {
+      showStatus('❌ ' + e.message, 'err');
+    }
+  }
+
+  async function toggleCode(id, active) {
+    try {
+      await api('admin-promo-toggle', { id, active });
+      await loadCodes();
+    } catch(e) {
+      alert('Erreur : ' + e.message);
+    }
+  }
+
+  function onTypeChange() {
+    const type = document.getElementById('f-type').value;
+    const vf = document.getElementById('value-field');
+    const vl = document.getElementById('value-label');
+    const vh = document.getElementById('value-hint');
+    const vi = document.getElementById('f-value');
+    if (type === 'insurance_upgrade' || type === 'free_delivery') {
+      vf.style.opacity = '.4';
+      vi.disabled = true; vi.value = '0';
+    } else {
+      vf.style.opacity = '1';
+      vi.disabled = false;
+    }
+    if (type === 'fixed_price') { vl.textContent = 'Prix total client ($) *'; vh.textContent = 'Ex: 1.00 → client paie 1 $ quelle que soit la livraison'; }
+    else if (type === 'discount_pct') { vl.textContent = 'Rabais (%) *'; vh.textContent = 'Ex: 20 → -20 % sur le total'; }
+    else if (type === 'discount_cad') { vl.textContent = 'Rabais ($) *'; vh.textContent = 'Ex: 5 → -5 $ sur le total'; }
+    else { vl.textContent = 'Valeur'; vh.textContent = 'Non applicable pour ce type'; }
+  }
+
+  function showStatus(msg, cls) {
+    const el = document.getElementById('create-status');
+    el.textContent = msg;
+    el.className = cls;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -38,6 +38,7 @@ const {
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
 // ─── Redistribution commission covoiturage ───
 // Postes modifiables depuis le hub admin. Le conducteur garde déjà sa part
@@ -169,8 +170,30 @@ async function createLivraison(req, res, ctx, body) {
     }
   } catch (_) {}
 
+  // ─── Code promo (validation + calcul du rabais) ───────────────────────────────
+  let validatedPromo = null;
+  let promoDiscount = 0;
+  if (body.promo_code && ctx.session) {
+    const distKmForPromo = estimateRouteKm(payload.ville_depart, payload.ville_arrivee) || 0;
+    const { promo: foundPromo, error: promoErr } = await validatePromoCode(ctx, body.promo_code, ctx.session.id, {
+      distance_km: distKmForPromo,
+      base_price: body.prix_base ?? body.base_price ?? 0,
+    });
+    if (promoErr) return res.status(400).json({ error: `Code promo : ${promoErr}` });
+    validatedPromo = foundPromo;
+    const discountInfo = computePromoDiscount(foundPromo, Number(payload.prix_total) || 0);
+    if (discountInfo.type === 'fixed_price') {
+      promoDiscount = Math.max(0, payload.prix_total - discountInfo.fixed_total);
+      payload.prix_total = discountInfo.fixed_total;
+    } else if (discountInfo.amount > 0) {
+      promoDiscount = discountInfo.amount;
+      payload.prix_total = Math.max(0, payload.prix_total - promoDiscount);
+    }
+    payload.prix_total = Math.round(payload.prix_total * 100) / 100;
+  }
+
   // ─── PRIX MINIMUM CALCULÉ (anti-abus "5$ pour un frigo") ───
-  if (ctx.profile?.role !== 'admin') {
+  if (ctx.profile?.role !== 'admin' && !validatedPromo) {
     const distKm = estimateRouteKm(payload.ville_depart, payload.ville_arrivee) || 5;
     const priceInfo = computeDeliveryPrice({
       distance_km: distKm,
@@ -222,6 +245,11 @@ async function createLivraison(req, res, ctx, body) {
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
+
+  // ─── Enregistrer l'usage du code promo ────────────────────────────────────
+  if (validatedPromo && livraison?.id) {
+    applyPromoCode(ctx, validatedPromo.id, ctx.session.id, livraison.id, promoDiscount).catch(() => {});
+  }
 
   // 🚨 Alerte admin (Denis 24h support) : nouvelle livraison créée
   alertAdmin(
@@ -6558,6 +6586,10 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badge-campaign-save')  return await badgeCampaignSave(req, res, ctx, body);
     if (endpoint === 'badge-campaign-toggle')return await badgeCampaignToggle(req, res, ctx, body);
     if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
+    if (endpoint === 'promo-validate')        return await promoValidate(req, res, ctx, body);
+    if (endpoint === 'admin-promo-list')      return await adminPromoList(req, res, ctx);
+    if (endpoint === 'admin-promo-create')    return await adminPromoCreate(req, res, ctx, body);
+    if (endpoint === 'admin-promo-toggle')    return await adminPromoToggle(req, res, ctx, body);
     if (endpoint === 'stripe-connect-onboard')   return await stripeConnectOnboard(req, res, ctx, body);
     if (endpoint === 'stripe-connect-status') return await stripeConnectStatus(req, res, ctx);
     if (endpoint === 'stripe-connect-dashboard') return await stripeConnectDashboard(req, res, ctx);

@@ -158,7 +158,15 @@
             </div>
           </div>
           <div class="full"><label for="base-price">Prix de base (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="Auto-calculé"><div class="hint">Le serveur refusera tout prix sous le minimum calculé selon distance + poids + taille + type + urgence.</div></div>
-          <div class="price full"><div class="muted">Prix total estimé</div><strong id="total-price">$0.00</strong></div>
+          <div class="price full"><div class="muted">Prix total estimé</div><strong id="total-price">$0.00</strong><div id="promo-discount-line" style="color:#c4f135;font-size:.8rem;margin-top:3px;font-weight:700;display:none"></div></div>
+          <div class="full" style="margin-top:2px">
+            <div style="display:flex;gap:8px;align-items:stretch">
+              <input id="promo-code-input" type="text" placeholder="Code promo (ex: INTACT2026)" autocomplete="off" style="flex:1;text-transform:uppercase;font-family:monospace;letter-spacing:.06em">
+              <button type="button" onclick="applyPromoCode()" id="promo-apply-btn" style="padding:10px 16px;background:var(--brand-lime);color:#071006;border:none;border-radius:8px;font-weight:800;cursor:pointer;white-space:nowrap">Appliquer</button>
+              <button type="button" onclick="clearPromo()" id="promo-clear-btn" style="display:none;padding:10px 12px;background:transparent;color:#ef4444;border:1px solid rgba(239,68,68,.4);border-radius:8px;font-weight:700;cursor:pointer">✕ Retirer</button>
+            </div>
+            <div id="promo-status" style="margin-top:6px;font-size:.83rem;display:none"></div>
+          </div>
         </div>
       </section>
 
@@ -201,7 +209,71 @@
     }
     const INSURANCE_PLANS={none:{premium:0,coverage:0,label:'Aucune protection'},base:{premium:1,coverage:50,label:'Base'},standard:{premium:2.99,coverage:250,label:'Standard'},plus:{premium:5.99,coverage:1000,label:'Plus'}};
     function selectedInsurance(){const key=el('insurance-plan').value||'none'; const plan=INSURANCE_PLANS[key]||INSURANCE_PLANS.none; const declared=parseFloat(el('declared-value').value)||0; return {...plan,key,covered:Math.min(declared,plan.coverage)}}
-    function updatePrice(){const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const total=base+platFee+priority+insurance.premium+extra; el('total-price').textContent='$'+total.toFixed(2)}
+
+    let activePromo = null;
+
+    function updatePrice(){
+      const base=parseFloat(el('base-price').value)||0;
+      const priority=el('is-priority').checked?5:0;
+      const insurance=selectedInsurance();
+      const platFee=Math.max(2.00,base*.15);
+      const qty=parseInt(el('quantite-colis')?.value)||1;
+      const extra=Math.max(0,qty-1)*2;
+      let total=base+platFee+priority+insurance.premium+extra;
+      let promoSave=0;
+      if(activePromo){
+        const d=activePromo.discount;
+        if(d.type==='fixed_price'){promoSave=Math.max(0,total-d.fixed_total);total=d.fixed_total;}
+        else if(d.type==='discount_pct'){promoSave=total*d.pct/100;total-=promoSave;}
+        else if(d.type==='discount_cad'){promoSave=Math.min(total,d.amount);total-=promoSave;}
+        else if(d.type==='insurance_upgrade'){promoSave=INSURANCE_PLANS.plus.premium;total-=promoSave;}
+      }
+      total=Math.max(0,total);
+      el('total-price').textContent='$'+total.toFixed(2);
+      const saveEl=el('promo-discount-line');
+      if(saveEl){saveEl.textContent=promoSave>0?'Code promo : -'+promoSave.toFixed(2)+' $':'';saveEl.style.display=promoSave>0?'block':'none';}
+    }
+
+    async function applyPromoCode(){
+      const code=(el('promo-code-input').value||'').trim().toUpperCase();
+      const statusEl=el('promo-status');
+      if(!code){statusEl.style.display='none';return;}
+      const btn=el('promo-apply-btn'); btn.disabled=true; btn.textContent='...';
+      try{
+        const client=window.getSupabaseClient&&window.getSupabaseClient();
+        const {data}=await client.auth.getSession();
+        if(!data?.session){statusEl.textContent='❌ Connecte-toi pour utiliser un code promo.';statusEl.style.color='#ef4444';statusEl.style.display='block';return;}
+        const base=parseFloat(el('base-price').value)||0;
+        const r=await fetch('/api/platform?endpoint=promo-validate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify({code,base_price:base})});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok){
+          activePromo=null;
+          statusEl.innerHTML='❌ '+(out.error||'Code invalide');
+          statusEl.style.color='#ef4444';statusEl.style.display='block';
+          el('promo-clear-btn').style.display='none';
+        }else{
+          activePromo=out;
+          const label=out.promo.description||out.discount.label;
+          const partner=out.promo.partner_name?` (${out.promo.partner_name})`:'';
+          statusEl.innerHTML='✅ '+label+partner;
+          statusEl.style.color='#c4f135';statusEl.style.display='block';
+          el('promo-clear-btn').style.display='';
+          if(out.discount.type==='insurance_upgrade'){el('insurance-plan').value='plus';}
+        }
+        updatePrice();
+      }catch(e){
+        statusEl.textContent='❌ '+e.message;
+        statusEl.style.color='#ef4444';statusEl.style.display='block';
+      }finally{btn.disabled=false;btn.textContent='Appliquer';}
+    }
+
+    function clearPromo(){
+      activePromo=null;
+      el('promo-code-input').value='';
+      el('promo-status').style.display='none';
+      el('promo-clear-btn').style.display='none';
+      updatePrice();
+    }
     function missingField(){return Array.from(document.querySelectorAll('#create-mission-form [required]')).find(f=>!String(f.value||'').trim())}
     function labelFor(field){const label=document.querySelector('label[for="'+field.id+'"]'); return label?label.textContent.replace('*','').trim():field.id}
     async function initPage(){if(!await AUTH_API.requireAuth('expediteur')) return; const user=AUTH_API.getUser(); el('auth-user-name').textContent=((user.prenom||'')+' '+(user.nom||'')).trim()}
@@ -212,14 +284,14 @@
       try{
         const client=window.getSupabaseClient&&window.getSupabaseClient(); if(!client) throw new Error('Client Supabase indisponible. Recharge la page.');
         const {data,error}=await client.auth.getSession(); if(error) throw new Error(error.message); if(!data.session) throw new Error('Session expiree. Reconnecte-toi.');
-        const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); const total=Math.round((base+platFee+priority+insurance.premium+extra)*100)/100;
+        const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); let total=Math.round((base+platFee+priority+insurance.premium+extra)*100)/100; if(activePromo){const d=activePromo.discount;if(d.type==='fixed_price')total=d.fixed_total;else if(d.type==='discount_pct')total=Math.round(total*(1-d.pct/100)*100)/100;else if(d.type==='discount_cad')total=Math.max(0,Math.round((total-d.amount)*100)/100);else if(d.type==='insurance_upgrade')total=Math.max(0,Math.round((total-INSURANCE_PLANS.plus.premium)*100)/100);} total=Math.max(0,total);
         const isScheduled=document.getElementById('timing-scheduled')?.checked;
         const dateSouhaitee=isScheduled&&el('date-souhaitee')?.value?new Date(el('date-souhaitee').value).toISOString():null;
         const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',dateSouhaitee?'Programmé pour: '+new Date(dateSouhaitee).toLocaleString('fr-CA'):'Dès que possible','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
         const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
         const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen'; const quantiteColis=qty;
         const pickupPoint=el('pickup-point'); const deliveryPoint=el('delivery-point');
-        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,quantite_colis:quantiteColis,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined};
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,quantite_colis:quantiteColis,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined,promo_code:activePromo?activePromo.promo.code:undefined,promo_id:activePromo?activePromo.promo.id:undefined};
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison créée, mais ID introuvable.');
