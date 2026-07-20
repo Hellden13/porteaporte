@@ -1,20 +1,31 @@
-// PorteàPorte — Service Worker v3
-// Stratégie : cache-first pour assets statiques, network-first pour API
-const SW_VERSION = 'pap-v103';
+// PorteàPorte — Service Worker v4
+// Stratégie : cache-first pour assets statiques, network-first pour pages HTML
+const SW_VERSION = 'pap-v110';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
 
-// Assets mis en cache à l'installation
+// Assets précachés à l'installation (core shell)
 const PRECACHE = [
   '/',
   '/index.html',
-  '/concours.html',
-  '/concours-reglement.html',
   '/offline.html',
   '/logo.svg',
+  '/manifest.json',
   '/assets/brand-uniform.css',
   '/assets/visual-polish.css',
+  '/assets/a11y.css',
+  '/assets/premium-system.css',
+  // Pages clés
+  '/dashboard-expediteur.html',
+  '/dashboard-livreur.html',
+  '/create-mission.html',
+  '/track.html',
+  // JS partagés
+  '/js/supabase-config.js',
+  '/js/auth-complete.js',
+  '/js/cookie-consent.js',
+  '/js/pwa-install.js',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -22,7 +33,7 @@ self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(STATIC_CACHE).then(cache =>
-      cache.addAll(PRECACHE).catch(() => {}) // silencieux si offline dès l'install
+      cache.addAll(PRECACHE).catch(() => {}) // silencieux si offline à l'install
     )
   );
 });
@@ -45,22 +56,23 @@ self.addEventListener('fetch', e => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // Ne pas intercepter : API, Supabase, Stripe, cross-origin
+  // Ne pas intercepter : API, Supabase, Stripe, Nominatim, cross-origin
   if (
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('supabase') ||
     url.hostname.includes('stripe') ||
     url.hostname.includes('cloudflare') ||
+    url.hostname.includes('nominatim') ||
+    url.hostname.includes('plausible') ||
     url.origin !== self.location.origin
   ) return;
 
   // Ne pas intercepter les requêtes non-GET
   if (request.method !== 'GET') return;
 
-  // Assets statiques (CSS, JS, images, fonts) → cache-first
-  if (
-    url.pathname.match(/\.(css|js|svg|png|jpg|jpeg|webp|woff2?|ico)$/)
-  ) {
+  // Assets statiques (CSS, JS, images, fonts, icons) → cache-first
+  if (url.pathname.match(/\.(css|js|svg|png|jpg|jpeg|webp|woff2?|ico|json)$/) &&
+      !url.pathname.includes('/api/')) {
     e.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
@@ -76,7 +88,7 @@ self.addEventListener('fetch', e => {
           }
           return new Response('', {
             status: 503,
-            statusText: 'Asset unavailable',
+            statusText: 'Asset unavailable offline',
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
           });
         });
@@ -85,7 +97,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Pages HTML → network-first, fallback offline
+  // Pages HTML → network-first, fallback cache, fallback offline
   if (request.headers.get('accept')?.includes('text/html')) {
     e.respondWith(
       fetch(request)
@@ -97,9 +109,8 @@ self.addEventListener('fetch', e => {
           return res;
         })
         .catch(() =>
-          caches.match(request) ||
-          caches.match('/offline.html') ||
-          caches.match('/index.html')
+          caches.match(request)
+            .then(cached => cached || caches.match('/offline.html'))
         )
     );
     return;
@@ -114,13 +125,13 @@ self.addEventListener('push', e => {
 
   const title   = payload.title || 'PorteàPorte';
   const options = {
-    body:    payload.body    || 'Nouvelle notification',
-    icon:    payload.icon    || '/logo.svg',
-    badge:   '/logo.svg',
-    tag:     payload.tag     || 'pap-notif',
-    data:    payload.data    || {},
-    actions: payload.actions || [],
-    vibrate: [200, 100, 200],
+    body:     payload.body    || 'Nouvelle notification',
+    icon:     payload.icon    || '/icons/icon-192.png',
+    badge:    '/icons/icon-192.png',
+    tag:      payload.tag     || 'pap-notif',
+    data:     payload.data    || {},
+    actions:  payload.actions || [],
+    vibrate:  [200, 100, 200],
     renotify: Boolean(payload.renotify),
   };
 
@@ -133,9 +144,16 @@ self.addEventListener('notificationclick', e => {
   const url = e.notification.data?.url || '/dashboard-livreur.html';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      const existing = clients.find(c => c.url.includes(url) || c.url.includes('porteaporte.site'));
+      const existing = clients.find(c =>
+        c.url.includes(url) || c.url.includes('porteaporte.site')
+      );
       if (existing) { existing.focus(); existing.navigate(url); }
       else self.clients.openWindow(url);
     })
   );
+});
+
+// ─── Message (skip waiting) ───────────────────────────────────────────────────
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });

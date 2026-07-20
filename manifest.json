@@ -1,47 +1,72 @@
 {
-  "name": "PorteÀPorte",
-  "short_name": "PorteÀPorte",
+  "id": "/",
+  "name": "PorteàPorte",
+  "short_name": "PorteàPorte",
   "description": "Livraison collaborative et covoiturage entre particuliers au Québec.",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait-primary",
   "background_color": "#0A0C10",
   "theme_color": "#0A0C10",
   "categories": ["transportation", "shopping", "social"],
   "lang": "fr",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [
     {
       "name": "Envoyer un colis",
       "short_name": "Envoyer",
-      "url": "/create-mission.html",
-      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+      "description": "Créer une nouvelle livraison",
+      "url": "/create-mission.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mon tableau de bord",
+      "short_name": "Dashboard",
+      "description": "Voir mes livraisons en cours",
+      "url": "/dashboard-expediteur.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Livrer",
+      "short_name": "Livrer",
+      "description": "Voir les missions disponibles",
+      "url": "/dashboard-livreur.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Covoiturage",
       "short_name": "Covoiturage",
-      "url": "/covoiturage.html",
-      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
-    },
-    {
-      "name": "Mon dashboard",
-      "short_name": "Dashboard",
-      "url": "/dashboard-expediteur.html",
-      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+      "url": "/covoiturage.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "screenshots": [
@@ -49,8 +74,8 @@
       "src": "/assets/photos/hero-covoiturage-confiance.png",
       "sizes": "1536x1024",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "PorteÀPorte — Livraison collaborative"
+      "form_factor": "wide",
+      "label": "PorteàPorte — Tableau de bord"
     }
   ]
 }
