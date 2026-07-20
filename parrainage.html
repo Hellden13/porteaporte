@@ -162,6 +162,8 @@
           <button onclick="copyCode()">Copier</button>
         </div>
         <div class="share-row">
+          <button class="share-btn" onclick="shareFacebook()">📘 Facebook</button>
+          <button class="share-btn" onclick="shareMessenger()">💬 Messenger</button>
           <button class="share-btn" onclick="shareWhatsApp()">💬 WhatsApp</button>
           <button class="share-btn" onclick="shareSMS()">📱 SMS</button>
           <button class="share-btn" onclick="copyLink()">🔗 Copier le lien</button>
@@ -351,6 +353,20 @@
     function shareSMS() {
       const msg = encodeURIComponent('Rejoins PorteàPorte avec mon code ' + _myCode + ' → ' + window.location.origin + '/parrainage.html?code=' + _myCode);
       window.open('sms:?body=' + msg);
+    }
+
+    function shareFacebook() {
+      const url = encodeURIComponent(window.location.origin + '/parrainage.html?code=' + _myCode);
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, 'fbshare', 'width=600,height=500,noopener');
+    }
+
+    function shareMessenger() {
+      const url = encodeURIComponent(window.location.origin + '/parrainage.html?code=' + _myCode);
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        window.location.href = 'fb-messenger://share/?link=' + url;
+      } else {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, 'fbshare', 'width=600,height=500,noopener');
+      }
     }
 
     async function submitCode() {

@@ -81,6 +81,21 @@
       </div>
       <div class="status" id="emergency-status">Chargement...</div>
     </section>
+
+    <section class="card">
+      <h2>🤝 Mon code parrainage</h2>
+      <p>Partage ton code pour inviter des amis. Tu reçois +100 Points Impact pour chaque filleul actif.</p>
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(93,191,255,.08);border:2px dashed rgba(93,191,255,.35);border-radius:10px;padding:14px 20px;margin:14px 0">
+        <span id="parrainage-code" style="font-family:monospace;font-size:1.8rem;font-weight:900;color:var(--brand-lime);letter-spacing:.15em">···</span>
+        <button class="btn btn-secondary" onclick="copyParrainageCode()" id="parrainage-copy-btn" style="padding:8px 14px;font-size:.82rem">Copier</button>
+      </div>
+      <a class="btn btn-secondary" href="/parrainage.html" style="font-size:.85rem;margin-top:4px">Voir mes filleuls →</a>
+    </section>
+
+    <section class="card">
+      <h2>🏅 Mes badges</h2>
+      <div id="badges-list-wrap"><p style="color:var(--brand-muted);font-size:.88rem">Chargement...</p></div>
+    </section>
   </main>
 
   <script>
@@ -90,8 +105,53 @@
       if (!await AUTH_API.requireAuth()) return;
       currentSession = AUTH_API.getUser()?.session;
       renderEmergencyContacts([]);
-      await loadRideSafetyStatus();
-      await loadEmergencyContacts();
+      await Promise.all([
+        loadRideSafetyStatus(),
+        loadEmergencyContacts(),
+        loadParrainageCode(),
+        loadBadges()
+      ]);
+    }
+
+    async function loadParrainageCode() {
+      try {
+        const d = await rideSafetyApi('referral-get', {});
+        const code = d.referral?.code || d.code || '';
+        if (code) document.getElementById('parrainage-code').textContent = code;
+      } catch (e) { console.warn('parrainage:', e); }
+    }
+
+    function copyParrainageCode() {
+      const code = document.getElementById('parrainage-code').textContent;
+      if (!code || code === '···') return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('parrainage-copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copie !';
+        setTimeout(() => { btn.textContent = orig; }, 1800);
+      });
+    }
+
+    async function loadBadges() {
+      try {
+        const d = await rideSafetyApi('badges-list', {});
+        const earned = d.earned || [];
+        const wrap = document.getElementById('badges-list-wrap');
+        if (!earned.length) {
+          wrap.innerHTML = '<p style="color:var(--brand-muted);font-size:.88rem">Aucun badge encore. Complete des livraisons et covoiturages pour en gagner !</p>';
+          return;
+        }
+        wrap.innerHTML = '<div style="display:flex;flex-direction:column;gap:2px">' + earned.map(e => {
+          const b = e.badges || e;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brand-border)">
+            <span style="font-size:1.5rem">${esc(b.icon || '🏅')}</span>
+            <div>
+              <div style="font-weight:700;color:var(--brand-text)">${esc(b.name || '')}</div>
+              <div style="font-size:.78rem;color:var(--brand-muted)">${esc(b.description || '')}</div>
+            </div>
+          </div>`;
+        }).join('') + '</div>';
+      } catch (e) { console.warn('badges:', e); }
     }
 
     async function rideSafetyApi(endpoint, body) {
