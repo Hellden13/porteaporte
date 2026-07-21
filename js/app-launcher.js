@@ -134,13 +134,37 @@
   style.textContent = css;
   document.head.appendChild(style);
 
+  // ─── Section admin (visible seulement pour role=admin) ───────────────────
+  function getAdminSection() {
+    try {
+      const role =
+        (window.AUTH_API?.getUser?.() || {})?.role ||
+        (window.__papUser || {})?.role ||
+        '';
+      if (role !== 'admin') return null;
+    } catch (_) { return null; }
+    return {
+      group: '⚡ Administration', isAdmin: true,
+      items: [
+        { href: '/admin/dashboard-admin.html', icon: '⚡', label: 'Dashboard Admin', desc: 'Contrôle total du site' },
+        { href: '/admin/users.html',           icon: '👥', label: 'Utilisateurs',    desc: 'Gérer les comptes' },
+        { href: '/admin/operations.html',      icon: '📦', label: 'Opérations',      desc: 'Livraisons en cours' },
+        { href: '/admin/promos.html',          icon: '🎟️', label: 'Codes promo',     desc: 'Partenaires & rabais' },
+        { href: '/admin/parametres.html',      icon: '⚙️', label: 'Paramètres',     desc: 'Config plateforme' },
+      ]
+    };
+  }
+
   // ─── HTML ─────────────────────────────────────────────────────────────────
   function buildHtml() {
     const here = location.pathname.replace(/\/$/, '') || '/index.html';
+    const adminSection = getAdminSection();
+    const sections = adminSection ? [adminSection, ...SECTIONS] : SECTIONS;
     let html = '';
-    SECTIONS.forEach(grp => {
+    sections.forEach(grp => {
+      const titleColor = grp.isAdmin ? 'color:#c4f135' : '';
       html += `<div class="pap-launcher-group">
-        <div class="pap-launcher-group-title">${grp.group}</div>
+        <div class="pap-launcher-group-title" style="${titleColor}">${grp.group}</div>
         <div class="pap-launcher-grid">`;
       grp.items.forEach(it => {
         const isActive = here === it.href || here === it.href.replace('.html','');
