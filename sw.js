@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v4
 // Stratégie : cache-first pour assets statiques, network-first pour pages HTML
-const SW_VERSION = 'pap-v110';
+const SW_VERSION = 'pap-v111';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
@@ -70,8 +70,8 @@ self.addEventListener('fetch', e => {
   // Ne pas intercepter les requêtes non-GET
   if (request.method !== 'GET') return;
 
-  // Assets statiques (CSS, JS, images, fonts, icons) → cache-first
-  if (url.pathname.match(/\.(css|js|svg|png|jpg|jpeg|webp|woff2?|ico|json)$/) &&
+  // Images → cache-first (ne changent pas souvent)
+  if (url.pathname.match(/\.(svg|png|jpg|jpeg|webp|ico)$/) &&
       !url.pathname.includes('/api/')) {
     e.respondWith(
       caches.match(request).then(cached => {
@@ -82,17 +82,29 @@ self.addEventListener('fetch', e => {
             caches.open(STATIC_CACHE).then(c => c.put(request, clone));
           }
           return res;
-        }).catch(() => {
-          if (url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico)$/)) {
-            return caches.match('/logo.svg');
-          }
-          return new Response('', {
-            status: 503,
-            statusText: 'Asset unavailable offline',
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-          });
-        });
+        }).catch(() => caches.match('/logo.svg'));
       })
+    );
+    return;
+  }
+
+  // JS/CSS/JSON → network-first, cache en fallback (garantit les mises à jour)
+  if (url.pathname.match(/\.(css|js|woff2?|json)$/) &&
+      !url.pathname.includes('/api/')) {
+    e.respondWith(
+      fetch(request).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(request, clone));
+        }
+        return res;
+      }).catch(() =>
+        caches.match(request).then(cached => cached || new Response('', {
+          status: 503,
+          statusText: 'Asset unavailable offline',
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        }))
+      )
     );
     return;
   }
