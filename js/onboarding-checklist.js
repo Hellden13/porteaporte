@@ -22,10 +22,19 @@
     const { data: { session } } = await db.auth.getSession();
     if (!session) return null;
     const { data: profile } = await db.from('profiles')
-      .select('id,role,email_verified,prenom,nom,ville,telephone,photo_url,photo_status,driver_status,livraisons,livraisons_count')
+      .select('id,role,email_verified,prenom,nom,ville,telephone,photo_url,photo_status,driver_status')
       .eq('id', session.user.id)
       .single();
-    return { session, profile };
+    let livraisons_count = 0;
+    if (profile) {
+      try {
+        const { count } = await db.from('livraisons')
+          .select('*', { count: 'exact', head: true })
+          .eq('expediteur_id', session.user.id);
+        livraisons_count = count || 0;
+      } catch (_) {}
+    }
+    return { session, profile: profile ? { ...profile, livraisons_count } : null };
   }
 
   // ─── Détermine les étapes selon le rôle et l'état ───
