@@ -241,7 +241,7 @@ module.exports = async function handler(req, res) {
         Authorization: 'Bearer ' + STRIPE_KEY,
         'Content-Type': 'application/x-www-form-urlencoded',
         'Stripe-Version': '2024-04-10',
-        'Idempotency-Key': `paiement-livraison-v3-${livraison.id}-${montantCents}-${currency}`,
+        'Idempotency-Key': `paiement-livraison-v4-live-${livraison.id}-${montantCents}-${currency}`,
       },
       body: params.toString(),
     });
