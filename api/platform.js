@@ -5151,8 +5151,13 @@ module.exports = async function handler(req, res) {
     const sbKey = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
 
     if (endpoint === 'stripe-public-config') {
-      const publishableKey = sanitizeEnv(process.env.STRIPE_PUBLIC_KEY)
-        || 'pk_live_51TNnGvGmtI41WMZSF2YASCjM7OytCs5v5AphI0wEC6LuVqTVwPWkCaUlL5OPmVChc3ywBJ89SoHlswaerhJ5hJiy006cGQG8fq';
+      const publishableKey = sanitizeEnv(process.env.STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLISHABLE_KEY);
+      if (!publishableKey) {
+        return res.status(503).json({
+          error: 'STRIPE_PUBLIC_KEY manquante',
+          code: 'STRIPE_PUBLIC_KEY_MISSING'
+        });
+      }
       return res.status(200).json({
         publishable_key: publishableKey,
         mode: publishableKey.includes('_test_') ? 'test' : 'live'
@@ -6278,12 +6283,12 @@ module.exports = async function handler(req, res) {
       checks.push({
         name: 'STRIPE_SECRET_KEY',
         ok: !!stripeKey,
-        detail: stripeKey ? `${stripeKey.startsWith('sk_live_') ? '🟢 LIVE' : (stripeKey.startsWith('sk_test_') ? '🟡 TEST' : '❓ Format inconnu')} · ${stripeKey.slice(0,7)}...${stripeKey.slice(-4)}` : '❌ Manquante dans Vercel'
+        detail: stripeKey ? `${stripeKey.startsWith('sk_live_') ? 'LIVE' : (stripeKey.startsWith('sk_test_') ? 'TEST' : 'Format inconnu')} - configuree` : 'Manquante dans Vercel'
       });
       checks.push({
         name: 'STRIPE_WEBHOOK_SECRET',
         ok: !!webhookSecret,
-        detail: webhookSecret ? `🟢 Configurée · ${webhookSecret.slice(0,7)}...${webhookSecret.slice(-4)}` : '❌ Manquante dans Vercel'
+        detail: webhookSecret ? 'Configuree' : 'Manquante dans Vercel'
       });
       try {
         const r = await fetch('https://api.stripe.com/v1/balance', {
@@ -6521,8 +6526,6 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-vehicle-photo')   return await rideVehiclePhotoUpload(req, res, ctx, body);
     if (endpoint === 'ride-create')          return await rideCreate(req, res, ctx, body);
     if (endpoint === 'ride-update')          return await rideUpdate(req, res, ctx, body);
-    if (endpoint === 'ride-search')          return await rideSearch(req, res, ctx, body);
-    if (endpoint === 'ride-detail')          return await rideDetail(req, res, ctx, body);
     if (endpoint === 'ride-book')            return await rideBook(req, res, ctx, body);
     if (endpoint === 'ride-driver-contact')  return await rideDriverContact(req, res, ctx, body);
     if (endpoint === 'ride-send-meetup-message') return await rideSendMeetupMessage(req, res, ctx, body);
@@ -6544,7 +6547,6 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
-    if (endpoint === 'ride-complete')        return await rideCompleteSecure(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);
