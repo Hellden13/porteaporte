@@ -119,6 +119,7 @@ module.exports = async function handler(req, res) {
   /* debug BOM supprimé — sanitizeEnv() suffit */
 
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
+  console.log('[paiement-livraison] stripe_mode=%s key_prefix=%s', STRIPE_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST', STRIPE_KEY.slice(0, 12));
   if (!SB_URL || !SB_KEY) return res.status(503).json({ error: 'Supabase non configure' });
 
   try {
