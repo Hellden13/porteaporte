@@ -634,7 +634,7 @@ async function handlePayment(){
 
     if(error) {
       console.error('[paiement] confirmCardPayment error:', error);
-      throw new Error(error.message);
+      throw new Error(error.message + ' [backend=' + (piData.stripe_mode||'?') + ' frontend=' + (stripe._apiKey||'').slice(0,12) + ']');
     }
 
     // 3. Synchroniser le statut serveur seulement apres confirmation Stripe.
