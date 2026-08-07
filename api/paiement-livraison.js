@@ -201,6 +201,8 @@ module.exports = async function handler(req, res) {
           livraison_id: livraison.id,
           status: existing.status,
           reused: true,
+          publishable_key: STRIPE_PK,
+          stripe_mode: STRIPE_IS_TEST ? 'test' : 'live',
         });
       }
 
@@ -217,6 +219,8 @@ module.exports = async function handler(req, res) {
           livraison_id: livraison.id,
           status: existing.status,
           reused: true,
+          publishable_key: STRIPE_PK,
+          stripe_mode: STRIPE_IS_TEST ? 'test' : 'live',
         });
       }
 
