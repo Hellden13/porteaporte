@@ -622,7 +622,13 @@ async function handlePayment(){
       return;
     }
 
-    // 2b. Confirmer le paiement avec Stripe.js (carte)
+    // 2b. Réinitialiser Stripe avec la clé matching le mode du backend (test vs live)
+    if (piData.publishable_key) {
+      stripe = Stripe(piData.publishable_key);
+      console.log('[paiement] Stripe réinitialisé en mode', piData.stripe_mode || 'inconnu');
+    }
+
+    // 2c. Confirmer le paiement avec Stripe.js (carte)
     const { error, paymentIntent } = await stripe.confirmCardPayment(piData.client_secret, {
       payment_method: {
         card: cardElement,

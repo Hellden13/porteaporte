@@ -116,7 +116,10 @@ module.exports = async function handler(req, res) {
   const STRIPE_KEY = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   const SB_URL = sanitizeEnv(process.env.SUPABASE_URL);
   const SB_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_KEY);
-  /* debug BOM supprimé — sanitizeEnv() suffit */
+  const STRIPE_IS_TEST = STRIPE_KEY.startsWith('sk_test_');
+  const STRIPE_PK = STRIPE_IS_TEST
+    ? 'pk_test_51TPYTTC1ggbN6iDYeznQJgKPu9KTbj2P0JYewaAPinJMDLxN1JpeauUm5iMrUAMGSbl2H3riALgV7O9QH2GE7rQR00wbHeE8nD'
+    : 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a';
 
   if (!STRIPE_KEY) return res.status(503).json({ error: 'Stripe non configure' });
   console.log('[paiement-livraison] stripe_mode=%s key_prefix=%s', STRIPE_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST', STRIPE_KEY.slice(0, 12));
@@ -322,6 +325,8 @@ module.exports = async function handler(req, res) {
       colis_id: colisId,
       livraison_id: livraison.id,
       status: intent.status,
+      publishable_key: STRIPE_PK,
+      stripe_mode: STRIPE_IS_TEST ? 'test' : 'live',
     });
   } catch (err) {
     const msg = err?.message || String(err) || 'erreur inconnue';
