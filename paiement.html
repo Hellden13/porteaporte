@@ -622,8 +622,6 @@ async function handlePayment(){
       return;
     }
 
-    console.log('[paiement] stripe_mode du backend:', piData.stripe_mode || 'inconnu');
-
     // 2b. Confirmer le paiement avec Stripe.js (carte)
     const { error, paymentIntent } = await stripe.confirmCardPayment(piData.client_secret, {
       payment_method: {
@@ -634,7 +632,7 @@ async function handlePayment(){
 
     if(error) {
       console.error('[paiement] confirmCardPayment error:', error);
-      throw new Error(error.message + ' [backend=' + (piData.stripe_mode||'?') + ' frontend=' + (stripe._apiKey||'').slice(0,12) + ']');
+      throw new Error(error.message);
     }
 
     // 3. Synchroniser le statut serveur seulement apres confirmation Stripe.
