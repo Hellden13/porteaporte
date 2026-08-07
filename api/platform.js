@@ -5154,8 +5154,8 @@ module.exports = async function handler(req, res) {
       const secretKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
       const isTest = secretKey.startsWith('sk_test_');
       const publishableKey = isTest
-        ? (sanitizeEnv(process.env.STRIPE_TEST_PUBLIC_KEY) || 'pk_test_51TPYTTC1ggbN6iDYeznQJgKPu9KTbj2P0JYewaAPinJMDLxN1JpeauUm5iMrUAMGSbl2H3riALgV7O9QH2GE7rQR00wbHeE8nD')
-        : (sanitizeEnv(process.env.STRIPE_PUBLIC_KEY) || 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a');
+        ? 'pk_test_51TPYTTC1ggbN6iDYeznQJgKPu9KTbj2P0JYewaAPinJMDLxN1JpeauUm5iMrUAMGSbl2H3riALgV7O9QH2GE7rQR00wbHeE8nD'
+        : 'pk_live_51TPYTTC1ggbN6iDYqf3edOE4tGAB4JOVxjiWWoHhvry3Kl14Y9CcU8ToBbsW1eA6lxiDzcIp6FKsnsYHFpVJjvl9000zhumf7a';
       return res.status(200).json({
         publishable_key: publishableKey,
         mode: isTest ? 'test' : 'live'
