@@ -902,7 +902,7 @@
       session = data.session;
 
       const { data: p } = await db.from('profiles')
-        .select('id,role,suspendu,driver_status,nom,prenom,disponible,subscription_status,subscription_plan,subscription_end_at,livraisons,coins,score,streak_jours,eco_bonus,transport_mode,niveau_livreur')
+        .select('id,role,suspendu,driver_status,nom,prenom,disponible,subscription_status,subscription_plan,subscription_end_at,transport_mode')
         .eq('id', session.user.id)
         .single();
       if (!p) { showBanner('Profil introuvable. Reconnecte-toi.', '#EF4444'); return; }
