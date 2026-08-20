@@ -1456,6 +1456,56 @@ async function manquementAdminDecision(req, res, ctx, body) {
   return res.status(200).json({ success: true });
 }
 
+async function pickupConfirm(req, res, ctx, body) {
+  const livraisonId = body.livraison_id || body.livraisonId;
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+  if (!isVerifiedDriver(ctx.session, ctx.profile) && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Livreur verifie requis' });
+  }
+
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,expediteur_id,livreur_id,statut,code,ville_depart,ville_arrivee`, {
+    headers: sbHeaders(ctx.sbKey)
+  });
+  const rows = livRes.ok ? await livRes.json() : [];
+  const livraison = rows[0];
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (!roleIn(ctx.profile, ['admin']) && livraison.livreur_id !== ctx.session.id) {
+    return res.status(403).json({ error: 'Seul le livreur assigne peut confirmer le pickup' });
+  }
+  if (!['confirme', 'paiement_autorise', 'en_route'].includes(livraison.statut)) {
+    return res.status(409).json({ error: 'Statut incompatible avec le pickup', statut: livraison.statut });
+  }
+
+  const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ statut: 'ramasse', ramasse_le: new Date().toISOString() })
+  });
+  if (!r.ok) return res.status(400).json({ error: 'Mise a jour statut impossible' });
+
+  // Notifier l'expéditeur (fire-and-forget)
+  try {
+    const expRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${livraison.expediteur_id}&select=email,prenom`, { headers: sbHeaders(ctx.sbKey) });
+    const expRows = expRes.ok ? await expRes.json() : [];
+    const exp = expRows[0];
+    if (exp?.email) {
+      callNotifier('colis_ramasse_expediteur', {
+        expediteur_email: exp.email,
+        prenom: exp.prenom || 'Expéditeur',
+        code: livraison.code || livraisonId.slice(0, 8),
+        livreur_prenom: ctx.profile?.prenom || 'Le livreur',
+        ville_depart: livraison.ville_depart || '',
+        ville_arrivee: livraison.ville_arrivee || '',
+        suivi_link: `${siteOrigin()}/suivi-livraison.html?id=${encodeURIComponent(livraisonId)}`
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.error('[pickupConfirm] notifier error:', e.message);
+  }
+
+  return res.status(200).json({ success: true, statut: 'ramasse' });
+}
+
 async function captureStripeOnDelivery(ctx, livraisonId, livraison) {
   const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
   if (!stripeKey) return;
@@ -6590,6 +6640,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'fiabilite-get') return await fiabiliteGet(req, res, ctx, body);
     if (endpoint === 'gps-update') return await gpsUpdate(req, res, ctx, body);
     if (endpoint === 'confirm-delivery') return await confirmDelivery(req, res, ctx, body);
+    if (endpoint === 'pickup-confirm') return await pickupConfirm(req, res, ctx, body);
     if (endpoint === 'delivery-proof') return await submitDeliveryProof(req, res, ctx, body);
     if (endpoint === 'available-livraisons') return await availableLivraisons(req, res, ctx, body);
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);

@@ -761,6 +761,26 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── COLIS RAMASSÉ (envoyé à l'expéditeur quand livreur confirme le pickup QR) ──
+    case 'colis_ramasse_expediteur': {
+      emails.push({
+        to: data.expediteur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🚀 Votre colis est en route — ${data.code}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 14px;color:#fff">🚀 Votre colis a été récupéré !</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${escapeHtml(data.prenom || 'Expéditeur')},<br><br><strong>${escapeHtml(data.livreur_prenom)}</strong> a récupéré votre colis <strong>${escapeHtml(data.code)}</strong> et est en route vers <strong>${escapeHtml(data.ville_arrivee || '?')}</strong>.</p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="${escapeHtml(data.suivi_link || '#')}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">📍 Suivre en temps réel →</a>
+            </div>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Questions ? bonjour@porteaporte.site 💙</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── CODE DE CONFIRMATION LIVRAISON (envoyé à l'expéditeur quand livreur accepte) ──
     case 'code_confirmation_livraison': {
       emails.push({
