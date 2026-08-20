@@ -1,10 +1,10 @@
 // ============================================================
 // PORTEÀPORTE — Vercel Function : Notifications courriel
 // Fichier : api/notifier.js
-// Service : SendGrid (gratuit jusqu'à 100 courriels/jour)
+// Service : Resend API (fallback legacy SENDGRID_API_KEY accepte pendant migration)
 // ============================================================
 // CONFIGURATION REQUISE dans Vercel → Settings → Environment Variables :
-//   SENDGRID_API_KEY = SG.xxxxxxxxxxxxxxxxxxxxxxxx
+//   RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxxxxxx
 //   ADMIN_EMAIL      = denismorneaubtc@gmail.com
 //   FROM_EMAIL       = notifications@porteaporte.site
 //   INTERNAL_API_SECRET = (obligatoire en prod pour types sensibles — voir BUILD)
@@ -136,15 +136,15 @@ module.exports = async function handler(req, res) {
     const fromDomain = fromEmail.includes('@') ? fromEmail.split('@').pop() : '';
     return res.status(200).json({
       success: true,
-      sendgrid_configured: Boolean(process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY),
+      resend_configured: Boolean(process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY),
       from_email_configured: Boolean(process.env.FROM_EMAIL),
       admin_email_configured: Boolean(process.env.ADMIN_EMAIL),
       supabase_configured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
       internal_secret_configured: Boolean(process.env.INTERNAL_API_SECRET),
       from_domain: fromDomain || null,
       expected_dns: fromDomain ? [
-        `SPF: ${fromDomain} doit autoriser SendGrid`,
-        `DKIM: ${fromDomain} doit etre authentifie dans SendGrid`,
+        `SPF: ${fromDomain} doit autoriser Resend`,
+        `DKIM: ${fromDomain} doit etre authentifie dans Resend`,
         `DMARC: _dmarc.${fromDomain} recommande`
       ] : [],
       spam_note: 'Si les courriels arrivent en pourriels, verifier surtout SPF, DKIM, DMARC et reputation du domaine expediteur.'
@@ -761,6 +761,28 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // ── CODE DE CONFIRMATION LIVRAISON (envoyé à l'expéditeur quand livreur accepte) ──
+    case 'code_confirmation_livraison': {
+      emails.push({
+        to: data.expediteur_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🔐 Votre code de livraison : ${data.code}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
+            <h2 style="margin:0 0 14px;color:#fff">🔐 Votre code de confirmation de livraison</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${escapeHtml(data.prenom || 'Expéditeur')},<br><br>Un livreur a accepté votre colis <strong>${escapeHtml(data.ville_depart || '')} → ${escapeHtml(data.ville_arrivee || '')}</strong>.<br><br>Au moment de la livraison, donnez ce code au livreur pour confirmer la remise :</p>
+            <div style="background:rgba(184,245,62,.08);border:2px solid rgba(184,245,62,.4);border-radius:12px;padding:24px;text-align:center;margin:20px 0">
+              <div style="font-size:2.4rem;font-weight:900;letter-spacing:6px;color:#b8f53e">${escapeHtml(data.code)}</div>
+              <div style="color:#a8b0ba;font-size:.8rem;margin-top:6px">Code de livraison — référence ${escapeHtml(data.code_livraison || '')}</div>
+            </div>
+            <p style="color:#a8b0ba;line-height:1.6;font-size:.88rem">⚠️ Ne partagez ce code qu'avec le livreur au moment de la remise. Le paiement n'est libéré qu'après la saisie du code.</p>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Questions ? Contactez-nous à bonjour@porteaporte.site 💙</p>
+          </div>`
+      });
+      break;
+    }
+
     // ── LIVRAISON COMPLÉTÉE ──
     case 'livraison_complete': {
       // À l'expéditeur
@@ -1163,11 +1185,11 @@ async function sendTestEmail(data, config) {
   const result = await sendEmail({
     to: email,
     from: { email: config.fromEmail, name: config.fromName },
-    subject: 'Test PorteàPorte - Verification SendGrid',
+    subject: 'Test PorteàPorte - Verification Resend',
     html: wrap(
       `<div style="${HEADER()}">${LOGO_HTML}</div>`,
       `<h2 style="font-size:22px;margin:0 0 16px;">Email de test recu</h2>
-      <p style="color:#555;line-height:1.7;">SendGrid fonctionne correctement pour PorteàPorte.</p>
+      <p style="color:#555;line-height:1.7;">Resend fonctionne correctement pour PorteàPorte.</p>
       <p style="font-size:12px;color:#777;">Timestamp: ${new Date().toISOString()}</p>`
     )
   }, config.resendKey);

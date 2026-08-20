@@ -482,7 +482,12 @@ async function assignDriver(req, res, ctx, body) {
     }
   }
 
-  const patch = { livreur_id: livreurId, statut: body.statut || 'confirme' };
+  // Générer un code de confirmation 6 chiffres pour la livraison
+  const receptionCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const crypto = require('crypto');
+  const receptionHash = crypto.createHash('sha256').update(receptionCode + '|' + livraisonId).digest('hex');
+
+  const patch = { livreur_id: livreurId, statut: body.statut || 'confirme', recipient_confirmation_hash: receptionHash };
   const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey),
@@ -490,6 +495,36 @@ async function assignDriver(req, res, ctx, body) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Assignation impossible', details: data });
+
+  // Envoyer le code par courriel à l'expéditeur (fire-and-forget)
+  try {
+    const expRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${livraison.expediteur_id}&select=email,prenom,nom`, {
+      headers: sbHeaders(ctx.sbKey)
+    });
+    const expRows = expRes.ok ? await expRes.json() : [];
+    const expProfile = expRows[0];
+    const origin = siteOrigin();
+    const notifHeaders = { 'Content-Type': 'application/json' };
+    if (process.env.INTERNAL_API_SECRET) notifHeaders['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+    await fetch(`${origin}/api/notifier`, {
+      method: 'POST',
+      headers: notifHeaders,
+      body: JSON.stringify({
+        type: 'code_confirmation_livraison',
+        data: {
+          expediteur_email: expProfile?.email,
+          prenom: expProfile?.prenom || 'Expéditeur',
+          code: receptionCode,
+          code_livraison: livraison.id?.slice(0, 8)?.toUpperCase(),
+          ville_depart: livraison.ville_depart,
+          ville_arrivee: livraison.ville_arrivee
+        }
+      })
+    }).catch(() => {});
+  } catch (e) {
+    console.error('[assignDriver] notifier code error:', e.message);
+  }
+
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 
@@ -1510,9 +1545,6 @@ async function confirmDelivery(req, res, ctx, body) {
   if (!r.ok) return res.status(400).json({ error: 'Confirmation livraison impossible', details: data });
 
   rewardReferralIfPending(ctx, livraison.livreur_id, 'first_delivery').catch(() => {});
-  captureStripeOnDelivery(ctx, livraisonId, livraison).catch(e =>
-    console.error('[confirmDelivery] auto-capture error:', e.message)
-  );
 
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }

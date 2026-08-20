@@ -2177,16 +2177,39 @@
     }
 
     async function markDelivered(id) {
-      if (!confirm('Marquer cette livraison comme livrée ?')) return;
-      const res = await fetch('/api/confirm-delivery', {
+      // Étape 1 : marquer comme livré
+      const res1 = await fetch('/api/platform?endpoint=confirm-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ livraison_id: id })
       });
-      if (res.ok) { await loadMyDeliveries(); }
-      else {
-        const out = await res.json().catch(() => ({}));
+      if (!res1.ok) {
+        const out = await res1.json().catch(() => ({}));
         alert(out.error || 'Erreur lors de la mise à jour');
+        return;
+      }
+
+      // Étape 2 : demander le code de confirmation au destinataire
+      const code = prompt('Demandez le code de livraison au destinataire et entrez-le ici :');
+      if (!code || code.trim().length < 6) {
+        alert('Code invalide. La livraison est marquée comme livrée mais le paiement n\'est pas encore libéré. Contactez le support.');
+        await loadMyDeliveries();
+        return;
+      }
+
+      // Étape 3 : capturer le paiement avec le code
+      const res2 = await fetch('/api/capture-livraison', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ livraison_id: id, recipient_code: code.trim() })
+      });
+      const out2 = await res2.json().catch(() => ({}));
+      if (res2.ok) {
+        alert('✅ Livraison confirmée ! Le paiement a été libéré.');
+        await loadMyDeliveries();
+      } else {
+        alert('Code invalide ou erreur : ' + (out2.error || 'Erreur inconnue') + '\nLe paiement reste bloqué en sécurité. Contactez le support si nécessaire.');
+        await loadMyDeliveries();
       }
     }
 
