@@ -1421,6 +1421,66 @@ async function manquementAdminDecision(req, res, ctx, body) {
   return res.status(200).json({ success: true });
 }
 
+async function captureStripeOnDelivery(ctx, livraisonId, livraison) {
+  const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
+  if (!stripeKey) return;
+  const piId = livraison.stripe_payment_intent;
+  if (!piId) return;
+
+  const piRes = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(piId)}`, {
+    headers: { Authorization: 'Bearer ' + stripeKey, 'Stripe-Version': '2024-04-10' }
+  });
+  const pi = piRes.ok ? await piRes.json() : null;
+  if (!pi || pi.status !== 'requires_capture') {
+    console.log('[confirmDelivery] PI non capturable:', piId, pi?.status);
+    return;
+  }
+
+  const capRes = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(piId)}/capture`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + stripeKey,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Stripe-Version': '2024-04-10',
+      'Idempotency-Key': `auto-capture-${livraisonId}-${piId}`
+    }
+  });
+  const captured = await capRes.json();
+  if (!capRes.ok) {
+    console.error('[confirmDelivery] capture Stripe failed:', captured.error?.message);
+    return;
+  }
+
+  await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(ctx.sbKey),
+    body: JSON.stringify({ statut: 'payee' })
+  });
+
+  if (livraison.livreur_id && captured.amount_received > 0) {
+    const grossCents = captured.amount_received;
+    const netCents = Math.floor(grossCents * 0.60);
+    await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
+      method: 'POST',
+      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: livraison.livreur_id,
+        livraison_id: livraisonId,
+        gross_amount: grossCents / 100,
+        platform_fee: (grossCents - netCents) / 100,
+        net_amount: netCents / 100,
+        currency: captured.currency || 'cad',
+        status: 'available',
+        available_after: new Date().toISOString(),
+        stripe_payment_intent: captured.id,
+        type: 'livraison',
+        created_at: new Date().toISOString()
+      })
+    }).catch(() => {});
+  }
+  console.log('[confirmDelivery] auto-capture OK:', piId, 'amount_received:', captured.amount_received);
+}
+
 async function confirmDelivery(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
@@ -1428,7 +1488,7 @@ async function confirmDelivery(req, res, ctx, body) {
     return res.status(403).json({ error: 'Livreur verifie requis' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,expediteur_id,livreur_id,statut`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,expediteur_id,livreur_id,statut,stripe_payment_intent,code,prix_total`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -1449,8 +1509,10 @@ async function confirmDelivery(req, res, ctx, body) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Confirmation livraison impossible', details: data });
 
-  // Déclenche la récompense parrainage si le livreur a été parrainé (fire-and-forget)
   rewardReferralIfPending(ctx, livraison.livreur_id, 'first_delivery').catch(() => {});
+  captureStripeOnDelivery(ctx, livraisonId, livraison).catch(e =>
+    console.error('[confirmDelivery] auto-capture error:', e.message)
+  );
 
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
