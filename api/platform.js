@@ -1576,7 +1576,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
     return res.status(400).json({ error: 'Position GPS obligatoire pour un depot sans destinataire' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -1662,6 +1662,11 @@ async function submitDeliveryProof(req, res, ctx, body) {
     }
   }
   if (!patched) return res.status(400).json({ error: 'Preuve enregistree, mais statut livraison non mis a jour' });
+
+  // Capture Stripe automatique — photo + GPS = preuve suffisante (fire-and-forget)
+  captureStripeOnDelivery(ctx, livraisonId, livraison).catch(e =>
+    console.error('[submitDeliveryProof] auto-capture error:', e.message)
+  );
 
   // Notifications post-preuve — fire and forget
   try {

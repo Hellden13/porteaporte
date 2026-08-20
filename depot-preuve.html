@@ -163,7 +163,7 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Depot avec preuve impossible');
-        show('ok', '✅ Preuve enregistree.\n\nL\'expediteur et le destinataire ont ete notifies par courriel. Le paiement reste protege jusqu\'a la confirmation de reception par le destinataire.\n\nRedirection vers ton dashboard...');
+        show('ok', '✅ Livraison confirmée !\n\nPhoto + GPS enregistrés. Le paiement est libéré automatiquement.\n\nRedirection vers ton dashboard...');
         document.getElementById('proof-form').style.display = 'none';
         setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 3000);
       } catch (err) {
