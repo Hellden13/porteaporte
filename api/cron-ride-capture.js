@@ -15,11 +15,12 @@ function sanitize(s) {
 module.exports = async function handler(req, res) {
   // Sécurité : Vercel cron envoie un header Authorization=Bearer CRON_SECRET (si configuré)
   const cronSecret = sanitize(process.env.CRON_SECRET);
-  if (cronSecret) {
-    const authHeader = req.headers.authorization || '';
-    if (authHeader !== 'Bearer ' + cronSecret) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  if (!cronSecret || cronSecret.length < 32) {
+    return res.status(503).json({ error: 'CRON_SECRET absent ou trop court' });
+  }
+  const authHeader = req.headers.authorization || '';
+  if (authHeader !== 'Bearer ' + cronSecret) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const sbUrl = sanitize(process.env.SUPABASE_URL);

@@ -1485,6 +1485,42 @@ describe('webauthn handler — rôle requis', () => {
   });
 });
 
+// ─── Tests durcissement services internes ───────────────────────────────────
+describe('services internes fail-closed', () => {
+  test('cron-cleanup refuse de démarrer sans CRON_SECRET robuste', async () => {
+    const handler = require('../api/cron-cleanup');
+    delete process.env.CRON_SECRET;
+    const req = makeReq({ method: 'GET', headers: {} });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 503);
+    assert.match(res._body?.error || '', /CRON_SECRET/);
+  });
+
+  test('cron-ride-capture refuse un secret trop court', async () => {
+    const handler = require('../api/cron-ride-capture');
+    process.env.CRON_SECRET = 'trop-court';
+    const req = makeReq({ method: 'GET', headers: { authorization: 'Bearer trop-court' } });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 503);
+    assert.match(res._body?.error || '', /CRON_SECRET/);
+  });
+
+  test('notifier refuse un message transactionnel sans secret interne', async () => {
+    const handler = require('../api/notifier');
+    delete process.env.INTERNAL_API_SECRET;
+    const req = makeReq({
+      body: { type: 'sos_alert', data: { email: 'test@example.com' } },
+      headers: { origin: 'https://porteaporte.site' }
+    });
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 503);
+    assert.match(res._body?.error || '', /INTERNAL_API_SECRET/);
+  });
+});
+
 // Nettoyage après tous les tests
 after(() => {
   delete global.fetch;

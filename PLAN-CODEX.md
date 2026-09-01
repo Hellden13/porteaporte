@@ -260,8 +260,8 @@ CREATE POLICY "admin lit docs kyc"   ON storage.objects FOR SELECT  USING  (buck
 
 | Variable | Valeur |
 |---|---|
-| `VAPID_PUBLIC_KEY` | `5St-YNoXKX2vMy3sZWYgihRB697D3j_2lyYj4BQB4w4dxvkwgc6ooE2qaAUUh9yHL7oDwF2y43hHzBk-5CPRkw` |
-| `VAPID_PRIVATE_KEY` | `9wF6UdVIHHK5MlIjVd9_2MFRckbSWx0y2yr2ORMRwxk` |
+| `VAPID_PUBLIC_KEY` | À générer et configurer dans Vercel (ne jamais publier la valeur ici) |
+| `VAPID_PRIVATE_KEY` | À générer et configurer dans Vercel (secret; ne jamais commiter) |
 
 Redéployer après ajout : `vercel --prod --yes`
 

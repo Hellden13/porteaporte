@@ -7,8 +7,11 @@ const { sanitizeEnv, sbHeaders, alertAdmin } = require('../lib/_lib');
 module.exports = async function handler(req, res) {
   // Sécurité : seulement Vercel Cron ou secret interne
   const authHeader = req.headers['authorization'] || '';
-  const cronSecret = process.env.CRON_SECRET || '';
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const cronSecret = sanitizeEnv(process.env.CRON_SECRET);
+  if (!cronSecret || cronSecret.length < 32) {
+    return res.status(503).json({ error: 'CRON_SECRET absent ou trop court' });
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Non autorisé' });
   }
 
@@ -159,22 +162,22 @@ module.exports = async function handler(req, res) {
     results.daily_summary = 'exception: ' + e.message;
   }
 
-  // ─── 5. CAPTURE PAIEMENTS COVOITURAGE (fusionné ici : plan Hobby ne lance qu'un cron) ───
-  // Capture les réservations 'confirme' dont le trajet est passé (+grâce) → paie les conducteurs.
+  // ─── 5. CYCLE COMPLET DES PAIEMENTS COVOITURAGE ───
+  // Le plan Vercel ne lance qu'un cron. On délègue donc au handler complet qui
+  // capture les réservations admissibles, nettoie les réservations fantômes et
+  // auto-valide après le délai de grâce.
   try {
-    const stripeKey = sanitizeEnv(process.env.STRIPE_SECRET_KEY);
-    if (stripeKey) {
-      const { rideCaptureEligible } = require('../lib/_rides');
-      const ctx = { sbUrl, sbKey, stripeKey, session: { id: '__cron__' }, profile: { role: 'admin' } };
-      let capData = null;
-      const fakeRes = { status: () => ({ json: (d) => { capData = d; return d; } }) };
-      await rideCaptureEligible({ url: '/api/cron-cleanup' }, fakeRes, ctx, { grace_hours: 4 });
-      results.ride_capture = capData
-        ? `captured ${(capData.captured || []).length}, skipped ${(capData.skipped || []).length}, errors ${(capData.errors || []).length}`
-        : 'no-result';
-    } else {
-      results.ride_capture = 'stripe non configuré';
-    }
+    const rideCron = require('./cron-ride-capture');
+    let rideStatus = 500;
+    let rideData = null;
+    const rideRes = {
+      status(code) {
+        rideStatus = code;
+        return { json(data) { rideData = data; return data; } };
+      }
+    };
+    await rideCron(req, rideRes);
+    results.ride_capture = { status: rideStatus, ...(rideData || {}) };
   } catch (e) {
     results.ride_capture = 'exception: ' + e.message;
   }

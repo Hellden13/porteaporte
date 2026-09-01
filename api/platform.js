@@ -110,6 +110,11 @@ async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
     return res.status(403).json({ error: 'Role expediteur requis' });
   }
+  // Si les nouvelles capacités sont présentes, elles priment sur le rôle legacy.
+  // L'absence de la colonne reste compatible avec les anciens profils.
+  if (ctx.profile?.role !== 'admin' && ctx.profile?.est_expediteur === false) {
+    return res.status(403).json({ error: 'Capacité expediteur requise' });
+  }
 
   const payload = {
     expediteur_id: ctx.session.id,
@@ -7087,7 +7092,6 @@ async function rideComplete(req, res, ctx, body) {
     return res.status(500).json({ error: 'Erreur serveur : ' + e.message });
   }
 }
-
 
 
 

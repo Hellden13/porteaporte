@@ -111,17 +111,19 @@ function assertNotifierAuth(req, type) {
 
   if (hasValidInternalSecret(req)) return { ok: true };
 
-  if (PUBLIC_TYPES.has(type)) {
+  const browserPublic = type === 'auth_confirmation' || type === 'partenaire' ||
+    type === 'liste_attente' || type === 'contact_support' ||
+    type === 'contact_partenariat' || type === 'contact_investisseur';
+  if (browserPublic) {
     if (!validatePublicCaller(req))
       return { ok: false, status: 403, error: 'Origine non autorisee' };
     return { ok: true };
   }
 
-  if (internalConfigured) {
-    return { ok: false, status: 403, error: 'Secret interne requis pour ce type de notification' };
+  if (!internalConfigured) {
+    return { ok: false, status: 503, error: 'INTERNAL_API_SECRET non configuré' };
   }
-  console.warn('[notifier] INTERNAL_API_SECRET non configure — tous types acceptés (migration)');
-  return { ok: true };
+  return { ok: false, status: 403, error: 'Secret interne requis pour ce type de notification' };
 }
 
 module.exports = async function handler(req, res) {
