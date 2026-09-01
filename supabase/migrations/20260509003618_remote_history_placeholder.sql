@@ -1,0 +1,2 @@
+-- Historical migration already applied remotely before this repository tracked migrations.
+-- Intentionally empty: retained only to keep local and remote migration history aligned.
