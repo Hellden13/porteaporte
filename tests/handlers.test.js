@@ -342,6 +342,24 @@ describe('platform.js dispatcher', () => {
     assert.equal(res._status, 200);
   });
 
+  test('turnstile-config expose seulement la clé publique et l’état', async () => {
+    const previous = process.env.TURNSTILE_SITE_KEY;
+    process.env.TURNSTILE_SITE_KEY = 'site-key-test';
+    const req = makeReq({ method: 'GET' });
+    req.url = '/api/platform?endpoint=turnstile-config';
+    const res = makeRes();
+    await handler(req, res);
+    assert.equal(res._status, 200);
+    assert.deepEqual(res._body, {
+      success: true,
+      enabled: true,
+      site_key: 'site-key-test'
+    });
+    assert.equal('secret' in res._body, false);
+    if (previous === undefined) delete process.env.TURNSTILE_SITE_KEY;
+    else process.env.TURNSTILE_SITE_KEY = previous;
+  });
+
   test('endpoint inconnu → 400', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user': { ok: true, data: { id: 'u1', email: 'e@e.com' } },

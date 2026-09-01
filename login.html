@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-captcha.js"></script>
   <script src="/js/modal-helper.js"></script>
   <style>
     .login-container {
@@ -262,6 +263,7 @@
               </button>
             </div>
           </div>
+          <div id="login-captcha" class="form-group" aria-live="polite"></div>
           <button type="submit" class="submit-btn" id="emailBtn">Se connecter</button>
         </form>
         <button type="button" class="ghost-btn" style="margin-top:10px" onclick="sendPasswordReset()">Mot de passe oublié ?</button>
@@ -356,6 +358,7 @@
   <script>
     const db = window.db || window.getSupabaseClient();
     let phoneForOtp = '';
+    const loginCaptcha = window.PAPAuthCaptcha.mount('login-captcha', 'login');
 
     function togglePwd(inputId, btnId) {
       var input = document.getElementById(inputId);
@@ -518,10 +521,13 @@
       btn.disabled = true;
       btn.textContent = 'Connexion...';
       try {
+        const captchaToken = await loginCaptcha.getToken();
         const { data, error } = await db.auth.signInWithPassword({
           email: document.getElementById('email').value.trim(),
-          password: document.getElementById('password').value
+          password: document.getElementById('password').value,
+          options: { captchaToken: captchaToken || undefined }
         });
+        loginCaptcha.reset();
         if (error) throw error;
         await afterLogin(data.session);
       } catch (err) {
@@ -538,9 +544,12 @@
         return;
       }
       try {
+        const captchaToken = await loginCaptcha.getToken();
         const { error } = await db.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/login.html'
+          redirectTo: window.location.origin + '/login.html',
+          captchaToken: captchaToken || undefined
         });
+        loginCaptcha.reset();
         if (error) throw error;
         showStatus('emailStatus', 'Lien de réinitialisation envoyé. Vérifie aussi les courriels indésirables.', 'success');
       } catch (err) {

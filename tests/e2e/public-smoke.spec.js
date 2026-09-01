@@ -24,6 +24,7 @@ test('connexion expose les champs essentiels', async ({ page }) => {
   await expect(page.locator('input[type="email"]')).toBeVisible();
   await expect(page.locator('input[type="password"]')).toBeVisible();
   await expect(page.locator('button[type="submit"]').first()).toBeVisible();
+  await expect(page.locator('#login-captcha')).toBeAttached();
 });
 
 test('inscription expose les champs essentiels et les mentions légales', async ({ page }) => {
@@ -32,4 +33,5 @@ test('inscription expose les champs essentiels et les mentions légales', async 
   await expect(page.locator('input[type="password"]')).toBeVisible();
   await expect(page.locator('a[href="/cgu.html"]')).toBeVisible();
   await expect(page.locator('a[href="/confidentialite.html"]').first()).toBeVisible();
+  await expect(page.locator('#signup-captcha')).toBeAttached();
 });

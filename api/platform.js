@@ -5316,6 +5316,15 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (endpoint === 'turnstile-config') {
+      const siteKey = sanitizeEnv(process.env.TURNSTILE_SITE_KEY);
+      return res.status(200).json({
+        success: true,
+        enabled: Boolean(siteKey),
+        site_key: siteKey || null
+      });
+    }
+
     if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
     const internalSecret = process.env.INTERNAL_API_SECRET;
     const internalHeader = req.headers['x-internal-notifier-secret'];
@@ -7092,6 +7101,5 @@ async function rideComplete(req, res, ctx, body) {
     return res.status(500).json({ error: 'Erreur serveur : ' + e.message });
   }
 }
-
 
 
