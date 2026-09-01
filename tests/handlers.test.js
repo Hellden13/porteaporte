@@ -1463,6 +1463,47 @@ describe('stripe-webhook hardening', () => {
     assert.equal(res._status, 500);
     assert.match(res._body?.error || '', /Webhook Stripe/);
   });
+
+  test('persiste et audite un paiement de covoiturage echoue', async () => {
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key-fake';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url: String(url), method: opts.method || 'GET', body: opts.body || null });
+      return { ok: true, status: opts.method === 'PATCH' ? 204 : 201, text: async () => '', json: async () => ({}) };
+    };
+
+    const event = {
+      id: 'evt_payment_failed',
+      type: 'payment_intent.payment_failed',
+      data: {
+        object: {
+          id: 'pi_payment_failed',
+          status: 'requires_payment_method',
+          amount: 1250,
+          currency: 'cad',
+          last_payment_error: { code: 'card_declined', message: 'Carte refusee' },
+          metadata: {
+            type: 'ride_booking',
+            booking_id: 'book-failed',
+            ride_id: 'ride-1',
+            passenger_id: 'passenger-1'
+          }
+        }
+      }
+    };
+    const res = makeRes();
+    await handler(makeStripeWebhookReq(event), res);
+
+    assert.equal(res._status, 200);
+    const bookingPatch = calls.find((c) => c.url.includes('/rest/v1/ride_bookings?id=eq.book-failed') && c.method === 'PATCH');
+    assert.ok(bookingPatch);
+    assert.equal(JSON.parse(bookingPatch.body).payment_status, 'failed');
+    const audit = calls.find((c) => c.url.includes('/rest/v1/transaction_audit_events') && c.method === 'POST');
+    assert.ok(audit);
+    assert.equal(JSON.parse(audit.body).event_type, 'ride_payment_intent_failed_webhook');
+  });
 });
 
 // ─── Tests webauthn.js ────────────────────────────────────────────────────────

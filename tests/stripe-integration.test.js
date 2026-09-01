@@ -774,6 +774,44 @@ describe('Stripe integration - webhook signe', { skip: STRIPE_SKIP }, () => {
     assert.match(res._body.error, /Signature invalide/);
   });
 
+  test('paiement echoue met a jour la reservation et cree une trace audit', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url: String(url), method: opts.method || 'GET', body: opts.body || null });
+      return jsonResponse({}, opts.method === 'PATCH' ? 204 : 201);
+    };
+    const event = {
+      id: 'evt_integration_payment_failed',
+      type: 'payment_intent.payment_failed',
+      data: {
+        object: {
+          id: 'pi_webhook_failed',
+          status: 'requires_payment_method',
+          amount: 1000,
+          currency: 'cad',
+          last_payment_error: { code: 'card_declined', message: 'Carte refusee' },
+          metadata: {
+            type: 'ride_booking',
+            booking_id: 'book-webhook-failed',
+            ride_id: 'ride-webhook',
+            passenger_id: 'passenger-1'
+          }
+        }
+      }
+    };
+
+    const res = makeRes();
+    await handler(makeStripeWebhookReq(event, webhookSecret), res);
+
+    assert.equal(res._status, 200);
+    const patch = calls.find((c) => c.url.includes('/rest/v1/ride_bookings?id=eq.book-webhook-failed') && c.method === 'PATCH');
+    assert.ok(patch);
+    assert.equal(JSON.parse(patch.body).payment_status, 'failed');
+    const audit = calls.find((c) => c.url.includes('/rest/v1/transaction_audit_events') && c.method === 'POST');
+    assert.ok(audit);
+    assert.equal(JSON.parse(audit.body).event_type, 'ride_payment_intent_failed_webhook');
+  });
+
   test('ecriture critique en echec retourne 500 pour retry Stripe', async () => {
     global.fetch = async (url, opts = {}) => {
       if (String(url).includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') {
