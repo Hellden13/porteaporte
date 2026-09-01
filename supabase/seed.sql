@@ -1,0 +1,2 @@
+-- Local test data is created by automated scenarios as needed.
+-- Keep this file free of production or personal data.

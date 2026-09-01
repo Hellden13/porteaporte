@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node --test tests/lib.test.js tests/rides.test.js tests/ride-create.test.js tests/ride-payment.test.js tests/growth.test.js tests/handlers.test.js tests/paiement.test.js",
+    "test": "node --test tests/lib.test.js tests/rides.test.js tests/ride-create.test.js tests/ride-payment.test.js tests/growth.test.js tests/handlers.test.js tests/paiement.test.js tests/auth-captcha.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "E2E_BASE_URL=https://porteaporte.site playwright test tests/e2e/live-smoke.spec.js",
     "test:lib": "node --test tests/lib.test.js",
     "test:rides": "node --test tests/rides.test.js",
     "test:growth": "node --test tests/growth.test.js",
@@ -21,5 +23,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }

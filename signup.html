@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-captcha.js"></script>
   <script src="/js/modal-helper.js"></script>
   <style>
     body{min-height:100vh;display:grid;place-items:center;padding:24px}
@@ -72,6 +73,8 @@
       </div>
       <input type="hidden" id="form-rendered-at" value="">
 
+      <div id="signup-captcha" class="form-group" aria-live="polite"></div>
+
       <button class="auth-btn" type="submit" id="signupBtn">Créer mon compte</button>
       <p style="font-size:.78rem;color:var(--brand-muted);text-align:center;margin-top:10px">
         En créant un compte, tu acceptes nos <a href="/cgu.html" target="_blank">CGU</a> et notre <a href="/confidentialite.html" target="_blank">politique de confidentialité (Loi 25)</a>.
@@ -95,6 +98,7 @@
     }
     const form = document.getElementById('signupForm');
     const btn = document.getElementById('signupBtn');
+    const signupCaptcha = window.PAPAuthCaptcha.mount('signup-captcha', 'signup');
 
     // Honeypot : enregistre le moment où le form est rendu (bots remplissent en <2s)
     document.getElementById('form-rendered-at').value = Date.now();
@@ -189,14 +193,26 @@
       if (referralCode) redirectParams.set('ref', referralCode);
       const redirectSuffix = redirectParams.toString() ? '?' + redirectParams.toString() : '';
 
+      let captchaToken = null;
+      try {
+        captchaToken = await signupCaptcha.getToken();
+      } catch (captchaError) {
+        showError(captchaError.message);
+        btn.disabled = false;
+        btn.textContent = 'Créer mon compte';
+        return;
+      }
+
       const { data, error } = await db.auth.signUp({
         email,
         password: form.password.value,
         options: {
           emailRedirectTo: window.location.origin + '/role-choice.html' + redirectSuffix,
-          data: { prenom, nom, role, referral_code: referralCode || null }
+          data: { prenom, nom, role, referral_code: referralCode || null },
+          captchaToken: captchaToken || undefined
         }
       });
+      signupCaptcha.reset();
 
       if (error) {
         showError(error.message || 'Inscription impossible.');
