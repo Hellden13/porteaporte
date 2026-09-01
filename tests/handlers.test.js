@@ -315,7 +315,11 @@ describe('paiement-livraison handler', () => {
 describe('vercel routing guards', () => {
   test('plan Hobby: un seul cron actif et tracking-public passe par platform', () => {
     const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+    const apiFunctions = fs.readdirSync('api').filter((name) => name.endsWith('.js'));
+    assert.ok(apiFunctions.length <= 12, `le plan Hobby accepte au plus 12 fonctions, trouvé: ${apiFunctions.length}`);
     assert.deepEqual((config.crons || []).map((cron) => cron.path), ['/api/cron-cleanup']);
+    const rideCron = (config.rewrites || []).find((rw) => rw.source === '/api/cron-ride-capture');
+    assert.equal(rideCron?.destination, '/api/cron-cleanup');
     const tracking = (config.rewrites || []).filter((rw) => rw.source === '/api/tracking-public');
     assert.equal(tracking.length, 1);
     assert.equal(tracking[0].destination, '/api/platform?endpoint=tracking-public');
@@ -1498,7 +1502,7 @@ describe('services internes fail-closed', () => {
   });
 
   test('cron-ride-capture refuse un secret trop court', async () => {
-    const handler = require('../api/cron-ride-capture');
+    const handler = require('../lib/_cron-ride-capture');
     process.env.CRON_SECRET = 'trop-court';
     const req = makeReq({ method: 'GET', headers: { authorization: 'Bearer trop-court' } });
     const res = makeRes();

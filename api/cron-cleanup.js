@@ -167,7 +167,7 @@ module.exports = async function handler(req, res) {
   // capture les réservations admissibles, nettoie les réservations fantômes et
   // auto-valide après le délai de grâce.
   try {
-    const rideCron = require('./cron-ride-capture');
+    const rideCron = require('../lib/_cron-ride-capture');
     let rideStatus = 500;
     let rideData = null;
     const rideRes = {
