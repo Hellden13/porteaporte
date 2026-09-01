@@ -6,7 +6,6 @@
         "api/capture-livraison.js": { "includeFiles": "lib/**" },
         "api/paiement-livraison.js": { "includeFiles": "lib/**" },
         "api/cron-cleanup.js": { "includeFiles": "lib/**" },
-        "api/cron-ride-capture.js": { "includeFiles": "lib/**" },
         "api/turnstile-verify.js": { "includeFiles": "lib/**" }
     },
     "crons": [
@@ -41,6 +40,10 @@
         { "source": "/test-login.html",         "destination": "/404.html", "permanent": false }
     ],
     "rewrites":  [
+                     {
+                         "source":  "/api/cron-ride-capture",
+                         "destination":  "/api/cron-cleanup"
+                     },
                      {
                          "source":  "/trajet/:id",
                          "destination":  "/api/platform?endpoint=og-trajet&id=:id"

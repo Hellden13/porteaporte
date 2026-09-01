@@ -264,6 +264,60 @@ module.exports = async function handler(req, res) {
       }), 'delivery payment succeeded audit insert');
     }
   }
+
+  /* ── payment_intent.payment_failed ─────────────────────── */
+  /* Paiement refusé/échoué : libérer la réservation et tracer */
+  if (type === 'payment_intent.payment_failed') {
+    const failureMessage = obj.last_payment_error?.message || 'Paiement refusé ou échoué';
+    const bookingId = obj.metadata?.booking_id;
+    if (bookingId && obj.metadata?.type === 'ride_booking') {
+      await requireOk(await sbPatch(sbUrl, sbKey, 'ride_bookings',
+        `id=eq.${encodeURIComponent(bookingId)}`,
+        { payment_status: 'failed' }), 'ride booking failed webhook patch');
+
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        user_id: obj.metadata?.passenger_id || null,
+        actor_id: null,
+        event_type: 'ride_payment_intent_failed_webhook',
+        amount_cents: obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status || 'failed',
+        evidence: {
+          source: 'api/stripe-webhook',
+          event_id: event.id,
+          ride_id: obj.metadata?.ride_id || null,
+          booking_id: bookingId,
+          failure_code: obj.last_payment_error?.code || null,
+          failure_message: failureMessage
+        }
+      }), 'ride payment failed audit insert');
+    }
+
+    const livraisonId = obj.metadata?.livraison_id;
+    if (livraisonId) {
+      await requireOk(await sbPatch(sbUrl, sbKey, 'livraisons',
+        `id=eq.${encodeURIComponent(livraisonId)}`,
+        { statut: 'payment_failed' }), 'delivery failed webhook patch');
+
+      await requireOk(await sbPost(sbUrl, sbKey, 'transaction_audit_events', {
+        livraison_id: livraisonId,
+        user_id: obj.metadata?.expediteur_id || null,
+        actor_id: null,
+        event_type: 'payment_intent_failed_webhook',
+        amount_cents: obj.amount || 0,
+        currency: obj.currency || 'cad',
+        stripe_payment_intent: obj.id,
+        status: obj.status || 'failed',
+        evidence: {
+          source: 'api/stripe-webhook',
+          event_id: event.id,
+          failure_code: obj.last_payment_error?.code || null,
+          failure_message: failureMessage
+        }
+      }), 'delivery payment failed audit insert');
+    }
+  }
   } catch (e) {
     console.error('[stripe-webhook] critical payment event failed', type, e.message);
     return res.status(500).json({ error: 'Webhook Stripe non traite', details: e.message });
