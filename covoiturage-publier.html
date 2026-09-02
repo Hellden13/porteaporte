@@ -309,6 +309,7 @@
           .quick-pick:hover { background: rgba(0,217,255,.15); border-color: rgba(0,217,255,.45); color: var(--brand-cyan); transform: translateY(-1px); }
           .quick-pick.active { background: #b8f53e; color: #071006; border-color: #ffffff; box-shadow: 0 0 0 4px rgba(184,245,62,.48), 0 6px 18px rgba(0,0,0,.35); transform: translateY(-2px) scale(1.04); font-weight: 900; }
           .quick-pick.active::before { content: '✓ '; }
+          .quick-pick:disabled { background:#11151d; border-color:#303746; color:#70798a; cursor:not-allowed; opacity:.58; text-decoration:line-through; transform:none; }
         </style>
         <div class="form-grid" style="margin-top:14px;">
           <label class="toggle-option"><input type="checkbox" id="is_return_trip" onchange="toggleReturn()"> 🔄 Trajet aller-retour</label>
@@ -1065,6 +1066,7 @@
       _selectedDay = daysOffset;
       document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      updateHourAvailability();
       updateRecap();
     }
     function pickHour(hour, btn) {
@@ -1105,6 +1107,22 @@
       const label = d.toLocaleDateString('fr-CA', { weekday:'long', day:'numeric', month:'long' }) + ' à ' + _selectedHour + 'h00';
       recap.innerHTML = '✅ <strong>' + label + '</strong>';
     }
+
+    function updateHourAvailability() {
+      const now = new Date();
+      document.querySelectorAll('.hour-btn').forEach(btn => {
+        const hour = Number(btn.dataset.h);
+        const isPastToday = _selectedDay === 0 && hour <= now.getHours();
+        btn.disabled = isPastToday;
+        btn.title = isPastToday ? 'Cette heure est déjà passée' : '';
+        if (isPastToday && btn.classList.contains('active')) {
+          btn.classList.remove('active');
+          _selectedHour = null;
+          document.getElementById('departure_time').value = '';
+        }
+      });
+    }
+    updateHourAvailability();
     // Refresh quand l'user édite manuellement
     document.addEventListener('change', e => {
       if (e.target?.id === 'departure_time' && _selectedDay === -1) updateRecap();
