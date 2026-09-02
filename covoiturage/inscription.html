@@ -143,7 +143,7 @@
         <div class="field"><label>Nom *</label><input type="text" id="nom" placeholder="Tremblay" autocomplete="family-name"></div>
       </div>
       <div class="field"><label>Courriel *</label><input type="email" id="email" placeholder="marie@exemple.com" autocomplete="email"></div>
-      <div class="field"><label>Mot de passe *</label><input type="password" id="password" placeholder="8 caractères minimum"></div>
+      <div class="field"><label>Mot de passe *</label><input type="password" id="password" minlength="10" pattern="(?=.*[A-Za-z])(?=.*[0-9]).{10,}" title="Au moins 10 caractères, dont une lettre et un chiffre" placeholder="10 caractères, avec lettre et chiffre"></div>
       <div class="field"><label>Téléphone *</label><input type="tel" id="telephone" placeholder="418-555-0100" autocomplete="tel"></div>
       <div class="field"><label>Ville principale</label><input type="text" id="ville" placeholder="Québec" autocomplete="address-level2"></div>
     </div>
@@ -352,8 +352,8 @@
       showError('Tous les champs obligatoires doivent être remplis.');
       return;
     }
-    if (pwd.length < 8) {
-      showError('Le mot de passe doit contenir au moins 8 caractères.');
+    if (pwd.length < 10 || !/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+      showError('Le mot de passe doit contenir au moins 10 caractères, dont une lettre et un chiffre.');
       return;
     }
     hideError();
