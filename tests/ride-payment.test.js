@@ -530,7 +530,7 @@ describe('ride cancellation safeguards', () => {
     global.fetch = async (url, opts = {}) => {
       calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
       if (url.includes('/rest/v1/rides?id=eq.ride-driver') && (!opts.method || opts.method === 'GET')) {
-        return { ok: true, status: 200, json: async () => [{ id: 'ride-driver', driver_id: 'driver-1', status: 'publie' }] };
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-driver', driver_id: 'driver-1', status: 'publie', start_city: 'Québec', end_city: 'Lévis', departure_time: new Date(Date.now() + 12 * 3600000).toISOString() }] };
       }
       if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-driver')) {
         return { ok: true, status: 200, json: async () => [
@@ -552,6 +552,12 @@ describe('ride cancellation safeguards', () => {
       }
       if (url.includes('/rest/v1/rides') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
       if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/rest/v1/rides?driver_id=eq.driver-1')) return { ok: true, status: 200, json: async () => [
+        { id: 'ride-driver', status: 'annule', created_at: new Date().toISOString() },
+        { id: 'ride-old', status: 'complete', created_at: new Date().toISOString() },
+      ] };
+      if (url.includes('/rest/v1/profiles?id=eq.driver-1') && (!opts.method || opts.method === 'GET')) return { ok: true, status: 200, json: async () => [{ id: 'driver-1', score: 100, score_fiabilite: 100 }] };
+      if (url.includes('/rest/v1/profiles?id=eq.driver-1') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
       if (url.includes('/rest/v1/profiles?id=in.')) return { ok: true, status: 200, json: async () => [
         { id: 'driver-1', email: 'driver@test.ca' },
         { id: 'passenger-a', email: 'a@test.ca' },
@@ -567,6 +573,8 @@ describe('ride cancellation safeguards', () => {
     assert.equal(res._status, 200);
     assert.equal(res._body.bookings_affected, 2);
     assert.equal(res._body.notifications_sent, 2);
+    assert.equal(res._body.reliability_penalty, 5);
+    assert.equal(res._body.cancellation_rate, 50);
     const ridePatchIndex = calls.findIndex(c => c.url.includes('/rest/v1/rides?id=eq.ride-driver') && c.method === 'PATCH');
     const refundIndex = calls.findIndex(c => c.url.includes('/v1/refunds'));
     assert.ok(refundIndex > -1 && ridePatchIndex > refundIndex, 'le trajet est annule apres remboursement');
@@ -574,6 +582,9 @@ describe('ride cancellation safeguards', () => {
     assert.equal(notices.length, 2);
     assert.equal(notices[0].data.refund, 5);
     assert.equal(notices[1].data.refund, 7);
+    const profilePatch = calls.find(c => c.url.includes('/profiles?id=eq.driver-1') && c.method === 'PATCH');
+    assert.ok(profilePatch, 'mise a jour fiabilite conducteur requise');
+    assert.equal(JSON.parse(profilePatch.body).score_fiabilite, 95);
   });
 
   test('rideCaptureEligible ne paie PAS un trajet pas encore passe (delai de grace)', async () => {
