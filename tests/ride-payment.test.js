@@ -408,6 +408,23 @@ describe('ride cancellation safeguards', () => {
     assert.equal(notificationBody.data.driver_email, 'driver@test.ca');
   });
 
+  test('apercu annulation passager retourne les montants sans modifier Stripe ni la base', async () => {
+    const calls = [];
+    global.fetch = async (url, opts = {}) => {
+      calls.push({ url, method: opts.method || 'GET' });
+      if (url.includes('/ride_bookings?id=eq.book-preview')) return { ok: true, json: async () => [{ id: 'book-preview', ride_id: 'ride-preview', passenger_id: 'passenger-1', status: 'confirme', total_passenger: 10, seats_reserved: 1, payment_currency: 'cad' }] };
+      if (url.includes('/rides?id=eq.ride-preview')) return { ok: true, json: async () => [{ id: 'ride-preview', driver_id: 'driver-1', departure_time: new Date(Date.now() + 12 * 3600000).toISOString(), available_seats: 1 }] };
+      if (url.includes('/impact_settings')) return { ok: true, json: async () => [{ ride_cancel_free_window_h: 24, ride_cancel_late_window_h: 2, ride_cancel_partial_refund_pct: 85, ride_cancel_partial_driver_pct: 10, ride_cancel_partial_fund_pct: 5 }] };
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+    const res = makeRes();
+    await rideCancel({ method: 'POST' }, res, ctx(), { booking_id: 'book-preview', preview_only: true });
+    assert.equal(res._status, 200);
+    assert.equal(res._body.refund, 8.5);
+    assert.equal(res._body.retained, 1.5);
+    assert.equal(calls.some(c => c.method === 'PATCH' || c.url.includes('api.stripe.com')), false);
+  });
+
   test('annulation passager entre 2h et 24h capture seulement la penalite', async () => {
     const calls = [];
     global.fetch = async (url, opts = {}) => {

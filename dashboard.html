@@ -505,13 +505,30 @@
 
   // Annuler une réservation depuis le tableau de bord principal.
   window.cancelPassengerBooking = async function (bookingId) {
-    if (!confirm('Annuler ta réservation ?\n\nLe remboursement sera calculé selon le délai avant le départ. Cette action est irréversible.')) return;
     try {
       const { data: { session } } = await db.auth.getSession();
       if (!session?.access_token) {
         window.location.href = '/login.html?redirect=/dashboard.html';
         return;
       }
+      const previewRes = await fetch('/api/ride-cancel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId, preview_only: true })
+      });
+      const preview = await previewRes.json().catch(() => ({}));
+      if (!previewRes.ok) {
+        alert('❌ Vérification impossible : ' + (preview.error || ('erreur ' + previewRes.status)));
+        return;
+      }
+      const warning = `ANNULATION DE LA RÉSERVATION\n\n` +
+        `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
+        `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
+        `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
+        `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
+        `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
+        `Cette action est irréversible. Confirmer ?`;
+      if (!confirm(warning)) return;
       const res = await fetch('/api/ride-cancel', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },

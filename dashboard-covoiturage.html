@@ -248,12 +248,24 @@ async function init() {
 
 // Annuler un trajet publié (conducteur)
 async function annulerTrajet(rideId) {
-  if (!confirm('Annuler ce trajet ?\n\nLes passagers en attente seront prévenus et leurs réservations annulées. Cette action est irréversible.')) return;
   try {
     const db = getSupabaseClient();
     const { data: _sd } = await db.auth.getSession();
     const token = _sd?.session?.access_token;
     if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const previewRes = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ride_id: rideId, preview_only: true })
+    });
+    const preview = await previewRes.json().catch(() => ({}));
+    if (!previewRes.ok) { alert('❌ Vérification impossible : ' + (preview.error || previewRes.status)); return; }
+    const warning = `ANNULATION DU TRAJET\n\n` +
+      `${preview.bookings_affected || 0} réservation(s) seront annulées.\n` +
+      `${Number(preview.total_refund || 0).toFixed(2)} $ seront remboursés aux passagers (100 %).\n` +
+      `Cette annulation sera inscrite à ton taux d’annulation et pourra affecter ta fiabilité.\n\n` +
+      `Cette action est irréversible. Confirmer ?`;
+    if (!confirm(warning)) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -273,12 +285,26 @@ async function annulerTrajet(rideId) {
 
 // Annuler une réservation (passager)
 async function annulerReservation(bookingId) {
-  if (!confirm('Annuler ta réservation ?\n\nUn remboursement s\'applique selon le délai avant le départ (politique d\'annulation). Cette action est irréversible.')) return;
   try {
     const db = getSupabaseClient();
     const { data: _sd } = await db.auth.getSession();
     const token = _sd?.session?.access_token;
     if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return; }
+    const previewRes = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId, preview_only: true })
+    });
+    const preview = await previewRes.json().catch(() => ({}));
+    if (!previewRes.ok) { alert('❌ Vérification impossible : ' + (preview.error || previewRes.status)); return; }
+    const warning = `ANNULATION DE LA RÉSERVATION\n\n` +
+      `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
+      `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
+      `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
+      `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
+      `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
+      `Cette action est irréversible. Confirmer ?`;
+    if (!confirm(warning)) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
