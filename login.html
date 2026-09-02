@@ -546,7 +546,7 @@
       try {
         const captchaToken = await loginCaptcha.getToken();
         const { error } = await db.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/login.html',
+          redirectTo: window.location.origin + '/reset-password.html',
           captchaToken: captchaToken || undefined
         });
         loginCaptcha.reset();
