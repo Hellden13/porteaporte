@@ -633,9 +633,10 @@ function buildTrajets() {
   })() : ''}
 
   ${(() => {
-    const finishedBookingStatuses = ['termine','completed','done','annule','cancelled','refunded','rembourse'];
-    const activeBookings = bookings.filter(b => !finishedBookingStatuses.includes(String(b.status||'').toLowerCase()));
-    const finishedBookings = bookings.filter(b => finishedBookingStatuses.includes(String(b.status||'').toLowerCase()));
+    const finishedBookingStatuses = ['termine','complete','completed','done','annule','annule_passager','annule_chauffeur','cancelled','refunded','rembourse'];
+    const bookingIsPast = b => b.ride_departure_time && new Date(b.ride_departure_time).getTime() < Date.now();
+    const activeBookings = bookings.filter(b => !finishedBookingStatuses.includes(String(b.status||'').toLowerCase()) && !bookingIsPast(b));
+    const finishedBookings = bookings.filter(b => finishedBookingStatuses.includes(String(b.status||'').toLowerCase()) || bookingIsPast(b));
     window.__activeBookings = activeBookings;
     window.__finishedBookings = finishedBookings;
     return '';
@@ -683,7 +684,7 @@ function buildTrajets() {
               : '';
             return `<tr>
               <td data-label="Trajet">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
-              <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
+              <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.ride_departure_time || b.created_at)}</td>
               <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
               <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
               <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
