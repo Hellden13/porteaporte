@@ -78,9 +78,19 @@
     .status-chip{display:inline-block;border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700;}
     .ride-action{display:inline-block;margin-left:10px;}
     @media(max-width:768px){
-      .table-wrap table{min-width:680px;}
-      .ride-action,.table-wrap td:last-child a,.table-wrap td:last-child button{display:block;width:100%;margin:6px 0 0!important;text-align:center;}
-      td:last-child{min-width:150px;}
+      .bookings-table-wrap{background:transparent;border:0;overflow:visible;}
+      .bookings-table{display:block;width:100%;}
+      .bookings-table thead{display:none;}
+      .bookings-table tbody{display:grid;gap:12px;}
+      .bookings-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;overflow:hidden;}
+      .bookings-table td{display:grid;grid-template-columns:minmax(88px,32%) minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--border);overflow-wrap:anywhere;align-items:start;}
+      .bookings-table td:first-child{border-top:0;padding-top:0;font-size:1rem;font-weight:800;}
+      .bookings-table td::before{content:attr(data-label);color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;}
+      .bookings-table td:first-child::before{color:var(--green);}
+      .bookings-table .booking-actions{display:flex;flex-wrap:wrap;gap:8px;}
+      .bookings-table .booking-actions a,.bookings-table .booking-actions button{display:block;width:100%;min-height:44px;margin:0!important;text-align:center;}
+      .bookings-table .driver-contact{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+      .bookings-table .driver-contact button{display:block;width:100%;min-height:44px;margin:0!important;white-space:normal;}
     }
 
     /* BADGES */
@@ -644,7 +654,7 @@ function buildTrajets() {
   })()}
   <div class="section-block">
     <div class="section-head"><h2>🚀 Mes réservations en cours (${window.__activeBookings.length})</h2></div>
-    <div class="table-wrap">
+    <div class="table-wrap bookings-table-wrap">
       ${window.__activeBookings.length === 0
         ? `<p class="empty-msg">Aucune réservation en cours. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
         : (() => {
@@ -672,15 +682,15 @@ function buildTrajets() {
               ? `<div style="margin-top:7px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
               : '';
             return `<tr>
-              <td>${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
-              <td style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
-              <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
-              <td>${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}${meetupMessage}</td>
-              <td><strong>${b.driver_prenom||'Chauffeur'}</strong><br>${drvContact.length ? drvContact.join(' ') : '<span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
+              <td data-label="Trajet">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+              <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.created_at)}</td>
+              <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+              <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
+              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
             </tr>`;
           };
           window.__bookingRowFn = bookingRow;
-          return `<table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__activeBookings.map(bookingRow).join('')}</tbody></table>`;
+          return `<table class="bookings-table"><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__activeBookings.map(bookingRow).join('')}</tbody></table>`;
         })()}
     </div>
     <a href="/confidentialite.html" style="font-size:.75rem;color:var(--brand-muted,var(--muted));display:inline-block;margin-top:8px">🔒 Protection des données — Loi 25</a>
@@ -707,7 +717,7 @@ function buildReservations() {
     Clique le bouton <strong>💬 Contacter</strong> sur chaque ligne ci-dessous pour envoyer un courriel direct (ou téléphoner). Si tu as 1 passager : 1 conversation. Si tu as 3 passagers : 3 conversations séparées (chacun reçoit ses propres messages). Une messagerie in-app intégrée arrive bientôt — en attendant, le courriel est le moyen le plus fiable.
   </div>
 
-  <div class="table-wrap">
+    <div class="table-wrap">
     ${allBookings.length === 0
       ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son nom + contact apparaîtront ici.</p>`
       : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
