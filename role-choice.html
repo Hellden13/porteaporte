@@ -117,8 +117,29 @@
         }
 
         .role-card.selected {
-            border-color: var(--accent-lime);
-            background: rgba(184, 245, 62, 0.05);
+            border-color: #b8f53e;
+            background: rgba(184, 245, 62, 0.18);
+            box-shadow: 0 0 0 4px rgba(184, 245, 62, 0.28), 0 12px 32px rgba(0, 0, 0, 0.28);
+        }
+
+        .capability-card.selected::before {
+            transform: scaleX(1);
+            height: 7px;
+            background: #b8f53e;
+        }
+
+        .capability-card.selected::after {
+            content: '✓ SÉLECTIONNÉ';
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            padding: .4rem .65rem;
+            border-radius: 999px;
+            background: #b8f53e;
+            color: #071006;
+            font-size: .72rem;
+            font-weight: 900;
+            letter-spacing: .03em;
         }
 
         .role-icon {
@@ -305,6 +326,26 @@
             background: var(--accent-cyan);
         }
 
+        .capability-card.selected .switch-line {
+            color: #b8f53e;
+        }
+
+        .capability-status {
+            min-height: 1.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .capability-status.error { color: #ff9b9b; }
+        .capability-status.success { color: #b8f53e; }
+
+        #capabilityContinue[disabled] {
+            cursor: wait;
+            opacity: .72;
+        }
+
         #livreur-card,
         #expediteur-card,
         .bottom-section .bottom-text:first-child {
@@ -425,9 +466,10 @@
         </div>
 
         <div class="capability-actions">
-            <button class="btn btn-select" type="button" onclick="saveCapabilities()">Continuer</button>
+            <button class="btn btn-select" id="capabilityContinue" type="button" onclick="saveCapabilities()">Continuer</button>
             <button class="btn btn-learn" type="button" onclick="selectAllCapabilities()">Tout cocher</button>
         </div>
+        <p id="capabilityStatus" class="capability-status" role="status" aria-live="polite"></p>
 
         <div class="roles-grid">
             <!-- LIVREUR CARD -->
@@ -548,7 +590,17 @@
             document.querySelectorAll('.capability-card').forEach(card => {
                 const input = card.querySelector('input[name="capability"]');
                 card.classList.toggle('selected', input && input.checked);
+                card.setAttribute('aria-checked', input && input.checked ? 'true' : 'false');
+                const label = card.querySelector('.switch-line');
+                if (label) label.lastChild.textContent = input && input.checked ? ' Sélectionné' : ' Non sélectionné';
             });
+        }
+
+        function setCapabilityStatus(message, type) {
+            const status = document.getElementById('capabilityStatus');
+            if (!status) return;
+            status.textContent = message || '';
+            status.className = 'capability-status' + (type ? ' ' + type : '');
         }
 
         function selectAllCapabilities() {
@@ -578,12 +630,19 @@
         }
 
         async function saveCapabilities() {
+            const button = document.getElementById('capabilityContinue');
             try {
                 const capabilities = collectCapabilities();
                 if (!Object.values(capabilities).some(Boolean)) {
+                    setCapabilityStatus('Choisis au moins une activité.', 'error');
                     showError('Choisis au moins une activite pour continuer.');
                     return;
                 }
+                if (button) {
+                    button.disabled = true;
+                    button.textContent = 'Enregistrement…';
+                }
+                setCapabilityStatus('Enregistrement de ton choix…');
                 const { data: sessionData } = await db.auth.getSession();
                 const session = sessionData?.session;
                 const { data: { user }, error: userError } = await db.auth.getUser();
@@ -602,19 +661,30 @@
                 const result = await response.json().catch(() => ({}));
                 if (!response.ok) {
                     console.error('Erreur:', result);
+                    setCapabilityStatus('Impossible d’enregistrer le choix. Réessaie.', 'error');
                     showError('Mise a jour impossible: ' + (result.error || 'profil impossible'));
                     return;
                 }
                 await claimStoredReferral(session);
+                setCapabilityStatus('Choix enregistré. Ouverture de ton espace…', 'success');
                 window.location.href = preferredDestination(capabilities);
             } catch (error) {
                 console.error('Erreur:', error);
+                setCapabilityStatus('Une erreur est survenue. Vérifie ta connexion et réessaie.', 'error');
                 showError('Une erreur est survenue');
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Continuer';
+                }
             }
         }
 
         document.querySelectorAll('input[name="capability"]').forEach(input => {
-            input.addEventListener('change', syncCapabilityCards);
+            input.addEventListener('change', () => {
+                syncCapabilityCards();
+                setCapabilityStatus('');
+            });
         });
         syncCapabilityCards();
 
