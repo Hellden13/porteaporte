@@ -149,10 +149,10 @@
     .pill-muted { background:rgba(255,255,255,0.05); color:var(--muted); }
 
     .row-actions { display:flex; gap:6px; flex-wrap:wrap; }
-    .row-actions a { padding:5px 11px; border-radius:6px; font-size:.75rem; font-weight:700; text-decoration:none; border:1px solid; white-space:nowrap; }
+    .row-actions a, .row-actions button { padding:5px 11px; border-radius:6px; font-size:.75rem; font-weight:700; text-decoration:none; border:1px solid; white-space:nowrap; }
     .ra-pay { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; border-color:transparent; }
     .ra-view { background:rgba(93,191,255,0.08); color:var(--primary); border-color:rgba(93,191,255,0.3); }
-    .ra-cancel { background:rgba(255,90,90,0.08); color:var(--danger); border-color:rgba(255,90,90,0.3); }
+    .ra-cancel { background:rgba(255,90,90,0.08); color:var(--danger); border-color:rgba(255,90,90,0.3); cursor:pointer; }
 
     .loading-state { text-align:center; padding:60px; color:var(--muted); }
     .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
@@ -482,10 +482,13 @@
     document.getElementById('paxCount').textContent = bookings.length;
 
     const rows = bookings.map(b => {
-      const isPending = ['en_attente','pending','unpaid'].includes(String(b.status||'').toLowerCase());
+      const bookingStatus = String(b.status||'').toLowerCase();
+      const isPending = ['en_attente','pending','unpaid'].includes(bookingStatus);
+      const canCancel = !['annule','annule_passager','annule_chauffeur','complete','cancelled','refunded','rembourse','termine','completed','done'].includes(bookingStatus);
       const actions = [];
       if (isPending) actions.push(`<a class="ra-pay" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}&booking_id=${esc(b.id)}">💳 Payer</a>`);
       actions.push(`<a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}">👁️ Voir</a>`);
+      if (canCancel) actions.push(`<button class="ra-cancel" type="button" onclick="window.cancelPassengerBooking('${esc(b.id)}')">❌ Annuler</button>`);
       return `<tr>
         <td><strong>${esc(b.pickup_city||'?')} → ${esc(b.dropoff_city||'?')}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
         <td>${b.seats_reserved||1} place${(b.seats_reserved||1)>1?'s':''}</td>
@@ -499,6 +502,32 @@
       <table><thead><tr><th>Trajet</th><th>Places</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     `;
   }
+
+  // Annuler une réservation depuis le tableau de bord principal.
+  window.cancelPassengerBooking = async function (bookingId) {
+    if (!confirm('Annuler ta réservation ?\n\nLe remboursement sera calculé selon le délai avant le départ. Cette action est irréversible.')) return;
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        window.location.href = '/login.html?redirect=/dashboard.html';
+        return;
+      }
+      const res = await fetch('/api/ride-cancel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status)));
+        return;
+      }
+      alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : ''));
+      window.location.reload();
+    } catch (e) {
+      alert('❌ Erreur réseau. Réessaie dans un instant.');
+    }
+  };
 
   // ─── CONDUCTEUR : mes trajets publiés + capture paiement ──────────────
   async function loadDriverRides(session) {

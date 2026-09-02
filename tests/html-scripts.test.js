@@ -44,3 +44,12 @@ test('le mode express saute directement du trajet au prix', () => {
     'Retour depuis le prix doit revenir au trajet en mode express'
   );
 });
+
+test('le tableau de bord principal permet au passager d annuler une reservation active', () => {
+  const html = fs.readFileSync(path.join(projectRoot, 'dashboard.html'), 'utf8');
+
+  assert.match(html, /window\.cancelPassengerBooking = async function/);
+  assert.match(html, /fetch\('\/api\/ride-cancel'/);
+  assert.match(html, /JSON\.stringify\(\{ booking_id: bookingId \}\)/);
+  assert.match(html, /if \(canCancel\) actions\.push\(`<button class="ra-cancel"/);
+});
