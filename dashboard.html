@@ -512,7 +512,8 @@
     document.getElementById('sectionConducteur').style.display = 'block';
     document.getElementById('drvCount').textContent = rides.length;
 
-    // Charger les bookings confirmés non payés sur ces trajets
+    // Charger les réservations confirmées dont le paiement est sécurisé
+    // jusqu'à la fin du trajet.
     const rideIds = rides.map(r => r.id);
     let pendingByRide = {};
     try {
@@ -534,7 +535,9 @@
       const tripPast = dep > 0 && dep < (Date.now() - 30 * 60 * 1000); // trajet passé +30min
       const captureBtn = (pending.length > 0 && tripPast)
         ? '<button class="ra-pay" onclick="window.captureRideTrip(\'' + esc(r.id) + '\',' + pending.length + ',' + totalDue.toFixed(2) + ')" style="border:none;cursor:pointer">💰 Recevoir mon paiement (' + totalDue.toFixed(2) + ' $)</button>'
-        : (pending.length > 0 ? '<span class="status-pill pill-warn" title="Disponible après l\'heure du trajet">⏳ ' + pending.length + ' en attente</span>' : '');
+        : (pending.length > 0
+          ? '<span class="status-pill pill-ok" title="Réservation confirmée. Le paiement est sécurisé par Stripe jusqu\'à la fin du trajet">✅ ' + pending.length + ' réservation' + (pending.length > 1 ? 's' : '') + ' confirmée' + (pending.length > 1 ? 's' : '') + ' · paiement sécurisé</span>'
+          : '');
       return '<tr>' +
         '<td><strong>' + esc(r.start_city||'?') + ' → ' + esc(r.end_city||'?') + '</strong>' + (r.is_recurring ? ' <span class="status-pill pill-info">🔁</span>' : '') + '</td>' +
         '<td>' + fmtDT(r.departure_time) + '</td>' +
