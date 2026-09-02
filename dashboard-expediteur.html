@@ -1413,7 +1413,7 @@
                     ? `<div style="margin-top:14px;padding:16px;background:rgba(0,217,255,.06);border:2px solid rgba(0,217,255,.35);border-radius:12px">
                         <div style="display:flex;align-items:center;gap:14px">
                           ${mission.livreur_profile.photo_url
-                              ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(0,217,255,.5)">`
+                              ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" alt="Photo du livreur" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(0,217,255,.5)">`
                               : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#5dbfff);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
                           <div style="flex:1">
                             <div style="font-size:.72rem;color:#00d9ff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
@@ -1433,7 +1433,7 @@
                     : mission.livreur_id && mission.livreur_profile
                     ? `<div class="mission-driver" style="display:flex;align-items:center;gap:8px;margin-top:6px">
                         ${mission.livreur_profile.photo_url
-                            ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`
+                            ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" alt="Photo du livreur" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`
                             : `<div style="width:28px;height:28px;border-radius:50%;background:var(--brand-bg-surface-light);display:flex;align-items:center;justify-content:center;font-size:14px">🚚</div>`}
                         <div>
                           <div style="font-size:.82rem;font-weight:700;color:var(--brand-text)">${livreurNom}</div>
