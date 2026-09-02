@@ -377,6 +377,15 @@ describe('ride cancellation safeguards', () => {
       if (url.includes('/rest/v1/transactions') && opts.method === 'POST') {
         return { ok: true, status: 201, json: async () => ({}) };
       }
+      if (url.includes('/rest/v1/profiles?id=in.')) {
+        return { ok: true, status: 200, json: async () => [
+          { id: 'passenger-1', email: 'passenger@test.ca', prenom: 'Passager' },
+          { id: 'driver-1', email: 'driver@test.ca', prenom: 'Conducteur' },
+        ] };
+      }
+      if (url.includes('/api/notifier') && opts.method === 'POST') {
+        return { ok: true, status: 200, json: async () => ({ success: true }) };
+      }
       return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
     };
 
@@ -388,8 +397,15 @@ describe('ride cancellation safeguards', () => {
     assert.equal(res._body.driver_compensation, 0);
     assert.equal(res._body.security_fund, 0);
     assert.equal(res._body.stripe_action, 'autorisation_liberee');
+    assert.equal(res._body.notification_sent, true);
     assert.ok(calls.some(c => c.url.includes('/cancel') && c.method === 'POST'));
     assert.ok(calls.some(c => c.url.includes('/rest/v1/rides?id=eq.ride-free') && c.method === 'PATCH'));
+    const notification = calls.find(c => c.url.includes('/api/notifier'));
+    assert.ok(notification, 'courriel annulation requis');
+    const notificationBody = JSON.parse(notification.body);
+    assert.equal(notificationBody.type, 'ride_booking_cancelled');
+    assert.equal(notificationBody.data.refund, 12.5);
+    assert.equal(notificationBody.data.driver_email, 'driver@test.ca');
   });
 
   test('annulation passager entre 2h et 24h capture seulement la penalite', async () => {
@@ -501,8 +517,8 @@ describe('ride cancellation safeguards', () => {
       }
       if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-driver')) {
         return { ok: true, status: 200, json: async () => [
-          { id: 'book-a', passenger_id: 'passenger-a', status: 'confirme', stripe_payment_intent: 'pi_a_real_1234567890' },
-          { id: 'book-b', passenger_id: 'passenger-b', status: 'confirme', stripe_payment_intent: 'pi_b_real_1234567890' },
+          { id: 'book-a', passenger_id: 'passenger-a', status: 'confirme', stripe_payment_intent: 'pi_a_real_1234567890', total_passenger: 5, seats_reserved: 1 },
+          { id: 'book-b', passenger_id: 'passenger-b', status: 'confirme', stripe_payment_intent: 'pi_b_real_1234567890', total_passenger: 7, seats_reserved: 1 },
         ] };
       }
       if (url.includes('/v1/payment_intents/pi_a_real_1234567890') && (!opts.method || opts.method === 'GET')) {
@@ -519,6 +535,12 @@ describe('ride cancellation safeguards', () => {
       }
       if (url.includes('/rest/v1/rides') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
       if (url.includes('/rest/v1/ride_bookings') && opts.method === 'PATCH') return { ok: true, status: 204, json: async () => ({}) };
+      if (url.includes('/rest/v1/profiles?id=in.')) return { ok: true, status: 200, json: async () => [
+        { id: 'driver-1', email: 'driver@test.ca' },
+        { id: 'passenger-a', email: 'a@test.ca' },
+        { id: 'passenger-b', email: 'b@test.ca' },
+      ] };
+      if (url.includes('/api/notifier') && opts.method === 'POST') return { ok: true, status: 200, json: async () => ({ success: true }) };
       return { ok: false, status: 404, json: async () => ({ error: 'not found' }) };
     };
 
@@ -527,9 +549,14 @@ describe('ride cancellation safeguards', () => {
 
     assert.equal(res._status, 200);
     assert.equal(res._body.bookings_affected, 2);
+    assert.equal(res._body.notifications_sent, 2);
     const ridePatchIndex = calls.findIndex(c => c.url.includes('/rest/v1/rides?id=eq.ride-driver') && c.method === 'PATCH');
     const refundIndex = calls.findIndex(c => c.url.includes('/v1/refunds'));
     assert.ok(refundIndex > -1 && ridePatchIndex > refundIndex, 'le trajet est annule apres remboursement');
+    const notices = calls.filter(c => c.url.includes('/api/notifier')).map(c => JSON.parse(c.body));
+    assert.equal(notices.length, 2);
+    assert.equal(notices[0].data.refund, 5);
+    assert.equal(notices[1].data.refund, 7);
   });
 
   test('rideCaptureEligible ne paie PAS un trajet pas encore passe (delai de grace)', async () => {
