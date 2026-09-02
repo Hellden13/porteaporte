@@ -29,3 +29,18 @@ test('les scripts intégrés aux pages publiques sont valides', () => {
 
   assert.deepEqual(errors, [], errors.join('\n'));
 });
+
+test('le mode express saute directement du trajet au prix', () => {
+  const html = fs.readFileSync(path.join(projectRoot, 'covoiturage-publier.html'), 'utf8');
+
+  assert.match(
+    html,
+    /from === 1 && document\.body\.classList\.contains\('express-mode'\) \? 5 : from \+ 1/,
+    'Suivant doit ignorer les étapes optionnelles masquées en mode express'
+  );
+  assert.match(
+    html,
+    /goStep\(document\.body\.classList\.contains\('express-mode'\) \? 1 : 4\)/,
+    'Retour depuis le prix doit revenir au trajet en mode express'
+  );
+});

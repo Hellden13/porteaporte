@@ -68,8 +68,11 @@
       font-weight: 700; color: var(--brand-muted); background: var(--brand-bg-surface);
       border: none; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .step-tab.active { background: var(--brand-lime); color: var(--brand-bg-dark); }
-    .step-tab.done   { color: var(--brand-lime); }
+    .step-tab.active {
+      background: #b8f53e !important; color: #071006 !important;
+      box-shadow: inset 0 -4px 0 #fff; font-weight: 900;
+    }
+    .step-tab.done { background: #17202c !important; color: #8f9bad !important; }
 
     .step-panel { display: none; }
     .step-panel.active { display: block; }
@@ -741,7 +744,7 @@
       </div>
 
       <div class="step-actions" id="publish-actions">
-        <button class="btn btn-ghost" onclick="goStep(4)">← Retour</button>
+        <button class="btn btn-ghost" onclick="goPreviousFromPrice()">← Retour</button>
         <div class="right"><button class="btn" id="publish-btn" onclick="publishRide()">🚗 Publier mon trajet</button></div>
       </div>
     </div>
@@ -989,6 +992,8 @@
     document.getElementById('departure_time').min = now.toISOString().slice(0,16);
 
     function goStep(n) {
+      // En mode express, les étapes optionnelles n'existent pas dans le parcours.
+      if (document.body.classList.contains('express-mode') && [2,3,4].includes(n)) n = n > currentStep ? 5 : 1;
       document.getElementById('step-' + currentStep).classList.remove('active');
       document.getElementById('tab-'  + currentStep).classList.remove('active');
       document.getElementById('tab-'  + currentStep).classList.add('done');
@@ -996,8 +1001,12 @@
       document.getElementById('step-' + n).classList.add('active');
       document.getElementById('tab-'  + n).classList.add('active');
       document.getElementById('tab-'  + n).classList.remove('done');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('step-' + n).scrollIntoView({ behavior: 'smooth', block: 'start' });
       if (n === 5) applyEnergyRate();
+    }
+
+    function goPreviousFromPrice() {
+      goStep(document.body.classList.contains('express-mode') ? 1 : 4);
     }
 
     function nextStep(from) {
@@ -1043,7 +1052,7 @@
           if (pairs[key]) dist.value = pairs[key];
         }
       }
-      goStep(from + 1);
+      goStep(from === 1 && document.body.classList.contains('express-mode') ? 5 : from + 1);
     }
 
     function norm(v) { return v.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
