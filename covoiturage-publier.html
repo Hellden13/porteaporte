@@ -305,9 +305,9 @@
           <div class="field"><label>Distance estimée (km)</label><input type="number" id="total_distance_km" placeholder="Auto si Québec ↔ Lévis" min="1" oninput="updatePricePreview()"></div>
         </div>
         <style>
-          .quick-pick { padding: 8px 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.16); color: var(--brand-muted); border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
+          .quick-pick { padding: 8px 14px; background: #171c27; border: 2px solid #586174; color: #dce3ef; border-radius: 8px; font-size: .82rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; }
           .quick-pick:hover { background: rgba(0,217,255,.15); border-color: rgba(0,217,255,.45); color: var(--brand-cyan); transform: translateY(-1px); }
-          .quick-pick.active { background: var(--brand-cyan); color: #00131a; border-color: var(--brand-cyan); box-shadow: 0 0 0 3px rgba(0,217,255,.35); transform: translateY(-1px); font-weight: 900; }
+          .quick-pick.active { background: #b8f53e; color: #071006; border-color: #ffffff; box-shadow: 0 0 0 4px rgba(184,245,62,.48), 0 6px 18px rgba(0,0,0,.35); transform: translateY(-2px) scale(1.04); font-weight: 900; }
           .quick-pick.active::before { content: '✓ '; }
         </style>
         <div class="form-grid" style="margin-top:14px;">
@@ -1171,8 +1171,6 @@
 
       renderSafeSelect(side);
     }
-
-    const escapeHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
     function renderSafeSelect(side) {
       const city = document.getElementById(side === 'start' ? 'start_city' : 'end_city').value.trim();
