@@ -1,0 +1,9 @@
+no,prenom,contact,role_prevu,vague,date_invitation,statut,compte_cree,email_confirme,role_reel,livraison_testee,paiement_teste,feedback_recu,notes
+# roles: expediteur | livreur | mixte | destinataire
+# vague: 1(interne 3-5) | 2(beta 10) | 3(beta 50)
+# statut: invite | relance | inscrit | actif | inactif | abandon
+1,,,,,,,non,non,,non,non,non,
+2,,,,,,,non,non,,non,non,non,
+3,,,,,,,non,non,,non,non,non,
+4,,,,,,,non,non,,non,non,non,
+5,,,,,,,non,non,,non,non,non,
