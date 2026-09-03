@@ -556,7 +556,22 @@
         window.location.href = '/login.html?redirect=/dashboard.html';
         return;
       }
-      const code = window.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au conducteur :');
+      // Vérifie d'abord si un code de sécurité est configuré (évite un message d'erreur cryptique).
+      try {
+        const statusRes = await fetch('/api/platform', {
+          method: 'POST',
+          headers: { 'Authorization': '***' + session.access_token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'ride-safety-code-status', booking_id: bookingId })
+        });
+        const st = await statusRes.json().catch(() => ({}));
+        if (statusRes.ok && !st.has_booking_code && !st.has_profile_code) {
+          if (confirm('Aucun code de sécurité n\'est encore configuré sur ton compte.\n\nCe code (4 à 8 chiffres) sert à confirmer ton arrivée et à libérer le paiement au conducteur.\n\nVeux-tu le créer maintenant ?')) {
+            window.location.href = '/compte.html#ride-safety-code';
+          }
+          return;
+        }
+      } catch (_) { /* si la vérif échoue, on tente quand même la saisie */ }
+      const code = window.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au conducteur :\n\n(Tu l\'as défini dans Compte → Code de sécurité trajet.)');
       if (code === null) return;
       const cleanCode = String(code || '').replace(/\D/g, '');
       if (!/^[0-9]{4,8}$/.test(cleanCode)) {
@@ -573,6 +588,10 @@
         const remaining = out.attempts_remaining;
         if (typeof remaining !== 'undefined') {
           alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : ''));
+        } else if (/code de securit/i.test(String(out.error || '')) || /aucun code/i.test(String(out.error || ''))) {
+          if (confirm('Aucun code de sécurité configuré. Veux-tu le créer maintenant dans ton compte ?')) {
+            window.location.href = '/compte.html#ride-safety-code';
+          }
         } else {
           alert('❌ Confirmation impossible : ' + (out.error || ('erreur ' + res.status)));
         }
