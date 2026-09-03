@@ -5586,6 +5586,8 @@ module.exports = async function handler(req, res) {
       const targetUserId = body.user_id || null;
       if (!targetEmail && !targetUserId) return res.status(400).json({ error: 'email ou user_id requis' });
 
+      const dryRun = body.dry_run !== false; // par defaut dry run : preview avant suppression reelle
+
       let userId = targetUserId;
       if (!userId && targetEmail) {
         const pr = await fetch(`${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}&select=id&limit=1`, {
@@ -5594,6 +5596,25 @@ module.exports = async function handler(req, res) {
         const ps = pr.ok ? await pr.json() : [];
         if (!ps[0]) return res.status(404).json({ error: 'Utilisateur introuvable avec cet email' });
         userId = ps[0].id;
+      }
+
+      // Verifier ce qui serait supprime (nombre de comptes Connect lies)
+      const chk = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(userId)}&select=id,stripe_account_id,charges_enabled,payouts_enabled`, {
+        headers: sbHeaders(sbKey)
+      });
+      const existing = chk.ok ? await chk.json().catch(() => []) : [];
+
+      if (dryRun) {
+        return res.status(200).json({
+          success: true,
+          dry_run: true,
+          user_id: userId,
+          would_delete_count: existing.length,
+          accounts: existing.map(a => ({ stripe_account_id: a.stripe_account_id, charges_enabled: a.charges_enabled, payouts_enabled: a.payouts_enabled })),
+          message: existing.length
+            ? `${existing.length} compte(s) Stripe Connect seraient supprimes. Renvoie avec dry_run:false pour confirmer.`
+            : 'Aucun compte Stripe Connect a supprimer pour cet utilisateur.'
+        });
       }
 
       const delRes = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(userId)}`, {
