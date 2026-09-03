@@ -114,7 +114,8 @@ function assertNotifierAuth(req, type) {
 
   const browserPublic = type === 'auth_confirmation' || type === 'partenaire' ||
     type === 'liste_attente' || type === 'contact_support' ||
-    type === 'contact_partenariat' || type === 'contact_investisseur';
+    type === 'contact_partenariat' || type === 'contact_investisseur' ||
+    type === 'test_email';
   if (browserPublic) {
     if (!validatePublicCaller(req))
       return { ok: false, status: 403, error: 'Origine non autorisee' };
