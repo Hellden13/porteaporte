@@ -112,7 +112,8 @@
       topup_set: null,          // apport admin > 0
       organismes: null,         // au moins 1 organisme actif
       analytics: null,          // Plausible présent
-      kyc_admin: null           // au moins 1 admin
+      kyc_admin: null,          // au moins 1 admin
+      email_auth: null          // Resend + domaine authentifié (SPF/DKIM/DMARC)
     };
 
     const ITEMS = {
@@ -136,8 +137,8 @@
         { id: 'tps_tvq', title: 'Compte TPS/TVQ si > 30k$/an prévu', desc: 'Inscription Revenu Québec.', action: { label: 'RQ', href: 'https://www.revenuquebec.ca/' } }
       ],
       comm: [
-        { id: 'sendgrid_domain', title: 'SendGrid domain auth (SPF/DKIM/DMARC)', desc: 'Sans ça, emails partent en spam. Vérif DNS sur porteaporte.site.', action: { label: 'SendGrid', href: 'https://app.sendgrid.com/settings/sender_auth' } },
-        { id: 'email_welcome', title: 'Email bienvenue testé (pas spam)', desc: 'Inscris-toi avec un Gmail vierge et vérifie l\'inbox.' },
+        { id: 'email_auth', title: 'Resend + domaine authentifié (SPF/DKIM/DMARC)', desc: 'SPF ajouté sur GoDaddy, DKIM Resend + DMARC actifs. Vérifié automatiquement via /api/notifier.', auto: 'email_auth', action: { label: 'Resend', href: 'https://resend.com/domains' } },
+        { id: 'email_welcome', title: 'Email bienvenue testé (pas spam)', desc: 'Outil de test : /admin/test-email.html (bug d\'auth corrigé). Envoie et vérifie l\'inbox Gmail.', action: { label: 'Tester', href: '/admin/test-email.html' } },
         { id: 'email_paiement', title: 'Email reçu paiement testé', desc: 'Fais une vraie commande test. L\'email doit arriver en moins de 2 min.' },
         { id: 'support_24h', title: 'Tu es prêt à être support 24h le 1er mois', desc: 'Notifications push activées sur ton téléphone. Boîte mail bonjour@porteaporte.site vérifiée toutes les heures.' },
         { id: 'analytics', title: 'Plausible analytics actif', desc: 'Pour mesurer ce qui marche dès le jour 1.', auto: 'analytics' }
@@ -198,6 +199,13 @@
 
       // 5. Admin (forcément toi)
       autoState.kyc_admin = true;
+
+      // 6. Config email Resend + domaine authentifié
+      try {
+        const r = await fetch('/api/notifier');
+        const out = await r.json();
+        autoState.email_auth = !!(out.resend_configured && out.from_email_configured && out.from_domain);
+      } catch (_) { autoState.email_auth = false; }
     }
 
     function renderCategory(catKey) {
