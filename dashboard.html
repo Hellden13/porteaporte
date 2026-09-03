@@ -485,9 +485,11 @@
       const bookingStatus = String(b.status||'').toLowerCase();
       const isPending = ['en_attente','pending','unpaid'].includes(bookingStatus);
       const canCancel = !['annule','annule_passager','annule_chauffeur','complete','cancelled','refunded','rembourse','termine','completed','done'].includes(bookingStatus);
+      const canConfirmArrival = ['confirme','driver_completed','paye'].includes(bookingStatus);
       const actions = [];
       if (isPending) actions.push(`<a class="ra-pay" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}&booking_id=${esc(b.id)}">💳 Payer</a>`);
       actions.push(`<a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}">👁️ Voir</a>`);
+      if (canConfirmArrival) actions.push(`<button class="ra-arrive" type="button" onclick="window.confirmPassengerArrival('${esc(b.id)}')" style="background:rgba(125,255,193,.14);color:#0a5a34;border:1px solid rgba(125,255,193,.6);padding:6px 12px;border-radius:8px;font-weight:800;cursor:pointer">✅ Je suis arrivé(e)</button>`);
       if (canCancel) actions.push(`<button class="ra-cancel" type="button" onclick="window.cancelPassengerBooking('${esc(b.id)}')">❌ Annuler</button>`);
       return `<tr>
         <td><strong>${esc(b.pickup_city||'?')} → ${esc(b.dropoff_city||'?')}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
@@ -540,6 +542,43 @@
         return;
       }
       alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : ''));
+      window.location.reload();
+    } catch (e) {
+      alert('❌ Erreur réseau. Réessaie dans un instant.');
+    }
+  };
+
+  // Confirmer son arrivée (passager) depuis le tableau de bord principal.
+  window.confirmPassengerArrival = async function (bookingId) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        window.location.href = '/login.html?redirect=/dashboard.html';
+        return;
+      }
+      const code = window.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au conducteur :');
+      if (code === null) return;
+      const cleanCode = String(code || '').replace(/\D/g, '');
+      if (!/^[0-9]{4,8}$/.test(cleanCode)) {
+        alert('Code invalide. Entre un code de 4 à 8 chiffres.');
+        return;
+      }
+      const res = await fetch('/api/platform', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, actor: 'passenger', code: cleanCode })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const remaining = out.attempts_remaining;
+        if (typeof remaining !== 'undefined') {
+          alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : ''));
+        } else {
+          alert('❌ Confirmation impossible : ' + (out.error || ('erreur ' + res.status)));
+        }
+        return;
+      }
+      alert('✅ Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au conducteur a été déclenché.');
       window.location.reload();
     } catch (e) {
       alert('❌ Erreur réseau. Réessaie dans un instant.');
