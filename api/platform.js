@@ -6761,6 +6761,26 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livreur-earnings')         return await livreurEarnings(req, res, ctx);
     if (endpoint === 'subscription-create')      return await subscriptionCreate(req, res, ctx);
     if (endpoint === 'subscription-status')      return await subscriptionStatus(req, res, ctx);
+    // ── admin-email-test ────────────────────────────────────────────
+    // Relais authentifié : le navigateur admin ne doit jamais connaître
+    // INTERNAL_API_SECRET, requis par /api/notifier.
+    if (endpoint === 'admin-email-test') {
+      if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
+      const email = String(body?.email || ctx.profile?.email || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email invalide' });
+      const internalSecret = String(process.env.INTERNAL_API_SECRET || '');
+      if (internalSecret.length < 16) return res.status(503).json({ error: 'INTERNAL_API_SECRET non configuré' });
+      const notifyRes = await fetch(`${siteOrigin(req)}/api/notifier`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-notifier-secret': internalSecret,
+        },
+        body: JSON.stringify({ type: 'test_email', data: { email } }),
+      });
+      const notifyBody = await notifyRes.json().catch(() => ({}));
+      return res.status(notifyRes.ok ? 200 : notifyRes.status).json(notifyBody);
+    }
     // ── admin-push-broadcast ────────────────────────────────────────
     if (endpoint === 'admin-push-broadcast') {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
@@ -7101,5 +7121,4 @@ async function rideComplete(req, res, ctx, body) {
     return res.status(500).json({ error: 'Erreur serveur : ' + e.message });
   }
 }
-
 

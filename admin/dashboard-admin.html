@@ -2979,11 +2979,11 @@
       const res = await fetch(apiUrl('/api/notifier'), { method: 'GET' });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Diagnostic email indisponible');
-      const ok = out.sendgrid_configured && out.from_email_configured && out.admin_email_configured;
+      const ok = out.resend_configured && out.from_email_configured && out.admin_email_configured;
       document.getElementById('email-health').textContent = ok ? 'OK' : 'À vérifier';
       document.getElementById('email-health-sub').textContent = out.from_domain || 'domaine inconnu';
       box.innerHTML = `
-        <div>SendGrid : <strong style="color:${out.sendgrid_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.sendgrid_configured ? 'configuré' : 'manquant'}</strong></div>
+        <div>Resend : <strong style="color:${out.resend_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.resend_configured ? 'configuré' : 'manquant'}</strong></div>
         <div>FROM_EMAIL : <strong style="color:${out.from_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.from_domain || 'manquant'}</strong></div>
         <div>ADMIN_EMAIL : <strong style="color:${out.admin_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.admin_email_configured ? 'configuré' : 'manquant'}</strong></div>
         <div style="margin-top:8px;color:#8A9BB0">${out.spam_note || ''}</div>
@@ -3001,10 +3001,14 @@
     btn.disabled = true;
     btn.textContent = 'Envoi...';
     try {
-      const res = await fetch(apiUrl('/api/notifier'), {
+      const user = AUTH_API.getUser();
+      const res = await fetch('/api/platform?endpoint=admin-email-test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'test_email', data: { email } })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + user.session.access_token
+        },
+        body: JSON.stringify({ email })
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok || !out.success) throw new Error(out.error || 'Email test non envoyé');
@@ -3013,7 +3017,7 @@
       alert('❌ ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Tester SendGrid';
+      btn.textContent = 'Tester Resend';
     }
   });
 
