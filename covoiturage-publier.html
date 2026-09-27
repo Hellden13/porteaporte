@@ -380,8 +380,6 @@
               <option value="suv">VUS / SUV</option>
               <option value="minivan">Minivan</option>
               <option value="camion">Camion / Pickup</option>
-              <option value="electrique">Électrique</option>
-              <option value="hybride">Hybride</option>
               <option value="autre">Autre</option>
             </select>
           </div>
@@ -1450,6 +1448,17 @@
         const err = document.getElementById('err-msg');
         err.style.display = 'block';
         err.textContent = "⚠️ Le secteur de départ et d'arrivée sont obligatoires pour que les passagers sachent où vous retrouver.";
+        return;
+      }
+
+      // Un trajet récurrent doit avoir au moins un jour sélectionné.
+      const recurringEnabled = document.getElementById('is_recurring').checked;
+      const recurringDays = Array.from(document.querySelectorAll('.recur-day:checked')).map(c => c.value);
+
+      if (recurringEnabled && recurringDays.length === 0) {
+        const err = document.getElementById('err-msg');
+        err.style.display = 'block';
+        err.textContent = '⚠️ Choisis au moins un jour pour un trajet récurrent.';
         return;
       }
 
