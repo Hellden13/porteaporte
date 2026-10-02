@@ -847,8 +847,27 @@
       });
     }
 
+    // Anciens trajets : « Électrique » / « Hybride » étaient des types de véhicule.
+    // Ce sont maintenant des énergies; la carrosserie devient « autre » faute de mieux.
+    // Sans ça, le select restait vide et la modification enregistrait « berline ».
+    function normalizeLegacyVehicle(ride) {
+      const vehicleTypes = ['berline', 'suv', 'minivan', 'camion', 'autre'];
+      const energyTypes = ['electrique', 'hybride', 'essence', 'diesel'];
+      const vehicle = String(ride.vehicle_type || '').toLowerCase();
+      const energy = String(ride.energy_type || '').toLowerCase();
+      const legacyEnergy = (vehicle === 'electrique' || vehicle === 'hybride') ? vehicle : null;
+      return {
+        vehicle_type: vehicleTypes.includes(vehicle) ? vehicle : (vehicle ? 'autre' : 'berline'),
+        // energy_type vaut « essence » par défaut en base : l'ancien type de véhicule est plus fiable.
+        energy_type: legacyEnergy && (!energy || energy === 'essence')
+          ? legacyEnergy
+          : (energyTypes.includes(energy) ? energy : 'essence'),
+      };
+    }
+
     function prefillFromRide(ride) {
       setEditUi();
+      const vehicle = normalizeLegacyVehicle(ride);
       setVal('start_city', ride.start_city || '');
       setVal('start_sector', ride.start_sector || '');
       setVal('end_city', ride.end_city || '');
@@ -857,8 +876,8 @@
       setVal('return_departure_time', toDateTimeLocal(ride.return_departure_time));
       setVal('flexibility_minutes', ride.flexibility_minutes ?? 0);
       setVal('total_distance_km', ride.total_distance_km || '');
-      setVal('vehicle_type', ride.vehicle_type || 'berline');
-      setVal('energy_type', ride.energy_type || 'essence');
+      setVal('vehicle_type', vehicle.vehicle_type);
+      setVal('energy_type', vehicle.energy_type);
       setVal('trunk_size', ride.trunk_size || 'moyen');
       setVal('available_seats', ride.available_seats || 1);
       setVal('personal_rules', ride.personal_rules || '');

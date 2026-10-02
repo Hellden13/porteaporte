@@ -414,3 +414,32 @@ describe('dates covoiturage a l heure du Quebec', () => {
     assert.equal(rideDayKeyOf('2026-10-11'), 'dim');
   });
 });
+
+// ─── Modification d'un ancien trajet électrique / hybride ────────────────────
+describe('covoiturage-publier normalise les anciens types de vehicule', () => {
+  const vm = require('node:vm');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'covoiturage-publier.html'), 'utf8');
+  const src = html.match(/function normalizeLegacyVehicle\(ride\) \{[\s\S]*?\n    \}\n/)?.[0];
+  const normalizeLegacyVehicle = src ? vm.runInNewContext(`(${src})`) : null;
+
+  test('la fonction est presente et utilisee par le prefill', () => {
+    assert.ok(normalizeLegacyVehicle, 'normalizeLegacyVehicle introuvable');
+    assert.match(html, /setVal\('vehicle_type', vehicle\.vehicle_type\)/);
+    assert.match(html, /setVal\('energy_type', vehicle\.energy_type\)/);
+  });
+
+  test('ancien type electrique devient energie electrique, carrosserie autre', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'electrique', energy_type: 'essence' }) }, { vehicle_type: 'autre', energy_type: 'electrique' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'hybride' }) }, { vehicle_type: 'autre', energy_type: 'hybride' });
+  });
+
+  test('une energie explicite non essence est conservee', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'hybride', energy_type: 'electrique' }) }, { vehicle_type: 'autre', energy_type: 'electrique' });
+  });
+
+  test('les trajets recents ne changent pas', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'suv', energy_type: 'diesel' }) }, { vehicle_type: 'suv', energy_type: 'diesel' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({}) }, { vehicle_type: 'berline', energy_type: 'essence' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'sedan' }) }, { vehicle_type: 'autre', energy_type: 'essence' });
+  });
+});
