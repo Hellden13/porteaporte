@@ -385,3 +385,32 @@ describe('coherence affichages prix et pourcentages', () => {
     assert.match(profile, /dispatchEvent\(new Event\('change'\)\)/);
   });
 });
+
+// ─── Dates de recherche à l'heure du Québec ──────────────────────────────────
+describe('dates covoiturage a l heure du Quebec', () => {
+  const { rideLocalDateKey, rideSearchDateKey, rideDayKeyOf } = require('../lib/_rides');
+
+  test('un depart en soiree reste le meme jour local malgre UTC', () => {
+    // 20 h 30 HAE le lundi 5 oct. = 00 h 30 UTC le 6 oct.
+    assert.equal(rideLocalDateKey('2026-10-06T00:30:00Z'), '2026-10-05');
+    // 23 h 59 HNE le 1er déc. = 04 h 59 UTC le 2 déc.
+    assert.equal(rideLocalDateKey('2026-12-02T04:59:00Z'), '2026-12-01');
+    assert.equal(rideLocalDateKey('2026-12-02T05:00:00Z'), '2026-12-02');
+  });
+
+  test('changement d heure : la frontiere de minuit suit HAE puis HNE', () => {
+    // 1er nov. 2026 : passage à l'heure normale (UTC-5)
+    assert.equal(rideLocalDateKey('2026-11-01T03:59:00Z'), '2026-10-31');
+    assert.equal(rideLocalDateKey('2026-11-01T04:00:00Z'), '2026-11-01');
+    assert.equal(rideLocalDateKey('2026-11-02T04:30:00Z'), '2026-11-01');
+  });
+
+  test('la date recherchee est traitee comme un jour calendaire', () => {
+    assert.equal(rideSearchDateKey('2026-10-05'), '2026-10-05');
+    assert.equal(rideSearchDateKey('2026-02-30'), null);
+    assert.equal(rideSearchDateKey('pas une date'), null);
+    assert.equal(rideSearchDateKey(''), null);
+    assert.equal(rideDayKeyOf('2026-10-05'), 'lun');
+    assert.equal(rideDayKeyOf('2026-10-11'), 'dim');
+  });
+});

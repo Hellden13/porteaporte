@@ -1036,6 +1036,35 @@ describe('platform ride-search public safeguards', () => {
     assert.equal(sectorRes._body?.rides?.[0]?.id, 'ride-1');
   });
 
+  test('ride-search par date compare le jour a l heure du Quebec', async () => {
+    global.fetch = makeFetchMock({
+      '/rest/v1/rides': {
+        ok: true,
+        data: [
+          // Lundi 5 oct. 2026 20 h 30 HAE = mardi 00 h 30 UTC
+          { id: 'ride-soir', start_city: 'Levis', end_city: 'Quebec', departure_time: '2026-10-06T00:30:00Z', available_seats: 2, status: 'publie', driver_id: 'd1' },
+          // Lundi 5 oct. 2026 08 h HAE
+          { id: 'ride-matin', start_city: 'Levis', end_city: 'Quebec', departure_time: '2026-10-05T12:00:00Z', available_seats: 2, status: 'publie', driver_id: 'd2' },
+          // Mardi 6 oct. 2026 08 h HAE
+          { id: 'ride-mardi', start_city: 'Levis', end_city: 'Quebec', departure_time: '2026-10-06T12:00:00Z', available_seats: 2, status: 'publie', driver_id: 'd3' },
+          // Récurrent le lundi seulement
+          { id: 'ride-recurrent-lun', start_city: 'Levis', end_city: 'Quebec', departure_time: '2026-09-01T11:00:00Z', available_seats: 2, status: 'publie', driver_id: 'd4', is_recurring: true, recurrence_days: ['lun'] }
+        ]
+      },
+      '/rest/v1/profiles?id=in.': { ok: true, data: [] }
+    });
+
+    const lundiRes = makeRes();
+    await handler(makeReq({ body: { endpoint: 'ride-search', from: 'Levis', to: 'Quebec', date: '2026-10-05' } }), lundiRes);
+    assert.equal(lundiRes._status, 200);
+    assert.deepEqual(lundiRes._body.rides.map(r => r.id).sort(), ['ride-matin', 'ride-recurrent-lun', 'ride-soir']);
+
+    const mardiRes = makeRes();
+    await handler(makeReq({ body: { endpoint: 'ride-search', from: 'Levis', to: 'Quebec', date: '2026-10-06' } }), mardiRes);
+    assert.equal(mardiRes._status, 200);
+    assert.deepEqual(mardiRes._body.rides.map(r => r.id), ['ride-mardi']);
+  });
+
   test('ride-search-log public ne retourne pas 401', async () => {
     global.fetch = makeFetchMock({
       '/rest/v1/ride_search_logs': { ok: true, data: [] }
