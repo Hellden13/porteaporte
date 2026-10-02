@@ -254,6 +254,90 @@ describe('rideUpdate securite', () => {
   });
 });
 
+describe('rideUpdate tient compte de l etat enregistre', () => {
+  // Mock Supabase : trajet existant `existing`, aucune réservation active, PATCH capturé.
+  function mockExisting(existing, { rejectExtendedSelect = false } = {}) {
+    const state = { patch: null };
+    global.fetch = async (url, opts = {}) => {
+      if (url.includes('/rest/v1/rides?id=eq.ride-1') && !opts.method) {
+        if (rejectExtendedSelect && url.includes('energy_type')) {
+          return { ok: false, status: 400, json: async () => ({ message: 'column rides.energy_type does not exist' }) };
+        }
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', driver_id: 'user_test_123', status: 'publie', ...existing }] };
+      }
+      if (url.includes('/rest/v1/ride_bookings?ride_id=eq.ride-1')) {
+        return { ok: true, status: 200, json: async () => [] };
+      }
+      if (opts.method === 'PATCH') {
+        state.patch = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => [{ id: 'ride-1', ...state.patch }] };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+    return state;
+  }
+
+  test('le plafond cost_per_km suit l energie enregistree si energy_type est omis', async () => {
+    const state = mockExisting({ energy_type: 'electrique' });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', cost_per_km: 0.35 });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.patch.cost_per_km, 0.18, 'une electrique reste plafonnee a 0,18 $/km');
+  });
+
+  test('energy_type envoye avec la modification reste prioritaire', async () => {
+    const state = mockExisting({ energy_type: 'electrique' });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', cost_per_km: 0.45, energy_type: 'diesel' });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.patch.cost_per_km, 0.45);
+    assert.equal(state.patch.energy_type, 'diesel');
+  });
+
+  test('vider les jours d un trajet recurrent est refuse', async () => {
+    const state = mockExisting({ is_recurring: true, recurrence_days: ['lun', 'mer'] });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', recurrence_days: [] });
+    assert.equal(res.statusCode, 400);
+    assert.match(res.data.error, /au moins un jour/);
+    assert.equal(state.patch, null);
+  });
+
+  test('activer la recurrence reutilise les jours deja enregistres', async () => {
+    const state = mockExisting({ is_recurring: false, recurrence_days: ['ven'] });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', is_recurring: true });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.patch.is_recurring, true);
+    assert.equal('recurrence_days' in state.patch, false, 'les jours existants ne sont pas ecrases');
+  });
+
+  test('activer la recurrence sans aucun jour connu est refuse', async () => {
+    const state = mockExisting({ is_recurring: false, recurrence_days: null });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', is_recurring: true });
+    assert.equal(res.statusCode, 400);
+    assert.equal(state.patch, null);
+  });
+
+  test('desactiver la recurrence remet les jours a null', async () => {
+    const state = mockExisting({ is_recurring: true, recurrence_days: ['lun'] });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', is_recurring: false, recurrence_days: ['lun'] });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.patch.is_recurring, false);
+    assert.equal(state.patch.recurrence_days, null);
+  });
+
+  test('repli sur le select de base si les colonnes energie/recurrence manquent', async () => {
+    const state = mockExisting({}, { rejectExtendedSelect: true });
+    const res = makeMockRes();
+    await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', available_seats: 2 });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.patch.available_seats, 2);
+  });
+});
+
 // Reset fetch après les tests
 test('cleanup', () => {
   global.fetch = originalFetch;
