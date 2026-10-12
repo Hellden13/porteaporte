@@ -14,6 +14,7 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-captcha.js"></script>
   <script src="/js/modal-helper.js"></script>
+  <script src="/js/pap-utm.js"></script>
   <style>
     body{min-height:100vh;display:grid;place-items:center;padding:24px}
     .auth-card{width:100%;max-width:520px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;padding:28px}
@@ -111,6 +112,21 @@
         .replace(/[^A-Z0-9_-]/g, '')
         .slice(0, 32);
     }
+
+    // ?role=conducteur : intention mémorisée pour présélection dans role-choice.html.
+    // Liste blanche dans pap-utm.js; toute autre valeur est ignorée.
+    (function rememberRoleIntent() {
+      try {
+        const intent = new URLSearchParams(window.location.search).get('role');
+        if (intent && window.papUtm) window.papUtm.rememberIntent(intent);
+      } catch (_) {}
+    })();
+
+    // signup_start : premier focus dans le formulaire, une fois par page.
+    form.addEventListener('focusin', function onFirstFocus() {
+      form.removeEventListener('focusin', onFirstFocus);
+      if (window.papUtm) window.papUtm.track('signup_start');
+    });
 
     const incomingReferralCode = getReferralCodeFromUrl();
     if (incomingReferralCode) {
@@ -220,6 +236,8 @@
         btn.textContent = 'Créer mon compte';
         return;
       }
+
+      if (window.papUtm) window.papUtm.track('signup_success', window.papUtm.get());
 
       // Email de bienvenue (best-effort, non bloquant)
       fetch('/api/notifier', {
