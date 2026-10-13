@@ -22,17 +22,12 @@
     .subtitle{text-align:center;color:var(--brand-muted);margin-bottom:24px}
     .form-group{display:grid;gap:8px;margin-bottom:16px}
     label{font-weight:700}
-    .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .role-option{border:1px solid var(--brand-border);background:var(--brand-bg-dark);color:var(--brand-text);border-radius:8px;padding:12px;text-align:center;cursor:pointer}
-    .role-option input{display:none}
-    .role-option:has(input:checked){border-color:var(--brand-cyan);background:rgba(0,217,255,.1)}
     .auth-btn{width:100%;margin-top:8px}
     .links{text-align:center;margin-top:16px;color:var(--brand-muted)}
-    .role-intent-note{margin:4px 0 0;font-size:.88rem;color:var(--brand-muted)}
+    .role-next-note{margin:0;color:var(--brand-muted)}
+    .role-intent-note{margin:0;font-size:.88rem;color:var(--brand-muted)}
     /* Mobile : la bulle Pia suit le formulaire au lieu de flotter par-dessus. */
     @media (max-width:560px){ body > #pia-launch{position:static;justify-self:end;margin-top:12px} }
-    /* Petits écrans : « Expéditeur » tient en entier dans sa case. */
-    @media (max-width:400px){ body{padding:16px 12px} .auth-card{padding:24px 16px} .role-option{padding:12px 4px} }
   </style>
 </head>
 <body>
@@ -63,14 +58,11 @@
         </div>
       </div>
 
+      <!-- Les activités se choisissent dans role-choice.html; la valeur par défaut reste envoyée dans les métadonnées. -->
+      <input type="hidden" name="role" value="expediteur">
       <div class="form-group">
-        <label>Rôle</label>
-        <div class="role-grid">
-          <label class="role-option"><input type="radio" name="role" value="expediteur" checked>Expéditeur</label>
-          <label class="role-option"><input type="radio" name="role" value="livreur">Livreur</label>
-          <label class="role-option"><input type="radio" name="role" value="les deux">Les deux</label>
-        </div>
-        <p id="roleIntentNote" class="role-intent-note" hidden>Conducteur ? Tu choisiras « Conducteur covoiturage » à l'étape suivante.</p>
+        <p class="role-next-note">Tu choisiras ce que tu veux faire à l'étape suivante. Tu peux tout cocher.</p>
+        <p id="roleIntentNote" class="role-intent-note" hidden>🚗 Conducteur ? Tu activeras « Conducteur covoiturage » juste après.</p>
       </div>
 
       <!-- Anti-bot honeypot : champ invisible aux humains, piège les bots qui remplissent tout -->
