@@ -386,6 +386,28 @@
                 top: 1rem;
             }
         }
+
+        /* Mobile : « Niveau » et la bulle Pia suivent le contenu au lieu de flotter par-dessus les cartes. */
+        @media (max-width: 560px) {
+            /* Le logo passe au-dessus du titre au lieu de le chevaucher. */
+            body > header {
+                position: static;
+                align-self: flex-start;
+                margin-bottom: 1rem;
+            }
+
+            body > #pp-layer-pill {
+                position: static;
+                align-self: flex-start;
+                margin: 1rem 12px 0;
+            }
+
+            body > #pia-launch {
+                position: static;
+                align-self: flex-end;
+                margin: 1rem 12px 12px;
+            }
+        }
     </style>
     <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
