@@ -385,3 +385,61 @@ describe('coherence affichages prix et pourcentages', () => {
     assert.match(profile, /dispatchEvent\(new Event\('change'\)\)/);
   });
 });
+
+// ─── Dates de recherche à l'heure du Québec ──────────────────────────────────
+describe('dates covoiturage a l heure du Quebec', () => {
+  const { rideLocalDateKey, rideSearchDateKey, rideDayKeyOf } = require('../lib/_rides');
+
+  test('un depart en soiree reste le meme jour local malgre UTC', () => {
+    // 20 h 30 HAE le lundi 5 oct. = 00 h 30 UTC le 6 oct.
+    assert.equal(rideLocalDateKey('2026-10-06T00:30:00Z'), '2026-10-05');
+    // 23 h 59 HNE le 1er déc. = 04 h 59 UTC le 2 déc.
+    assert.equal(rideLocalDateKey('2026-12-02T04:59:00Z'), '2026-12-01');
+    assert.equal(rideLocalDateKey('2026-12-02T05:00:00Z'), '2026-12-02');
+  });
+
+  test('changement d heure : la frontiere de minuit suit HAE puis HNE', () => {
+    // 1er nov. 2026 : passage à l'heure normale (UTC-5)
+    assert.equal(rideLocalDateKey('2026-11-01T03:59:00Z'), '2026-10-31');
+    assert.equal(rideLocalDateKey('2026-11-01T04:00:00Z'), '2026-11-01');
+    assert.equal(rideLocalDateKey('2026-11-02T04:30:00Z'), '2026-11-01');
+  });
+
+  test('la date recherchee est traitee comme un jour calendaire', () => {
+    assert.equal(rideSearchDateKey('2026-10-05'), '2026-10-05');
+    assert.equal(rideSearchDateKey('2026-02-30'), null);
+    assert.equal(rideSearchDateKey('pas une date'), null);
+    assert.equal(rideSearchDateKey(''), null);
+    assert.equal(rideDayKeyOf('2026-10-05'), 'lun');
+    assert.equal(rideDayKeyOf('2026-10-11'), 'dim');
+  });
+});
+
+// ─── Modification d'un ancien trajet électrique / hybride ────────────────────
+describe('covoiturage-publier normalise les anciens types de vehicule', () => {
+  const vm = require('node:vm');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'covoiturage-publier.html'), 'utf8');
+  const src = html.match(/function normalizeLegacyVehicle\(ride\) \{[\s\S]*?\n    \}\n/)?.[0];
+  const normalizeLegacyVehicle = src ? vm.runInNewContext(`(${src})`) : null;
+
+  test('la fonction est presente et utilisee par le prefill', () => {
+    assert.ok(normalizeLegacyVehicle, 'normalizeLegacyVehicle introuvable');
+    assert.match(html, /setVal\('vehicle_type', vehicle\.vehicle_type\)/);
+    assert.match(html, /setVal\('energy_type', vehicle\.energy_type\)/);
+  });
+
+  test('ancien type electrique devient energie electrique, carrosserie autre', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'electrique', energy_type: 'essence' }) }, { vehicle_type: 'autre', energy_type: 'electrique' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'hybride' }) }, { vehicle_type: 'autre', energy_type: 'hybride' });
+  });
+
+  test('une energie explicite non essence est conservee', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'hybride', energy_type: 'electrique' }) }, { vehicle_type: 'autre', energy_type: 'electrique' });
+  });
+
+  test('les trajets recents ne changent pas', () => {
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'suv', energy_type: 'diesel' }) }, { vehicle_type: 'suv', energy_type: 'diesel' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({}) }, { vehicle_type: 'berline', energy_type: 'essence' });
+    assert.deepEqual({ ...normalizeLegacyVehicle({ vehicle_type: 'sedan' }) }, { vehicle_type: 'autre', energy_type: 'essence' });
+  });
+});
