@@ -106,6 +106,10 @@ function applyPlatformCors(req, res) {
   Object.entries(headers).forEach(([k, v]) => res.setHeader(k, v));
 }
 
+// Plans de protection acceptés pour une nouvelle livraison (bêta : couverture max 250 $).
+const NEW_DELIVERY_PROTECTION_PLANS = ['none', 'base', 'standard'];
+const BETA_MAX_DECLARED_VALUE_CENTS = 25000;
+
 async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
     return res.status(403).json({ error: 'Role expediteur requis' });
@@ -114,6 +118,16 @@ async function createLivraison(req, res, ctx, body) {
   // L'absence de la colonne reste compatible avec les anciens profils.
   if (ctx.profile?.role !== 'admin' && ctx.profile?.est_expediteur === false) {
     return res.status(403).json({ error: 'Capacité expediteur requise' });
+  }
+
+  const protectionPlan = body.assurance_plan === undefined || body.assurance_plan === null || body.assurance_plan === ''
+    ? 'none'
+    : body.assurance_plan;
+  if (!NEW_DELIVERY_PROTECTION_PLANS.includes(protectionPlan)) {
+    return res.status(400).json({
+      error: 'Plan de protection invalide. Plans offerts : aucune protection, Base (couverture max 50 $) ou Standard (couverture max 250 $).',
+      allowed_plans: NEW_DELIVERY_PROTECTION_PLANS
+    });
   }
 
   const payload = {
@@ -129,7 +143,7 @@ async function createLivraison(req, res, ctx, body) {
     valeur_declaree: body.valeur_declaree === undefined ? null : toNumber(body.valeur_declaree),
     date_souhaitee: body.date_souhaitee || body.date_livraison || null,
     prix_total: toNumber(body.prix_total || body.prix, 0),
-    assurance_plan: body.assurance_plan || null,
+    assurance_plan: protectionPlan,
     notes: body.notes || null,
     nom_destinataire: body.nom_destinataire || null,
     email_destinataire: body.email_destinataire || null,
@@ -174,6 +188,7 @@ async function createLivraison(req, res, ctx, body) {
       }
     }
   } catch (_) {}
+  maxColisValueCents = Math.min(maxColisValueCents, BETA_MAX_DECLARED_VALUE_CENTS);
 
   // ─── Code promo (validation + calcul du rabais) ───────────────────────────────
   let validatedPromo = null;

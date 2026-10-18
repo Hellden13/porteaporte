@@ -683,6 +683,42 @@ describe('platform.js dispatcher', () => {
     assert.ok(res._body?.error?.includes('expediteur') || res._body?.error?.includes('Role'));
   });
 
+  test('create-livraison refuse le plan de protection Plus et toute valeur hors none/base/standard', async () => {
+    for (const plan of ['plus', 'premium', 'PLUS']) {
+      let livraisonInsert = false;
+      const mock = makeFetchMock({
+        '/auth/v1/user': { ok: true, data: { id: 'u1' } },
+        '/rest/v1/profiles': { ok: true, data: [{ id: 'u1', role: 'expediteur', suspendu: false, est_expediteur: true }] }
+      });
+      global.fetch = async (url, opts = {}) => {
+        if (url.includes('/rest/v1/livraisons') && opts.method === 'POST') livraisonInsert = true;
+        return mock(url, opts);
+      };
+      const req = makeReq({
+        body: {
+          endpoint: 'create-livraison',
+          adresse_depart: '1 rue A', adresse_arrivee: '2 rue B',
+          ville_depart: 'Québec', ville_arrivee: 'Lévis',
+          valeur_declaree: 100, prix_total: 20, assurance_plan: plan
+        },
+        headers: { authorization: 'Bearer tok' }
+      });
+      const res = makeRes();
+      await handler(req, res);
+      assert.equal(res._status, 400, `plan ${plan}`);
+      assert.match(res._body?.error || '', /Plan de protection invalide/);
+      assert.deepEqual(res._body?.allowed_plans, ['none', 'base', 'standard']);
+      assert.equal(livraisonInsert, false, `aucune insertion pour ${plan}`);
+    }
+  });
+
+  test('la promo insurance_upgrade offre la protection Standard, jamais Plus', () => {
+    const { computeDiscount } = require('../lib/_promos');
+    const d = computeDiscount({ type: 'insurance_upgrade' }, 20);
+    assert.equal(d.insurance_level, 'standard');
+    assert.doesNotMatch(d.label, /Plus/);
+  });
+
   test('admin-dashboard exige le rôle admin', async () => {
     global.fetch = makeFetchMock({
       '/auth/v1/user':    { ok: true, data: { id: 'u1' } },
