@@ -1184,7 +1184,7 @@
           <form id="email-test-form" class="form-grid">
             <label for="email-test-to">Envoyer un test a</label>
             <input id="email-test-to" type="email" placeholder="toi@exemple.com" required>
-            <button class="action-btn" type="submit" id="email-test-btn">Tester SendGrid</button>
+            <button class="action-btn" type="submit" id="email-test-btn">Tester l'envoi de courriels</button>
           </form>
         </div>
         <div class="form-card" style="grid-column:1/-1">
@@ -3050,10 +3050,13 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Erreur envoi');
-      const msg = `✅ Envoyé : ${out.sent || 0} / ${out.total || 0}${out.failed ? ' — échecs : ' + out.failed : ''}${out.test_mode ? ' (mode test)' : ''}`;
-      resultBox.innerHTML = `<span style="color:var(--brand-lime)">${msg}</span>`;
+      const hasFail = Number(out.failed) > 0;
+      const reason = hasFail && Array.isArray(out.errors) && out.errors.length ? ' — raison : ' + out.errors.join(' | ') : '';
+      const msg = `${hasFail ? '⚠️' : '✅'} Envoyé : ${out.sent || 0} / ${out.total || 0}${hasFail ? ' — échecs : ' + out.failed : ''}${out.test_mode ? ' (mode test)' : ''}${reason}`;
+      resultBox.innerHTML = `<span style="color:${hasFail ? '#ff8a8a' : 'var(--brand-lime)'}"></span>`;
+      resultBox.firstChild.textContent = msg;
       alert(msg);
-      if (!testMode) event.target.reset();
+      if (!testMode && !hasFail) event.target.reset();
     } catch (err) {
       resultBox.innerHTML = `<span style="color:#ff8a8a">❌ ${err.message}</span>`;
       alert('❌ ' + err.message);

@@ -6840,13 +6840,14 @@ module.exports = async function handler(req, res) {
       }
       return res.status(200).json({ success: true, sent: pbSent, failed: pbFailed, total: pbSubs.length, stale_removed: pbStale.length });
     }
-    // ── admin-email-broadcast (envoi de masse par courriel via SendGrid) ──
+    // ── admin-email-broadcast (envoi de masse par courriel via Resend) ──
+    // Même fournisseur et même clé que /api/notifier (admin-email-test), qui fonctionne.
     if (endpoint === 'admin-email-broadcast') {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
-      const SENDGRID_API_KEY = (process.env.SENDGRID_API_KEY || '').trim();
+      const RESEND_KEY = (process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY || '').trim();
       const FROM_EMAIL = (process.env.FROM_EMAIL || 'notifications@porteaporte.site').trim();
       const FROM_NAME  = 'PorteàPorte 🍁';
-      if (!SENDGRID_API_KEY) return res.status(500).json({ error: 'SENDGRID_API_KEY non configurée' });
+      if (!RESEND_KEY) return res.status(500).json({ error: 'RESEND_API_KEY non configurée' });
 
       const ebSubject  = String(body?.subject || '').trim().slice(0, 200);
       const ebBodyRaw  = String(body?.body || body?.html || '').trim();
@@ -6894,27 +6895,35 @@ module.exports = async function handler(req, res) {
       }
       if (!recipients.length) return res.status(200).json({ success: true, sent: 0, failed: 0, total: 0, message: 'Aucun destinataire' });
 
-      // SendGrid : 1 personalization par destinataire (les destinataires ne se voient pas entre eux), max 1000/requête
+      // Resend /emails/batch : 1 courriel par destinataire (ils ne se voient pas entre eux), max 100/requête
       let ebSent = 0, ebFailed = 0;
-      const CHUNK = 900;
+      const ebErrors = [];
+      const CHUNK = 100;
       for (let i = 0; i < recipients.length; i += CHUNK) {
         const chunk = recipients.slice(i, i + CHUNK);
         try {
-          const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          const rsRes = await fetch('https://api.resend.com/emails/batch', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              personalizations: chunk.map(to => ({ to: [{ email: to }] })),
-              from: { email: FROM_EMAIL, name: FROM_NAME },
+            headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(chunk.map(to => ({
+              from: `${FROM_NAME} <${FROM_EMAIL}>`,
+              to: [to],
               subject: ebSubject,
-              content: [{ type: 'text/html', value: fullHtml }]
-            })
+              html: fullHtml
+            })))
           });
-          if (sgRes.status === 202) ebSent += chunk.length;
-          else { ebFailed += chunk.length; const t = await sgRes.text().catch(() => ''); console.error('[email-broadcast] SendGrid', sgRes.status, t.slice(0, 300)); }
-        } catch (e) { ebFailed += chunk.length; console.error('[email-broadcast]', e.message); }
+          if (rsRes.ok) ebSent += chunk.length;
+          else {
+            ebFailed += chunk.length;
+            const t = await rsRes.text().catch(() => '');
+            let msg = t.slice(0, 300);
+            try { const j = JSON.parse(t); msg = j.message || j.name || msg; } catch (_) {}
+            ebErrors.push(`Resend ${rsRes.status}: ${msg}`);
+            console.error('[email-broadcast] Resend', rsRes.status, t.slice(0, 300));
+          }
+        } catch (e) { ebFailed += chunk.length; ebErrors.push(e.message); console.error('[email-broadcast]', e.message); }
       }
-      return res.status(200).json({ success: true, sent: ebSent, failed: ebFailed, total: recipients.length, test_mode: ebTestMode });
+      return res.status(200).json({ success: ebFailed === 0, sent: ebSent, failed: ebFailed, total: recipients.length, test_mode: ebTestMode, errors: ebErrors.length ? ebErrors.slice(0, 3) : undefined });
     }
     // ── admin-user-delete (suppression définitive d'un compte) ──
     if (endpoint === 'admin-user-delete') {
