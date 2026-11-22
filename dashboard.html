@@ -196,6 +196,9 @@
       </div>
     </div>
 
+    <!-- Concours des Fêtes (affiché seulement si le concours est lancé, jusqu'au 6 janvier 2027) -->
+    <div id="concoursFetesCard" class="section" style="display:none;border:1px solid rgba(200,16,46,.45);background:linear-gradient(90deg,rgba(31,111,67,.18),rgba(200,16,46,.14));border-radius:14px;padding:14px 16px;margin:12px 0"></div>
+
     <!-- Stats globales -->
     <div class="stats" id="globalStats"></div>
 
@@ -363,6 +366,8 @@
       loadDriverRides(session),
       loadExpediteurDeliveries(session),
       loadLivreurMissions(session, profile),
+      loadConcoursFetes(session),
+      loadCovTripsStat(session, profile),
     ]);
 
     document.getElementById('loading').style.display = 'none';
@@ -443,7 +448,7 @@
     stats.innerHTML = `
       <div class="stat"><div class="stat-val">${profile.livraisons || profile.livraisons_count || 0}</div><div class="stat-label">Livraisons</div></div>
       <div class="stat"><div class="stat-val">${Number(profile.score_confiance || profile.score || 0).toFixed(1)}</div><div class="stat-label">Score</div></div>
-      <div class="stat"><div class="stat-val">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
+      <div class="stat"><div class="stat-val" id="statCovTrips">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
       <div class="stat"><div class="stat-val">${profile.coins || 0}</div><div class="stat-label">Points impact</div></div>
     `;
   }
@@ -604,6 +609,59 @@
       alert('❌ Erreur réseau. Réessaie dans un instant.');
     }
   };
+
+  // ─── Compteur « Trajets covoit » : comme passager ET comme conducteur ──────────
+  // Avant, il affichait profile.cov_total_rides, qui ne comptait pas les trajets faits comme passager.
+  const STATUTS_TRAJET_FAIT = ['paye', 'complete', 'completed', 'termine'];
+  function compterTrajetsCovoit(reservations, trajetsConducteur) {
+    const passager = (reservations || []).filter((b) => STATUTS_TRAJET_FAIT.includes(String(b.status || '').toLowerCase())).length;
+    const conducteur = (trajetsConducteur || []).filter((r) => String(r.status || '').toLowerCase() === 'termine').length;
+    return passager + conducteur;
+  }
+  async function loadCovTripsStat(session, profile) {
+    const el = document.getElementById('statCovTrips');
+    if (!el) return;
+    try {
+      const [b, r] = await Promise.all([
+        db.from('ride_bookings').select('id,status').eq('passenger_id', session.user.id).limit(1000),
+        db.from('rides').select('id,status').eq('driver_id', session.user.id).eq('status', 'termine').limit(1000),
+      ]);
+      if (b.error || r.error) return; // garde la valeur du profil
+      el.textContent = String(Math.max(compterTrajetsCovoit(b.data, r.data), 0));
+    } catch (_) { /* valeur du profil conservée */ }
+  }
+
+  // ─── Concours des Fêtes : « Tu as X participations au tirage des Fêtes » ──────
+  function texteParticipationsFetes(d) {
+    const n = Number(d && d.participations) || 0;
+    const titre = '🎄 Tu as ' + n + ' participation' + (n > 1 ? 's' : '') + ' au tirage des Fêtes';
+    const det = d && d.detail;
+    const parts = [];
+    if (det && det.livraisons) parts.push(det.livraisons + ' livraison' + (det.livraisons > 1 ? 's' : ''));
+    if (det && det.trajets_passager) parts.push(det.trajets_passager + ' trajet' + (det.trajets_passager > 1 ? 's' : '') + ' comme passager');
+    if (det && det.trajets_conducteur) parts.push(det.trajets_conducteur + ' trajet' + (det.trajets_conducteur > 1 ? 's' : '') + ' comme conducteur');
+    const susp = Number(d && d.suspendues) || 0;
+    const sous = (n > 0
+      ? 'Grâce à : ' + parts.join(', ') + '. Chaque livraison ou trajet payé = 1 chance de plus.'
+      : 'Chaque livraison ou trajet de covoiturage complété et payé te donne 1 chance de gagner une carte-cadeau de 100 $.') +
+      (susp ? ' ' + susp + ' participation' + (susp > 1 ? 's' : '') + ' en attente : un litige est en cours.' : '');
+    return { titre, sous };
+  }
+
+  async function loadConcoursFetes(session) {
+    const el = document.getElementById('concoursFetesCard');
+    if (!el || Date.now() >= Date.parse('2027-01-07T05:00:00.000Z')) return;
+    try {
+      const r = await fetch('/api/platform?endpoint=concours-fetes-moi', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const d = await r.json().catch(() => null);
+      if (!r.ok || !d || !d.lance) return;
+      const t = texteParticipationsFetes(d);
+      el.innerHTML = '<div style="font-weight:800;font-size:1.05rem">' + esc(t.titre) + '</div>' +
+        '<div style="color:var(--muted);font-size:.86rem;margin-top:4px">' + esc(t.sous) +
+        ' <a href="' + esc(d.reglement || '/concours-fetes-reglement.html') + '" style="color:#f5d061;font-weight:700">Règlement</a></div>';
+      el.style.display = 'block';
+    } catch (_) { /* carte cachée si indisponible */ }
+  }
 
   // ─── CONDUCTEUR : mes trajets publiés + capture paiement ──────────────
   async function loadDriverRides(session) {

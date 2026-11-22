@@ -743,6 +743,28 @@
 
     <div id="section-rewards" class="section">
       <div class="section-title">Missions, PorteCoins & tirages</div>
+
+      <!-- 🎄 Concours des Fêtes 2026 : participations calculées depuis le service utilisé (aucun achat). -->
+      <div class="table-card" id="concours-fetes-admin" style="margin-bottom:18px;border:1px solid rgba(200,16,46,.45)">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px">
+          <div>
+            <div style="font-weight:800;font-size:1.05rem">🎄 Concours des Fêtes 2026 — carte-cadeau de 100 $</div>
+            <div id="cf-etat" style="color:var(--brand-muted);font-size:.82rem;margin-top:3px">Chargement…</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="action-btn" id="cf-lancer" style="display:none" onclick="cfLancer()">🚀 Lancer le concours</button>
+            <button class="action-btn" id="cf-theme" onclick="cfTheme()">Thème des Fêtes : …</button>
+            <button class="action-btn" id="cf-csv" onclick="cfCsv()" disabled>⬇️ Export CSV</button>
+            <button class="action-btn danger" id="cf-tirer" onclick="cfTirer(this)" disabled title="Actif seulement après le 31 décembre 2026, 23 h 59 (heure du Québec)">🎲 Tirer au sort</button>
+          </div>
+        </div>
+        <div id="cf-message" role="status" style="display:none;margin:0 14px 10px;padding:8px 12px;border-radius:8px;font-size:.86rem"></div>
+        <table>
+          <thead><tr><th>Participant</th><th>Participations</th><th>Livraisons</th><th>Trajets (passager)</th><th>Trajets (conducteur)</th></tr></thead>
+          <tbody id="cf-participants"><tr><td colspan="5" class="empty-msg">—</td></tr></tbody>
+        </table>
+        <div style="padding:8px 14px;color:var(--brand-muted);font-size:.76rem">Règlement : <a href="/concours-fetes-reglement.html" target="_blank" rel="noopener">/concours-fetes-reglement.html</a> (sections à écrire par Denis).</div>
+      </div>
       <div class="impact-summary">
         <div class="impact-mini"><div>PorteCoins nets</div><div id="reward-admin-coins">—</div></div>
         <div class="impact-mini"><div>Transactions PC</div><div id="reward-admin-tx">—</div></div>
@@ -977,9 +999,6 @@
             <input id="impact-ride-pet" type="number" min="0" step="0.5" value="8">
             <label for="impact-ride-stop">Frais arrêt supplémentaire ($)</label>
             <input id="impact-ride-stop" type="number" min="0" step="0.5" value="3">
-            <label for="impact-ride-free-trips">Trajets sans commission (franchise par conducteur)</label>
-            <input id="impact-ride-free-trips" type="number" min="0" step="1" value="10">
-            <div style="color:var(--brand-muted);font-size:.72rem;margin-top:-4px">Les N premiers trajets publiés par un conducteur sont sans commission (figé à la publication). 0 = désactivé.</div>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Politique d'annulation (passager) —</div>
             <div style="font-size:.74rem;color:var(--brand-muted);margin-bottom:8px">Quand un passager annule, selon le délai avant départ : ce qu'il récupère, la part versée au conducteur (dédommagement), et la part gardée au fond de sécurité. Chaque palier doit totaliser 100%.</div>
@@ -1106,30 +1125,9 @@
       </div>
 
       <div class="section-title" style="margin-top:24px">Seuils tarifaires</div>
-      <div class="impact-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div>
-          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">COÛT/KM PAR DÉFAUT</div>
-          <div style="font-size:1.6rem;font-weight:900;color:var(--brand-lime)">0,35 $/km</div>
-          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Configurable dans platform.js → RIDE_COST_PER_KM</div>
-        </div>
-        <div>
-          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">MAXIMUM LÉGAL SUGGÉRÉ</div>
-          <div style="font-size:1.6rem;font-weight:900;color:#FFB800">0,50 $/km</div>
-          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Alerte automatique si dépassé · RIDE_MAX_COST_PER_KM</div>
-        </div>
-        <div>
-          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">FRAIS PLATEFORME</div>
-          <div style="font-size:1.6rem;font-weight:900;color:var(--brand-cyan)">10%</div>
-          <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Prélevés sur la part passager · RIDE_PLATFORM_PCT</div>
-        </div>
-        <div>
-          <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">SUPPLÉMENTS</div>
-          <div style="font-size:.92rem;font-weight:700;color:var(--brand-text);line-height:1.8">
-            🧳 Bagages : +5,00 $<br>
-            🐾 Animal : +8,00 $<br>
-            📍 Arrêt : +3,00 $
-          </div>
-        </div>
+      <!-- Lu depuis le serveur (ride-settings → pricing) : mêmes chiffres que le formulaire de publication et le calcul réel. -->
+      <div class="impact-summary" id="seuils-tarifaires" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="color:var(--brand-muted)">Chargement des tarifs…</div>
       </div>
 
     </div>
@@ -1866,6 +1864,25 @@
     await loadLitiges(window.db);
   }
 
+  async function adminCreerRetour(btn) {
+    const user = AUTH_API.getUser();
+    if (!user?.session?.access_token) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/platform?endpoint=admin-ride-create-return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + user.session.access_token },
+        body: JSON.stringify({ endpoint: 'admin-ride-create-return', ride_id: btn.dataset.rideId }),
+      });
+      const out = await res.json().catch(() => ({}));
+      btn.textContent = res.ok ? (out.deja ? '✔ Retour déjà créé' : '✔ Retour créé') : ('❌ ' + (out.error || 'Erreur'));
+      if (res.ok && !out.deja) loadCovoiturage();
+    } catch (_) {
+      btn.textContent = '❌ Erreur réseau';
+      btn.disabled = false;
+    }
+  }
+
   async function adminSupprimerTrajet(btn) {
     const ok = await window.PAPRideDelete.ouvrir(btn.dataset.rideId, btn.dataset.rideLabel);
     if (ok) { loadCovoiturage(); loadAFaire(); }
@@ -1898,9 +1915,18 @@
             const rid = afId(r.id);
             const libelle = `${r.start_city || '?'} → ${r.end_city || '?'}`;
             // Trajet supprimé = annulé + marque au journal (le serveur renvoie supprime et supprime_le).
-            const actions = (rid && !r.supprime)
-              ? `<button class="action-btn danger" data-ride-id="${rid}" data-ride-label="${afEsc(libelle)}" onclick="adminSupprimerTrajet(this)">🗑️ Supprimer</button>`
-              : `<span style="color:#5A6A7A;font-size:.78rem">${r.supprime && r.supprime_le ? 'Supprimé le ' + afEsc(new Date(r.supprime_le).toLocaleDateString('fr-CA')) + (r.supprime_par === 'admin' ? ' (admin)' : '') : '—'}</span>`;
+            // Bouton caché si une réservation est payée ou en cours (le serveur refuse de toute façon) ;
+            // null = lecture impossible : caché aussi, par prudence.
+            const resaActive = r.reservations_actives !== 0;
+            const retourBtn = (rid && !r.supprime && r.status === 'publie' && r.is_return_trip && r.return_departure_time)
+              ? ` <button class="action-btn" data-ride-id="${rid}" onclick="adminCreerRetour(this)" title="Crée le trajet du retour (réservable). Sans effet s'il existe déjà.">↩️ Créer le retour</button>`
+              : '';
+            const actions = r.supprime
+              ? `<span style="color:#5A6A7A;font-size:.78rem">${r.supprime_le ? 'Supprimé le ' + afEsc(new Date(r.supprime_le).toLocaleDateString('fr-CA')) + (r.supprime_par === 'admin' ? ' (admin)' : '') : 'Supprimé'}</span>`
+              : (!rid ? '—'
+                : (resaActive
+                  ? `<span style="color:#FFB800;font-size:.78rem" title="Annule le trajet pour rembourser les passagers">${r.reservations_actives == null ? 'Réservations ?' : r.reservations_actives + ' réservation(s) active(s)'}</span>`
+                  : `<button class="action-btn danger" data-ride-id="${rid}" data-ride-label="${afEsc(libelle)}" onclick="adminSupprimerTrajet(this)">🗑️ Supprimer</button>`) + retourBtn);
             return `<tr>
               <td>${afEsc(libelle)}<div style="font-family:monospace;color:#00D9FF;font-size:.7rem">${afEsc(String(r.id || '').slice(0,8))}… · ${afEsc(r.driver_prenom || r.driver_id?.slice(0,8) || '—')}</div></td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}${r.is_recurring ? ' 🔁' : ''}</td>
@@ -2184,7 +2210,6 @@
       document.getElementById('impact-ride-luggage').value = settings.ride_fee_luggage  ?? 5;
       document.getElementById('impact-ride-pet').value     = settings.ride_fee_pet      ?? 8;
       document.getElementById('impact-ride-stop').value    = settings.ride_fee_stop     ?? 3;
-      document.getElementById('impact-ride-free-trips').value = settings.ride_free_trips ?? 10;
       document.getElementById('impact-cxl-free-h').value   = settings.ride_cancel_free_window_h     ?? 24;
       document.getElementById('impact-cxl-late-h').value   = settings.ride_cancel_late_window_h     ?? 2;
       document.getElementById('impact-cxl-p-refund').value = settings.ride_cancel_partial_refund_pct ?? 85;
@@ -2568,7 +2593,6 @@
         ride_fee_luggage:   Number(document.getElementById('impact-ride-luggage').value || 0),
         ride_fee_pet:       Number(document.getElementById('impact-ride-pet').value || 0),
         ride_fee_stop:      Number(document.getElementById('impact-ride-stop').value || 0),
-        ride_free_trips:    Math.max(0, Math.floor(Number(document.getElementById('impact-ride-free-trips').value || 0))),
         ride_cancel_free_window_h:      Math.max(0, Number(document.getElementById('impact-cxl-free-h').value || 0)),
         ride_cancel_late_window_h:      Math.max(0, Number(document.getElementById('impact-cxl-late-h').value || 0)),
         ride_cancel_partial_refund_pct: Math.max(0, Number(document.getElementById('impact-cxl-p-refund').value || 0)),
@@ -3191,6 +3215,138 @@
     await loadAvis();
   }
 
+  // ── CONCOURS DES FÊTES (admin) ─────────────────────────────────────────
+  let cfEtat = null;
+  async function cfAppel(body) {
+    const user = AUTH_API.getUser();
+    const res = await fetch('/api/platform?endpoint=admin-concours-fetes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (user?.session?.access_token || '') },
+      body: JSON.stringify({ endpoint: 'admin-concours-fetes', ...body }),
+    });
+    return res;
+  }
+  function cfMessage(texte, ok) {
+    const el = document.getElementById('cf-message');
+    if (!el) return;
+    el.style.display = texte ? 'block' : 'none';
+    el.style.background = ok ? 'rgba(31,111,67,.25)' : 'rgba(255,90,90,.14)';
+    el.textContent = texte || '';
+  }
+  function renderConcoursFetes(d) {
+    cfEtat = d;
+    const etat = document.getElementById('cf-etat');
+    const corps = document.getElementById('cf-participants');
+    if (!etat || !corps) return;
+    document.getElementById('cf-lancer').style.display = d.lance ? 'none' : '';
+    document.getElementById('cf-theme').textContent = 'Thème des Fêtes : ' + (d.theme_interrupteur === false ? 'COUPÉ (cliquer pour activer)' : 'ACTIF (cliquer pour couper)');
+    document.getElementById('cf-csv').disabled = !d.lance;
+    const tirer = document.getElementById('cf-tirer');
+    tirer.disabled = !(d.lance && d.tirage_autorise && !d.gagnant);
+    if (!d.lance) {
+      etat.textContent = 'Pas encore lancé. Les participations comptent à partir du lancement.';
+      corps.innerHTML = '<tr><td colspan="5" class="empty-msg">Concours non lancé</td></tr>';
+      return;
+    }
+    const depuis = d.concours?.created_at ? new Date(d.concours.created_at).toLocaleDateString('fr-CA') : '?';
+    etat.textContent = `Lancé le ${depuis} · fin le 31 décembre 2026 à 23 h 59 · ${d.participants.length} participant(s), ${d.total_participations} participation(s)` +
+      (d.gagnant ? ' · TIRAGE FAIT' : (d.tirage_autorise ? ' · tirage possible' : ' · tirage après la date limite'));
+    corps.innerHTML = d.participants.length === 0
+      ? '<tr><td colspan="5" class="empty-msg">Aucune participation validée pour l\'instant</td></tr>'
+      : d.participants.map((p) => `<tr${d.gagnant && d.gagnant.user_id === p.user_id ? ' style="background:rgba(245,208,97,.12)"' : ''}>
+          <td>${afEsc([p.prenom, p.nom].filter(Boolean).join(' ') || '—')}${d.gagnant && d.gagnant.user_id === p.user_id ? ' 🏆' : ''}<div style="color:var(--brand-muted);font-size:.72rem">${afEsc(p.email || '')}</div></td>
+          <td style="font-weight:800">${Number(p.total) || 0}${Number(p.suspendues) ? ` <span style="color:#FFB800;font-weight:600;font-size:.78rem" title="Suspendues pendant un litige">(+${Number(p.suspendues)} suspendue(s))</span>` : ''}</td>
+          <td>${Number(p.livraisons) || 0}</td><td>${Number(p.trajets_passager) || 0}</td><td>${Number(p.trajets_conducteur) || 0}</td>
+        </tr>`).join('');
+  }
+  async function loadConcoursFetesAdmin() {
+    try {
+      const res = await cfAppel({ mode: 'liste' });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { cfMessage('Concours indisponible : ' + (d.error || res.status), false); return; }
+      renderConcoursFetes(d);
+    } catch (_) { cfMessage('Concours indisponible (réseau).', false); }
+  }
+  async function cfLancer() {
+    const res = await cfAppel({ mode: 'lancer' });
+    const d = await res.json().catch(() => ({}));
+    cfMessage(res.ok ? '🎄 Concours lancé.' : ('Lancement impossible : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+  async function cfTheme() {
+    const actif = !(cfEtat && cfEtat.theme_interrupteur !== false);
+    const res = await cfAppel({ mode: 'theme', actif });
+    const d = await res.json().catch(() => ({}));
+    cfMessage(res.ok ? ('Thème des Fêtes ' + (actif ? 'activé' : 'coupé') + '. Les pages se mettent à jour d\'ici 5 minutes.') : ('Changement impossible : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+  async function cfCsv() {
+    const res = await cfAppel({ mode: 'csv' });
+    if (!res.ok) { cfMessage('Export impossible.', false); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'concours-fetes-2026-participants.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  // Tirage : deux clics (confirmation dans la page), résultat définitif inscrit au journal d'audit.
+  async function cfTirer(btn) {
+    if (btn.dataset.confirmer !== '1') {
+      btn.dataset.confirmer = '1';
+      btn.textContent = '⚠️ Confirmer le tirage (définitif)';
+      cfMessage('Le tirage est définitif et inscrit au journal d\'audit. Clique encore pour confirmer.', false);
+      return;
+    }
+    btn.disabled = true;
+    const res = await cfAppel({ mode: 'tirer' });
+    const d = await res.json().catch(() => ({}));
+    btn.dataset.confirmer = '';
+    btn.textContent = '🎲 Tirer au sort';
+    cfMessage(res.ok
+      ? `🏆 Gagnant : ${[d.gagnant?.prenom, d.gagnant?.nom].filter(Boolean).join(' ') || d.gagnant?.user_id} (${d.gagnant?.participations} participation(s)). Inscrit au journal d'audit.`
+      : ('Tirage refusé : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+
+  // ── SEUILS TARIFAIRES (source unique : ride-settings → pricing) ─────────
+  function fmtDollars(v) { return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' }); }
+  function fmtKm(v) { return Number(v || 0).toFixed(2).replace('.', ',') + ' $/km'; }
+  function renderSeuilsTarifaires(p) {
+    const el = document.getElementById('seuils-tarifaires');
+    if (!el) return;
+    if (!p || !p.energy_rates) { el.innerHTML = '<div style="color:#ff9999">Tarifs indisponibles (ride-settings).</div>'; return; }
+    const noms = { electrique: '⚡ Électrique', hybride: '🔋 Hybride', essence: '⛽ Essence', diesel: '🛻 Diesel' };
+    const lignes = Object.entries(p.energy_rates).map(([k, v]) => `${noms[k] || afEsc(k)} : ${fmtKm(v.def)} (max ${fmtKm(v.max)})`).join('<br>');
+    el.innerHTML = `
+      <div>
+        <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">COÛT/KM SUGGÉRÉ PAR ÉNERGIE</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--brand-lime);line-height:1.8">${lignes}</div>
+      </div>
+      <div>
+        <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">MAXIMUM ABSOLU</div>
+        <div style="font-size:1.6rem;font-weight:900;color:#FFB800">${fmtKm(p.cost_per_km_max)}</div>
+        <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">Le prix passager est plafonné à ce tarif sur sa distance.</div>
+      </div>
+      <div>
+        <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">FRAIS PLATEFORME (FIXES, PAR PLACE)</div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--brand-cyan)">${fmtDollars(p.platform_fee_low)} / ${fmtDollars(p.platform_fee_high)}</div>
+        <div style="font-size:.78rem;color:var(--brand-muted);margin-top:4px">${fmtDollars(p.platform_fee_low)} si le sous-total est sous ${fmtDollars(p.platform_fee_threshold)}, sinon ${fmtDollars(p.platform_fee_high)}. Minimum facturé : ${fmtDollars(p.min_charge)}.</div>
+      </div>
+      <div>
+        <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">SUPPLÉMENTS</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--brand-text);line-height:1.8">
+          🧳 Bagages : +${fmtDollars(p.fee_luggage)}<br>🐾 Animal : +${fmtDollars(p.fee_pet)}<br>📍 Arrêt : +${fmtDollars(p.fee_stop)}<br>📦 Colis : ${fmtDollars(p.fee_package_base)} + ${fmtDollars(p.fee_package_per_kg)}/kg après 5 kg
+        </div>
+      </div>`;
+  }
+  async function loadSeuilsTarifaires() {
+    try {
+      const r = await fetch('/api/platform?endpoint=ride-settings');
+      const out = await r.json().catch(() => ({}));
+      renderSeuilsTarifaires(r.ok ? out.pricing : null);
+    } catch (_) { renderSeuilsTarifaires(null); }
+  }
+
   // ── À FAIRE MAINTENANT (lot 1) ───────────────────────────────────
   function afEsc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3284,6 +3440,8 @@
     document.getElementById('admin-email').textContent = user.email || '';
     document.getElementById('admin-welcome').textContent = 'Connecté en tant que ' + ([user.prenom, user.nom].filter(Boolean).join(' ') || user.email);
     loadAFaire();
+    loadSeuilsTarifaires();
+    loadConcoursFetesAdmin();
     await loadData();
     await loadRewardsAdmin();
     await loadImpact();

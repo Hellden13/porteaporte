@@ -1329,7 +1329,8 @@ describe('capture-livraison handler — confirmation destinataire + escrow', () 
           expediteur_id: 'exp-1',
           recipient_confirmation_hash: receptionHash('123456', 'liv-1')
         }]
-      }
+      },
+      '/rest/v1/transaction_audit_events': { ok: true, data: [] }
     });
 
     const req = makeReq({ body: { livraison_id: 'liv-1', recipient_code: '654321' } });
@@ -1344,6 +1345,11 @@ describe('capture-livraison handler — confirmation destinataire + escrow', () 
     const code = '123456';
     global.fetch = async (url, opts = {}) => {
       calls.push({ url, method: opts.method || 'GET', body: opts.body || '' });
+
+      // Compteur des codes faux (journal d'audit) : aucun échec encore.
+      if (url.includes('/rest/v1/transaction_audit_events') && (opts.method || 'GET') === 'GET') {
+        return { ok: true, status: 200, json: async () => [] };
+      }
 
       if (url.includes('/rest/v1/livraisons') && (opts.method || 'GET') === 'GET') {
         return {

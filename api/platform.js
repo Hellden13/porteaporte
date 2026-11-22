@@ -20,7 +20,7 @@ const {
 
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
-  getRideSettings,
+  getRideSettings, ridePricingConfig, adminRideCreateReturn,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel, rideDelete,
   rideDriverContact, rideSendMeetupMessage, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
   rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
@@ -39,6 +39,7 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
+const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
 // ─── Redistribution commission covoiturage ───
@@ -4377,7 +4378,6 @@ async function impactPublic(req, res, ctx) {
     totals: state.totals,
     allocations: state.allocations,
     ride_redistribution: state.ride_redistribution,
-    ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10))),
     ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50)),
     ride_fee_threshold: Math.max(0, Number(state.settings.ride_fee_threshold != null ? state.settings.ride_fee_threshold : 15)),
     ride_platform_fee_high: Math.max(0, Number(state.settings.ride_platform_fee_high != null ? state.settings.ride_platform_fee_high : 3))
@@ -4421,7 +4421,6 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     insurance_fund_topup_cents: 0,
     founder_revenue_pct: 0,
     profit_to_insurance: true,
-    ride_free_trips: 10,
     ride_platform_fee: 1.50,
     ride_fee_threshold: 15,
     ride_platform_fee_high: 3,
@@ -4453,12 +4452,12 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
   const rows = r.ok ? await r.json() : [];
   let rideSettings = {};
   try {
-    const rideFields = 'ride_free_trips,ride_platform_fee,ride_fee_threshold,ride_platform_fee_high';
+    const rideFields = 'ride_platform_fee,ride_fee_threshold,ride_platform_fee_high';
     let rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=${rideFields}&limit=1`, {
       headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
     });
     if (!rr.ok) {
-      rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_free_trips,ride_platform_fee&limit=1`, {
+      rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_fee&limit=1`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
       });
     }
@@ -4466,6 +4465,7 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     rideSettings = rideRows[0] || {};
   } catch (_) {}
   const mergedSettings = { ...defaults, ...(rows[0] || {}), ...rideSettings };
+  delete mergedSettings.ride_free_trips; // promotion retirée
   return res.status(200).json({
     success: true,
     stripe_configured: Boolean(process.env.STRIPE_SECRET_KEY),
@@ -4723,7 +4723,6 @@ async function impactAdmin(req, res, ctx, body) {
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
-      ride_free_trips:    Math.max(0, Math.floor(toNumber(body.ride_free_trips, 10))),
       ride_cancel_free_window_h:      Math.max(0, toNumber(body.ride_cancel_free_window_h, 24)),
       ride_cancel_late_window_h:      Math.max(0, toNumber(body.ride_cancel_late_window_h, 2)),
       ride_cancel_partial_refund_pct: Math.max(0, Math.min(100, toNumber(body.ride_cancel_partial_refund_pct, 85))),
@@ -4898,7 +4897,8 @@ async function rewardsDashboard(req, res, ctx) {
   const drawsRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&status=eq.active&order=draw_date.asc&limit=5`, {
     headers: sbHeaders(ctx.sbKey)
   });
-  const draws = drawsRes.ok ? await drawsRes.json() : [];
+  // Le Concours des Fêtes n'apparaît pas parmi les tirages à PorteCoins (on n'y participe qu'en utilisant le service).
+  const draws = (drawsRes.ok ? await drawsRes.json() : []).filter((d) => d.eligibility_badge_slug !== CONCOURS_FETES.slug);
   const drawIds = draws.map((d) => d.id);
   let entries = [];
   if (drawIds.length) {
@@ -4971,6 +4971,10 @@ async function drawEnter(req, res, ctx, body) {
   const drawId = body.draw_id || body.drawId;
   const entries = Math.max(1, Math.min(50, Math.round(toNumber(body.entries, 1))));
   if (!drawId) return res.status(400).json({ error: 'draw_id requis' });
+  // Concours des Fêtes : on participe SEULEMENT en utilisant le service, jamais en PorteCoins.
+  if (await estDrawConcours(ctx, drawId)) {
+    return res.status(403).json({ error: 'On participe au Concours des Fêtes seulement en utilisant PorteàPorte (livraison ou covoiturage payé).', code: 'concours_service_seulement' });
+  }
   const cost = entries * 10;
 
   const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&status=eq.active&select=id,title,draw_date&limit=1`, {
@@ -5022,6 +5026,9 @@ function pickWeightedWinner(candidates) {
 }
 
 async function runMonthlyDraw(ctx, drawId) {
+  // Le Concours des Fêtes a son propre tirage (pondéré, après la date limite, journalisé) : jamais celui-ci,
+  // qui ajoute tous les membres quand il n'y a pas de participation.
+  if (await estDrawConcours(ctx, drawId)) return { ok: false, status: 409, error: 'Concours des Fêtes : utilise son propre bouton « Tirer au sort ».' };
   const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&select=*&limit=1`, {
     headers: sbHeaders(ctx.sbKey)
   });
@@ -5218,6 +5225,11 @@ async function adminRewards(req, res, ctx, body) {
     return res.status(200).json({ success: true, draw: Array.isArray(insert.data) ? insert.data[0] : insert.data });
   }
 
+  // Le Concours des Fêtes ne se modifie, ne se duplique, ne se supprime et ne se tire pas ici.
+  if (['update_draw_status', 'run_draw', 'delete_draw', 'update_draw', 'duplicate_draw'].includes(body.mode)
+      && await estDrawConcours(ctx, body.id || body.draw_id)) {
+    return res.status(409).json({ error: 'Concours des Fêtes : géré dans son propre encadré (règles fixes, tirage journalisé).', code: 'concours_protege' });
+  }
   if (body.mode === 'update_draw_status') {
     const id = body.id || body.draw_id;
     const status = String(body.status || '').trim();
@@ -5426,20 +5438,26 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'safe-meeting-points') {
       return await safeMeetingPoints(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
     }
+    if (endpoint === 'concours-fetes-public') {
+      return await concoursFetesPublic(req, res, { sbUrl, sbKey });
+    }
     if (endpoint === 'ride-settings') {
       const settings = await getRideSettings({ sbUrl, sbKey });
+      // Source unique : la même configuration que celle utilisée par calcRidePrice.
+      const pricing = ridePricingConfig(settings);
       return res.status(200).json({
         success: true,
+        pricing,
         settings: {
-          ride_platform_fee: 1.5,
-          ride_fee_threshold: 15,
-          ride_platform_fee_high: 3,
-          ride_fee_luggage: 5,
-          ride_fee_pet: 8,
-          ride_fee_stop: 3,
-          ride_fee_package_base: 8,
-          ride_fee_package_per_kg: 1.5,
-          ...settings,
+          ...Object.fromEntries(Object.entries(settings).filter(([k]) => k !== 'ride_free_trips')),
+          ride_platform_fee: pricing.platform_fee_low,
+          ride_fee_threshold: pricing.platform_fee_threshold,
+          ride_platform_fee_high: pricing.platform_fee_high,
+          ride_fee_luggage: pricing.fee_luggage,
+          ride_fee_pet: pricing.fee_pet,
+          ride_fee_stop: pricing.fee_stop,
+          ride_fee_package_base: pricing.fee_package_base,
+          ride_fee_package_per_kg: pricing.fee_package_per_kg,
         },
       });
     }
@@ -6694,6 +6712,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
     if (endpoint === 'admin-a-faire') return await adminAFaire(req, res, ctx, body);
+    if (endpoint === 'concours-fetes-moi') return await concoursFetesMoi(req, res, ctx);
+    if (endpoint === 'admin-concours-fetes') return await adminConcoursFetes(req, res, ctx, body);
     if (endpoint === 'admin-pilotage') return await adminPilotage(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
@@ -6763,6 +6783,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-auto-release-list')  return await adminAutoReleaseList(req, res, ctx, body);
     if (endpoint === 'active-drivers-count')     return await activeDriversCount(req, res, ctx, body);
     if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
+    if (endpoint === 'admin-ride-create-return') return await adminRideCreateReturn(req, res, ctx, body);
     if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
     if (endpoint === 'pet-card-upsert')          return await petCardUpsert(req, res, ctx, body);
     if (endpoint === 'pet-photo-upload')         return await petPhotoUpload(req, res, ctx, body);

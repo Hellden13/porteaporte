@@ -1,0 +1,25 @@
+-- ⚠️ NE PAS APPLIQUER sur l'ancien projet (miqrircrfpzkmvvacgwt). Pour porteaporte-prod-v2, après le déménagement.
+-- Audit sécurité du 22 nov. 2026 (docs/AUDIT-SECURITE-2026-11-22.md, constats 2 et 4).
+-- Le code n'utilise ces deux tables QUE côté serveur (clé de service : lib/_promos.js, api/platform.js),
+-- donc rien ne casse dans le site. La clé de service ignore la RLS.
+-- Idempotente. À lancer dans le SQL Editor de prod-v2, dans une transaction :
+begin;
+
+-- 1. promo_codes : n'importe qui pouvait lire tous les codes (règle « USING (true) »).
+drop policy if exists "promo_codes_select" on public.promo_codes;
+revoke select, insert, update, delete on public.promo_codes from anon, authenticated;
+-- La règle promo_codes_admin (is_admin()) reste : l'admin connecté garde l'accès.
+grant select, insert, update, delete on public.promo_codes to authenticated;  -- filtré par la RLS (admin seulement)
+
+-- 2. ride_search_logs : n'importe qui pouvait insérer directement (règle « WITH CHECK (true) »),
+--    en contournant la limite de l'endpoint ride-search. Le serveur journalise déjà avec la clé de service.
+drop policy if exists "searchlogs_insert" on public.ride_search_logs;
+revoke insert, update, delete on public.ride_search_logs from anon, authenticated;
+revoke usage on sequence public.ride_search_logs_id_seq from anon, authenticated;
+-- La règle searchlogs_admin_read reste : l'admin connecté peut lire.
+
+commit;
+
+-- Vérification (doit donner 0 ligne pour les deux règles retirées) :
+-- select policyname from pg_policies where tablename in ('promo_codes','ride_search_logs');
+-- Et avec la clé anon : GET /rest/v1/promo_codes -> 0 ligne ; POST /rest/v1/ride_search_logs -> 401/403.

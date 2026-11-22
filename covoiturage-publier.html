@@ -182,8 +182,8 @@
     </div>
 
     <div class="driver-fee-banner" id="driver-fee-banner">
-      <strong>Tes <span class="free-trips-count">10</span> premiers trajets sans frais de plateforme.</strong>
-      <small>Ensuite, frais de service transparents : <span class="ride-fee-low">1,50 $</span> sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
+      <strong>Frais de service transparents, payés par le passager :</strong>
+      <small><span class="ride-fee-low">1,50 $</span> par place sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
     </div>
 
     <div class="edit-safety-note" id="edit-safety-note">
@@ -1332,7 +1332,8 @@
 
     // ── Prix preview ─────────────────────────────────────────────
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
-    const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15, freeTrips: 10 };
+    // Valeurs de secours seulement (si le serveur ne répond pas) ; la vérité vient de ride-settings.
+    const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15, luggage: 5.00 };
 
     function ridePlatformFeeForPreview(subtotal) {
       return Number(subtotal || 0) >= rideFeeSettings.threshold ? rideFeeSettings.high : rideFeeSettings.low;
@@ -1340,16 +1341,22 @@
 
     async function loadRideFeeSettings() {
       try {
-        const r = await fetch('/api/platform?endpoint=platform-settings-get');
+        // Source unique : la configuration des prix du serveur (ride-settings → pricing).
+        const r = await fetch('/api/platform?endpoint=ride-settings');
         const out = await r.json().catch(() => ({}));
-        const s = out.settings || {};
-        if (Number.isFinite(Number(s.ride_platform_fee))) rideFeeSettings.low = Math.max(0, Number(s.ride_platform_fee));
-        if (Number.isFinite(Number(s.ride_platform_fee_high))) rideFeeSettings.high = Math.max(rideFeeSettings.low, Number(s.ride_platform_fee_high));
-        if (Number.isFinite(Number(s.ride_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(s.ride_fee_threshold));
-        if (Number.isFinite(Number(s.ride_free_trips))) rideFeeSettings.freeTrips = Math.max(0, Math.floor(Number(s.ride_free_trips)));
+        const p = out.pricing || {};
+        if (Number.isFinite(Number(p.platform_fee_low))) rideFeeSettings.low = Math.max(0, Number(p.platform_fee_low));
+        if (Number.isFinite(Number(p.platform_fee_high))) rideFeeSettings.high = Math.max(rideFeeSettings.low, Number(p.platform_fee_high));
+        if (Number.isFinite(Number(p.platform_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(p.platform_fee_threshold));
+        if (Number.isFinite(Number(p.fee_luggage))) rideFeeSettings.luggage = Number(p.fee_luggage);
+        Object.entries(p.energy_rates || {}).forEach(([k, v]) => {
+          if (ENERGY_RATES[k] && Number.isFinite(Number(v.def)) && Number.isFinite(Number(v.max))) {
+            ENERGY_RATES[k].def = Number(v.def); ENERGY_RATES[k].max = Number(v.max);
+          }
+        });
+        if (!isEditMode) applyEnergyRate();
         const banner = document.getElementById('driver-fee-banner');
-        if (banner) banner.style.display = rideFeeSettings.freeTrips > 0 && !isEditMode ? 'block' : 'none';
-        document.querySelectorAll('.free-trips-count').forEach(el => { el.textContent = String(rideFeeSettings.freeTrips); });
+        if (banner) banner.style.display = !isEditMode ? 'block' : 'none';
         document.querySelectorAll('.ride-fee-low').forEach(el => { el.textContent = fmt(rideFeeSettings.low); });
         document.querySelectorAll('.ride-fee-high').forEach(el => { el.textContent = fmt(rideFeeSettings.high); });
         document.querySelectorAll('.ride-fee-threshold').forEach(el => { el.textContent = fmt(rideFeeSettings.threshold); });
@@ -1391,7 +1398,7 @@
       const eMax  = (ENERGY_RATES[sel ? sel.value : 'essence'] || ENERGY_RATES.essence).max;
       const cpk   = Math.min(Number(document.getElementById('cost_per_km').value) || 0.25, eMax);
       const seats = Number(document.getElementById('available_seats').value) || 2;
-      const lugFee = 5.00; // RIDE_FEE_LUGGAGE
+      const lugFee = rideFeeSettings.luggage; // ride-settings → pricing.fee_luggage
 
       if (!dist) {
         document.getElementById('price-rows').innerHTML = '<p style="color:var(--brand-muted);font-size:0.88rem;">Renseignez la distance estimée à l\'étape 1 pour voir le calcul.</p>';
@@ -1568,5 +1575,6 @@
   <script src="/js/auth-state.js" defer></script>
   <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
+  <script src="/js/fetes.js" defer></script>
 </body>
 </html>

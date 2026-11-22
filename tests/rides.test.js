@@ -197,22 +197,19 @@ describe('calcRidePrice', () => {
     assert.ok(isRounded(price.driverAmount), 'driverAmount doit être arrondi');
   });
 
-  test('franchise commissionFree=true → platformFee = 0', () => {
-    const free = calcRidePrice({ ...base, commissionFree: true });
-    const paid = calcRidePrice({ ...base, commissionFree: false });
-    assert.equal(free.platformFee, 0, 'aucune commission quand commissionFree=true');
-    assert.equal(free.commissionFree, true);
-    // Le passager paie moins (économie = la commission)
-    assert.ok(free.totalPassenger < paid.totalPassenger, 'le passager paie moins sans commission');
-    // Le chauffeur garde la même part
-    assert.equal(free.driverAmount, paid.driverAmount, 'le chauffeur garde sa part entière');
-    // Le total passager = part chauffeur (plus de frais plateforme) quand pas de bagage
-    assert.equal(free.totalPassenger, free.driverAmount, 'sans commission, total = part chauffeur');
+  test('promotion « trajets sans frais » retirée : commissionFree=true paie quand même les frais normaux', () => {
+    const ancien = calcRidePrice({ ...base, commissionFree: true });
+    const normal = calcRidePrice({ ...base, commissionFree: false });
+    assert.equal(ancien.platformFee, normal.platformFee);
+    assert.ok(ancien.platformFee > 0);
+    assert.equal(ancien.commissionFree, false);
+    assert.equal(ancien.totalPassenger, normal.totalPassenger);
   });
 
-  test('franchise sur 2 sièges → platformFee reste 0', () => {
-    const free = calcRidePrice({ ...base, seats: 2, commissionFree: true });
-    assert.equal(free.platformFee, 0);
+  test('2 sièges sur un ancien trajet commission_free : frais normaux pour chaque siège', () => {
+    const ancien = calcRidePrice({ ...base, seats: 2, commissionFree: true });
+    assert.equal(ancien.platformFee, calcRidePrice({ ...base, seats: 2 }).platformFee);
+    assert.ok(ancien.platformFee > 0);
   });
 
   test('par défaut (commissionFree absent) → commission normale', () => {

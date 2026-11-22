@@ -7,14 +7,6 @@
     return Number(v || 0).toFixed(2).replace('.', ',') + ' $';
   }
 
-  function applyFreeTrips(n) {
-    if (!Number.isFinite(n) || n <= 0) return;
-    window.__freeTrips = n;
-    document.querySelectorAll('.free-trips-count').forEach(function (el) {
-      el.textContent = String(n);
-    });
-  }
-
   function applyRideFees(low, high, threshold) {
     if (!Number.isFinite(low) || low < 0) return;
     var hasHigh = Number.isFinite(high) && high > low;
@@ -45,7 +37,6 @@
     .then(function (d) {
       var settings = d && d.settings;
       if (!settings) return;
-      applyFreeTrips(Number(settings.ride_free_trips));
       applyRideFees(
         Number(settings.ride_platform_fee),
         Number(settings.ride_platform_fee_high),
