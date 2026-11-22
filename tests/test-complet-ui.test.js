@@ -125,3 +125,91 @@ test('17. API : « Valider trajet » avant le départ → 400 et rien n\'est mod
     assert.deepEqual(patches, [], endpoint);
   }
 });
+
+// ─── Points 20 à 26 ──────────────────────────────────────────────────────────
+test('20. après l\'inscription : écran « Courriel envoyé à … — clique sur le lien, puis reviens ici »', () => {
+  const html = lire('signup.html');
+  assert.match(html, /Courriel envoyé à <span id="courriel-envoye-adresse"/);
+  assert.match(html, /clique sur le lien<\/strong>[\s\S]*puis reviens ici/);
+  assert.match(html, /document\.getElementById\('courriel-envoye-adresse'\)\.textContent = adresse;/);
+  assert.equal((html.match(/ecranCourrielEnvoye\(email, redirectSuffix\);/g) || []).length, 2);
+  assert.match(html, /db\.auth\.resend\(\{ type: 'signup'/);
+});
+
+test('21. neige des Fêtes nettement plus lente sur cellulaire', () => {
+  const js = lire('js/fetes.js');
+  assert.match(js, /var duree = petit \? \(34 \+ Math\.random\(\) \* 16\) : \(16 \+ Math\.random\(\) \* 10\);/);
+  for (const f of ['index.html', 'covoiturage.html', 'livraison.html']) assert.match(lire(f), /fetes\.js\?v=tc2211/, f);
+});
+
+test('22. accents : plus de « Creer », « Reserver », « disponibilites », « Deconnexion »… dans le texte des pages', () => {
+  const fs2 = require('node:fs');
+  const MAUVAIS = /\b(Creer|Reserver|disponibilites|protegees|masquees|Deconnexion|Ponctualite|Fiabilite|resultats|limitee|declaree|speciales)\b/;
+  const trouves = [];
+  for (const d of ['.', 'admin', 'covoiturage']) {
+    for (const f of fs2.readdirSync(d).filter((x) => x.endsWith('.html') && !/backup|corrupted/.test(x))) {
+      const sansScripts = lire(`${d}/${f}`).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, '');
+      const textes = sansScripts.split(/<[^>]*>/).join(' ');
+      if (MAUVAIS.test(textes)) trouves.push(`${d}/${f}: ${textes.match(MAUVAIS)[0]}`);
+    }
+  }
+  assert.deepEqual(trouves, [], trouves.join('\n'));
+  // Les clés internes ne doivent PAS avoir été accentuées (comparaisons de rôles).
+  assert.match(lire('lib/_lib.js'), /'livreur expediteur', 'expediteur livreur'/);
+  assert.match(lire('login.html'), /'livreur expediteur', 'expediteur livreur'/);
+});
+
+test('23. boutons flottants rangés : place réservée en bas, aucun empilement, petits sur cellulaire', () => {
+  const js = lire('js/flottants.js');
+  assert.match(js, /body\{padding-bottom:max\(var\(--pap-reserve-bas,92px\)/);
+  assert.match(js, /\.pap-launcher-btn\{right:21px!important;bottom:88px!important\}/, 'menu au-dessus de la bulle, plus superposé');
+  assert.match(js, /#pap-gps-status\{left:50%!important/);
+  assert.match(js, /\.pp-layer-pill > :not\(\.pp-layer-chevron\)\{display:none!important\}/);
+  for (const f of ['dashboard-livreur.html', 'dashboard.html', 'covoiturage-trajet.html', 'index.html']) {
+    const h = lire(f);
+    assert.ok(h.indexOf('/js/flottants.js') > 0, f);
+  }
+});
+
+test('24. livreur : prénom (jamais le nom), carte sans débordement, menu cellulaire sur une rangée', () => {
+  const html = lire('dashboard-livreur.html');
+  assert.doesNotMatch(html, /greetName'\)\.textContent = p\.nom/);
+  assert.match(html, /const prenomAccueil = String\(p\.prenom/);
+  assert.match(html, /grid-template-columns: minmax\(0, 1\.6fr\) minmax\(0, 1fr\);/);
+  assert.match(html, /\.delivery-actions \{ display: flex; gap: 6px; flex-wrap: wrap; \}/);
+  assert.match(html, /\.topbar-right \{ width: 100%; flex-wrap: nowrap;[^}]*overflow-x: auto;/);
+});
+
+test('25. livraisons de test : cachées aux livreurs par un drapeau admin, jamais supprimées', async () => {
+  const t = require('../lib/_livraisons-test');
+  const rep = (d, ok = true) => ({ ok, status: ok ? 200 : 500, json: async () => d });
+  const ev = [];
+  global.fetch = async (url, o = {}) => {
+    if ((o.method || 'GET') === 'DELETE') throw new Error('aucune suppression permise');
+    if (url.includes('/rest/v1/livraisons')) return rep([{ id: 'L1', code: 'PP-OLD1', expediteur_id: 'e', statut: 'confirme' }]);
+    if ((o.method || 'GET') === 'POST') { const b = JSON.parse(o.body); ev.push({ ...b, created_at: new Date(Date.now() + ev.length).toISOString() }); return rep([b]); }
+    return rep(ev.map((e) => ({ livraison_id: e.livraison_id, event_type: e.event_type, created_at: e.created_at })));
+  };
+  const ctx = { sbUrl: 'https://x', sbKey: 'k', session: { id: 'a' }, profile: { role: 'admin' } };
+  const res = () => ({ _s: 200, _b: null, status(c) { this._s = c; return this; }, json(b) { this._b = b; return this; }, setHeader() { return this; } });
+  const nonAdmin = res();
+  await t.adminLivraisonTest({}, nonAdmin, { ...ctx, profile: { role: 'livreur' } }, { code: 'PP-OLD1' });
+  assert.equal(nonAdmin._s, 403);
+  const r1 = res(); await t.adminLivraisonTest({}, r1, ctx, { code: 'PP-OLD1', raison: 'test septembre' });
+  assert.equal(r1._s, 200);
+  assert.deepEqual(await t.idsLivraisonsTest(ctx), ['L1']);
+  const r2 = res(); await t.adminLivraisonTest({}, r2, ctx, { livraison_id: 'L1', test: false });
+  assert.deepEqual(await t.idsLivraisonsTest(ctx), [], 'réversible');
+  const src = lire('api/platform.js');
+  assert.equal((src.match(/const cachees = new Set\(await idsLivraisonsTest\(ctx\)\)/g) || []).length, 2, 'les 2 listes du livreur filtrent');
+});
+
+test('26. nouveau membre : tableau de bord unifié, plus de bannière « Essayer »', () => {
+  for (const f of ['dashboard-livreur.html', 'dashboard-expediteur.html', 'dashboard-covoiturage.html', 'dashboard-marchand.html', 'dashboard-destinataire.html']) {
+    assert.doesNotMatch(lire(f), /pap-redirect-banner|Essayer →/, f);
+  }
+  assert.match(lire('signup.html'), /emailRedirectTo: window\.location\.origin \+ '\/dashboard\.html' \+ redirectSuffix/);
+  assert.match(lire('signup.html'), /window\.location\.href = nextUrl \|\| '\/dashboard\.html';/);
+  assert.match(lire('login.html'), /const dest = '\/dashboard\.html';/);
+  assert.match(lire('role-choice.html'), /window\.location\.href = nextUrl \|\| '\/dashboard\.html';/);
+});

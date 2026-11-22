@@ -1,3 +1,3 @@
 (function () {
-  console.warn('api-only: verification Stripe disponible sur /api/stripe-verify.');
+  console.warn('api-only: vérification Stripe disponible sur /api/stripe-verify.');
 })();

@@ -1,3 +1,3 @@
 (function () {
-  console.warn('api-only: verification Turnstile disponible sur /api/turnstile-verify.');
+  console.warn('api-only: vérification Turnstile disponible sur /api/turnstile-verify.');
 })();

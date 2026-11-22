@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -228,7 +229,7 @@
     function health(name, state) {
       const normalized = String(state || 'unknown').toLowerCase();
       const tone = normalized === 'ok' ? 'ok' : normalized === 'missing' || normalized === 'error' ? 'bad' : 'warn';
-      const label = normalized === 'ok' ? 'OK' : normalized === 'missing' ? 'Manquant' : normalized === 'error' ? 'Erreur' : 'A verifier';
+      const label = normalized === 'ok' ? 'OK' : normalized === 'missing' ? 'Manquant' : normalized === 'error' ? 'Erreur' : 'A vérifier';
       return `<div class="health-item">
         <div class="label">${name}</div>
         <div class="pill ${tone}">${label}</div>
@@ -272,7 +273,7 @@
           metric('Revenus colis', money(d.revenue_cents), 'total observe')
         ) +
         panel('Impact', 'preuve communautaire',
-          mainMetric('Km mutualises', number(i.shared_km), 'trajets et donnees impact', 'good') +
+          mainMetric('Km mutualises', number(i.shared_km), 'trajets et données impact', 'good') +
           metric('CO2 economise', i.co2_saved_kg == null ? '—' : `${number(i.co2_saved_kg)} kg`, 'estime ou configure') +
           metric('Missions communautaires', number(i.community_missions), 'actives ou configurees') +
           metric('Repas livres', number(i.meals_delivered), 'si suivi impact disponible') +
@@ -289,10 +290,10 @@
           mainMetric('Erreurs critiques', number(a.critical_errors), 'sante audit/events', a.critical_errors ? 'bad' : 'good') +
           metric('Paiements bloques', number(a.payments_blocked), 'Stripe / statuts paiement', a.payments_blocked ? 'warn' : 'good') +
           metric('Litiges', number(a.litiges), 'manquements ouverts', a.litiges ? 'warn' : 'good') +
-          metric('KYC a verifier', number(a.kyc_pending), 'dossiers en attente', a.kyc_pending ? 'warn' : 'good')
+          metric('KYC a vérifier', number(a.kyc_pending), 'dossiers en attente', a.kyc_pending ? 'warn' : 'good')
         ) +
         `<section class="panel full">
-          <div class="panel-head"><div class="panel-title">Sante du systeme</div><div class="panel-note">disponibilite operationnelle</div></div>
+          <div class="panel-head"><div class="panel-title">Sante du systeme</div><div class="panel-note">disponibilité operationnelle</div></div>
           <div class="health-grid">
             ${health('API', h.api)}
             ${health('Supabase', h.supabase)}
@@ -328,7 +329,7 @@
         document.getElementById('content').className = 'error';
         document.getElementById('content').textContent = error.message;
         document.getElementById('status-main').textContent = 'Pilotage indisponible';
-        document.getElementById('status-sub').textContent = 'Les donnees restent protegees; verifie la session admin ou l API.';
+        document.getElementById('status-sub').textContent = 'Les données restent protégées; verifie la session admin ou l API.';
       } finally {
         btn.disabled = false;
       }

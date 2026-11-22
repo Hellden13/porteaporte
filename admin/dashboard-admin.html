@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
@@ -392,7 +393,7 @@
     <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
 
     <div class="sidebar-label" style="margin-top:16px">💰 Finances &amp; analytics</div>
-    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètres financiers</a>
+    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètrès financiers</a>
     <a href="/admin/ride-payments.html" class="nav-link"><span class="icon">💳</span> Paiements covoit</a>
     <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Dashboard Fondateur</a>
     <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
@@ -631,7 +632,7 @@
             </tr>
           </thead>
           <tbody id="livraisons-body">
-            <tr><td colspan="7" class="empty-msg">Les livraisons apparaitront ici quand elles seront creees.</td></tr>
+            <tr><td colspan="7" class="empty-msg">Les livraisons apparaitront ici quand elles seront créées.</td></tr>
           </tbody>
         </table>
       </div>
@@ -666,7 +667,7 @@
       <div class="table-card" style="margin-bottom:20px">
         <div style="padding:14px 18px;background:rgba(93,191,255,.06);border-bottom:1px solid var(--brand-border)">
           <strong style="color:#fff">📊 Répartition de chaque dollar (live)</strong>
-          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Calculée sur le CA du mois ci-dessus · ajuste les % dans <a href="/admin/parametres.html" style="color:#5dbfff">Paramètres</a></span>
+          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Calculée sur le CA du mois ci-dessus · ajuste les % dans <a href="/admin/parametres.html" style="color:#5dbfff">Paramètrès</a></span>
         </div>
         <table>
           <thead><tr><th>Poste</th><th style="text-align:right">% configuré</th><th style="text-align:right">Montant ce mois</th></tr></thead>
@@ -682,7 +683,7 @@
         </div>
         <table>
           <thead><tr><th>Code</th><th>Trajet</th><th>Prix</th><th>Commission</th><th>Livreur</th><th>Date</th></tr></thead>
-          <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Les revenus apparaitront ici apres les premieres transactions.</td></tr></tbody>
+          <tbody id="rev-body"><tr><td colspan="6" class="empty-msg">Les revenus apparaitront ici après les premieres transactions.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -737,7 +738,7 @@
             </tr>
           </thead>
           <tbody id="avis-tbody">
-            <tr><td colspan="6" class="empty-msg">Les avis apparaitront ici apres les premieres evaluations.</td></tr>
+            <tr><td colspan="6" class="empty-msg">Les avis apparaitront ici après les premieres evaluations.</td></tr>
           </tbody>
         </table>
       </div>
@@ -873,7 +874,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="gami-tbody"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Les donnees de gamification apparaitront ici.</td></tr></tbody>
+            <tbody id="gami-tbody"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted);padding:24px">Les données de gamification apparaitront ici.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -982,7 +983,7 @@
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin-bottom:8px">— Répartition livraisons —</div>
             <div style="background:rgba(93,191,255,.06);border:1px solid var(--brand-border);border-radius:8px;padding:14px 16px;margin-bottom:8px;font-size:.85rem;color:var(--brand-muted);line-height:1.6">
               📦 La répartition des livraisons (livreur, communauté, protection, profit…) se règle à <strong>un seul endroit</strong> pour rester cohérente partout :
-              <a href="/admin/parametres.html" style="display:inline-block;margin-top:8px;color:var(--brand-lime);font-weight:800;text-decoration:none">⚙️ Ouvrir Paramètres financiers →</a>
+              <a href="/admin/parametres.html" style="display:inline-block;margin-top:8px;color:var(--brand-lime);font-weight:800;text-decoration:none">⚙️ Ouvrir Paramètrès financiers →</a>
               <div style="margin-top:6px;font-size:.78rem;color:var(--brand-muted)">Transparence (public) et Fondateur lisent automatiquement cette même source.</div>
             </div>
 
@@ -1051,7 +1052,7 @@
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Affichage public —</div>
             <label for="impact-public-note">Note publique</label>
             <textarea id="impact-public-note" maxlength="400">Montants estimés en direct, confirmés mensuellement.</textarea>
-            <button class="action-btn" type="submit">Enregistrer tous les paramètres</button>
+            <button class="action-btn" type="submit">Enregistrer tous les paramètrès</button>
           </form>
         </div>
         <div class="form-card">
@@ -1114,7 +1115,7 @@
       <div class="table-card">
         <table id="cov-bookings-table">
           <thead><tr><th>ID</th><th>Trajet</th><th>Passager</th><th>Places</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody id="cov-bookings-body"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted)">Les reservations apparaitront ici.</td></tr></tbody>
+          <tbody id="cov-bookings-body"><tr><td colspan="7" style="text-align:center;color:var(--brand-muted)">Les réservations apparaitront ici.</td></tr></tbody>
         </table>
       </div>
 
@@ -1760,7 +1761,7 @@
     // Part fondateur (rémunération personnelle, prélevée sur la marge plateforme hors livreur) — masquée si 0 %
     if (founderPct > 0) {
       repartHtml += `<tr style="background:linear-gradient(90deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border-top:2px solid rgba(255,215,0,.3)">
-        <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (% du CA)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">Rémunération personnelle, prélevée sur la marge plateforme (hors livreur) — pas en plus du prix client. Configurable dans Paramètres → Fonds Assurance.</div></td>
+        <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (% du CA)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">Rémunération personnelle, prélevée sur la marge plateforme (hors livreur) — pas en plus du prix client. Configurable dans Paramètrès → Fonds Assurance.</div></td>
         <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${founderPct.toFixed(1)} %</td>
         <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${$m(total * founderPct / 100)}</td>
       </tr>`;
@@ -2128,7 +2129,7 @@
   async function adminCaptureLegacy(livraisonId) {
     const reason = (await PAPDialog.prompt('Validation admin exceptionnelle. Inscris la preuve: appel au destinataire, photo, message, ou autre.'));
     if (!reason || reason.trim().length < 6) return;
-    if (!(await PAPDialog.confirm('Confirmer la reception manuellement et liberer le paiement Stripe?'))) return;
+    if (!(await PAPDialog.confirm('Confirmer la reception manuellement et libérer le paiement Stripe?'))) return;
     const session = AUTH_API.getUser()?.session;
     const res = await fetch(apiUrl('/api/capture-payment'), {
       method: 'POST',
@@ -2191,14 +2192,14 @@
         <div>
           ${proofField('Type de depot', proof.dropoff_type)}
           ${proofField('Statut preuve', proof.status)}
-          ${proofField('Stockage photo', proof.photo_storage_path ? 'Supabase Storage' : 'Base de donnees legacy')}
+          ${proofField('Stockage photo', proof.photo_storage_path ? 'Supabase Storage' : 'Base de données legacy')}
           ${proofField('Note livreur', proof.note)}
           ${proofField('GPS', hasGps ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : null)}
           ${proofField('Precision', proof.accuracy_m ? Math.round(Number(proof.accuracy_m)) + ' m' : null)}
           ${proofField('Heure', proof.created_at ? new Date(proof.created_at).toLocaleString('fr-CA') : null)}
           <div class="action-cell" style="margin-top:12px">
             ${hasGps ? `<a class="action-btn" href="${maps}" target="_blank" rel="noopener">Ouvrir GPS</a>` : ''}
-            <button class="action-btn danger" onclick="adminCaptureLegacy('${livraisonId}')">Valider et liberer</button>
+            <button class="action-btn danger" onclick="adminCaptureLegacy('${livraisonId}')">Valider et libérer</button>
           </div>
           <div style="color:var(--brand-muted-dark);font-size:.78rem;line-height:1.45;margin-top:12px">
             Valide seulement si la photo, le GPS et la note sont coherents. Sinon, garde le paiement bloque et ouvre un litige.
@@ -2420,7 +2421,7 @@
       const out = await rewardsRequest({ mode: 'run_draw', id });
       const winner = out.winner || {};
       const label = winner.user_email || winner.user_id || 'gagnant enregistre';
-      (await PAPDialog.alert(`${out.already_exists ? 'Gagnant deja choisi' : 'Gagnant choisi'}: ${label}. Participants admissibles: ${out.candidates_count || 0}`));
+      (await PAPDialog.alert(`${out.already_exists ? 'Gagnant déjà choisi' : 'Gagnant choisi'}: ${label}. Participants admissibles: ${out.candidates_count || 0}`));
       await loadRewardsAdmin();
     } catch (err) { (await PAPDialog.alert(err.message)); }
   }

@@ -74,6 +74,7 @@
   <meta name="twitter:description" content="Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -273,7 +274,7 @@
       try{
         const res=await fetch('/api/impact-public');
         const out=await res.json();
-        if(!res.ok)throw new Error(out.error||'Donnees de transparence indisponibles');
+        if(!res.ok)throw new Error(out.error||'Données de transparence indisponibles');
         const impact=out.impact;
         document.getElementById('impact-month').textContent=monthLabel(impact.month);
         document.getElementById('impact-generated').textContent='Mise à jour '+new Date(impact.generated_at).toLocaleString('fr-CA');

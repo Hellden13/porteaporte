@@ -198,7 +198,7 @@
       <button id="confirm-btn" type="submit">Confirmer la reception</button>
     </form>
 
-    <div class="notice">Confirme seulement si le colis est bien arrive. En cas de probleme, n'entre pas le code et contacte PorteàPorte.</div>
+    <div class="notice">Confirme seulement si le colis est bien arrive. En cas de problème, n'entre pas le code et contacte PorteàPorte.</div>
     <div id="result" class="result"></div>
 
     <!-- Section avis destinataire — visible après confirmation réussie -->
@@ -217,10 +217,11 @@
       <div id="review-result"></div>
     </div>
 
-    <p class="small">Les preuves de livraison, messages, photos et donnees GPS peuvent etre utilisees en cas de litige.</p>
+    <p class="small">Les preuves de livraison, messages, photos et données GPS peuvent etre utilisees en cas de litige.</p>
   </main>
 
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const livraisonId = params.get('livraison_id') || params.get('id');

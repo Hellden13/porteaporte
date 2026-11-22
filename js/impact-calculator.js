@@ -78,7 +78,7 @@
     container.innerHTML = `
       <div class="pap-calc">
         <h3>Ou va chaque dollar que tu paies?</h3>
-        <div class="subtitle">Une repartition simple pour comprendre le modele PorteaPorte pendant la beta.</div>
+        <div class="subtitle">Une répartition simple pour comprendre le modele PorteaPorte pendant la beta.</div>
 
         <div class="preset-row">
           <button class="preset-btn" type="button" onclick="window._papCalcSet(this, 5)">5 $ (mini)</button>

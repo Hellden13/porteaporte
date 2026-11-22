@@ -178,7 +178,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
   const normalized = normalizeNotifierBody(req.body);
-  if (!normalized) return res.status(400).json({ error: 'Paramètres manquants (type et data)' });
+  if (!normalized) return res.status(400).json({ error: 'Paramètrès manquants (type et data)' });
   const { type, data } = normalized;
 
   const auth = assertNotifierAuth(req, type);

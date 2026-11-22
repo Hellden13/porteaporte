@@ -13,27 +13,27 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['covoiturage', 'trajet', 'passager', 'conducteur', 'route', 'lift', 'siege', 'place', 'covoit', 'voyage', 'chauffeur'],
         title: 'Covoiturage — trouver un trajet',
-        answer: 'Cherche ton trajet : ville depart, ville arrivee, date. Tu vois immediatement qui passe deja par la. La beta privilegie les profils verifies, la messagerie interne et les evaluations apres chaque trajet. Le paiement en ligne protege autorise la carte au moment de reserver, puis la capture se fait apres validation du trajet.',
+        answer: 'Cherche ton trajet : ville depart, ville arrivée, date. Tu vois immediatement qui passe déjà par la. La beta privilegie les profils vérifiés, la messagerie interne et les evaluations après chaque trajet. Le paiement en ligne protégé autorise la carte au moment de réserver, puis la capture se fait après validation du trajet.',
         actions: [
           ['Trouver un trajet', '/covoiturage.html'],
           ['Pourquoi nous (comparatif)', '/comparatif-covoiturage.html'],
-          ['Securite expliquee', '/securite.html']
+          ['Sécurité expliquee', '/securite.html']
         ]
       },
       {
         keys: ['publier', 'conduire', 'conducteur', 'chauffeur', 'gagner', 'essence', 'auto', 'voiture', 'siege libre'],
         title: 'Je conduis — publier un trajet',
-        answer: 'Tu fais deja la route ? Publie ton trajet en 60 secondes (mode express). Tu remplis ton auto, tu partages l essence. Bonus : active "j accepte les colis" et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre.',
+        answer: 'Tu fais déjà la route ? Publie ton trajet en 60 secondes (mode express). Tu remplis ton auto, tu partages l essence. Bonus : active "j accepte les colis" et gagne 15-25 $ de plus par trajet en glissant un colis dans ton coffre.',
         actions: [
           ['Publier un trajet', '/covoiturage-publier.html'],
           ['Guide chauffeur', '/covoiturage-info.html'],
-          ['Securite chauffeur', '/securite.html']
+          ['Sécurité chauffeur', '/securite.html']
         ]
       },
       {
         keys: ['envoyer', 'colis', 'expedier', 'lettre', 'expediteur', 'livraison', 'paquet', 'boite'],
         title: 'Envoyer un colis dans le coffre',
-        answer: 'Bonus de notre concept : tu peux glisser un colis dans le coffre d un chauffeur qui passe deja dans la bonne direction. Plus economique que Postes Canada / Purolart, livraison souvent le jour meme. Tu indiques depart, arrivee, taille et valeur declaree. Adresses completes protegees avant acceptation.',
+        answer: 'Bonus de notre concept : tu peux glisser un colis dans le coffre d un chauffeur qui passe déjà dans la bonne direction. Plus economique que Postes Canada / Purolart, livraison souvent le jour meme. Tu indiques depart, arrivée, taille et valeur déclarée. Adresses completes protégées avant acceptation.',
         actions: [
           ['Envoyer un colis', '/expediteur.html'],
           ['Trouver un chauffeur', '/covoiturage.html'],
@@ -42,26 +42,26 @@ if (!window.__PIA_LOADED__) {
       },
       {
         keys: ['paiement', 'stripe', 'argent', 'escrow', 'capture', 'payer', 'remboursement', 'rembourser', 'no-show'],
-        title: 'Paiement et reservation',
-        answer: 'Le paiement Stripe protege est actif pour les livraisons et le covoiturage. Pour un trajet, la carte est autorisee a la reservation et la capture reste manuelle apres validation. Aucune info de carte n est stockee sur nos serveurs.',
+        title: 'Paiement et réservation',
+        answer: 'Le paiement Stripe protégé est actif pour les livraisons et le covoiturage. Pour un trajet, la carte est autorisee a la réservation et la capture reste manuelle après validation. Aucune info de carte n est stockee sur nos serveurs.',
         actions: [
-          ['FAQ securite paiement', '/securite.html'],
+          ['FAQ sécurité paiement', '/securite.html'],
           ['Voir les conditions', '/cgu.html']
         ]
       },
       {
         keys: ['securite', 'kyc', 'identite', 'verifie', 'verification', 'face', 'safe', 'arnaque', 'fraude', 'femme'],
-        title: 'Securite et identite verifiee',
-        answer: 'La confiance doit passer par les profils verifies, les avis, les messages gardes dans l app et les signalements. Evite de voyager avec un profil incomplet. Si probleme pendant la beta, texte Denis au 438-449-2023.',
+        title: 'Sécurité et identité vérifiée',
+        answer: 'La confiance doit passer par les profils vérifiés, les avis, les messages gardes dans l app et les signalements. Evite de voyager avec un profil incomplet. Si problème pendant la beta, texte Denis au 438-449-2023.',
         actions: [
-          ['Page securite complete', '/securite.html'],
+          ['Page sécurité complete', '/securite.html'],
           ['Texter le fondateur', 'sms:+14384492023']
         ]
       },
       {
         keys: ['suivi', 'gps', 'tracking', 'position', 'destinataire', 'code', 'reception'],
         title: 'Suivi et reception',
-        answer: 'Le chauffeur peut activer le partage GPS pendant le trajet. Tu vois ou il est. Un contact de confiance que tu designes (mere, conjoint) peut aussi voir le GPS. Le partage s arrete a l arrivee. Pour les colis : photo de confirmation + code destinataire.',
+        answer: 'Le chauffeur peut activer le partage GPS pendant le trajet. Tu vois ou il est. Un contact de confiance que tu designes (mere, conjoint) peut aussi voir le GPS. Le partage s arrete a l arrivée. Pour les colis : photo de confirmation + code destinataire.',
         actions: [
           ['Suivre une livraison', '/suivi-livraison.html'],
           ['Support', '/contact.html']
@@ -70,7 +70,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['evaluation', 'note', 'avis', 'etoile', 'rating', 'review', 'feedback'],
         title: 'Evaluations mutuelles',
-        answer: 'Apres chaque trajet, le passager note le chauffeur ET le chauffeur note le passager. Note basse (1-2 etoiles) declenche une alerte admin. Les mauvais profils sont identifies vite. Badges visibles : 🌟 Elite, ✓ Confiance verifiee, 👍 Recommande, 🌱 Nouveau membre.',
+        answer: 'Après chaque trajet, le passager note le chauffeur ET le chauffeur note le passager. Note basse (1-2 etoiles) declenche une alerte admin. Les mauvais profils sont identifies vite. Badges visibles : 🌟 Elite, ✓ Confiance vérifiée, 👍 Recommande, 🌱 Nouveau membre.',
         actions: [
           ['Voir comment ca marche', '/securite.html']
         ]
@@ -86,9 +86,9 @@ if (!window.__PIA_LOADED__) {
         ]
       },
       {
-        keys: ['livreur', 'livrer', 'devenir livreur', 'verification livreur'],
+        keys: ['livreur', 'livrer', 'devenir livreur', 'vérification livreur'],
         title: 'Devenir livreur de colis',
-        answer: 'Tu veux livrer des colis (sans necessairement covoiturer) ? Cree ton compte, choisis le role livreur, termine la verification d identite. Tu vois ensuite les missions sur ta route. Tu garde 60 a 70 % du prix par colis.',
+        answer: 'Tu veux livrer des colis (sans necessairement covoiturer) ? Cree ton compte, choisis le role livreur, termine la vérification d identité. Tu vois ensuite les missions sur ta route. Tu garde 60 a 70 % du prix par colis.',
         actions: [
           ['Devenir livreur', '/devenir-livreur.html'],
           ['Dashboard livreur', '/dashboard-livreur.html']
@@ -119,7 +119,7 @@ if (!window.__PIA_LOADED__) {
     const STARTERS = [
       ['Je cherche un trajet', 'covoiturage'],
       ['Je conduis (je veux publier)', 'publier conducteur'],
-      ['Comment ca marche, la securite ?', 'securite kyc'],
+      ['Comment ca marche, la sécurité ?', 'sécurité kyc'],
       ['Je veux envoyer un colis', 'envoyer colis'],
       ['Je teste a Quebec/Levis', 'beta quebec'],
       ['Je suis perdu', 'aide']

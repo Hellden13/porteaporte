@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body { background: #f7f8fa; }
@@ -202,7 +203,7 @@
 
 <div class="trajet-wrapper" id="main-wrapper">
   <div class="left-col">
-    <a href="/covoiturage.html" class="back-link">&#8592; Retour aux resultats</a>
+    <a href="/covoiturage.html" class="back-link">&#8592; Retour aux résultats</a>
 
     <div id="skeleton-left">
       <div class="card">
@@ -373,7 +374,7 @@
         </div>
         <div class="post-confirm-card" id="post-confirm-card"></div>
 
-        <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Reserver ma place</button>
+        <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Réserver ma place</button>
       </div>
     </div>
   </div>
@@ -709,7 +710,7 @@ function switchTab(tab) {
   document.getElementById('tab-pkg').classList.toggle('active', tab === 'package');
   document.getElementById('form-passenger').style.display = tab === 'passenger' ? '' : 'none';
   document.getElementById('form-package').style.display   = tab === 'package'   ? '' : 'none';
-  document.getElementById('btn-reserve').textContent = tab === 'passenger' ? 'Reserver ma place' : 'Envoyer mon colis';
+  document.getElementById('btn-reserve').textContent = tab === 'passenger' ? 'Réserver ma place' : 'Envoyer mon colis';
   if (tab !== 'passenger') resetRidePayment();
 }
 
@@ -792,7 +793,7 @@ function formatDate(dt) {
   if (!dt) return '';
   const d = new Date(dt);
   return d.toLocaleDateString('fr-CA', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
-       + ' a ' + d.toLocaleTimeString('fr-CA', { hour:'2-digit', minute:'2-digit' });
+       + ' à ' + d.toLocaleTimeString('fr-CA', { hour:'2-digit', minute:'2-digit' });
 }
 
 function formatShortDate(dt) {
@@ -1246,7 +1247,7 @@ async function loadRide() {
 
 async function submitBooking() {
   if (!currentUser) {
-    showToast('Connectez-vous pour reserver.', 'error');
+    showToast('Connectez-vous pour réserver.', 'error');
     setTimeout(function() { location.href = '/login.html?next=' + encodeURIComponent(location.href); }, 1200);
     return;
   }
@@ -1268,7 +1269,7 @@ async function submitBooking() {
   } finally {
     btn.disabled = false;
     btn.textContent = activeTab === 'passenger'
-      ? (ridePaymentReady ? 'Payer et confirmer' : 'Reserver ma place')
+      ? (ridePaymentReady ? 'Payer et confirmer' : 'Réserver ma place')
       : 'Envoyer mon colis';
   }
 }
@@ -1321,7 +1322,7 @@ async function ensurePetCardApprovedForRide() {
   var petBox = document.getElementById('pax-pet');
   if (!petBox || !petBox.checked) return;
   if (!currentSession || !currentSession.access_token) {
-    throw new Error('Connecte-toi pour verifier la carte animal.');
+    throw new Error('Connecte-toi pour vérifier la carte animal.');
   }
 
   var res = await fetch('/api/platform?endpoint=pet-card-get', {
@@ -1331,12 +1332,12 @@ async function ensurePetCardApprovedForRide() {
   });
   var data = await res.json().catch(function(){ return {}; });
   if (!res.ok || data.error) {
-    throw new Error(data.error || 'Verification de la carte animal impossible.');
+    throw new Error(data.error || 'Vérification de la carte animal impossible.');
   }
   var pet = data.pet || {};
   if (!pet.pet_name || !pet.pet_species) {
-    updatePetCardHint('Complete le nom et le type de ton animal avant de reserver.', false);
-    throw new Error('Complete la carte animal avant de reserver avec un animal.');
+    updatePetCardHint('Complete le nom et le type de ton animal avant de réserver.', false);
+    throw new Error('Complete la carte animal avant de réserver avec un animal.');
   }
   if (pet.pet_photo_status !== 'approved' || !pet.pet_photo_url) {
     var msg = pet.pet_photo_status === 'pending'

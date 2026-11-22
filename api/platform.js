@@ -126,12 +126,12 @@ function applyPlatformCors(req, res) {
 
 async function createLivraison(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['expediteur', 'les deux', 'admin'])) {
-    return res.status(403).json({ error: 'Role expediteur requis' });
+    return res.status(403).json({ error: 'Role expéditeur requis' });
   }
   // Si les nouvelles capacités sont présentes, elles priment sur le rôle legacy.
   // L'absence de la colonne reste compatible avec les anciens profils.
   if (ctx.profile?.role !== 'admin' && ctx.profile?.est_expediteur === false) {
-    return res.status(403).json({ error: 'Capacité expediteur requise' });
+    return res.status(403).json({ error: 'Capacité expéditeur requise' });
   }
 
   const payload = {
@@ -406,7 +406,7 @@ async function setUserRole(req, res, ctx, body) {
     nextCapabilities = {};
     for (const key of capabilityKeys) nextCapabilities[key] = body.capabilities[key] === true;
     if (!Object.values(nextCapabilities).some(Boolean)) {
-      return res.status(400).json({ error: 'Au moins une activite doit etre active' });
+      return res.status(400).json({ error: 'Au moins une activité doit etre active' });
     }
   } else {
     const requestedNormalized = requested === 'both' ? 'les deux' : requested;
@@ -483,13 +483,13 @@ async function assignDriver(req, res, ctx, body) {
   const livraison = rows[0];
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
   if (livraison.livreur_id && livraison.livreur_id !== livreurId) {
-    return res.status(409).json({ error: 'Livraison deja assignee' });
+    return res.status(409).json({ error: 'Livraison déjà assignee' });
   }
 
   const admin = roleIn(ctx.profile, ['admin']);
   const selfDriver = livreurId === ctx.session.id && isVerifiedDriver(ctx.session, ctx.profile);
   const owner = livraison.expediteur_id === ctx.session.id;
-  if (!admin && !selfDriver && !owner) return res.status(403).json({ error: 'Assignation refusee' });
+  if (!admin && !selfDriver && !owner) return res.status(403).json({ error: 'Assignation refusée' });
   if (!admin && livraison.statut !== 'paiement_autorise') {
     return res.status(409).json({ error: 'Paiement escrow requis avant assignation' });
   }
@@ -788,7 +788,7 @@ async function livraisonWithdraw(req, res, ctx, body) {
       refunded: false,
       transferred: false,
       status: livraison.statut,
-      message: 'La livraison est deja disponible pour les autres livreurs.'
+      message: 'La livraison est déjà disponible pour les autres livreurs.'
     });
   }
 
@@ -796,7 +796,7 @@ async function livraisonWithdraw(req, res, ctx, body) {
 
   if (['ramasse', 'picked_up', 'en_route', 'in_transit', 'livre', 'livree', 'delivered', 'payee', 'paid', 'confirmee'].includes(currentStatus)) {
     return res.status(409).json({
-      error: 'Retrait impossible : tu as deja le colis ou la livraison est trop avancee. Utilise le flux imprevu/rescue.',
+      error: 'Retrait impossible : tu as déjà le colis ou la livraison est trop avancee. Utilise le flux imprevu/rescue.',
       requires_rescue: true
     });
   }
@@ -1634,7 +1634,7 @@ async function confirmDelivery(req, res, ctx, body) {
     return res.status(403).json({ error: 'Seul le livreur assigne peut marquer livre' });
   }
   if (!['confirme', 'en_route', 'ramasse'].includes(livraison.statut)) {
-    return res.status(409).json({ error: 'Statut livraison incompatible avec livraison terminee' });
+    return res.status(409).json({ error: 'Statut livraison incompatible avec livraison terminée' });
   }
 
   // Le code de réception est vérifié AVANT tout changement de statut (5 essais au maximum).
@@ -2012,7 +2012,7 @@ async function myLivraisons(req, res, ctx, body) {
   const expediteurId = admin && requestedUserId ? requestedUserId : ctx.session.id;
 
   if (!admin && !roleIn(ctx.profile, ['expediteur', 'les deux'])) {
-    return res.status(403).json({ error: 'Role expediteur requis' });
+    return res.status(403).json({ error: 'Role expéditeur requis' });
   }
 
   const baseUrl = `${ctx.sbUrl}/rest/v1/livraisons?expediteur_id=eq.${encodeURIComponent(expediteurId)}&select=*&limit=200`;
@@ -2030,7 +2030,7 @@ async function myLivraisons(req, res, ctx, body) {
   }
 
   if (!r.ok) {
-    return res.status(400).json({ error: 'Lecture livraisons expediteur impossible', details: rows });
+    return res.status(400).json({ error: 'Lecture livraisons expéditeur impossible', details: rows });
   }
 
   const livraisons = rows
@@ -2638,7 +2638,7 @@ async function submitDriverVerification(req, res, ctx, body) {
   const rl = await checkRateLimit(`kyc:${ctx.session.id}`, 3, 86400);
   if (!rl.allowed) return res.status(429).json({ error: 'Trop de soumissions KYC aujourd\'hui. Réessayez demain.' });
   if (!isEmailVerified(ctx.session, ctx.profile)) {
-    return res.status(403).json({ error: 'Courriel confirme requis avant verification livreur' });
+    return res.status(403).json({ error: 'Courriel confirme requis avant vérification livreur' });
   }
   if (ctx.profile.driver_status === 'suspended' || ctx.profile.verification_status === 'suspended') {
     return res.status(403).json({ error: 'Compte livreur suspendu' });
@@ -2654,7 +2654,7 @@ async function submitDriverVerification(req, res, ctx, body) {
   const route = String(body.trajet_principal || body.trajet || '').trim();
 
   if (!firstName || !lastName || !phone || !city || !vehicule) {
-    return res.status(400).json({ error: 'Prenom, nom, telephone, ville et transport requis' });
+    return res.status(400).json({ error: 'Prenom, nom, téléphone, ville et transport requis' });
   }
 
   const nextDriverStatus = ctx.profile.driver_status === 'verified' ? 'verified' : 'pending_review';
@@ -2713,7 +2713,7 @@ async function submitDriverVerification(req, res, ctx, body) {
   }
 
   if (!r.ok) {
-    return res.status(400).json({ error: 'Soumission verification impossible', details: data });
+    return res.status(400).json({ error: 'Soumission vérification impossible', details: data });
   }
 
   const updated = Array.isArray(data) ? data[0] : data;
@@ -2788,7 +2788,7 @@ async function requestDriverCard(req, res, ctx) {
   });
   if (!result.ok) {
     return res.status(result.status || 500).json({
-      error: 'Carte livreur non envoyee',
+      error: 'Carte livreur non envoyée',
       details: result.data
     });
   }
@@ -2895,7 +2895,7 @@ async function adminSetUserAccess(req, res, ctx, body) {
   if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
   if (normalizeRole(target.role) === 'admin' && body.confirmation !== 'RETIRER_ADMIN') {
-    return res.status(403).json({ error: 'Protection admin: confirmation speciale requise pour retirer un autre admin' });
+    return res.status(403).json({ error: 'Protection admin: confirmation spéciale requise pour retirer un autre admin' });
   }
 
   const now = new Date().toISOString();
@@ -2975,7 +2975,7 @@ async function notifications(req, res, ctx, body) {
 
   const userId = body.user_id || body.userId || ctx.session.id;
   const admin = roleIn(ctx.profile, ['admin']);
-  if (userId !== ctx.session.id && !admin) return res.status(403).json({ error: 'Notification refusee' });
+  if (userId !== ctx.session.id && !admin) return res.status(403).json({ error: 'Notification refusée' });
 
   const payload = {
     user_id: userId,
@@ -3047,7 +3047,7 @@ async function createReview(req, res, ctx, body) {
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
   const admin = roleIn(ctx.profile, ['admin']);
   if (!['livre', 'livree', 'payee', 'confirmee', 'succeeded'].includes(livraison.statut) && !admin) {
-    return res.status(409).json({ error: 'Avis possible seulement apres livraison' });
+    return res.status(409).json({ error: 'Avis possible seulement après livraison' });
   }
 
   let reviewedId, reviewedRole;
@@ -3055,13 +3055,13 @@ async function createReview(req, res, ctx, body) {
     // Livreur évalue l'expéditeur
     if (!admin && livraison.livreur_id !== ctx.session.id)
       return res.status(403).json({ error: 'Avis reserve au livreur de cette livraison' });
-    if (!livraison.expediteur_id) return res.status(409).json({ error: 'Aucun expediteur a evaluer' });
+    if (!livraison.expediteur_id) return res.status(409).json({ error: 'Aucun expéditeur a evaluer' });
     reviewedId   = livraison.expediteur_id;
     reviewedRole = 'expediteur';
   } else {
     // Expéditeur évalue le livreur (défaut)
     if (!admin && livraison.expediteur_id !== ctx.session.id)
-      return res.status(403).json({ error: 'Avis reserve a l expediteur de la livraison' });
+      return res.status(403).json({ error: 'Avis reserve a l expéditeur de la livraison' });
     if (!livraison.livreur_id) return res.status(409).json({ error: 'Aucun livreur assigne a evaluer' });
     reviewedId   = livraison.livreur_id;
     reviewedRole = 'livreur';
@@ -3160,7 +3160,7 @@ async function recipientReview(req, res, sbUrl, sbKey, body) {
   const liv = rows[0];
   if (!liv) return res.status(404).json({ error: 'Livraison introuvable' });
   if (!['livre', 'livree', 'payee', 'confirmee', 'succeeded'].includes(liv.statut)) {
-    return res.status(409).json({ error: 'Livraison pas encore confirmee' });
+    return res.status(409).json({ error: 'Livraison pas encore confirmée' });
   }
   if (!liv.livreur_id) return res.status(409).json({ error: 'Aucun livreur a evaluer' });
 
@@ -3169,7 +3169,7 @@ async function recipientReview(req, res, sbUrl, sbKey, body) {
     headers: sbHeaders(sbKey)
   });
   const existing = existRes.ok ? await existRes.json() : [];
-  if (existing.length) return res.status(409).json({ error: 'Avis destinataire deja soumis' });
+  if (existing.length) return res.status(409).json({ error: 'Avis destinataire déjà soumis' });
 
   const payload = {
     reviewed_id:   liv.livreur_id,
@@ -5057,7 +5057,7 @@ async function runMonthlyDraw(ctx, drawId) {
   const drawRows = drawRes.ok ? await drawRes.json() : [];
   const draw = drawRows[0];
   if (!draw) return { ok: false, status: 404, error: 'Tirage introuvable' };
-  if (draw.status === 'completed') return { ok: false, status: 409, error: 'Tirage deja complete' };
+  if (draw.status === 'completed') return { ok: false, status: 409, error: 'Tirage déjà complete' };
   if (draw.status === 'cancelled') return { ok: false, status: 409, error: 'Tirage annule' };
 
   const existingRes = await fetch(`${ctx.sbUrl}/rest/v1/draw_winners?draw_id=eq.${encodeURIComponent(drawId)}&select=id,draw_id,user_id,user_email,user_role,prize_title,published,created_at&limit=1`, {

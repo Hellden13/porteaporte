@@ -376,7 +376,7 @@ describe('coherence affichages prix et pourcentages', () => {
     const profile = read('profile.html');
     assert.match(rides, /select=pet_name,pet_species,pet_photo_url,pet_photo_status/);
     assert.match(rides, /pet_photo_status !== 'approved'/);
-    assert.match(rides, /Carte animal requise avant de reserver avec un animal/);
+    assert.match(rides, /Carte animal requise avant de r[ée]server avec un animal/);
     assert.match(detail, /ensurePetCardApprovedForRide/);
     assert.match(detail, /pet-card-get/);
     assert.match(detail, /profile\.html\?pet=1#pet-card-section/);

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Creer une livraison PorteàPorte">
-  <title>Creer une livraison - PorteàPorte</title>
+  <meta name="description" content="Créer une livraison PorteàPorte">
+  <title>Créer une livraison - PorteàPorte</title>
   <style>
     body{background:var(--brand-bg-dark);color:var(--brand-text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;margin:0}
     .page{max-width:760px;margin:0 auto;padding:34px 20px 70px}
@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -42,12 +43,12 @@
   <main class="page">
     <div class="top">
       <div class="brand">PorteàPorte</div>
-      <div class="small muted"><span id="auth-user-name"></span> <button class="btn ghost" type="button" onclick="AUTH_API.logout()">Deconnexion</button></div>
+      <div class="small muted"><span id="auth-user-name"></span> <button class="btn ghost" type="button" onclick="AUTH_API.logout()">Déconnexion</button></div>
     </div>
 
-    <h1>Creer une nouvelle livraison</h1>
-    <p class="muted">Remplis les informations du colis. Les adresses completes restent protegees et ne seront affichees qu'au livreur assigne.</p>
-    <p class="hint">Les adresses completes restent masquees jusqu'a l'acceptation de la livraison.</p>
+    <h1>Créer une nouvelle livraison</h1>
+    <p class="muted">Remplis les informations du colis. Les adresses completes restent protégées et ne seront affichees qu'au livreur assigne.</p>
+    <p class="hint">Les adresses completes restent masquées jusqu'à l'acceptation de la livraison.</p>
     <div id="beta-zone-notice" style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:.9rem;color:var(--brand-lime);display:none">
       🍁 <strong>Bêta active à <span id="beta-zone-list">Québec / Lévis</span></strong> uniquement. Les villes de départ et d'arrivée doivent être dans la zone bêta. Pour une autre ville : <a href="mailto:bonjour@porteaporte.site" style="color:var(--brand-lime);text-decoration:underline">bonjour@porteaporte.site</a>
     </div>
@@ -142,12 +143,12 @@
       <section class="panel">
         <div class="section-title">Options et prix</div>
         <div class="grid">
-          <div class="full"><label for="special-instructions">Instructions speciales</label><textarea id="special-instructions" placeholder="Ex: appeler avant, fragile, laisser au concierge"></textarea></div>
+          <div class="full"><label for="special-instructions">Instructions spéciales</label><textarea id="special-instructions" placeholder="Ex: appeler avant, fragile, laisser au concierge"></textarea></div>
           <label class="check"><input id="is-fragile" type="checkbox"> Colis fragile</label>
           <label class="check"><input id="requires-signature" type="checkbox"> Signature requise</label>
           <label class="check"><input id="requires-photo" type="checkbox"> Photo requise</label>
           <label class="check"><input id="is-priority" type="checkbox"> Priorité +5 CAD</label>
-          <div class="full"><label for="insurance-plan">Protection colis *</label><select id="insurance-plan" required><option value="none">Aucune protection - 0 CAD - couverture 0 CAD</option><option value="base">Base - 1 CAD - couverture max 50 CAD</option><option value="standard">Standard - 2.99 CAD - couverture max 250 CAD</option><option value="plus">Plus - 5.99 CAD - couverture max 1000 CAD</option></select><div class="hint">La protection livraison est optionnelle. Sans protection payee, aucune couverture contractuelle ne s'applique.</div></div>
+          <div class="full"><label for="insurance-plan">Protection colis *</label><select id="insurance-plan" required><option value="none">Aucune protection - 0 CAD - couverture 0 CAD</option><option value="base">Base - 1 CAD - couverture max 50 CAD</option><option value="standard">Standard - 2.99 CAD - couverture max 250 CAD</option><option value="plus">Plus - 5.99 CAD - couverture max 1000 CAD</option></select><div class="hint">La protection livraison est optionnelle. Sans protection payée, aucune couverture contractuelle ne s'applique.</div></div>
           <div class="full" style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 16px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
               <div>
@@ -173,7 +174,7 @@
         </div>
       </section>
 
-      <div class="actions"><a href="/dashboard-expediteur.html" class="btn ghost">Annuler</a><button type="button" id="create-livraison-btn" class="btn primary">Creer la livraison</button></div>
+      <div class="actions"><a href="/dashboard-expediteur.html" class="btn ghost">Annuler</a><button type="button" id="create-livraison-btn" class="btn primary">Créer la livraison</button></div>
     </form>
   </main>
 
@@ -290,7 +291,7 @@
         const qty=parseInt(el('quantite-colis')?.value)||1; const extra=Math.max(0,qty-1)*2; const base=parseFloat(el('base-price').value)||0; const priority=el('is-priority').checked?5:0; const insurance=selectedInsurance(); const platFee=Math.max(2.00,base*.15); let total=Math.round((base+platFee+priority+insurance.premium+extra)*100)/100; if(activePromo){const d=activePromo.discount;if(d.type==='fixed_price')total=d.fixed_total;else if(d.type==='discount_pct')total=Math.round(total*(1-d.pct/100)*100)/100;else if(d.type==='discount_cad')total=Math.max(0,Math.round((total-d.amount)*100)/100);else if(d.type==='insurance_upgrade')total=Math.max(0,Math.round((total-INSURANCE_PLANS.plus.premium)*100)/100);} total=Math.max(0,total);
         const isScheduled=document.getElementById('timing-scheduled')?.checked;
         const dateSouhaitee=isScheduled&&el('date-souhaitee')?.value?new Date(el('date-souhaitee').value).toISOString():null;
-        const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivee CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',dateSouhaitee?'Programmé pour: '+new Date(dateSouhaitee).toLocaleString('fr-CA'):'Dès que possible','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
+        const notes=[el('special-instructions').value,'Depart CP: '+el('pickup-postal').value,'Arrivée CP: '+el('delivery-postal').value,el('requires-signature').checked?'Signature requise':'',el('requires-photo').checked?'Photo requise':'',el('is-fragile').checked?'Fragile':'',dateSouhaitee?'Programmé pour: '+new Date(dateSouhaitee).toLocaleString('fr-CA'):'Dès que possible','Protection colis beta: '+insurance.label+' | prime '+insurance.premium.toFixed(2)+' CAD | plafond max '+insurance.covered.toFixed(2)+' CAD'].filter(Boolean).join(' | ');
         const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
         const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen'; const quantiteColis=qty;
         const pickupPoint=el('pickup-point'); const deliveryPoint=el('delivery-point');
@@ -306,7 +307,7 @@
         el('success-message').textContent='Livraison créée. Code destinataire affiché ci-dessous. Ouverture du paiement escrow...';
         el('success-message').classList.add('show');
         setTimeout(()=>{window.location.href='/paiement.html?'+payParams.toString()},out.recipient_confirmation_code?4500:900);
-      }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Creer la livraison'}
+      }catch(err){console.error('Erreur creation livraison:',err); showError(err.message)}finally{btn.disabled=false; btn.textContent='Créer la livraison'}
       return false;
     }
     // ── Calculateur prix automatique (anti-frigo-5$) ──
@@ -378,7 +379,7 @@
           return;
         }
         select.innerHTML = '<option value="">Remise directe / adresse indiquee</option>' + points.slice(0, 25).map((p) => {
-          const score = p.safety_score ? ' - securite ' + p.safety_score + '/100' : '';
+          const score = p.safety_score ? ' - sécurité ' + p.safety_score + '/100' : '';
           const label = (p.public_label || 'Point public suggere') + ' - ' + (p.name || 'Lieu') + ', ' + (p.address || city) + score;
           return '<option value="' + String(p.id).replace(/"/g,'&quot;') + '">' + label.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) + '</option>';
         }).join('');

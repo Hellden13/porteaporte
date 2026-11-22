@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="/js/gain-livreur.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
@@ -380,7 +381,7 @@
             });
             resolve(true);
           } catch (e) {
-            (await PAPDialog.alert('GPS refusé : tu dois autoriser la géolocalisation pour livrer. Active-le dans les paramètres de ton navigateur.'));
+            (await PAPDialog.alert('GPS refusé : tu dois autoriser la géolocalisation pour livrer. Active-le dans les paramètrès de ton navigateur.'));
             resolve(false);
           }
         };
@@ -419,7 +420,7 @@
       });
 
       if (ok) {
-        showSuccess('Mission acceptee. Ouverture du dashboard...');
+        showSuccess('Mission acceptée. Ouverture du dashboard...');
         window.setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 1200);
       }
     }

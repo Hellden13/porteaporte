@@ -616,7 +616,7 @@
                 <div class="owner-switch-grid">
                     <a class="owner-choice primary" href="/covoiturage.html">
                         <strong>Chercher un trajet</strong>
-                        <span>Voir les trajets disponibles et reserver une place.</span>
+                        <span>Voir les trajets disponibles et réserver une place.</span>
                     </a>
                     <a class="owner-choice" href="/covoiturage-publier.html">
                         <strong>Publier un trajet</strong>
@@ -800,6 +800,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/modal-helper.js"></script>
     <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
     <script src="/js/codes-livraison.js"></script>
     <script src="/js/supabase-config.js"></script>
     <script src="/js/auth-complete.js"></script>
@@ -958,7 +959,7 @@
                 updateTabCounts(cachedLivraisons);
                 displayMissions(cachedLivraisons);
             } catch (error) {
-                console.error('ERREUR livraisons expediteur:', error.message);
+                console.error('ERREUR livraisons expéditeur:', error.message);
                 document.getElementById('missions-container').innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-title">Livraisons indisponibles</div>
@@ -984,7 +985,7 @@
                 paiement_autorise: 'Escrow autorise',
                 requires_capture: 'Escrow autorise',
                 processing: 'Paiement en traitement',
-                succeeded: 'Paiement recu',
+                succeeded: 'Paiement reçu',
                 paid: 'Payee',
                 confirme: 'Livreur assigne',
                 accepted: 'Livreur assigne',
@@ -992,9 +993,9 @@
                 in_transit: 'En route',
                 ramasse: 'Ramassee',
                 picked_up: 'Ramassee',
-                livre: 'Livree - attente confirmation destinataire',
-                livree: 'Livree - attente confirmation destinataire',
-                delivered: 'Livree - attente confirmation destinataire',
+                livre: 'Livrée - attente confirmation destinataire',
+                livree: 'Livrée - attente confirmation destinataire',
+                delivered: 'Livrée - attente confirmation destinataire',
                 payee: 'Payee',
                 annule: 'Annulee',
                 annulee: 'Annulee',
@@ -1002,7 +1003,7 @@
                 litige: 'Litige',
                 rembourse: 'Remboursee',
                 refunded: 'Remboursee',
-                confirmee: 'Confirmee par destinataire'
+                confirmee: 'Confirmée par destinataire'
             };
             return labels[status] || status || 'En attente';
         }
@@ -1189,7 +1190,7 @@
             const out = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(out.error || 'Erreur');
             msgEl.style.color = '#7dffc1';
-            msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48h pour contester.';
+            msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48 h pour contester.';
             setTimeout(() => toggleManquementExp(id), 2500);
           } catch (err) {
             msgEl.style.color = '#ffb0b0';
@@ -1332,7 +1333,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + user.session.access_token
                 },
-                body: JSON.stringify({ livraison_id: livraisonId, raison: 'Annulation expediteur depuis dashboard' })
+                body: JSON.stringify({ livraison_id: livraisonId, raison: 'Annulation expéditeur depuis dashboard' })
             });
             const result = await res.json().catch(() => ({}));
             if (!res.ok) {
@@ -1345,13 +1346,13 @@
 
         async function capturePayment(livraisonId, statut) {
             if (!['livre', 'livree', 'delivered'].includes(statut)) {
-                showError('❌ La livraison doit etre marquee livree avant de liberer Stripe.');
+                showError('❌ La livraison doit etre marquee livrée avant de libérer Stripe.');
                 return;
             }
             if (captureInProgress.has(livraisonId)) return;
-            const recipientCode = (await PAPDialog.prompt('Entre le code de reception donne par le destinataire. Sans ce code, le paiement reste protege.'));
+            const recipientCode = (await PAPDialog.prompt('Entre le code de reception donne par le destinataire. Sans ce code, le paiement reste protégé.'));
             if (!recipientCode) return;
-            if (!(await PAPDialog.confirm('Code destinataire saisi. Liberer le paiement Stripe au livreur?'))) return;
+            if (!(await PAPDialog.confirm('Code destinataire saisi. Libérer le paiement Stripe au livreur?'))) return;
             captureInProgress.add(livraisonId);
             document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
                 btn.disabled = true;
@@ -1372,7 +1373,7 @@
                     showError('❌ ' + (result.error || 'Capture Stripe impossible'));
                     return;
                 }
-                showSuccess('✅ Reception confirmee. Paiement libere au livreur.');
+                showSuccess('✅ Reception confirmée. Paiement libere au livreur.');
                 await loadMissions();
             } finally {
                 captureInProgress.delete(livraisonId);
@@ -1413,7 +1414,7 @@
                     <div class="empty-state">
                         <div class="empty-state-title">Aucune livraison</div>
                         <div class="empty-state-text">${currentTab === 'all' ? 'Creez votre premiere livraison' : 'Aucune livraison dans cette categorie'}</div>
-                        <a href="/create-mission.html" class="btn btn-primary">Creer une livraison</a>
+                        <a href="/create-mission.html" class="btn btn-primary">Créer une livraison</a>
                     </div>
                 `;
                 return;
@@ -1469,14 +1470,14 @@
                         <div class="detail-row"><span class="detail-label">A</span><span class="detail-value">${esc(mission.ville_arrivee || 'Arrivee')}</span></div>
                         <div class="detail-row"><span class="detail-label">Colis</span><span class="detail-value">${esc(mission.type_colis || 'Colis')}${mission.quantite_colis > 1 ? ' × ' + mission.quantite_colis : ''}${mission.poids_kg ? ' - ' + esc(String(mission.poids_kg)) + ' kg' : ''}</span></div>
                         ${mission.date_souhaitee ? `<div class="detail-row"><span class="detail-label">Date souhaitee</span><span class="detail-value">${dateLabel(mission.date_souhaitee)}</span></div>` : ''}
-                        <div class="detail-row"><span class="detail-label">Creee</span><span class="detail-value">${dateLabel(mission.cree_le || mission.created_at)}</span></div>
+                        <div class="detail-row"><span class="detail-label">Créée</span><span class="detail-value">${dateLabel(mission.cree_le || mission.created_at)}</span></div>
                     </div>
                     <div class="mission-footer">
                         <div class="mission-price">${money(mission.prix_total)}</div>
                         ${livreurBlock}
                     </div>
                     ${['payee','paid','annule','annulee','cancelled','rembourse'].includes(mission.statut) ? '' : `
-                    <details class="mission-codes" ontoggle="if(this.open) chargerCodesMission('${esc(mission.id)}')" style="margin-top:10px">
+                    <détails class="mission-codes" ontoggle="if(this.open) chargerCodesMission('${esc(mission.id)}')" style="margin-top:10px">
                         <summary style="cursor:pointer;font-weight:800;color:#ffd84d">🔑 Mes deux codes (ramassage et réception)</summary>
                         <div id="codes-${esc(mission.id)}" style="margin-top:6px;color:#c9d1db;font-size:.85rem">Chargement…</div>
                     </details>`}

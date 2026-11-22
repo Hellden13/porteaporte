@@ -14,6 +14,7 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="/js/gain-livreur.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -195,9 +196,13 @@
     /* ---- Content 2-col ---- */
     .content-grid {
       display: grid;
-      grid-template-columns: 1.6fr 1fr;
+      /* minmax(0, …) : une carte large ne déborde plus sur la colonne de droite (test complet, point 24). */
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
       gap: 20px;
     }
+    .content-grid > *, .card { min-width: 0; }
+    .delivery-row > * { min-width: 0; max-width: 100%; }
+    .delivery-row { overflow-wrap: anywhere; }
 
     /* ---- Card ---- */
     .card {
@@ -223,7 +228,7 @@
     }
     .delivery-route { font-weight: 700; font-size: 0.9rem; }
     .delivery-meta { color: var(--brand-muted); font-size: 0.78rem; margin-top: 2px; }
-    .delivery-actions { display: flex; gap: 6px; }
+    .delivery-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .btn-sm {
       padding: 6px 12px;
       border-radius: 6px;
@@ -394,8 +399,13 @@
     }
     @media (max-width: 600px) {
       .stats-grid { grid-template-columns: 1fr 1fr; }
-      .topbar { padding: 12px 16px; }
-      .topbar-right { flex-wrap: wrap; justify-content: flex-end; }
+      /* En-tête cellulaire (point 24) : logo seul en haut, puis une seule rangée de boutons qui défile. */
+      .topbar { padding: 10px 14px 8px; flex-wrap: wrap; gap: 8px; }
+      .topbar-right { width: 100%; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; overflow-x: auto;
+        -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+      .topbar-right::-webkit-scrollbar { display: none; }
+      .topbar-btn { flex: 0 0 auto; padding: 7px 10px; font-size: 12.5px; white-space: nowrap; }
+      #livreurTabs { top: 96px !important; }
       .page { padding: 18px 14px 48px; }
       .online-bar { padding: 12px 16px; }
       .section-header { align-items: flex-start; flex-direction: column; gap: 6px; }
@@ -555,13 +565,13 @@
         <div class="stat-icon">📦</div>
         <div class="stat-label">Livraisons ce mois</div>
         <div class="stat-value" id="statDeliveries">—</div>
-        <div class="stat-sub" id="statDeliveriesSub">Les premieres donnees arriveront pendant la beta.</div>
+        <div class="stat-sub" id="statDeliveriesSub">Les premieres données arriveront pendant la beta.</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">💰</div>
         <div class="stat-label">Revenus ce mois</div>
         <div class="stat-value" id="statEarnings">—</div>
-        <div class="stat-sub" id="statEarningsSub">Les gains apparaitront apres les missions confirmees.</div>
+        <div class="stat-sub" id="statEarningsSub">Les gains apparaitront après les missions confirmees.</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">⭐</div>
@@ -619,9 +629,9 @@
         <div class="coins-balance" id="porteCoinsBalance">—</div>
         <div class="reward-muted">Les Points Impact n'ont aucune valeur monétaire. Ils servent aux tirages, badges et avantages plateforme.</div>
         <div class="reward-title" style="margin-top:18px">Progression &amp; niveau</div>
-        <div id="driverLevelBox" class="reward-muted">Ta progression apparaitra ici apres tes premieres missions.</div>
+        <div id="driverLevelBox" class="reward-muted">Ta progression apparaitra ici après tes premieres missions.</div>
         <div class="reward-title" style="margin-top:18px">Mes badges</div>
-        <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Tes badges apparaitront ici avec ton activite.</p></div>
+        <div id="badgesRow" style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px"><p class="loading-msg">Tes badges apparaitront ici avec ton activité.</p></div>
         <details style="margin-top:14px">
           <summary style="cursor:pointer;font-size:0.8rem;color:var(--brand-muted);letter-spacing:0.04em;list-style:none;display:flex;align-items:center;gap:6px">
             <span>▸</span> Tirages mensuels
@@ -647,7 +657,7 @@
           <div style="font-size:.82rem;color:var(--brand-muted);margin-top:4px">jours consécutifs sans réclamation</div>
         </div>
         <div id="cfNextBox" style="background:var(--brand-bg-dark);border:1px solid var(--brand-border);border-radius:10px;padding:12px 16px;font-size:.84rem;color:var(--brand-muted);min-width:180px">
-          Ton niveau apparaitra ici apres tes premieres donnees.
+          Ton niveau apparaitra ici après tes premieres données.
         </div>
       </div>
       <div id="cfMilestones" style="display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -690,7 +700,7 @@
       <div class="card">
         <div class="card-title">💬 Commentaires clients</div>
         <div class="comments-section" id="commentsSection">
-          <p class="loading-msg">Les commentaires clients apparaitront ici apres les livraisons.</p>
+          <p class="loading-msg">Les commentaires clients apparaitront ici après les livraisons.</p>
         </div>
       </div>
     </div>
@@ -716,7 +726,7 @@
         </div>
       </div>
       <div id="revenue-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:24px;position:relative">
-        <div style="color:var(--brand-muted);font-size:0.8rem;padding:16px 0">Les revenus beta apparaitront ici apres les missions confirmees.</div>
+        <div style="color:var(--brand-muted);font-size:0.8rem;padding:16px 0">Les revenus beta apparaitront ici après les missions confirmees.</div>
       </div>
     </div>
 
@@ -924,7 +934,7 @@
       }
       const normalizedRole = normalizeRoleValue(p.role);
       if (!isEmailConfirmed(session, p)) {
-        showBanner('Confirme ton courriel avant d acceder au dashboard livreur. Les missions restent bloquees tant que le courriel n est pas confirme.', '#F59E0B', '/login.html', 'Retour connexion', 'Courriel a confirmer');
+        showBanner('Confirme ton courriel avant d accéder au dashboard livreur. Les missions restent bloquees tant que le courriel n est pas confirme.', '#F59E0B', '/login.html', 'Retour connexion', 'Courriel a confirmer');
         return;
       }
       if (normalizedRole === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
@@ -972,7 +982,7 @@
           <h2 style="color:${color}">${title || 'Attention'}</h2>
           <p>${msg}</p>
           ${link ? `<a href="${link}" style="background:${color};color:#0A0C10">${linkText}</a>` : ''}
-          <a href="/dashboard-expediteur.html" style="background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);margin-left:8px">Espace expediteur</a>
+          <a href="/dashboard-expediteur.html" style="background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);margin-left:8px">Espace expéditeur</a>
           <a href="/profile.html" style="background:transparent;color:var(--brand-text);border:1px solid var(--brand-border);margin-left:8px">Mon profil</a>
         </div>`;
     }
@@ -1604,7 +1614,7 @@
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
         msgEl.style.color = '#7dffc1';
-        msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48h pour contester.';
+        msgEl.textContent = '✅ Signalement envoyé. La partie accusée a 48 h pour contester.';
         setTimeout(() => toggleManquement(id), 2500);
       } catch (err) {
         msgEl.style.color = '#ffb0b0';
@@ -2402,7 +2412,7 @@
         el.innerHTML = data.map(m => {
           const exp = m.expediteur_profile;
           const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
-          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" alt="Photo de ${esc(expName || 'l expediteur')}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" alt="Photo de ${esc(expName || 'l expéditeur')}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
           return `
           <div class="mission-card" style="flex-direction:column;align-items:stretch;gap:10px">
@@ -2451,8 +2461,8 @@
           const canMark = ['confirme','accepted','en_route','in_transit','ramasse','picked_up'].includes(row.statut);
           const delivered = ['livre','livree','delivered'].includes(row.statut);
           const exp = row.expediteur_profile;
-          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expediteur' : null;
-          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" alt="Photo de ${esc(expName || 'l expediteur')}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
+          const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
+          const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" alt="Photo de ${esc(expName || 'l expéditeur')}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
           const adresseDepart = row.adresse_depart || '';
           const adresseArrivee = row.adresse_arrivee || '';
           const notes = row.notes || row.description || '';
@@ -2527,7 +2537,7 @@
                 <div id="selfie-zone-${row.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:#05080c;border:1px dashed #1E2535;border-radius:10px;margin-bottom:12px">
                   <video id="selfie-video-${row.id}" autoplay playsinline style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(93,191,255,.5)"></video>
                   <canvas id="selfie-canvas-${row.id}" style="display:none"></canvas>
-                  <img loading="lazy" decoding="async" id="selfie-preview-${row.id}" alt="Apercu du selfie de verification" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #5dbfff">
+                  <img loading="lazy" decoding="async" id="selfie-preview-${row.id}" alt="Apercu du selfie de vérification" style="display:none;width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid #5dbfff">
                   <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);color:#5dbfff">📷 Activer la caméra</button>
                   <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006">📸 Capturer ma selfie</button>
                   <button class="btn-sm" type="button" onclick="retakeSelfie('${row.id}')" id="selfie-retake-${row.id}" style="display:none;background:#1E2535;color:#fff">🔄 Reprendre</button>

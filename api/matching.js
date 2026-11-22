@@ -184,7 +184,7 @@ module.exports = async function handler(req, res) {
     if (action === 'publier_colis') {
       if (!session) return res.status(401).json({ error: 'Session requise' });
       if (!roleIn(profile, ['expediteur', 'les deux', 'admin'])) {
-        return res.status(403).json({ error: 'Role expediteur requis' });
+        return res.status(403).json({ error: 'Role expéditeur requis' });
       }
 
       const pricing = estimatePrice({

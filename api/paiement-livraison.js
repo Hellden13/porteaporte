@@ -153,11 +153,11 @@ module.exports = async function handler(req, res) {
 
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
   if (livraison.expediteur_id !== session.id) {
-    return res.status(403).json({ error: 'Seul l expediteur peut payer cette livraison' });
+    return res.status(403).json({ error: 'Seul l expéditeur peut payer cette livraison' });
   }
 
   if (livraison.statut === 'payee' || livraison.statut === 'paid') {
-    return res.status(409).json({ error: 'Livraison deja payee' });
+    return res.status(409).json({ error: 'Livraison déjà payée' });
   }
 
   const montantDollars = Number(livraison.prix_total || 0);
@@ -224,7 +224,7 @@ module.exports = async function handler(req, res) {
       }
 
       if (existing.status === 'succeeded') {
-        return res.status(409).json({ error: 'Paiement livraison deja complete pour ce dossier', payment_intent_id: existing.id });
+        return res.status(409).json({ error: 'Paiement livraison déjà complete pour ce dossier', payment_intent_id: existing.id });
       }
     }
 

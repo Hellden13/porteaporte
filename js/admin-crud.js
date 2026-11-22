@@ -143,7 +143,7 @@
         <td><span class="badge ${normalizeRole(user.role) === 'livreur' ? 'badge-livreur' : 'badge-expediteur'}">${html(user.role, 'expediteur')}</span></td>
         <td>${html(user.coins || 0)}</td>
         <td>${html(user.xp || 0)}</td>
-        <td><button class="btn" type="button" onclick="adminCRUD.viewProfile('${html(user.id)}')">Details</button></td>
+        <td><button class="btn" type="button" onclick="adminCRUD.viewProfile('${html(user.id)}')">Détails</button></td>
       </tr>
     `), 'Aucun utilisateur trouve.', 6);
 
@@ -156,7 +156,7 @@
         <td>${html(driver.score || driver.score_confiance || driver.rating || driver.xp || 0)}</td>
         <td>${html(driver.driver_status || 'not_started')}</td>
         <td>
-          <button class="btn" type="button" onclick="adminCRUD.updateDriverStatus('${html(driver.id)}','verified')">Verifier</button>
+          <button class="btn" type="button" onclick="adminCRUD.updateDriverStatus('${html(driver.id)}','verified')">Vérifier</button>
           <button class="btn" type="button" onclick="adminCRUD.updateDriverStatus('${html(driver.id)}','rejected')">Rejeter</button>
           <button class="btn" type="button" onclick="adminCRUD.updateDriverStatus('${html(driver.id)}','suspended')">Suspendre</button>
         </td>
@@ -170,7 +170,7 @@
         <td>${html(expediteur.coins || 0)}</td>
         <td>${html(expediteur.envois || expediteur.livraisons || 0)}</td>
       </tr>
-    `), 'Aucun expediteur trouve.', 4);
+    `), 'Aucun expéditeur trouve.', 4);
 
     logOk('loadUsers', state.users.length);
     return state.users;

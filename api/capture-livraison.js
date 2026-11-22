@@ -216,7 +216,7 @@ module.exports = async function handler(req, res) {
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
 
   if (!['livre', 'livree', 'delivered'].includes(livraison.statut)) {
-    return res.status(409).json({ error: 'Livraison non livree: capture Stripe bloquee' });
+    return res.status(409).json({ error: 'Livraison non livrée: capture Stripe bloquee' });
   }
 
   const admin = session ? await isAdmin(session.id, SB_URL, SB_KEY) : false;
@@ -231,13 +231,13 @@ module.exports = async function handler(req, res) {
   }
 
   if (!recipientCodeValid && !admin && livraison.expediteur_id !== session?.id) {
-    return res.status(403).json({ error: 'Code destinataire requis pour liberer ce paiement' });
+    return res.status(403).json({ error: 'Code destinataire requis pour libérer ce paiement' });
   }
 
   if (confirmationHash) {
     if (!recipientCodeValid && !admin) {
       return res.status(403).json({
-        error: 'Code de reception destinataire invalide. Le paiement reste protege.'
+        error: 'Code de reception destinataire invalide. Le paiement reste protégé.'
       });
     }
     if (!recipientCodeValid && admin && !admin_override_reason) {
@@ -321,7 +321,7 @@ module.exports = async function handler(req, res) {
     return res.status(409).json({ error: 'PaymentIntent ne correspond pas a cette livraison' });
   }
   if (intent.metadata?.expediteur_id && intent.metadata.expediteur_id !== livraison.expediteur_id) {
-    return res.status(409).json({ error: 'PaymentIntent ne correspond pas a cet expediteur' });
+    return res.status(409).json({ error: 'PaymentIntent ne correspond pas a cet expéditeur' });
   }
 
   if (!tx) {

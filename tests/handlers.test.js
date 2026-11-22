@@ -588,7 +588,7 @@ describe('platform.js dispatcher', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 403);
-    assert.ok(res._body?.error?.includes('expediteur') || res._body?.error?.includes('Role'));
+    assert.ok(/exp[ée]diteur|Role/i.test(res._body?.error || ''));
   });
 
   test('set-role accepte les capacites cumulables et derive le role legacy', async () => {
@@ -680,7 +680,7 @@ describe('platform.js dispatcher', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 403);
-    assert.ok(res._body?.error?.includes('expediteur') || res._body?.error?.includes('Role'));
+    assert.ok(/exp[ée]diteur|Role/i.test(res._body?.error || ''));
   });
 
   test('admin-dashboard exige le rôle admin', async () => {
@@ -891,7 +891,7 @@ describe('platform.js dispatcher', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 403);
-    assert.match(res._body?.error || '', /expediteur/i);
+    assert.match(res._body?.error || '', /exp[ée]diteur/i);
   });
 
   test('dashboard livreur: my-driver-livraisons bloque un livreur non verifie', async () => {
@@ -927,7 +927,7 @@ describe('platform.js dispatcher', () => {
     const res = makeRes();
     await handler(req, res);
     assert.equal(res._status, 403);
-    assert.match(res._body?.error || '', /Verification livreur/i);
+    assert.match(res._body?.error || '', /V[ée]rification livreur/i);
   });
 
   test('dashboard livreur: my-driver-livraisons retourne les livraisons assignees au livreur verifie', async () => {

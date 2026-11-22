@@ -182,7 +182,7 @@ describe('rideUpdate securite', () => {
     const res = makeMockRes();
     await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', departure_time: new Date(Date.now() + 86400000).toISOString() });
     assert.equal(res.statusCode, 409);
-    assert.match(res.data.error, /reservation active/i);
+    assert.match(res.data.error, /r[ée]servation active/i);
     assert.equal(patched, false);
   });
 
@@ -202,7 +202,7 @@ describe('rideUpdate securite', () => {
     const res = makeMockRes();
     await rideUpdate(makeMockReq(), res, makeMockCtx(), { ride_id: 'ride-1', available_seats: 3 });
     assert.equal(res.statusCode, 503);
-    assert.match(res.data.error, /bloquee par securite/i);
+    assert.match(res.data.error, /bloqu[ée]e par s[ée]curit[ée]/i);
     assert.equal(patched, false);
   });
 

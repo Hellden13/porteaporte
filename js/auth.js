@@ -107,7 +107,7 @@
 
     if (!isEmailVerified(ctx.session, ctx.profile)) {
       console.error('ERREUR auth: email non confirme');
-      showError('Confirme ton email avant d acceder aux donnees sensibles.');
+      showError('Confirme ton email avant d accéder aux données sensibles.');
       window.location.href = redirectTo || '/login.html';
       return null;
     }
@@ -140,7 +140,7 @@
     }
 
     if (ctx.profile.driver_status !== 'verified' && normalizeRole(ctx.profile.role) !== 'admin') {
-      console.error('ERREUR livreur: verification requise');
+      console.error('ERREUR livreur: vérification requise');
       showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
       window.location.href = redirectTo || '/livreur.html';
       return null;
@@ -155,7 +155,7 @@
 
   async function logout() {
     const { error } = await client.auth.signOut();
-    if (error) console.error('ERREUR deconnexion:', error.message);
+    if (error) console.error('ERREUR déconnexion:', error.message);
     window.location.href = '/login.html';
   }
 

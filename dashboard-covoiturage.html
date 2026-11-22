@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -182,7 +183,7 @@
   <main class="main" id="main-content">
     <div class="loading" id="initial-loading">
       <div class="spinner"></div>
-      <p>Ton tableau de bord covoiturage apparaitra ici quand tes trajets ou reservations seront disponibles.</p>
+      <p>Ton tableau de bord covoiturage apparaitra ici quand tes trajets ou réservations seront disponibles.</p>
     </div>
   </main>
 </div>
@@ -750,7 +751,7 @@ function buildTrajets() {
               <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.ride_departure_time || b.created_at)}</td>
               <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
               <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
-              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Coordonnees masquees jusqu a confirmation</span>'}</td>
+              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Coordonnees masquées jusqu a confirmation</span>'}</td>
             </tr>`;
           };
           window.__bookingRowFn = bookingRow;

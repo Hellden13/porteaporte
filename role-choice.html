@@ -7,6 +7,7 @@
     <title>Choisir ton rôle - PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -430,52 +431,52 @@
             <label class="role-card capability-card" data-capability="est_passager">
                 <input type="checkbox" name="capability" value="est_passager" checked>
                 <h2 class="role-title">Passager covoiturage</h2>
-                <p class="role-description">Je cherche des trajets et je peux reserver une place.</p>
+                <p class="role-description">Je cherche des trajets et je peux réserver une place.</p>
                 <div class="role-features">
                     <h4>Covoiturage</h4>
                     <ul class="feature-list">
                         <li>Rechercher un trajet</li>
-                        <li>Reserver une place</li>
-                        <li>Voir les details avant de payer</li>
+                        <li>Réserver une place</li>
+                        <li>Voir les détails avant de payer</li>
                     </ul>
                 </div>
-                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activité</span></div>
             </label>
 
             <label class="role-card capability-card" data-capability="est_conducteur">
                 <input type="checkbox" name="capability" value="est_conducteur">
                 <h2 class="role-title">Conducteur covoiturage</h2>
-                <p class="role-description">J'offre des places quand je fais deja la route.</p>
+                <p class="role-description">J'offre des places quand je fais déjà la route.</p>
                 <div class="role-features">
                     <h4>Covoiturage</h4>
                     <ul class="feature-list">
                         <li>Publier un trajet</li>
-                        <li>Recevoir des reservations</li>
+                        <li>Recevoir des réservations</li>
                         <li>Partager les frais de route</li>
                     </ul>
                 </div>
-                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activité</span></div>
             </label>
 
             <label class="role-card capability-card" data-capability="est_expediteur">
                 <input type="checkbox" name="capability" value="est_expediteur">
-                <h2 class="role-title">Expediteur colis</h2>
+                <h2 class="role-title">Expéditeur colis</h2>
                 <p class="role-description">J'envoie des colis avec un prix estime avant paiement.</p>
                 <div class="role-features">
                     <h4>Livraison</h4>
                     <ul class="feature-list">
-                        <li>Creer une livraison</li>
+                        <li>Créer une livraison</li>
                         <li>Suivre un colis</li>
                         <li>Service humain et local</li>
                     </ul>
                 </div>
-                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activité</span></div>
             </label>
 
             <label class="role-card capability-card" data-capability="est_livreur">
                 <input type="checkbox" name="capability" value="est_livreur">
                 <h2 class="role-title">Livreur colis</h2>
-                <p class="role-description">Je livre des colis selon mes disponibilites.</p>
+                <p class="role-description">Je livre des colis selon mes disponibilités.</p>
                 <div class="role-features">
                     <h4>Livraison</h4>
                     <ul class="feature-list">
@@ -484,7 +485,7 @@
                         <li>Activer Stripe Connect pour etre paye</li>
                     </ul>
                 </div>
-                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activite</span></div>
+                <div class="role-cta"><span class="switch-line"><span class="switch-dot"></span> Activité</span></div>
             </label>
         </div>
 
@@ -656,7 +657,7 @@
                 const capabilities = collectCapabilities();
                 if (!Object.values(capabilities).some(Boolean)) {
                     setCapabilityStatus('Choisis au moins une activité.', 'error');
-                    showError('Choisis au moins une activite pour continuer.');
+                    showError('Choisis au moins une activité pour continuer.');
                     return;
                 }
                 if (button) {
@@ -785,7 +786,7 @@
             if (role === 'livreur') {
                 showSuccess('✅ Mode Livreur: missions selon ton profil, acceptation libre, bonus beta et protection colis disponible');
             } else {
-                showInfo('Expéditeur:\n\n- Prix estimé avant paiement\n- Suivi en temps réel\n- Service humain\n- Impact local selon les paramètres beta');
+                showInfo('Expéditeur:\n\n- Prix estimé avant paiement\n- Suivi en temps réel\n- Service humain\n- Impact local selon les paramètrès beta');
             }
         }
 

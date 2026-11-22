@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paramètres financiers — Admin</title>
+  <title>Paramètrès financiers — Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/platform-settings-defaults.js"></script>
@@ -48,7 +49,7 @@
 <body>
   <main class="wrap">
     <div class="topbar">
-      <h1>⚙️ Paramètres financiers</h1>
+      <h1>⚙️ Paramètrès financiers</h1>
       <a class="btn secondary" href="/admin/dashboard-admin.html">← Admin</a>
     </div>
 
@@ -464,7 +465,7 @@
         return;
       }
       msg.className = 'msg ok';
-      msg.textContent = '✅ Paramètres sauvegardés. Les calculs sur le site sont mis à jour.';
+      msg.textContent = '✅ Paramètrès sauvegardés. Les calculs sur le site sont mis à jour.';
       setTimeout(() => { msg.style.display = 'none'; }, 3000);
     }
 

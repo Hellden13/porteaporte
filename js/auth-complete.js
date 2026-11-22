@@ -105,7 +105,7 @@
 
     if (!isEmailVerified(data.session, profile)) {
       console.error('ERREUR auth: email non confirme');
-      showError('Confirme ton email avant d acceder aux donnees sensibles.');
+      showError('Confirme ton email avant d accéder aux données sensibles.');
       window.location.href = '/login.html';
       return false;
     }
@@ -124,7 +124,7 @@
     if (!await requireAuth('livreur')) return false;
 
     if (normalizeRole(currentUser.role) !== 'admin' && currentUser.driver_status !== 'verified') {
-      console.error('ERREUR livreur: verification requise');
+      console.error('ERREUR livreur: vérification requise');
       showError('Ton compte livreur doit etre verifie avant de voir ou accepter des colis.');
       window.location.href = '/livreur.html';
       return false;
@@ -144,7 +144,7 @@
   async function logout() {
     const { error } = await client.auth.signOut();
     if (error) {
-      console.error('ERREUR deconnexion:', error.message);
+      console.error('ERREUR déconnexion:', error.message);
       return;
     }
     // console.log('OK deconnecte');
