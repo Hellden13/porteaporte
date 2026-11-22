@@ -49,19 +49,23 @@ describe('prix du covoiturage : une seule source de vérité', () => {
     const gros = rides.calcRidePrice({ totalDistanceKm: 400, costPerKm: p.energy_rates.diesel.def, seats: 1, totalSeats: 1 });
     assert.equal(gros.platformFee, p.platform_fee_high);
     assert.equal(p.cost_per_km_default, p.energy_rates.essence.def);
-    const gratuit = rides.calcRidePrice({ totalDistanceKm: 20, costPerKm: 0.25, seats: 1, totalSeats: 3, commissionFree: true });
-    assert.equal(gratuit.platformFee, 0);
+    // Promotion « trajets sans frais » retirée : même un ancien trajet commission_free paie les frais normaux.
+    const ancien = rides.calcRidePrice({ totalDistanceKm: 20, costPerKm: 0.25, seats: 1, totalSeats: 3, commissionFree: true });
+    assert.equal(ancien.platformFee, p.platform_fee_low);
+    assert.equal(ancien.commissionFree, false);
+    assert.ok(!('free_trips' in p));
   });
 
   test('ride-settings renvoie cette configuration, avec les réglages de l\'admin (impact_settings)', async () => {
     const res = await appel('ride-settings', {}, async (url) => {
       if (url.includes('/rpc/check_rate_limit')) return rep(true);
-      if (url.includes('/rest/v1/impact_settings')) return rep([{ id: 'default', ride_platform_fee: 2, ride_platform_fee_high: 4, ride_fee_threshold: 20, ride_free_trips: 3 }]);
+      if (url.includes('/rest/v1/impact_settings')) return rep([{ id: 'default', ride_platform_fee: 2, ride_platform_fee_high: 4, ride_fee_threshold: 20, ride_free_trips: 3 }]);  // ancien réglage ignoré
       return rep([]);
     });
     assert.equal(res._status, 200);
     const p = res._body.pricing;
-    assert.deepEqual([p.platform_fee_low, p.platform_fee_high, p.platform_fee_threshold, p.free_trips], [2, 4, 20, 3]);
+    assert.deepEqual([p.platform_fee_low, p.platform_fee_high, p.platform_fee_threshold, p.free_trips], [2, 4, 20, undefined]);
+    assert.ok(!('ride_free_trips' in res._body.settings));
     assert.equal(res._body.settings.ride_platform_fee, 2);
     assert.ok(p.energy_rates.essence.def > 0);
   });
@@ -138,7 +142,8 @@ describe('aller-retour : le retour est un trajet réservable', () => {
     assert.equal(r.return_departure_time, null);
     assert.equal(r.status, 'publie');
     assert.equal(r.available_seats, a.available_seats);
-    assert.equal(r.commission_free, a.commission_free);
+    assert.equal(r.commission_free, false);
+    assert.equal(a.commission_free, false, 'aucun trajet sans frais (promotion retirée)');
     assert.deepEqual(r.stop_points.map((x) => x.city), ['B', 'A']);
     assert.ok(res._body.ride_retour);
   });
@@ -206,5 +211,42 @@ describe('recherche par date : jour du Québec, quel que soit le fuseau du serve
     assert.equal(rides.jourQuebec(new Date('2026-12-10T01:30:00Z')), '2026-12-09');
     assert.equal(rides.jourQuebec(new Date('2026-07-01T03:30:00Z')), '2026-06-30');
     assert.equal(rides.jourQuebec(new Date('2026-07-01T04:30:00Z')), '2026-07-01');
+  });
+});
+
+describe('promotion « 10 premiers trajets sans frais » : retirée', () => {
+  test('aucune page ni aucun script ne l\'annonce encore', () => {
+    for (const f of ['covoiturage-publier.html', 'comparatif-covoiturage.html', 'securite.html', 'js/support-widget.js', 'js/free-trips.js', 'admin/dashboard-admin.html', 'lib/_rides.js']) {
+      const t = lire(f);
+      assert.doesNotMatch(t, /premiers trajets sans|free-trips-count|FREE_TRIPS|ride_free_trips|__freeTrips/i, f);
+    }
+  });
+
+  test('publication : même le tout premier trajet d\'un conducteur paie les frais', async () => {
+    const posts = [];
+    global.fetch = async (url, o = {}) => {
+      if (url.includes('/auth/v1/user')) return rep({ id: 'd1' });
+      if (url.includes('/rpc/check_rate_limit')) return rep(true);
+      if (url.includes('/rest/v1/profiles')) return rep([{ id: 'd1', role: 'conducteur', suspendu: false }]);
+      if (url.includes('/rest/v1/impact_settings')) return rep([{ id: 'default', ride_free_trips: 10 }]);
+      if (url.includes('/rest/v1/rides') && o.method === 'POST') { const b = JSON.parse(o.body); posts.push(b); return rep([{ ...b, id: 'r1' }], true, 201); }
+      return rep([]);
+    };
+    const res = makeRes();
+    await handler({ method: 'POST', url: '/api/platform', body: { endpoint: 'ride-create', start_city: 'Lévis', end_city: 'Québec', departure_time: new Date(Date.now() + 86400000).toISOString(), available_seats: 2 }, headers: { authorization: 'Bearer t', 'content-type': 'application/json' } }, res);
+    assert.equal(res._status, 200);
+    assert.equal(posts[0].commission_free, false);
+  });
+
+  test('platform-settings-get ne renvoie plus de franchise', async () => {
+    global.fetch = async (url) => {
+      if (url.includes('/rpc/check_rate_limit')) return rep(true);
+      if (url.includes('/rest/v1/impact_settings')) return rep([{ id: 'default', ride_free_trips: 10, ride_platform_fee: 1.5 }]);
+      return rep([]);
+    };
+    const res = makeRes();
+    await handler({ method: 'GET', url: '/api/platform?endpoint=platform-settings-get', query: { endpoint: 'platform-settings-get' }, body: {}, headers: {} }, res);
+    assert.equal(res._status, 200);
+    assert.ok(!('ride_free_trips' in res._body.settings));
   });
 });

@@ -1,0 +1,49 @@
+-- ⚠️ NE PAS APPLIQUER sur l'ancien projet (miqrircrfpzkmvvacgwt). Pour porteaporte-prod-v2, après le déménagement.
+-- Audit sécurité du 22 nov. 2026 : un membre connecté pouvait changer profiles.email (son propre profil)
+-- et y mettre l'adresse de quelqu'un d'autre ; les courriels qui lisent profiles.email partiraient là.
+-- Règle : profiles.email SUIT auth.users.email, et rien d'autre.
+--   1. Une modification de profiles.email par un client (auth.uid() non nul) est annulée : on remet le courriel d'Auth.
+--   2. Quand le courriel d'Auth change (confirmation de changement d'adresse), profiles.email suit.
+--   3. Rattrapage : les profils dont le courriel diffère d'Auth sont alignés (UPDATE, aucune suppression).
+-- Idempotente. À lancer dans le SQL Editor de prod-v2.
+begin;
+
+create or replace function public.profiles_email_suit_auth() returns trigger
+language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if new.email is distinct from old.email and auth.uid() is not null then
+    new.email := coalesce((select u.email from auth.users u where u.id = new.id), old.email);
+  end if;
+  return new;
+end $$;
+revoke all on function public.profiles_email_suit_auth() from public, anon, authenticated;
+
+drop trigger if exists profiles_email_suit_auth on public.profiles;
+create trigger profiles_email_suit_auth
+  before update of email on public.profiles
+  for each row execute function public.profiles_email_suit_auth();
+
+create or replace function public.auth_email_vers_profiles() returns trigger
+language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if new.email is distinct from old.email then
+    update public.profiles set email = coalesce(new.email, '') where id = new.id;
+  end if;
+  return new;
+end $$;
+revoke all on function public.auth_email_vers_profiles() from public, anon, authenticated;
+
+drop trigger if exists auth_email_vers_profiles on auth.users;
+create trigger auth_email_vers_profiles
+  after update of email on auth.users
+  for each row execute function public.auth_email_vers_profiles();
+
+-- Rattrapage (compte les lignes touchées dans la sortie de l'éditeur).
+update public.profiles p set email = u.email
+  from auth.users u
+ where u.id = p.id and u.email is not null and p.email is distinct from u.email;
+
+commit;
+
+-- Vérification (doit donner 0) :
+-- select count(*) from public.profiles p join auth.users u on u.id = p.id where p.email is distinct from u.email;

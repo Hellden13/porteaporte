@@ -182,8 +182,8 @@
     </div>
 
     <div class="driver-fee-banner" id="driver-fee-banner">
-      <strong>Tes <span class="free-trips-count">10</span> premiers trajets sans frais de plateforme.</strong>
-      <small>Ensuite, frais de service transparents : <span class="ride-fee-low">1,50 $</span> sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
+      <strong>Frais de service transparents, payés par le passager :</strong>
+      <small><span class="ride-fee-low">1,50 $</span> par place sous <span class="ride-fee-threshold">15,00 $</span>, puis <span class="ride-fee-high">3,00 $</span>.</small>
     </div>
 
     <div class="edit-safety-note" id="edit-safety-note">
@@ -1333,7 +1333,7 @@
     // ── Prix preview ─────────────────────────────────────────────
     function fmt(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
     // Valeurs de secours seulement (si le serveur ne répond pas) ; la vérité vient de ride-settings.
-    const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15, freeTrips: 10, luggage: 5.00 };
+    const rideFeeSettings = { low: 1.50, high: 3.00, threshold: 15, luggage: 5.00 };
 
     function ridePlatformFeeForPreview(subtotal) {
       return Number(subtotal || 0) >= rideFeeSettings.threshold ? rideFeeSettings.high : rideFeeSettings.low;
@@ -1348,7 +1348,6 @@
         if (Number.isFinite(Number(p.platform_fee_low))) rideFeeSettings.low = Math.max(0, Number(p.platform_fee_low));
         if (Number.isFinite(Number(p.platform_fee_high))) rideFeeSettings.high = Math.max(rideFeeSettings.low, Number(p.platform_fee_high));
         if (Number.isFinite(Number(p.platform_fee_threshold))) rideFeeSettings.threshold = Math.max(0, Number(p.platform_fee_threshold));
-        if (Number.isFinite(Number(p.free_trips))) rideFeeSettings.freeTrips = Math.max(0, Math.floor(Number(p.free_trips)));
         if (Number.isFinite(Number(p.fee_luggage))) rideFeeSettings.luggage = Number(p.fee_luggage);
         Object.entries(p.energy_rates || {}).forEach(([k, v]) => {
           if (ENERGY_RATES[k] && Number.isFinite(Number(v.def)) && Number.isFinite(Number(v.max))) {
@@ -1357,8 +1356,7 @@
         });
         if (!isEditMode) applyEnergyRate();
         const banner = document.getElementById('driver-fee-banner');
-        if (banner) banner.style.display = rideFeeSettings.freeTrips > 0 && !isEditMode ? 'block' : 'none';
-        document.querySelectorAll('.free-trips-count').forEach(el => { el.textContent = String(rideFeeSettings.freeTrips); });
+        if (banner) banner.style.display = !isEditMode ? 'block' : 'none';
         document.querySelectorAll('.ride-fee-low').forEach(el => { el.textContent = fmt(rideFeeSettings.low); });
         document.querySelectorAll('.ride-fee-high').forEach(el => { el.textContent = fmt(rideFeeSettings.high); });
         document.querySelectorAll('.ride-fee-threshold').forEach(el => { el.textContent = fmt(rideFeeSettings.threshold); });

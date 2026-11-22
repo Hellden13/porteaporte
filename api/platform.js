@@ -4377,7 +4377,6 @@ async function impactPublic(req, res, ctx) {
     totals: state.totals,
     allocations: state.allocations,
     ride_redistribution: state.ride_redistribution,
-    ride_free_trips: Math.max(0, Math.floor(Number(state.settings.ride_free_trips != null ? state.settings.ride_free_trips : 10))),
     ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50)),
     ride_fee_threshold: Math.max(0, Number(state.settings.ride_fee_threshold != null ? state.settings.ride_fee_threshold : 15)),
     ride_platform_fee_high: Math.max(0, Number(state.settings.ride_platform_fee_high != null ? state.settings.ride_platform_fee_high : 3))
@@ -4421,7 +4420,6 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     insurance_fund_topup_cents: 0,
     founder_revenue_pct: 0,
     profit_to_insurance: true,
-    ride_free_trips: 10,
     ride_platform_fee: 1.50,
     ride_fee_threshold: 15,
     ride_platform_fee_high: 3,
@@ -4453,12 +4451,12 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
   const rows = r.ok ? await r.json() : [];
   let rideSettings = {};
   try {
-    const rideFields = 'ride_free_trips,ride_platform_fee,ride_fee_threshold,ride_platform_fee_high';
+    const rideFields = 'ride_platform_fee,ride_fee_threshold,ride_platform_fee_high';
     let rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=${rideFields}&limit=1`, {
       headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
     });
     if (!rr.ok) {
-      rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_free_trips,ride_platform_fee&limit=1`, {
+      rr = await fetch(`${sbUrl}/rest/v1/impact_settings?id=eq.default&select=ride_platform_fee&limit=1`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
       });
     }
@@ -4466,6 +4464,7 @@ async function platformSettingsPublic(req, res, sbUrl, sbKey) {
     rideSettings = rideRows[0] || {};
   } catch (_) {}
   const mergedSettings = { ...defaults, ...(rows[0] || {}), ...rideSettings };
+  delete mergedSettings.ride_free_trips; // promotion retirée
   return res.status(200).json({
     success: true,
     stripe_configured: Boolean(process.env.STRIPE_SECRET_KEY),
@@ -4723,7 +4722,6 @@ async function impactAdmin(req, res, ctx, body) {
       ride_fee_luggage:   Math.max(0, toNumber(body.ride_fee_luggage, 5)),
       ride_fee_pet:       Math.max(0, toNumber(body.ride_fee_pet, 8)),
       ride_fee_stop:      Math.max(0, toNumber(body.ride_fee_stop, 3)),
-      ride_free_trips:    Math.max(0, Math.floor(toNumber(body.ride_free_trips, 10))),
       ride_cancel_free_window_h:      Math.max(0, toNumber(body.ride_cancel_free_window_h, 24)),
       ride_cancel_late_window_h:      Math.max(0, toNumber(body.ride_cancel_late_window_h, 2)),
       ride_cancel_partial_refund_pct: Math.max(0, Math.min(100, toNumber(body.ride_cancel_partial_refund_pct, 85))),
@@ -5434,11 +5432,10 @@ module.exports = async function handler(req, res) {
         success: true,
         pricing,
         settings: {
-          ...settings,
+          ...Object.fromEntries(Object.entries(settings).filter(([k]) => k !== 'ride_free_trips')),
           ride_platform_fee: pricing.platform_fee_low,
           ride_fee_threshold: pricing.platform_fee_threshold,
           ride_platform_fee_high: pricing.platform_fee_high,
-          ride_free_trips: pricing.free_trips,
           ride_fee_luggage: pricing.fee_luggage,
           ride_fee_pet: pricing.fee_pet,
           ride_fee_stop: pricing.fee_stop,
