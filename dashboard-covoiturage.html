@@ -197,6 +197,7 @@
 </nav>
 
 <script src="/js/auth-api.js"></script>
+<script src="/js/ride-delete.js"></script>
 <script>
 let dashData  = null;
 let userProfile = null;
@@ -246,6 +247,15 @@ async function init() {
     console.error('[dashboard-covoiturage init]', e);
     if (il) il.innerHTML = '⚠️ Chargement impossible. Vérifie ta connexion.<br><button onclick="location.reload()" style="margin-top:12px;background:#5dbfff;color:#051022;border:none;padding:10px 18px;border-radius:8px;font-weight:800;cursor:pointer">🔄 Réessayer</button>';
   }
+}
+
+// Supprimer un trajet (conducteur) : fenêtre dans la page, le serveur décide (ride-delete).
+async function supprimerTrajet(rideIdEnc) {
+  const rideId = decodeURIComponent(rideIdEnc);
+  const ride = (dashData.my_rides || []).find((r) => r.id === rideId);
+  const libelle = ride ? `${ride.start_city || '?'} → ${ride.end_city || '?'}` : 'Trajet';
+  const ok = await window.PAPRideDelete.ouvrir(rideId, libelle);
+  if (ok) window.location.reload();
 }
 
 // Annuler un trajet publié (conducteur)
@@ -637,6 +647,7 @@ function buildTrajets() {
         <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
         ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
         ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
+        <button type="button" onclick="supprimerTrajet('${encodeURIComponent(r.id)}')" style="margin-left:10px;background:rgba(255,80,80,.08);color:#ff9999;border:1px solid rgba(255,80,80,.3);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
         ${(canCancel && r.status === 'publie' && new Date(r.departure_time) <= new Date()) ? `<button onclick="terminerTrajet('${r.id}')" style="margin-left:10px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Terminer</button>` : ''}
         ${meetupBox}
       </td>

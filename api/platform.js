@@ -21,7 +21,7 @@ const {
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
-  rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
+  rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel, rideDelete,
   rideDriverContact, rideSendMeetupMessage, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
   rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
@@ -38,6 +38,7 @@ const {
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+const { adminAFaire } = require('../lib/_admin-a-faire');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
 // ─── Redistribution commission covoiturage ───
@@ -3940,9 +3941,9 @@ async function rideActiveCities(req, res, ctx) {
   });
   let rides = r.ok ? await r.json() : [];
 
-  // Fallback : sans filtre status si vide
+  // Fallback si vide : jamais les trajets annulés (dont les supprimés)
   if (!rides.length || !r.ok) {
-    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
+    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=neq.annule&select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (r2.ok) rides = await r2.json();
@@ -6692,6 +6693,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
+    if (endpoint === 'admin-a-faire') return await adminAFaire(req, res, ctx, body);
     if (endpoint === 'admin-pilotage') return await adminPilotage(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
@@ -6741,6 +6743,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
+    if (endpoint === 'ride-delete')          return await rideDelete(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);

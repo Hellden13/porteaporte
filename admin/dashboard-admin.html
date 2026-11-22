@@ -457,6 +457,25 @@
       </div>
     </div>
 
+    <!-- ✅ À faire maintenant (lot 1) : seulement ce qui demande une action, chaque élément avec son bouton -->
+    <section id="a-faire" aria-labelledby="a-faire-titre" style="background:var(--brand-bg-surface,#0f1520);border:1px solid rgba(93,191,255,.35);border-radius:14px;padding:18px 20px;margin-bottom:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <h2 id="a-faire-titre" style="margin:0;font-size:1.15rem;color:#fff">✅ À faire maintenant <span id="a-faire-total" style="color:var(--brand-muted,#A8B0BA);font-weight:700;font-size:.9rem"></span></h2>
+        <button type="button" class="action-btn" onclick="loadAFaire()">↻ Actualiser</button>
+      </div>
+      <div id="a-faire-erreur" style="display:none;color:#FFB347;font-size:.85rem;margin-bottom:8px"></div>
+      <div id="a-faire-liste"><div class="empty-msg" style="color:var(--brand-muted,#A8B0BA)">Chargement…</div></div>
+    </section>
+    <style>
+      #a-faire .af-groupe { margin-top:12px; }
+      #a-faire .af-groupe h3 { margin:0 0 6px; font-size:.82rem; text-transform:uppercase; letter-spacing:.05em; color:var(--brand-muted,#A8B0BA); }
+      #a-faire .af-ligne { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 12px; background:rgba(255,255,255,.04); border:1px solid #1e2535; border-radius:10px; margin-bottom:6px; }
+      #a-faire .af-texte { color:#fff; font-size:.9rem; min-width:0; overflow-wrap:anywhere; }
+      #a-faire .af-texte small { display:block; color:var(--brand-muted,#A8B0BA); font-size:.76rem; margin-top:2px; }
+      #a-faire .af-boutons { display:flex; gap:6px; flex-wrap:wrap; }
+      #a-faire a.action-btn { text-decoration:none; display:inline-block; }
+    </style>
+
     <!-- 🧭 Repère d'orientation : 3 centres spécialisés -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:24px">
       <a href="/admin/operations.html" style="display:flex;align-items:center;gap:14px;text-decoration:none;background:rgba(93,191,255,.07);border:1px solid rgba(93,191,255,.28);border-radius:12px;padding:16px 18px">
@@ -1847,6 +1866,11 @@
     await loadLitiges(window.db);
   }
 
+  async function adminSupprimerTrajet(btn) {
+    const ok = await window.PAPRideDelete.ouvrir(btn.dataset.rideId, btn.dataset.rideLabel);
+    if (ok) { loadCovoiturage(); loadAFaire(); }
+  }
+
   async function loadCovoiturage() {
     const user = AUTH_API.getUser();
     if (!user?.session?.access_token) return;
@@ -1869,14 +1893,21 @@
       document.getElementById('cov-rides-body').innerHTML = rides.length === 0
         ? '<tr><td colspan="6" class="empty-msg">Aucun trajet</td></tr>'
         : rides.map(r => {
-            const statusColor = { publie: '#5dbfff', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA';
+            const statusColor = r.supprime ? '#5A6A7A' : ({ publie: '#5dbfff', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA');
+            // Colonnes alignées sur l'en-tête : Trajet, Départ, Places, Prix/km, Statut, Actions.
+            const rid = afId(r.id);
+            const libelle = `${r.start_city || '?'} → ${r.end_city || '?'}`;
+            // Trajet supprimé = annulé + marque au journal (le serveur renvoie supprime et supprime_le).
+            const actions = (rid && !r.supprime)
+              ? `<button class="action-btn danger" data-ride-id="${rid}" data-ride-label="${afEsc(libelle)}" onclick="adminSupprimerTrajet(this)">🗑️ Supprimer</button>`
+              : `<span style="color:#5A6A7A;font-size:.78rem">${r.supprime && r.supprime_le ? 'Supprimé le ' + afEsc(new Date(r.supprime_le).toLocaleDateString('fr-CA')) + (r.supprime_par === 'admin' ? ' (admin)' : '') : '—'}</span>`;
             return `<tr>
-              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${r.id.slice(0,8)}…</td>
-              <td>${r.start_city || '?'} → ${r.end_city || '?'}</td>
-              <td style="color:#A8B0BA;font-size:.8rem">${r.driver_prenom || r.driver_id?.slice(0,8) || '—'}</td>
-              <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}</td>
-              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
+              <td>${afEsc(libelle)}<div style="font-family:monospace;color:#00D9FF;font-size:.7rem">${afEsc(String(r.id || '').slice(0,8))}… · ${afEsc(r.driver_prenom || r.driver_id?.slice(0,8) || '—')}</div></td>
+              <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}${r.is_recurring ? ' 🔁' : ''}</td>
               <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
+              <td style="color:#A8B0BA">${r.cost_per_km != null ? Number(r.cost_per_km).toFixed(2) + ' $' : '—'}</td>
+              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.supprime ? 'supprimé' : afEsc(r.status)}</span></td>
+              <td>${actions}</td>
             </tr>`;
           }).join('');
 
@@ -3160,12 +3191,99 @@
     await loadAvis();
   }
 
+  // ── À FAIRE MAINTENANT (lot 1) ───────────────────────────────────
+  function afEsc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function afId(v) {
+    // Les identifiants passent dans un onclick : on n'accepte que des caractères d'UUID.
+    return /^[0-9a-fA-F-]{1,64}$/.test(String(v || '')) ? String(v) : '';
+  }
+  function afDepuis(d) {
+    if (!d) return '';
+    const t = new Date(d).getTime();
+    if (!Number.isFinite(t)) return '';
+    const h = Math.floor((Date.now() - t) / 3600000);
+    return h < 48 ? `depuis ${Math.max(h, 0)} h` : `depuis ${Math.floor(h / 24)} j`;
+  }
+  function afLigne(texte, sous, boutons) {
+    return `<div class="af-ligne"><div class="af-texte">${texte}${sous ? `<small>${sous}</small>` : ''}</div><div class="af-boutons">${boutons}</div></div>`;
+  }
+  async function afAction(fn) {
+    try { await fn(); } finally { loadAFaire(); }
+  }
+  function renderAFaire(data) {
+    const it = data.items || {};
+    const groupes = [];
+    const relancer = (it.relancer || []).filter((p) => afId(p.id));
+    if (relancer.length) groupes.push(['📨 Comptes « Non démarré » à relancer', relancer.map((p) => afLigne(
+      afEsc(p.nom), afEsc([p.email, afDepuis(p.depuis)].filter(Boolean).join(' · ')),
+      `<button class="action-btn" onclick="afAction(() => sendVerifReminder('${afId(p.id)}'))">📨 Relancer</button>`))]);
+    const livs = (it.livraisons || []).filter((l) => afId(l.id));
+    if (livs.length) groupes.push(['📦 Livraisons bloquées ou à capturer (plus de 48 h)', livs.map((l) => afLigne(
+      `${afEsc(l.code || l.id.slice(0, 8))} — ${afEsc(l.trajet)}`,
+      `${l.type === 'a_capturer' ? 'À capturer' : 'Bloquée'} · statut ${afEsc(l.statut)} · ${afEsc(afDepuis(l.depuis))}`,
+      l.type === 'a_capturer'
+        ? `<button class="action-btn" onclick="afAction(() => adminCaptureLegacy('${afId(l.id)}'))">Libérer avec preuve admin</button>`
+        : (l.statut === 'litige'
+          ? `<a class="action-btn" href="#section-litiges">Voir le litige</a>`
+          : `<a class="action-btn" href="#section-livraisons">Voir la livraison</a>`)))]);
+    const resas = (it.reservations || []).filter((b) => afId(b.id));
+    if (resas.length) groupes.push(['🚗 Réservations covoiturage en attente', resas.map((b) => afLigne(
+      `Réservation ${afEsc(b.id.slice(0, 8))}…${b.passager ? ' — ' + afEsc(b.passager) : ''}`,
+      afEsc([b.places ? b.places + ' place(s)' : '', afDepuis(b.depuis)].filter(Boolean).join(' · ')),
+      `<a class="action-btn" href="#section-covoiturage">Voir la réservation</a>`))]);
+    const sigs = (it.signalements || []).filter((r) => afId(r.id));
+    if (sigs.length) groupes.push(['⚠️ Signalements ouverts', sigs.map((r) => afLigne(
+      `${r.source === 'manquement' ? 'Manquement' : 'Covoiturage'} — ${afEsc(r.motif)}`, afEsc(afDepuis(r.depuis)),
+      r.source === 'manquement'
+        ? `<a class="action-btn" href="/admin/manquements.html">Traiter</a>`
+        : `<a class="action-btn" href="#section-covoiturage">Voir le signalement</a>`))]);
+    const vals = (it.validations || []).filter((v) => afId(v.id));
+    if (vals.length) groupes.push(['🪪 Organismes et livreurs en attente de validation', vals.map((v) => afLigne(
+      `${v.type === 'organisme' ? 'Organisme' : 'Livreur'} — ${afEsc(v.nom)}`, afEsc(afDepuis(v.depuis)),
+      v.type === 'organisme'
+        ? `<button class="action-btn" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','approved'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','rejected'))">Refuser</button>`
+        : `<button class="action-btn" onclick="afAction(() => setDriverStatus('${afId(v.id)}','verified'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => setDriverStatus('${afId(v.id)}','rejected'))">Refuser</button>`))]);
+
+    const total = groupes.reduce((s, g) => s + g[1].length, 0);
+    const erreurs = data.erreurs || [];
+    const errBox = document.getElementById('a-faire-erreur');
+    errBox.style.display = erreurs.length ? 'block' : 'none';
+    errBox.textContent = erreurs.length ? '⚠️ Lecture impossible pour : ' + erreurs.join(', ') + '. La liste peut être incomplète.' : '';
+    document.getElementById('a-faire-total').textContent = total ? `(${total})` : '';
+    document.getElementById('a-faire-liste').innerHTML = total
+      ? groupes.map(([titre, lignes]) => `<div class="af-groupe"><h3>${titre}</h3>${lignes.join('')}</div>`).join('')
+      : (erreurs.length
+        ? '<div class="empty-msg" style="color:#FFB347">Impossible de confirmer qu\'il n\'y a rien à faire.</div>'
+        : '<div class="empty-msg" style="color:var(--brand-muted,#A8B0BA)">Rien à faire pour l\'instant</div>');
+  }
+  async function loadAFaire() {
+    const liste = document.getElementById('a-faire-liste');
+    try {
+      const token = AUTH_API.getUser()?.session?.access_token;
+      if (!token) throw new Error('Session admin requise');
+      const res = await fetch(apiUrl('/api/platform?endpoint=admin-a-faire'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ endpoint: 'admin-a-faire' })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Lecture impossible');
+      renderAFaire(out);
+    } catch (e) {
+      document.getElementById('a-faire-total').textContent = '';
+      liste.innerHTML = `<div class="empty-msg" style="color:#FFB347">⚠️ « À faire » indisponible : ${afEsc(e.message)}</div>`;
+    }
+  }
+
   // ── INIT ─────────────────────────────────────────────────────────
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
     const user = AUTH_API.getUser();
     document.getElementById('admin-email').textContent = user.email || '';
     document.getElementById('admin-welcome').textContent = 'Connecté en tant que ' + ([user.prenom, user.nom].filter(Boolean).join(' ') || user.email);
+    loadAFaire();
     await loadData();
     await loadRewardsAdmin();
     await loadImpact();
@@ -3179,6 +3297,7 @@
 
   init();
 </script>
+  <script src="/js/ride-delete.js"></script>
   <script src="/js/admin-alert-bell.js" defer></script>
 </body>
 </html>
