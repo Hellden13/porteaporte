@@ -47,6 +47,11 @@ const {
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
+const { distanceLivraison } = require('../lib/_distance');
+// Champs de distance envoyés par les formulaires (codes postaux facultatifs).
+function champsDistance(b) {
+  return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
+}
 const { codesLivraison, codesAffichables, verifierCodeReception, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
@@ -210,7 +215,8 @@ async function createLivraison(req, res, ctx, body) {
 
   // ─── PRIX MINIMUM CALCULÉ (anti-abus "5$ pour un frigo") ───
   if (ctx.profile?.role !== 'admin' && !validatedPromo) {
-    const distKm = estimateRouteKm(payload.ville_depart, payload.ville_arrivee) || 5;
+    // Même distance et même règle que le formulaire (endpoint price-estimate).
+    const distKm = distanceLivraison(champsDistance({ ...body, ville_depart: payload.ville_depart, ville_arrivee: payload.ville_arrivee })).km;
     const priceInfo = computeDeliveryPrice({
       distance_km: distKm,
       weight_kg: payload.poids_kg,
@@ -5763,7 +5769,8 @@ module.exports = async function handler(req, res) {
       });
     }
     if (endpoint === 'price-estimate') {
-      const distKm = estimateRouteKm(body.ville_depart, body.ville_arrivee) || Number(body.distance_km) || 5;
+      const dist = distanceLivraison(champsDistance(body));
+      const distKm = dist.km;
       const info = computeDeliveryPrice({
         distance_km: distKm,
         weight_kg: body.poids_kg,
@@ -5774,6 +5781,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         distance_km: distKm,
+        distance_methode: dist.methode,
         suggested_price_cad: info.price_cad,
         min_price_cad: info.min_price_cad,
         breakdown: info.breakdown

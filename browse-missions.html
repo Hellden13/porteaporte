@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+  <script src="/js/gain-livreur.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth.js"></script>
@@ -202,8 +203,7 @@
       }
 
       // Price attractiveness
-      const scoreBasePct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
-      const gain = (m.prix_total || 0) * scoreBasePct / 100;
+      const gain = window.PAPGain.cents(Math.round((m.prix_total || 0) * 100)).netCents / 100;
       if (gain >= 30) { score += 15; tags.push({t:'Bon gain', c:'green'}); }
       else if (gain >= 15) { score += 7; tags.push({t:'Gain correct', c:'yellow'}); }
 
@@ -257,17 +257,8 @@
         const { score, tags } = m._match;
         const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
 
-        const basePct = (window.__platformShares && Number(window.__platformShares.pct_livreur)) || 60;
-        const baseGain = (m.prix_total || 0) * basePct / 100;
-        const ecoGain  = baseGain * (ecoBonus / 100);
-        const totalGain = baseGain + ecoGain;
-
-        let gainHtml = ecoBonus > 0
-          ? `<div class="eco-gain">
-               <span class="eco-gain-left">🌱 Ton gain (${basePct}% + ${ecoBonus}% éco)</span>
-               <span class="eco-gain-right">${money(totalGain)}</span>
-             </div>`
-          : `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Ton gain estimé : <strong style="color:var(--brand-lime)">${money(baseGain)}</strong></div>`;
+        // Même règle que le paiement réel (js/gain-livreur.js). Pas de bonus éco : il n'est pas versé.
+        const gainHtml = `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Tu gagnes : <strong style="color:var(--brand-lime)">${window.PAPGain.texte(m.prix_total || 0)}</strong></div>`;
 
         const onRouteBadge = m.on_route
           ? `<span style="display:inline-block;padding:2px 8px;background:rgba(93,191,255,.15);color:#7dffc1;border:1px solid rgba(93,191,255,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`
@@ -303,7 +294,7 @@
             <div><span>Taille</span>${esc(text(m.taille_colis, 'N/D'))}</div>
             <div><span>Dispo destinataire</span>${(Array.isArray(m.destinataire_dispo_jours) && m.destinataire_dispo_jours.length) ? esc(m.destinataire_dispo_jours.join(', ')) + (m.destinataire_dispo_debut ? '<br>' + esc(m.destinataire_dispo_debut.slice(0,5)) + '–' + esc((m.destinataire_dispo_fin || '').slice(0,5)) : '') : 'Flexible'}</div>
           </div>
-          <div class="price">${money(m.prix_total)}</div>
+          <div class="price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${window.PAPGain.texte(m.prix_total || 0)}</div>
           ${gainHtml}
           ${m.rescue_mode
             ? `<button class="btn" type="button" style="background:linear-gradient(135deg,#ff4444,#ff8800);color:#fff;font-weight:900" onclick="acceptRescue('${esc(m.id)}')">🆘 Accepter ce RESCUE (+${m.rescue_bonus_pct||20}% bonus)</button>`

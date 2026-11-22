@@ -20,6 +20,7 @@
 <title>PorteàPorte — Paiement sécurisé</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 <script src="/js/dialogues.js"></script>
+<script src="/js/gain-livreur.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-config.js"></script>
@@ -111,6 +112,7 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
   .escrow-arrow{width:1px;height:24px;margin:0 auto;background:linear-gradient(180deg,rgba(93,191,255,.25),rgba(11,255,203,.6))}
   .escrow-arrow::after{right:-3px;top:auto;bottom:-2px;transform:rotate(135deg)}
 }
+[hidden]{display:none!important}
 </style>
 <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
@@ -156,12 +158,19 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
         <div><label class="fl">Pr&eacute;nom et nom</label><input class="fi" type="text" id="nom" placeholder="Denis Morneau" required></div>
         <div><label class="fl">Courriel</label><input class="fi" type="email" id="email" placeholder="denis@courriel.ca" required></div>
       </div>
-      <label class="fl">T&eacute;l&eacute;phone</label>
-      <input class="fi" type="tel" id="tel" placeholder="+1 (418) 555-0123">
+      <div id="bloc-tel">
+        <label class="fl">T&eacute;l&eacute;phone</label>
+        <input class="fi" type="tel" id="tel" placeholder="+1 (418) 555-0123">
+      </div>
     </div>
 
-    <!-- ETAPE 2 : DETAILS COLIS -->
-    <div class="step-block">
+    <!-- ETAPE 2 : DETAILS COLIS (masquée si la livraison est déjà créée : rien à ressaisir) -->
+    <div class="step-block" id="recap-colis-bloc" hidden>
+      <div class="step-title"><span class="step-num">2</span>Ton colis</div>
+      <div id="recap-colis" style="line-height:1.6"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Déjà saisi à la création de la livraison. Pour le changer, annule la livraison et crée-en une nouvelle.</div>
+    </div>
+    <div class="step-block" id="etape-colis">
       <div class="step-title"><span class="step-num">2</span>Détails du colis</div>
       <div class="fr">
         <div>
@@ -297,9 +306,9 @@ const db = window.getSupabaseClient();
 let stripe = null;
 let cardElement = null;
 
+// Part du livreur : la même règle que le paiement réel (js/gain-livreur.js).
 function deliverySharePct() {
-  const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
-  return Number.isFinite(pct) && pct > 0 ? pct : 60;
+  return window.PAPGain ? window.PAPGain.cents(10000).pct : 60;
 }
 
 function refreshDistributionLabel() {
@@ -420,6 +429,36 @@ function lockMissionFields() {
     const field = document.getElementById(id);
     if (field) field.disabled = true;
   });
+  // Livraison déjà créée : on ne redemande pas le colis ni le mode de prix, on montre un résumé.
+  const etape = document.getElementById('etape-colis');
+  if (etape) etape.hidden = true;
+}
+
+function libelleTypeColis(type) {
+  const t = String(type || 'Colis').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Colis';
+}
+
+function afficherRecapColis(livraison) {
+  const bloc = document.getElementById('recap-colis-bloc');
+  const recap = document.getElementById('recap-colis');
+  if (!bloc || !recap) return;
+  const lignes = [
+    ['Type', libelleTypeColis(livraison.type_colis)],
+    ['Trajet', (livraison.ville_depart || livraison.adresse_depart || '?') + ' → ' + (livraison.ville_arrivee || livraison.adresse_arrivee || '?')],
+    ['Poids', livraison.poids_kg ? String(livraison.poids_kg).replace('.', ',') + ' kg' : '—'],
+    ['Protection', assuranceLabel(livraison.assurance_plan)]
+  ];
+  recap.textContent = '';
+  lignes.forEach(([k, v]) => {
+    const d = document.createElement('div');
+    const b = document.createElement('strong');
+    b.textContent = k + ' : ';
+    d.appendChild(b);
+    d.appendChild(document.createTextNode(v));
+    recap.appendChild(d);
+  });
+  bloc.hidden = false;
 }
 
 function assuranceLabel(plan) {
@@ -453,6 +492,19 @@ async function hydrateBillingProfile() {
       const fullName = [profile.prenom, profile.nom].filter(Boolean).join(' ');
       if (nameField && !nameField.value) nameField.value = fullName || session.user.email || '';
     }
+    // Téléphone déjà connu (profil) : on ne le redemande pas. Colonne facultative selon la base.
+    const tel = await db.from('profiles').select('telephone').eq('id', session.user.id).maybeSingle().catch(() => ({}));
+    const numero = tel && !tel.error && tel.data ? String(tel.data.telephone || '').trim() : '';
+    if (numero) {
+      setFieldValue('tel', numero);
+      const bloc = document.getElementById('bloc-tel');
+      if (bloc) bloc.hidden = true;
+    }
+    // Livraison déjà créée : le téléphone n'est pas requis pour payer.
+    if (getParam('livraison_id') || getParam('id')) {
+      const bloc = document.getElementById('bloc-tel');
+      if (bloc) bloc.hidden = true;
+    }
   } catch (err) {
     console.warn('Profil paiement non charge:', err.message);
   }
@@ -484,7 +536,8 @@ function applyExistingLivraison(livraison) {
   const finalDep = livraison.ville_depart || livraison.adresse_depart || document.getElementById('ville-dep').value || '-';
   const finalArr = livraison.ville_arrivee || livraison.adresse_arrivee || document.getElementById('ville-arr').value || '-';
   document.getElementById('sum-trajet').textContent = finalDep + ' -> ' + finalArr;
-  document.getElementById('sum-type').textContent = livraison.type_colis || 'Colis';
+  document.getElementById('sum-type').textContent = libelleTypeColis(livraison.type_colis);
+  afficherRecapColis(livraison);
   document.getElementById('sum-livraison').textContent = fmt(total);
   document.getElementById('sum-assurance').textContent = assuranceLabel(livraison.assurance_plan);
   document.getElementById('sum-comm').textContent = 'Inclus';

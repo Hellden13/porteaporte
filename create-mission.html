@@ -160,7 +160,7 @@
               </div>
             </div>
           </div>
-          <div class="full"><label for="base-price">Prix de base (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="Auto-calculé"><div class="hint">Le serveur refusera tout prix sous le minimum calculé selon distance + poids + taille + type + urgence.</div></div>
+          <div class="full"><label for="base-price">Prix de base (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="Calculé tout seul"><div class="hint">Rempli tout seul selon la distance, le poids, la taille et le type. Tu peux l'augmenter, pas descendre sous le minimum.</div></div>
           <div class="price full"><div class="muted">Prix total estimé</div><strong id="total-price">$0.00</strong><div id="promo-discount-line" style="color:#c4f135;font-size:.8rem;margin-top:3px;font-weight:700;display:none"></div></div>
           <div class="full" style="margin-top:2px">
             <div style="display:flex;gap:8px;align-items:stretch">
@@ -219,7 +219,7 @@
       const base=parseFloat(el('base-price').value)||0;
       const priority=el('is-priority').checked?5:0;
       const insurance=selectedInsurance();
-      const platFee=Math.max(2.00,base*.15);
+      const platFee=base>0?Math.max(2.00,base*.15):0;
       const qty=parseInt(el('quantite-colis')?.value)||1;
       const extra=Math.max(0,qty-1)*2;
       let total=base+platFee+priority+insurance.premium+extra;
@@ -232,7 +232,7 @@
         else if(d.type==='insurance_upgrade'){promoSave=INSURANCE_PLANS.plus.premium;total-=promoSave;}
       }
       total=Math.max(0,total);
-      el('total-price').textContent='$'+total.toFixed(2);
+      el('total-price').textContent=total.toFixed(2).replace('.',',')+' $';
       const saveEl=el('promo-discount-line');
       if(saveEl){saveEl.textContent=promoSave>0?'Code promo : -'+promoSave.toFixed(2)+' $':'';saveEl.style.display=promoSave>0?'block':'none';}
     }
@@ -294,7 +294,7 @@
         const jours=Array.from(document.querySelectorAll('.dispo-jour:checked')).map(c=>c.value);
         const tailleColis=el('taille-colis')?el('taille-colis').value:'moyen'; const quantiteColis=qty;
         const pickupPoint=el('pickup-point'); const deliveryPoint=el('delivery-point');
-        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,quantite_colis:quantiteColis,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined,promo_code:activePromo?activePromo.promo.code:undefined,promo_id:activePromo?activePromo.promo.id:undefined};
+        const payload={titre:el('title').value.trim(),description:el('description').value.trim(),type_colis:el('category').value,taille_colis:tailleColis,poids_kg:parseFloat(el('weight').value)||1,valeur_declaree:parseFloat(el('declared-value').value)||0,adresse_depart:el('pickup-address').value.trim(),adresse_arrivee:el('delivery-address').value.trim(),ville_depart:el('pickup-city').value.trim(),ville_arrivee:el('delivery-city').value.trim(),code_postal_depart:el('pickup-postal').value.trim(),code_postal_arrivee:el('delivery-postal').value.trim(),prix_base:base,prix_total:total,notes,assurance_plan:insurance.key,quantite_colis:quantiteColis,date_souhaitee:dateSouhaitee||undefined,pickup_point_id:pickupPoint?.value||undefined,dropoff_point_id:deliveryPoint?.value||undefined,pickup_safe_label:pickupPoint?.value?pickupPoint.options[pickupPoint.selectedIndex]?.textContent:undefined,dropoff_safe_label:deliveryPoint?.value?deliveryPoint.options[deliveryPoint.selectedIndex]?.textContent:undefined,nom_destinataire:el('recipient-name').value.trim()||undefined,email_destinataire:el('recipient-email').value.trim()||undefined,telephone_destinataire:el('recipient-phone').value.trim()||undefined,destinataire_dispo_jours:jours.length?jours:undefined,destinataire_dispo_debut:el('dispo-debut')?el('dispo-debut').value:undefined,destinataire_dispo_fin:el('dispo-fin')?el('dispo-fin').value:undefined,promo_code:activePromo?activePromo.promo.code:undefined,promo_id:activePromo?activePromo.promo.id:undefined};
         const res=await fetch('/api/create-livraison',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify(payload)});
         const out=await res.json().catch(()=>({})); if(!res.ok){const detail=out.details&& (out.details.message||out.details.hint||out.details.code); throw new Error((out.error||'Creation livraison impossible')+(detail?' - '+detail:''))}
         const id=out.livraison&&out.livraison.id||out.livraison_id; if(!id) throw new Error('Livraison créée, mais ID introuvable.');
@@ -311,36 +311,47 @@
     }
     // ── Calculateur prix automatique (anti-frigo-5$) ──
     let priceDebounce = null;
+    // Prix calculé tout seul, avec la MÊME règle et la MÊME distance que le serveur (endpoint price-estimate).
+    let prixMinimum = 0;
+    let prixManuel = false; // devient vrai si l'expéditeur tape lui-même un prix plus haut
     async function recomputeAutoPrice() {
       const ville_depart = el('pickup-city')?.value?.trim();
       const ville_arrivee = el('delivery-city')?.value?.trim();
-      const poids = parseFloat(el('weight')?.value) || 0;
+      const poids = parseFloat(el('weight')?.value) || 1;
       const taille = el('taille-colis')?.value || 'moyen';
       const type = el('category')?.value || 'colis';
       const deadline = document.getElementById('timing-scheduled')?.checked ? 'scheduled' : 'asap';
-      if (!ville_depart || !ville_arrivee || !poids) {
+      if (!ville_depart || !ville_arrivee) {
         el('price-min').textContent = '— $';
-        el('price-explain').textContent = 'Remplis villes + poids + taille + catégorie pour le prix.';
+        el('price-explain').textContent = 'Entre les villes (et les codes postaux) de départ et de livraison : le prix se calcule tout seul.';
         return;
       }
       try {
         const r = await fetch('/api/platform?endpoint=price-estimate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: 'price-estimate', ville_depart, ville_arrivee, poids_kg: poids, taille_colis: taille, type_colis: type, deadline })
+          body: JSON.stringify({ endpoint: 'price-estimate', ville_depart, ville_arrivee, code_postal_depart: el('pickup-postal')?.value || '', code_postal_arrivee: el('delivery-postal')?.value || '', poids_kg: poids, taille_colis: taille, type_colis: type, deadline })
         });
         const out = await r.json();
         if (!out.success) throw new Error();
-        el('price-min').textContent = out.min_price_cad + ' $';
-        el('price-explain').innerHTML = `📍 ${out.distance_km} km · ⚖️ ${poids} kg · 📦 ${taille}/${type} · ⏱️ ${deadline}<br>Suggéré: <strong style="color:#fff">${out.suggested_price_cad} $</strong> · Minimum: <strong style="color:var(--brand-lime)">${out.min_price_cad} $</strong>`;
-        // Pré-remplit base-price si vide
+        prixMinimum = Number(out.min_price_cad) || 0;
+        el('price-min').textContent = prixMinimum.toFixed(2).replace('.', ',') + ' $';
+        const explain = el('price-explain');
+        explain.textContent = '';
+        explain.append(`📍 ${out.distance_km} km (${out.distance_methode || 'estimation'}) · ⚖️ ${poids} kg · 📦 ${taille}/${type}`);
+        explain.append(document.createElement('br'));
+        explain.append(`Prix suggéré : ${Number(out.suggested_price_cad).toFixed(2).replace('.', ',')} $ · Minimum : ${prixMinimum.toFixed(2).replace('.', ',')} $`);
         const baseInput = el('base-price');
-        if (!baseInput.value || parseFloat(baseInput.value) === 0) {
-          baseInput.value = out.suggested_price_cad;
-          baseInput.min = out.min_price_cad;
-          updatePrice();
+        baseInput.min = prixMinimum;
+        const actuel = parseFloat(baseInput.value) || 0;
+        if (!prixManuel || actuel < prixMinimum) {
+          baseInput.value = Number(out.suggested_price_cad).toFixed(2);
+          prixManuel = false;
         }
-      } catch (_) {}
+        updatePrice();
+      } catch (_) {
+        el('price-explain').textContent = 'Calcul du prix indisponible pour le moment. Réessaie dans un instant.';
+      }
     }
     function debouncedRecompute() { clearTimeout(priceDebounce); priceDebounce = setTimeout(recomputeAutoPrice, 400); }
 
@@ -414,7 +425,11 @@
 
     document.addEventListener('DOMContentLoaded',()=>{
       ['base-price','is-priority','insurance-plan','declared-value','quantite-colis'].forEach(id=>el(id)?.addEventListener('input',updatePrice));
-      ['pickup-city','delivery-city','weight','taille-colis','category'].forEach(id=>el(id) && el(id).addEventListener('input',debouncedRecompute));
+      ['pickup-city','delivery-city','pickup-postal','delivery-postal','weight','taille-colis','category'].forEach(id=>{ if(!el(id)) return; el(id).addEventListener('input',debouncedRecompute); el(id).addEventListener('change',debouncedRecompute); });
+      el('base-price')?.addEventListener('input',()=>{ prixManuel = true; });
+      el('base-price')?.addEventListener('change',()=>{ const v=parseFloat(el('base-price').value)||0; if(prixMinimum && v<prixMinimum){ el('base-price').value=prixMinimum.toFixed(2); prixManuel=false; updatePrice(); } });
+      // Une adresse choisie dans les suggestions remplit ville + code postal : on recalcule.
+      ['pickup-sugg','delivery-sugg'].forEach(id=>el(id)?.addEventListener('mousedown',()=>setTimeout(recomputeAutoPrice,50)));
       document.querySelectorAll('input[name="pickup-timing"]').forEach(r=>r.addEventListener('change',debouncedRecompute));
       // Compteur livreurs actifs : update à chaque changement de ville
       ['pickup-city','delivery-city'].forEach(id=>el(id)?.addEventListener('input', updateDriversCountBanner));

@@ -7,6 +7,7 @@ const CORS = {
 
 const { normalizeRole, alertAdmin, siteOrigin, internalHeaders } = require('../lib/_lib');
 const { verifierCodeReception, insertAudit } = require('../lib/_codes-livraison');
+const { gainLivreurCents } = require('../lib/_gain-livreur');
 
 // Protection du code de réception (5 essais par livraison) : voir lib/_codes-livraison.js.
 
@@ -424,13 +425,14 @@ module.exports = async function handler(req, res) {
       loyaltyBonus = Number(profileData[0]?.loyalty_bonus_pct || 0);
       if (loyaltyBonus > 10) loyaltyBonus = 10; // safety cap
     } catch (e) {}
-    // Part de base = 60% + bonus fidélité (max 70%)
-    const basePct = 60 + loyaltyBonus;
-    const baseNetCents = Math.floor(grossCents * (basePct / 100));
+    // La règle unique du gain (lib/_gain-livreur.js) : 60 % + fidélité (max 70 %), + bonus sauvetage.
     const rescuePct = livraison.rescue_livreur_original ? (Number(livraison.rescue_bonus_pct) || 20) : 0;
-    const bonusCents = rescuePct > 0 ? Math.floor(baseNetCents * (rescuePct / 100)) : 0;
-    const netCents = baseNetCents + bonusCents;
-    const feeCents = grossCents - netCents;
+    const gain = gainLivreurCents(grossCents, { fidelitePct: loyaltyBonus, sauvetagePct: rescuePct });
+    const basePct = gain.pct;
+    const baseNetCents = gain.baseCents;
+    const bonusCents = gain.bonusCents;
+    const netCents = gain.netCents;
+    const feeCents = gain.plateformeCents;
 
     // ─── TRANSFER STRIPE AUTO avec source_transaction ───
     // Au lieu d'attendre la settlement (2j), on dit à Stripe "transfère depuis cette charge spécifique"

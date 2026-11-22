@@ -14,6 +14,7 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
   <script src="/js/dialogues.js"></script>
+  <script src="/js/gain-livreur.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -860,9 +861,12 @@
     let pendingMissionId = null;
     let availableMissions = [];
 
+    // Part du livreur : la même règle que le paiement réel (js/gain-livreur.js = lib/_gain-livreur.js).
     function deliverySharePct() {
-      const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
-      return Number.isFinite(pct) && pct > 0 ? pct : 60;
+      return window.PAPGain.cents(10000, { fidelitePct: Number(profile?.loyalty_bonus_pct) || 0 }).pct;
+    }
+    function gainTexte(prixTotal) {
+      return window.PAPGain.texte(prixTotal, { fidelitePct: Number(profile?.loyalty_bonus_pct) || 0 });
     }
 
     function showError(message) {
@@ -910,6 +914,10 @@
         .single();
       if (!p) { showBanner('Profil introuvable. Reconnecte-toi.', '#EF4444'); return; }
       profile = p;
+      // Bonus fidélité (facultatif : la colonne peut manquer sur une vieille base).
+      db.from('profiles').select('loyalty_bonus_pct').eq('id', session.user.id).maybeSingle()
+        .then((r) => { if (!r.error && r.data) { profile.loyalty_bonus_pct = Number(r.data.loyalty_bonus_pct) || 0; } })
+        .catch(() => {});
 
       if (p.suspendu) {
         showBanner('Compte suspendu. Contacte le support.', '#EF4444', 'mailto:support@porteaporte.site', 'Contacter le support');
@@ -1054,6 +1062,8 @@
       const ecoBonus   = profile.eco_bonus || 0;          // e.g. 20, 15, 10, 5, 0
       const mode       = profile.transport_mode || null;
       const basePct    = deliverySharePct();
+      // Le paiement réel ne verse pas de bonus éco : la répartition n'en tient pas compte.
+      const ecoPaye    = 0;
 
       /* --- Eco banner --- */
       const banner = document.getElementById('ecoBanner');
@@ -1094,16 +1104,16 @@
 
       /* --- Revenue breakdown with eco bonus --- */
       const base    = earnings * (basePct / 100);
-      const eco     = earnings * (ecoBonus / 100);
+      const eco     = earnings * (ecoPaye / 100);
       const total   = base + eco;
-      const pct     = basePct + ecoBonus;
+      const pct     = basePct + ecoPaye;
 
-      document.getElementById('revYouLabel').textContent = `Toi (${basePct}%)`;
+      document.getElementById('revYouLabel').textContent = `Toi (${basePct} % du prix payé)`;
       document.getElementById('revYouBar').style.width   = Math.min(basePct, 100) + '%';
       document.getElementById('revYou').textContent      = money(base);
 
       // Bonus éco (ligne affichée seulement si actif)
-      if (ecoBonus > 0) {
+      if (ecoPaye > 0) {
         document.getElementById('revEcoRow').style.display = 'flex';
         document.getElementById('revEcoLabel').textContent = `Éco (+${ecoBonus}%)`;
         document.getElementById('revEcoBar').style.width   = ecoBonus + '%';
@@ -1113,7 +1123,7 @@
       }
 
       // Postes plateforme officiels (somme = 100% avec la part livreur)
-      renderRevenuePosts(earnings, basePct, ecoBonus);
+      renderRevenuePosts(earnings, basePct, ecoPaye);
 
       // Total reçu par le livreur (base + éco) — toujours affiché
       document.getElementById('revTotalRow').style.display = 'flex';
@@ -1250,7 +1260,7 @@
             <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
             <div class="mission-meta">${m.type_colis || 'Colis'}${m.quantite_colis > 1 ? ' <strong>×' + m.quantite_colis + '</strong>' : ''}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
           </div>
-          <span class="mission-price">${money(m.prix_total)}</span>
+          <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total)}</span>
           <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
         </div>
       `).join('');
@@ -1445,7 +1455,7 @@
           <div class="delivery-row">
             <div>
               <div class="delivery-route">${row.type_colis || 'Colis'}${row.taille_colis ? ` (${row.taille_colis})` : ''}${row.quantite_colis > 1 ? ` <strong>×${row.quantite_colis}</strong>` : ''} · ${row.code || row.id.slice(0,8)}</div>
-              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · ${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · Tu gagnes : ${gainTexte(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
               ${prefsHtml}
             </div>
             <div class="delivery-actions">
@@ -2401,7 +2411,7 @@
                 <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
                 ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
               </div>
-              <span class="mission-price">${money(m.prix_total)}</span>
+              <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total)}</span>
             </div>
             ${m.adresse_masquees ? `
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.22);border-radius:8px;padding:10px;font-size:.82rem;color:#d9f99d">
@@ -2452,7 +2462,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
                 <div>
                   <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
-                  <div class="delivery-meta" style="margin-top:2px">${money(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+                  <div class="delivery-meta" style="margin-top:2px">Tu gagnes : ${gainTexte(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
                   ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}Expéditeur : ${expName}</div>` : ''}
                 </div>
               </div>
@@ -2800,8 +2810,8 @@
     const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
     function livreurShareRatio() {
-      const pct = window.__platformShares && Number(window.__platformShares.pct_livreur);
-      return (Number.isFinite(pct) && pct > 0 ? pct : 60) / 100;
+      const fid = (typeof profile !== 'undefined' && profile) ? Number(profile.loyalty_bonus_pct) || 0 : 0;
+      return window.PAPGain.cents(10000, { fidelitePct: fid }).pct / 100;
     }
 
     async function loadChart() {
