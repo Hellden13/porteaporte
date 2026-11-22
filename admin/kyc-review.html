@@ -312,7 +312,7 @@
     const doc      = DOC_LABELS[d.doc_type] || d.doc_type || '—';
     const eco      = d.eco_bonus || 0;
     const ecoClass = eco >= 15 ? 'high' : eco >= 5 ? 'mid' : 'low';
-    const ecoLabel = eco > 0 ? `🌱 +${eco}% Bonus éco` : 'Aucun bonus éco';
+    const ecoLabel = eco > 0 ? `🌱 Mode éco déclaré (bonus +${eco}% non versé : décision de Denis)` : 'Mode non éco';
     const date     = d.soumis_le ? new Date(d.soumis_le).toLocaleDateString('fr-CA', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
     const delay    = d.soumis_le ? Math.floor((Date.now() - new Date(d.soumis_le)) / 3600000) : 0;
     const delayTxt = delay < 1 ? 'Il y a moins d\'1h' : delay < 24 ? `Il y a ${delay}h` : `Il y a ${Math.floor(delay/24)}j`;

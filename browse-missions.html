@@ -158,7 +158,9 @@
         if (window.PorteAuth && !await window.PorteAuth.requireVerifiedDriver('/livreur.html')) return;
         if (!await requireSession()) return;
         /* Load eco bonus from profile */
-        const { data: prof } = await db.from('profiles').select('eco_bonus,transport_mode').eq('id', currentSession.user.id).single();
+        const { data: prof } = await db.from('profiles').select('eco_bonus,transport_mode,loyalty_bonus_pct').eq('id', currentSession.user.id).single();
+        // Bonus fidélité : le même que le paiement réel ajoute à la part de 60 %.
+        window._livreurFidelite = Number(prof?.loyalty_bonus_pct) || 0;
         window._livreurEcoBonus = prof?.eco_bonus || 0;
         window._livreurEcoMode  = prof?.transport_mode || '';
 
@@ -249,7 +251,7 @@
       const ECO_ICONS  = { pieds:'🚶', velo:'🚴', trottinette:'🛴', skateboard:'🛹', voiture_electrique:'🔋🚗', moto_electrique:'🔋🏍️', camion_electrique:'🔋🚛' };
 
       let bannerHtml = '';
-      if (ecoBonus > 0) {
+      if (false && ecoBonus > 0) { // bonus éco jamais versé : retiré en attendant la décision de Denis
         bannerHtml = `<div class="eco-banner-top">${ECO_ICONS[ecoMode] || '🌱'} Bonus écologique +${ecoBonus}% actif — ton gain réel est affiché sur chaque mission. <span>Merci de livrer vert !</span></div>`;
       }
 
@@ -259,7 +261,7 @@
         const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
 
         // Même règle que le paiement réel (js/gain-livreur.js). Pas de bonus éco : il n'est pas versé.
-        const gainHtml = `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Tu gagnes : <strong style="color:var(--brand-lime)">${window.PAPGain.texte(m.prix_total || 0)}</strong></div>`;
+        const gainHtml = `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Tu gagnes : <strong style="color:var(--brand-lime)">${window.PAPGain.texte(m.prix_total || 0, { fidelitePct: window._livreurFidelite || 0 })}</strong></div>`;
 
         const onRouteBadge = m.on_route
           ? `<span style="display:inline-block;padding:2px 8px;background:rgba(93,191,255,.15);color:#7dffc1;border:1px solid rgba(93,191,255,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`
@@ -295,7 +297,7 @@
             <div><span>Taille</span>${esc(text(m.taille_colis, 'N/D'))}</div>
             <div><span>Dispo destinataire</span>${(Array.isArray(m.destinataire_dispo_jours) && m.destinataire_dispo_jours.length) ? esc(m.destinataire_dispo_jours.join(', ')) + (m.destinataire_dispo_debut ? '<br>' + esc(m.destinataire_dispo_debut.slice(0,5)) + '–' + esc((m.destinataire_dispo_fin || '').slice(0,5)) : '') : 'Flexible'}</div>
           </div>
-          <div class="price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${window.PAPGain.texte(m.prix_total || 0)}</div>
+          <div class="price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${window.PAPGain.texte(m.prix_total || 0, { fidelitePct: window._livreurFidelite || 0 })}</div>
           ${gainHtml}
           ${m.rescue_mode
             ? `<button class="btn" type="button" style="background:linear-gradient(135deg,#ff4444,#ff8800);color:#fff;font-weight:900" onclick="acceptRescue('${esc(m.id)}')">🆘 Accepter ce RESCUE (+${m.rescue_bonus_pct||20}% bonus)</button>`

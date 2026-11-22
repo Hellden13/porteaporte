@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/platform-settings-defaults.js"></script>
+  <script src="/js/repartition.js"></script>
   <style>
     body { padding: 24px; min-height: 100vh; background: #05080c; }
     .wrap { max-width: 920px; margin: 0 auto; }
@@ -59,7 +60,10 @@
 
     <div class="panel">
       <h2 style="margin:0 0 8px">💸 Répartition des fonds</h2>
-      <div style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">Sur un ticket de <strong style="color:#fff" id="ticketDisplay">15 $</strong>, voici où va chaque dollar :</div>
+      <div style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">Sur un ticket de <strong style="color:#fff" id="ticketDisplay">15 $</strong>, voici où va <strong>réellement</strong> chaque dollar (même calcul que le paiement, js/repartition.js) :
+        <br>• La part du livreur est fixée à <strong>60 % du prix total</strong> (règle de paiement) ; son bonus fidélité (0 à 10 points) est pris sur la part de la plateforme.
+        <br>• Les frais Stripe <strong>réels</strong> (environ 2,9 % + 0,30 $) sont payés par la plateforme. Le % « Frais Stripe » ci-dessous ne sert qu'à faire le total de 100 %.
+        <br>• Ce qui reste est partagé entre les autres postes <strong>au prorata</strong> de leurs %. La colonne en dollars montre le montant exact.</div>
 
       <div class="preset-bar">
         <span style="color:var(--brand-muted);font-size:.85rem">📋 Presets :</span>
@@ -380,20 +384,34 @@
       msg.textContent = '✅ ' + (active ? `Restriction active — uniquement ${cities.join(', ')}` : 'Restriction désactivée — toutes villes acceptées');
     }
 
+    const POSTE_DE = { pct_livreur: 'livreur', pct_stripe: 'stripe', pct_protection: 'protection', pct_urgence: 'urgence', pct_communaute: 'communaute', pct_developpement: 'developpement', pct_marketing: 'marketing', pct_operations: 'operations', pct_profit: 'profit' };
+    function dollarsReels() {
+      const out = {};
+      if (!window.PAPRepartition) return out;
+      const rep = window.PAPRepartition.repartitionLivraison({ montantPayeCents: Math.round(ticket * 100), settings: current });
+      rep.lignes.forEach(l => { out[l.poste] = l.cents; });
+      return out;
+    }
+    function rafraichirDollars() {
+      const d = dollarsReels();
+      POSTES.forEach(p => { const el = document.getElementById('dollar-' + p.key); if (el) el.textContent = ((d[POSTE_DE[p.key]] || 0) / 100).toFixed(2) + ' $'; });
+    }
     function render() {
       document.getElementById('ticketDisplay').textContent = ticket.toFixed(2) + ' $';
+      const reels = dollarsReels();
       const html = POSTES.map(p => {
         const pct = current[p.key] || 0;
-        const dollars = (ticket * pct / 100).toFixed(2);
+        const dollars = ((reels[POSTE_DE[p.key]] || 0) / 100).toFixed(2);
+        const fige = p.key === 'pct_livreur' ? 'disabled title="Fixé à 60 % : la règle de paiement du livreur"' : '';
         return `
           <div class="slider-row">
             <div class="icon">${p.icon}</div>
             <div>
               <div class="name">${p.name}</div>
               <div class="desc">${p.desc}</div>
-              <input type="range" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" oninput="updatePct('${p.key}', this.value)">
+              <input type="range" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" ${fige} oninput="updatePct('${p.key}', this.value)">
             </div>
-            <input class="pct-input" type="number" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" oninput="updatePct('${p.key}', this.value)">
+            <input class="pct-input" type="number" min="${p.min}" max="${p.max}" step="0.1" value="${pct}" ${fige} oninput="updatePct('${p.key}', this.value)">
             <div class="dollar" id="dollar-${p.key}">${dollars} $</div>
           </div>
         `;
@@ -406,7 +424,7 @@
       current[key] = Number(val) || 0;
       // Update both inputs
       document.querySelectorAll(`[oninput*="${key}"]`).forEach(el => el.value = val);
-      document.getElementById('dollar-' + key).textContent = (ticket * current[key] / 100).toFixed(2) + ' $';
+      rafraichirDollars();
       updateTotal();
     }
 
@@ -438,7 +456,7 @@
       if (!p) return;
       POSTES.forEach(post => {
         const key = post.key.replace('pct_', '');
-        current[post.key] = p[key] || 0;
+        current[post.key] = post.key === 'pct_livreur' ? 60 : (p[key] || 0);
       });
       render();
     }

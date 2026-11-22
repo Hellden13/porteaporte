@@ -49,7 +49,13 @@ const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
+const { calculerBonusFidelite } = require('../lib/_fidelite');
+const { apresCaptureLivraison } = require('../lib/_apres-capture');
+const { verifierBadgesAuto, recompenserParrainage, recompenseAvis5Etoiles, badgeProfilVerifie, jalonSansReclamation } = require('../lib/_recompenses');
+const { totauxRepartition, repartitionLivraison: repartitionLivraisonCalc, repartitionTrajet: repartitionTrajetCalc } = require('../lib/_repartition-journal');
+const { validerParametres, prixMinimumTotal } = require('../js/repartition');
 const { livraisonsTestIds, adminLivraisonTest, idsLivraisonsTest } = require('../lib/_livraisons-test');
+const { adminRemettreRamasse } = require('../lib/_livraisons-coincees');
 // Champs de distance envoyés par les formulaires (codes postaux facultatifs).
 function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
@@ -62,32 +68,8 @@ const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPr
 // Postes modifiables depuis le hub admin. Le conducteur garde déjà sa part
 // (transfert Stripe dans rideCaptureEligible). Ici on découpe SEULEMENT la
 // commission plateforme. Total normalisé/affiché doit viser 100%.
-const RIDE_REDISTRIBUTION_DEFAULT = [
-  { key: 'operations',  label: 'Frais & opérations', emoji: '⚙️', pct: 30 },
-  { key: 'securite',    label: 'Fond de sécurité',   emoji: '🛡️', pct: 35 },
-  { key: 'dons',        label: 'Dons organismes',    emoji: '❤️', pct: 25 },
-  { key: 'developpeur', label: 'Développeur',        emoji: '💻', pct: 10 }
-];
-
-function normalizeRideRedistribution(input) {
-  let arr = input;
-  if (typeof arr === 'string') {
-    try { arr = JSON.parse(arr); } catch (_) { arr = null; }
-  }
-  if (!Array.isArray(arr) || !arr.length) return RIDE_REDISTRIBUTION_DEFAULT;
-  const cleaned = [];
-  for (const raw of arr) {
-    if (!raw || typeof raw !== 'object') continue;
-    const label = String(raw.label || '').trim().slice(0, 60);
-    if (!label) continue;
-    const key = String(raw.key || label.toLowerCase().replace(/[^a-z0-9]+/g, '_'))
-      .slice(0, 40) || `poste_${cleaned.length + 1}`;
-    const pct = Math.max(0, Math.min(100, toNumber(raw.pct, 0)));
-    const emoji = String(raw.emoji || '•').slice(0, 4);
-    cleaned.push({ key, label, emoji, pct });
-  }
-  return cleaned.length ? cleaned : RIDE_REDISTRIBUTION_DEFAULT;
-}
+// Redistribution covoiturage : une seule définition, partagée avec le paiement et la page Transparence.
+const { REDISTRIBUTION_TRAJET_DEFAUT: RIDE_REDISTRIBUTION_DEFAULT, normaliserRedistribution: normalizeRideRedistribution } = require('../js/repartition');
 
 function validateCancelSplit(name, refundPct, driverPct, fundPct) {
   const values = [refundPct, driverPct, fundPct].map(Number);
@@ -226,12 +208,19 @@ async function createLivraison(req, res, ctx, body) {
       type: payload.type_colis,
       urgency: body.deadline || body.urgence || 'flexible'
     });
-    const userPrice = Number(body.prix_base ?? body.base_price ?? payload.prix_total) || 0;
-    if (userPrice < priceInfo.min_price_cad) {
+    // Le minimum est vérifié sur le PRIX TOTAL payé (avant, seul le prix de base était vérifié et
+    // le total envoyé par le navigateur était cru tel quel).
+    const minTotal = prixMinimumTotal(priceInfo.min_price_cad);
+    const suggereTotal = prixMinimumTotal(priceInfo.price_cad);
+    const totalDemande = Number(payload.prix_total) || 0;
+    const baseDemandee = Number(body.prix_base ?? body.base_price ?? 0) || 0;
+    if (totalDemande + 0.004 < minTotal || (baseDemandee > 0 && baseDemandee + 0.004 < priceInfo.min_price_cad)) {
       return res.status(400).json({
-        error: `Prix livreur trop bas pour cette livraison. Minimum: ${priceInfo.min_price_cad} $ (suggéré: ${priceInfo.price_cad} $). Détail: ${distKm} km · ${payload.poids_kg || '?'} kg · ${payload.type_colis || 'colis'} · ${payload.taille_colis || 'moyen'}.`,
+        error: `Prix total trop bas pour cette livraison. Prix minimum : ${minTotal.toFixed(2).replace('.', ',')} $ (suggéré : ${suggereTotal.toFixed(2).replace('.', ',')} $). Détail : ${distKm} km · ${payload.poids_kg || '?'} kg · ${payload.type_colis || 'colis'} · ${payload.taille_colis || 'moyen'}.`,
         suggested_price_cad: priceInfo.price_cad,
         min_price_cad: priceInfo.min_price_cad,
+        min_total_cad: minTotal,
+        suggested_total_cad: suggereTotal,
         breakdown: priceInfo.breakdown
       });
     }
@@ -1593,27 +1582,15 @@ async function captureStripeOnDelivery(ctx, livraisonId, livraison) {
     body: JSON.stringify({ statut: 'payee' })
   });
 
-  if (livraison.livreur_id && captured.amount_received > 0) {
-    const grossCents = captured.amount_received;
-    const netCents = Math.floor(grossCents * 0.60);
-    await fetch(`${ctx.sbUrl}/rest/v1/livreur_earnings`, {
-      method: 'POST',
-      headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: livraison.livreur_id,
-        livraison_id: livraisonId,
-        gross_amount: grossCents / 100,
-        platform_fee: (grossCents - netCents) / 100,
-        net_amount: netCents / 100,
-        currency: captured.currency || 'cad',
-        status: 'available',
-        available_after: new Date().toISOString(),
-        stripe_payment_intent: captured.id,
-        type: 'livraison',
-        created_at: new Date().toISOString()
-      })
-    }).catch(() => {});
-  }
+  // Même suite que la capture après le code de réception : répartition réelle au journal,
+  // gain du livreur (60 % du prix avant rabais + fidélité + sauvetage), virement Stripe Connect.
+  const livComplete = { ...livraison, id: livraison.id || livraisonId };
+  await apresCaptureLivraison({ sbUrl: ctx.sbUrl, sbKey: ctx.sbKey, stripeKey }, livComplete, captured)
+    .catch((e) => console.error('[confirmDelivery] après-capture :', e.message));
+  try {
+    if (livComplete.livreur_id) { await verifierBadgesAuto(ctx, livComplete.livreur_id); await recompenserParrainage(ctx, livComplete.livreur_id, 'premiere_livraison'); }
+    if (livComplete.expediteur_id) { await verifierBadgesAuto(ctx, livComplete.expediteur_id); await recompenserParrainage(ctx, livComplete.expediteur_id, 'premiere_livraison'); }
+  } catch (e) { console.error('[confirmDelivery] récompenses :', e.message); }
   console.log('[confirmDelivery] auto-capture OK:', piId, 'amount_received:', captured.amount_received);
 }
 
@@ -1650,8 +1627,6 @@ async function confirmDelivery(req, res, ctx, body) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return res.status(400).json({ error: 'Confirmation livraison impossible', details: data });
 
-  rewardReferralIfPending(ctx, livraison.livreur_id, 'first_delivery').catch(() => {});
-
   return res.status(200).json({ success: true, livraison: Array.isArray(data) ? data[0] : data });
 }
 
@@ -1682,7 +1657,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
     return res.status(400).json({ error: 'Position GPS obligatoire pour un depot sans destinataire' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total,ville_depart,ville_arrivee,rescue_livreur_original,rescue_bonus_pct`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -2840,6 +2815,8 @@ async function adminUpdateDriverStatus(req, res, ctx, body) {
   if (!r.ok) return res.status(400).json({ error: 'Mise a jour livreur impossible', details: data });
 
   const updated = Array.isArray(data) ? data[0] : data;
+  // Identité approuvée : badge « Profil vérifié » (+50 XP, +25 Points Impact), une seule fois.
+  if (status === 'verified') await badgeProfilVerifie(ctx, userId).catch(() => null);
   if (status === 'rejected' && updated?.email) {
     await callNotifier('verification_refusee', {
       user_id: updated.id,
@@ -3123,6 +3100,9 @@ async function createReview(req, res, ctx, body) {
     );
   }
 
+  // Avis 5 étoiles reçu : +15 XP à la personne évaluée, une seule fois par avis.
+  await recompenseAvis5Etoiles(ctx, { reviewedId, reviewerId: ctx.session.id, refId: 'livraison:' + livraison.id, rating }).catch(() => null);
+
   return res.status(200).json({ success: true, updated: !!existing[0], review: Array.isArray(data) ? data[0] : data });
 }
 
@@ -3294,6 +3274,9 @@ async function rideReviewCreate(req, res, ctx, body) {
   }
 
   if (!r.ok) return res.status(400).json({ error: 'Création avis impossible', details: data });
+
+  // Avis 5 étoiles reçu : +15 XP, une seule fois par avis.
+  await recompenseAvis5Etoiles(ctx, { reviewedId, reviewerId: session.id, refId: 'trajet:' + rideId, rating }).catch(() => null);
 
   // Alerte si note basse
   if (rating <= 2) {
@@ -4248,8 +4231,15 @@ async function fetchImpactState(sbUrl, sbKey) {
       communaute:  Math.max(0, toNumber(settings.pct_don, PLATFORM_ALLOCATION_DEFAULTS.pct_communaute))
     };
   }
-  // donationPoolCents = part communauté (Fonds PorteàPorte → organismes)
-  const donationPoolCents = Math.round(revenueCents * (slices.communaute || slices.don || 0) / 100);
+  // Ce qui a VRAIMENT été réservé, lu au journal (une ligne par paiement capturé, lib/_repartition-journal.js).
+  // Avant : une estimation (revenus du mois × %), jamais enregistrée nulle part.
+  const journal = await totauxRepartition({ sbUrl, sbKey });
+  const posteJournal = (sorte, test) => Object.values(journal.postes || {})
+    .filter((p) => p.sorte === sorte && test(p))
+    .reduce((t, p) => t + (Number(p.cents) || 0), 0);
+  const estDon = (p) => /communaute|don|organisme/i.test(`${p.poste} ${p.label}`);
+  // donationPoolCents = part communauté réservée (livraisons) + part « dons » des frais de covoiturage
+  const donationPoolCents = posteJournal('livraison', (p) => p.poste === 'communaute') + posteJournal('covoiturage', estDon);
   const allocationTotal = activeOrgs.reduce((sum, org) => sum + Math.max(0, toNumber(org.allocation_percent, 0)), 0);
 
   const allocations = activeOrgs.map((org) => {
@@ -4267,10 +4257,19 @@ async function fetchImpactState(sbUrl, sbKey) {
   // ─── Redistribution commission covoiturage (postes configurables) ───
   const rideRedistribution = normalizeRideRedistribution(settings.ride_redistribution);
 
+  // Exemples calculés par LA fonction du paiement (js/repartition.js) : livraison de 10 $ et trajet de 2,88 $.
+  const fraisPlace = Math.max(0, toNumber(settings.ride_platform_fee, 1.5));
+  const exemples = {
+    livraison: repartitionLivraisonCalc({ montantPayeCents: 1000, settings }),
+    covoiturage: repartitionTrajetCalc({ montantPayeCents: 288, conducteurCents: Math.max(0, 288 - Math.round(fraisPlace * 100)), redistribution: rideRedistribution }),
+  };
+
   return {
     month,
     generated_at: new Date().toISOString(),
     settings,
+    journal,
+    exemples,
     ride_redistribution: rideRedistribution,
     organisations,
     active_organisations: activeOrgs.length,
@@ -4280,7 +4279,11 @@ async function fetchImpactState(sbUrl, sbKey) {
       donation_pool_cents: donationPoolCents,
       donation_rate_percent: Math.round((slices.communaute || slices.don || 0) * 10) / 10,
       slices,
-      slice_cents: Object.fromEntries(Object.entries(slices).map(([k, pct]) => [k, Math.round(revenueCents * pct / 100)])),
+      // Montants réellement réservés au journal, par poste (plus d'estimation).
+      slice_cents: Object.fromEntries(Object.values(journal.postes || {}).filter((p) => p.sorte === 'livraison').map((p) => [p.poste, p.cents])),
+      journal_lisible: journal.lisible !== false,
+      paiements_journal: journal.paiements,
+      montant_journal_cents: journal.montant_cents,
       allocation_total_percent: Math.round(allocationTotal * 100) / 100,
       status: 'estimated'
     },
@@ -4332,8 +4335,12 @@ async function impactPublic(req, res, ctx) {
   const totalRevenueCents = Math.round(
     fundRows.reduce((sum, r) => sum + toNumber(r.prix_total, 0) * 100, 0)
   );
-  // Utilise effectiveInsurancePct (qui inclut profit si toggle ON)
-  const fundFromDeliveriesCents = Math.round(totalRevenueCents * effectiveInsurancePct);
+  // Part livraison du fonds : ce qui a été réservé au journal à chaque capture
+  // (protection colis, + réserve si le mode bêta la redirige vers le fonds).
+  const postesJournal = Object.values(state.journal?.postes || {});
+  const fundFromDeliveriesCents = postesJournal
+    .filter((p) => p.sorte === 'livraison' && (p.poste === 'protection' || (profitToInsurance && p.poste === 'profit')))
+    .reduce((t, p) => t + (Number(p.cents) || 0), 0);
   const founderRevenueCents = Math.round(totalRevenueCents * founderRevenuePct);
 
   // ─── Contribution covoiturage au fonds de sécurité unifié ───
@@ -4353,7 +4360,10 @@ async function impactPublic(req, res, ctx) {
       .filter((r) => r.status === 'paye' || !!r.paid_at)
       .reduce((sum, r) => sum + toNumber(r.platform_fee, 0) * 100, 0)
   );
-  const fundFromCovoiturageCents = Math.round(rideCommissionCapturedCents * rideSecuritePct / 100);
+  // Part covoiturage du fonds : postes « sécurité » réservés au journal à chaque capture de trajet.
+  const fundFromCovoiturageCents = postesJournal
+    .filter((p) => p.sorte === 'covoiturage' && /secur|sécur/i.test(`${p.poste} ${p.label}`))
+    .reduce((t, p) => t + (Number(p.cents) || 0), 0);
 
   const fundTotalCents = fundFromDeliveriesCents + fundFromCovoiturageCents + fundTopupCents;
 
@@ -4398,6 +4408,8 @@ async function impactPublic(req, res, ctx) {
     generated_at: state.generated_at,
     note: state.settings.public_note || 'Montants estimes en direct, confirmes mensuellement.',
     totals: state.totals,
+    exemples: state.exemples,
+    repartition_reelle: state.journal,
     allocations: state.allocations,
     ride_redistribution: state.ride_redistribution,
     ride_platform_fee: Math.max(0, Number(state.settings.ride_platform_fee != null ? state.settings.ride_platform_fee : 1.50)),
@@ -4424,8 +4436,8 @@ async function impactPublic(req, res, ctx) {
     founder_revenue_pct: founderRevenuePct,
     founder_revenue_cents: founderRevenueCents,
     funded_by: profitToInsurance
-      ? `${pctProtection}% protection + ${pctProfit}% profit (redirigé bêta) = ${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`
-      : `${(effectiveInsurancePct * 100).toFixed(1)}% de chaque livraison confirmée + ${rideSecuritePct}% de la commission covoiturage + apports directs PorteàPorte`,
+      ? 'Postes « Protection colis » et « Réserve » (redirigée en bêta) de chaque livraison capturée + poste « Sécurité » des frais de covoiturage + apports directs PorteàPorte, tels qu’écrits au journal'
+      : 'Poste « Protection colis » de chaque livraison capturée + poste « Sécurité » des frais de covoiturage + apports directs PorteàPorte, tels qu’écrits au journal',
     note: profitToInsurance
       ? 'Mode bêta : toute la part « Pérennité » de la plateforme est redirigée vers le fonds de sécurité (litige/réclamation) pour protéger la communauté. Plus de fonds = plus de sécurité.'
       : 'Fonds volontaire bêta — pas un contrat d\'assurance.'
@@ -4952,12 +4964,8 @@ async function rewardsDashboard(req, res, ctx) {
   const reached = claimFreeData.milestones_reached || [];
   for (const m of MILESTONES) {
     if (claimFreeData.claim_free_days >= m.days && !reached.includes(m.key)) {
-      // Attribuer le jalon (fire & forget)
-      fetch(`${ctx.sbUrl}/rest/v1/rpc/award_claim_free_milestone`, {
-        method: 'POST',
-        headers: { ...sbHeaders(ctx.sbKey), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_driver_id: ctx.session.id, p_milestone_key: m.key, p_points: m.points })
-      }).catch(() => {});
+      // Une seule fois par jalon (lib/_recompenses.js).
+      await jalonSansReclamation(ctx, ctx.session.id, m.key, m.points).catch(() => false);
       reached.push(m.key); // optimistic update pour la réponse courante
     }
   }
@@ -5791,6 +5799,9 @@ module.exports = async function handler(req, res) {
         distance_methode: dist.methode,
         suggested_price_cad: info.price_cad,
         min_price_cad: info.min_price_cad,
+        // Prix TOTAL (livraison + frais de service), ce que l'expéditeur paie au minimum, sans les options.
+        min_total_cad: prixMinimumTotal(info.min_price_cad),
+        suggested_total_cad: prixMinimumTotal(info.price_cad),
         breakdown: info.breakdown
       });
     }
@@ -6236,6 +6247,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraison-codes') return await livraisonCodes(req, res, ctx, body);
     if (endpoint === 'livraisons-test-ids') return await livraisonsTestIds(req, res, ctx);
     if (endpoint === 'admin-livraison-test') return await adminLivraisonTest(req, res, ctx, body);
+    if (endpoint === 'admin-remettre-ramasse') return await adminRemettreRamasse(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
     if (endpoint === 'livraison-withdraw') return await livraisonWithdraw(req, res, ctx, body);
@@ -6297,14 +6309,16 @@ module.exports = async function handler(req, res) {
       if (Array.isArray(body.beta_cities)) patch.beta_cities = body.beta_cities.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
       if (typeof body.beta_cities_active === 'boolean') patch.beta_cities_active = body.beta_cities_active;
       if (typeof body.profit_to_insurance === 'boolean') patch.profit_to_insurance = body.profit_to_insurance;
-      // Validation : somme des % distribuables = 100% (uniquement si tous fournis)
+      // Validation (js/repartition.js) sur les réglages COMPLETS après la modification :
+      // total des pourcentages = 100 % et part du livreur = 60 % (la règle que le paiement applique).
       const distribFields = ['pct_livreur','pct_stripe','pct_developpement','pct_protection','pct_urgence','pct_communaute','pct_profit','pct_marketing','pct_operations'];
-      const hasAnyDistrib = distribFields.some(f => patch[f] != null);
-      if (hasAnyDistrib) {
-        const sum = distribFields.reduce((s,f) => s + Number(patch[f] != null ? patch[f] : 0), 0);
-        if (Math.abs(sum - 100) > 0.5) {
-          return res.status(400).json({ error: `Somme des % doit faire 100% (actuel: ${sum.toFixed(1)}%)` });
-        }
+      if (distribFields.some(f => patch[f] != null)) {
+        if (distribFields.some(f => patch[f] != null && !Number.isFinite(patch[f]))) return res.status(400).json({ error: 'Chaque pourcentage doit être un nombre.' });
+        const curRes = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default&select=${distribFields.join(',')}&limit=1`, { headers: sbHeaders(ctx.sbKey) });
+        if (!curRes.ok) return res.status(503).json({ error: 'Réglages actuels illisibles : rien n’a été changé.' });
+        const actuels = (await curRes.json().catch(() => []))[0] || {};
+        const v = validerParametres({ ...actuels, ...patch });
+        if (!v.ok) return res.status(400).json({ error: v.erreurs.join(' '), total: v.total });
       }
       let r = await fetch(`${ctx.sbUrl}/rest/v1/platform_settings?id=eq.default`, {
         method: 'PATCH', headers: sbHeaders(ctx.sbKey),
@@ -6326,63 +6340,23 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'loyalty-bonus-get') {
       const session = await getSession(req, sbUrl, sbKey);
       if (!session) return res.status(401).json({ error: 'Connexion requise' });
-      const userId = body.user_id || session.id;
-      // Charger profile + stats
+      // Son propre bonus seulement (l'admin peut consulter celui d'un autre membre).
+      let userId = session.id;
+      if (body.user_id && body.user_id !== session.id) {
+        const moi = await getProfile(session.id, sbUrl, sbKey);
+        if (normalizeRole(moi?.role) !== 'admin') return res.status(403).json({ error: 'Réservé à ton propre compte' });
+        userId = body.user_id;
+      }
       const p = await getProfile(userId, sbUrl, sbKey);
       if (!p) return res.status(404).json({ error: 'Profil introuvable' });
-
-      let totalLivraisons = 0;
-      let scoreFiabilite = 100;
-      let nbBadges = 0;
-      try {
-        const lr = await fetch(`${sbUrl}/rest/v1/livraisons?livreur_id=eq.${userId}&statut=in.(payee,paid)&select=id`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
-        });
-        const cr = lr.headers.get('content-range') || '0-0/0';
-        totalLivraisons = Number(cr.split('/')[1]) || 0;
-      } catch (e) {}
-      try {
-        const fr = await fetch(`${sbUrl}/rest/v1/v_user_fiabilite?id=eq.${userId}&select=score`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-        });
-        const fdata = fr.ok ? await fr.json() : [];
-        scoreFiabilite = fdata[0]?.score ?? 100;
-      } catch (e) {}
-      try {
-        const br = await fetch(`${sbUrl}/rest/v1/user_badges?user_id=eq.${userId}&select=id`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
-        });
-        const cr = br.headers.get('content-range') || '0-0/0';
-        nbBadges = Number(cr.split('/')[1]) || 0;
-      } catch (e) {}
-
-      // Calcul du bonus
-      const breakdown = [];
-      let bonus = 0;
-      if (totalLivraisons >= 50) { bonus += 2; breakdown.push({ icon: '🌟', label: '50+ livraisons', pts: 2 }); }
-      if (scoreFiabilite >= 95) { bonus += 2; breakdown.push({ icon: '⭐', label: 'Fiabilité ≥95', pts: 2 }); }
-      if (nbBadges >= 3) { bonus += 1; breakdown.push({ icon: '🏆', label: '3+ badges', pts: 1 }); }
-      const moisAnciennete = p.cree_le ? Math.floor((Date.now() - new Date(p.cree_le).getTime()) / (30 * 86400000)) : 0;
-      if (moisAnciennete >= 10) { bonus += 1; breakdown.push({ icon: '📅', label: '10+ mois membre', pts: 1 }); }
-      if (Number(p.eco_bonus || 0) > 0) { bonus += 1; breakdown.push({ icon: '🌱', label: 'Bonus écologique', pts: 1 }); }
-      const manuel = Number(p.loyalty_bonus_manual || 0);
-      if (manuel > 0) { bonus += manuel; breakdown.push({ icon: '🎁', label: 'Bonus admin', pts: manuel }); }
-      // Cap à 10%
-      bonus = Math.min(10, bonus);
-
-      // Update profil
-      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}`, {
-        method: 'PATCH',
-        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ loyalty_bonus_pct: bonus, loyalty_updated_at: new Date().toISOString() })
-      }).catch(() => {});
-
+      // Même calcul que le paiement réel (recalculé aussi à chaque capture) : lib/_fidelite.js.
+      const f = await calculerBonusFidelite({ sbUrl, sbKey }, p, { enregistrer: true });
       return res.status(200).json({
         success: true,
-        bonus_pct: bonus,
-        part_finale: 60 + bonus,
-        breakdown,
-        stats: { livraisons: totalLivraisons, fiabilite: scoreFiabilite, badges: nbBadges, mois: moisAnciennete }
+        bonus_pct: f.bonus,
+        part_finale: 60 + f.bonus,
+        breakdown: f.breakdown,
+        stats: f.stats
       });
     }
     if (endpoint === 'vote-current') {

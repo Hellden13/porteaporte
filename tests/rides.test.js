@@ -331,7 +331,9 @@ describe('coherence affichages prix et pourcentages', () => {
     const html = read('calculateur-prix.html');
     assert.match(html, /platform-settings-defaults\.js/);
     assert.match(html, /platform-settings-get/);
-    assert.match(html, /platformAllocationPosts/);
+    // Répartition réelle : le même calcul que le paiement (js/repartition.js).
+    assert.match(html, /\/js\/repartition\.js/);
+    assert.match(html, /window\.PAPRepartition\.repartitionLivraison\(\{ montantPayeCents: Math\.round\(totalPap \* 100\), settings: platformShares \}\)/);
   });
 
   test('simulateur covoiturage info n utilise plus le frais 10 pourcent', () => {
@@ -366,7 +368,7 @@ describe('coherence affichages prix et pourcentages', () => {
     const firstWelcome = notifier.indexOf("case 'bienvenue'");
     assert.notEqual(firstWelcome, -1);
     assert.match(notifier.slice(firstWelcome, firstWelcome + 500), /templateBienvenueP2/);
-    assert.match(notifier, /PorteàPorte est une plateforme quebecoise qui commence par le covoiturage/);
+    assert.match(notifier, /PorteàPorte est une plateforme qu[eé]b[eé]coise qui commence par le covoiturage/);
     assert.match(signup, /type:\s*'bienvenue'/);
   });
 

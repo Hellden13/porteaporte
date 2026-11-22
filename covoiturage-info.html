@@ -239,7 +239,7 @@
       <div class="step-card" data-n="4">
         <div class="step-num">4</div>
         <h3>Tout le monde économise</h3>
-        <p>Plus le véhicule est plein, plus chacun économise. Un bonus groupe s'applique automatiquement.</p>
+        <p>Plus le véhicule est plein, plus le coût du trajet est partagé entre plusieurs personnes.</p>
       </div>
     </div>
   </div>
@@ -305,198 +305,16 @@
 
 <hr class="divider">
 
-<!-- BONUS GROUPE -->
+<!-- RÉCOMPENSES : texte exact de ce qui est donné (test complet, point 3).
+     Le « bonus de groupe » (−5 % à −15 %) n'a jamais été appliqué au prix réel et aurait été pris sur la
+     part du conducteur ; les avantages de niveaux (visibilité, priorité, support) n'existent pas dans le code.
+     Ils sont retirés en attendant la décision de Denis. -->
 <div style="background: var(--bg);">
   <div class="section">
-    <div class="section-label">Bonus de groupe</div>
-    <h2 class="section-title">Plus de monde = moins de coûts pour chacun</h2>
-    <p class="section-sub">Quand le véhicule se remplit, tout le monde profite d'une réduction automatique.</p>
-    <div class="bonus-grid">
-      <div class="bonus-card">
-        <div class="seats">1</div>
-        <div class="label">passager</div>
-        <div class="reduction">Prix normal</div>
-        <div class="badge-tag">Standard</div>
-      </div>
-      <div class="bonus-card">
-        <div class="seats">2</div>
-        <div class="label">passagers</div>
-        <div class="reduction" style="color:var(--cyan)">−5% chacun</div>
-        <div class="badge-tag">Économique</div>
-      </div>
-      <div class="bonus-card">
-        <div class="seats">3</div>
-        <div class="label">passagers</div>
-        <div class="reduction" style="color:var(--green)">−10% chacun</div>
-        <div class="badge-tag">Optimisé</div>
-      </div>
-      <div class="bonus-card best">
-        <div class="seats">🚗</div>
-        <div class="label">Auto pleine</div>
-        <div class="reduction" style="color:var(--green)">−15% + badge</div>
-        <div class="badge-tag">🏆 Auto pleine</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<hr class="divider">
-
-<!-- MISSIONS -->
-<div style="background: var(--surface);">
-  <div class="section">
-    <div class="section-label">Missions</div>
-    <h2 class="section-title">Des défis qui récompensent votre impact</h2>
-    <p class="section-sub">Chaque trajet compte. Accomplissez des missions, gagnez des XP et des badges.</p>
-    <div class="missions-grid">
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🚗</div>
-        <div>
-          <h4>Premier trajet partagé</h4>
-          <p>Complétez votre tout premier trajet en covoiturage.</p>
-          <span class="xp-pill">+50 XP — Badge "Premier trajet utile"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(0,217,255,.1)">🎯</div>
-        <div>
-          <h4>Trajet complet</h4>
-          <p>Toutes les places de votre trajet sont réservées.</p>
-          <span class="xp-pill">+100 XP — Badge "Auto pleine"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🌿</div>
-        <div>
-          <h4>Éco-route</h4>
-          <p>Trajet de 50 km+ avec au moins 2 passagers.</p>
-          <span class="xp-pill">+150 XP — Badge "Moins d'essence"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(255,183,77,.1)">⏱️</div>
-        <div>
-          <h4>Ponctualité</h4>
-          <p>5 trajets consécutifs sans retard signalé.</p>
-          <span class="xp-pill">+200 XP — Badge "Fiable sur la route"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(93,191,255,.1)">🤝</div>
-        <div>
-          <h4>Aide communautaire</h4>
-          <p>Trajet aidant une personne âgée, un étudiant ou une personne sans véhicule.</p>
-          <span class="xp-pill">+180 XP — Badge "Coup de main local"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(0,217,255,.1)">🗺️</div>
-        <div>
-          <h4>Route régionale</h4>
-          <p>Trajet Québec–Lévis, Québec–Montréal ou région éloignée.</p>
-          <span class="xp-pill">+120 XP — Badge "Connecteur régional"</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(93,191,255,.1)">⭐</div>
-        <div>
-          <h4>Ambassadeur local</h4>
-          <p>10 trajets complétés avec une note de 4,8 et plus.</p>
-          <span class="xp-pill">+300 XP — Priorité de visibilité</span>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon" style="background:rgba(255,107,107,.1)">🏔️</div>
-        <div>
-          <h4>Grand explorateur</h4>
-          <p>Complétez 3 trajets de plus de 200 km.</p>
-          <span class="xp-pill">+250 XP — Badge "Grand trajet"</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<hr class="divider">
-
-<!-- BADGES -->
-<div style="background: var(--bg);">
-  <div class="section">
-    <div class="section-label">Badges</div>
-    <h2 class="section-title">Votre réputation se voit</h2>
-    <p class="section-sub">Chaque badge est un signe de confiance visible sur votre profil.</p>
-    <div class="badges-grid">
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🌱</div><div><div class="name">Nouveau covoitureur</div><div class="desc">Premier compte covoiturage créé</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">✅</div><div><div class="name">Conducteur vérifié</div><div class="desc">Profil et véhicule validés</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🧑‍🤝‍🧑</div><div><div class="name">Passager fiable</div><div class="desc">Jamais annulé à moins de 24h</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">🚗</div><div><div class="name">Premier trajet utile</div><div class="desc">Premier covoiturage complété</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">🎯</div><div><div class="name">Auto pleine</div><div class="desc">Véhicule complet au départ</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🌿</div><div><div class="name">Éco-route</div><div class="desc">50 km+ avec 2 passagers min.</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,183,77,.12)">⏱️</div><div><div class="name">Fiable sur la route</div><div class="desc">5 trajets sans retard</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🤝</div><div><div class="name">Coup de main local</div><div class="desc">Aide à la communauté</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(0,217,255,.12)">⭐</div><div><div class="name">Ambassadeur PorteàPorte</div><div class="desc">10 trajets, note 4,8+</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🗺️</div><div><div class="name">Connecteur régional</div><div class="desc">Trajets interrégionaux Québec</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(255,107,107,.12)">❤️</div><div><div class="name">Trajet solidaire</div><div class="desc">Aide proactive à autrui</div></div></div>
-      <div class="badge-item"><div class="badge-icon" style="background:rgba(93,191,255,.12)">🏆</div><div><div class="name">Groupe optimisé</div><div class="desc">Auto pleine 3 fois de suite</div></div></div>
-    </div>
-  </div>
-</div>
-
-<hr class="divider">
-
-<!-- NIVEAUX -->
-<div style="background: var(--surface);">
-  <div class="section">
-    <div class="section-label">Progression</div>
-    <h2 class="section-title">Plus vous covoiturez, plus vous progressez</h2>
-    <p class="section-sub">Cinq niveaux, chacun avec des avantages concrets sur la plateforme.</p>
-    <div class="levels-list">
-      <div class="level-row">
-        <div class="level-num" style="background:rgba(139,155,176,.12);color:#8B9BB0">1</div>
-        <div class="level-info"><div class="name">Nouveau</div><div class="xp">0 – 199 XP</div></div>
-        <div class="level-perks">
-          <span class="perk-chip">Profil covoiturage</span>
-          <span class="perk-chip">Recherche & réservation</span>
-          <span class="perk-chip">Badge "Nouveau covoitureur"</span>
-        </div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="background:rgba(0,217,255,.12);color:var(--cyan)">2</div>
-        <div class="level-info"><div class="name">Fiable</div><div class="xp">200 – 499 XP</div></div>
-        <div class="level-perks">
-          <span class="perk-chip">Trajets récurrents</span>
-          <span class="perk-chip">Missions intermédiaires</span>
-          <span class="perk-chip">Badge profil visible</span>
-        </div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="background:rgba(93,191,255,.12);color:var(--green)">3</div>
-        <div class="level-info"><div class="name">Habitué</div><div class="xp">500 – 999 XP</div></div>
-        <div class="level-perks">
-          <span class="perk-chip">Meilleure visibilité</span>
-          <span class="perk-chip">Missions exclusives</span>
-          <span class="perk-chip">Accès gros trajets</span>
-        </div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="background:rgba(255,183,77,.12);color:#FFB74D">4</div>
-        <div class="level-info"><div class="name">Ambassadeur</div><div class="xp">1 000 – 1 999 XP</div></div>
-        <div class="level-perks">
-          <span class="perk-chip">Priorité dans les résultats</span>
-          <span class="perk-chip">Support prioritaire</span>
-          <span class="perk-chip">Badge Ambassadeur</span>
-        </div>
-      </div>
-      <div class="level-row" style="border-color:rgba(93,191,255,.3);">
-        <div class="level-num" style="background:rgba(93,191,255,.2);color:var(--green)">5</div>
-        <div class="level-info"><div class="name">Capitaine régional</div><div class="xp">2 000+ XP</div></div>
-        <div class="level-perks">
-          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Visibilité maximale</span>
-          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Missions capitaine</span>
-          <span class="perk-chip" style="border-color:rgba(93,191,255,.3);color:var(--green)">Badge exclusif</span>
-        </div>
-      </div>
-    </div>
+    <div class="section-label">Récompenses</div>
+    <h2 class="section-title">Chaque trajet payé compte</h2>
+    <p class="section-sub">Quand un trajet est payé, PorteàPorte te donne automatiquement les badges dont tu remplis la condition (premier trajet partagé, éco-route de 50 km et plus avec 2 passagers ou plus…), une seule fois chacun, avec leurs XP et leurs Points Impact. Ton tableau de bord montre tes badges et ta progression.</p>
+    <p class="section-sub" style="margin-top:8px">Les Points Impact n'ont aucune valeur en argent. Ils donnent des participations aux tirages (10 points = 1 participation).</p>
   </div>
 </div>
 
@@ -612,7 +430,7 @@
     const occupants  = Math.max(1, nbPax) + 1; // conducteur inclus, comme calcRidePrice()
     const paxBase    = (totalCost * (distPax / distTotal)) / occupants;
 
-    const bonusPct   = nbPax === 1 ? 0 : nbPax === 2 ? 5 : nbPax === 3 ? 10 : 15;
+    const bonusPct   = 0; // bonus de groupe jamais appliqué au prix réel : retiré (décision de Denis)
     const bonusAmt   = paxBase * (bonusPct / 100);
     const paxAfterBonus = paxBase - bonusAmt;
 

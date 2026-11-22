@@ -64,14 +64,24 @@ describe('9. le prix du formulaire = la règle du serveur', () => {
     test(`suggéré accepté, minimum − 0,01 $ refusé : ${c.ville_depart} → ${c.ville_arrivee} (${c.type_colis})`, async () => {
       const est = await appel({ endpoint: 'price-estimate', ...c });
       assert.equal(est._status, 200);
-      const { suggested_price_cad: sug, min_price_cad: min } = est._body;
+      const { suggested_price_cad: sug, min_price_cad: min, min_total_cad: minTotal, suggested_total_cad: sugTotal } = est._body;
       assert.ok(sug >= min && min > 0);
+      // Minimum TOTAL = minimum + frais de service (15 %, au moins 2 $), la règle du formulaire.
+      assert.equal(minTotal, Math.round((min + Math.max(2, min * 0.15)) * 100) / 100);
       const base = { endpoint: 'create-livraison', ...c, adresse_depart: '1 rue A', adresse_arrivee: '2 rue B' };
-      const ok = await appel({ ...base, prix_base: sug, prix_total: sug + 2 }, true);
+      const ok = await appel({ ...base, prix_base: sug, prix_total: sugTotal }, true);
       assert.equal(ok._status, 200, JSON.stringify(ok._body));
-      const non = await appel({ ...base, prix_base: min - 0.01, prix_total: min + 2 }, true);
+      const juste = await appel({ ...base, prix_base: min, prix_total: minTotal }, true);
+      assert.equal(juste._status, 200, 'le prix minimum total est accepté');
+      const non = await appel({ ...base, prix_base: min - 0.01, prix_total: minTotal + 2 }, true);
       assert.equal(non._status, 400);
       assert.equal(non._body.min_price_cad, min, 'le serveur calcule le même minimum que le formulaire');
+      // Le total envoyé par le navigateur n'est plus cru : prix de base correct mais total trop bas = refusé.
+      const triche = await appel({ ...base, prix_base: sug, prix_total: Math.round((minTotal - 0.01) * 100) / 100 }, true);
+      assert.equal(triche._status, 400);
+      assert.match(triche._body.error, /^Prix total trop bas/);
+      assert.match(triche._body.error, /Prix minimum : /);
+      assert.doesNotMatch(triche._body.error, /livreur/i, 'le message parle du prix total, pas du « prix livreur »');
     });
   }
   test('formulaire : envoie les codes postaux, se remplit sans attendre le poids, affiche le minimum', () => {
@@ -80,7 +90,11 @@ describe('9. le prix du formulaire = la règle du serveur', () => {
     assert.match(html, /code_postal_depart:el\('pickup-postal'\)\.value\.trim\(\)/);
     assert.match(html, /const poids = parseFloat\(el\('weight'\)\?\.value\) \|\| 1;/);
     assert.doesNotMatch(html, /if \(!ville_depart \|\| !ville_arrivee \|\| !poids\)/);
-    assert.match(html, /el\('price-min'\)\.textContent = prixMinimum\.toFixed\(2\)/);
+    // « Prix minimum (total) » = minimum total du serveur + options choisies.
+    assert.match(html, /Prix minimum \(total\)/);
+    assert.match(html, /prixMinimumTotalCad = Number\(out\.min_total_cad\) \|\| 0;/);
+    assert.match(html, /const minAvecOptions=prixMinimumTotalCad\+priority\+insurance\.premium\+extra; el\('price-min'\)\.textContent=minAvecOptions/);
+    assert.doesNotMatch(html, /[Pp]rix livreur/);
     assert.match(html, /baseInput\.value = Number\(out\.suggested_price_cad\)\.toFixed\(2\)/);
     assert.match(html, /const platFee=base>0\?Math\.max\(2\.00,base\*\.15\):0;/);
   });
@@ -107,19 +121,27 @@ describe('11. gain du livreur', () => {
     assert.equal(gainLivreurCents(1000).netCents, 600);
     assert.equal(gainLivreurCents(1000, { fidelitePct: 50 }).pct, 70, 'fidélité plafonnée à +10');
   });
-  test('le paiement réel utilise la règle unique', () => {
-    const src = fs.readFileSync('api/capture-livraison.js', 'utf8');
-    assert.match(src, /gainLivreurCents\(grossCents, \{ fidelitePct: loyaltyBonus, sauvetagePct: rescuePct \}\)/);
+  test('le paiement réel utilise la règle unique (les deux chemins de capture)', () => {
+    const apres = fs.readFileSync('lib/_apres-capture.js', 'utf8');
+    assert.match(apres, /repartition = repartitionLivraison\(\{/);
+    assert.match(apres, /const netCents = Math\.min\(grossCents, repartition\.livreurCents\);/);
+    assert.match(apres, /amount: String\(netCents\)/, 'le virement Stripe est exactement la part calculée');
+    assert.match(fs.readFileSync('api/capture-livraison.js', 'utf8'), /await apresCaptureLivraison\(/);
+    const plat = fs.readFileSync('api/platform.js', 'utf8');
+    assert.match(plat, /await apresCaptureLivraison\(\{ sbUrl: ctx\.sbUrl, sbKey: ctx\.sbKey, stripeKey \}, livComplete, captured\)/);
+    assert.doesNotMatch(plat, /Math\.floor\(grossCents \* 0\.60\)/, 'plus de 60 % fixe à part');
   });
   test('les écrans du livreur affichent « Tu gagnes » et la vraie part', () => {
     const dl = fs.readFileSync('dashboard-livreur.html', 'utf8');
     assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(m\.prix_total\)\}/g) || []).length, 2);
     assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(row\.prix_total\)\}/g) || []).length, 2);
     assert.doesNotMatch(dl, /<span class="mission-price">\$\{money\(m\.prix_total\)\}<\/span>/);
-    assert.match(dl, /`Toi \(\$\{basePct\} % du prix payé\)`/);
+    assert.match(dl, /`Toi \(\$\{basePct\} % du prix total\)`/);
     assert.match(dl, /return window\.PAPGain\.cents\(10000, \{ fidelitePct: Number\(profile\?\.loyalty_bonus_pct\) \|\| 0 \}\)\.pct;/);
     const bm = fs.readFileSync('browse-missions.html', 'utf8');
-    assert.match(bm, /Tu gagnes : \$\{window\.PAPGain\.texte\(m\.prix_total \|\| 0\)\}/);
+    // Avec le bonus fidélité du livreur, comme le paiement réel.
+    assert.match(bm, /Tu gagnes : \$\{window\.PAPGain\.texte\(m\.prix_total \|\| 0, \{ fidelitePct: window\._livreurFidelite \|\| 0 \}\)\}/);
+    assert.match(bm, /window\._livreurFidelite = Number\(prof\?\.loyalty_bonus_pct\) \|\| 0;/);
     assert.doesNotMatch(bm, /<div class="price">\$\{money\(m\.prix_total\)\}<\/div>/);
   });
 });

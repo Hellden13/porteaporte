@@ -97,7 +97,7 @@ if (!window.__PIA_LOADED__) {
       {
         keys: ['impact', 'organisme', 'don', 'transparence', 'communaute', 'tirage', 'points', 'porte coins'],
         title: 'Impact communautaire',
-        answer: 'Un pourcentage de chaque trajet va a des organismes locaux quebecois que tu choisis chaque trimestre. Tout est public sur la page Transparence. Les PorteCoins ne sont pas de l argent et ne sont pas une cryptomonnaie.',
+        answer: 'Une part de chaque paiement est réservée au fonds communauté pour des organismes québécois choisis par vote. Les montants réellement réservés sont publiés sur la page Transparence. Les Points Impact ne sont pas de l’argent et ne sont pas une cryptomonnaie.',
         actions: [
           ['Voir la transparence', '/transparence.html'],
           ['Programme Points', '/programme-points.html'],

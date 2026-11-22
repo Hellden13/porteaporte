@@ -7,7 +7,8 @@ const CORS = {
 
 const { normalizeRole, alertAdmin, siteOrigin, internalHeaders } = require('../lib/_lib');
 const { verifierCodeReception, insertAudit } = require('../lib/_codes-livraison');
-const { gainLivreurCents } = require('../lib/_gain-livreur');
+const { apresCaptureLivraison } = require('../lib/_apres-capture');
+const { verifierBadgesAuto, recompenserParrainage } = require('../lib/_recompenses');
 
 // Protection du code de réception (5 essais par livraison) : voir lib/_codes-livraison.js.
 
@@ -108,68 +109,6 @@ async function insertTransactionIfMissing(sbUrl, sbKey, payload) {
   });
   const data = await r.json().catch(() => ({}));
   return { ok: r.ok, data: Array.isArray(data) ? data[0] : data };
-}
-
-async function autoGrantBadges(sbUrl, sbKey, livreurId, livraison) {
-  // Compter livraisons totales du livreur
-  let totalLivs = 0;
-  try {
-    const r = await fetch(`${sbUrl}/rest/v1/livraisons?livreur_id=eq.${livreurId}&statut=in.(payee,paid)&select=id,taille_colis`, {
-      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Prefer: 'count=exact' }
-    });
-    const livs = r.ok ? await r.json() : [];
-    totalLivs = livs.length;
-    var xlCount = livs.filter(l => l.taille_colis === 'xl').length;
-  } catch (e) { return; }
-
-  // Liste des badges à attribuer selon seuils
-  const slugsToGrant = [];
-  if (totalLivs >= 1) slugsToGrant.push('premier_pas');
-  if (totalLivs >= 10) slugsToGrant.push('regulier_10');
-  if (totalLivs >= 50) slugsToGrant.push('pro_50');
-  if (totalLivs >= 100) slugsToGrant.push('centurion_100');
-  if (totalLivs >= 500) slugsToGrant.push('legende_500');
-  if (totalLivs >= 1000) slugsToGrant.push('maitre_1000');
-  if (livraison.taille_colis === 'xl') slugsToGrant.push('costaud');
-  if (xlCount >= 10) slugsToGrant.push('specialiste_xl');
-  if (livraison.rescue_livreur_original) slugsToGrant.push('sauveur');
-
-  // Récupérer IDs des badges
-  if (!slugsToGrant.length) return;
-  const slugList = slugsToGrant.map(s => `"${s}"`).join(',');
-  const bRes = await fetch(`${sbUrl}/rest/v1/badges?slug=in.(${slugList})&select=id,slug,xp_reward`, {
-    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-  });
-  const badges = bRes.ok ? await bRes.json() : [];
-  if (!badges.length) return;
-
-  // Insérer dans user_badges (avec ON CONFLICT pour éviter doublons)
-  for (const badge of badges) {
-    await fetch(`${sbUrl}/rest/v1/user_badges?on_conflict=user_id,badge_id`, {
-      method: 'POST',
-      headers: {
-        apikey: sbKey, Authorization: `Bearer ${sbKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=ignore-duplicates,return=minimal'
-      },
-      body: JSON.stringify({ user_id: livreurId, badge_id: badge.id, granted_at: new Date().toISOString(), granted_by: 'system_auto' })
-    }).catch(() => {});
-  }
-
-  // Ajouter XP cumulé des badges
-  const totalXp = badges.reduce((s, b) => s + (b.xp_reward || 0), 0);
-  if (totalXp > 0) {
-    const pr = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${livreurId}&select=xp`, {
-      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-    });
-    const profData = pr.ok ? await pr.json() : [];
-    const currentXp = Number(profData[0]?.xp || 0);
-    await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${livreurId}`, {
-      method: 'PATCH',
-      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ xp: currentXp + totalXp })
-    }).catch(() => {});
-  }
 }
 
 function sanitizeEnv(s) {
@@ -411,107 +350,9 @@ module.exports = async function handler(req, res) {
     }
   });
 
-  // Créditer les gains du livreur (60% + bonus rescue + bonus fidélité)
-  // + TRANSFER STRIPE INSTANTANÉ avec source_transaction (contourne l'attente settlement)
-  if (livraison.livreur_id && captured.amount_received > 0) {
-    const grossCents = captured.amount_received;
-    // Lire bonus fidélité depuis profile
-    let loyaltyBonus = 0;
-    try {
-      const pr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(livraison.livreur_id)}&select=loyalty_bonus_pct`, {
-        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
-      });
-      const profileData = pr.ok ? await pr.json() : [];
-      loyaltyBonus = Number(profileData[0]?.loyalty_bonus_pct || 0);
-      if (loyaltyBonus > 10) loyaltyBonus = 10; // safety cap
-    } catch (e) {}
-    // La règle unique du gain (lib/_gain-livreur.js) : 60 % + fidélité (max 70 %), + bonus sauvetage.
-    const rescuePct = livraison.rescue_livreur_original ? (Number(livraison.rescue_bonus_pct) || 20) : 0;
-    const gain = gainLivreurCents(grossCents, { fidelitePct: loyaltyBonus, sauvetagePct: rescuePct });
-    const basePct = gain.pct;
-    const baseNetCents = gain.baseCents;
-    const bonusCents = gain.bonusCents;
-    const netCents = gain.netCents;
-    const feeCents = gain.plateformeCents;
-
-    // ─── TRANSFER STRIPE AUTO avec source_transaction ───
-    // Au lieu d'attendre la settlement (2j), on dit à Stripe "transfère depuis cette charge spécifique"
-    // -> fonds disponibles immédiatement sur le compte Connect du livreur
-    let earningStatus = 'available';
-    let stripeTransferId = null;
-    let transferError = null;
-    try {
-      const livAcctRes = await fetch(`${SB_URL}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(livraison.livreur_id)}&select=stripe_account_id,payouts_enabled,status&limit=1`, {
-        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
-      });
-      const acctRows = livAcctRes.ok ? await livAcctRes.json() : [];
-      const livAcct = acctRows[0];
-      const chargeId = captured.latest_charge || captured.charges?.data?.[0]?.id;
-
-      if (livAcct?.stripe_account_id && livAcct.status === 'active' && chargeId && STRIPE_KEY) {
-        const transferParams = new URLSearchParams({
-          amount: String(netCents),
-          currency: captured.currency || 'cad',
-          destination: livAcct.stripe_account_id,
-          source_transaction: chargeId, // CLEF : permet transfer même si pas encore settled
-          description: `PorteàPorte livraison ${livraison.code || livraison_id.slice(0,8)}`,
-          'metadata[livraison_id]': livraison_id,
-          'metadata[livreur_id]': livraison.livreur_id,
-          'metadata[payment_intent]': captured.id
-        });
-        const transferResp = await fetch('https://api.stripe.com/v1/transfers', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + STRIPE_KEY,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Idempotency-Key': `transfer-${livraison_id}-${netCents}`
-          },
-          body: transferParams.toString()
-        });
-        const transferData = await transferResp.json();
-        if (transferResp.ok) {
-          earningStatus = 'transferred';
-          stripeTransferId = transferData.id;
-          console.log('[capture-livraison] ✓ Transfer Stripe automatique vers livreur OK:', transferData.id);
-        } else {
-          transferError = transferData.error?.message || 'Transfer failed';
-          console.error('[capture-livraison] ⚠️ Transfer Stripe a échoué (earning marqué available pour payout manuel):', transferError);
-        }
-      } else {
-        console.log('[capture-livraison] Pas de transfer auto (compte Connect inactif ou pas de charge)', {
-          hasAcct: !!livAcct?.stripe_account_id, status: livAcct?.status, hasCharge: !!chargeId
-        });
-      }
-    } catch (e) {
-      console.error('[capture-livraison] Erreur transfer auto:', e.message);
-      transferError = e.message;
-    }
-
-    await fetch(`${SB_URL}/rest/v1/livreur_earnings`, {
-      method: 'POST',
-      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id:               livraison.livreur_id,
-        livraison_id,
-        gross_amount:          grossCents / 100,
-        platform_fee:          feeCents   / 100,
-        net_amount:            netCents   / 100,
-        currency:              captured.currency || 'cad',
-        status:                earningStatus,
-        available_after:       new Date().toISOString(),
-        stripe_payment_intent: captured.id,
-        stripe_transfer_id:    stripeTransferId,
-        type:                  rescuePct > 0 ? 'rescue_bonus' : (loyaltyBonus > 0 ? 'loyalty_bonus' : 'livraison'),
-        notes:                 [
-          rescuePct > 0 ? `Rescue +${rescuePct}%` : null,
-          loyaltyBonus > 0 ? `Fidélité +${loyaltyBonus}% (part ${basePct}%)` : null,
-          stripeTransferId ? `Auto-transfer Stripe ${stripeTransferId}` : null,
-          transferError ? `Auto-transfer FAILED: ${transferError} (payout manuel possible)` : null
-        ].filter(Boolean).join(' · ') || null,
-        created_at:            new Date().toISOString()
-      })
-    }).catch(e => console.error('[livreur_earnings insert]', e.message));
-  }
+  // Répartition réelle + gain du livreur + virement Stripe Connect + journal : lib/_apres-capture.js
+  // (le même code sert à la capture après une preuve de dépôt, dans api/platform.js).
+  const { repartition } = await apresCaptureLivraison({ sbUrl: SB_URL, sbKey: SB_KEY, stripeKey: STRIPE_KEY }, livraison, captured);
 
   // ── Notifier expéditeur + livreur : livraison complète, paiement libéré ──
   try {
@@ -528,9 +369,8 @@ module.exports = async function handler(req, res) {
     const expProfile = profiles.find(p => p.id === livraison.expediteur_id);
     const livProfile = profiles.find(p => p.id === livraison.livreur_id);
 
-    const netCents = (livraison.livreur_id && captured.amount_received > 0)
-      ? Math.floor(captured.amount_received * 0.60)
-      : 0;
+    // Le montant du courriel est exactement celui versé (répartition ci-dessus).
+    const netCents = (livraison.livreur_id && repartition) ? Math.min(captured.amount_received, repartition.livreurCents) : 0;
 
     await fetch(`${origin}/api/notifier`, {
       method: 'POST',
@@ -551,12 +391,18 @@ module.exports = async function handler(req, res) {
     console.error('[livraison_complete notify error]', e.message);
   }
 
-  // ── AUTO-ATTRIBUTION DES BADGES ──
-  if (livraison.livreur_id) {
-    try {
-      await autoGrantBadges(SB_URL, SB_KEY, livraison.livreur_id, livraison);
-    } catch (e) { console.error('[badges auto-grant]', e.message); }
-  }
+  // ── RÉCOMPENSES : badges dont la condition est remplie (une seule fois chacun) + parrainage ──
+  try {
+    const ctxR = { sbUrl: SB_URL, sbKey: SB_KEY };
+    if (livraison.livreur_id) {
+      await verifierBadgesAuto(ctxR, livraison.livreur_id);
+      await recompenserParrainage(ctxR, livraison.livreur_id, 'premiere_livraison');
+    }
+    if (livraison.expediteur_id) {
+      await verifierBadgesAuto(ctxR, livraison.expediteur_id);
+      await recompenserParrainage(ctxR, livraison.expediteur_id, 'premiere_livraison');
+    }
+  } catch (e) { console.error('[récompenses]', e.message); }
 
   // 🎉 Alerte admin (Denis) : livraison capturée avec succès — bonne nouvelle
   alertAdmin(

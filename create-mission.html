@@ -156,13 +156,13 @@
                 <div id="price-explain" style="font-size:.82rem;color:#a8b0ba;margin-top:4px">Remplis les champs poids/taille/villes pour voir le prix recommandé.</div>
               </div>
               <div style="text-align:right">
-                <div style="color:#a8b0ba;font-size:.74rem">Minimum</div>
+                <div style="color:#a8b0ba;font-size:.74rem">Prix minimum (total)</div>
                 <div id="price-min" style="font-size:1.4rem;font-weight:900;color:var(--brand-lime)">— $</div>
               </div>
             </div>
           </div>
-          <div class="full"><label for="base-price">Prix de base (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="Calculé tout seul"><div class="hint">Rempli tout seul selon la distance, le poids, la taille et le type. Tu peux l'augmenter, pas descendre sous le minimum.</div></div>
-          <div class="price full"><div class="muted">Prix total estimé</div><strong id="total-price">$0.00</strong><div id="promo-discount-line" style="color:#c4f135;font-size:.8rem;margin-top:3px;font-weight:700;display:none"></div></div>
+          <div class="full"><label for="base-price">Prix de la livraison (CAD) *</label><input id="base-price" type="number" min="5" step="0.01" required placeholder="Calculé tout seul"><div class="hint">Rempli tout seul selon la distance, le poids, la taille et le type. Tu peux l'augmenter, pas descendre sous le minimum. Le prix total ci-dessous ajoute les frais de service et tes options : c'est le montant que tu paies.</div></div>
+          <div class="price full"><div class="muted">Prix total</div><strong id="total-price">$0.00</strong><div id="promo-discount-line" style="color:#c4f135;font-size:.8rem;margin-top:3px;font-weight:700;display:none"></div></div>
           <div class="full" style="margin-top:2px">
             <div style="display:flex;gap:8px;align-items:stretch">
               <input id="promo-code-input" type="text" placeholder="Code promo (ex: INTACT2026)" autocomplete="off" style="flex:1;text-transform:uppercase;font-family:monospace;letter-spacing:.06em">
@@ -224,6 +224,8 @@
       const qty=parseInt(el('quantite-colis')?.value)||1;
       const extra=Math.max(0,qty-1)*2;
       let total=base+platFee+priority+insurance.premium+extra;
+      // Prix minimum affiché = minimum total du serveur + les options choisies.
+      if(prixMinimumTotalCad>0){ const minAvecOptions=prixMinimumTotalCad+priority+insurance.premium+extra; el('price-min').textContent=minAvecOptions.toFixed(2).replace('.',',')+' $'; }
       let promoSave=0;
       if(activePromo){
         const d=activePromo.discount;
@@ -313,7 +315,8 @@
     // ── Calculateur prix automatique (anti-frigo-5$) ──
     let priceDebounce = null;
     // Prix calculé tout seul, avec la MÊME règle et la MÊME distance que le serveur (endpoint price-estimate).
-    let prixMinimum = 0;
+    let prixMinimum = 0;       // minimum du prix de la livraison (champ ci-dessus)
+    let prixMinimumTotalCad = 0; // minimum du PRIX TOTAL sans options (règle du serveur)
     let prixManuel = false; // devient vrai si l'expéditeur tape lui-même un prix plus haut
     async function recomputeAutoPrice() {
       const ville_depart = el('pickup-city')?.value?.trim();
@@ -336,12 +339,12 @@
         const out = await r.json();
         if (!out.success) throw new Error();
         prixMinimum = Number(out.min_price_cad) || 0;
-        el('price-min').textContent = prixMinimum.toFixed(2).replace('.', ',') + ' $';
+        prixMinimumTotalCad = Number(out.min_total_cad) || 0;
         const explain = el('price-explain');
         explain.textContent = '';
         explain.append(`📍 ${out.distance_km} km (${out.distance_methode || 'estimation'}) · ⚖️ ${poids} kg · 📦 ${taille}/${type}`);
         explain.append(document.createElement('br'));
-        explain.append(`Prix suggéré : ${Number(out.suggested_price_cad).toFixed(2).replace('.', ',')} $ · Minimum : ${prixMinimum.toFixed(2).replace('.', ',')} $`);
+        explain.append(`Prix total suggéré : ${Number(out.suggested_total_cad || out.suggested_price_cad).toFixed(2).replace('.', ',')} $ · Prix minimum : ${prixMinimumTotalCad.toFixed(2).replace('.', ',')} $ (sans options)`);
         const baseInput = el('base-price');
         baseInput.min = prixMinimum;
         const actuel = parseFloat(baseInput.value) || 0;

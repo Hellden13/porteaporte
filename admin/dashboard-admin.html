@@ -12,6 +12,7 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
   <script src="/js/platform-settings-defaults.js"></script>
+<script src="/js/repartition.js"></script>
   <script>
     if (window.location.protocol === 'file:') {
       window.location.href = 'https://porteaporte.site/admin/dashboard-admin.html';
@@ -666,13 +667,13 @@
       <!-- ─── TABLEAU COMPLET RÉPARTITION (avec % founder) ─── -->
       <div class="table-card" style="margin-bottom:20px">
         <div style="padding:14px 18px;background:rgba(93,191,255,.06);border-bottom:1px solid var(--brand-border)">
-          <strong style="color:#fff">📊 Répartition de chaque dollar (live)</strong>
-          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Calculée sur le CA du mois ci-dessus · ajuste les % dans <a href="/admin/parametres.html" style="color:#5dbfff">Paramètrès</a></span>
+          <strong style="color:#fff">📊 Répartition réelle de chaque dollar</strong>
+          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Même calcul que le paiement : livreur 60 %, frais Stripe réels, puis le reste partagé selon les réglages de <a href="/admin/parametres.html" style="color:#5dbfff">Paramètres</a></span>
         </div>
         <table>
-          <thead><tr><th>Poste</th><th style="text-align:right">% configuré</th><th style="text-align:right">Montant ce mois</th></tr></thead>
+          <thead><tr><th>Poste</th><th style="text-align:right">Réglage</th><th style="text-align:right">Livraison de 10 $</th><th style="text-align:right">Réel au journal (livraisons)</th></tr></thead>
           <tbody id="repartition-complet-body">
-            <tr><td colspan="3" class="empty-msg">Chargement de la répartition...</td></tr>
+            <tr><td colspan="4" class="empty-msg">Chargement de la répartition...</td></tr>
           </tbody>
         </table>
       </div>
@@ -844,7 +845,7 @@
       <div class="stats-grid" style="margin-bottom:20px" id="gami-stats">
         <div class="stat-card"><div class="stat-card-label">Badges actifs</div><div class="stat-card-value" id="gs-active">—</div></div>
         <div class="stat-card"><div class="stat-card-label">Campagnes en cours</div><div class="stat-card-value" id="gs-campaigns">—</div></div>
-        <div class="stat-card"><div class="stat-card-label">Bénéfices actifs</div><div class="stat-card-value" id="gs-benefits">—</div></div>
+        <div class="stat-card"><div class="stat-card-label" title="Aucun avantage de badge n’est appliqué par le code pour l’instant : seulement XP et Points Impact">Bénéfices actifs (aucun avantage appliqué)</div><div class="stat-card-value" id="gs-benefits">—</div></div>
         <div class="stat-card"><div class="stat-card-label">Total badges accordés</div><div class="stat-card-value" id="gs-total">—</div></div>
       </div>
 
@@ -934,7 +935,7 @@
             </div>
           </div>
           <div style="background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.15);border-radius:8px;padding:14px;margin-bottom:12px">
-            <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">🎁 Bénéfice saisonnier (se réactive automatiquement)</div>
+            <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">🎁 Fenêtre du bénéfice saisonnier — attention : aucun avantage concret n’est encore appliqué par le code (décision de Denis requise). Le badge donne seulement ses XP et Points Impact.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
               <div>
                 <label style="font-size:.8rem;color:var(--brand-muted);display:block;margin-bottom:4px">Bénéfice actif à partir de</label>
@@ -1721,52 +1722,38 @@
     if (pctLivEl) pctLivEl.textContent = pctLivreur;
     document.getElementById('rev-count').textContent      = rows.length;
 
-    // ─── Tableau complet répartition officielle ───
-    const POSTES_LIVE = canon
-      ? canon.platformAllocationPosts(s, { includeZero: false })
-      : [
-        { icon: '🚗', label: 'Livreur québécois', key: 'pct_livreur', pct: 60, color: '#5dbfff' },
-        { icon: '💳', label: 'Frais Stripe (traitement des paiements)', key: 'pct_stripe', pct: 7, color: '#A8ACB1' },
-        { icon: '🔧', label: 'Infrastructure & développement', key: 'pct_developpement', pct: 5, color: '#A8B0BA' },
-        { icon: '🛡️', label: 'Protection colis', key: 'pct_protection', pct: 10, color: '#00D9FF' },
-        { icon: '🆘', label: 'Fonds d\'urgence', key: 'pct_urgence', pct: 6, color: '#ffa500' },
-        { icon: '💚', label: 'Communauté (organismes d\'ici)', key: 'pct_communaute', pct: 5, color: '#7dffc1' },
-        { icon: '💪', label: 'Réserve / pérennité', key: 'pct_profit', pct: 7, color: '#A8B0BA' }
-      ];
-    const founderPct = Number(s.founder_revenue_pct ? s.founder_revenue_pct * 100 : 0);
+    // ─── Répartition réelle (js/repartition.js, le calcul du paiement) ───
+    // Colonnes : réglage de l'admin, exemple d'une livraison de 10 $, et ce qui a été
+    // réellement écrit au journal à chaque capture (lib/_repartition-journal.js).
+    const escA = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const valid = window.PAPRepartition ? window.PAPRepartition.validerParametres(s) : { ok: true, total: 100, erreurs: [] };
+    const exemple = window.PAPRepartition ? window.PAPRepartition.repartitionLivraison({ montantPayeCents: 1000, settings: s }) : null;
+    const reglage = { livreur: 'pct_livreur', stripe: 'pct_stripe', protection: 'pct_protection', urgence: 'pct_urgence', communaute: 'pct_communaute', developpement: 'pct_developpement', marketing: 'pct_marketing', operations: 'pct_operations', profit: 'pct_profit' };
     const profitToInsurance = s.profit_to_insurance !== false;
-    let repartHtml = POSTES_LIVE.map(p => {
-      const pct = Number(p.pct);
-      const montant = total * pct / 100;
-      // Si profit redirige vers fonds, indique-le visuellement
-      const redirected = p.key === 'pct_profit' && profitToInsurance;
-      const nameDisplay = redirected
-        ? `${p.label} <span style="color:#00d9ff;font-size:.75rem;background:rgba(0,217,255,.12);padding:2px 8px;border-radius:99px;margin-left:6px">🛡️ → Fonds litige (bêta)</span>`
-        : p.label;
-      return `<tr ${redirected ? 'style="background:rgba(0,217,255,.04)"' : ''}>
-        <td><span style="font-size:1.1rem;margin-right:8px">${p.emoji || p.icon}</span><strong style="color:#fff">${nameDisplay}</strong></td>
-        <td style="text-align:right;color:${redirected ? '#00d9ff' : p.color};font-weight:800;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</td>
-        <td style="text-align:right;color:#fff;font-weight:900;font-variant-numeric:tabular-nums">${$m(montant)}</td>
+    const dessiner = (journal) => {
+      const reel = {};
+      Object.values((journal && journal.postes) || {}).forEach(p => { if (p.sorte === 'livraison') reel[p.poste] = p.cents; });
+      let html = (exemple ? exemple.lignes : []).map(l => {
+        const cle = reglage[l.poste];
+        const pctTxt = cle ? `${Number(s[cle] ?? 0).toFixed(1)} %` : '—';
+        const redirected = l.poste === 'profit' && profitToInsurance;
+        return `<tr ${redirected ? 'style="background:rgba(0,217,255,.04)"' : ''}>
+          <td><strong style="color:#fff">${escA(l.label)}</strong>${redirected ? ' <span style="color:#00d9ff;font-size:.75rem">→ fonds litige (bêta)</span>' : ''}<div style="color:#A8B0BA;font-size:.75rem">${escA(l.detail || '')}</div></td>
+          <td style="text-align:right;color:#A8B0BA;font-variant-numeric:tabular-nums">${pctTxt}</td>
+          <td style="text-align:right;color:#fff;font-weight:800;font-variant-numeric:tabular-nums">${$m(l.cents / 100)}</td>
+          <td style="text-align:right;color:#7dffc1;font-weight:800;font-variant-numeric:tabular-nums">${reel[l.poste] != null ? $m(reel[l.poste] / 100) : '—'}</td>
+        </tr>`;
+      }).join('');
+      html += `<tr style="background:rgba(255,255,255,.04);border-top:2px solid var(--brand-border)">
+        <td><strong style="color:#A8B0BA">Total (réglages : doit faire 100 %, livreur 60 %)</strong>${valid.ok ? '' : `<div style="color:#ffb0b0;font-size:.78rem">${escA(valid.erreurs.join(' '))}</div>`}</td>
+        <td style="text-align:right;color:${valid.ok ? '#7dffc1' : '#ffb0b0'};font-weight:900">${Number(valid.total).toFixed(1)} %</td>
+        <td style="text-align:right;color:#fff;font-weight:900">${exemple ? $m(exemple.total / 100) : '—'}</td>
+        <td style="text-align:right;color:#7dffc1;font-weight:900">${journal && journal.paiements ? $m(journal.montant_cents / 100) + ` (${journal.paiements} paiement(s), livraisons + trajets)` : 'aucun paiement au journal'}</td>
       </tr>`;
-    }).join('');
-    // Total des postes canoniques, incluant ceux masqués à 0 %.
-    const sumPostes = canon
-      ? canon.platformAllocationTotal(s, { includeZero: true })
-      : POSTES_LIVE.reduce((s2, p) => s2 + (Number(p.pct) || 0), 0);
-    repartHtml += `<tr style="background:rgba(255,255,255,.04);border-top:2px solid var(--brand-border)">
-      <td><strong style="color:#A8B0BA">Total répartition (doit = 100%)</strong></td>
-      <td style="text-align:right;color:${Math.abs(sumPostes-100) < 0.5 ? '#7dffc1' : '#ffb0b0'};font-weight:900">${sumPostes.toFixed(1)} %</td>
-      <td style="text-align:right;color:#fff;font-weight:900">${$m(total)}</td>
-    </tr>`;
-    // Part fondateur (rémunération personnelle, prélevée sur la marge plateforme hors livreur) — masquée si 0 %
-    if (founderPct > 0) {
-      repartHtml += `<tr style="background:linear-gradient(90deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border-top:2px solid rgba(255,215,0,.3)">
-        <td><span style="font-size:1.2rem;margin-right:8px">👑</span><strong style="color:#ffd700">Ta part fondateur (% du CA)</strong><div style="color:#A8B0BA;font-size:.78rem;margin-top:3px">Rémunération personnelle, prélevée sur la marge plateforme (hors livreur) — pas en plus du prix client. Configurable dans Paramètrès → Fonds Assurance.</div></td>
-        <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${founderPct.toFixed(1)} %</td>
-        <td style="text-align:right;color:#ffd700;font-weight:900;font-variant-numeric:tabular-nums">${$m(total * founderPct / 100)}</td>
-      </tr>`;
-    }
-    document.getElementById('repartition-complet-body').innerHTML = repartHtml;
+      document.getElementById('repartition-complet-body').innerHTML = html;
+    };
+    dessiner(null);
+    fetch('/api/impact-public').then(r => r.ok ? r.json() : null).then(d => dessiner(d && d.impact && d.impact.repartition_reelle)).catch(() => {});
 
     document.getElementById('rev-body').innerHTML = rows.length === 0
       ? '<tr><td colspan="6" class="empty-msg">Aucune livraison payée ce mois</td></tr>'
@@ -2095,7 +2082,7 @@
               <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
               <td><div class="action-cell">${proofBtn}${actionHtml}${(window.__livTestIds || new Set()).has(l.id)
                 ? `<button class="action-btn" onclick="adminLivraisonTest('${l.id}', false)">Rendre visible aux livreurs</button><div style="color:#F59E0B;font-size:.72rem">Cachée (test)</div>`
-                : `<button class="action-btn" onclick="adminLivraisonTest('${l.id}', true)">Cacher aux livreurs (test)</button>`}</div></td>
+                : `<button class="action-btn" onclick="adminLivraisonTest('${l.id}', true)">Cacher aux livreurs (test)</button>`}${(['PP-EA656834', 'PP-B0FBF7D8'].includes(l.code) && l.statut === 'livre') ? `<button class="action-btn" onclick="adminRemettreRamasse('${l.code}')">Remettre à « Ramassé »</button>` : ''}</div></td>
             </tr>`;
           }).join('');
     }
@@ -2124,6 +2111,22 @@
     const out = await res.json().catch(() => ({}));
     if (!res.ok) { await PAPDialog.alert(out.error || 'Action impossible.'); return; }
     await loadData();
+  }
+
+  // Les 2 livraisons coincées du test complet : remises à « Ramassé » (statut et date de livraison
+  // seulement, jamais le paiement). À faire après la mise en ligne de la correction du code de réception.
+  async function adminRemettreRamasse(code) {
+    const ok = await PAPDialog.confirm(`Remettre ${code} à « Ramassé » ?\n\nLe statut redevient « ramasse » et la date de livraison est effacée. Le paiement n'est pas touché (il reste en attente). Le livreur devra refaire « Marquer livré » avec le bon code de réception.`, { title: 'Remettre à « Ramassé »', ok: 'Remettre' });
+    if (!ok) return;
+    const session = AUTH_API.getUser()?.session;
+    const res = await fetch(apiUrl('/api/platform?endpoint=admin-remettre-ramasse'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint: 'admin-remettre-ramasse', code, raison: 'Test complet 22 nov. : livrée avant la correction du code de réception' })
+    });
+    const out = await res.json().catch(() => ({}));
+    await PAPDialog.alert(res.ok ? `${code} est de nouveau « Ramassé ». Paiement : ${out.paiement || 'en attente'}.` : (out.error || 'Action impossible.'));
+    if (res.ok) await loadData();
   }
 
   async function adminCaptureLegacy(livraisonId) {
@@ -2878,7 +2881,7 @@
       noel: {
         slug: 'esprit_noel_' + now.getFullYear(), icon: '??',
         name: 'Esprit de Noël ' + now.getFullYear(),
-        description: 'Badge spécial Noël. Son bénéfice revient chaque décembre.',
+        description: 'Badge spécial Noël.',
         campaign_name: 'Noël ' + now.getFullYear(),
         seasonal_months: [12],
         active_from: new Date(now.getFullYear(), 11, 1).toISOString(),

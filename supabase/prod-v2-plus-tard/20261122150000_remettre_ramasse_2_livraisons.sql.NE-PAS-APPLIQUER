@@ -1,0 +1,39 @@
+-- Test complet du 22 nov. 2026, point 5 — NE PAS APPLIQUER AVANT LA MISE EN LIGNE DE fix-test-complet.
+-- Remet PP-EA656834 et PP-B0FBF7D8 à « Ramassé » (statut = 'ramasse', livre_le = null).
+-- Ne touche à AUCUNE colonne de paiement (stripe_payment_intent, transactions, livreur_earnings : rien).
+-- Même effet que le bouton admin « Remettre à « Ramassé » » (lib/_livraisons-coincees.js), qui en plus
+-- vérifie sur Stripe que le paiement est encore « requires_capture ». Préférer le bouton.
+-- Sans danger si lancé deux fois : ne change que les livraisons encore « livre ».
+
+begin;
+
+-- 1. Avant : doit montrer 2 lignes, statut 'livre'.
+select code, statut, livre_le, stripe_payment_intent is not null as a_un_paiement
+from public.livraisons
+where code in ('PP-EA656834', 'PP-B0FBF7D8');
+
+-- 2. Le changement (seulement statut et livre_le).
+with avant as (
+  select id, code, statut, livre_le, expediteur_id
+  from public.livraisons
+  where code in ('PP-EA656834', 'PP-B0FBF7D8') and statut = 'livre'
+  for update
+), maj as (
+  update public.livraisons l
+  set statut = 'ramasse', livre_le = null
+  from avant
+  where l.id = avant.id
+  returning l.id
+)
+insert into public.transaction_audit_events (livraison_id, user_id, event_type, status, evidence)
+select avant.id, avant.expediteur_id, 'livraison_remise_ramasse', 'ramasse',
+       jsonb_build_object('source', 'supabase/prod-v2-plus-tard (SQL manuel)', 'code', avant.code,
+                          'avant', jsonb_build_object('statut', avant.statut, 'livre_le', avant.livre_le),
+                          'apres', jsonb_build_object('statut', 'ramasse', 'livre_le', null))
+from avant join maj on maj.id = avant.id;
+
+-- 3. Après : doit montrer 2 lignes, statut 'ramasse', livre_le vide.
+select code, statut, livre_le from public.livraisons where code in ('PP-EA656834', 'PP-B0FBF7D8');
+
+-- Si tout est correct : commit; sinon : rollback;
+-- commit;

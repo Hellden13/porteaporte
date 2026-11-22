@@ -10,6 +10,7 @@
 //   INTERNAL_API_SECRET = (obligatoire en prod pour types sensibles — voir BUILD)
 // ============================================================
 
+const { gainLivreurCents } = require('../lib/_gain-livreur');
 const crypto = require('crypto');
 const { internalSecret, NOM_EXPEDITEUR_COURRIEL } = require('../lib/_lib');
 
@@ -288,7 +289,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.email,
         from: { email: fromEmail, name: fromName },
-        subject: '🍁 Bienvenue sur PorteàPorte ! Tes 50 PorteCoins t\'attendent',
+        subject: '🍁 Bienvenue sur PorteàPorte !',
         html: templateBienvenue(data)
       });
       // 2. Alerte admin
@@ -301,8 +302,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           { label: 'Courriel', value: data.email },
           { label: 'Rôle', value: data.role },
           { label: 'Ville', value: data.ville || 'Non spécifiée' },
-          { label: 'Code parrainage', value: data.parrain || 'Aucun' },
-          { label: 'PorteCoins', value: '50 crédités automatiquement' }
+          { label: 'Code parrainage', value: data.parrain || 'Aucun' }
         ])
       });
       break;
@@ -869,7 +869,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.email,
         from: { email: fromEmail, name: fromName },
-        subject: '🍁 Tu es sur la liste — 50 PorteCoins réservés pour toi !',
+        subject: '🍁 Tu es sur la liste d’attente de PorteàPorte',
         html: templateListeAttente(data)
       });
       emails.push({
@@ -1178,22 +1178,22 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.passenger_email,
         from: { email: fromEmail, name: fromName },
-        subject: `Confirme ton arrivee : ${route}`,
+        subject: `Confirme ton arrivée : ${route}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
-            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEAPORTE - ARRIVEE A CONFIRMER</div>
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEAPORTE - ARRIVÉE A CONFIRMER</div>
             <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">Ton chauffeur a termine le trajet</h1>
             <p style="color:#a8b0ba;margin:0 0 18px">${route} - ${heureQc(data.departure_time) || 'Date du trajet'}</p>
 
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">Confirmation requise</strong>
-              <div>Si tu es bien arrive a destination, confirme ton arrivee pour liberer le paiement au chauffeur.</div>
+              <div>Si tu es bien arrivé à destination, confirme ton arrivée pour libérer le paiement au chauffeur.</div>
               <div style="color:#a8b0ba;margin-top:8px">Chauffeur : <strong style="color:#fff">${data.driver_name || 'Conducteur'}</strong></div>
             </div>
 
-            <a href="https://porteaporte.site/dashboard-covoiturage.html?section=reservations&booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Confirmer mon arrivee</a>
+            <a href="https://porteaporte.site/dashboard-covoiturage.html?section=reservations&booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Confirmer mon arrivée</a>
 
-            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Si quelque chose ne va pas, ne confirme pas l'arrivee et contacte PorteaPorte depuis ton tableau de bord.</p>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Si quelque chose ne va pas, ne confirme pas l'arrivée et contacte PorteàPorte depuis ton tableau de bord.</p>
           </div>`
       });
       break;
@@ -1241,7 +1241,7 @@ async function sendEmail(emailData, apiKey) {
     ok: response.status === 200,
     status: response.status,
     to: emailData.to,
-    error: response.status === 200 ? undefined : (message || 'Resend a refuse le message'),
+    error: response.status === 200 ? undefined : (message || 'Resend a refusé le message'),
     resend_message_id: details?.id || null
   };
 }
@@ -1296,10 +1296,10 @@ async function sendTestEmail(data, config) {
   const result = await sendEmail({
     to: email,
     from: { email: config.fromEmail, name: config.fromName },
-    subject: 'Test PorteàPorte - Verification Resend',
+    subject: 'Test PorteàPorte - Vérification Resend',
     html: wrap(
       `<div style="${HEADER()}">${LOGO_HTML}</div>`,
-      `<h2 style="font-size:22px;margin:0 0 16px;">Email de test recu</h2>
+      `<h2 style="font-size:22px;margin:0 0 16px;">Email de test reçu</h2>
       <p style="color:#555;line-height:1.7;">Resend fonctionne correctement pour PorteàPorte.</p>
       <p style="font-size:12px;color:#777;">Timestamp: ${new Date().toISOString()}</p>`
     )
@@ -1373,13 +1373,13 @@ function templateBienvenueP2(d) {
           <div style="color:#5dbfff;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">PorteàPorte</div>
           <h1 style="font-size:26px;line-height:1.15;margin:0 0 14px;color:#fff">Bienvenue, ${prenom}.</h1>
           <p style="color:#c9d1dc;line-height:1.7;margin:0 0 18px">
-            PorteàPorte est une plateforme quebecoise qui commence par le covoiturage:
-            une personne voyage deja, une autre embarque, et parfois un colis peut profiter de la meme route.
+            PorteàPorte est une plateforme québécoise qui commence par le covoiturage:
+            une personne voyage déjà, une autre embarque, et parfois un colis peut profiter de la même route.
           </p>
           <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.28);border-radius:12px;padding:18px;margin:22px 0">
             <div style="font-weight:900;color:#7dffc1;margin-bottom:10px">Pourquoi on existe</div>
             <p style="color:#d8dde6;line-height:1.65;margin:0">
-              Pour rendre les routes deja parcourues plus utiles: partager les frais, reduire les trajets vides,
+              Pour rendre les routes déjà parcourues plus utiles: partager les frais, réduire les trajets vides,
               aider localement et garder une relation humaine entre membres.
             </p>
           </div>
@@ -1388,9 +1388,9 @@ function templateBienvenueP2(d) {
             <a href="https://porteaporte.site/covoiturage-publier.html" style="display:block;background:rgba(255,255,255,.06);color:#f7f8fb;text-decoration:none;font-weight:800;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:13px 16px">Publier un trajet</a>
             <a href="https://porteaporte.site/dashboard.html" style="display:block;background:rgba(125,255,193,.10);color:#7dffc1;text-decoration:none;font-weight:800;border:1px solid rgba(125,255,193,.28);border-radius:10px;padding:13px 16px">Ouvrir mon tableau de bord</a>
           </div>
-          ${showDriver ? `<p style="color:#a8acb1;line-height:1.6;margin:18px 0 0;font-size:13px">Si tu veux recevoir des paiements comme conducteur ou livreur, tu devras finaliser la verification et Stripe Connect dans ton espace membre.</p>` : ''}
+          ${showDriver ? `<p style="color:#a8acb1;line-height:1.6;margin:18px 0 0;font-size:13px">Si tu veux recevoir des paiements comme conducteur ou livreur, tu devras finaliser la vérification et Stripe Connect dans ton espace membre.</p>` : ''}
           <p style="color:#6d7886;font-size:12px;line-height:1.6;margin:22px 0 0;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
-            Question ou idee de trajet? Reponds simplement a ce courriel ou ecris a
+            Question ou idée de trajet? Réponds simplement à ce courriel ou écris à
             <a href="mailto:bonjour@porteaporte.site" style="color:#5dbfff">bonjour@porteaporte.site</a>.
           </p>
         </div>
@@ -1404,12 +1404,7 @@ function templateBienvenue(d) {
     `<div style="${HEADER()}">${LOGO_HTML}</div>`,
     `<h2 style="font-size:22px;margin:0 0 16px;">Bienvenue, ${d.prenom} ! 🎉</h2>
     <p style="color:#555;line-height:1.7;">Ton compte PorteàPorte est créé. Tu fais maintenant partie de la première plateforme canadienne de livraison entre particuliers.</p>
-    <div style="background:#f9f9f7;border:1px solid #e0e0da;border-radius:6px;padding:20px;margin:20px 0;text-align:center;">
-      <div style="font-size:42px;font-weight:900;color:#B8F53E;letter-spacing:-2px;">50 🪙</div>
-      <div style="font-size:13px;color:#888;margin-top:4px;">PorteCoins de bienvenue crédités</div>
-      <div style="font-size:11px;color:#aaa;margin-top:2px;">Valeur : 5,00 $</div>
-    </div>
-    <p style="color:#555;line-height:1.7;">Utilise tes PorteCoins pour obtenir des livraisons gratuites, accéder à la boutique de récompenses, et participer aux tirages mensuels.</p>
+    <p style="color:#555;line-height:1.7;">Chaque livraison ou trajet payé te donne de l'XP, des badges et des Points Impact (sans valeur en argent), qui servent aux tirages mensuels.</p>
     <div style="text-align:center;margin:24px 0;">
       <a href="https://porteaporte.site/compte.html" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">
         Accéder à mon compte →
@@ -1423,15 +1418,15 @@ function templateAuthConfirmation(d) {
   return wrap(
     `<div style="${HEADER()}">${LOGO_HTML}</div>`,
     `<h2 style="font-size:22px;margin:0 0 16px;">Confirme ton compte PorteàPorte</h2>
-    <p style="color:#555;line-height:1.7;">Tu recois ce courriel parce qu'un compte PorteàPorte a ete cree avec cette adresse.</p>
+    <p style="color:#555;line-height:1.7;">Tu reçois ce courriel parce qu'un compte PorteàPorte a été créé avec cette adresse.</p>
     <p style="color:#555;line-height:1.7;">Clique sur le bouton ci-dessous pour confirmer ton courriel et ouvrir ta session.</p>
     <div style="text-align:center;margin:26px 0;">
       <a href="${d.link}" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:6px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">Confirmer mon courriel</a>
     </div>
     <p style="font-size:12px;color:#777;line-height:1.6;">Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :</p>
     <p style="font-size:11px;line-height:1.5;word-break:break-all;color:#555;">${d.link}</p>
-    <p style="font-size:12px;color:#aaa;line-height:1.6;">Si tu n'as pas cree de compte PorteàPorte, tu peux ignorer ce message.</p>
-    <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:18px;">PorteàPorte, plateforme de livraison collaborative au Quebec.</p>`
+    <p style="font-size:12px;color:#aaa;line-height:1.6;">Si tu n'as pas créé de compte PorteàPorte, tu peux ignorer ce message.</p>
+    <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:18px;">PorteàPorte, plateforme de livraison collaborative au Québec.</p>`
   );
 }
 
@@ -1442,7 +1437,7 @@ function templateCarteLivreur(d) {
   return wrap(
     `<div style="${HEADER('#1D6B3A')}">${LOGO_HTML}</div>`,
     `<h2 style="font-size:22px;margin:0 0 16px;">Ta carte livreur PorteàPorte</h2>
-    <p style="color:#555;line-height:1.7;">Bonjour ${d.prenom || ''}, voici ta carte livreur numerique. Elle confirme ton profil PorteàPorte, mais l'acces aux colis reels reste limite tant que la verification n'est pas complete.</p>
+    <p style="color:#555;line-height:1.7;">Bonjour ${d.prenom || ''}, voici ta carte livreur numérique. Elle confirme ton profil PorteàPorte, mais l'accès aux colis réels reste limité tant que la vérification n'est pas complete.</p>
     <div style="background:#0A1628;color:#fff;border-radius:12px;padding:22px;margin:20px 0;">
       <div style="font-size:12px;color:#B8F53E;text-transform:uppercase;letter-spacing:1px;">PorteàPorte</div>
       <div style="font-size:24px;font-weight:800;margin:14px 0 4px;">${d.prenom || ''} ${d.nom || ''}</div>
@@ -1454,7 +1449,7 @@ function templateCarteLivreur(d) {
         <div><strong>Transport :</strong> ${d.vehicule || d.transport_mode || 'A completer'}</div>
       </div>
     </div>
-    <p style="color:#555;line-height:1.7;">Pour devenir actif, complete la verification d'identite. Les livreurs non verifies ne voient pas les colis reels ni les informations sensibles.</p>
+    <p style="color:#555;line-height:1.7;">Pour devenir actif, complète la vérification d'identité. Les livreurs non vérifiés ne voient pas les colis réels ni les informations sensibles.</p>
     <div style="text-align:center;margin:24px 0;">
       <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#B8F53E;color:#0A1628;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:800;">Ouvrir mon dashboard</a>
     </div>`
@@ -1469,10 +1464,8 @@ function templateListeAttente(d) {
     <div style="background:#f0faf4;border:1px solid #b8f53e;border-radius:6px;padding:20px;margin:20px 0;">
       <div style="font-weight:700;margin-bottom:8px;">Ce qui t'attend au lancement :</div>
       <div style="color:#555;font-size:13px;line-height:1.8;">
-        ✓ 50 PorteCoins offerts (valeur 5 $)<br>
-        ✓ Badge exclusif "Fondateur" sur ton profil<br>
-        ✓ Accès prioritaire avant l'ouverture publique<br>
-        ✓ Tarifs préférentiels les 3 premiers mois
+        ✓ Un courriel dès que PorteàPorte ouvre dans ta région<br>
+        ✓ Des badges, de l'XP et des Points Impact (sans valeur en argent) dès tes premières livraisons ou tes premiers trajets payés
       </div>
     </div>
     <div style="text-align:center;margin:24px 0;">
@@ -1511,7 +1504,7 @@ function templateLivreurConfirme(d) {
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Trajet</span><strong>${d.ville_depart} → ${d.ville_arrivee}</strong></div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Adresse ramassage</span><strong>${d.adresse_depart || 'À confirmer'}</strong></div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Date souhaitée</span><strong>${d.date_souhaitee || 'Flexible'}</strong></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#888;">Ton revenu</span><strong style="color:#1D6B3A;">${d.montant_livreur} $</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#888;">Tu gagnes</span><strong style="color:#1D6B3A;">${d.montant_livreur != null ? d.montant_livreur : (gainLivreurCents(Math.round((Number(d.prix_total) || 0) * 100)).netCents / 100).toFixed(2).replace('.', ',')} $</strong></div>
     </div>
     <p style="font-size:12px;color:#888;">N'oublie pas de prendre une photo du colis au ramassage et à la livraison.</p>`
   );
@@ -1536,9 +1529,9 @@ function templatePaiementLibere(d) {
     <p style="color:#555;line-height:1.7;">L'expéditeur a confirmé la réception. Ton paiement de <strong style="color:#1D6B3A;">${d.montant_livreur} $</strong> a été libéré et sera dans ton compte sous 2-5 jours ouvrables.</p>
     <div style="background:#f0faf4;border:1px solid #b8f53e;border-radius:6px;padding:16px;margin:16px 0;text-align:center;">
       <div style="font-size:36px;font-weight:900;color:#1D6B3A;">${d.montant_livreur} $</div>
-      <div style="font-size:12px;color:#888;margin-top:4px;">+ ${d.portecoin_bonus || 0} PorteCoins bonus</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Tu gagnes : 60 % du prix total, plus ton bonus fidélité s'il y a lieu</div>
     </div>
-    <p style="font-size:12px;color:#aaa;">Merci pour ta fiabilité ! Continue comme ça pour maintenir ton statut et accéder aux bonus mensuels.</p>`
+    <p style="font-size:12px;color:#aaa;">Merci pour ta fiabilité ! Tes badges et ton XP sont mis à jour sur ton tableau de bord.</p>`
   );
 }
 

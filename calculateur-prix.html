@@ -81,6 +81,7 @@
   <script src="/js/dialogues.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="/js/platform-settings-defaults.js"></script>
+  <script src="/js/repartition.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -357,18 +358,15 @@
       }).join('');
       document.getElementById('compareTable').innerHTML = papRow + compRows;
 
-      // Breakdown répartition
-      const posts = PLATFORM_CANON
-        ? PLATFORM_CANON.platformAllocationPosts(platformShares, { includeZero: false })
-        : Object.keys(platformShares).map(k => ({ key: k, pct: platformShares[k], emoji: '', label: k.replace('pct_', '') })).filter(p => Number(p.pct) > 0);
-      // Répartition OFFICIELLE livraison (= platform_settings). Total = 100 %.
+      // Répartition RÉELLE (js/repartition.js, le même calcul que le paiement) : livreur 60 %,
+      // frais Stripe (estimés 2,9 % + 0,30 $), puis le reste partagé selon les réglages. Total = prix payé.
       const fmt2 = v => v.toLocaleString('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits: 2 });
-      document.getElementById('breakdown').innerHTML = posts.map(p => {
-        const pct = Number(p.pct) || 0;
-        const amount = totalPap * pct / 100;
-        const color = p.key === 'pct_livreur' ? 'var(--brand-lime)' : (p.key === 'pct_communaute' ? '#ff6b9d' : (p.key === 'pct_profit' ? 'var(--brand-cyan)' : ''));
-        return `<div style="display:flex;justify-content:space-between"><span>${p.emoji || ''} ${p.label} (${pct}%)</span><strong style="${color ? 'color:' + color : ''}">${fmt2(amount)}</strong></div>`;
-      }).join('');
+      const rep = window.PAPRepartition ? window.PAPRepartition.repartitionLivraison({ montantPayeCents: Math.round(totalPap * 100), settings: platformShares }) : null;
+      document.getElementById('breakdown').innerHTML = rep ? rep.lignes.filter(l => l.cents !== 0).map(l => {
+        const pct = rep.montantPayeCents ? Math.round(l.cents / rep.montantPayeCents * 1000) / 10 : 0;
+        const color = l.poste === 'livreur' ? 'var(--brand-lime)' : (l.poste === 'communaute' ? '#ff6b9d' : '');
+        return `<div style="display:flex;justify-content:space-between"><span>${l.label} (${String(pct).replace('.', ',')} %)</span><strong style="${color ? 'color:' + color : ''}">${fmt2(l.cents / 100)}</strong></div>`;
+      }).join('') : '';
     }
 
     document.getElementById('villeDepart').addEventListener('input', tryAutoDistance);

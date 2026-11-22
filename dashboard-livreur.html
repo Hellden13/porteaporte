@@ -16,6 +16,7 @@
   <script src="/js/dialogues.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="/js/gain-livreur.js"></script>
+  <script src="/js/repartition.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -675,9 +676,9 @@
 
         <!-- Répartition revenus -->
         <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
-          <div class="card-title" style="margin-bottom:12px">Répartition revenus</div>
+          <div class="card-title" style="margin-bottom:12px">Où va l’argent d’une livraison de 10,00 $</div>
           <div class="rev-bar">
-            <span class="rev-label" id="revYouLabel">Toi (base configurée)</span>
+            <span class="rev-label" id="revYouLabel">Toi (60 % du prix total)</span>
             <div class="rev-track"><div class="rev-fill" id="revYouBar" style="width:0%;background:var(--brand-lime)"></div></div>
             <span class="rev-amount" id="revYou">—</span>
           </div>
@@ -690,7 +691,7 @@
           <!-- Postes plateforme officiels — générés depuis la source canonique (platform_settings), somme = 100% -->
           <div id="revPlatformRows"></div>
           <div id="revTotalRow" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--brand-border);display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:.82rem;font-weight:800;color:var(--brand-text)">Total pour toi</span>
+            <span style="font-size:.82rem;font-weight:800;color:var(--brand-text)">Tu gagnes</span>
             <span style="font-weight:900;color:var(--brand-lime);font-size:1rem" id="revTotal">—</span>
           </div>
         </div>
@@ -1030,36 +1031,31 @@
       }
     }
 
-    /* Postes plateforme officiels (hors livreur). Les % viennent de la source canonique
-       (window.__platformShares = platform_settings). Le bonus éco s'ajoute à la part du
-       livreur et réduit proportionnellement la portion plateforme → l'ensemble fait 100%. */
-    const REV_PLATFORM_POSTS = [
-      { key: 'pct_protection',    emoji: '🛡️', label: 'Protection colis',    color: '#00D9FF' },
-      { key: 'pct_profit',        emoji: '💪', label: 'Réserve / pérennité', color: '#A8ACB1' },
-      { key: 'pct_stripe',        emoji: '💳', label: 'Frais Stripe',        color: '#A8ACB1' },
-      { key: 'pct_urgence',       emoji: '🆘', label: 'Fonds d’urgence',     color: '#ffa500' },
-      { key: 'pct_communaute',    emoji: '💚', label: 'Communauté',          color: 'rgba(125,255,193,.7)' },
-      { key: 'pct_developpement', emoji: '🔧', label: 'Infrastructure',      color: '#A8ACB1' },
-    ];
-    const REV_PLATFORM_FALLBACK = { pct_protection:10, pct_profit:7, pct_stripe:7, pct_urgence:6, pct_communaute:5, pct_developpement:5 };
-
-    function renderRevenuePosts(earnings, basePct, ecoBonus) {
+    /* Répartition réelle d'une livraison de 10,00 $ (js/repartition.js, le même calcul que le paiement) :
+       ta part (60 % + ton bonus fidélité), les frais Stripe (estimés : 2,9 % + 0,30 $), puis le reste
+       de la plateforme partagé entre les postes des Paramètres financiers. La somme fait 10,00 $. */
+    const REV_EXEMPLE_CENTS = 1000;
+    const REV_COULEURS = { stripe: '#A8ACB1', protection: '#00D9FF', urgence: '#ffa500', communaute: 'rgba(125,255,193,.7)' };
+    function repartitionExemple() {
+      if (!window.PAPRepartition) return null;
+      return window.PAPRepartition.repartitionLivraison({
+        montantPayeCents: REV_EXEMPLE_CENTS,
+        settings: window.__platformShares || {},
+        fidelitePct: Math.max(0, deliverySharePct() - 60),
+      });
+    }
+    function renderRevenuePosts() {
       const container = document.getElementById('revPlatformRows');
       if (!container) return;
-      const shares = window.__platformShares || {};
-      const platformBase = Math.max(0, 100 - basePct);                 // ex. 40
-      const platformLeft = Math.max(0, 100 - basePct - ecoBonus);      // ex. 20 si éco +20%
-      const scale = platformBase > 0 ? platformLeft / platformBase : 0;
-      container.innerHTML = REV_PLATFORM_POSTS.map(p => {
-        const raw   = Number(shares[p.key]);
-        const canon = Number.isFinite(raw) ? raw : REV_PLATFORM_FALLBACK[p.key];
-        const pct   = Math.round(canon * scale * 10) / 10;             // % effectif (1 décimale)
-        if (!(pct > 0)) return '';
-        const amount = earnings * pct / 100;
+      const rep = repartitionExemple();
+      if (!rep) { container.innerHTML = ''; return; }
+      container.innerHTML = rep.lignes.filter(l => l.poste !== 'livreur' && l.cents !== 0).map(l => {
+        const pct = Math.round(l.cents / REV_EXEMPLE_CENTS * 1000) / 10;
+        const label = String(l.label).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         return `<div class="rev-bar">
-            <span class="rev-label">${p.emoji} ${p.label} (${pct}%)</span>
-            <div class="rev-track"><div class="rev-fill" style="width:${Math.min(pct,100)}%;background:${p.color}"></div></div>
-            <span class="rev-amount">${money(amount)}</span>
+            <span class="rev-label">${label} (${pct.toString().replace('.', ',')} %)</span>
+            <div class="rev-track"><div class="rev-fill" style="width:${Math.min(Math.abs(pct),100)}%;background:${REV_COULEURS[l.poste] || '#A8ACB1'}"></div></div>
+            <span class="rev-amount">${money(l.cents / 100)}</span>
           </div>`;
       }).join('');
     }
@@ -1067,7 +1063,6 @@
     function renderStats() {
       renderSubscriptionBanner();
       const deliveries = profile.livraisons || 0;
-      const earnings   = (profile.coins || 0) / 100;
       const score      = ((profile.score || 0) / 20).toFixed(1);
       const streak     = profile.streak_jours || 0;
       const ecoBonus   = profile.eco_bonus || 0;          // e.g. 20, 15, 10, 5, 0
@@ -1076,31 +1071,17 @@
       // Le paiement réel ne verse pas de bonus éco : la répartition n'en tient pas compte.
       const ecoPaye    = 0;
 
-      /* --- Eco banner --- */
+      /* --- Bonus écologique : promis mais jamais versé par le paiement. Retiré de l'affichage
+             en attendant la décision de Denis (montant et source). --- */
       const banner = document.getElementById('ecoBanner');
-      if (ecoBonus > 0 && mode) {
-        banner.style.display = 'flex';
-        document.getElementById('ecoIcon').textContent = ECO_ICONS[mode] || '🌱';
-        document.getElementById('ecoBannerTitle').textContent = `Bonus écologique +${ecoBonus}% actif · ${ECO_LABELS[mode] || mode}`;
-        document.getElementById('ecoBannerDesc').textContent = `Sur chaque livraison, tu reçois ${basePct}% + ${ecoBonus}% de bonus éco, soit ${basePct + ecoBonus}% du prix total.`;
-        document.getElementById('ecoKycLink').style.display = 'none';
-      } else if (!mode || profile.driver_status !== 'verified') {
-        banner.style.display = 'flex';
-        banner.style.background = 'rgba(168,172,177,.06)';
-        banner.style.borderColor = 'var(--brand-border)';
-        document.getElementById('ecoIcon').textContent = '🌱';
-        document.getElementById('ecoBannerTitle').textContent = 'Aucun bonus écologique';
-        document.getElementById('ecoBannerTitle').style.color = 'var(--brand-muted)';
-        document.getElementById('ecoBannerDesc').textContent = 'Livre à vélo, trottinette ou en véhicule électrique pour gagner un bonus de 5% à 20% sur chaque livraison.';
-        document.getElementById('ecoKycLink').textContent = 'Mettre à jour mon profil →';
-        document.getElementById('ecoKycLink').style.display = 'block';
-      }
+      if (banner) banner.style.display = 'none';
 
       /* --- Stats cards --- */
       document.getElementById('statDeliveries').textContent = deliveries;
       document.getElementById('statDeliveriesSub').textContent = 'total cumulé';
-      document.getElementById('statEarnings').textContent = money(earnings);
-      document.getElementById('statEarningsSub').textContent = (ECO_ICONS[mode] || '') + ' ' + (ECO_LABELS[mode] || profile.niveau_livreur || 'Bronze');
+      // Les revenus viennent des gains réellement enregistrés (livreur_earnings), chargés plus bas.
+      // Avant, le solde de PorteCoins (sans valeur en argent) était affiché comme des dollars.
+      if (document.getElementById('statEarnings').textContent === '—') document.getElementById('statEarningsSub').textContent = 'Chargement des gains…';
       document.getElementById('statScore').textContent = score;
       document.getElementById('statStreak').textContent = streak + 'j';
 
@@ -1113,32 +1094,16 @@
         streakBar.appendChild(dot);
       }
 
-      /* --- Revenue breakdown with eco bonus --- */
-      const base    = earnings * (basePct / 100);
-      const eco     = earnings * (ecoPaye / 100);
-      const total   = base + eco;
-      const pct     = basePct + ecoPaye;
-
-      document.getElementById('revYouLabel').textContent = `Toi (${basePct} % du prix payé)`;
+      /* --- Répartition réelle (exemple 10,00 $) --- */
+      const rep = repartitionExemple();
+      const tienCents = rep ? rep.livreurCents : Math.floor(REV_EXEMPLE_CENTS * basePct / 100);
+      document.getElementById('revYouLabel').textContent = `Toi (${basePct} % du prix total)`;
       document.getElementById('revYouBar').style.width   = Math.min(basePct, 100) + '%';
-      document.getElementById('revYou').textContent      = money(base);
-
-      // Bonus éco (ligne affichée seulement si actif)
-      if (ecoPaye > 0) {
-        document.getElementById('revEcoRow').style.display = 'flex';
-        document.getElementById('revEcoLabel').textContent = `Éco (+${ecoBonus}%)`;
-        document.getElementById('revEcoBar').style.width   = ecoBonus + '%';
-        document.getElementById('revEco').textContent      = money(eco);
-      } else {
-        document.getElementById('revEcoRow').style.display = 'none';
-      }
-
-      // Postes plateforme officiels (somme = 100% avec la part livreur)
-      renderRevenuePosts(earnings, basePct, ecoPaye);
-
-      // Total reçu par le livreur (base + éco) — toujours affiché
+      document.getElementById('revYou').textContent      = money(tienCents / 100);
+      document.getElementById('revEcoRow').style.display = 'none';
+      renderRevenuePosts();
       document.getElementById('revTotalRow').style.display = 'flex';
-      document.getElementById('revTotal').textContent      = money(total) + ` (${pct}%)`;
+      document.getElementById('revTotal').textContent      = money(tienCents / 100) + ` (${basePct} %)`;
     }
 
     document.addEventListener('platform-shares', () => {

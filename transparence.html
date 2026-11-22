@@ -103,14 +103,14 @@
         <div class="metric-sub" id="impact-generated">Données disponibles après les premières livraisons.</div>
       </div>
       <div class="metric">
-        <div class="metric-label">Fonds dons estimé</div>
+        <div class="metric-label">Réservé au fonds communauté</div>
         <div class="metric-value" id="impact-pool">0,00 $</div>
-        <div class="metric-sub">Basé sur la portion solidaire des revenus plateforme.</div>
+        <div class="metric-sub">Écrit au journal à chaque paiement capturé. Les versements aux organismes seront publiés ici quand ils seront faits.</div>
       </div>
       <div class="metric">
-        <div class="metric-label">Livraisons comptées</div>
+        <div class="metric-label">Paiements comptés</div>
         <div class="metric-value" id="impact-deliveries">0</div>
-        <div class="metric-sub" id="impact-rate">Une part de la commission reversée aux organismes</div>
+        <div class="metric-sub" id="impact-rate">Livraisons et trajets réellement payés, depuis le début</div>
       </div>
       <div class="metric" style="border-color:rgba(93,191,255,.25);background:rgba(93,191,255,.04)">
         <div class="metric-label" style="color:var(--brand-lime)">🛡️ Jours sans réclamation</div>
@@ -126,7 +126,7 @@
 
     <div class="section-title">📊 Répartition de chaque dollar payé</div>
     <div class="panel" style="padding:24px">
-      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Voici exactement où va chaque dollar — données <strong>en direct depuis l'admin</strong>. Si on ajuste la répartition, cette section change automatiquement.</p>
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Exemple : une livraison de <strong>10,00 $</strong>, calculée par <strong>le même code que le paiement réel</strong>. Le livreur touche 60 % du prix total. Les frais Stripe (2,9 % + 0,30 $) sont payés par PorteàPorte. Le reste est partagé entre les postes ci-dessous, selon les proportions réglées dans l'admin.</p>
       <div id="repartition-table" style="display:grid;gap:8px">
         <div style="text-align:center;color:var(--brand-muted);padding:20px">La répartition apparaîtra ici dès que les données seront disponibles.</div>
       </div>
@@ -137,13 +137,21 @@
 
     <div class="section-title">🚗 Commission covoiturage — où elle va</div>
     <div class="panel" style="padding:24px">
-      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Le conducteur <strong>garde sa part</strong> (essence partagée entre passagers). Sur le covoiturage, PorteàPorte ne prend qu'une petite commission — et la voici redistribuée intégralement&nbsp;:</p>
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Exemple : un trajet de <strong>2,88 $</strong>. Le conducteur <strong>garde toute sa part</strong> (partage des frais). Les frais de service paient d'abord Stripe ; le reste est partagé ainsi&nbsp;:</p>
       <div id="ride-redist-table" style="display:grid;gap:8px">
         <div style="text-align:center;color:var(--brand-muted);padding:20px">Le détail apparaîtra ici dès que les données seront disponibles.</div>
       </div>
       <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)">
-        💡 100% de la commission est réinvesti dans la sécurité, les opérations et la communauté.
+        💡 Chaque paiement capturé est écrit au journal avec ces montants. Le total réel est plus bas.
       </p>
+    </div>
+
+    <div class="section-title">🧾 Réellement enregistré depuis le début</div>
+    <div class="panel" style="padding:24px">
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">La somme de toutes les lignes écrites au journal, paiement par paiement. Aucune estimation.</p>
+      <div id="journal-table" style="display:grid;gap:8px">
+        <div style="text-align:center;color:var(--brand-muted);padding:20px">Aucun paiement capturé n'a encore été écrit au journal.</div>
+      </div>
     </div>
 
     <div class="section-title">🛡️ Fonds de sécurité</div>
@@ -151,7 +159,7 @@
       <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Un <strong>seul fonds de sécurité</strong> protège la communauté. Il est alimenté par la livraison, le covoiturage et les apports directs de PorteàPorte — voici son solde et d'où il vient&nbsp;:</p>
       <div style="text-align:center;margin:0 0 18px">
         <div style="font-size:2.2rem;font-weight:900;color:var(--brand-lime);font-variant-numeric:tabular-nums" id="secfund-total">0,00 $</div>
-        <div style="color:var(--brand-muted);font-size:.85rem">solde estimé en direct</div>
+        <div style="color:var(--brand-muted);font-size:.85rem">solde selon le journal (montants réservés moins sinistres payés)</div>
       </div>
       <div id="secfund-breakdown" style="display:grid;gap:8px"></div>
       <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)" id="secfund-note">
@@ -166,7 +174,7 @@
 
     <div class="section-title">Méthode de calcul</div>
     <div class="panel note" id="impact-note">
-      Les montants sont calculés automatiquement à partir des livraisons payées. Les versements réels doivent être rapprochés et confirmés par l'administration.
+      Chaque paiement capturé (livraison ou trajet) écrit au journal ce qu'il finance : la part du livreur ou du conducteur, les frais Stripe réels, puis chaque poste. Les montants de cette page sont la somme de ce journal. L'argent des postes reste sur le compte Stripe de PorteàPorte, réservé à ces usages.
     </div>
 
     <div class="section-title">Concours et tirages</div>
@@ -233,42 +241,37 @@
       const d=new Date(value+'T00:00:00Z');
       return d.toLocaleDateString('fr-CA',{month:'long',year:'numeric',timeZone:'UTC'});
     }
-    async function loadRepartition() {
-      try {
-        const r = await fetch('/api/platform?endpoint=platform-settings-get');
-        const out = await r.json();
-        const s = out.settings || {};
-        const canon = window.PAP_PLATFORM_SETTINGS;
-        const POSTES = canon
-          ? canon.platformAllocationPosts(s, { includeZero: false }).map(p => ({ icon: p.emoji, name: p.label, key: p.key, pct: p.pct, hl: p.key === 'pct_livreur', cause: p.key === 'pct_communaute' }))
-          : [
-            { icon: '🚗', name: 'Livreur québécois', key: 'pct_livreur', pct: 60, hl: true },
-            { icon: '💳', name: 'Frais Stripe (traitement des paiements)', key: 'pct_stripe', pct: 7 },
-            { icon: '🔧', name: 'Infrastructure & développement', key: 'pct_developpement', pct: 5 },
-            { icon: '🛡️', name: 'Protection colis', key: 'pct_protection', pct: 10 },
-            { icon: '🆘', name: 'Fonds d\'urgence', key: 'pct_urgence', pct: 6 },
-            { icon: '💚', name: 'Communauté (organismes d\'ici)', key: 'pct_communaute', pct: 5, cause: true },
-            { icon: '💪', name: 'Réserve / pérennité', key: 'pct_profit', pct: 7 }
-          ];
-        const ticket = Number(s.ticket_moyen_cad) || 15;
-        const html = POSTES.map(p => {
-          const pct = Number(p.pct);
-          const dollars = (ticket * pct / 100).toFixed(2);
-          const bg = p.hl ? 'rgba(93,191,255,.12)' : p.cause ? 'rgba(255,107,157,.08)' : 'rgba(255,255,255,.03)';
-          const border = p.hl ? '#5dbfff' : p.cause ? '#ff6b9d' : 'transparent';
-          return `<div style="display:grid;grid-template-columns:36px 1fr 70px 90px;gap:12px;align-items:center;padding:12px 16px;background:${bg};border-radius:8px;border-left:3px solid ${border}">
-            <div style="font-size:1.3rem">${p.icon}</div>
-            <div style="font-weight:700;color:#fff;font-size:.92rem">${p.name}</div>
-            <div style="color:var(--brand-muted);font-size:.88rem;text-align:right;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</div>
-            <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${dollars} $</div>
-          </div>`;
-        }).join('');
-        document.getElementById('repartition-table').innerHTML = html + `<div style="padding:14px 16px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;color:#fff;font-weight:800"><span>📦 Total sur ticket moyen ${ticket} $</span><span style="color:var(--brand-cyan)">${ticket.toFixed(2)} $</span></div>`;
-      } catch (e) {
-        document.getElementById('repartition-table').innerHTML = `<div style="color:#ff9999;text-align:center;padding:20px">Répartition temporairement indisponible.</div>`;
+    const escT=(v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const ICONES={livreur:'🚗',conducteur:'🚗',stripe:'💳',protection:'🛡️',urgence:'🆘',communaute:'💚',developpement:'🔧',marketing:'📢',operations:'🏛️',profit:'💪',securite:'🛡️',dons:'❤️',developpeur:'💻',deficit:'➖'};
+    // Affiche les lignes d'une répartition (cents) : la somme égale le montant payé, au cent près.
+    function lignesRepartition(rep){
+      const total=rep.montantPayeCents||0;
+      return rep.lignes.filter(l=>l.cents!==0||l.poste==='livreur'||l.poste==='conducteur').map(l=>{
+        const pct=total?Math.round(l.cents/total*1000)/10:0;
+        const fort=l.poste==='livreur'||l.poste==='conducteur';
+        return `<div style="display:grid;grid-template-columns:36px 1fr 70px 90px;gap:12px;align-items:center;padding:12px 16px;background:${fort?'rgba(93,191,255,.12)':l.poste==='communaute'?'rgba(255,107,157,.08)':'rgba(255,255,255,.03)'};border-radius:8px;border-left:3px solid ${fort?'#5dbfff':'transparent'}">
+          <div style="font-size:1.3rem">${ICONES[l.poste]||'•'}</div>
+          <div><div style="font-weight:700;color:#fff;font-size:.92rem">${escT(l.label)}</div><div style="color:var(--brand-muted);font-size:.78rem">${escT(l.detail||'')}</div></div>
+          <div style="color:var(--brand-muted);font-size:.88rem;text-align:right;font-variant-numeric:tabular-nums">${pct.toFixed(1).replace('.',',')} %</div>
+          <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${money(l.cents)}</div>
+        </div>`;
+      }).join('')+`<div style="padding:14px 16px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;color:#fff;font-weight:800"><span>Total payé</span><span style="color:var(--brand-cyan)">${money(rep.total)}</span></div>`;
+    }
+    function afficherRepartition(impact){
+      const ex=impact&&impact.exemples;
+      if(ex&&ex.livraison) document.getElementById('repartition-table').innerHTML=lignesRepartition(ex.livraison);
+      if(ex&&ex.covoiturage) document.getElementById('ride-redist-table').innerHTML=lignesRepartition(ex.covoiturage);
+      const j=impact&&impact.repartition_reelle;
+      const jt=document.getElementById('journal-table');
+      if(j&&j.paiements>0&&jt){
+        const postes=Object.values(j.postes||{}).sort((a,b)=>a.sorte.localeCompare(b.sorte)||b.cents-a.cents);
+        jt.innerHTML=postes.map(p=>`<div style="display:grid;grid-template-columns:36px 1fr 110px;gap:12px;align-items:center;padding:10px 16px;background:rgba(255,255,255,.03);border-radius:8px">
+          <div style="font-size:1.2rem">${ICONES[p.poste]||'•'}</div>
+          <div style="font-weight:700;color:#fff;font-size:.9rem">${escT(p.label)} <span style="color:var(--brand-muted);font-weight:400">· ${p.sorte==='covoiturage'?'covoiturage':'livraison'}</span></div>
+          <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${money(p.cents)}</div></div>`).join('')
+          +`<div style="padding:14px 16px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;color:#fff;font-weight:800"><span>${j.paiements} paiement(s) capturé(s)</span><span style="color:var(--brand-cyan)">${money(j.montant_cents)}</span></div>`;
       }
     }
-    loadRepartition();
 
     async function loadImpact(){
       try{
@@ -279,26 +282,13 @@
         document.getElementById('impact-month').textContent=monthLabel(impact.month);
         document.getElementById('impact-generated').textContent='Mise à jour '+new Date(impact.generated_at).toLocaleString('fr-CA');
         document.getElementById('impact-pool').textContent=money(impact.totals.donation_pool_cents);
-        document.getElementById('impact-deliveries').textContent=impact.totals.deliveries_count||0;
-        document.getElementById('impact-rate').textContent=`${impact.totals.donation_rate_percent}% de la commission plateforme`;
+        document.getElementById('impact-deliveries').textContent=(impact.repartition_reelle&&impact.repartition_reelle.paiements)||0;
+        afficherRepartition(impact);
         document.getElementById('impact-note').textContent=impact.note;
-        // Répartition de la commission covoiturage
-        const esc=(s)=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-        const redist=impact.ride_redistribution||[];
-        const rt=document.getElementById('ride-redist-table');
-        if(rt&&redist.length){
-          rt.innerHTML=redist.map(p=>{
-            const pct=Number(p.pct)||0;
-            return `<div style="display:grid;grid-template-columns:36px 1fr 70px;gap:12px;align-items:center;padding:12px 16px;background:rgba(255,255,255,.03);border-radius:8px">
-              <div style="font-size:1.3rem">${esc(p.emoji||'•')}</div>
-              <div style="font-weight:700;color:#fff;font-size:.92rem">${esc(p.label)}</div>
-              <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${pct.toFixed(1)} %</div>
-            </div>`;
-          }).join('');
-        }
+        const esc=(v)=>escT(v);
         const orgs=impact.allocations||[];
         // Show beta notice if no deliveries yet
-        if(!impact.totals.deliveries_count){
+        if(!(impact.repartition_reelle&&impact.repartition_reelle.paiements)){
           document.getElementById('beta-notice').style.display='block';
         }
         // Compteur jours sans réclamation plateforme
@@ -306,10 +296,11 @@
         if(out.protection_fund){
           const pf=out.protection_fund;
           const totalEl=document.getElementById('secfund-total');
-          if(totalEl) totalEl.textContent=money(pf.total_cents||0);
+          if(totalEl) totalEl.textContent=money(pf.net_balance_cents||0);
           const rows=[
-            {icon:'📦',name:'Part livraison',sub:`${((pf.insurance_pct||0)*100).toFixed(1)}% des livraisons capturées`,cents:pf.from_deliveries_cents||0},
-            {icon:'🚗',name:'Part covoiturage',sub:`${(pf.ride_securite_pct||0)}% de la commission covoiturage capturée`,cents:pf.from_covoiturage_cents||0},
+            {icon:'📦',name:'Part livraison',sub:pf.profit_to_insurance?'Postes Protection colis + Réserve (bêta), au journal':'Poste Protection colis, au journal',cents:pf.from_deliveries_cents||0},
+            {icon:'🚗',name:'Part covoiturage',sub:'Poste Sécurité des frais de service, au journal',cents:pf.from_covoiturage_cents||0},
+            {icon:'➖',name:'Sinistres payés',sub:`${pf.payouts_count||0} réclamation(s) payée(s)`,cents:-(pf.payouts_total_cents||0)},
             {icon:'💙',name:'Apports directs PorteàPorte',sub:'Argent ajouté par la plateforme',cents:pf.topup_cents||0}
           ];
           const bd=document.getElementById('secfund-breakdown');
