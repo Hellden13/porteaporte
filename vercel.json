@@ -34,6 +34,8 @@
         { "source": "/missions.html", "destination": "/dashboard-livreur.html", "permanent": false },
         { "source": "/reservations.html", "destination": "/dashboard-covoiturage.html", "permanent": false },
         { "source": "/trajets.html", "destination": "/dashboard-covoiturage.html", "permanent": false },
+        { "source": "/trajets", "destination": "/covoiturage.html", "permanent": false },
+        { "source": "/trajets/", "destination": "/covoiturage.html", "permanent": false },
         { "source": "/demo.html",            "destination": "/404.html", "permanent": false },
         { "source": "/admin/admin-legacy.html", "destination": "/404.html", "permanent": false },
         { "source": "/admin-dashboard.html",    "destination": "/404.html", "permanent": false },

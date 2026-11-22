@@ -396,10 +396,69 @@ describe('pages et migration', () => {
     });
   }
 
-  test('admin : « Supprimé le … » affiché d\'après la marque, pas de bouton', () => {
+  // Exécute le vrai rendu de « Trajets récents » (loadCovoiturage) avec un faux document.
+  function rendreTrajetsAdmin(rides) {
+    const vm = require('node:vm');
     const html = lire('admin/dashboard-admin.html');
-    assert.match(html, /\(rid && !r\.supprime\)/);
-    assert.match(html, /'Supprimé le '/);
+    const extraire = (debut) => {
+      const i = html.indexOf(debut);
+      assert.ok(i > 0, debut);
+      let n = 0, j = html.indexOf('{', i);
+      for (let k = j; k < html.length; k++) {
+        if (html[k] === '{') n++;
+        else if (html[k] === '}' && --n === 0) return html.slice(i, k + 1);
+      }
+      throw new Error('fin introuvable');
+    };
+    const els = {};
+    const ctx = {
+      document: { getElementById: (id) => (els[id] ||= { id, innerHTML: '', textContent: '', style: {} }) },
+      AUTH_API: { getUser: () => ({ session: { access_token: 't' } }) },
+      fetch: async () => ({ ok: true, json: async () => ({ rides, bookings: [], reports: [] }) }),
+      Date, Number, String, Math, JSON, console,
+    };
+    vm.createContext(ctx);
+    vm.runInContext([extraire('function afEsc('), extraire('function afId('), extraire('async function loadCovoiturage()')].join('\n'), ctx);
+    return ctx.loadCovoiturage().then(() => els['cov-rides-body'].innerHTML);
+  }
+
+  test('admin : Supprimer caché si réservation active, « Supprimé le … » sinon, bouton retour', async () => {
+    const id = (n) => `a0000000-0000-4000-8000-00000000000${n}`;
+    const out = await rendreTrajetsAdmin([
+      { id: id(1), start_city: 'A', end_city: 'B', status: 'annule', supprime: true, supprime_le: '2026-11-20T10:00:00Z', supprime_par: 'admin', reservations_actives: 0 },
+      { id: id(2), start_city: 'C', end_city: 'D', status: 'publie', reservations_actives: 1 },
+      { id: id(3), start_city: 'E', end_city: 'F', status: 'publie', reservations_actives: 0, is_return_trip: true, return_departure_time: '2026-12-01T21:00:00Z' },
+      { id: id(4), start_city: 'G', end_city: 'H', status: 'publie', reservations_actives: null },
+    ]);
+    const lignes = out.split('<tr>').slice(1);
+    assert.equal(lignes.length, 4);
+    assert.match(lignes[0], /Supprimé le 2026-11-20 \(admin\)/);
+    assert.doesNotMatch(lignes[0], /adminSupprimerTrajet/);
+    assert.doesNotMatch(lignes[1], /adminSupprimerTrajet/);
+    assert.match(lignes[1], /1 réservation\(s\) active\(s\)/);
+    assert.match(lignes[2], /adminSupprimerTrajet/);
+    assert.match(lignes[2], /adminCreerRetour/);
+    assert.doesNotMatch(lignes[3], /adminSupprimerTrajet/, 'lecture impossible : bouton caché par prudence');
+  });
+
+  test('ride-admin : compte les réservations actives de chaque trajet', async () => {
+    const R1 = 'a0000000-0000-4000-8000-0000000000d1';
+    const R2 = 'a0000000-0000-4000-8000-0000000000d2';
+    global.fetch = async (url) => {
+      if (url.includes('/auth/v1/user')) return rep({ id: ADMIN });
+      if (url.includes('/rpc/check_rate_limit')) return rep(true);
+      if (url.includes('/rest/v1/profiles')) return rep([{ id: ADMIN, role: 'admin', suspendu: false }]);
+      if (url.includes('/rest/v1/ride_bookings?ride_id=in.')) {
+        assert.match(url, /status=not\.in\.\(annule_passager,annule_chauffeur,cancelled,refunded,rembourse\)/);
+        return rep([{ ride_id: R1, status: 'paye' }]);
+      }
+      if (url.includes('/rest/v1/rides?')) return rep([{ id: R1, status: 'publie' }, { id: R2, status: 'publie' }]);
+      return rep([]);
+    };
+    const res = makeRes();
+    await handler({ method: 'POST', url: '/api/platform', body: { endpoint: 'ride-admin' }, headers: { authorization: 'Bearer tok', 'content-type': 'application/json' } }, res);
+    assert.equal(res._status, 200);
+    assert.deepEqual(res._body.rides.map((r) => r.reservations_actives), [1, 0]);
   });
 
   test('aucun code n\'écrit le statut « supprime » dans rides (la base actuelle ne le permet pas)', () => {

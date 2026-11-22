@@ -20,7 +20,7 @@ const {
 
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
-  getRideSettings,
+  getRideSettings, ridePricingConfig, adminRideCreateReturn,
   rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel, rideDelete,
   rideDriverContact, rideSendMeetupMessage, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
   rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
@@ -5428,18 +5428,22 @@ module.exports = async function handler(req, res) {
     }
     if (endpoint === 'ride-settings') {
       const settings = await getRideSettings({ sbUrl, sbKey });
+      // Source unique : la même configuration que celle utilisée par calcRidePrice.
+      const pricing = ridePricingConfig(settings);
       return res.status(200).json({
         success: true,
+        pricing,
         settings: {
-          ride_platform_fee: 1.5,
-          ride_fee_threshold: 15,
-          ride_platform_fee_high: 3,
-          ride_fee_luggage: 5,
-          ride_fee_pet: 8,
-          ride_fee_stop: 3,
-          ride_fee_package_base: 8,
-          ride_fee_package_per_kg: 1.5,
           ...settings,
+          ride_platform_fee: pricing.platform_fee_low,
+          ride_fee_threshold: pricing.platform_fee_threshold,
+          ride_platform_fee_high: pricing.platform_fee_high,
+          ride_free_trips: pricing.free_trips,
+          ride_fee_luggage: pricing.fee_luggage,
+          ride_fee_pet: pricing.fee_pet,
+          ride_fee_stop: pricing.fee_stop,
+          ride_fee_package_base: pricing.fee_package_base,
+          ride_fee_package_per_kg: pricing.fee_package_per_kg,
         },
       });
     }
@@ -6763,6 +6767,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-auto-release-list')  return await adminAutoReleaseList(req, res, ctx, body);
     if (endpoint === 'active-drivers-count')     return await activeDriversCount(req, res, ctx, body);
     if (endpoint === 'admin-rides-list')         return await adminRidesList(req, res, ctx);
+    if (endpoint === 'admin-ride-create-return') return await adminRideCreateReturn(req, res, ctx, body);
     if (endpoint === 'admin-ride-fix')           return await adminRideFix(req, res, ctx, body);
     if (endpoint === 'pet-card-upsert')          return await petCardUpsert(req, res, ctx, body);
     if (endpoint === 'pet-photo-upload')         return await petPhotoUpload(req, res, ctx, body);
