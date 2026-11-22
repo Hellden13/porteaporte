@@ -462,10 +462,17 @@ describe('js/fetes.js (navigateur)', () => {
   });
 
   test('chargé sur l\'accueil (avec flocons), covoiturage et livraison ; pas de musique', () => {
-    assert.match(lire('index.html'), /<script src="\/js\/fetes\.js" data-fetes="accueil" defer><\/script>/);
+    // Numéro de version (?v=…) : force les navigateurs à reprendre le script après un changement de texte.
+    const versions = new Set();
+    const v1 = lire('index.html').match(/<script src="\/js\/fetes\.js\?v=([0-9a-z]+)" data-fetes="accueil" defer><\/script>/);
+    assert.ok(v1, 'index.html'); versions.add(v1[1]);
     for (const f of ['covoiturage.html', 'covoiturage-trajet.html', 'covoiturage-publier.html', 'livraison.html']) {
-      assert.match(lire(f), /<script src="\/js\/fetes\.js" defer><\/script>/, f);
+      const v = lire(f).match(/<script src="\/js\/fetes\.js\?v=([0-9a-z]+)" defer><\/script>/);
+      assert.ok(v, f); versions.add(v[1]);
     }
+    const v2 = lire('concours-fetes-reglement.html').match(/<script src="\/js\/reglement-fetes\.js\?v=([0-9a-z]+)" defer><\/script>/);
+    assert.ok(v2, 'règlement'); versions.add(v2[1]);
+    assert.equal(versions.size, 1, 'même version partout : ' + [...versions].join(', '));
     assert.doesNotMatch(lire('js/fetes.js'), /<audio|new Audio|\.mp3|\.ogg/i);
     assert.ok(fs.statSync(path.join(ROOT, 'js/fetes.js')).size < 12000, 'script léger (aucune image)');
     assert.doesNotMatch(lire('js/fetes.js'), /\.(png|jpe?g|gif|webp|svg)['"]/i, 'aucune image');
@@ -734,7 +741,7 @@ describe('participation d\'inscription : endpoints', () => {
     assert.match(regl, /Le concours commence le <span id="date-lancement">à venir<\/span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec\./);
     assert.match(regl, /Le tirage au sort aura lieu le mardi 5 janvier 2027 à 13 h, à Lévis, parmi toutes les participations validées\./);
     assert.match(regl, /<li>répondre dans les 7 jours suivant le premier contact\.<\/li>/);
-    assert.match(regl, /<script src="\/js\/reglement-fetes\.js" defer><\/script>/);
+    assert.match(regl, /<script src="\/js\/reglement-fetes\.js\?v=[0-9a-z]+" defer><\/script>/);
     assert.match(regl, /une carte-cadeau d'épicerie Super C d'une valeur de 100 \$\. Le prix doit être accepté tel quel\./);
     assert.match(regl, /Super C n'est ni commanditaire ni organisateur de ce concours\./);
     assert.match(regl, /reçoit automatiquement une \(1\) participation\. Limite d'une \(1\) participation par personne par ce moyen\. Aucun achat ni utilisation du service n'est requis\./);
