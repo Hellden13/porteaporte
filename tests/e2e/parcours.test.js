@@ -15,7 +15,7 @@ const ROOT = path.join(__dirname, '..', '..');
 let S, SB, ANON, SVC;
 const MARQUE = 'e2e-' + crypto.randomBytes(3).toString('hex');
 const comptes = {};
-const crees = { rides: [], bookings: [] };
+const crees = { rides: [], bookings: [], draws: [] };
 
 async function j(method, url, { token, key, body, headers } = {}) {
   const h = { 'content-type': 'application/json', ...(headers || {}) };
@@ -60,6 +60,7 @@ before(async () => {
 after(async () => {
   // Nettoyage de la base LOCALE (données de ce test seulement).
   for (const id of crees.bookings) await svc('DELETE', `/rest/v1/ride_bookings?id=eq.${id}`);
+  for (const id of crees.draws) { await svc('DELETE', `/rest/v1/draw_entries?draw_id=eq.${id}`); await svc('DELETE', `/rest/v1/monthly_draws?id=eq.${id}`); }
   for (const c of Object.values(comptes)) {
     for (const t of ['ride_bookings?passenger_id', 'rides?driver_id', 'transactions?user_id', 'transaction_audit_events?user_id', 'ride_driver_profiles?user_id', 'notifications?user_id']) {
       await svc('DELETE', `/rest/v1/${t}=eq.${c.id}`);
@@ -165,6 +166,28 @@ describe('parcours complet (local)', () => {
       const r = await api(e, { ride_id: allerId }, comptes.passager.token);
       assert.equal(r.status, 403, e);
     }
+  });
+
+  test('concours des Fêtes : « Lancer » dans l\'admin, puis l\'API publique voit le lancement (cache ≤ 60 s)', async () => {
+    const pub = () => j('GET', `${S.adresse}/api/platform?endpoint=concours-fetes-public`);
+    const existant = await svc('GET', '/rest/v1/monthly_draws?eligibility_badge_slug=eq.concours-fetes-2026&select=id,created_at');
+    const l = await api('admin-concours-fetes', { mode: 'lancer' }, comptes.admin.token);
+    assert.equal(l.status, 200, JSON.stringify(l.d));
+    if (!existant.d?.length) crees.draws.push(l.d.concours.id);
+    const lanceLe = existant.d?.[0]?.created_at || l.d.concours.created_at;
+    const r = await pub();
+    assert.equal(r.status, 200);
+    assert.equal(r.d.concours_ouvert, true);
+    assert.equal(r.d.theme_actif, true);
+    assert.equal(Date.parse(r.d.lance_le), Date.parse(lanceLe));
+    const cc = r.headers.get('cache-control');
+    assert.match(cc, /s-maxage=([1-9]|[1-5]\d|60)(\D|$)/, cc);
+    assert.match(cc, /(^|[ ,])max-age=0(\D|$)/, cc);
+    assert.doesNotMatch(cc, /stale-/, cc);
+    // « Lancer » une 2e fois ne change pas la date de lancement.
+    const re = await api('admin-concours-fetes', { mode: 'lancer' }, comptes.admin.token);
+    assert.equal(re.d.deja, true);
+    assert.equal(Date.parse((await pub()).d.lance_le), Date.parse(lanceLe));
   });
 
   test('aucun appel hors du Mac (production, courriels, Stripe réel)', () => {

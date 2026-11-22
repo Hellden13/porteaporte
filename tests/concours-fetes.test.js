@@ -817,3 +817,76 @@ describe('règlement : date du lancement automatique', () => {
     assert.equal(annule._body.lance_le, null);
   });
 });
+
+// ─── Bug du 22 nov. 2026 : lancé dans l'admin, mais le public disait « non lancé » (cache de 5 min) ─────
+describe('lancement par l\'admin → endpoint public (même source, cache ≤ 60 s)', () => {
+  // Petite base en mémoire partagée : ce que l'admin écrit, le public le relit.
+  function baseMemoire() {
+    const draws = []; const audit = [];
+    const fetchImpl = async (url, o = {}) => {
+      const m = o.method || 'GET';
+      if (url.includes('/auth/v1/user')) return rep({ id: U(50) });
+      if (url.includes('/rpc/check_rate_limit')) return rep(true);
+      if (url.includes('/rest/v1/profiles')) return rep([{ id: U(50), role: 'admin', suspendu: false }]);
+      if (url.includes('/rest/v1/monthly_draws') && m === 'POST') {
+        const ligne = { id: DRAW, created_at: new Date(Date.now()).toISOString(), ...JSON.parse(o.body) };
+        draws.push(ligne); return rep([ligne], true, 201);
+      }
+      if (url.includes('/rest/v1/monthly_draws')) {
+        return rep(url.includes('eligibility_badge_slug=eq.concours-fetes-2026') ? draws.filter((d) => d.eligibility_badge_slug === 'concours-fetes-2026') : []);
+      }
+      if (url.includes('/rest/v1/transaction_audit_events') && m === 'POST') { audit.push(JSON.parse(o.body)); return rep([], true, 201); }
+      if (url.includes('/rest/v1/transaction_audit_events')) return rep(audit.filter((e) => url.includes(`event_type=eq.${e.event_type}`)).reverse());
+      return rep([]);
+    };
+    return { draws, audit, fetchImpl, ecritures: [] };
+  }
+  const publicGet = (sb) => appel(sb, 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+
+  test('avant le lancement : non lancé ; après le clic « Lancer » : ouvert, thème actif, date du clic', async () => {
+    Date.now = () => Date.parse('2026-11-22T11:29:34-05:00');
+    const sb = baseMemoire();
+    const avant = await publicGet(sb);
+    assert.deepEqual([avant._body.concours_ouvert, avant._body.theme_actif, avant._body.lance_le], [false, false, null]);
+    const l = await appel(sb, 'admin-concours-fetes', { mode: 'lancer' });
+    assert.equal(l._status, 200);
+    const apres = await publicGet(sb);
+    assert.equal(apres._status, 200);
+    assert.equal(apres._body.concours_ouvert, true);
+    assert.equal(apres._body.theme_actif, true);
+    assert.equal(apres._body.lance_le, '2026-11-22T16:29:34.000Z');
+    // Seulement des champs publics.
+    assert.deepEqual(Object.keys(apres._body).sort(), ['concours_ouvert', 'fin', 'fin_theme', 'lance_le', 'prix', 'reglement', 'theme_actif']);
+  });
+
+  test('« Lancer » une 2e fois : rien n\'est recréé, la date de lancement ne change pas', async () => {
+    Date.now = () => Date.parse('2026-11-22T11:29:34-05:00');
+    const sb = baseMemoire();
+    await appel(sb, 'admin-concours-fetes', { mode: 'lancer' });
+    Date.now = () => Date.parse('2026-11-25T09:00:00-05:00');
+    const re = await appel(sb, 'admin-concours-fetes', { mode: 'lancer' });
+    assert.equal(re._body.deja, true);
+    assert.equal(sb.draws.length, 1);
+    assert.equal((await publicGet(sb))._body.lance_le, '2026-11-22T16:29:34.000Z');
+  });
+
+  test('interrupteur du thème coupé par l\'admin : le public le voit aussi', async () => {
+    Date.now = () => Date.parse('2026-12-10T12:00:00-05:00');
+    const sb = baseMemoire();
+    await appel(sb, 'admin-concours-fetes', { mode: 'lancer' });
+    await appel(sb, 'admin-concours-fetes', { mode: 'theme', actif: false });
+    const r = await publicGet(sb);
+    assert.deepEqual([r._body.concours_ouvert, r._body.theme_actif], [true, false]);
+  });
+
+  test('cache : 60 s au maximum au CDN, rien dans le navigateur', async () => {
+    const r = await publicGet(baseMemoire());
+    const cc = r._h['Cache-Control'];
+    assert.equal(cc, C.CACHE_PUBLIC);
+    const s = Number((cc.match(/s-maxage=(\d+)/) || [])[1]);
+    const navigateur = Number((cc.match(/(?:^|[ ,])max-age=(\d+)/) || [])[1]);
+    assert.ok(s > 0 && s <= 60, `s-maxage=${s}`);
+    assert.equal(navigateur, 0);
+    assert.doesNotMatch(cc, /stale-while-revalidate|stale-if-error/);
+  });
+});
