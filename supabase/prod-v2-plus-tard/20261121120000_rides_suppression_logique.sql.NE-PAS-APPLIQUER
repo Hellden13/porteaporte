@@ -1,3 +1,10 @@
+-- ⚠️ NE PAS APPLIQUER sur l'ancien projet (miqrircrfpzkmvvacgwt).
+-- Gardée pour le futur projet porteaporte-prod-v2 seulement, et seulement si Denis le décide.
+-- Depuis le 22 nov. 2026, le code n'en a PLUS besoin : « Supprimer » = statut annule + marque
+-- « ride_deleted » dans transaction_audit_events. Si on applique ceci un jour, il faudra aussi
+-- adapter lib/_rides.js (rideDelete) pour utiliser le statut supprime.
+-- Le fichier est hors de supabase/migrations et sans extension .sql pour que « supabase db push » l'ignore.
+
 -- Lot 1 admin : suppression logique des trajets de covoiturage.
 -- À APPLIQUER PAR DENIS (éditeur SQL Supabase). Relançable sans risque (idempotente).
 --  1. Nouveau statut « supprime » permis sur rides.status.

@@ -3941,9 +3941,9 @@ async function rideActiveCities(req, res, ctx) {
   });
   let rides = r.ok ? await r.json() : [];
 
-  // Fallback : sans filtre status si vide
+  // Fallback si vide : jamais les trajets annulés (dont les supprimés)
   if (!rides.length || !r.ok) {
-    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=neq.supprime&select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
+    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=neq.annule&select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (r2.ok) rides = await r2.json();

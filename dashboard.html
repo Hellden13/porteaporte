@@ -607,13 +607,26 @@
 
   // ─── CONDUCTEUR : mes trajets publiés + capture paiement ──────────────
   async function loadDriverRides(session) {
-    const { data: rides } = await db.from('rides')
+    const { data: tousRides } = await db.from('rides')
       .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,is_recurring')
       .eq('driver_id', session.user.id)
-      .neq('status', 'supprime')
       .order('departure_time', { ascending: false })
-      .limit(20);
-    if (!rides?.length) return;
+      .limit(40);
+    // Trajets supprimés (annulés + marque « ride_deleted » au journal) : jamais dans « Mes trajets ».
+    let supprimes = new Set();
+    if ((tousRides || []).some(r => r.status === 'annule')) {
+      try {
+        const { data: marques } = await db.from('transaction_audit_events')
+          .select('evidence')
+          .eq('event_type', 'ride_deleted')
+          .eq('status', 'supprime')
+          .eq('user_id', session.user.id)
+          .limit(1000);
+        supprimes = new Set((marques || []).map(m => m.evidence && m.evidence.ride_id).filter(Boolean));
+      } catch (e) { /* journal illisible : les trajets restent affichés comme annulés */ }
+    }
+    const rides = (tousRides || []).filter(r => !(r.status === 'annule' && supprimes.has(r.id))).slice(0, 20);
+    if (!rides.length) return;
     window.__drvRides = rides;
 
     document.getElementById('sectionConducteur').style.display = 'block';

@@ -29,22 +29,39 @@ function makeRes() {
 }
 
 // Faux Supabase : enregistre chaque appel (méthode + URL + corps).
-function supabase({ moi, role = 'conducteur', ride = { id: RIDE, driver_id: DRIVER, status: 'publie' }, bookings = [], bookingsOk = true, bookingsBody = {}, patchOk = true, patchErr = {} }) {
+// marques = événements « ride_deleted » déjà au journal ; bookingsApres = réservations vues après le changement.
+function supabase({
+  moi, role = 'conducteur', ride = { id: RIDE, driver_id: DRIVER, status: 'publie' },
+  bookings = [], bookingsOk = true, bookingsBody = {}, bookingsApres = null, bookingsBrut = undefined,
+  marques = [], marquesOk = true, marqueOk = true, patchOk = true, patchLignes = 1,
+}) {
   const appels = [];
+  let lecturesReservations = 0;
   const fetchImpl = async (url, opts = {}) => {
     const method = opts.method || 'GET';
     appels.push({ method, url, body: opts.body ? JSON.parse(opts.body) : null });
     if (url.includes('/auth/v1/user')) return rep({ id: moi });
     if (url.includes('/rpc/check_rate_limit')) return rep(true);
     if (url.includes('/rest/v1/profiles')) return rep([{ id: moi, role, suspendu: false }]);
-    if (url.includes('/rest/v1/rides') && method === 'PATCH') return patchOk ? rep([{ ...ride, status: 'supprime' }]) : rep(patchErr, false, 400);
+    if (url.includes('/rest/v1/transaction_audit_events')) {
+      if (method === 'POST') return marqueOk ? rep([{ id: 'marque-1' }], true, 201) : rep({}, false, 500);
+      if (method === 'PATCH') return rep([]);
+      return marquesOk ? rep(marques) : rep({}, false, 500);
+    }
+    if (url.includes('/rest/v1/rides') && method === 'PATCH') {
+      if (!patchOk) return rep({ message: 'erreur' }, false, 400);
+      return rep(Array.from({ length: patchLignes }, () => ({ ...ride, status: JSON.parse(opts.body).status })));
+    }
     if (url.includes('/rest/v1/rides')) return rep(ride ? [ride] : []);
     if (url.includes('/rest/v1/ride_bookings')) {
+      lecturesReservations += 1;
       if (!bookingsOk) return rep(bookingsBody, false, 500);
+      if (bookingsBrut !== undefined) return rep(bookingsBrut);
+      const liste = lecturesReservations > 1 && bookingsApres ? bookingsApres : bookings;
       // Le serveur demande seulement les réservations qui ne sont pas annulées ou remboursées.
       const m = url.match(/status=not\.in\.\(([^)]*)\)/);
       const fermes = m ? m[1].split(',') : [];
-      return rep(bookings.filter((b) => !fermes.includes(b.status)));
+      return rep(liste.filter((b) => !fermes.includes(b.status)));
     }
     return rep([]);
   };
@@ -61,35 +78,54 @@ async function supprimer(ctxSb, rideId = RIDE) {
 
 const patches = (appels) => appels.filter((a) => a.method === 'PATCH' && a.url.includes('/rest/v1/rides'));
 const deletes = (appels) => appels.filter((a) => a.method === 'DELETE');
+const ajoutsMarque = (appels) => appels.filter((a) => a.method === 'POST' && a.url.includes('/rest/v1/transaction_audit_events'));
+const echecsMarque = (appels) => appels.filter((a) => a.method === 'PATCH' && a.url.includes('/rest/v1/transaction_audit_events'));
+const ecritures = (appels) => appels.filter((a) => a.method !== 'GET' && !a.url.includes('/rpc/check_rate_limit'));
+const MARQUE = { id: 'm0', created_at: '2026-11-20T10:00:00Z', actor_id: DRIVER, user_id: DRIVER, evidence: { ride_id: RIDE, supprime_le: '2026-11-20T10:00:00Z', par: 'conducteur' } };
 
 describe('ride-delete — qui peut supprimer', () => {
-  test('propriétaire : suppression logique (statut supprime + date + auteur), jamais un DELETE', async () => {
+  test('propriétaire : statut annule + marque au journal (date, auteur), jamais un DELETE', async () => {
     const sb = supabase({ moi: DRIVER, bookings: [{ id: 'b1', status: 'annule_passager' }] });
     const res = await supprimer(sb);
     assert.equal(res._status, 200);
-    assert.equal(res._body.status, 'supprime');
+    assert.equal(res._body.supprime, true);
+    assert.equal(res._body.status, 'annule');
+    const m = ajoutsMarque(sb.appels);
+    assert.equal(m.length, 1);
+    assert.equal(m[0].body.event_type, 'ride_deleted');
+    assert.equal(m[0].body.status, 'supprime');
+    assert.equal(m[0].body.actor_id, DRIVER);
+    assert.equal(m[0].body.user_id, DRIVER);
+    assert.equal(m[0].body.evidence.ride_id, RIDE);
+    assert.equal(m[0].body.evidence.statut_avant, 'publie');
+    assert.ok(!Number.isNaN(Date.parse(m[0].body.evidence.supprime_le)));
     const p = patches(sb.appels);
     assert.equal(p.length, 1);
-    assert.equal(p[0].body.status, 'supprime');
-    assert.ok(!Number.isNaN(Date.parse(p[0].body.supprime_le)));
-    assert.equal(p[0].body.supprime_par, DRIVER);
-    assert.match(p[0].url, /id=eq\.a0000000-0000-4000-8000-000000000001/);
+    assert.deepEqual(p[0].body, { status: 'annule' });
+    assert.match(p[0].url, /id=eq\.a0000000-0000-4000-8000-000000000001&status=eq\.publie/);
+    // La marque est écrite avant de toucher au trajet.
+    assert.ok(sb.appels.indexOf(m[0]) < sb.appels.indexOf(p[0]));
     assert.deepEqual(deletes(sb.appels), []);
+    assert.deepEqual(echecsMarque(sb.appels), []);
   });
 
-  test('non-propriétaire : 403, rien modifié', async () => {
+  test('non-propriétaire : 403, rien écrit', async () => {
     const sb = supabase({ moi: AUTRE });
     const res = await supprimer(sb);
     assert.equal(res._status, 403);
-    assert.deepEqual(patches(sb.appels), []);
+    assert.deepEqual(ecritures(sb.appels), []);
   });
 
-  test('admin : peut supprimer le trajet d\'un autre', async () => {
+  test('admin : peut supprimer le trajet d\'un autre (auteur = admin, conducteur = propriétaire)', async () => {
     const sb = supabase({ moi: ADMIN, role: 'admin' });
     const res = await supprimer(sb);
     assert.equal(res._status, 200);
     assert.equal(res._body.par, 'admin');
-    assert.equal(patches(sb.appels)[0].body.supprime_par, ADMIN);
+    const m = ajoutsMarque(sb.appels)[0];
+    assert.equal(m.body.actor_id, ADMIN);
+    assert.equal(m.body.user_id, DRIVER);
+    assert.equal(m.body.evidence.par, 'admin');
+    assert.equal(patches(sb.appels).length, 1);
   });
 
   test('sans connexion : 401', async () => {
@@ -105,27 +141,41 @@ describe('ride-delete — qui peut supprimer', () => {
     const sb = supabase({ moi: DRIVER });
     const r2 = await supprimer(sb, "x');drop");
     assert.equal(r2._status, 400);
-    assert.deepEqual(patches(sb.appels), []);
+    assert.deepEqual(ecritures(sb.appels), []);
   });
 
-  test('déjà supprimé : rien de plus', async () => {
-    const sb = supabase({ moi: DRIVER, ride: { id: RIDE, driver_id: DRIVER, status: 'supprime' } });
+  test('déjà supprimé (annulé + marque) : rien de plus', async () => {
+    const sb = supabase({ moi: DRIVER, ride: { id: RIDE, driver_id: DRIVER, status: 'annule' }, marques: [MARQUE] });
     const res = await supprimer(sb);
     assert.equal(res._status, 200);
     assert.equal(res._body.deja_supprime, true);
-    assert.deepEqual(patches(sb.appels), []);
+    assert.deepEqual(ecritures(sb.appels), []);
+  });
+
+  test('trajet annulé normalement (sans marque) : peut être supprimé', async () => {
+    const sb = supabase({ moi: DRIVER, ride: { id: RIDE, driver_id: DRIVER, status: 'annule' } });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 200);
+    assert.equal(ajoutsMarque(sb.appels).length, 1);
+  });
+
+  test('marque sur un trajet republié depuis : ce n\'est plus « supprimé »', async () => {
+    const sb = supabase({ moi: DRIVER, marques: [MARQUE] });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 200);
+    assert.notEqual(res._body.deja_supprime, true);
   });
 });
 
-describe('ride-delete — réservations', () => {
+describe('ride-delete — réservations et pannes', () => {
   for (const statut of ['paye', 'confirme', 'en_attente', 'driver_completed', 'complete']) {
-    test(`réservation « ${statut} » : refusé, le message dit d'annuler`, async () => {
+    test(`réservation « ${statut} » : refusé, le message dit d'annuler, rien écrit`, async () => {
       const sb = supabase({ moi: DRIVER, bookings: [{ id: 'b1', status: statut }] });
       const res = await supprimer(sb);
       assert.equal(res._status, 409);
       assert.equal(res._body.code, 'reservation_active');
       assert.match(res._body.error, /Annule-le plutôt/);
-      assert.deepEqual(patches(sb.appels), []);
+      assert.deepEqual(ecritures(sb.appels), []);
     });
   }
 
@@ -133,35 +183,69 @@ describe('ride-delete — réservations', () => {
     const sb = supabase({ moi: ADMIN, role: 'admin', bookings: [{ id: 'b1', status: 'paye' }] });
     const res = await supprimer(sb);
     assert.equal(res._status, 409);
-    assert.deepEqual(patches(sb.appels), []);
+    assert.deepEqual(ecritures(sb.appels), []);
   });
 
   test('réservations illisibles : refus (échec fermé)', async () => {
     const sb = supabase({ moi: DRIVER, bookingsOk: false });
     const res = await supprimer(sb);
     assert.equal(res._status, 502);
-    assert.deepEqual(patches(sb.appels), []);
+    assert.deepEqual(ecritures(sb.appels), []);
   });
 
   test('erreur HTTP avec une liste vide : refus quand même (jamais « aucune réservation » par défaut)', async () => {
     const sb = supabase({ moi: DRIVER, bookingsOk: false, bookingsBody: [] });
     const res = await supprimer(sb);
     assert.equal(res._status, 502);
+    assert.deepEqual(ecritures(sb.appels), []);
+  });
+
+  test('réponse « OK » mais pas une liste de réservations : refus quand même', async () => {
+    const sb = supabase({ moi: DRIVER, bookingsBrut: { message: 'inattendu' } });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 502);
+    assert.deepEqual(ecritures(sb.appels), []);
+  });
+
+  test('journal illisible : refus, rien écrit', async () => {
+    const sb = supabase({ moi: DRIVER, marquesOk: false });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 502);
+    assert.deepEqual(ecritures(sb.appels), []);
+  });
+
+  test('marque impossible à écrire : le trajet n\'est pas touché', async () => {
+    const sb = supabase({ moi: DRIVER, marqueOk: false });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 502);
     assert.deepEqual(patches(sb.appels), []);
   });
 
-  test('garde de la base (réservation arrivée entre-temps) : message « annule-le »', async () => {
-    const sb = supabase({ moi: DRIVER, patchOk: false, patchErr: { message: 'Trajet avec une réservation payée ou en cours : annule-le plutôt' } });
+  test('trajet changé entre-temps (0 ligne modifiée) : 409, marque mise en échec', async () => {
+    const sb = supabase({ moi: DRIVER, patchLignes: 0 });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 409);
+    assert.equal(echecsMarque(sb.appels).length, 1);
+    assert.deepEqual(echecsMarque(sb.appels)[0].body, { status: 'echec' });
+  });
+
+  test('changement refusé par la base : 409, marque mise en échec', async () => {
+    const sb = supabase({ moi: DRIVER, patchOk: false });
+    const res = await supprimer(sb);
+    assert.equal(res._status, 409);
+    assert.equal(echecsMarque(sb.appels).length, 1);
+  });
+
+  test('réservation arrivée pendant la suppression : trajet remis comme avant, marque en échec', async () => {
+    const sb = supabase({ moi: DRIVER, bookingsApres: [{ id: 'b9', status: 'en_attente' }] });
     const res = await supprimer(sb);
     assert.equal(res._status, 409);
     assert.match(res._body.error, /annule-le plutôt/);
-  });
-
-  test('migration non appliquée : erreur claire', async () => {
-    const sb = supabase({ moi: DRIVER, patchOk: false, patchErr: { message: 'violates check constraint "rides_status_check"' } });
-    const res = await supprimer(sb);
-    assert.equal(res._status, 502);
-    assert.match(res._body.error, /migration/);
+    const p = patches(sb.appels);
+    assert.equal(p.length, 2);
+    assert.deepEqual(p[1].body, { status: 'publie' });
+    assert.match(p[1].url, /status=eq\.annule/);
+    assert.equal(echecsMarque(sb.appels).length, 1);
   });
 });
 
@@ -220,26 +304,75 @@ describe('trajet supprimé caché, trajets passés cachés', () => {
     assert.ok(ids.includes('r-recurrent'));
   });
 
-  test('« Mes trajets » (ride-my-rides et tableau covoiturage) : jamais un trajet supprimé', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'lib', '_rides.js'), 'utf8');
-    assert.match(src, /rides\?driver_id=eq\.\$\{ctx\.session\.id\}&status=neq\.supprime/);
-    assert.match(src, /rides\?driver_id=eq\.\$\{uid\}&status=neq\.supprime/);
-    const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
-    assert.match(dash, /\.neq\('status', 'supprime'\)/);
-  });
-
-  test('ride-my-rides demande bien le filtre au serveur', async () => {
+  // Faux Supabase pour les listes : un trajet supprimé (annulé + marque), un annulé normal, un publié.
+  const SUPP = 'a0000000-0000-4000-8000-0000000000aa';
+  const ANNU = 'a0000000-0000-4000-8000-0000000000bb';
+  const PUB = 'a0000000-0000-4000-8000-0000000000cc';
+  function listes(moi, role = 'conducteur') {
     const urls = [];
-    global.fetch = async (url) => {
+    global.fetch = async (url, opts = {}) => {
       urls.push(url);
-      if (url.includes('/auth/v1/user')) return rep({ id: DRIVER });
-      if (url.includes('/rest/v1/profiles')) return rep([{ id: DRIVER, role: 'conducteur', suspendu: false }]);
+      if (url.includes('/auth/v1/user')) return rep({ id: moi });
+      if (url.includes('/rpc/check_rate_limit')) return rep(true);
+      if (url.includes('/rest/v1/profiles')) return rep([{ id: moi, role, suspendu: false }]);
+      if (url.includes('/rest/v1/transaction_audit_events')) {
+        return rep([{ id: 'm1', created_at: '2026-11-20T10:00:00Z', actor_id: ADMIN, user_id: DRIVER, evidence: { ride_id: SUPP, supprime_le: '2026-11-20T10:00:00Z', par: 'admin' } }]);
+      }
+      if (url.includes('/rest/v1/rides?')) {
+        return rep([
+          { id: SUPP, driver_id: DRIVER, start_city: 'A', end_city: 'B', status: 'annule' },
+          { id: ANNU, driver_id: DRIVER, start_city: 'C', end_city: 'D', status: 'annule' },
+          { id: PUB, driver_id: DRIVER, start_city: 'E', end_city: 'F', status: 'publie' },
+        ]);
+      }
       return rep([]);
     };
+    return urls;
+  }
+  async function appeler(endpoint, moi, role) {
+    const urls = listes(moi, role);
     const res = makeRes();
-    await handler({ method: 'POST', url: '/api/platform', body: { endpoint: 'ride-my-rides' }, headers: { authorization: 'Bearer tok', 'content-type': 'application/json' } }, res);
+    await handler({ method: 'POST', url: '/api/platform', body: { endpoint }, headers: { authorization: 'Bearer tok', 'content-type': 'application/json' } }, res);
+    return { res, urls };
+  }
+
+  test('« Mes trajets » (ride-my-rides) : le trajet supprimé disparaît, l\'annulé normal reste', async () => {
+    const { res, urls } = await appeler('ride-my-rides', DRIVER);
     assert.equal(res._status, 200);
-    assert.ok(urls.some((u) => u.includes(`/rest/v1/rides?driver_id=eq.${DRIVER}&status=neq.supprime`)));
+    const ids = res._body.my_rides.map((r) => r.id);
+    assert.deepEqual(ids, [ANNU, PUB]);
+    assert.ok(urls.some((u) => u.includes(`transaction_audit_events?event_type=eq.ride_deleted&status=eq.supprime`) && u.includes(`user_id=eq.${DRIVER}`)));
+  });
+
+  test('tableau de bord covoiturage : le trajet supprimé disparaît', async () => {
+    const { res } = await appeler('cov-dashboard', DRIVER);
+    assert.equal(res._status, 200);
+    const ids = (res._body.my_rides || []).map((r) => r.id);
+    assert.ok(!ids.includes(SUPP));
+    assert.ok(ids.includes(ANNU) && ids.includes(PUB));
+  });
+
+  test('admin : le trajet supprimé reste listé avec « supprime » et sa date', async () => {
+    const { res } = await appeler('ride-admin', ADMIN, 'admin');
+    assert.equal(res._status, 200);
+    const supp = res._body.rides.find((r) => r.id === SUPP);
+    const annu = res._body.rides.find((r) => r.id === ANNU);
+    assert.equal(supp.supprime, true);
+    assert.equal(supp.supprime_le, '2026-11-20T10:00:00Z');
+    assert.equal(supp.supprime_par, 'admin');
+    assert.ok(!annu.supprime);
+  });
+
+  test('tableau de bord unifié (dashboard.html) : filtre les trajets marqués « ride_deleted »', () => {
+    const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
+    assert.match(dash, /\.from\('transaction_audit_events'\)[\s\S]{0,200}\.eq\('event_type', 'ride_deleted'\)/);
+    assert.match(dash, /!\(r\.status === 'annule' && supprimes\.has\(r\.id\)\)/);
+    assert.doesNotMatch(dash, /neq\('status', 'supprime'\)/);
+  });
+
+  test('carte des villes : le repli ne montre jamais les trajets annulés (dont les supprimés)', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'api', 'platform.js'), 'utf8');
+    assert.match(src, /rides\?status=neq\.annule&select=start_city/);
   });
 });
 
@@ -263,15 +396,29 @@ describe('pages et migration', () => {
     });
   }
 
-  test('migration : statut supprime, colonnes date et auteur, garde en base, aucun DELETE', () => {
-    const dir = path.join(ROOT, 'supabase', 'migrations');
-    const f = fs.readdirSync(dir).find((n) => n.endsWith('_rides_suppression_logique.sql'));
-    assert.ok(f, 'fichier de migration présent');
+  test('admin : « Supprimé le … » affiché d\'après la marque, pas de bouton', () => {
+    const html = lire('admin/dashboard-admin.html');
+    assert.match(html, /\(rid && !r\.supprime\)/);
+    assert.match(html, /'Supprimé le '/);
+  });
+
+  test('aucun code n\'écrit le statut « supprime » dans rides (la base actuelle ne le permet pas)', () => {
+    const src = lire('lib/_rides.js');
+    assert.doesNotMatch(src, /JSON\.stringify\(\{ status: 'supprime'/);
+    assert.doesNotMatch(src, /supprime_le: new Date\(\)\.toISOString\(\), supprime_par/);
+    assert.doesNotMatch(src, /rides\?[^`]*status=neq\.supprime/);
+  });
+
+  test('migration gardée pour prod-v2, hors de supabase/migrations, marquée « NE PAS APPLIQUER »', () => {
+    const migr = fs.readdirSync(path.join(ROOT, 'supabase', 'migrations'));
+    assert.ok(!migr.some((n) => n.includes('suppression_logique')), 'pas dans supabase/migrations');
+    const dir = path.join(ROOT, 'supabase', 'prod-v2-plus-tard');
+    const f = fs.readdirSync(dir).find((n) => n.includes('_rides_suppression_logique.sql'));
+    assert.ok(f, 'fichier gardé');
+    assert.ok(!f.endsWith('.sql'), 'extension changée pour que le CLI l\'ignore');
     const sql = fs.readFileSync(path.join(dir, f), 'utf8');
+    assert.match(sql.split('\n')[0], /NE PAS APPLIQUER/);
     assert.match(sql, /'supprime'::text/);
-    assert.match(sql, /add column if not exists supprime_le timestamptz/);
-    assert.match(sql, /add column if not exists supprime_par uuid/);
-    assert.match(sql, /before update of status on public\.rides/);
     assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /\bdelete\s+from\b/i);
   });
 });

@@ -1893,19 +1893,20 @@
       document.getElementById('cov-rides-body').innerHTML = rides.length === 0
         ? '<tr><td colspan="6" class="empty-msg">Aucun trajet</td></tr>'
         : rides.map(r => {
-            const statusColor = { publie: '#5dbfff', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A', supprime: '#5A6A7A' }[r.status] || '#A8B0BA';
+            const statusColor = r.supprime ? '#5A6A7A' : ({ publie: '#5dbfff', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA');
             // Colonnes alignées sur l'en-tête : Trajet, Départ, Places, Prix/km, Statut, Actions.
             const rid = afId(r.id);
             const libelle = `${r.start_city || '?'} → ${r.end_city || '?'}`;
-            const actions = (rid && r.status !== 'supprime')
+            // Trajet supprimé = annulé + marque au journal (le serveur renvoie supprime et supprime_le).
+            const actions = (rid && !r.supprime)
               ? `<button class="action-btn danger" data-ride-id="${rid}" data-ride-label="${afEsc(libelle)}" onclick="adminSupprimerTrajet(this)">🗑️ Supprimer</button>`
-              : `<span style="color:#5A6A7A;font-size:.78rem">${r.status === 'supprime' && r.supprime_le ? 'Supprimé le ' + new Date(r.supprime_le).toLocaleDateString('fr-CA') : '—'}</span>`;
+              : `<span style="color:#5A6A7A;font-size:.78rem">${r.supprime && r.supprime_le ? 'Supprimé le ' + afEsc(new Date(r.supprime_le).toLocaleDateString('fr-CA')) + (r.supprime_par === 'admin' ? ' (admin)' : '') : '—'}</span>`;
             return `<tr>
               <td>${afEsc(libelle)}<div style="font-family:monospace;color:#00D9FF;font-size:.7rem">${afEsc(String(r.id || '').slice(0,8))}… · ${afEsc(r.driver_prenom || r.driver_id?.slice(0,8) || '—')}</div></td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}${r.is_recurring ? ' 🔁' : ''}</td>
               <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
               <td style="color:#A8B0BA">${r.cost_per_km != null ? Number(r.cost_per_km).toFixed(2) + ' $' : '—'}</td>
-              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${afEsc(r.status)}</span></td>
+              <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.supprime ? 'supprimé' : afEsc(r.status)}</span></td>
               <td>${actions}</td>
             </tr>`;
           }).join('');
