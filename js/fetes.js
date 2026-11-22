@@ -94,15 +94,17 @@
     box.className = 'fetes-neige';
     box.setAttribute('aria-hidden', 'true');
     var petit = window.innerWidth && window.innerWidth < 600;
-    var nombre = petit ? 9 : 14;
+    var nombre = petit ? 7 : 14;
     for (var k = 0; k < nombre; k++) {
       var f = document.createElement('i');
       f.textContent = '❄';
       f.style.left = ((k + Math.random()) * 100 / nombre).toFixed(1) + '%';
       f.style.fontSize = (12 + Math.round(Math.random() * 16)) + 'px';
       f.style.opacity = (0.6 + Math.random() * 0.35).toFixed(2);
-      f.style.animationDuration = (14 + Math.random() * 10).toFixed(1) + 's';
-      f.style.animationDelay = (-Math.random() * 20).toFixed(1) + 's';
+      // Cellulaire : chute beaucoup plus lente (test complet du 22 nov. 2026, point 21).
+      var duree = petit ? (34 + Math.random() * 16) : (16 + Math.random() * 10);
+      f.style.animationDuration = duree.toFixed(1) + 's';
+      f.style.animationDelay = (-Math.random() * duree).toFixed(1) + 's';
       f.style.setProperty('--dx', (Math.random() * 80 - 40).toFixed(0) + 'px');
       box.appendChild(f);
     }

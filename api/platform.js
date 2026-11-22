@@ -23,6 +23,7 @@ const {
   livraisonLinkToken, verifyLivraisonToken,
   callNotifier, alertAdmin, computeDeliveryPrice, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
+  NOM_EXPEDITEUR_COURRIEL,
 } = require('../lib/_lib');
 
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
@@ -48,6 +49,7 @@ const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
+const { livraisonsTestIds, adminLivraisonTest, idsLivraisonsTest } = require('../lib/_livraisons-test');
 // Champs de distance envoyés par les formulaires (codes postaux facultatifs).
 function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
@@ -1956,6 +1958,9 @@ async function availableLivraisons(req, res, ctx) {
     filtered.sort((a, b) => (b.routeScore || 0) - (a.routeScore || 0));
   }
 
+  // Livraisons de test cachées aux livreurs (drapeau admin, rien n'est supprimé). Test complet, point 25.
+  { const cachees = new Set(await idsLivraisonsTest(ctx)); for (let k = filtered.length - 1; k >= 0; k--) if (cachees.has(filtered[k].row.id)) filtered.splice(k, 1); }
+
   // Enrichir avec les profils expéditeurs
   const expIds = [...new Set(filtered.map(({ row }) => row.expediteur_id).filter(Boolean))];
   let expProfiles = {};
@@ -2136,6 +2141,8 @@ async function myDriverLivraisons(req, res, ctx) {
       created_at: row.created_at || row.cree_le || row.date_creation || null
     }))
     .sort((a, b) => new Date(b.cree_le || b.created_at || 0) - new Date(a.cree_le || a.created_at || 0));
+  // Livraisons de test cachées aux livreurs (drapeau admin). Test complet, point 25.
+  { const cachees = new Set(await idsLivraisonsTest(ctx)); for (let k = livraisons.length - 1; k >= 0; k--) if (cachees.has(livraisons[k].id)) livraisons.splice(k, 1); }
 
   // Enrichir avec les profils des expéditeurs
   const expIds = [...new Set(livraisons.map(l => l.expediteur_id).filter(Boolean))];
@@ -6227,6 +6234,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraison-imprevu') return await livraisonImprevu(req, res, ctx, body);
     if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
     if (endpoint === 'livraison-codes') return await livraisonCodes(req, res, ctx, body);
+    if (endpoint === 'livraisons-test-ids') return await livraisonsTestIds(req, res, ctx);
+    if (endpoint === 'admin-livraison-test') return await adminLivraisonTest(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
     if (endpoint === 'livraison-withdraw') return await livraisonWithdraw(req, res, ctx, body);
@@ -6892,7 +6901,7 @@ module.exports = async function handler(req, res) {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
       const RESEND_KEY = (process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY || '').trim();
       const FROM_EMAIL = (process.env.FROM_EMAIL || 'notifications@porteaporte.site').trim();
-      const FROM_NAME  = 'PorteàPorte 🍁';
+      const FROM_NAME  = NOM_EXPEDITEUR_COURRIEL;
       if (!RESEND_KEY) return res.status(500).json({ error: 'RESEND_API_KEY non configurée' });
 
       const ebSubject  = String(body?.subject || '').trim().slice(0, 200);

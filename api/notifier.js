@@ -11,7 +11,7 @@
 // ============================================================
 
 const crypto = require('crypto');
-const { internalSecret } = require('../lib/_lib');
+const { internalSecret, NOM_EXPEDITEUR_COURRIEL } = require('../lib/_lib');
 
 const PUBLIC_TYPES = new Set([
   'auth_confirmation',
@@ -129,6 +129,26 @@ function assertNotifierAuth(req, type) {
   return { ok: false, status: 403, error: 'Secret interne requis pour ce type de notification' };
 }
 
+
+// ─── Test complet du 22 nov. 2026 (point 19) ───
+// Téléphone : affiché seulement s'il a 10 chiffres (un 1 devant est accepté). Sinon rien.
+function telephoneValide(v) {
+  const d = String(v || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+  return /^\d{10}$/.test(d) ? d : '';
+}
+function telephoneAffiche(v) {
+  const d = telephoneValide(v);
+  return d ? `${d.slice(0, 3)} ${d.slice(3, 6)}-${d.slice(6)}` : '';
+}
+// Heure : toujours celle du Québec. Une date ISO brute est convertie, un texte déjà formaté reste tel quel.
+function heureQc(v) {
+  if (!v) return '';
+  if (typeof v === 'string' && !/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+  const d = new Date(v);
+  if (!Number.isFinite(d.getTime())) return String(v);
+  return d.toLocaleString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' });
+}
+
 module.exports = async function handler(req, res) {
   // CORS
   const allowOrigin = process.env.ALLOWED_ORIGIN || 'https://porteaporte.site';
@@ -167,7 +187,7 @@ module.exports = async function handler(req, res) {
   const SENDGRID_API_KEY = process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY;
   const ADMIN_EMAIL      = process.env.ADMIN_EMAIL || 'denismorneaubtc@gmail.com';
   const FROM_EMAIL       = process.env.FROM_EMAIL  || 'notifications@porteaporte.site';
-  const FROM_NAME        = 'PorteàPorte 🍁';
+  const FROM_NAME        = NOM_EXPEDITEUR_COURRIEL; // un seul nom d'expéditeur partout
 
   if (!SENDGRID_API_KEY) {
     console.error('RESEND_API_KEY manquante');
@@ -628,7 +648,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             </div>
             <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:16px;margin:18px 0">
               <strong style="color:#00d9ff">⏱️ Tu as 48h pour contester</strong><br>
-              <span style="color:#a8b0ba;font-size:.9rem">Délai jusqu'au ${data.conteste_avant ? new Date(data.conteste_avant).toLocaleString('fr-CA') : '48h'}. Sans réponse, le signalement sera validé automatiquement.</span>
+              <span style="color:#a8b0ba;font-size:.9rem">Délai jusqu'au ${data.conteste_avant ? new Date(data.conteste_avant).toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'long', timeStyle: 'short' }) : '48h'}. Sans réponse, le signalement sera validé automatiquement.</span>
             </div>
             <div style="text-align:center;margin:20px 0">
               <a href="${contesteLink}" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Voir et contester</a>
@@ -1027,13 +1047,13 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — RÉSERVATION CONFIRMÉE</div>
             <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">✅ ${route}</h1>
-            <p style="color:#a8b0ba;margin:0 0 18px">${data.departure_time || 'Date à confirmer'} · ${data.seats || 1} place(s) · <strong style="color:#7dffc1">${data.total_price || '—'} $</strong> payé</p>
+            <p style="color:#a8b0ba;margin:0 0 18px">${heureQc(data.departure_time) || 'Date à confirmer'} · ${data.seats || 1} place(s) · <strong style="color:#7dffc1">${data.total_price || '—'} $</strong> payé</p>
 
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">👨‍✈️ Ton conducteur</strong>
               <div><strong>${data.driver_name || 'Conducteur'}</strong></div>
               ${data.driver_email ? `<div style="margin-top:4px"><a href="mailto:${data.driver_email}" style="color:#5dbfff">${data.driver_email}</a></div>` : ''}
-              ${data.driver_phone ? `<div><a href="tel:${data.driver_phone}" style="color:#7dffc1">📞 ${data.driver_phone}</a></div>` : ''}
+              ${telephoneValide(data.driver_phone) ? `<div><a href="tel:+1${telephoneValide(data.driver_phone)}" style="color:#7dffc1">📞 ${telephoneAffiche(data.driver_phone)}</a></div>` : ''}
               ${data.driver_vehicle ? `<div style="color:#a8b0ba;margin-top:6px">🚙 ${data.driver_vehicle}</div>` : ''}
             </div>
 
@@ -1062,13 +1082,13 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — NOUVELLE RÉSERVATION</div>
             <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">🎫 ${route}</h1>
-            <p style="color:#a8b0ba;margin:0 0 18px">${data.departure_time || 'Date à confirmer'} · ${data.seats || 1} place(s) réservée(s)</p>
+            <p style="color:#a8b0ba;margin:0 0 18px">${heureQc(data.departure_time) || 'Date à confirmer'} · ${data.seats || 1} place(s) réservée(s)</p>
 
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">🎫 Ton passager</strong>
               <div><strong>${data.passenger_name || 'Passager'}</strong></div>
               ${data.passenger_email ? `<div style="margin-top:4px"><a href="mailto:${data.passenger_email}" style="color:#5dbfff">${data.passenger_email}</a></div>` : ''}
-              ${data.passenger_phone ? `<div><a href="tel:${data.passenger_phone}" style="color:#7dffc1">📞 ${data.passenger_phone}</a></div>` : ''}
+              ${telephoneValide(data.passenger_phone) ? `<div><a href="tel:+1${telephoneValide(data.passenger_phone)}" style="color:#7dffc1">📞 ${telephoneAffiche(data.passenger_phone)}</a></div>` : ''}
               ${data.has_luggage ? '<div style="color:#ffd700;margin-top:6px">🧳 A des bagages volumineux</div>' : ''}
               ${data.has_pet ? '<div style="color:#ffd700;margin-top:6px">🐾 Voyage avec un animal</div>' : ''}
               ${data.special_requests ? `<div style="color:#a8b0ba;margin-top:8px;font-style:italic">"${data.special_requests}"</div>` : ''}
@@ -1163,7 +1183,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEAPORTE - ARRIVEE A CONFIRMER</div>
             <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">Ton chauffeur a termine le trajet</h1>
-            <p style="color:#a8b0ba;margin:0 0 18px">${route} - ${data.departure_time || 'Date du trajet'}</p>
+            <p style="color:#a8b0ba;margin:0 0 18px">${route} - ${heureQc(data.departure_time) || 'Date du trajet'}</p>
 
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">Confirmation requise</strong>
@@ -1574,7 +1594,7 @@ function templateAdminNotif(titre, rows, urgent = false) {
     <div style="margin-top:16px;text-align:center;">
       <a href="https://porteaporte.site/gestion-pp-8k2x.html" style="background:#0A1628;color:#ffffff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:12px;font-weight:600;display:inline-block;">Ouvrir le panneau admin →</a>
     </div>
-    <p style="font-size:11px;color:#aaa;margin-top:16px;">Généré automatiquement par PorteàPorte · ${new Date().toLocaleString('fr-CA')}</p>`
+    <p style="font-size:11px;color:#aaa;margin-top:16px;">Généré automatiquement par PorteàPorte · ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'long', timeStyle: 'short' })}</p>`
   );
 }
 

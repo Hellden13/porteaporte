@@ -29,12 +29,23 @@
     .role-intent-note{margin:0;font-size:.88rem;color:var(--brand-muted)}
     /* Mobile : la bulle Pia suit le formulaire au lieu de flotter par-dessus. */
     @media (max-width:560px){ body > #pia-launch{position:static;justify-self:end;margin-top:12px} }
-  </style>
+  [hidden]{display:none!important}
+</style>
 </head>
 <body>
   <main class="auth-card">
     <div class="logo">PorteàPorte</div>
     <p class="subtitle">Créer un compte pour la livraison de colis et le covoiturage.</p>
+
+    <section id="courriel-envoye" hidden aria-live="polite" style="text-align:center">
+      <div style="font-size:2.6rem;line-height:1">📬</div>
+      <h1 style="font-size:1.35rem;margin:10px 0 8px">Courriel envoyé à <span id="courriel-envoye-adresse" style="color:#7de4ff;word-break:break-all"></span></h1>
+      <p style="color:#c9d1db;line-height:1.55;margin:0 0 14px">Ouvre ce courriel et <strong>clique sur le lien</strong> pour confirmer ton adresse, <strong>puis reviens ici</strong> : tu arriveras directement sur ton tableau de bord.</p>
+      <p style="color:#a8b0ba;font-size:.88rem;margin:0 0 16px">Rien reçu après 2 minutes ? Regarde dans tes pourriels (spams), ou renvoie le courriel.</p>
+      <button type="button" id="renvoyer-courriel" class="btn" style="margin-bottom:10px">Renvoyer le courriel</button>
+      <div id="renvoyer-msg" style="color:#c9d1db;font-size:.88rem;min-height:1.2em"></div>
+      <p style="margin-top:14px"><a href="/login.html" style="color:#7de4ff">J'ai confirmé mon adresse : me connecter</a></p>
+    </section>
 
     <form id="signupForm">
       <div class="form-group">
@@ -233,7 +244,8 @@
         email,
         password: form.password.value,
         options: {
-          emailRedirectTo: window.location.origin + '/role-choice.html' + redirectSuffix,
+          // Après le lien de confirmation : directement le tableau de bord unifié (test complet, point 26).
+          emailRedirectTo: window.location.origin + '/dashboard.html' + redirectSuffix,
           data: { prenom, nom, role, referral_code: referralCode || null, ...utmData },
           captchaToken: captchaToken || undefined
         }
@@ -276,17 +288,39 @@
         await claimReferralIfPossible(data.session);
         if (!emailConfirmed) {
           await db.auth.signOut().catch(() => {});
-          showSuccess('Compte créé. 📬 Vérifie ton email (et tes spams au cas où) avant d’ouvrir le dashboard.');
-          btn.textContent = 'Email de confirmation envoyé';
+          ecranCourrielEnvoye(email, redirectSuffix);
           return;
         }
-        window.location.href = nextUrl || (role === 'expediteur' ? '/dashboard-expediteur.html' : '/livreur.html');
+        window.location.href = nextUrl || '/dashboard.html';
         return;
       }
 
-      showSuccess('Compte créé. 📬 Vérifie ton email (et tes spams au cas où) pour confirmer ton inscription.');
-      btn.textContent = 'Email de confirmation envoyé';
+      ecranCourrielEnvoye(email, redirectSuffix);
     });
+
+    // Écran clair après l'inscription (test complet, point 20) : à qui le courriel est parti et quoi faire.
+    function ecranCourrielEnvoye(adresse, suffixe) {
+      const form = document.getElementById('signupForm');
+      if (form) form.hidden = true;
+      document.querySelectorAll('.alert, #successMsg, #errorMsg').forEach((el) => { el.style.display = 'none'; });
+      document.getElementById('courriel-envoye-adresse').textContent = adresse;
+      const ecran = document.getElementById('courriel-envoye');
+      ecran.hidden = false;
+      ecran.scrollIntoView({ block: 'start' });
+      const bouton = document.getElementById('renvoyer-courriel');
+      const msg = document.getElementById('renvoyer-msg');
+      bouton.onclick = async () => {
+        bouton.disabled = true;
+        try {
+          const { error } = await db.auth.resend({ type: 'signup', email: adresse, options: { emailRedirectTo: window.location.origin + '/dashboard.html' + (suffixe || '') } });
+          msg.textContent = error ? 'Renvoi impossible pour le moment : ' + error.message : '✅ Courriel renvoyé à ' + adresse + '.';
+        } catch (e) {
+          msg.textContent = 'Renvoi impossible pour le moment. Réessaie dans une minute.';
+        } finally {
+          setTimeout(() => { bouton.disabled = false; }, 30000);
+        }
+      };
+    }
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/cookie-consent.js" defer></script>

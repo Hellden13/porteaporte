@@ -646,10 +646,7 @@
                 }
             } catch (_) {}
             if (nextUrl) return nextUrl;
-            if (caps.est_conducteur) return '/covoiturage-publier.html';
-            if (caps.est_passager) return '/covoiturage.html';
-            if (caps.est_livreur) return '/livreur.html';
-            if (caps.est_expediteur) return '/dashboard-expediteur.html';
+            // Tableau de bord unifié pour tout le monde (test complet, point 26).
             return '/dashboard.html';
         }
 
@@ -777,15 +774,7 @@
                         }
                     }
                 } catch (_) {}
-                if (nextUrl) {
-                    window.location.href = nextUrl;
-                } else if (role === 'livreur') {
-                    window.location.href = '/livreur.html';
-                } else if (role === 'expediteur') {
-                    window.location.href = '/dashboard-expediteur.html';
-                } else if (role === 'both') {
-                    window.location.href = '/livreur.html';
-                }
+                window.location.href = nextUrl || '/dashboard.html';
             } catch (error) {
                 console.error('Erreur:', error);
                 showError('❌ Une erreur est survenue');

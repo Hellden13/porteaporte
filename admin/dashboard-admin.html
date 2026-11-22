@@ -2067,6 +2067,7 @@
     if (livraisons) {
       const delivered = livraisons.filter(l => ['livre', 'livree', 'delivered', 'payee', 'paid', 'succeeded', 'confirmee'].includes(normalizedLivraisonStatus(l))).length;
       document.getElementById('stat-livraisons').textContent = delivered > 0 ? `${livraisons.length} (${delivered} livrées/payées)` : livraisons.length;
+      await chargerLivraisonsTest();
       document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
         ? '<tr><td colspan="7" class="empty-msg">Aucune livraison</td></tr>'
         : livraisons.map(l => {
@@ -2091,10 +2092,37 @@
               <td>${renderLivraisonWorkflow(l)}</td>
               <td style="color:#5dbfff;font-weight:700">${l.prix_total ? '$'+Number(l.prix_total).toFixed(2) : '—'}</td>
               <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
-              <td><div class="action-cell">${proofBtn}${actionHtml}</div></td>
+              <td><div class="action-cell">${proofBtn}${actionHtml}${(window.__livTestIds || new Set()).has(l.id)
+                ? `<button class="action-btn" onclick="adminLivraisonTest('${l.id}', false)">Rendre visible aux livreurs</button><div style="color:#F59E0B;font-size:.72rem">Cachée (test)</div>`
+                : `<button class="action-btn" onclick="adminLivraisonTest('${l.id}', true)">Cacher aux livreurs (test)</button>`}</div></td>
             </tr>`;
           }).join('');
     }
+  }
+
+  // Livraisons de test : cachées aux livreurs, jamais supprimées (test complet du 22 nov. 2026, point 25).
+  async function chargerLivraisonsTest() {
+    try {
+      const session = AUTH_API.getUser()?.session;
+      const r = await fetch(apiUrl('/api/platform?endpoint=livraisons-test-ids'), { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const out = await r.json().catch(() => ({}));
+      window.__livTestIds = new Set(r.ok ? (out.ids || []) : []);
+    } catch (_) { window.__livTestIds = new Set(); }
+  }
+  async function adminLivraisonTest(livraisonId, cacher) {
+    const raison = cacher
+      ? await PAPDialog.prompt('Cacher cette livraison aux livreurs ? Elle n\'est pas supprimée et tu peux la rendre visible plus tard.\nRaison (facultatif) :', 'Livraison de test', { title: 'Cacher aux livreurs', ok: 'Cacher' })
+      : ((await PAPDialog.confirm('Rendre cette livraison visible aux livreurs ?', { title: 'Rendre visible', ok: 'Rendre visible' })) ? '' : null);
+    if (raison === null) return;
+    const session = AUTH_API.getUser()?.session;
+    const res = await fetch(apiUrl('/api/platform?endpoint=admin-livraison-test'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint: 'admin-livraison-test', livraison_id: livraisonId, test: cacher, raison })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { await PAPDialog.alert(out.error || 'Action impossible.'); return; }
+    await loadData();
   }
 
   async function adminCaptureLegacy(livraisonId) {

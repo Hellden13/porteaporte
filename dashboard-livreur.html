@@ -408,7 +408,6 @@
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-<div id="pap-redirect-banner" style="background:linear-gradient(135deg,rgba(125,255,193,.15),rgba(0,217,255,.08));border-bottom:2px solid rgba(125,255,193,.5);padding:10px 20px;text-align:center;font-weight:700;color:#7dffc1">✨ Nouveau dashboard unifié disponible &nbsp; <a href="/dashboard.html" style="background:#7dffc1;color:#051022;padding:5px 14px;border-radius:6px;font-weight:900;text-decoration:none;display:inline-block;margin-left:8px">Essayer →</a></div>
 
   <!-- Topbar -->
   <header class="topbar">
@@ -949,7 +948,9 @@
       document.getElementById('bannerArea').style.display = 'none';
       document.getElementById('onlineBar').style.display = 'flex';
       document.getElementById('mainPage').style.display = 'block';
-      document.getElementById('greetName').textContent = p.nom || session.user.email?.split('@')[0] || 'livreur';
+      // Prénom seulement (jamais le nom de famille). Test complet du 22 nov. 2026, point 24.
+      const prenomAccueil = String(p.prenom || session.user.user_metadata?.prenom || '').trim().split(/\s+/)[0];
+      document.getElementById('greetName').textContent = prenomAccueil || 'livreur';
 
       /* Restore online status */
       const isOnline = p.disponible === true;

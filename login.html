@@ -507,12 +507,8 @@
         return;
       }
 
-      let dest = '/dashboard-expediteur.html';
-      if (role === 'livreur') dest = driverStatus === 'verified' ? '/dashboard-livreur.html' : '/livreur.html';
-      else if (role === 'les deux') {
-        showUserPortalChoice(profile);
-        return;
-      }
+      // Tout membre arrive sur le tableau de bord unifié (test complet du 22 nov. 2026, point 26).
+      const dest = '/dashboard.html';
       showStatus('emailStatus', 'Connexion réussie ! Redirection...', 'success');
       setTimeout(() => { window.location.href = dest; }, 1000);
     }
