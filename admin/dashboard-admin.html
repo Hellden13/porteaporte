@@ -743,6 +743,28 @@
 
     <div id="section-rewards" class="section">
       <div class="section-title">Missions, PorteCoins & tirages</div>
+
+      <!-- 🎄 Concours des Fêtes 2026 : participations calculées depuis le service utilisé (aucun achat). -->
+      <div class="table-card" id="concours-fetes-admin" style="margin-bottom:18px;border:1px solid rgba(200,16,46,.45)">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px">
+          <div>
+            <div style="font-weight:800;font-size:1.05rem">🎄 Concours des Fêtes 2026 — carte-cadeau de 100 $</div>
+            <div id="cf-etat" style="color:var(--brand-muted);font-size:.82rem;margin-top:3px">Chargement…</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="action-btn" id="cf-lancer" style="display:none" onclick="cfLancer()">🚀 Lancer le concours</button>
+            <button class="action-btn" id="cf-theme" onclick="cfTheme()">Thème des Fêtes : …</button>
+            <button class="action-btn" id="cf-csv" onclick="cfCsv()" disabled>⬇️ Export CSV</button>
+            <button class="action-btn danger" id="cf-tirer" onclick="cfTirer(this)" disabled title="Actif seulement après le 31 décembre 2026, 23 h 59 (heure du Québec)">🎲 Tirer au sort</button>
+          </div>
+        </div>
+        <div id="cf-message" role="status" style="display:none;margin:0 14px 10px;padding:8px 12px;border-radius:8px;font-size:.86rem"></div>
+        <table>
+          <thead><tr><th>Participant</th><th>Participations</th><th>Livraisons</th><th>Trajets (passager)</th><th>Trajets (conducteur)</th></tr></thead>
+          <tbody id="cf-participants"><tr><td colspan="5" class="empty-msg">—</td></tr></tbody>
+        </table>
+        <div style="padding:8px 14px;color:var(--brand-muted);font-size:.76rem">Règlement : <a href="/concours-fetes-reglement.html" target="_blank" rel="noopener">/concours-fetes-reglement.html</a> (sections à écrire par Denis).</div>
+      </div>
       <div class="impact-summary">
         <div class="impact-mini"><div>PorteCoins nets</div><div id="reward-admin-coins">—</div></div>
         <div class="impact-mini"><div>Transactions PC</div><div id="reward-admin-tx">—</div></div>
@@ -3193,6 +3215,99 @@
     await loadAvis();
   }
 
+  // ── CONCOURS DES FÊTES (admin) ─────────────────────────────────────────
+  let cfEtat = null;
+  async function cfAppel(body) {
+    const user = AUTH_API.getUser();
+    const res = await fetch('/api/platform?endpoint=admin-concours-fetes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (user?.session?.access_token || '') },
+      body: JSON.stringify({ endpoint: 'admin-concours-fetes', ...body }),
+    });
+    return res;
+  }
+  function cfMessage(texte, ok) {
+    const el = document.getElementById('cf-message');
+    if (!el) return;
+    el.style.display = texte ? 'block' : 'none';
+    el.style.background = ok ? 'rgba(31,111,67,.25)' : 'rgba(255,90,90,.14)';
+    el.textContent = texte || '';
+  }
+  function renderConcoursFetes(d) {
+    cfEtat = d;
+    const etat = document.getElementById('cf-etat');
+    const corps = document.getElementById('cf-participants');
+    if (!etat || !corps) return;
+    document.getElementById('cf-lancer').style.display = d.lance ? 'none' : '';
+    document.getElementById('cf-theme').textContent = 'Thème des Fêtes : ' + (d.theme_interrupteur === false ? 'COUPÉ (cliquer pour activer)' : 'ACTIF (cliquer pour couper)');
+    document.getElementById('cf-csv').disabled = !d.lance;
+    const tirer = document.getElementById('cf-tirer');
+    tirer.disabled = !(d.lance && d.tirage_autorise && !d.gagnant);
+    if (!d.lance) {
+      etat.textContent = 'Pas encore lancé. Les participations comptent à partir du lancement.';
+      corps.innerHTML = '<tr><td colspan="5" class="empty-msg">Concours non lancé</td></tr>';
+      return;
+    }
+    const depuis = d.concours?.created_at ? new Date(d.concours.created_at).toLocaleDateString('fr-CA') : '?';
+    etat.textContent = `Lancé le ${depuis} · fin le 31 décembre 2026 à 23 h 59 · ${d.participants.length} participant(s), ${d.total_participations} participation(s)` +
+      (d.gagnant ? ' · TIRAGE FAIT' : (d.tirage_autorise ? ' · tirage possible' : ' · tirage après la date limite'));
+    corps.innerHTML = d.participants.length === 0
+      ? '<tr><td colspan="5" class="empty-msg">Aucune participation validée pour l\'instant</td></tr>'
+      : d.participants.map((p) => `<tr${d.gagnant && d.gagnant.user_id === p.user_id ? ' style="background:rgba(245,208,97,.12)"' : ''}>
+          <td>${afEsc([p.prenom, p.nom].filter(Boolean).join(' ') || '—')}${d.gagnant && d.gagnant.user_id === p.user_id ? ' 🏆' : ''}<div style="color:var(--brand-muted);font-size:.72rem">${afEsc(p.email || '')}</div></td>
+          <td style="font-weight:800">${Number(p.total) || 0}</td>
+          <td>${Number(p.livraisons) || 0}</td><td>${Number(p.trajets_passager) || 0}</td><td>${Number(p.trajets_conducteur) || 0}</td>
+        </tr>`).join('');
+  }
+  async function loadConcoursFetesAdmin() {
+    try {
+      const res = await cfAppel({ mode: 'liste' });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { cfMessage('Concours indisponible : ' + (d.error || res.status), false); return; }
+      renderConcoursFetes(d);
+    } catch (_) { cfMessage('Concours indisponible (réseau).', false); }
+  }
+  async function cfLancer() {
+    const res = await cfAppel({ mode: 'lancer' });
+    const d = await res.json().catch(() => ({}));
+    cfMessage(res.ok ? '🎄 Concours lancé.' : ('Lancement impossible : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+  async function cfTheme() {
+    const actif = !(cfEtat && cfEtat.theme_interrupteur !== false);
+    const res = await cfAppel({ mode: 'theme', actif });
+    const d = await res.json().catch(() => ({}));
+    cfMessage(res.ok ? ('Thème des Fêtes ' + (actif ? 'activé' : 'coupé') + '. Les pages se mettent à jour d\'ici 5 minutes.') : ('Changement impossible : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+  async function cfCsv() {
+    const res = await cfAppel({ mode: 'csv' });
+    if (!res.ok) { cfMessage('Export impossible.', false); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'concours-fetes-2026-participants.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  // Tirage : deux clics (confirmation dans la page), résultat définitif inscrit au journal d'audit.
+  async function cfTirer(btn) {
+    if (btn.dataset.confirmer !== '1') {
+      btn.dataset.confirmer = '1';
+      btn.textContent = '⚠️ Confirmer le tirage (définitif)';
+      cfMessage('Le tirage est définitif et inscrit au journal d\'audit. Clique encore pour confirmer.', false);
+      return;
+    }
+    btn.disabled = true;
+    const res = await cfAppel({ mode: 'tirer' });
+    const d = await res.json().catch(() => ({}));
+    btn.dataset.confirmer = '';
+    btn.textContent = '🎲 Tirer au sort';
+    cfMessage(res.ok
+      ? `🏆 Gagnant : ${[d.gagnant?.prenom, d.gagnant?.nom].filter(Boolean).join(' ') || d.gagnant?.user_id} (${d.gagnant?.participations} participation(s)). Inscrit au journal d'audit.`
+      : ('Tirage refusé : ' + (d.error || res.status)), res.ok);
+    loadConcoursFetesAdmin();
+  }
+
   // ── SEUILS TARIFAIRES (source unique : ride-settings → pricing) ─────────
   function fmtDollars(v) { return Number(v || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' }); }
   function fmtKm(v) { return Number(v || 0).toFixed(2).replace('.', ',') + ' $/km'; }
@@ -3326,6 +3441,7 @@
     document.getElementById('admin-welcome').textContent = 'Connecté en tant que ' + ([user.prenom, user.nom].filter(Boolean).join(' ') || user.email);
     loadAFaire();
     loadSeuilsTarifaires();
+    loadConcoursFetesAdmin();
     await loadData();
     await loadRewardsAdmin();
     await loadImpact();

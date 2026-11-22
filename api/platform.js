@@ -39,6 +39,7 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
+const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
 // ─── Redistribution commission covoiturage ───
@@ -4896,7 +4897,8 @@ async function rewardsDashboard(req, res, ctx) {
   const drawsRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&status=eq.active&order=draw_date.asc&limit=5`, {
     headers: sbHeaders(ctx.sbKey)
   });
-  const draws = drawsRes.ok ? await drawsRes.json() : [];
+  // Le Concours des Fêtes n'apparaît pas parmi les tirages à PorteCoins (on n'y participe qu'en utilisant le service).
+  const draws = (drawsRes.ok ? await drawsRes.json() : []).filter((d) => d.eligibility_badge_slug !== CONCOURS_FETES.slug);
   const drawIds = draws.map((d) => d.id);
   let entries = [];
   if (drawIds.length) {
@@ -4969,6 +4971,10 @@ async function drawEnter(req, res, ctx, body) {
   const drawId = body.draw_id || body.drawId;
   const entries = Math.max(1, Math.min(50, Math.round(toNumber(body.entries, 1))));
   if (!drawId) return res.status(400).json({ error: 'draw_id requis' });
+  // Concours des Fêtes : on participe SEULEMENT en utilisant le service, jamais en PorteCoins.
+  if (await estDrawConcours(ctx, drawId)) {
+    return res.status(403).json({ error: 'On participe au Concours des Fêtes seulement en utilisant PorteàPorte (livraison ou covoiturage payé).', code: 'concours_service_seulement' });
+  }
   const cost = entries * 10;
 
   const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&status=eq.active&select=id,title,draw_date&limit=1`, {
@@ -5020,6 +5026,9 @@ function pickWeightedWinner(candidates) {
 }
 
 async function runMonthlyDraw(ctx, drawId) {
+  // Le Concours des Fêtes a son propre tirage (pondéré, après la date limite, journalisé) : jamais celui-ci,
+  // qui ajoute tous les membres quand il n'y a pas de participation.
+  if (await estDrawConcours(ctx, drawId)) return { ok: false, status: 409, error: 'Concours des Fêtes : utilise son propre bouton « Tirer au sort ».' };
   const drawRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}&select=*&limit=1`, {
     headers: sbHeaders(ctx.sbKey)
   });
@@ -5216,6 +5225,11 @@ async function adminRewards(req, res, ctx, body) {
     return res.status(200).json({ success: true, draw: Array.isArray(insert.data) ? insert.data[0] : insert.data });
   }
 
+  // Le Concours des Fêtes ne se modifie, ne se duplique, ne se supprime et ne se tire pas ici.
+  if (['update_draw_status', 'run_draw', 'delete_draw', 'update_draw', 'duplicate_draw'].includes(body.mode)
+      && await estDrawConcours(ctx, body.id || body.draw_id)) {
+    return res.status(409).json({ error: 'Concours des Fêtes : géré dans son propre encadré (règles fixes, tirage journalisé).', code: 'concours_protege' });
+  }
   if (body.mode === 'update_draw_status') {
     const id = body.id || body.draw_id;
     const status = String(body.status || '').trim();
@@ -5423,6 +5437,9 @@ module.exports = async function handler(req, res) {
     }
     if (endpoint === 'safe-meeting-points') {
       return await safeMeetingPoints(req, res, { sbUrl, sbKey, session: null, profile: null }, body);
+    }
+    if (endpoint === 'concours-fetes-public') {
+      return await concoursFetesPublic(req, res, { sbUrl, sbKey });
     }
     if (endpoint === 'ride-settings') {
       const settings = await getRideSettings({ sbUrl, sbKey });
@@ -6695,6 +6712,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
     if (endpoint === 'admin-a-faire') return await adminAFaire(req, res, ctx, body);
+    if (endpoint === 'concours-fetes-moi') return await concoursFetesMoi(req, res, ctx);
+    if (endpoint === 'admin-concours-fetes') return await adminConcoursFetes(req, res, ctx, body);
     if (endpoint === 'admin-pilotage') return await adminPilotage(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
