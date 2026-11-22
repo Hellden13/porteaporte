@@ -1,5 +1,5 @@
 /* js/fetes.js — Thème et Concours des Fêtes PorteàPorte (jusqu'au 6 janvier 2027 inclus).
-   Léger : aucune image, aucune police, aucune musique. Un seul appel (concours-fetes-public, mis en cache 5 min).
+   Léger : aucune image, aucune police, aucune musique. Un seul appel (concours-fetes-public, mis en cache 60 s au maximum).
    Accueil : <script src="/js/fetes.js" data-fetes="accueil" defer></script> (flocons + compte à rebours).
    Autres pages : <script src="/js/fetes.js" defer></script> (bannière seulement). */
 (function () {

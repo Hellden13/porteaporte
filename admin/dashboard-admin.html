@@ -3278,7 +3278,7 @@
     const actif = !(cfEtat && cfEtat.theme_interrupteur !== false);
     const res = await cfAppel({ mode: 'theme', actif });
     const d = await res.json().catch(() => ({}));
-    cfMessage(res.ok ? ('Thème des Fêtes ' + (actif ? 'activé' : 'coupé') + '. Les pages se mettent à jour d\'ici 5 minutes.') : ('Changement impossible : ' + (d.error || res.status)), res.ok);
+    cfMessage(res.ok ? ('Thème des Fêtes ' + (actif ? 'activé' : 'coupé') + '. Les pages se mettent à jour d\'ici une minute.') : ('Changement impossible : ' + (d.error || res.status)), res.ok);
     loadConcoursFetesAdmin();
   }
   async function cfCsv() {
