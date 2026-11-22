@@ -761,7 +761,7 @@
         </div>
         <div id="cf-message" role="status" style="display:none;margin:0 14px 10px;padding:8px 12px;border-radius:8px;font-size:.86rem"></div>
         <table>
-          <thead><tr><th>Participant</th><th>Participations</th><th>Livraisons</th><th>Trajets (passager)</th><th>Trajets (conducteur)</th></tr></thead>
+          <thead><tr><th>Participant</th><th>Participations</th><th>Inscription</th><th>Livraisons</th><th>Trajets (passager)</th><th>Trajets (conducteur)</th></tr></thead>
           <tbody id="cf-participants"><tr><td colspan="5" class="empty-msg">—</td></tr></tbody>
         </table>
         <div style="padding:8px 14px;color:var(--brand-muted);font-size:.76rem">Règlement : <a href="/concours-fetes-reglement.html" target="_blank" rel="noopener">/concours-fetes-reglement.html</a> (sections à écrire par Denis).</div>
@@ -3245,19 +3245,19 @@
     const tirer = document.getElementById('cf-tirer');
     tirer.disabled = !(d.lance && d.tirage_autorise && !d.gagnant);
     if (!d.lance) {
-      etat.textContent = 'Pas encore lancé. Les participations comptent à partir du lancement.';
-      corps.innerHTML = '<tr><td colspan="5" class="empty-msg">Concours non lancé</td></tr>';
+      etat.textContent = 'Pas encore lancé. Les participations par le service comptent à partir du lancement; chaque membre au courriel vérifié reçoit aussi 1 participation d\'inscription.';
+      corps.innerHTML = '<tr><td colspan="6" class="empty-msg">Concours non lancé</td></tr>';
       return;
     }
     const depuis = d.concours?.created_at ? new Date(d.concours.created_at).toLocaleDateString('fr-CA') : '?';
     etat.textContent = `Lancé le ${depuis} · fin le 31 décembre 2026 à 23 h 59 · ${d.participants.length} participant(s), ${d.total_participations} participation(s)` +
       (d.gagnant ? ' · TIRAGE FAIT' : (d.tirage_autorise ? ' · tirage possible' : ' · tirage après la date limite'));
     corps.innerHTML = d.participants.length === 0
-      ? '<tr><td colspan="5" class="empty-msg">Aucune participation validée pour l\'instant</td></tr>'
+      ? '<tr><td colspan="6" class="empty-msg">Aucune participation validée pour l\'instant</td></tr>'
       : d.participants.map((p) => `<tr${d.gagnant && d.gagnant.user_id === p.user_id ? ' style="background:rgba(245,208,97,.12)"' : ''}>
           <td>${afEsc([p.prenom, p.nom].filter(Boolean).join(' ') || '—')}${d.gagnant && d.gagnant.user_id === p.user_id ? ' 🏆' : ''}<div style="color:var(--brand-muted);font-size:.72rem">${afEsc(p.email || '')}</div></td>
           <td style="font-weight:800">${Number(p.total) || 0}${Number(p.suspendues) ? ` <span style="color:#FFB800;font-weight:600;font-size:.78rem" title="Suspendues pendant un litige">(+${Number(p.suspendues)} suspendue(s))</span>` : ''}</td>
-          <td>${Number(p.livraisons) || 0}</td><td>${Number(p.trajets_passager) || 0}</td><td>${Number(p.trajets_conducteur) || 0}</td>
+          <td>${Number(p.inscription) || 0}</td><td>${Number(p.livraisons) || 0}</td><td>${Number(p.trajets_passager) || 0}</td><td>${Number(p.trajets_conducteur) || 0}</td>
         </tr>`).join('');
   }
   async function loadConcoursFetesAdmin() {

@@ -632,8 +632,11 @@
   }
 
   // ─── Concours des Fêtes : « Tu as X participations au tirage des Fêtes » ──────
+  // « 1 participation pour ton inscription + X grâce à tes livraisons et trajets » (Denis, 22 nov. 2026).
   function texteParticipationsFetes(d) {
     const n = Number(d && d.participations) || 0;
+    const insc = Number(d && d.inscription) > 0 ? 1 : 0;
+    const service = Math.max(n - insc, 0);
     const titre = '🎄 Tu as ' + n + ' participation' + (n > 1 ? 's' : '') + ' au tirage des Fêtes';
     const det = d && d.detail;
     const parts = [];
@@ -641,9 +644,12 @@
     if (det && det.trajets_passager) parts.push(det.trajets_passager + ' trajet' + (det.trajets_passager > 1 ? 's' : '') + ' comme passager');
     if (det && det.trajets_conducteur) parts.push(det.trajets_conducteur + ' trajet' + (det.trajets_conducteur > 1 ? 's' : '') + ' comme conducteur');
     const susp = Number(d && d.suspendues) || 0;
-    const sous = (n > 0
-      ? 'Grâce à : ' + parts.join(', ') + '. Chaque livraison ou trajet payé = 1 chance de plus.'
-      : 'Chaque livraison ou trajet de covoiturage complété et payé te donne 1 chance de gagner une carte-cadeau de 100 $.') +
+    const detail = (parts.length ? ' (' + parts.join(', ') + ')' : '') + '.';
+    const repartition = insc
+      ? '1 participation pour ton inscription + ' + service + ' grâce à tes livraisons et trajets' + detail
+      : service + ' grâce à tes livraisons et trajets' + detail + ' Vérifie ton courriel pour recevoir ta participation d\'inscription.';
+    const sous = repartition +
+      ' Chaque livraison ou trajet payé = 1 chance de plus.' +
       (susp ? ' ' + susp + ' participation' + (susp > 1 ? 's' : '') + ' en attente : un litige est en cours.' : '');
     return { titre, sous };
   }
