@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -271,13 +272,13 @@ async function annulerTrajet(rideId) {
       body: JSON.stringify({ ride_id: rideId, preview_only: true })
     });
     const preview = await previewRes.json().catch(() => ({}));
-    if (!previewRes.ok) { alert('❌ Vérification impossible : ' + (preview.error || previewRes.status)); return; }
+    if (!previewRes.ok) { (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || previewRes.status))); return; }
     const warning = `ANNULATION DU TRAJET\n\n` +
       `${preview.bookings_affected || 0} réservation(s) seront annulées.\n` +
       `${Number(preview.total_refund || 0).toFixed(2)} $ seront remboursés aux passagers (100 %).\n` +
       `Cette annulation sera inscrite à ton taux d’annulation et pourra affecter ta fiabilité.\n\n` +
       `Cette action est irréversible. Confirmer ?`;
-    if (!confirm(warning)) return;
+    if (!(await PAPDialog.confirm(warning))) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -285,13 +286,13 @@ async function annulerTrajet(rideId) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert('❌ Annulation impossible : ' + (err.error || ('erreur ' + res.status)));
+      (await PAPDialog.alert('❌ Annulation impossible : ' + (err.error || ('erreur ' + res.status))));
       return;
     }
-    alert('✅ Trajet annulé.');
+    (await PAPDialog.alert('✅ Trajet annulé.'));
     window.location.reload();
   } catch (e) {
-    alert('❌ Erreur réseau. Réessaie dans un instant.');
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
   }
 }
 
@@ -308,7 +309,7 @@ async function annulerReservation(bookingId) {
       body: JSON.stringify({ booking_id: bookingId, preview_only: true })
     });
     const preview = await previewRes.json().catch(() => ({}));
-    if (!previewRes.ok) { alert('❌ Vérification impossible : ' + (preview.error || previewRes.status)); return; }
+    if (!previewRes.ok) { (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || previewRes.status))); return; }
     const warning = `ANNULATION DE LA RÉSERVATION\n\n` +
       `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
       `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
@@ -316,7 +317,7 @@ async function annulerReservation(bookingId) {
       `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
       `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
       `Cette action est irréversible. Confirmer ?`;
-    if (!confirm(warning)) return;
+    if (!(await PAPDialog.confirm(warning))) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -324,19 +325,19 @@ async function annulerReservation(bookingId) {
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) {
-      alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status)));
+      (await PAPDialog.alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status))));
       return;
     }
-    alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : ''));
+    (await PAPDialog.alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : '')));
     window.location.reload();
   } catch (e) {
-    alert('❌ Erreur réseau. Réessaie dans un instant.');
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
   }
 }
 
 // Terminer un trajet (conducteur)
 async function terminerTrajet(rideId) {
-  if (!confirm('Confirmer la fin de ce trajet ?\n\nLes passagers seront notifiés et devront confirmer leur arrivée. Le paiement sera capturé automatiquement.')) return;
+  if (!(await PAPDialog.confirm('Confirmer la fin de ce trajet ?\n\nLes passagers seront notifiés et devront confirmer leur arrivée. Le paiement sera capturé automatiquement.'))) return;
   try {
     const db = getSupabaseClient();
     const { data: _sd } = await db.auth.getSession();
@@ -348,21 +349,21 @@ async function terminerTrajet(rideId) {
       body: JSON.stringify({ endpoint: 'ride-complete', ride_id: rideId, actor: 'driver' })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert('❌ ' + (out.error || 'Erreur ' + res.status)); return; }
-    alert('✅ Trajet marqué comme terminé !\n\nLes passagers vont recevoir une notification pour confirmer leur arrivée.');
+    if (!res.ok) { (await PAPDialog.alert('❌ ' + (out.error || 'Erreur ' + res.status))); return; }
+    (await PAPDialog.alert('✅ Trajet marqué comme terminé !\n\nLes passagers vont recevoir une notification pour confirmer leur arrivée.'));
     window.location.reload();
   } catch (e) {
-    alert('❌ Erreur réseau. Réessaie dans un instant.');
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
   }
 }
 
 // Confirmer l'arrivée (passager) — demande le code de sécurité
 async function confirmerArrivee(bookingId) {
-  const code = window.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :');
+  const code = (await PAPDialog.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :'));
   if (code === null) return;
   const cleanCode = String(code || '').replace(/\D/g, '');
   if (!/^[0-9]{4,8}$/.test(cleanCode)) {
-    alert('Code invalide. Entre un code de 4 à 8 chiffres.');
+    (await PAPDialog.alert('Code invalide. Entre un code de 4 à 8 chiffres.'));
     return;
   }
   try {
@@ -379,16 +380,16 @@ async function confirmerArrivee(bookingId) {
     if (!res.ok) {
       const remaining = out.attempts_remaining;
       if (typeof remaining !== 'undefined') {
-        alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : ''));
+        (await PAPDialog.alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : '')));
       } else {
-        alert('Erreur : ' + (out.error || 'Erreur ' + res.status));
+        (await PAPDialog.alert('Erreur : ' + (out.error || 'Erreur ' + res.status)));
       }
       return;
     }
-    alert('Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.');
+    (await PAPDialog.alert('Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.'));
     window.location.reload();
   } catch (e) {
-    alert('Erreur réseau. Réessaie dans un instant.');
+    (await PAPDialog.alert('Erreur réseau. Réessaie dans un instant.'));
   }
 }
 
@@ -405,7 +406,7 @@ async function fetchDriverContact(bookingId) {
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok) {
-    alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status));
+    (await PAPDialog.alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status)));
     return null;
   }
   return out;
@@ -422,7 +423,7 @@ async function openDriverContact(bookingId, type) {
     window.location.href = 'mailto:' + contact.email;
     return;
   }
-  alert('Coordonnee non disponible pour ce conducteur.');
+  (await PAPDialog.alert('Coordonnee non disponible pour ce conducteur.'));
 }
 
 function escHtml(value) {
@@ -437,10 +438,10 @@ function toggleMeetupForm(rideId) {
 async function sendMeetupToRide(rideId) {
   const textarea = document.getElementById('meetup-message-' + rideId);
   const message = (textarea?.value || '').trim();
-  if (!message) { alert('Entre un court message de point de rencontre.'); return; }
-  if (message.length > 300) { alert('Maximum 300 caracteres.'); return; }
+  if (!message) { (await PAPDialog.alert('Entre un court message de point de rencontre.')); return; }
+  if (message.length > 300) { (await PAPDialog.alert('Maximum 300 caracteres.')); return; }
   const bookings = (dashData.ride_bookings || []).filter(b => b.ride_id === rideId && String(b.status || '').toLowerCase() === 'confirme');
-  if (!bookings.length) { alert('Aucun passager confirme pour ce trajet.'); return; }
+  if (!bookings.length) { (await PAPDialog.alert('Aucun passager confirme pour ce trajet.')); return; }
   try {
     const db = getSupabaseClient();
     const { data: _sd } = await db.auth.getSession();
@@ -458,11 +459,11 @@ async function sendMeetupToRide(rideId) {
       if (res.ok && out.success) sent += 1;
       else errors.push(out.error || ('Erreur ' + res.status));
     }
-    if (sent) alert('Message envoye a ' + sent + ' passager(s) confirme(s).');
-    if (errors.length) alert('Certains messages n ont pas ete envoyes : ' + errors[0]);
+    if (sent) (await PAPDialog.alert('Message envoye a ' + sent + ' passager(s) confirme(s).'));
+    if (errors.length) (await PAPDialog.alert('Certains messages n ont pas ete envoyes : ' + errors[0]));
     window.location.reload();
   } catch (e) {
-    alert('Erreur reseau. Reessaie dans un instant.');
+    (await PAPDialog.alert('Erreur reseau. Reessaie dans un instant.'));
   }
 }
 
@@ -859,27 +860,27 @@ async function rideCodeRequest(endpoint, body) {
 async function submitRideCodeModal() {
   const bookingId = document.getElementById('ride-code-booking-id').value;
   const code = document.getElementById('ride-code-input').value.replace(/\D/g, '');
-  if (code.length < 4) { alert('Entre un code de 4 à 8 chiffres.'); return; }
+  if (code.length < 4) { (await PAPDialog.alert('Entre un code de 4 à 8 chiffres.')); return; }
   try {
     await rideCodeRequest('ride-driver-complete', { booking_id: bookingId, code });
     closeRideCodeModal();
-    alert('Trajet validé. Le paiement est libéré.');
+    (await PAPDialog.alert('Trajet validé. Le paiement est libéré.'));
     await init();
   } catch (e) {
-    alert('Validation impossible : ' + e.message);
+    (await PAPDialog.alert('Validation impossible : ' + e.message));
   }
 }
 
 async function submitRideDriverCompletedOnly() {
   const bookingId = document.getElementById('ride-code-booking-id').value;
-  if (!confirm('Marquer ce trajet terminé sans code ? Le passager aura 4h pour confirmer ou signaler un problème.')) return;
+  if (!(await PAPDialog.confirm('Marquer ce trajet terminé sans code ? Le passager aura 4h pour confirmer ou signaler un problème.'))) return;
   try {
     await rideCodeRequest('ride-driver-complete', { booking_id: bookingId });
     closeRideCodeModal();
-    alert('Trajet marqué terminé. Auto-validation après 4h sans alerte passager.');
+    (await PAPDialog.alert('Trajet marqué terminé. Auto-validation après 4h sans alerte passager.'));
     await init();
   } catch (e) {
-    alert('Action impossible : ' + e.message);
+    (await PAPDialog.alert('Action impossible : ' + e.message));
   }
 }
 

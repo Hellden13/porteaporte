@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion admin - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-captcha.js"></script>
   <style>
     body{min-height:100vh;display:grid;place-items:center;padding:24px}
     .card{width:100%;max-width:460px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:14px;padding:30px;box-shadow:0 18px 60px rgba(0,0,0,.38)}
@@ -35,6 +37,7 @@
       <input id="email" type="email" autocomplete="email" required>
       <label for="password">Mot de passe</label>
       <input id="password" type="password" autocomplete="current-password" required>
+      <div id="admin-captcha" aria-live="polite" style="margin-top:14px"></div>
       <button class="btn" id="loginBtn" type="submit">Se connecter comme admin</button>
     </form>
 
@@ -49,6 +52,8 @@
   <script>
     const db = window.getSupabaseClient();
     const statusEl = document.getElementById('status');
+    // Supabase exige le captcha (Turnstile) : même widget que login.html.
+    const adminCaptcha = window.PAPAuthCaptcha.mount('admin-captcha', 'login');
 
     function status(message, type = 'error') {
       statusEl.textContent = message;
@@ -102,10 +107,13 @@
       btn.disabled = true;
       btn.textContent = 'Vérification...';
       try {
+        const captchaToken = await adminCaptcha.getToken();
         const { data, error } = await db.auth.signInWithPassword({
           email: document.getElementById('email').value.trim(),
-          password: document.getElementById('password').value
+          password: document.getElementById('password').value,
+          options: { captchaToken: captchaToken || undefined }
         });
+        adminCaptcha.reset();
         if (error) throw error;
         await checkAdminAndRedirect(data.session);
       } catch (err) {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🚨 Centre Opérations — PorteàPorte Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -326,11 +327,11 @@
         const out = await r.json();
         if (!r.ok) throw new Error(out.error);
         const samples = (out.fake_livraisons_sample || []).map(l => `• ${l.code || l.id.slice(0,8)} — ${l.statut} — "${l.titre || '(sans titre)'}"`).join('\n');
-        alert(`🔍 ${out.fake_livraisons_count} livraison(s) seront supprimées.\n\nExemples (5 premiers):\n${samples || '(aucun)'}\n\nLes livraisons PAYÉES sont JAMAIS touchées.\n\nClique "🗑️ Purger" pour exécuter pour de vrai.`);
-      } catch (e) { alert('❌ ' + e.message); }
+        (await PAPDialog.alert(`🔍 ${out.fake_livraisons_count} livraison(s) seront supprimées.\n\nExemples (5 premiers):\n${samples || '(aucun)'}\n\nLes livraisons PAYÉES sont JAMAIS touchées.\n\nClique "🗑️ Purger" pour exécuter pour de vrai.`));
+      } catch (e) { (await PAPDialog.alert('❌ ' + e.message)); }
     }
     async function executePurge() {
-      if (!confirm('CERTAIN ? Cette action supprime définitivement les livraisons fictives.\n\nLes livraisons PAYÉES ne sont PAS touchées (vrai argent en jeu).')) return;
+      if (!(await PAPDialog.confirm('CERTAIN ? Cette action supprime définitivement les livraisons fictives.\n\nLes livraisons PAYÉES ne sont PAS touchées (vrai argent en jeu).'))) return;
       try {
         const r = await fetch('/api/platform?endpoint=admin-purge-test-data', {
           method: 'POST',
@@ -339,9 +340,9 @@
         });
         const out = await r.json();
         if (!r.ok) throw new Error(out.error);
-        alert(`✅ ${out.deleted_livraisons || 0} livraisons de test supprimées.\nLa plateforme est prête pour les vrais clients !`);
+        (await PAPDialog.alert(`✅ ${out.deleted_livraisons || 0} livraisons de test supprimées.\nLa plateforme est prête pour les vrais clients !`));
         loadPulse();
-      } catch (e) { alert('❌ ' + e.message); }
+      } catch (e) { (await PAPDialog.alert('❌ ' + e.message)); }
     }
     init();
   </script>

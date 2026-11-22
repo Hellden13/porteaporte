@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organismes - Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -67,7 +68,7 @@
       if (!sess?.session) { window.location.href = '/login.html'; return; }
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
       await load();
     }
 
@@ -134,7 +135,7 @@
     }
 
     async function addDon(id) {
-      const montant = Number(prompt('Montant du don reçu ($) :', '0'));
+      const montant = Number((await PAPDialog.prompt('Montant du don reçu ($) :', '0')));
       if (!montant || montant <= 0) return;
       const { data } = await db.from('organismes_partenaires').select('total_recu_cad').eq('id', id).single();
       const nouveau = (Number(data?.total_recu_cad) || 0) + montant;
@@ -146,7 +147,7 @@
     }
 
     async function deleteOrg(id) {
-      if (!confirm('Supprimer cet organisme ?')) return;
+      if (!(await PAPDialog.confirm('Supprimer cet organisme ?'))) return;
       await db.from('organismes_partenaires').delete().eq('id', id);
       load();
     }

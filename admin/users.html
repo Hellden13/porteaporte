@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Utilisateurs - Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -55,7 +56,7 @@
       if (!sess?.session) { window.location.href = '/login.html'; return; }
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
 
       const { data } = await db.from('profiles').select('id,email,prenom,nom,role,driver_status,verification_status,suspendu,cree_le,ville,stripe_identity_status').order('cree_le', { ascending: false });
       all = data || [];
@@ -145,10 +146,10 @@
     }
 
     async function setStatus(id, status) {
-      if (!confirm('Changer le statut à "' + status + '" ?')) return;
+      if (!(await PAPDialog.confirm('Changer le statut à "' + status + '" ?'))) return;
       const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
       const { error } = await db.from('profiles').update({ driver_status: status, verification_status: status === 'verified' ? 'verified' : (status === 'rejected' ? 'rejected' : 'pending') }).eq('id', id);
-      if (error) { alert('Erreur : ' + error.message); return; }
+      if (error) { (await PAPDialog.alert('Erreur : ' + error.message)); return; }
       const u = all.find(x => x.id === id);
       if (u) { u.driver_status = status; }
       renderFilters();
@@ -156,10 +157,10 @@
     }
 
     async function toggleSuspend(id, suspend) {
-      if (!confirm(suspend ? 'Suspendre cet utilisateur ?' : 'Réactiver cet utilisateur ?')) return;
+      if (!(await PAPDialog.confirm(suspend ? 'Suspendre cet utilisateur ?' : 'Réactiver cet utilisateur ?'))) return;
       const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
       const { error } = await db.from('profiles').update({ suspendu: suspend }).eq('id', id);
-      if (error) { alert('Erreur : ' + error.message); return; }
+      if (error) { (await PAPDialog.alert('Erreur : ' + error.message)); return; }
       const u = all.find(x => x.id === id);
       if (u) u.suspendu = suspend;
       renderFilters();
@@ -167,7 +168,7 @@
     }
 
     async function deleteUser(id, email) {
-      if (!confirm('⚠️ SUPPRIMER définitivement ce compte ?\n\n' + (email || id) + '\n\nCette action est irréversible (compte + profil effacés).')) return;
+      if (!(await PAPDialog.confirm('⚠️ SUPPRIMER définitivement ce compte ?\n\n' + (email || id) + '\n\nCette action est irréversible (compte + profil effacés).'))) return;
       try {
         const res = await fetch('/api/platform?endpoint=admin-user-delete', {
           method: 'POST',
@@ -179,9 +180,9 @@
         all = all.filter(u => u.id !== id);
         renderFilters();
         render();
-        alert('✅ Compte supprimé : ' + (out.email || email || id));
+        (await PAPDialog.alert('✅ Compte supprimé : ' + (out.email || email || id)));
       } catch (err) {
-        alert('❌ ' + err.message);
+        (await PAPDialog.alert('❌ ' + err.message));
       }
     }
 

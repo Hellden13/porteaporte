@@ -1326,7 +1326,7 @@
                 return;
             }
             // Fallback ancien comportement si script pas chargé
-            if (!confirm('Annuler cette livraison?')) return;
+            if (!(await PAPDialog.confirm('Annuler cette livraison?'))) return;
             const res = await fetch('/api/cancel-livraison', {
                 method: 'POST',
                 headers: {
@@ -1350,9 +1350,9 @@
                 return;
             }
             if (captureInProgress.has(livraisonId)) return;
-            const recipientCode = prompt('Entre le code de reception donne par le destinataire. Sans ce code, le paiement reste protege.');
+            const recipientCode = (await PAPDialog.prompt('Entre le code de reception donne par le destinataire. Sans ce code, le paiement reste protege.'));
             if (!recipientCode) return;
-            if (!confirm('Code destinataire saisi. Liberer le paiement Stripe au livreur?')) return;
+            if (!(await PAPDialog.confirm('Code destinataire saisi. Liberer le paiement Stripe au livreur?'))) return;
             captureInProgress.add(livraisonId);
             document.querySelectorAll(`[data-capture-id="${livraisonId}"]`).forEach((btn) => {
                 btn.disabled = true;

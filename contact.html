@@ -106,6 +106,7 @@
   <meta name="twitter:title" content="Contact &amp; Support · PorteàPorte">
   <meta name="twitter:description" content="Contactez l'équipe PorteàPorte pour toute question, demande de partenariat ou signalement. Nous répondons sous 24 heures.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
+  <script src="/js/dialogues.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -243,7 +244,7 @@
       const sujet  = document.getElementById('cfSujet').value;
       const msg    = document.getElementById('cfMessage').value.trim();
 
-      if (!prenom || !email || !msg) { alert('Remplis les champs obligatoires (prénom, courriel, message).'); return; }
+      if (!prenom || !email || !msg) { (await PAPDialog.alert('Remplis les champs obligatoires (prénom, courriel, message).')); return; }
 
       const btn = document.querySelector('.submit-btn');
       btn.disabled = true;
@@ -259,7 +260,7 @@
       } catch (e) {
         btn.disabled = false;
         btn.textContent = 'Envoyer le message';
-        alert('Erreur. Écris-nous directement à support@porteaporte.site');
+        (await PAPDialog.alert('Erreur. Écris-nous directement à support@porteaporte.site'));
       }
     }
   </script>

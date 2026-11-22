@@ -120,13 +120,13 @@
         body: JSON.stringify({ endpoint: 'ride-message-send', ride_id: opts.ride_id, recipient_id: opts.other_user_id, body: text })
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { alert('Erreur : ' + (d.error || 'envoi impossible')); btn.disabled = false; return; }
+      if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || 'envoi impossible'))); btn.disabled = false; return; }
       ta.value = '';
       // Refresh thread
       const thread = await fetchThread(opts);
       if (thread && thread.messages) renderMessages(currentCtx.myId, thread.messages);
     } catch (e) {
-      alert('Erreur réseau : ' + (e.message || e));
+      (await PAPDialog.alert('Erreur réseau : ' + (e.message || e)));
     } finally {
       btn.disabled = false;
       ta.focus();

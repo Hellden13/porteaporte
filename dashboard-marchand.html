@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -341,7 +342,7 @@
       const date         = document.getElementById('fDate').value;
       const description  = document.getElementById('fDescription').value.trim();
 
-      if (!villeDepart || !villeArrivee) { alert('Remplis les villes de départ et d\'arrivée.'); return; }
+      if (!villeDepart || !villeArrivee) { (await PAPDialog.alert('Remplis les villes de départ et d\'arrivée.')); return; }
 
       const base  = Math.max(8, distance * 0.45 + poids * 0.5);
       const comm  = Math.max(2, base * 0.15);
@@ -370,10 +371,10 @@
           document.getElementById('fVilleArrivee').value = '';
           document.getElementById('fDescription').value = '';
         } else {
-          alert(data.error || 'Erreur lors de la publication.');
+          (await PAPDialog.alert(data.error || 'Erreur lors de la publication.'));
         }
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
       } finally {
         btn.disabled = false;
         btn.textContent = 'Publier la livraison';

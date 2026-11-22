@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Révision KYC — Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -380,10 +381,10 @@
           <button class="btn-reject"  onclick="openRejectModal('${d.user_id}')">❌ Refuser</button>
         ` : isApproved ? `
           <button class="btn-reject" onclick="openRejectModal('${d.user_id}')">Révoquer</button>
-          <button class="btn-detail" onclick="alert('Profil livreur #${d.user_id}')">Voir profil</button>
+          <button class="btn-detail" onclick="PAPDialog.alert('Profil livreur #${d.user_id}')">Voir profil</button>
         ` : `
           <button class="btn-approve" onclick="approveKyc('${d.user_id}','${d.transport_mode}',${eco})">Ré-approuver</button>
-          <button class="btn-detail" onclick="alert('Profil livreur #${d.user_id}')">Voir profil</button>
+          <button class="btn-detail" onclick="PAPDialog.alert('Profil livreur #${d.user_id}')">Voir profil</button>
         `}
       </div>
     </div>`;
@@ -418,7 +419,7 @@
       ]);
       await loadDossiers();
     } catch (err) {
-      alert('Erreur : ' + err.message);
+      (await PAPDialog.alert('Erreur : ' + err.message));
       if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
     }
   }
@@ -440,7 +441,7 @@
 
   async function confirmReject() {
     const reason = document.getElementById('rejectReason').value.trim();
-    if (!reason) { alert('Précise un motif de refus.'); return; }
+    if (!reason) { (await PAPDialog.alert('Précise un motif de refus.')); return; }
 
     const btn = document.querySelector('.modal-confirm-reject');
     btn.disabled = true;
@@ -454,7 +455,7 @@
       closeRejectModal();
       await loadDossiers();
     } catch (err) {
-      alert('Erreur : ' + err.message);
+      (await PAPDialog.alert('Erreur : ' + err.message));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Confirmer le refus';
@@ -472,7 +473,7 @@
         document.getElementById('lightbox').classList.add('open');
       }
     } catch (_) {
-      alert('Impossible d\'afficher ce document.');
+      (await PAPDialog.alert('Impossible d\'afficher ce document.'));
     }
   }
 

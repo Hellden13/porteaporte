@@ -152,7 +152,7 @@
     const btn = document.getElementById('pc-confirm-btn');
     const msg = document.getElementById('pc-msg');
     const reason = document.getElementById('pc-reason')?.value?.trim() || '';
-    if (!confirm('Es-tu CERTAIN(E) de vouloir annuler ?\nCette action est irréversible.')) return;
+    if (!(await PAPDialog.confirm('Es-tu CERTAIN(E) de vouloir annuler ?\nCette action est irréversible.'))) return;
     btn.disabled = true;
     btn.textContent = 'Annulation en cours...';
     msg.className = 'pc-msg';

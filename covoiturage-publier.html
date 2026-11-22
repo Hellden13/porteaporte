@@ -212,6 +212,7 @@
       body.express-mode .form-section[data-optional="1"] { display:none; }
       body.express-mode #step-2 .form-section, body.express-mode #step-3 .form-section, body.express-mode #step-4 .form-section { display:none; }
     </style>
+    <script src="/js/dialogues.js"></script>
     <script>
       function toggleExpress() {
         const on = document.body.classList.toggle('express-mode');
@@ -1012,9 +1013,9 @@
 
     function nextStep(from) {
       if (from === 1) {
-        if (!document.getElementById('start_city').value.trim()) { alert('Ville de départ requise'); return; }
-        if (!document.getElementById('end_city').value.trim())   { alert('Ville d\'arrivée requise'); return; }
-        if (!document.getElementById('departure_time').value)    { alert('Date de départ requise'); return; }
+        if (!document.getElementById('start_city').value.trim()) { PAPDialog.alert('Ville de départ requise'); return; }
+        if (!document.getElementById('end_city').value.trim())   { PAPDialog.alert('Ville d\'arrivée requise'); return; }
+        if (!document.getElementById('departure_time').value)    { PAPDialog.alert('Date de départ requise'); return; }
         const dist = document.getElementById('total_distance_km');
         if (!dist.value) {
           const pairs = {
@@ -1441,7 +1442,7 @@
           copyBtn.textContent = '✅ Lien copié !';
           setTimeout(() => { copyBtn.textContent = '🔗 Copier le lien'; }, 2500);
         } catch (_) {
-          prompt('Copie ce lien :', shareUrl);
+          (await PAPDialog.prompt('Copie ce lien :', shareUrl));
         }
       };
     }

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -278,7 +279,7 @@
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) {
-      alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status));
+      (await PAPDialog.alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status)));
       return null;
     }
     return out;
@@ -295,7 +296,7 @@
       location.href = 'mailto:' + contact.email;
       return;
     }
-    alert('Coordonnee non disponible pour ce conducteur.');
+    (await PAPDialog.alert('Coordonnee non disponible pour ce conducteur.'));
   }
 
   function renderAll(booking, rideData) {
@@ -362,9 +363,9 @@
       e.preventDefault();
       if (window.PapCancel) {
         // À adapter si on a un widget cancel pour rides plutôt que livraisons
-        alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
+        PAPDialog.alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
       } else {
-        alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
+        PAPDialog.alert('Pour annuler, contacte le conducteur ou écris à bonjour@porteaporte.site');
       }
     };
   }

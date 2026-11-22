@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+    <script src="/js/dialogues.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/supabase-config.js"></script>
     <style>
@@ -488,7 +489,7 @@
                     window.savePetCard = async function () {
                         try {
                             const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
-                            if (!session) { alert('Connecte-toi'); return; }
+                            if (!session) { (await PAPDialog.alert('Connecte-toi')); return; }
                             const payload = {
                                 endpoint: 'pet-card-upsert',
                                 pet_name: document.getElementById('pet_name').value,
@@ -506,17 +507,17 @@
                                 body: JSON.stringify(payload)
                             });
                             const d = await r.json();
-                            if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+                            if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || r.status))); return; }
                             const ok = document.getElementById('pet-saved');
                             ok.style.display = 'block';
                             setTimeout(() => ok.style.display = 'none', 2500);
-                        } catch (e) { alert('Erreur : ' + e.message); }
+                        } catch (e) { (await PAPDialog.alert('Erreur : ' + e.message)); }
                     };
 
                     window.handlePetPhotoUpload = async function (e) {
                         const file = e.target.files[0];
                         if (!file) return;
-                        if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
+                        if (file.size > 5 * 1024 * 1024) { (await PAPDialog.alert('Max 5MB')); return; }
                         const statusEl = document.getElementById('pet-photo-status');
                         statusEl.innerHTML = '<span style="color:#888;">📤 Upload…</span>';
                         try {
@@ -784,8 +785,8 @@
     async function handlePhotoUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { alert('Photo trop lourde (max 5MB)'); return; }
-      if (!file.type.startsWith('image/')) { alert('Seules les images sont acceptées'); return; }
+      if (file.size > 5 * 1024 * 1024) { (await PAPDialog.alert('Photo trop lourde (max 5MB)')); return; }
+      if (!file.type.startsWith('image/')) { (await PAPDialog.alert('Seules les images sont acceptées')); return; }
 
       const photoStatusEl = document.getElementById('photo-status');
       photoStatusEl.innerHTML = '<span style="color:#888;">📤 Upload en cours…</span>';
@@ -861,7 +862,7 @@
           body: JSON.stringify({ endpoint: 'profile-photo-visibility', visible })
         });
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
         document.getElementById('photo-visible-check').checked = !visible;
       }
     }
@@ -872,12 +873,12 @@
       try {
         const client = window.db || window.getSupabaseClient();
         const { data: { session } } = await client.auth.getSession();
-        if (!session) { alert('Session expirée'); return false; }
+        if (!session) { (await PAPDialog.alert('Session expirée')); return false; }
         const { error } = await client.from('profiles').update({ [field]: value }).eq('id', session.user.id);
-        if (error) { alert('Erreur sauvegarde : ' + error.message); return false; }
+        if (error) { (await PAPDialog.alert('Erreur sauvegarde : ' + error.message)); return false; }
         return true;
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
         return false;
       }
     }
@@ -938,7 +939,7 @@
     };
 
         async function logout() {
-            if (confirm('Es-tu sûr de vouloir te déconnecter ?')) {
+            if ((await PAPDialog.confirm('Es-tu sûr de vouloir te déconnecter ?'))) {
                 await db.auth.signOut();
                 localStorage.removeItem('auth_token');
                 window.location.href = '/index.html';

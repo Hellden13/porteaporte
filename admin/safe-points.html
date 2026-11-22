@@ -7,6 +7,7 @@
   <title>Points rencontre - Admin PorteaPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -329,11 +330,11 @@
     const lat = validCoord(el('pt-lat').value);
     const lng = validCoord(el('pt-lng').value);
     if (!el('pt-city').value.trim() || !el('pt-name').value.trim() || !el('pt-address').value.trim()) {
-      alert('Ville, nom et adresse sont requis.');
+      (await PAPDialog.alert('Ville, nom et adresse sont requis.'));
       return;
     }
     if (lat == null || lng == null) {
-      alert('Latitude et longitude doivent être valides.');
+      (await PAPDialog.alert('Latitude et longitude doivent être valides.'));
       return;
     }
     const saveBtn = el('save-btn');
@@ -363,7 +364,7 @@
       closeModal();
       await loadList();
     } catch (error) {
-      alert(error.message);
+      (await PAPDialog.alert(error.message));
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Sauvegarder';
@@ -372,12 +373,12 @@
 
   async function disablePoint(point) {
     if (!point?.id) return;
-    if (!confirm('Désactiver ce point rencontre ?')) return;
+    if (!(await PAPDialog.confirm('Désactiver ce point rencontre ?'))) return;
     try {
       await api('admin-safe-points-delete', { id: point.id });
       await loadList();
     } catch (error) {
-      alert(error.message);
+      (await PAPDialog.alert(error.message));
     }
   }
 

@@ -142,6 +142,7 @@
     </div>
   </main>
 
+  <script src="/js/dialogues.js"></script>
   <script>
     const codeInput = document.getElementById('codeInput');
     const trackBtn  = document.getElementById('trackBtn');
@@ -279,8 +280,8 @@
         const btn = document.querySelector('.copy-btn');
         btn.textContent = '✅ Copié !';
         setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
-      }).catch(() => {
-        prompt('Copie ce lien :', url);
+      }).catch(async () => {
+        (await PAPDialog.prompt('Copie ce lien :', url));
       });
     }
 

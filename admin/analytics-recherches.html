@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Analytics recherches — Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -88,7 +89,7 @@
     async function loadData() {
       var days = parseInt(document.getElementById('days-sel').value, 10);
       var db = window.getSupabaseClient && window.getSupabaseClient();
-      if (!db) { alert('Supabase non chargé'); return; }
+      if (!db) { (await PAPDialog.alert('Supabase non chargé')); return; }
       var { data: { session } } = await db.auth.getSession();
       if (!session) { location.href = '/login.html?redirect=/admin/analytics-recherches.html'; return; }
       try {
@@ -98,14 +99,14 @@
           body: JSON.stringify({ endpoint: 'admin-top-searches', days: days })
         });
         var d = await r.json();
-        if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+        if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || r.status))); return; }
         document.querySelector('#stat-total .v').textContent = d.total_searches || 0;
         renderTable('tab-from', d.top_departure_cities);
         renderTable('tab-to', d.top_destination_cities);
         renderTable('tab-pairs', d.top_pairs);
         renderTable('tab-zero', d.zero_result_pairs, true);
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
       }
     }
     document.getElementById('days-sel').addEventListener('change', loadData);

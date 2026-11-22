@@ -1734,7 +1734,7 @@
 
     // ── Refus / Rescue ──
     async function refuserMission(id) {
-      const raison = prompt('Raison du refus (optionnel) :') || '';
+      const raison = (await PAPDialog.prompt('Raison du refus (optionnel) :')) || '';
       if (raison === null) return; // cancel
       try {
         const res = await fetch('/api/livreur-refuser-mission', {
@@ -1745,29 +1745,29 @@
         const out = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (out.requires_rescue) {
-            if (confirm('⚠️ Tu as déjà le colis ! Veux-tu plutôt demander un RESCUE (autre livreur prend la relève + bonus) ?')) {
+            if ((await PAPDialog.confirm('⚠️ Tu as déjà le colis ! Veux-tu plutôt demander un RESCUE (autre livreur prend la relève + bonus) ?'))) {
               return demanderRescue(id);
             }
             return;
           }
           throw new Error(out.error || 'Erreur');
         }
-        alert('✅ ' + (out.message || 'Mission refusée'));
+        (await PAPDialog.alert('✅ ' + (out.message || 'Mission refusée')));
         await loadMyDeliveries();
-      } catch (err) { alert('❌ ' + err.message); }
+      } catch (err) { (await PAPDialog.alert('❌ ' + err.message)); }
     }
 
     async function demanderRescue(id) {
-      const raison = prompt('Pourquoi tu dois passer la main ? (ex: panne, urgence familiale)') || '';
+      const raison = (await PAPDialog.prompt('Pourquoi tu dois passer la main ? (ex: panne, urgence familiale)')) || '';
       if (!raison) return;
-      const bonus = Number(prompt('Bonus offert au livreur qui te dépanne (en %, défaut 20) :', '20')) || 20;
+      const bonus = Number((await PAPDialog.prompt('Bonus offert au livreur qui te dépanne (en %, défaut 20) :', '20'))) || 20;
       let coords = { lat: null, lng: null };
       try {
         const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
         coords.lat = pos.coords.latitude;
         coords.lng = pos.coords.longitude;
       } catch (e) {}
-      const addr = prompt('Adresse approximative où l\'autre livreur peut venir te chercher le colis :') || '';
+      const addr = (await PAPDialog.prompt('Adresse approximative où l\'autre livreur peut venir te chercher le colis :')) || '';
       try {
         const res = await fetch('/api/livreur-rescue-request', {
           method: 'POST',
@@ -1776,9 +1776,9 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
-        alert('🆘 ' + (out.message || 'Rescue diffusée'));
+        (await PAPDialog.alert('🆘 ' + (out.message || 'Rescue diffusée')));
         await loadMyDeliveries();
-      } catch (err) { alert('❌ ' + err.message); }
+      } catch (err) { (await PAPDialog.alert('❌ ' + err.message)); }
     }
 
     // ── Bonus fidélité ──
@@ -1861,7 +1861,7 @@
 
     async function setActiveMode(mode) {
       const { error } = await db.from('profiles').update({ transport_mode_actif: mode, transport_mode: mode }).eq('id', session.user.id);
-      if (error) { alert('Erreur : ' + error.message); return; }
+      if (error) { (await PAPDialog.alert('Erreur : ' + error.message)); return; }
       await loadModes();
       if (typeof loadMissions === 'function') loadMissions();
     }
@@ -1872,7 +1872,7 @@
       if (!newMode) return;
       const { data: p } = await db.from('profiles').select('transport_modes_disponibles').eq('id', session.user.id).single();
       const modes = Array.isArray(p?.transport_modes_disponibles) ? p.transport_modes_disponibles : [];
-      if (modes.includes(newMode)) { alert('Mode déjà ajouté'); return; }
+      if (modes.includes(newMode)) { (await PAPDialog.alert('Mode déjà ajouté')); return; }
       modes.push(newMode);
       await db.from('profiles').update({ transport_modes_disponibles: modes }).eq('id', session.user.id);
       sel.value = '';
@@ -1880,10 +1880,10 @@
     }
 
     async function removeMode(mode) {
-      if (!confirm('Retirer ' + (MODE_LABELS[mode]?.name || mode) + ' de tes modes disponibles ?')) return;
+      if (!(await PAPDialog.confirm('Retirer ' + (MODE_LABELS[mode]?.name || mode) + ' de tes modes disponibles ?'))) return;
       const { data: p } = await db.from('profiles').select('transport_modes_disponibles,transport_mode_actif').eq('id', session.user.id).single();
       let modes = (p?.transport_modes_disponibles || []).filter(m => m !== mode);
-      if (!modes.length) { alert('Tu dois garder au moins un mode'); return; }
+      if (!modes.length) { (await PAPDialog.alert('Tu dois garder au moins un mode')); return; }
       const patch = { transport_modes_disponibles: modes };
       if (p?.transport_mode_actif === mode) {
         patch.transport_mode_actif = modes[0];
@@ -2132,7 +2132,7 @@
     }
 
     async function requestXlConfirmation(id) {
-      if (!confirm('Envoyer une demande de pré-confirmation au destinataire ? Il a 15 min pour répondre.')) return;
+      if (!(await PAPDialog.confirm('Envoyer une demande de pré-confirmation au destinataire ? Il a 15 min pour répondre.'))) return;
       try {
         const res = await fetch('/api/xl-confirmation-request', {
           method: 'POST',
@@ -2141,9 +2141,9 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
-        alert('✅ ' + (out.message || 'Destinataire notifié. Tu seras informé de sa réponse.'));
+        (await PAPDialog.alert('✅ ' + (out.message || 'Destinataire notifié. Tu seras informé de sa réponse.')));
       } catch (err) {
-        alert('❌ ' + err.message);
+        (await PAPDialog.alert('❌ ' + err.message));
       }
     }
 
@@ -2256,8 +2256,8 @@
     }
 
     async function cancelAssignedDelivery(id) {
-      if (!confirm('Te retirer de cette mission ?\n\nLa livraison retournera sur le mur pour les autres livreurs. L’expéditeur ne sera pas remboursé et son paiement restera bloqué en sécurité.')) return;
-      const raison = prompt('Raison courte pour l’historique admin (optionnel) :', 'Livreur indisponible');
+      if (!(await PAPDialog.confirm('Te retirer de cette mission ?\n\nLa livraison retournera sur le mur pour les autres livreurs. L’expéditeur ne sera pas remboursé et son paiement restera bloqué en sécurité.'))) return;
+      const raison = (await PAPDialog.prompt('Raison courte pour l’historique admin (optionnel) :', 'Livreur indisponible'));
       try {
         const res = await fetch('/api/livraison-withdraw', {
           method: 'POST',
@@ -2266,14 +2266,14 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) {
-          alert(out.error || 'Retrait impossible pour cette mission.');
+          (await PAPDialog.alert(out.error || 'Retrait impossible pour cette mission.'));
           return;
         }
         showSuccess(out.message || 'Mission remise sur le mur.');
         await loadMyDeliveries();
         if (typeof loadAvailableMissions === 'function') await loadAvailableMissions();
       } catch (err) {
-        alert('Erreur réseau. Réessaie dans un instant.');
+        (await PAPDialog.alert('Erreur réseau. Réessaie dans un instant.'));
       }
     }
 
@@ -2349,8 +2349,8 @@
         body: JSON.stringify({ livraison_id: id })
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(out.error || 'Impossible d\'accepter cette mission'); return; }
-      alert('Mission acceptée ! Les détails complets sont maintenant disponibles.');
+      if (!res.ok) { (await PAPDialog.alert(out.error || 'Impossible d\'accepter cette mission')); return; }
+      (await PAPDialog.alert('Mission acceptée ! Les détails complets sont maintenant disponibles.'));
       await Promise.all([loadMissions(), loadMyDeliveries()]);
     }
 
@@ -2358,7 +2358,7 @@
        LOGOUT
     ============================= */
     async function logout() {
-      if (confirm('Se déconnecter ?')) {
+      if ((await PAPDialog.confirm('Se déconnecter ?'))) {
         await db.auth.signOut();
         window.location.href = '/index.html';
       }
@@ -2728,11 +2728,11 @@
         if (data.onboarding_url) {
           window.location.href = data.onboarding_url;
         } else {
-          alert((data.error || 'Erreur Stripe') + (data.details ? '\n\nDétail : ' + data.details : ''));
+          (await PAPDialog.alert((data.error || 'Erreur Stripe') + (data.details ? '\n\nDétail : ' + data.details : '')));
           if (btn) { btn.disabled = false; btn.textContent = '⚡ Configurer mes paiements'; }
         }
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
         if (btn) { btn.disabled = false; }
       }
     };
@@ -2744,13 +2744,13 @@
       try {
         const data = await apiCall('stripe-connect-payout', 'POST', {});
         if (data.success) {
-          alert(`✅ ${data.message}`);
+          (await PAPDialog.alert(`✅ ${data.message}`));
           await loadStripeStatus();
         } else {
-          alert('❌ ' + (data.error || 'Erreur virement'));
+          (await PAPDialog.alert('❌ ' + (data.error || 'Erreur virement')));
         }
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
       } finally {
         btn.disabled = false;
         btn.textContent = '💸 Virer mes gains maintenant';
@@ -2761,9 +2761,9 @@
       try {
         const data = await apiCall('stripe-connect-dashboard', 'POST', {});
         if (data.url) window.open(data.url, '_blank');
-        else alert(data.error || 'Lien indisponible');
+        else (await PAPDialog.alert(data.error || 'Lien indisponible'));
       } catch (e) {
-        alert('Erreur : ' + e.message);
+        (await PAPDialog.alert('Erreur : ' + e.message));
       }
     };
 

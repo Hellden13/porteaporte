@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Intelligence Adresses - Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -46,7 +47,7 @@
       if (!sess?.session) { window.location.href = '/login.html'; return; }
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
       const r = await db.from('address_intelligence').select('*').order('created_at', { ascending: false }).limit(500);
       all = r.data || [];
       render();
@@ -80,13 +81,13 @@
       document.getElementById('list').innerHTML = html || '<div class="empty">Aucune note.</div>';
     }
     async function adminAction(id, action) {
-      if (action === 'delete' && !confirm('Supprimer cette note ?')) return;
+      if (action === 'delete' && !(await PAPDialog.confirm('Supprimer cette note ?'))) return;
       const res = await fetch('/api/address-intel-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ intel_id: id, action })
       });
-      if (!res.ok) { const o = await res.json().catch(()=>({})); alert('Erreur : ' + (o.error||'')); return; }
+      if (!res.ok) { const o = await res.json().catch(()=>({})); (await PAPDialog.alert('Erreur : ' + (o.error||''))); return; }
       const r = (window.getSupabaseClient?.() || window.supabase).from('address_intelligence').select('*').order('created_at', { ascending: false }).limit(500);
       all = (await r).data || [];
       render();

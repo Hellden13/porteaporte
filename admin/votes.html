@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Votes communautaires — Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -62,7 +63,7 @@
       if (!sess?.session) { window.location.href = '/login.html'; return; }
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
       const { data: o } = await db.from('organismes_partenaires').select('id,nom').eq('actif', true);
       orgs = o || [];
       document.getElementById('orgs-checklist').innerHTML = orgs.map(o => `<label class="org-check"><input type="checkbox" value="${o.id}" checked> ${o.nom}</label>`).join('');
@@ -109,13 +110,13 @@
       load();
     }
     async function closeVote(id) {
-      if (!confirm('Fermer ce vote et calculer les résultats ?')) return;
+      if (!(await PAPDialog.confirm('Fermer ce vote et calculer les résultats ?'))) return;
       const res = await fetch('/api/platform?endpoint=admin-vote-close', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ vote_id: id })
       });
       const out = await res.json().catch(() => ({}));
-      alert(res.ok ? `✅ ${out.nb_votants} votants · Résultats calculés` : ('❌ ' + (out.error || 'Erreur')));
+      (await PAPDialog.alert(res.ok ? `✅ ${out.nb_votants} votants · Résultats calculés` : ('❌ ' + (out.error || 'Erreur'))));
       load();
     }
     init();

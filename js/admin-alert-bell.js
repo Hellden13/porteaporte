@@ -124,7 +124,7 @@
 
   // ─── Notification API ─────────────────────────────────────────────────────
   window.__papBellAskNotif = function () {
-    if (!('Notification' in window)) { alert('Ton navigateur ne supporte pas les notifications'); return; }
+    if (!('Notification' in window)) { PAPDialog.alert('Ton navigateur ne supporte pas les notifications'); return; }
     Notification.requestPermission().then(p => {
       const ok = p === 'granted';
       document.getElementById('pap-bell-notif-btn').textContent = ok ? '✅ Notifs activées' : '🔕 Refusées';

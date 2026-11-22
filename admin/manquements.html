@@ -6,6 +6,7 @@
   <title>Arbitrage manquements - Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -67,7 +68,7 @@
       session = sess.session;
 
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
 
       await loadManquements();
     }
@@ -147,14 +148,14 @@
 
     async function decide(id, decision) {
       const note = document.getElementById('note-' + id)?.value.trim() || '';
-      if (!confirm('Confirmer la décision « ' + decision.toUpperCase() + ' » ?')) return;
+      if (!(await PAPDialog.confirm('Confirmer la décision « ' + decision.toUpperCase() + ' » ?'))) return;
       const res = await fetch('/api/manquement-admin-decision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ manquement_id: id, decision, note })
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) { alert('Erreur : ' + (out.error || 'inconnue')); return; }
+      if (!res.ok) { (await PAPDialog.alert('Erreur : ' + (out.error || 'inconnue'))); return; }
       await loadManquements();
     }
 

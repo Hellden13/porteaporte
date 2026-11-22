@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Correction trajets — Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -69,7 +70,7 @@
     }
     async function load() {
       const db = window.getSupabaseClient && window.getSupabaseClient();
-      if (!db) { alert('Supabase non chargé'); return; }
+      if (!db) { (await PAPDialog.alert('Supabase non chargé')); return; }
       const { data: { session: s } } = await db.auth.getSession();
       if (!s) { location.href = '/login.html?redirect=/admin/rides-fix.html'; return; }
       session = s;
@@ -80,9 +81,9 @@
           body: JSON.stringify({ endpoint: 'admin-rides-list' })
         });
         const d = await r.json();
-        if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+        if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || r.status))); return; }
         render(d.rides || []);
-      } catch (e) { alert('Erreur : ' + e.message); }
+      } catch (e) { (await PAPDialog.alert('Erreur : ' + e.message)); }
     }
     function render(rides) {
       const body = document.getElementById('rides-body');

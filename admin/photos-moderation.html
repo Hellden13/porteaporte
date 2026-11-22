@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Modération photos — Admin PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -56,7 +57,7 @@
     }
     async function load() {
       const db = window.getSupabaseClient && window.getSupabaseClient();
-      if (!db) { alert('Supabase non chargé'); return; }
+      if (!db) { (await PAPDialog.alert('Supabase non chargé')); return; }
       const { data: { session: s } } = await db.auth.getSession();
       if (!s) { location.href = '/login.html?redirect=/admin/photos-moderation.html'; return; }
       session = s;
@@ -67,11 +68,11 @@
           body: JSON.stringify({ endpoint: 'admin-photos-pending' })
         });
         const d = await r.json();
-        if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+        if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || r.status))); return; }
         const totalCount = (d.count || 0) + (d.count_pets || 0);
         document.getElementById('count').textContent = totalCount;
         renderGrid(d.pending || [], d.pending_pets || []);
-      } catch (e) { alert('Erreur : ' + e.message); }
+      } catch (e) { (await PAPDialog.alert('Erreur : ' + e.message)); }
     }
     function renderGrid(profileItems, petItems) {
       const grid = document.getElementById('grid');
@@ -125,9 +126,9 @@
     async function moderate(userId, action, kind) {
       let reason = '';
       if (action === 'reject') {
-        reason = prompt('Raison du refus (optionnel) :') || '';
+        reason = (await PAPDialog.prompt('Raison du refus (optionnel) :')) || '';
       } else {
-        if (!confirm('Approuver cette photo ? Elle sera visible aux autres utilisateurs.')) return;
+        if (!(await PAPDialog.confirm('Approuver cette photo ? Elle sera visible aux autres utilisateurs.'))) return;
       }
       try {
         const body = { endpoint: 'admin-photo-moderate', user_id: userId, action, reason };
@@ -138,7 +139,7 @@
           body: JSON.stringify(body)
         });
         const d = await r.json();
-        if (!r.ok) { alert('Erreur : ' + (d.error || r.status)); return; }
+        if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || r.status))); return; }
         // Retire la carte
         const card = document.querySelector('.card[data-id="' + userId + '"]');
         if (card) card.remove();
@@ -147,7 +148,7 @@
         if (parseInt(countEl.textContent, 10) === 0) {
           document.getElementById('grid').innerHTML = '<div class="empty"><div class="em">🎉</div>Aucune photo en attente de modération !</div>';
         }
-      } catch (e) { alert('Erreur : ' + e.message); }
+      } catch (e) { (await PAPDialog.alert('Erreur : ' + e.message)); }
     }
     load();
   </script>

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth.js"></script>
@@ -92,7 +93,7 @@
     function showError(msg) {
       const el = document.getElementById('status');
       if (el) { el.textContent = msg; el.style.color = 'var(--brand-danger, #ff6b6b)'; el.style.display = 'block'; }
-      else alert('Erreur: ' + msg);
+      else PAPDialog.alert('Erreur: ' + msg);
     }
     function showSuccess(msg) {
       const el = document.getElementById('status');
@@ -314,7 +315,7 @@
 
     // Accepter une mission RESCUE
     async function acceptRescue(id) {
-      if (!confirm('🆘 Accepter ce RESCUE ?\n\nTu vas :\n1. Aller chercher le colis chez l\'autre livreur\n2. Continuer la livraison normale\n3. Recevoir ton gain + le bonus')) return;
+      if (!(await PAPDialog.confirm('🆘 Accepter ce RESCUE ?\n\nTu vas :\n1. Aller chercher le colis chez l\'autre livreur\n2. Continuer la livraison normale\n3. Recevoir ton gain + le bonus'))) return;
       const gpsOk = await askGpsConsent({ ville_depart: '—', ville_arrivee: '—', prix_total: 0 });
       if (!gpsOk) return;
       try {
@@ -325,10 +326,10 @@
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || 'Erreur');
-        alert('✅ ' + (out.message || 'Rescue acceptée'));
+        (await PAPDialog.alert('✅ ' + (out.message || 'Rescue acceptée')));
         if (window.papGps?.start) window.papGps.start();
         setTimeout(() => loadMissions(), 1000);
-      } catch (err) { alert('❌ ' + err.message); }
+      } catch (err) { (await PAPDialog.alert('❌ ' + err.message)); }
     }
 
     // Animation rescue pulse
@@ -378,7 +379,7 @@
           overlay.remove();
           // Demander la permission GPS au navigateur
           if (!navigator.geolocation) {
-            alert('Ton navigateur ne supporte pas le GPS. Tu ne peux pas accepter cette mission.');
+            (await PAPDialog.alert('Ton navigateur ne supporte pas le GPS. Tu ne peux pas accepter cette mission.'));
             resolve(false);
             return;
           }
@@ -388,7 +389,7 @@
             });
             resolve(true);
           } catch (e) {
-            alert('GPS refusé : tu dois autoriser la géolocalisation pour livrer. Active-le dans les paramètres de ton navigateur.');
+            (await PAPDialog.alert('GPS refusé : tu dois autoriser la géolocalisation pour livrer. Active-le dans les paramètres de ton navigateur.'));
             resolve(false);
           }
         };

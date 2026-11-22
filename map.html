@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
@@ -604,13 +605,13 @@
         body: JSON.stringify({ livraison_id: id })
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(out.error || 'Impossible d\'accepter cette mission'); return; }
+      if (!res.ok) { (await PAPDialog.alert(out.error || 'Impossible d\'accepter cette mission')); return; }
 
       /* Unlock the mission locally */
       const m = allMissions.find(x => x.id === id);
       if (m) m._locked = false;
 
-      alert('Mission acceptée ! Les adresses complètes sont maintenant disponibles.');
+      (await PAPDialog.alert('Mission acceptée ! Les adresses complètes sont maintenant disponibles.'));
       closeDetail();
       await loadMissions();
     }
@@ -621,7 +622,7 @@
     let myMarker = null;
 
     function centerOnMe() {
-      if (!navigator.geolocation) { alert('Géolocalisation non disponible'); return; }
+      if (!navigator.geolocation) { PAPDialog.alert('Géolocalisation non disponible'); return; }
       navigator.geolocation.getCurrentPosition(pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
         map.flyTo([lat, lng], 14, { duration: 1 });
@@ -633,7 +634,7 @@
           weight: 2,
           fillOpacity: 1
         }).bindPopup('<strong>Ta position</strong>').addTo(map);
-      }, () => alert('Impossible d\'obtenir ta position.'));
+      }, () => PAPDialog.alert('Impossible d\'obtenir ta position.'));
     }
 
     function setMode(mode) {

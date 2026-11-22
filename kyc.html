@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -812,7 +813,7 @@
      AUTO-DÉTECTION VILLE (GPS + Nominatim OpenStreetMap)
   ================================================================ */
   async function autoDetectCity() {
-    if (!navigator.geolocation) { alert('GPS non supporté'); return; }
+    if (!navigator.geolocation) { (await PAPDialog.alert('GPS non supporté')); return; }
     const addrInput = document.getElementById('address');
     addrInput.placeholder = '⏳ Détection en cours...';
     try {
@@ -825,11 +826,11 @@
         addrInput.style.borderColor = '#5dbfff';
       } else {
         addrInput.placeholder = '123 rue Principale, Montréal, QC H2T 1V6';
-        alert('Adresse non trouvée');
+        (await PAPDialog.alert('Adresse non trouvée'));
       }
     } catch (e) {
       addrInput.placeholder = '123 rue Principale, Montréal, QC H2T 1V6';
-      alert('Erreur GPS : ' + e.message);
+      (await PAPDialog.alert('Erreur GPS : ' + e.message));
     }
   }
 
@@ -859,7 +860,7 @@
 
   // Si retour de Stripe Identity (avec ?identity_session_complete=1)
   if (new URLSearchParams(window.location.search).get('identity_session_complete') === '1') {
-    setTimeout(() => alert('✅ Vérification Stripe terminée ! Ton statut sera mis à jour automatiquement dans quelques secondes.'), 500);
+    setTimeout(() => PAPDialog.alert('✅ Vérification Stripe terminée ! Ton statut sera mis à jour automatiquement dans quelques secondes.'), 500);
   }
 
   /* ================================================================

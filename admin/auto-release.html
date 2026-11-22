@@ -7,6 +7,7 @@
   <title>💰 Libération paiements livreurs — Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -200,11 +201,11 @@
     }
 
     async function release(livraisonId, kind) {
-      const reason = prompt(kind === 'clear'
+      const reason = (await PAPDialog.prompt(kind === 'clear'
         ? 'Confirmation libération paiement (preuve photo + GPS validés).\nRaison admin (optionnelle) :'
-        : '⚠️ Cas AMBIGU. Vérifie la preuve avant de libérer.\nRaison admin obligatoire :', 'Délai 48h écoulé, preuve livraison validée');
+        : '⚠️ Cas AMBIGU. Vérifie la preuve avant de libérer.\nRaison admin obligatoire :', 'Délai 48h écoulé, preuve livraison validée'));
       if (reason === null) return;
-      if (kind === 'ambiguous' && !reason.trim()) { alert('Raison obligatoire pour les cas ambigus.'); return; }
+      if (kind === 'ambiguous' && !reason.trim()) { (await PAPDialog.alert('Raison obligatoire pour les cas ambigus.')); return; }
 
       log(`🚀 Libération ${livraisonId.slice(0,8)}...`);
       try {
@@ -220,20 +221,20 @@
           setTimeout(loadList, 1000);
         } else {
           log(`❌ ${livraisonId.slice(0,8)} : ${d.error || r.status}`, 'err');
-          alert('Erreur : ' + (d.error || r.status));
+          (await PAPDialog.alert('Erreur : ' + (d.error || r.status)));
         }
       } catch (e) {
         log(`❌ ${livraisonId.slice(0,8)} : ${e.message}`, 'err');
       }
     }
 
-    function openDispute(livraisonId) {
-      if (!confirm('Ouvrir un litige sur cette livraison ?')) return;
+    async function openDispute(livraisonId) {
+      if (!(await PAPDialog.confirm('Ouvrir un litige sur cette livraison ?'))) return;
       location.href = '/admin/manquements.html?livraison=' + livraisonId;
     }
 
     async function captureCovoit() {
-      if (!confirm('Capturer tous les paiements covoit éligibles (status=confirme + paid_at null) ?')) return;
+      if (!(await PAPDialog.confirm('Capturer tous les paiements covoit éligibles (status=confirme + paid_at null) ?'))) return;
       log('🚗 Capture covoit en cours...');
       try {
         const { data: { session } } = await db.auth.getSession();

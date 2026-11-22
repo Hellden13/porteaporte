@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paramètres financiers — Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/platform-settings-defaults.js"></script>
@@ -252,7 +253,7 @@
       if (!sess?.session) { window.location.href = '/login.html'; return; }
       session = sess.session;
       const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      if (prof?.role !== 'admin') { alert('Accès admin requis'); window.location.href = '/'; return; }
+      if (prof?.role !== 'admin') { (await PAPDialog.alert('Accès admin requis')); window.location.href = '/'; return; }
       await load();
       await loadFund();
     }
@@ -301,7 +302,7 @@
         livraison_id: document.getElementById('po-liv').value.trim() || null,
         motif: document.getElementById('po-motif').value.trim() || null
       };
-      if (!confirm(`Enregistrer un sinistre versé de ${fmt$(amountCents)} ? Ce montant sera soustrait du fonds.`)) return;
+      if (!(await PAPDialog.confirm(`Enregistrer un sinistre versé de ${fmt$(amountCents)} ? Ce montant sera soustrait du fonds.`))) return;
       const res = await fetch('/api/platform?endpoint=fund-payout-add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },

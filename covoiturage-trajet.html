@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body { background: #f7f8fa; }
@@ -426,7 +427,7 @@ async function shareThisRideCopy() {
     await navigator.clipboard.writeText(rideShareUrl());
     if (btn) { btn.textContent = '✅ Lien copié !'; setTimeout(() => { btn.textContent = '🔗 Copier le lien'; }, 2500); }
   } catch (_) {
-    prompt('Copie ce lien :', rideShareUrl());
+    (await PAPDialog.prompt('Copie ce lien :', rideShareUrl()));
   }
 }
 function shareThisRideMessenger() {
@@ -1366,7 +1367,7 @@ async function bookPassenger() {
   if (!res.ok || data.error) {
     // Cas spécial : déjà réservé → redirection vers le dashboard
     if (res.status === 409 && data.existing_booking) {
-      if (confirm(data.error + '\n\n' + (data.action || 'Va voir ta réservation existante.'))) {
+      if ((await PAPDialog.confirm(data.error + '\n\n' + (data.action || 'Va voir ta réservation existante.')))) {
         window.location.href = data.action_url || '/dashboard-covoiturage.html';
       }
       return;

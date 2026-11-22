@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
@@ -180,7 +181,7 @@
 
     async function saveRideSafetyCode() {
       const code = document.getElementById('ride-safety-code').value.replace(/\D/g, '');
-      if (code.length < 4) { alert('Entre un code de 4 à 8 chiffres.'); return; }
+      if (code.length < 4) { (await PAPDialog.alert('Entre un code de 4 à 8 chiffres.')); return; }
       const question = document.getElementById('safety-secret-question').value;
       const answer = document.getElementById('safety-secret-answer').value.trim();
       try {
@@ -192,9 +193,9 @@
         document.getElementById('ride-safety-code').value = '';
         document.getElementById('safety-secret-answer').value = '';
         document.getElementById('ride-safety-status').textContent = 'Code sécurité configuré.';
-        alert('Code enregistré.');
+        (await PAPDialog.alert('Code enregistré.'));
       } catch (e) {
-        alert('Impossible d enregistrer le code : ' + e.message);
+        (await PAPDialog.alert('Impossible d enregistrer le code : ' + e.message));
       }
     }
 
@@ -235,9 +236,9 @@
       try {
         await rideSafetyApi('emergency-contacts-set', { contacts });
         document.getElementById('emergency-status').textContent = 'Contacts enregistrés.';
-        alert('Contacts enregistrés.');
+        (await PAPDialog.alert('Contacts enregistrés.'));
       } catch (e) {
-        alert('Impossible d enregistrer les contacts : ' + e.message);
+        (await PAPDialog.alert('Impossible d enregistrer les contacts : ' + e.message));
       }
     }
 

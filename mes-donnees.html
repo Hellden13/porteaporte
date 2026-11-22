@@ -12,6 +12,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -132,7 +133,7 @@
     }
 
     async function requestDelete() {
-      if (!confirm('Es-tu CERTAIN(E) de vouloir supprimer ton compte ?\n\nCette action est irréversible et sera traitée sous 30 jours.')) return;
+      if (!(await PAPDialog.confirm('Es-tu CERTAIN(E) de vouloir supprimer ton compte ?\n\nCette action est irréversible et sera traitée sous 30 jours.'))) return;
       const msg = document.getElementById('del-msg');
       const reason = document.getElementById('del-reason').value.trim();
       try {

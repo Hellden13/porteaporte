@@ -227,6 +227,7 @@
     </p>
   </div>
 
+  <script src="/js/dialogues.js"></script>
   <script src="/js/supabase-config.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
@@ -315,7 +316,7 @@
         const err = r ? await r.json().catch(() => ({})) : {};
         btn.disabled = false;
         btn.textContent = plan === 'conducteur_pro' ? 'S\'abonner — 14,99 $/mois' : 'S\'abonner — 49 $/mois';
-        alert(err.error || 'Une erreur est survenue. Réessayez.');
+        (await PAPDialog.alert(err.error || 'Une erreur est survenue. Réessayez.'));
         return;
       }
 
@@ -325,7 +326,7 @@
       } else {
         btn.disabled = false;
         btn.textContent = plan === 'conducteur_pro' ? 'S\'abonner — 14,99 $/mois' : 'S\'abonner — 49 $/mois';
-        alert('Impossible d\'obtenir le lien de paiement. Réessayez.');
+        (await PAPDialog.alert('Impossible d\'obtenir le lien de paiement. Réessayez.'));
       }
     }
 

@@ -6,6 +6,7 @@
   <title>Dashboard Admin - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/auth-complete.js"></script>
@@ -1527,7 +1528,7 @@
   async function setDriverStatus(userId, newStatus) {
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
-    if (!token) { alert('Session admin requise'); return; }
+    if (!token) { (await PAPDialog.alert('Session admin requise')); return; }
 
     let reason = '';
     if (newStatus === 'rejected') {
@@ -1541,49 +1542,49 @@
       body: JSON.stringify({ user_id: userId, driver_status: newStatus, reason })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(out.error || 'Mise a jour impossible'); return; }
-    if (newStatus === 'rejected') alert('✅ Utilisateur refusé — il a été prévenu par courriel avec la raison.');
+    if (!res.ok) { (await PAPDialog.alert(out.error || 'Mise a jour impossible')); return; }
+    if (newStatus === 'rejected') (await PAPDialog.alert('✅ Utilisateur refusé — il a été prévenu par courriel avec la raison.'));
     await loadData();
   }
 
   async function sendVerifReminder(userId) {
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
-    if (!token) { alert('Session admin requise'); return; }
+    if (!token) { (await PAPDialog.alert('Session admin requise')); return; }
     const res = await fetch(apiUrl('/api/platform?endpoint=verification-reminder'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ endpoint: 'verification-reminder', user_id: userId })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(out.error || 'Envoi impossible'); return; }
-    alert('📨 Invitation à se vérifier envoyée à ' + (out.sent_to || 'l\'utilisateur') + ' !');
+    if (!res.ok) { (await PAPDialog.alert(out.error || 'Envoi impossible')); return; }
+    (await PAPDialog.alert('📨 Invitation à se vérifier envoyée à ' + (out.sent_to || 'l\'utilisateur') + ' !'));
   }
 
   async function captureBooking(bookingId) {
-    if (!confirm('Capturer le paiement maintenant ? Le conducteur sera payé.\n(À faire seulement APRÈS le trajet.)')) return;
+    if (!(await PAPDialog.confirm('Capturer le paiement maintenant ? Le conducteur sera payé.\n(À faire seulement APRÈS le trajet.)'))) return;
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
-    if (!token) { alert('Session admin requise'); return; }
+    if (!token) { (await PAPDialog.alert('Session admin requise')); return; }
     const res = await fetch(apiUrl('/api/platform?endpoint=ride-capture-eligible'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ endpoint: 'ride-capture-eligible', booking_id: bookingId, force: true })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(out.error || 'Capture impossible'); return; }
+    if (!res.ok) { (await PAPDialog.alert(out.error || 'Capture impossible')); return; }
     const cap = (out.captured || []).length;
     const errs = (out.errors || []);
-    if (cap > 0) alert('💰 Paiement capturé — conducteur payé ! ✅');
-    else if (errs.length) alert('⚠️ Échec capture : ' + (errs[0].error || 'erreur Stripe — l\'autorisation a peut-être expiré (>7 jours).'));
-    else alert('Rien à capturer (déjà fait ou non éligible).');
+    if (cap > 0) (await PAPDialog.alert('💰 Paiement capturé — conducteur payé ! ✅'));
+    else if (errs.length) (await PAPDialog.alert('⚠️ Échec capture : ' + (errs[0].error || 'erreur Stripe — l\'autorisation a peut-être expiré (>7 jours).')));
+    else (await PAPDialog.alert('Rien à capturer (déjà fait ou non éligible).'));
     location.reload();
   }
 
   async function setUserAccess(userId, action, role) {
     const me = AUTH_API.getUser();
     if (userId === me?.id) {
-      alert('Protection active: tu ne peux pas retirer ton propre compte admin.');
+      (await PAPDialog.alert('Protection active: tu ne peux pas retirer ton propre compte admin.'));
       return;
     }
 
@@ -1595,23 +1596,23 @@
       ? 'REVISION'
       : 'RETIRER';
     if (action === 'retirer') {
-      const typed = prompt(`Action sensible. Tape ${expected} pour retirer cet utilisateur.`);
+      const typed = (await PAPDialog.prompt(`Action sensible. Tape ${expected} pour retirer cet utilisateur.`));
       if (typed !== expected) return;
     } else if (action === 'pause') {
-      const typed = prompt(`Action sensible. Tape ${expected} pour mettre ce profil en pause.`);
+      const typed = (await PAPDialog.prompt(`Action sensible. Tape ${expected} pour mettre ce profil en pause.`));
       if (typed !== expected) return;
     } else if (action === 'revision') {
-      if (!confirm('Remettre ce livreur en revision? Il devra etre approuve de nouveau.')) return;
-    } else if (!confirm('Réactiver cet utilisateur?')) {
+      if (!(await PAPDialog.confirm('Remettre ce livreur en revision? Il devra etre approuve de nouveau.'))) return;
+    } else if (!(await PAPDialog.confirm('Réactiver cet utilisateur?'))) {
       return;
     }
     const reason = ['retirer', 'pause', 'revision'].includes(action)
-      ? prompt('Raison admin interne (optionnelle)') || ''
+      ? (await PAPDialog.prompt('Raison admin interne (optionnelle)')) || ''
       : '';
 
     const session = await window.db.auth.getSession();
     const token = session?.data?.session?.access_token;
-    if (!token) { alert('Session admin requise'); return; }
+    if (!token) { (await PAPDialog.alert('Session admin requise')); return; }
 
     const res = await fetch(apiUrl('/api/admin-user-access'), {
       method: 'POST',
@@ -1626,7 +1627,7 @@
     const out = await res.json().catch(() => ({}));
     if (!res.ok) {
       const detail = out.details?.message || out.details?.error || '';
-      alert((out.error || 'Action impossible') + (detail ? '\n' + detail : ''));
+      (await PAPDialog.alert((out.error || 'Action impossible') + (detail ? '\n' + detail : '')));
       return;
     }
     await loadData();
@@ -1836,7 +1837,7 @@
       ask_info: 'demander plus d information',
       close_review: 'fermer la revision'
     };
-    const note = prompt(`Note admin pour ${labels[action] || action} :`, '');
+    const note = (await PAPDialog.prompt(`Note admin pour ${labels[action] || action} :`, ''));
     if (note === null) return;
     const user = AUTH_API.getUser();
     const res = await fetch(apiUrl('/api/platform?endpoint=admin-dispute-action'), {
@@ -1845,14 +1846,14 @@
       body: JSON.stringify({ livraison_id: livraisonId, action, note })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert('❌ ' + (out.error || 'Action litige impossible')); return; }
-    alert('Action enregistrée.');
+    if (!res.ok) { (await PAPDialog.alert('❌ ' + (out.error || 'Action litige impossible'))); return; }
+    (await PAPDialog.alert('Action enregistrée.'));
     await loadLitiges(window.db);
     await loadData();
   }
 
   async function rembourserLivraison(livraisonId) {
-    if (!confirm('Rembourser cette livraison via Stripe ?')) return;
+    if (!(await PAPDialog.confirm('Rembourser cette livraison via Stripe ?'))) return;
     const user = AUTH_API.getUser();
     const res = await fetch('/api/refund-payment', {
       method: 'POST',
@@ -1860,8 +1861,8 @@
       body: JSON.stringify({ livraison_id: livraisonId })
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { alert('❌ ' + (out.error || 'Remboursement impossible')); return; }
-    alert('✅ Remboursement effectué.');
+    if (!res.ok) { (await PAPDialog.alert('❌ ' + (out.error || 'Remboursement impossible'))); return; }
+    (await PAPDialog.alert('✅ Remboursement effectué.'));
     await loadLitiges(window.db);
   }
 
@@ -2097,9 +2098,9 @@
   }
 
   async function adminCaptureLegacy(livraisonId) {
-    const reason = prompt('Validation admin exceptionnelle. Inscris la preuve: appel au destinataire, photo, message, ou autre.');
+    const reason = (await PAPDialog.prompt('Validation admin exceptionnelle. Inscris la preuve: appel au destinataire, photo, message, ou autre.'));
     if (!reason || reason.trim().length < 6) return;
-    if (!confirm('Confirmer la reception manuellement et liberer le paiement Stripe?')) return;
+    if (!(await PAPDialog.confirm('Confirmer la reception manuellement et liberer le paiement Stripe?'))) return;
     const session = AUTH_API.getUser()?.session;
     const res = await fetch(apiUrl('/api/capture-payment'), {
       method: 'POST',
@@ -2111,10 +2112,10 @@
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) {
-      alert(out.error || 'Capture impossible');
+      (await PAPDialog.alert(out.error || 'Capture impossible'));
       return;
     }
-    alert('Paiement libere et audit enregistre.');
+    (await PAPDialog.alert('Paiement libere et audit enregistre.'));
     await loadData();
   }
 
@@ -2353,47 +2354,47 @@
     try {
       await rewardsRequest({ mode: 'update_draw_status', id, status });
       await loadRewardsAdmin();
-    } catch (err) { alert(err.message); }
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   }
 
   async function deleteDraw(id, title) {
-    if (!confirm(`Supprimer le tirage "${title}" et toutes ses participations ? Cette action est irréversible.`)) return;
+    if (!(await PAPDialog.confirm(`Supprimer le tirage "${title}" et toutes ses participations ? Cette action est irréversible.`))) return;
     try {
       await rewardsRequest({ mode: 'delete_draw', id });
       await loadRewardsAdmin();
-    } catch (err) { alert(err.message); }
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   }
 
   async function duplicateDraw(id) {
     try {
       await rewardsRequest({ mode: 'duplicate_draw', id });
       await loadRewardsAdmin();
-      alert('Tirage dupliqué en brouillon — modifie la date avant de l\'activer.');
-    } catch (err) { alert(err.message); }
+      (await PAPDialog.alert('Tirage dupliqué en brouillon — modifie la date avant de l\'activer.'));
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   }
 
-  function editDraw(d) {
-    const title = prompt('Titre du tirage :', d.title || '');
+  async function editDraw(d) {
+    const title = (await PAPDialog.prompt('Titre du tirage :', d.title || ''));
     if (title === null) return;
-    const date = prompt('Date du tirage (AAAA-MM-JJ) :', d.draw_date || '');
+    const date = (await PAPDialog.prompt('Date du tirage (AAAA-MM-JJ) :', d.draw_date || ''));
     if (date === null) return;
-    const description = prompt('Lots / description :', d.description || '');
+    const description = (await PAPDialog.prompt('Lots / description :', d.description || ''));
     if (description === null) return;
     rewardsRequest({ mode: 'update_draw', id: d.id, title, draw_date: date, description })
       .then(() => loadRewardsAdmin())
-      .catch(err => alert(err.message));
+      .catch(err => PAPDialog.alert(err.message));
   }
 
   async function runDrawNow(id) {
-    const typed = prompt('Action sensible. Tape TIRAGE pour choisir automatiquement un gagnant.');
+    const typed = (await PAPDialog.prompt('Action sensible. Tape TIRAGE pour choisir automatiquement un gagnant.'));
     if (typed !== 'TIRAGE') return;
     try {
       const out = await rewardsRequest({ mode: 'run_draw', id });
       const winner = out.winner || {};
       const label = winner.user_email || winner.user_id || 'gagnant enregistre';
-      alert(`${out.already_exists ? 'Gagnant deja choisi' : 'Gagnant choisi'}: ${label}. Participants admissibles: ${out.candidates_count || 0}`);
+      (await PAPDialog.alert(`${out.already_exists ? 'Gagnant deja choisi' : 'Gagnant choisi'}: ${label}. Participants admissibles: ${out.candidates_count || 0}`));
       await loadRewardsAdmin();
-    } catch (err) { alert(err.message); }
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   }
 
   document.getElementById('reward-mission-form')?.addEventListener('submit', async (event) => {
@@ -2409,7 +2410,7 @@
       });
       event.target.reset();
       await loadRewardsAdmin();
-    } catch (err) { alert(err.message); }
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   });
 
   document.getElementById('reward-draw-form')?.addEventListener('submit', async (event) => {
@@ -2426,7 +2427,7 @@
       });
       event.target.reset();
       await loadRewardsAdmin();
-    } catch (err) { alert(err.message); }
+    } catch (err) { (await PAPDialog.alert(err.message)); }
   });
 
 
@@ -2549,22 +2550,22 @@
   }
 
   async function deleteImpactOrg(id) {
-    if (!confirm('Retirer cet organisme?')) return;
+    if (!(await PAPDialog.confirm('Retirer cet organisme?'))) return;
     try {
       await impactRequest({ mode: 'delete_org', id });
       await loadImpact();
     } catch (err) {
-      alert(err.message);
+      (await PAPDialog.alert(err.message));
     }
   }
 
   async function updateImpactApplication(id, status) {
-    const admin_note = prompt('Note admin optionnelle') || '';
+    const admin_note = (await PAPDialog.prompt('Note admin optionnelle')) || '';
     try {
       await impactRequest({ mode: 'update_application', id, status, admin_note });
       await loadImpact();
     } catch (err) {
-      alert(err.message);
+      (await PAPDialog.alert(err.message));
     }
   }
 
@@ -2575,15 +2576,15 @@
       const partialTotal = pctVal('impact-cxl-p-refund') + pctVal('impact-cxl-p-driver') + pctVal('impact-cxl-p-fund');
       const lateTotal = pctVal('impact-cxl-l-refund') + pctVal('impact-cxl-l-driver') + pctVal('impact-cxl-l-fund');
       if (Math.abs(partialTotal - 100) > 0.001) {
-        alert('Annulation partielle: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + partialTotal + '%.');
+        (await PAPDialog.alert('Annulation partielle: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + partialTotal + '%.'));
         return;
       }
       if (Math.abs(lateTotal - 100) > 0.001) {
-        alert('Annulation tardive: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + lateTotal + '%.');
+        (await PAPDialog.alert('Annulation tardive: remboursement + conducteur + fonds doit totaliser 100%. Total actuel: ' + lateTotal + '%.'));
         return;
       }
       if (pctVal('impact-cxl-free-h') < pctVal('impact-cxl-late-h')) {
-        alert('Le delai gratuit doit etre superieur ou egal au seuil tardif.');
+        (await PAPDialog.alert('Le delai gratuit doit etre superieur ou egal au seuil tardif.'));
         return;
       }
       await impactRequest({
@@ -2609,7 +2610,7 @@
       });
       await loadImpact();
     } catch (err) {
-      alert(err.message);
+      (await PAPDialog.alert(err.message));
     }
   });
 
@@ -2630,7 +2631,7 @@
       document.getElementById('impact-org-active').checked = true;
       await loadImpact();
     } catch (err) {
-      alert(err.message);
+      (await PAPDialog.alert(err.message));
     }
   });
 
@@ -2794,7 +2795,7 @@
       if (!out.success) throw new Error(out.error || 'Erreur');
       closeCampaignModal();
       await loadGamification();
-    } catch(e) { alert('Erreur : ' + e.message); }
+    } catch(e) { (await PAPDialog.alert('Erreur : ' + e.message)); }
     finally { btn.disabled = false; btn.textContent = payload.id ? 'Enregistrer' : 'Créer la campagne'; }
   }
 
@@ -2810,7 +2811,7 @@
   }
 
   async function batchGrantCampaign(badgeId, slug) {
-    if (!confirm(`Accorder le badge "${slug}" à tous les membres éligibles maintenant ?`)) return;
+    if (!(await PAPDialog.confirm(`Accorder le badge "${slug}" à tous les membres éligibles maintenant ?`))) return;
     const session = AUTH_API.getUser()?.session;
     const token = session?.access_token;
     const r = await fetch('/api/admin-growth', {
@@ -2819,7 +2820,7 @@
       body: JSON.stringify({ mode: 'batch_grant_badge', badge_slug: slug })
     });
     const out = await r.json();
-    alert(`Résultat : ${out.granted} accordés, ${out.skipped} déjà possédés, ${out.errors} erreurs.`);
+    (await PAPDialog.alert(`Résultat : ${out.granted} accordés, ${out.skipped} déjà possédés, ${out.errors} erreurs.`));
     await loadGamification();
   }
 
@@ -3004,7 +3005,7 @@
     const url   = document.getElementById('notif-url').value.trim() || '/dashboard-livreur.html';
     const role  = document.getElementById('notif-role').value;
 
-    if (!confirm(`Envoyer "${title}" à tous les abonnés${role ? ' (' + role + ')' : ''} ?`)) return;
+    if (!(await PAPDialog.confirm(`Envoyer "${title}" à tous les abonnés${role ? ' (' + role + ')' : ''} ?`))) return;
 
     btn.disabled = true;
     btn.textContent = '⏳ Envoi en cours…';
@@ -3018,10 +3019,10 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Erreur envoi');
-      alert(`✅ Notification envoyée à ${out.sent || '?'} abonné(s).${out.failed ? ' Échecs : ' + out.failed : ''}`);
+      (await PAPDialog.alert(`✅ Notification envoyée à ${out.sent || '?'} abonné(s).${out.failed ? ' Échecs : ' + out.failed : ''}`));
       event.target.reset();
     } catch (err) {
-      alert('❌ ' + err.message);
+      (await PAPDialog.alert('❌ ' + err.message));
     } finally {
       btn.disabled = false;
       btn.textContent = '📤 Envoyer la notification';
@@ -3068,9 +3069,9 @@
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok || !out.success) throw new Error(out.error || 'Email test non envoyé');
-      alert(`Email de test envoyé à ${out.email_masked || email}. Vérifie aussi les pourriels.`);
+      (await PAPDialog.alert(`Email de test envoyé à ${out.email_masked || email}. Vérifie aussi les pourriels.`));
     } catch (err) {
-      alert('❌ ' + err.message);
+      (await PAPDialog.alert('❌ ' + err.message));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Tester Resend';
@@ -3092,7 +3093,7 @@
     const confirmMsg = testMode
       ? `Mode test : le courriel "${subject}" ne sera envoyé qu'à toi (admin). Continuer ?`
       : `Envoyer le courriel "${subject}" à ${audienceLabel}${excludeTest ? ' (hors comptes test)' : ''} ?\n\n⚠️ Cet envoi est réel et irréversible.`;
-    if (!confirm(confirmMsg)) return;
+    if (!(await PAPDialog.confirm(confirmMsg))) return;
 
     btn.disabled = true;
     btn.textContent = '⏳ Envoi en cours…';
@@ -3111,11 +3112,11 @@
       const msg = `${hasFail ? '⚠️' : '✅'} Envoyé : ${out.sent || 0} / ${out.total || 0}${hasFail ? ' — échecs : ' + out.failed : ''}${out.test_mode ? ' (mode test)' : ''}${reason}`;
       resultBox.innerHTML = `<span style="color:${hasFail ? '#ff8a8a' : 'var(--brand-lime)'}"></span>`;
       resultBox.firstChild.textContent = msg;
-      alert(msg);
+      (await PAPDialog.alert(msg));
       if (!testMode && !hasFail) event.target.reset();
     } catch (err) {
       resultBox.innerHTML = `<span style="color:#ff8a8a">❌ ${err.message}</span>`;
-      alert('❌ ' + err.message);
+      (await PAPDialog.alert('❌ ' + err.message));
     } finally {
       btn.disabled = false;
       btn.textContent = '📨 Envoyer le courriel de masse';
@@ -3208,11 +3209,11 @@
   }
 
   async function deleteAvis(id, table) {
-    if (!confirm('Supprimer cet avis ? Cette action est irréversible.')) return;
+    if (!(await PAPDialog.confirm('Supprimer cet avis ? Cette action est irréversible.'))) return;
     const db = window.db;
     const tbl = table === 'livraison' ? 'reviews' : 'cov_reviews';
     const { error } = await db.from(tbl).delete().eq('id', id);
-    if (error) { alert('Erreur : ' + error.message); return; }
+    if (error) { (await PAPDialog.alert('Erreur : ' + error.message)); return; }
     await loadAvis();
   }
 

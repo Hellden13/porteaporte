@@ -85,7 +85,7 @@
   //        ou await window.papLogout({ skipConfirm: true })
   window.papLogout = async function (opts) {
     opts = opts || {};
-    if (!opts.skipConfirm && !confirm('Es-tu sûr de vouloir te déconnecter ?')) return;
+    if (!opts.skipConfirm && !(await PAPDialog.confirm('Es-tu sûr de vouloir te déconnecter ?'))) return;
     try {
       const db = await (async () => {
         if (window.db) return window.db;
