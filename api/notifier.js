@@ -341,6 +341,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.email,
         from: { email: fromEmail, name: fromName },
+        replyTo: adminEmail || undefined, // les réponses arrivent à Denis (ADMIN_EMAIL)
         subject: prenom
           ? `${prenom}, un trajet Lévis ↔ Québec t'attend sur PorteàPorte`
           : `Un trajet Lévis ↔ Québec t'attend sur PorteàPorte`,
@@ -348,13 +349,13 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
             <p style="${para}">Salut${p ? ' ' + p : ''},</p>
-            <p style="${para}">Tu t'es inscrit sur PorteàPorte il y a quelque temps, mais ton profil n'est pas encore terminé.</p>
+            <p style="${para}">Tu t'es inscrit sur PorteàPorte il y a quelque temps, mais ta vérification n'est pas encore terminée.</p>
             <p style="${para}">Bonne nouvelle : le service roule maintenant entre Lévis et Québec.<br>
-            🚗 Un trajet régulier part de Saint-Nicolas (McDonald's) vers Place Laurier à 8 h, avec un retour à 16 h, du lundi au vendredi. 2,88 $ la place.<br>
-            📦 Tu as un colis à faire passer de l'autre côté du fleuve ? Il peut voyager sur la même route.</p>
-            <p style="${para}">Il te reste moins de 2 minutes pour finir ton profil :</p>
+            🚗 Tu fais déjà la route ? Une fois vérifié, tu peux publier tes trajets, partager tes frais d'essence et transporter des colis en chemin.<br>
+            🪑 Besoin d'un lift ? Un trajet régulier part de Saint-Nicolas (McDonald's) vers Place Laurier à 8 h, avec un retour à 16 h, du lundi au vendredi. 2,88 $ la place.</p>
+            <p style="${para}">Il te reste moins de 2 minutes pour finir :</p>
             <div style="text-align:center;margin:24px 0">
-              <a href="https://porteaporte.site/livreur.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">Terminer mon inscription</a>
+              <a href="https://porteaporte.site/livreur.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">Terminer ma vérification</a>
             </div>
             <p style="${para}">Des questions ? Réponds simplement à ce courriel.</p>
             <p style="color:#d8dde6;line-height:1.6;margin:18px 0 0">Denis<br>
@@ -1196,7 +1197,8 @@ async function sendEmail(emailData, apiKey) {
       from: `${emailData.from.name} <${emailData.from.email}>`,
       to: emailData.to,
       subject: emailData.subject,
-      html: emailData.html
+      html: emailData.html,
+      ...(emailData.replyTo ? { reply_to: emailData.replyTo } : {})
     })
   });
   const text = await response.text().catch(() => '');

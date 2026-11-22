@@ -215,6 +215,24 @@ describe('page admin — bloc « À faire maintenant »', () => {
     assert.doesNotMatch(out, /pirate|alert\(1\);/);
   });
 
+  test('Relancer : date du dernier envoi sous le nom (JJ/MM, heure du Québec), rien si jamais relancé', async () => {
+    const items = {
+      relancer: [
+        { id: U(1), nom: 'Julie', email: 'j@example.com', derniere_relance: '2026-11-16T02:00:00Z' },
+        { id: U(2), nom: 'Ana', derniere_relance: null },
+        { id: U(3), nom: 'Zoé', derniere_relance: '<script>' },
+      ],
+    };
+    const { ctx, els } = chargerBloc({ ok: true, json: async () => ({ items, erreurs: [] }) });
+    const tzAvant = process.env.TZ;
+    process.env.TZ = 'UTC'; // à 2 h UTC le 16/11, il est encore le 15/11 au Québec
+    try { await ctx.loadAFaire(); } finally { if (tzAvant === undefined) delete process.env.TZ; else process.env.TZ = tzAvant; }
+    const lignes = els['a-faire-liste'].innerHTML.split('class="af-ligne"').slice(1);
+    assert.match(lignes[0], /<div class="af-texte">Julie<small class="af-relance">Dernier envoi « Relancer » : 15\/11<\/small><small>j@example\.com/);
+    assert.doesNotMatch(lignes[1], /Dernier envoi/);
+    assert.doesNotMatch(lignes[2], /Dernier envoi|<script>/);
+  });
+
   test('erreur de l\'API : message clair', async () => {
     const { ctx, els } = chargerBloc({ ok: false, json: async () => ({ error: 'Admin requis' }) });
     await ctx.loadAFaire();

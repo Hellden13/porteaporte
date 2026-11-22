@@ -472,6 +472,7 @@
       #a-faire .af-ligne { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 12px; background:rgba(255,255,255,.04); border:1px solid #1e2535; border-radius:10px; margin-bottom:6px; }
       #a-faire .af-texte { color:#fff; font-size:.9rem; min-width:0; overflow-wrap:anywhere; }
       #a-faire .af-texte small { display:block; color:var(--brand-muted,#A8B0BA); font-size:.76rem; margin-top:2px; }
+      #a-faire .af-texte small.af-relance { color:#f5d061; }
       #a-faire .af-boutons { display:flex; gap:6px; flex-wrap:wrap; }
       #a-faire a.action-btn { text-decoration:none; display:inline-block; }
     </style>
@@ -3362,6 +3363,14 @@
     const h = Math.floor((Date.now() - t) / 3600000);
     return h < 48 ? `depuis ${Math.max(h, 0)} h` : `depuis ${Math.floor(h / 24)} j`;
   }
+  function afJJMM(d) {
+    // Date JJ/MM à l'heure du Québec (même format que le message du serveur).
+    const t = d ? new Date(d) : null;
+    if (!t || !Number.isFinite(t.getTime())) return '';
+    const parts = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Toronto', day: '2-digit', month: '2-digit' }).formatToParts(t);
+    const v = (type) => (parts.find((x) => x.type === type) || {}).value || '';
+    return v('day') + '/' + v('month');
+  }
   function afLigne(texte, sous, boutons) {
     return `<div class="af-ligne"><div class="af-texte">${texte}${sous ? `<small>${sous}</small>` : ''}</div><div class="af-boutons">${boutons}</div></div>`;
   }
@@ -3373,7 +3382,8 @@
     const groupes = [];
     const relancer = (it.relancer || []).filter((p) => afId(p.id));
     if (relancer.length) groupes.push(['📨 Comptes « Non démarré » à relancer', relancer.map((p) => afLigne(
-      afEsc(p.nom), afEsc([p.email, afDepuis(p.depuis)].filter(Boolean).join(' · ')),
+      afEsc(p.nom) + (afJJMM(p.derniere_relance) ? `<small class="af-relance">Dernier envoi « Relancer » : ${afJJMM(p.derniere_relance)}</small>` : ''),
+      afEsc([p.email, afDepuis(p.depuis)].filter(Boolean).join(' · ')),
       `<button class="action-btn" onclick="afAction(() => sendVerifReminder('${afId(p.id)}'))">📨 Relancer</button>`))]);
     const livs = (it.livraisons || []).filter((l) => afId(l.id));
     if (livs.length) groupes.push(['📦 Livraisons bloquées ou à capturer (plus de 48 h)', livs.map((l) => afLigne(

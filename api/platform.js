@@ -39,6 +39,7 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
+const { adminVerificationReminder } = require('../lib/_relance');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
@@ -2811,39 +2812,7 @@ async function adminUpdateDriverStatus(req, res, ctx, body) {
   return res.status(200).json({ success: true, profile: updated });
 }
 
-// Admin : renvoie un courriel invitant un inscrit "non démarré" à compléter sa vérification.
-async function adminVerificationReminder(req, res, ctx, body) {
-  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
-  const userId = body.user_id || body.id;
-  if (!userId) return res.status(400).json({ error: 'user_id requis' });
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,prenom,driver_status&limit=1`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const rows = r.ok ? await r.json() : [];
-  const profile = rows[0];
-  if (!profile || !profile.email) return res.status(404).json({ error: 'Utilisateur ou courriel introuvable' });
-  if (profile.driver_status === 'verified') return res.status(400).json({ error: 'Cet utilisateur est déjà vérifié' });
-
-  let notif;
-  try {
-    notif = await callNotifier('verification_rappel', {
-      user_id: profile.id,
-      email: profile.email,
-      prenom: profile.prenom || ''
-    });
-  } catch (e) {
-    console.error('[verification-reminder]', e.message);
-    return res.status(502).json({ error: 'Envoi impossible : ' + e.message });
-  }
-  if (!notif.ok || notif.data?.success === false) {
-    const reason = notif.data?.error || (notif.data?.results || []).map(r => r && r.error).filter(Boolean)[0] || `notifier HTTP ${notif.status}`;
-    console.error('[verification-reminder] échec', notif.status, reason);
-    return res.status(502).json({ error: 'Envoi impossible : ' + reason });
-  }
-
-  return res.status(200).json({ success: true, sent_to: profile.email });
-}
+// Admin : bouton « Relancer » — voir lib/_relance.js (un envoi par compte aux 7 jours).
 
 async function adminSetUserAccess(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) {
