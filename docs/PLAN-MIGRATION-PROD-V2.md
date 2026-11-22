@@ -173,4 +173,37 @@ Attention : tout ce qui a été écrit dans la nouvelle base après la bascule (
 > Merci d'être là depuis le début,
 > Denis, PorteàPorte
 
+### Destinataires : les 19 comptes actifs
+
+Ce sont les profils non archivés (`suspendu` faux) de la sauvegarde du 22 novembre 2026, c'est-à-dire la même règle que la liste « Utilisateurs actifs » de l'admin. Les 6 autres comptes sont archivés (tests) et ne reçoivent rien. Les adresses courriel ne sont pas copiées dans le dépôt : elles sont dans la sauvegarde.
+
+| # | Prénom | Nom | Rôle |
+|---|---|---|---|
+| 1 | Ahmed | Chebbi | les deux |
+| 2 | Akram | Bendella | livreur |
+| 3 | Alexis | Watelle | les deux |
+| 4 | Caroline | hoffmann | expéditeur |
+| 5 | Claudine | Leblanc | expéditeur |
+| 6 | Dan | Bouchard Edmunds | les deux |
+| 7 | Denis | Morneau | admin (c'est toi : reçoit-il le courriel ?) |
+| 8 | Diane | Boisvert | les deux |
+| 9 | Elodie | Philippot | expéditeur |
+| 10 | Gabrielle | Dastous | les deux |
+| 11 | Iverson | Aĺlen | les deux |
+| 12 | Jacques | Matte | les deux |
+| 13 | Jean | Begue | expéditeur |
+| 14 | Joanie | Côté | les deux |
+| 15 | Manon | Castilloux | les deux |
+| 16 | Marie-Philippe | Boutet | expéditeur |
+| 17 | Stéphan | Fofack | les deux |
+| 18 | Valdes | NZALLI TCHOUONHUI | livreur |
+
+**Adresse qui ressemble à un test, à confirmer par Denis** (contient « + », « test », « example », « fictif » ou « demo ») :
+
+| # | Prénom | Nom | Rôle |
+|---|---|---|---|
+| 19 | Kim | Robi | les deux |
+
+Les noms sont recopiés tels qu'ils sont dans la base, y compris « hoffmann » en minuscule et le « ĺ » de « Aĺlen ».
+
 À décider par Denis : l'adresse d'envoi, la date, et s'il faut un rappel après 7 jours pour les membres qui n'ont pas encore choisi leur mot de passe.
