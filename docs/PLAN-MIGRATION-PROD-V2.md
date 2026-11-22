@@ -6,42 +6,37 @@
 
 ---
 
-## 0. Le vrai blocage : sortir les données de l'ancien projet
+## 0. Décision : voie C (clé de service)
 
-Une recherche faite le 22 novembre 2026 sur le Mac n'a trouvé **aucun mot de passe de la base** et **aucune chaîne `postgresql://` complète** :
-- `supabase/.temp/pooler-url` (dans plusieurs copies) : l'adresse seulement, sans mot de passe ;
-- `.env.production.local` (copies et sauvegardes) : seulement `SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_KEY`, sans mot de passe de base ;
-- le CLI Vercel est déconnecté sur ce Mac ;
-- `~/.openclaw/workspace/porteaporte/.env.production.local` n'a pas pu être lu (permission refusée), et je n'ai pas forcé.
+Mis à jour le 22 novembre 2026.
+- **Voie B impossible.** Le jeton du CLI Supabase voit seulement les organisations « Hellden13 » et « Pieds en L'air S.E.N.C. ». L'ancien projet n'y est pas : il est sur le compte dont la 2FA est perdue.
+- **Voie C retenue par Denis.** La clé de service de l'ancien projet, trouvée dans les copies locales de `.env.production.local`, fonctionne en lecture.
+- **Voie A, en parallèle (conseillé).** La demande de récupération du compte au support Supabase reste utile : c'est la seule façon de garder les mots de passe des membres et de faire un `pg_dump` complet.
 
-Trois façons de sortir les données, de la meilleure à la moins bonne. **Denis choisit.**
+### Sauvegarde faite le 22 novembre 2026 (lecture seulement)
 
-| Voie | Ce qu'elle donne | Ce qu'il manque |
-|---|---|---|
-| **A. Récupérer le compte** : demande à support@supabase.com de désactiver la 2FA (preuve de propriété : courriel du compte, facturation, ref `miqrircrfpzkmvvacgwt`) | Tout : `pg_dump` complet, y compris les comptes et leurs mots de passe chiffrés, le stockage et les réglages Auth | Le délai de réponse du support |
-| **B. Jeton du CLI Supabase** : un jeton est présent dans le trousseau du Mac | Si ce jeton appartient au compte qui possède l'ancien projet, l'API de gestion Supabase peut exécuter du SQL, ou réinitialiser le mot de passe de la base, sans passer par le tableau de bord | Pas vérifié. Je ne l'ai pas utilisé : c'est à Denis de décider s'il veut s'en servir. |
-| **C. Clé de service** (celle que le site utilise déjà, dans Vercel) | Toutes les tables `public` par l'API REST, la liste des comptes par l'API admin Auth, et tous les fichiers du stockage | Les **mots de passe** (chaque membre devra en refaire un), et le schéma exact : fonctions, RLS et déclencheurs ne sont pas lisibles par la clé de service |
+Elle est dans `/Volumes/Projets-Sauvegardes/porteaporte-sauvegarde-2026-11-22/`, sur le disque externe, hors de tout dépôt Git :
+- `tables/` : 91 tables et vues du schéma `public`, en JSON, lues par pages et vérifiées contre le compte du serveur, soit 993 lignes ;
+- `auth/users.json` : 25 comptes, **sans mots de passe** (l'API ne les donne pas) ;
+- `storage/` : 3 buckets, `kyc-documents` (6 fichiers, privé), `delivery-proofs` (1 fichier, **privé** et non public comme je le croyais), et `profile-photos` (9 fichiers, public), avec un index SHA-256 par bucket ;
+- `schema/openapi-postgrest.json` : la liste des colonnes de chaque table, telle que le serveur la voit aujourd'hui ;
+- `RAPPORT.json` : les comptes de lignes et la liste des erreurs, qui est vide.
 
-Avec la voie C, le schéma vient de la sauvegarde du 2 septembre 2026, complétée par les migrations du dépôt (voir la section 1). Il faut donc vérifier table par table qu'aucune colonne ajoutée depuis n'a été oubliée.
-
----
+Ce que cette sauvegarde **ne contient pas** : les fonctions, les règles RLS, les déclencheurs, les mots de passe et les réglages Auth. Ils viennent du dépôt (section 1) et des réglages à refaire à la main.
 
 ## 1. Inventaire : ce qu'il faut copier
 
 ### Schéma (tables, vues, fonctions, RLS)
 
-La seule copie du schéma complet sur le Mac est `~/.openclaw/backups/Porte-a-Porte_DB_2026-09-02_0830/schema.sql`, du 2 septembre 2026. Elle contient :
-- 81 tables ;
-- 9 vues ;
-- 28 fonctions ;
-- 12 déclencheurs ;
-- 172 règles RLS.
+Le dépôt contient un schéma complet de l'ancienne production : `supabase/migrations/20260901090000_production_schema_baseline.sql`, du 1er septembre 2026, avec 81 tables. Ma version précédente de ce plan disait le contraire : c'était une erreur. Une copie équivalente existe aussi dans `~/.openclaw/backups/Porte-a-Porte_DB_2026-09-02_0830/schema.sql` (81 tables, 9 vues, 28 fonctions, 12 déclencheurs, 172 règles RLS).
 
-Le dossier `supabase/migrations/` du dépôt ne contient **pas** le schéma complet : trois des fichiers sont des « placeholders » vides. Il faut ajouter à la sauvegarde ce qui a changé depuis le 2 septembre :
-- `20260901114500_lock_privileged_rpc_functions.sql` et `20260901133000_repair_recursive_views.sql`, à vérifier : ils sont peut-être déjà dans la sauvegarde ;
-- `supabase/rate_limits.sql` (la fonction `check_rate_limit` et sa table) et `supabase/claim_free_streak.sql` ;
-- `20261121120000_rides_suppression_logique.sql`, **pas encore appliquée** sur l'ancienne base ;
-- tout ce qui a été collé à la main dans le SQL Editor depuis septembre. Avec la voie A ou B, un `pg_dump --schema-only` frais règle ce point.
+Il faut appliquer ensuite, dans l'ordre :
+- les autres fichiers de `supabase/migrations/` : `20260901101200_harden_service_policies_and_profiles.sql`, `20260901114500_lock_privileged_rpc_functions.sql` et `20260901133000_repair_recursive_views.sql` ;
+- `supabase/rate_limits.sql` (la fonction `check_rate_limit` et sa table) et `supabase/claim_free_streak.sql`.
+
+Ensuite, on compare chaque table avec `schema/openapi-postgrest.json` de la sauvegarde : une colonne ajoutée à la main depuis septembre y apparaîtra.
+
+Le fichier `supabase/prod-v2-plus-tard/20261121120000_rides_suppression_logique.sql.NE-PAS-APPLIQUER` n'est **plus nécessaire**. « Supprimer » marche maintenant sans migration : le trajet passe à `annule` et reçoit une marque `ride_deleted` dans `transaction_audit_events`. Ce fichier ne sera appliqué que si Denis le décide, et il faudra alors adapter `rideDelete`.
 
 **Tables utilisées par le code aujourd'hui (60) :**
 - *Livraisons* : `livraisons`, `delivery_proofs`, `delivery_locations`, `gps_updates`, `livreur_earnings`, `payout_requests`, `manquements`, `evaluations`, `reviews`.
@@ -60,9 +55,8 @@ Le dossier `supabase/migrations/` du dépôt ne contient **pas** le schéma comp
 
 ### Auth (comptes)
 
-- **Comptes** (`auth.users` et `auth.identities`) :
-  - avec les voies A ou B, on copie le schéma `auth` par `pg_dump`. Les mots de passe chiffrés suivent, et les membres n'ont rien à refaire ;
-  - avec la voie C, on recrée les comptes par l'API admin **avec le même `id`**, sinon tous les liens vers `profiles` sont cassés. Ensuite, on envoie à chaque membre un courriel pour choisir un nouveau mot de passe.
+- **Comptes** (voie C) : on recrée chaque compte par l'API admin du nouveau projet **avec le même `id`** et le même courriel, sinon tous les liens vers `profiles` sont cassés. On le marque « courriel confirmé » s'il l'était, et sans mot de passe utilisable. Ensuite, chaque membre reçoit un courriel pour choisir un nouveau mot de passe (texte en section 6).
+  - La sauvegarde contient 25 comptes. Denis parle de 19 membres, et 7 adresses ressemblent à des comptes de test (« test », « + », etc.). **Denis doit dresser la liste** des comptes à recréer et de ceux qui recevront le courriel.
 - **Clés d'accès (passkeys)** : elles sont stockées dans `public.webauthn_credentials` et liées au domaine (`WEBAUTHN_RP_ID`). Elles restent valides tant que le domaine `porteaporte.site` ne change pas.
 - **Réglages à refaire à la main** dans le nouveau projet :
   - Site URL et URL de redirection autorisées : porteaporte.site, ainsi que les aperçus Vercel s'ils servent ;
@@ -75,10 +69,11 @@ Le dossier `supabase/migrations/` du dépôt ne contient **pas** le schéma comp
 
 | Bucket | Contenu | Accès |
 |---|---|---|
-| `delivery-proofs` | Photos de preuve de livraison | Public (lien `/object/public/…`) |
+| `delivery-proofs` | Photos de preuve de livraison | **Privé** dans l'ancien projet (le code a aussi un lien `/object/public/…` à vérifier) |
+| `profile-photos` | Photos de profil | Public |
 | `kyc-documents` | Pièces d'identité des livreurs | **Privé** (liens signés) : doit rester privé |
 
-1. Avant de copier, lister tous les buckets de l'ancien projet : il peut y en avoir d'autres que le code n'utilise plus.
+1. Il y a 3 buckets dans l'ancien projet (liste vérifiée le 22 novembre 2026), tous dans la sauvegarde.
 2. Copier chaque fichier en gardant **le même chemin**, parce que les tables gardent les chemins (et parfois l'adresse complète).
 3. Remettre les règles RLS de `storage.objects`.
 4. Les adresses complètes enregistrées en base (`https://miqrircrfpzkmvvacgwt.supabase.co/storage/...`) doivent être réécrites vers la nouvelle ref, par un `UPDATE` vérifié, après sauvegarde.
@@ -121,20 +116,20 @@ La clé publique peut être dans le code. **La clé de service, jamais.**
 ## 3. Ordre des étapes
 
 **Préparation (le site reste ouvert) :**
-1. Choisir la voie A, B ou C (section 0). Avec A ou B, faire tout de suite un `pg_dump` complet de l'ancienne base et le garder sur le disque externe.
-2. Dans le nouveau projet, créer le schéma, les fonctions, les RLS, les buckets et la publication Realtime, et refaire les réglages Auth. Comparer avec l'ancien : même nombre de tables, de colonnes, de règles RLS et de fonctions.
-3. Répétition générale : copier les données une première fois, puis tester un aperçu Vercel branché sur le nouveau projet (connexion, recherche de trajet, réservation en mode test, photo de preuve, panneau admin). Corriger ce qui manque.
-
+1. **Réactiver porteaporte-prod-v2.** Il est en pause (« INACTIVE ») depuis la vérification du 22 novembre 2026. Dans le tableau de bord Supabase, ouvre le projet puis clique sur « Restore project ». C'est Denis qui le fait, avec sa 2FA. Note ses codes de secours hors du Mac.
+2. Dans prod-v2, créer le schéma : le fichier de base puis les migrations de la section 1. Créer ensuite les 3 buckets avec leurs règles et la publication Realtime, puis refaire les réglages Auth. Comparer avec la sauvegarde : mêmes tables et mêmes colonnes.
+3. Répétition générale : importer une première fois la sauvegarde, en recréant les comptes avant les tables, parce que `profiles.id` pointe vers `auth.users`. Tester ensuite un aperçu Vercel branché sur prod-v2 : connexion après réinitialisation, recherche, réservation en mode test, photo de preuve, admin.
 **Bascule (dans un creux, à annoncer d'avance) :**
 4. Figer le site, en mode maintenance ou en refusant les écritures, pour que plus rien n'entre dans l'ancienne base.
-5. Faire la copie finale des données, des comptes et des fichiers.
+5. Faire une nouvelle sauvegarde par la clé de service, avec le même script, pour avoir les données du jour. Puis faire la copie finale : comptes, tables, fichiers.
 6. Vérifier : compter les lignes de chaque table des deux côtés (elles doivent être égales) et comparer les sommes d'argent (transactions, gains, PorteCoins).
 7. Changer les variables Vercel et les clés dans le code, puis déployer en production. C'est le seul déploiement, et **Denis l'approuve**.
 8. Rouvrir le site, renvoyer les événements Stripe de la fenêtre de bascule et tester en vrai (connexion, une réservation, l'admin).
+9. Envoyer le courriel de réinitialisation (section 6), **seulement après l'accord de Denis sur le texte et sur la liste**.
 
 **Après :**
-9. Garder l'ancien projet **intact, en lecture**, au moins 30 jours. Ne rien y supprimer.
-10. Appliquer la migration `20261121120000_rides_suppression_logique.sql` sur le **nouveau** projet, par son SQL Editor, dans une transaction.
+10. Garder l'ancien projet **intact, en lecture**, au moins 30 jours. Ne rien y supprimer.
+11. Rien à faire pour « Supprimer » : il marche sans migration.
 
 ---
 
@@ -146,8 +141,36 @@ Attention : tout ce qui a été écrit dans la nouvelle base après la bascule (
 
 ## 5. Avant de commencer, à vérifier
 
-- [ ] La voie choisie (A, B ou C) est confirmée par Denis.
-- [ ] Un `pg_dump` frais, ou un export complet par la clé de service, est fait et copié sur le disque externe.
+- [x] Voie C choisie par Denis (22 novembre 2026).
+- [ ] prod-v2 réactivé.
+- [ ] Liste des comptes à recréer et à prévenir, validée par Denis.
+- [ ] Texte du courriel (section 6) relu et approuvé par Denis.
+- [x] Export complet par la clé de service sur le disque externe (22 novembre 2026). À refaire le jour de la bascule.
 - [ ] Le nouveau projet est sur un plan payant si la taille de la base ou du stockage le demande, avec ses sauvegardes automatiques activées.
 - [ ] La 2FA de Denis sur le **nouveau** compte a ses codes de secours notés hors du Mac, pour éviter que ça se reproduise.
 - [ ] La date de bascule est annoncée aux membres.
+
+## 6. Courriel aux membres : nouveau mot de passe (brouillon, rien n'est envoyé)
+
+**Denis lit et approuve ce texte avant tout envoi.** L'envoi se fait après la bascule, avec le lien de réinitialisation de Supabase (modèle « Reset password » du projet prod-v2) ou par Resend.
+
+> **Objet :** PorteàPorte : choisis ton nouveau mot de passe
+>
+> Bonjour {prénom},
+>
+> On a déménagé PorteàPorte sur des serveurs neufs pour rendre le site plus solide et plus sûr. Ton compte, ton historique, tes trajets et tes PorteCoins ont suivi : rien n'est perdu.
+>
+> Par sécurité, les mots de passe n'ont pas été déménagés. Il faut donc en choisir un nouveau, une seule fois :
+>
+> 👉 **[Choisir mon nouveau mot de passe]({lien})**
+>
+> Le lien est valide pendant 24 heures. S'il a expiré, va sur porteaporte.site, clique sur « Mot de passe oublié » et entre cette adresse courriel.
+>
+> Tu n'as rien demandé ? C'est normal : ce courriel est envoyé à tous les membres. On ne te demandera jamais ton mot de passe par courriel ou par téléphone.
+>
+> Une question ? Réponds simplement à ce courriel.
+>
+> Merci d'être là depuis le début,
+> Denis, PorteàPorte
+
+À décider par Denis : l'adresse d'envoi, la date, et s'il faut un rappel après 7 jours pour les membres qui n'ont pas encore choisi leur mot de passe.
