@@ -334,20 +334,31 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
     }
 
     case 'verification_rappel': {
+      // Bouton « Relancer » du tableau de bord admin (texte de Denis, 22 nov. 2026).
+      const prenom = String(data.prenom || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
+      const p = escapeHtml(prenom);
+      const para = 'color:#d8dde6;line-height:1.6;margin:0 0 14px';
       emails.push({
         to: data.email,
         from: { email: fromEmail, name: fromName },
-        subject: `Il te reste une étape pour livrer avec PorteàPorte 🚗`,
+        subject: prenom
+          ? `${prenom}, un trajet Lévis ↔ Québec t'attend sur PorteàPorte`
+          : `Un trajet Lévis ↔ Québec t'attend sur PorteàPorte`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
-            <h2 style="margin:0 0 14px;color:#fff">Tu es inscrit — il te reste une étape ! ✅</h2>
-            <p style="color:#d8dde6;line-height:1.6">Bonjour ${data.prenom || ''},<br><br>Merci de t'être inscrit comme livreur/conducteur sur PorteàPorte ! 🙌<br>Pour commencer à <strong>livrer, conduire et gagner</strong>, il te reste juste à <strong>compléter ta vérification</strong> — c'est rapide et sécurisé.</p>
+            <p style="${para}">Salut${p ? ' ' + p : ''},</p>
+            <p style="${para}">Tu t'es inscrit sur PorteàPorte il y a quelque temps, mais ton profil n'est pas encore terminé.</p>
+            <p style="${para}">Bonne nouvelle : le service roule maintenant entre Lévis et Québec.<br>
+            🚗 Un trajet régulier part de Saint-Nicolas (McDonald's) vers Place Laurier à 8 h, avec un retour à 16 h, du lundi au vendredi. 2,88 $ la place.<br>
+            📦 Tu as un colis à faire passer de l'autre côté du fleuve ? Il peut voyager sur la même route.</p>
+            <p style="${para}">Il te reste moins de 2 minutes pour finir ton profil :</p>
             <div style="text-align:center;margin:24px 0">
-              <a href="https://porteaporte.site/livreur.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">🚀 Compléter ma vérification</a>
+              <a href="https://porteaporte.site/livreur.html" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">Terminer mon inscription</a>
             </div>
-            <p style="color:#a8b0ba;font-size:.9rem;line-height:1.6">Une fois vérifié, tu accèdes aux trajets et livraisons près de chez toi. On a hâte de t'avoir dans la communauté ! 💙🍁</p>
-            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Tu ne souhaites plus livrer ? Ignore simplement ce courriel.</p>
+            <p style="${para}">Des questions ? Réponds simplement à ce courriel.</p>
+            <p style="color:#d8dde6;line-height:1.6;margin:18px 0 0">Denis<br>
+            <span style="color:#a8b0ba">PorteàPorte — Quelqu'un passe déjà dans ta direction.</span></p>
           </div>`
       });
       break;
@@ -1558,3 +1569,6 @@ function templateAdminNotif(titre, rows, urgent = false) {
     <p style="font-size:11px;color:#aaa;margin-top:16px;">Généré automatiquement par PorteàPorte · ${new Date().toLocaleString('fr-CA')}</p>`
   );
 }
+
+// Pour les tests seulement (aucun envoi).
+module.exports.buildEmails = buildEmails;
