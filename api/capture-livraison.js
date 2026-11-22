@@ -5,7 +5,7 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-const { normalizeRole, alertAdmin } = require('../lib/_lib');
+const { normalizeRole, alertAdmin, siteOrigin, internalHeaders } = require('../lib/_lib');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 
 // Protection du code destinataire (6 chiffres) contre les essais en série :
@@ -607,9 +607,8 @@ module.exports = async function handler(req, res) {
 
   // ── Notifier expéditeur + livreur : livraison complète, paiement libéré ──
   try {
-    const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
-    const notifHeaders = { 'Content-Type': 'application/json' };
-    if (process.env.INTERNAL_API_SECRET) notifHeaders['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+    const origin = siteOrigin();
+    const notifHeaders = internalHeaders();
 
     // Récupérer emails expéditeur + livreur
     const ids = [livraison.expediteur_id, livraison.livreur_id].filter(Boolean);

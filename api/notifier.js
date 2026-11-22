@@ -11,6 +11,7 @@
 // ============================================================
 
 const crypto = require('crypto');
+const { internalSecret } = require('../lib/_lib');
 
 const PUBLIC_TYPES = new Set([
   'auth_confirmation',
@@ -54,12 +55,12 @@ function safeCompareSecret(a, b) {
 }
 
 function hasValidInternalSecret(req) {
-  const secret = process.env.INTERNAL_API_SECRET;
+  const secret = internalSecret();
   if (!secret || secret.length < 16) return false;
   const provided =
     req.headers['x-internal-notifier-secret'] ||
     req.headers['x-internal-webhook-secret'];
-  return safeCompareSecret(String(provided || ''), secret);
+  return safeCompareSecret(String(provided || '').trim(), secret);
 }
 
 function validatePublicCaller(req) {
@@ -108,7 +109,7 @@ function normalizeNotifierBody(body) {
 }
 
 function assertNotifierAuth(req, type) {
-  const internalConfigured = !!(process.env.INTERNAL_API_SECRET && process.env.INTERNAL_API_SECRET.length >= 16);
+  const internalConfigured = internalSecret().length >= 16;
 
   if (hasValidInternalSecret(req)) return { ok: true };
 
@@ -144,7 +145,7 @@ module.exports = async function handler(req, res) {
       from_email_configured: Boolean(process.env.FROM_EMAIL),
       admin_email_configured: Boolean(process.env.ADMIN_EMAIL),
       supabase_configured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
-      internal_secret_configured: Boolean(process.env.INTERNAL_API_SECRET),
+      internal_secret_configured: Boolean(internalSecret()),
       from_domain: fromDomain || null,
       expected_dns: fromDomain ? [
         `SPF: ${fromDomain} doit autoriser Resend`,

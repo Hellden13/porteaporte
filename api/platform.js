@@ -2,6 +2,13 @@
 // Modules extraits : _lib.js · _push.js · _rides.js · _growth.js · _connect.js
 
 const crypto = require('crypto');
+
+// Comparaison à temps constant (secret interne reçu en en-tête).
+function safeEqualText(a, b) {
+  const ba = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
+}
 const {
   PLATFORM_ALLOCATION_DEFAULTS,
   platformAllocationPosts,
@@ -12,7 +19,7 @@ const {
   signStorageUrl, getSession, getProfile, normalizeRole, hasCapability, deriveLegacyRole, roleIn, mergeUserRole,
   isEmailVerified, isVerifiedDriver, endpointFromReq, toNumber,
   generateReceptionCode, hashReceptionCode, normalizeText, normalizeCity,
-  driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalHeaders,
+  driverTransportMode, estimateRouteKm, isMissionOnRoute, haversineKm, cityCoords, grantBadgeBySlug, siteOrigin, internalSecret, internalHeaders,
   livraisonLinkToken, verifyLivraisonToken,
   callNotifier, alertAdmin, computeDeliveryPrice, deliveryEligibility, missingColumn, insertWithSchemaFallback,
   stripeRequest, defaultRewardMissions,
@@ -512,8 +519,7 @@ async function assignDriver(req, res, ctx, body) {
     const expRows = expRes.ok ? await expRes.json() : [];
     const expProfile = expRows[0];
     const origin = siteOrigin();
-    const notifHeaders = { 'Content-Type': 'application/json' };
-    if (process.env.INTERNAL_API_SECRET) notifHeaders['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+    const notifHeaders = internalHeaders();
     await fetch(`${origin}/api/notifier`, {
       method: 'POST',
       headers: notifHeaders,
@@ -5319,9 +5325,9 @@ module.exports = async function handler(req, res) {
     }
 
     if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Supabase non configure' });
-    const internalSecret = process.env.INTERNAL_API_SECRET;
-    const internalHeader = req.headers['x-internal-notifier-secret'];
-    const internal = Boolean(internalSecret && internalHeader && internalHeader === internalSecret);
+    const secretInterne = internalSecret();
+    const internalHeader = String(req.headers['x-internal-notifier-secret'] || '').trim();
+    const internal = Boolean(secretInterne.length >= 16 && internalHeader && safeEqualText(internalHeader, secretInterne));
 
     if (endpoint === 'impact-public') {
       return await impactPublic(req, res, { sbUrl, sbKey });
@@ -5916,9 +5922,8 @@ module.exports = async function handler(req, res) {
         });
         const livProfile = livRes.ok ? (await livRes.json())[0] : null;
         if (livProfile?.email) {
-          const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
-          const headers = { 'Content-Type': 'application/json' };
-          if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+          const origin = siteOrigin();
+          const headers = internalHeaders();
           await fetch(`${origin}/api/notifier`, {
             method: 'POST',
             headers,
@@ -5986,9 +5991,8 @@ module.exports = async function handler(req, res) {
           const profs = profRes.ok ? await profRes.json().catch(() => []) : [];
           const expEmail = profs.find(p => p.id === livraisonForNotif.expediteur_id)?.email || null;
           const livEmail = profs.find(p => p.id === livraisonForNotif.livreur_id)?.email || null;
-          const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
-          const headers = { 'Content-Type': 'application/json' };
-          if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+          const origin = siteOrigin();
+          const headers = internalHeaders();
           await fetch(`${origin}/api/notifier`, {
             method: 'POST',
             headers,
@@ -6142,9 +6146,8 @@ module.exports = async function handler(req, res) {
 
       // Notifier le fondateur immédiatement (email)
       try {
-        const origin = (process.env.PUBLIC_SITE_ORIGIN || process.env.ALLOWED_ORIGIN || 'https://porteaporte.site').replace(/\/$/, '');
-        const headers = { 'Content-Type': 'application/json' };
-        if (process.env.INTERNAL_API_SECRET) headers['x-internal-notifier-secret'] = process.env.INTERNAL_API_SECRET;
+        const origin = siteOrigin();
+        const headers = internalHeaders();
         const mapsLink = (rec.latitude != null && rec.longitude != null)
           ? `https://www.google.com/maps?q=${rec.latitude},${rec.longitude}` : null;
         await fetch(`${origin}/api/notifier`, {
@@ -6793,14 +6796,10 @@ module.exports = async function handler(req, res) {
       if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Accès réservé aux admins' });
       const email = String(body?.email || ctx.profile?.email || '').trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email invalide' });
-      const internalSecret = String(process.env.INTERNAL_API_SECRET || '');
-      if (internalSecret.length < 16) return res.status(503).json({ error: 'INTERNAL_API_SECRET non configuré' });
+      if (internalSecret().length < 16) return res.status(503).json({ error: 'INTERNAL_API_SECRET non configuré' });
       const notifyRes = await fetch(`${siteOrigin(req)}/api/notifier`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-notifier-secret': internalSecret,
-        },
+        headers: internalHeaders(),
         body: JSON.stringify({ type: 'test_email', data: { email } }),
       });
       const notifyBody = await notifyRes.json().catch(() => ({}));
