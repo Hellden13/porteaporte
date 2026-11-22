@@ -855,7 +855,11 @@
         const stops = pickupSafe + dropoffSafe + stopsDetailed;
 
         // Score étoiles
-        const score = d.score > 0 ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${(d.score / 20).toFixed(1)}</span>` : '';
+        // Note des passagers : la vraie moyenne des avis, sinon « Nouveau ». (Avant : score_confiance ÷ 20,
+        // un score interne, ce qui affichait 5.0★ sans aucun avis.)
+        const score = d.nb_reviews > 0 && d.avg_rating
+          ? `<span style="color:#f59e0b;font-size:0.8rem;">★ ${Number(d.avg_rating).toFixed(1).replace('.', ',')} (${d.nb_reviews} avis)</span>`
+          : `<span style="font-size:0.75rem;font-weight:800;color:#0B1B10;background:#9BE7B0;border-radius:999px;padding:1px 8px;">Nouveau</span>`;
 
         // Badge statut trajet
         const status = String(r.status || 'publie').toLowerCase();
@@ -902,7 +906,7 @@
               ${stops}
               ${matchReasons}
               <div style="margin-top:8px;font-size:0.82rem;color:var(--brand-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
-                <strong style="color:var(--brand-text)">${d.prenom || 'Chauffeur'}</strong>
+                <strong style="color:var(--brand-text)">${d.prenom || 'Conducteur'}</strong>
                 ${score}
                 <span class="trust-badge-slot" data-uid="${r.driver_id || d.id || ''}"></span>
                 ${d.bio ? `<span style="color:var(--brand-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px">"${d.bio}"</span>` : ''}
@@ -912,7 +916,7 @@
               <div class="ride-price-amount">${fmt(r.estimated_price)}</div>
               <div class="ride-price-label">par personne</div>
               <div style="font-size:0.72rem;color:var(--brand-muted);margin-top:2px;">dont ${fmt(r.platform_fee)} frais service</div>
-              ${r.luggage_fee_info ? `<div style="font-size:0.72rem;color:var(--brand-cyan);margin-top:2px;">+${fmt(r.luggage_fee_info)} bagage → chauffeur</div>` : ''}
+              ${r.luggage_fee_info && r.accepts_large_luggage ? `<div style="font-size:0.72rem;color:var(--brand-cyan);margin-top:2px;">+${fmt(r.luggage_fee_info)} bagage → chauffeur</div>` : ''}
               ${r.group_discount ? `<div style="font-size:0.72rem;color:#f59e0b;margin-top:4px;">👥 +1 passager = -${r.group_discount.next_pct}% pour tous</div>` : ''}
               <a class="pp-btn pp-btn-primary pp-btn-sm" href="/covoiturage-trajet.html?id=${r.id}" style="margin-top:10px;">Voir le trajet</a>
             </div>

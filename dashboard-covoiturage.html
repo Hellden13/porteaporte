@@ -498,6 +498,15 @@ function $m(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',cu
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-CA',{dateStyle:'medium'}) : '—'; }
 function fmtDT(d)   { return d ? new Date(d).toLocaleString('fr-CA',{dateStyle:'short',timeStyle:'short'}) : '—'; }
 
+// Les réservations gardent parfois le code de l'arrêt (« depart », « arrivee ») : on affiche la ville.
+function villeArret(v, b, sens) {
+  const t = String(v || '').trim();
+  const ride = (b && (b.ride || b.rides)) || {};
+  if (!t || t === 'depart') return ride.start_city || b?.start_city || 'Point de départ';
+  if (t === 'arrivee') return ride.end_city || b?.end_city || 'Arrivée';
+  return t;
+}
+
 function statusChip(s) {
   const map = {
     publie: ['#5dbfff','#0D2A00','Publié'],
@@ -509,8 +518,19 @@ function statusChip(s) {
     annule_passager: ['#FF6B6B','#2A0000','Annulé'],
     annule_chauffeur: ['#FF6B6B','#2A0000','Annulé'],
     complete: ['#5A6A7A','#111','Complété'],
+    completed: ['#5A6A7A','#111','Complété'],
+    paye: ['#7DFFC1','#062016','Payé'],
+    paid: ['#7DFFC1','#062016','Payé'],
+    driver_completed: ['#FFD166','#2A1E00','Terminé — attente du passager'],
+    en_attente_paiement: ['#FFB74D','#1A0F00','Paiement à faire'],
+    pending: ['#FFB74D','#1A0F00','En attente'],
+    rembourse: ['#A8B0BA','#111','Remboursé'],
+    refunded: ['#A8B0BA','#111','Remboursé'],
+    litige: ['#FF6B6B','#2A0000','En litige'],
   };
-  const [bg,fg,label] = map[s] || ['#3A4A5A','#8A9BB0',s];
+  // Jamais de statut brut à l'écran : libellé français, ou au pire le code rendu lisible.
+  const lisible = String(s || '—').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  const [bg,fg,label] = map[s] || ['#3A4A5A','#E0E6EE',lisible];
   return `<span class="status-chip" style="background:${bg};color:${fg}">${label}</span>`;
 }
 
@@ -527,7 +547,11 @@ function buildOverview() {
   const badges    = dashData.badges       || [];
 
   const activeRides   = rides.filter(r => r.status === 'publie').length;
-  const confirmedBook = bookings.filter(b => b.status === 'confirme').length;
+  // Réservations confirmées : les miennes (passager) ET celles reçues sur mes trajets (conducteur).
+  const STATUTS_CONFIRMES = ['confirme', 'paye', 'paid', 'driver_completed'];
+  const toutes = new Map();
+  [...bookings, ...(dashData.ride_bookings || [])].forEach((b) => { if (b && b.id) toutes.set(b.id, b); });
+  const confirmedBook = [...toutes.values()].filter(b => STATUTS_CONFIRMES.includes(String(b.status || '').toLowerCase())).length;
   const earnedBadges  = badges.filter(b => b.earned).length;
   const doneMissions  = missions.filter(m => m.done).length;
   const isConducteur  = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux';
@@ -723,7 +747,7 @@ function buildTrajets() {
               ? `<div style="margin-top:7px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
               : '';
             return `<tr>
-              <td data-label="Trajet">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+              <td data-label="Trajet">${villeArret(b.pickup_city, b)} → ${villeArret(b.dropoff_city, b)}</td>
               <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.ride_departure_time || b.created_at)}</td>
               <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
               <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
@@ -789,7 +813,7 @@ function buildReservations() {
             : '<span style="color:var(--muted);font-size:.75rem">—</span>';
           return `<tr>
             <td><strong>${b.passenger_prenom||'—'}</strong></td>
-            <td style="font-size:.8rem;color:var(--muted)">${b.pickup_city||'?'} → ${b.dropoff_city||'?'}</td>
+            <td style="font-size:.8rem;color:var(--muted)">${villeArret(b.pickup_city, b)} → ${villeArret(b.dropoff_city, b)}</td>
             <td>${b.seats_reserved} pl.</td>
             <td>${petCell}</td>
             <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>

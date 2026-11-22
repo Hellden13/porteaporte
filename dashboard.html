@@ -332,6 +332,14 @@
       document.getElementById('referralChances').textContent = out.chances || 1;
     } catch (_) {}
   }
+  // Code d'arrêt (« depart », « arrivee ») gardé par d'anciennes réservations : jamais affiché tel quel.
+  function villeArret(v) {
+    const t = String(v || '').trim();
+    if (!t || t === 'depart') return 'Point de départ';
+    if (t === 'arrivee') return 'Arrivée';
+    return t;
+  }
+
   function statusPill(s) {
     const x = String(s||'').toLowerCase();
     const map = {
@@ -342,9 +350,12 @@
       complete: ['pill-good','Complété'], completed: ['pill-good','Complété'], termine: ['pill-good','Terminé'],
       annule: ['pill-muted','Annulé'], cancelled: ['pill-muted','Annulé'], rembourse: ['pill-muted','Remboursé'],
       publie: ['pill-info','Publié'], complet: ['pill-good','Complet'],
-      litige: ['pill-danger','Litige']
+      litige: ['pill-danger','Litige'], driver_completed: ['pill-warn','Terminé — attente du passager'],
+      en_attente_paiement: ['pill-warn','Paiement à faire'], refunded: ['pill-muted','Remboursé'], ramasse: ['pill-info','Ramassé'],
+      paiement_autorise: ['pill-info','Paiement sécurisé'], publiee: ['pill-info','Publiée']
     };
-    const [cls, lbl] = map[x] || ['pill-muted', s||'?'];
+    // Jamais de statut brut : libellé français, ou au pire le code rendu lisible.
+    const [cls, lbl] = map[x] || ['pill-muted', String(s || '—').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())];
     return `<span class="status-pill ${cls}">${lbl}</span>`;
   }
 
@@ -499,7 +510,7 @@
       if (canConfirmArrival) actions.push(`<button class="ra-arrive" type="button" onclick="window.confirmPassengerArrival('${esc(b.id)}')" style="background:rgba(125,255,193,.14);color:#0a5a34;border:1px solid rgba(125,255,193,.6);padding:6px 12px;border-radius:8px;font-weight:800;cursor:pointer">✅ Je suis arrivé(e)</button>`);
       if (canCancel) actions.push(`<button class="ra-cancel" type="button" onclick="window.cancelPassengerBooking('${esc(b.id)}')">❌ Annuler</button>`);
       return `<tr>
-        <td><strong>${esc(b.pickup_city||'?')} → ${esc(b.dropoff_city||'?')}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
+        <td><strong>${esc(villeArret(b.pickup_city))} → ${esc(villeArret(b.dropoff_city))}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
         <td>${b.seats_reserved||1} place${(b.seats_reserved||1)>1?'s':''}</td>
         <td><strong>${fmt(b.total_passenger)}</strong></td>
         <td>${statusPill(b.status)}</td>

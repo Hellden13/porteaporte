@@ -183,6 +183,17 @@
     #toast.show { opacity: 1; }
     #toast.success { background: #198754; }
     #toast.error   { background: #dc3545; }
+    /* Test complet du 22 nov. 2026 (13) : les cartes sont sombres, le texte doit rester lisible partout. */
+    .card .route-cities .city, .card .tl-stop-name, .card .driver-name, .card .sr-val,
+    .card .vehicle-info strong, .card .review-name { color: #F3F6FA; }
+    .card .route-date, .card .tl-stop-sub, .card .score-row .sr-lbl, .card .driver-bio, .card .vehicle-info,
+    .card .review-text, .card .form-group label, .card .check-row, .card .score-titre { color: #C9D1DB; }
+    .card .meeting-card { background: #F4F6FA; }
+    .card .meeting-card .mc-name { color: #10131A; }
+    .card .meeting-card .mc-sub { color: #3D4654; }
+    .card .meeting-card.selected { background: #E9E6FF; border-color: #6c63ff; }
+    .card .meeting-card.selected .mc-name { color: #10131A; }
+    .note-nouveau { display:inline-block; font-size:.8rem; font-weight:800; color:#0B1B10; background:#9BE7B0; border-radius:999px; padding:2px 10px; }
   </style>
 </head>
 <body>
@@ -231,12 +242,12 @@
       </div>
 
       <div class="card">
-        <h2>&#128506;&#65039; Itineraire</h2>
+        <h2>&#128506;&#65039; Itinéraire</h2>
         <div class="timeline" id="timeline"></div>
       </div>
 
       <div class="card" id="card-chauffeur">
-        <h2>&#129333;&#8205;&#9992;&#65039; Votre chauffeur</h2>
+        <h2>&#129333;&#8205;&#9992;&#65039; Votre conducteur</h2>
         <div class="driver-header">
           <div class="driver-avatar" id="driver-avatar"></div>
           <div>
@@ -743,7 +754,7 @@ async function showPostPaymentConfirmation(bookingId) {
       <div class="post-confirm-row"><strong>📅 Départ</strong>${esc(formatDate(ride.departure_time || currentRide?.departure_time || ''))}</div>
       <div class="post-confirm-row"><strong>📍 Embarquement</strong>${esc(ride.pickup_city || booking.pickup_city || '?')}${ride.pickup_sector || booking.pickup_sector ? ' · ' + esc(ride.pickup_sector || booking.pickup_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🏁 Débarquement</strong>${esc(ride.dropoff_city || booking.dropoff_city || '?')}${ride.dropoff_sector || booking.dropoff_sector ? ' · ' + esc(ride.dropoff_sector || booking.dropoff_sector) : ''}</div>
-      <div class="post-confirm-row"><strong>🚗 Chauffeur</strong>${esc(driver.prenom || 'Chauffeur')}${driver.telephone ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
+      <div class="post-confirm-row"><strong>🚗 Conducteur</strong>${esc(driver.prenom || 'Conducteur')}${String(driver.telephone || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '').length === 10 ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
       <div class="post-confirm-row"><strong>🔐 Code sécurité</strong>${hasCode ? 'Code configuré' : 'Aucun code par défaut détecté. Ajoute un code dans ton compte pour sécuriser les prochains trajets.'}</div>
     </div>
     <div class="post-confirm-actions">
@@ -833,14 +844,22 @@ function populateCitySelects(ride) {
     isEnd: true
   });
 
-  const visibleStops = stops.filter(s => s.label);
+  // Pas d'arrêt en double avec le départ ou l'arrivée (ex. « Lévis » deux fois).
+  const norm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const visibleStops = stops.filter((s, i) => s.label && (s.isStart || s.isEnd || (norm(s.label) !== norm(startLabel) && norm(s.label) !== norm(endLabel))));
+  // L'arrivée ne peut pas être annoncée avant le dernier arrêt.
+  const dernierArret = visibleStops.filter((s) => !s.isStart && !s.isEnd && s.time).pop();
+  const arrivee = visibleStops.find((s) => s.isEnd);
+  if (arrivee && dernierArret && (!arrivee.time || arrivee.time <= dernierArret.time)) arrivee.time = new Date(dernierArret.time.getTime() + 15 * 60 * 1000);
 
   // Selects cachés (rétrocompatibilité avec submitBooking)
   ['pax-pickup','pax-dropoff','pkg-pickup','pkg-dropoff'].forEach(function(selId) {
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.innerHTML = '';
-    visibleStops.forEach(function(s) {
+    // On ne débarque pas au point de départ, et on n'embarque pas à l'arrivée.
+    const debarquement = /dropoff$/.test(selId);
+    visibleStops.filter((s) => debarquement ? !s.isStart : !s.isEnd).forEach(function(s) {
       const o = document.createElement('option');
       o.value = s.id;
       o.textContent = s.label;
@@ -849,16 +868,17 @@ function populateCitySelects(ride) {
   });
   // Par défaut : pickup = 1er, dropoff = dernier
   document.getElementById('pax-pickup').selectedIndex = 0;
-  document.getElementById('pax-dropoff').selectedIndex = visibleStops.length - 1;
+  document.getElementById('pax-dropoff').selectedIndex = document.getElementById('pax-dropoff').options.length - 1;
   if (document.getElementById('pkg-pickup')) document.getElementById('pkg-pickup').selectedIndex = 0;
-  if (document.getElementById('pkg-dropoff')) document.getElementById('pkg-dropoff').selectedIndex = visibleStops.length - 1;
+  if (document.getElementById('pkg-dropoff')) document.getElementById('pkg-dropoff').selectedIndex = document.getElementById('pkg-dropoff').options.length - 1;
 
   // Cards visuelles pickup & dropoff
   function fmtTime(d) { return d ? d.toLocaleTimeString('fr-CA', { hour:'2-digit', minute:'2-digit', timeZone:'America/Toronto' }) : '—'; }
-  function renderCards(containerId, selectId, defaultIdx) {
+  function renderCards(containerId, selectId, defaultIdx, garder) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = visibleStops.map((s, i) => {
+      if (garder && !garder(s)) return '';
       const time = fmtTime(s.time);
       const meetingHtml = s.meeting ? '<div class="mc-sub">📌 ' + esc(s.meeting) + '</div>' : '';
       const badges = [];
@@ -885,8 +905,8 @@ function populateCitySelects(ride) {
       });
     });
   }
-  renderCards('pickup-cards',  'pax-pickup',  0);
-  renderCards('dropoff-cards', 'pax-dropoff', visibleStops.length - 1);
+  renderCards('pickup-cards',  'pax-pickup',  0, (s) => !s.isEnd);
+  renderCards('dropoff-cards', 'pax-dropoff', visibleStops.length - 1, (s) => !s.isStart);
 }
 
 function renderRide(r) {
@@ -936,6 +956,9 @@ function renderRide(r) {
     });
   }
   stopArr.push({ name: endName, sub: r.destination_address || '', dot: 'filled', meeting: r.dropoff_safe_label || null });
+  // Pas d'arrêt intermédiaire identique au départ ou à l'arrivée.
+  var normT = function (t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); };
+  stopArr = stopArr.filter(function (s, i) { return i === 0 || i === stopArr.length - 1 || (normT(s.name) !== normT(startName) && normT(s.name) !== normT(endName)); });
 
   document.getElementById('timeline').innerHTML = stopArr.map(function(s) {
     return '<div class="tl-stop">' +
@@ -949,7 +972,7 @@ function renderRide(r) {
 
   var p  = r.driver_profile || {};
   var dp = r.driver_info    || {};
-  var prenom = dp.prenom || p.prenom || 'Chauffeur';
+  var prenom = dp.prenom || p.prenom || 'Conducteur';
 
   var avatarEl = document.getElementById('driver-avatar');
   avatarEl.innerHTML = '';
@@ -998,7 +1021,7 @@ function renderRide(r) {
       window.RideChat.open({
         ride_id: r.id || rideId,
         other_user_id: driverIdForBadge,
-        other_name: prenom || 'Chauffeur'
+        other_name: prenom || 'Conducteur'
       });
     });
     actionsWrap.appendChild(btnChat);
@@ -1017,7 +1040,7 @@ function renderRide(r) {
       window.RideReview.open({
         ride_id: r.id || rideId,
         role: 'passenger',
-        target_name: prenom || 'Chauffeur',
+        target_name: prenom || 'Conducteur',
         onSuccess: function () { setTimeout(function () { location.reload(); }, 1500); }
       });
     });
@@ -1045,12 +1068,19 @@ function renderRide(r) {
       '<span class="sr-val">' + val + '</span></div>';
   }
 
-  document.getElementById('score-bars').innerHTML =
-    '<div style="font-size:.82rem;color:#888;margin-bottom:8px">Score de confiance</div>' +
-    scoreRow('Score global', sc) +
-    scoreRow('Ponctualite',  sp) +
-    scoreRow('Fiabilite',    sf) +
-    scoreRow('Comportement', sb);
+  // Note : « Nouveau » tant qu'il n'y a aucun avis (plus de barres à 0 ni de 5.0★ inventé).
+  var avis = Array.isArray(p.recent_reviews) ? p.recent_reviews.filter(function (a) { return Number(a.note || a.rating) > 0; }) : [];
+  var aucunScore = !(sc || sp || sf || sb);
+  document.getElementById('score-bars').innerHTML = aucunScore
+    ? '<div class="score-titre" style="font-size:.82rem;margin-bottom:8px">Note des passagers</div>' +
+      (avis.length
+        ? '<div style="color:#F3F6FA;font-weight:800">★ ' + (avis.reduce(function (t, a) { return t + Number(a.note || a.rating); }, 0) / avis.length).toFixed(1).replace('.', ',') + ' <span style="color:#C9D1DB;font-weight:600">(' + avis.length + ' avis)</span></div>'
+        : '<span class="note-nouveau">Nouveau</span> <span style="color:#C9D1DB;font-size:.82rem">aucun avis pour l\'instant</span>')
+    : '<div class="score-titre" style="font-size:.82rem;margin-bottom:8px">Score de confiance</div>' +
+      scoreRow('Score global', sc) +
+      scoreRow('Ponctualité',  sp) +
+      scoreRow('Fiabilité',    sf) +
+      scoreRow('Comportement', sb);
 
   var smokeMap = { non_fumeur: ['&#128683;','Non-fumeur','good'], fumeur: ['&#128684;','Fumeur autorise','bad'] };
   var musicMap = { silence: ['&#128263;','Silence','neutral'], musique: ['&#127925;','Musique','neutral'] };
@@ -1118,7 +1148,7 @@ function renderRide(r) {
     '<div class="pb-row total"><span>Total passager</span><span>' + price.toFixed(2) + ' $</span></div>' +
     (driverAmt > 0 ? '<div class="pb-row" style="color:#7fe5a3;font-size:.78rem;"><span>↳ versé au conducteur</span><span>' + driverAmt.toFixed(2) + ' $</span></div>' : '') +
     '<div class="pb-note">Total passager = part du trajet + frais de service' + (lugFee > 0 ? ' + bagage' : '') + '.</div>' +
-    '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>' +
+    (r.accepts_large_luggage ? '<div class="pb-note">Les frais de bagage sont versés en totalité au chauffeur.</div>' : '<div class="pb-note">Bagages en soute refusés par ce conducteur : aucun supplément.</div>') +
     '<div class="pb-note" style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #ea580c;border-radius:6px;color:#7c3a12;line-height:1.5;">' +
       '<strong>Politique d\'annulation :</strong> remboursement intégral si tu annules plus de 24 h avant le départ. ' +
       'Entre 2 h et 24 h : 85 % remboursé. Moins de 2 h ou absence : 50 % remboursé. ' +
