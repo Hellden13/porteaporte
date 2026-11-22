@@ -722,13 +722,19 @@ describe('participation d\'inscription : endpoints', () => {
     assert.deepEqual([res._body.lance, res._body.participations], [false, 0]);
   });
 
-  test('aucune participation par lettre, aucun formulaire ; règlement : texte de Denis avec ses [crochets]', () => {
+  test('aucune participation par lettre, aucun formulaire ; règlement : texte de Denis, informations remplies', () => {
     const regl = lire('concours-fetes-reglement.html');
     assert.doesNotMatch(regl, /<form|<input|par la poste|par lettre/i);
     assert.match(regl, /AUCUN ACHAT REQUIS\.<\/strong> L'inscription à PorteàPorte est gratuite\./);
-    for (const c of ['[adresse postale complète]', '[date du lancement]', '[date, ex. 5 janvier 2027]', '[heure]', '[7]']) {
-      assert.ok(regl.includes(`<span class="a-ecrire">${c}</span>`), c);
-    }
+    // Aucun crochet ni surlignage « à remplir » ne reste sur la page.
+    assert.doesNotMatch(regl.replace(/<!--[\s\S]*?-->/g, ''), /[\[\]]/);
+    assert.doesNotMatch(regl, /a-ecrire|TEXTE À ÉCRIRE|#f5d061/);
+    assert.match(regl, /\(porteaporte\.site\), 1469, rue Fréchette, Lévis \(Québec\) G7A 4N5 \(l'« Organisateur »\)\./);
+    assert.equal((regl.match(/Lévis \(Québec\)/g) || []).length, 1, 'pas de doublon « Lévis (Québec) »');
+    assert.match(regl, /Le concours commence le <span id="date-lancement">à venir<\/span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec\./);
+    assert.match(regl, /Le tirage au sort aura lieu le mardi 5 janvier 2027 à 13 h, à Lévis, parmi toutes les participations validées\./);
+    assert.match(regl, /<li>répondre dans les 7 jours suivant le premier contact\.<\/li>/);
+    assert.match(regl, /<script src="\/js\/reglement-fetes\.js" defer><\/script>/);
     assert.match(regl, /une carte-cadeau d'épicerie Super C d'une valeur de 100 \$\. Le prix doit être accepté tel quel\./);
     assert.match(regl, /Super C n'est ni commanditaire ni organisateur de ce concours\./);
     assert.match(regl, /reçoit automatiquement une \(1\) participation\. Limite d'une \(1\) participation par personne par ce moyen\. Aucun achat ni utilisation du service n'est requis\./);
@@ -756,5 +762,58 @@ describe('tableau de bord du membre : « 1 participation pour ton inscription + 
   test('courriel pas encore vérifié : on l\'invite à le vérifier', () => {
     const t = ctx.texteParticipationsFetes({ participations: 0, inscription: 0 });
     assert.match(t.sous, /^0 grâce à tes livraisons et trajets\. Vérifie ton courriel pour recevoir ta participation d'inscription\./);
+  });
+});
+
+describe('règlement : date du lancement automatique', () => {
+  async function page(reponse) {
+    const el = { id: 'date-lancement', textContent: '' }; // vide : c'est le script qui doit écrire
+    const ctx = {
+      document: { getElementById: (id) => (id === 'date-lancement' ? el : null) },
+      window: {}, Intl, Date, isFinite,
+      fetch: async (url) => { assert.equal(url, '/api/platform?endpoint=concours-fetes-public'); if (reponse instanceof Error) throw reponse; return reponse; },
+    };
+    vm.createContext(ctx);
+    vm.runInContext(lire('js/reglement-fetes.js'), ctx);
+    await new Promise((r) => setTimeout(r, 5));
+    page.api = ctx.window.PAPReglementFetes;
+    return el.textContent;
+  }
+  const ok = (d) => ({ ok: true, json: async () => d });
+
+  test('lancé : date du clic « Lancer le concours », format « 23 novembre 2026 » (heure du Québec)', async () => {
+    const tz = process.env.TZ;
+    process.env.TZ = 'UTC'; // le serveur ou le navigateur peut être dans un autre fuseau
+    try {
+      assert.equal(await page(ok({ lance_le: '2026-11-24T04:30:00Z' })), '23 novembre 2026');
+    } finally { if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz; }
+    assert.equal(await page(ok({ lance_le: '2026-11-23T15:00:00Z' })), '23 novembre 2026');
+    // 23 h 30 le 23 nov. au Québec = 24 nov. en UTC : c'est la date du Québec qui compte.
+    assert.equal(await page(ok({ lance_le: '2026-11-24T04:30:00Z' })), '23 novembre 2026');
+    assert.equal(await page(ok({ lance_le: '2026-12-01T17:00:00Z' })), '1er décembre 2026');
+  });
+
+  test('pas encore lancé, réponse en erreur ou réseau coupé : « à venir »', async () => {
+    assert.equal(await page(ok({ lance_le: null })), 'à venir');
+    assert.equal(await page({ ok: false, json: async () => ({}) }), 'à venir');
+    assert.equal(await page(new Error('réseau')), 'à venir');
+    assert.equal(await page(ok({ lance_le: 'nimporte' })), 'à venir');
+    assert.equal(page.api.dateLongue('nimporte'), null);
+    assert.equal(page.api.dateLongue(''), null);
+  });
+
+  test('API publique : lance_le = date de création du concours, null tant qu\'il n\'est pas lancé', async () => {
+    Date.now = () => Date.parse('2026-12-10T12:00:00-05:00');
+    const lance = await appel(base(), 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(lance._body.lance_le, DEBUT);
+    const pas = await appel(base({ concours: false }), 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(pas._body.lance_le, null);
+    // Concours annulé : pas de date de lancement affichée.
+    const sb = base();
+    const brut = sb.fetchImpl;
+    sb.fetchImpl = async (url, o) => (url.includes('/rest/v1/monthly_draws')
+      ? rep([{ id: DRAW, created_at: DEBUT, status: 'cancelled', eligibility_badge_slug: 'concours-fetes-2026' }]) : brut(url, o));
+    const annule = await appel(sb, 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(annule._body.lance_le, null);
   });
 });

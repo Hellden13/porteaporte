@@ -20,8 +20,6 @@
     h2 { font-size: 1.15rem; margin: 0 0 8px; }
     section p, section li { line-height: 1.6; margin: 0 0 8px; }
     section ul { margin: 0 0 8px; padding-left: 22px; }
-    /* [Crochets] à remplir par Denis : volontairement bien visibles. */
-    .a-ecrire { color: #f5d061; font-weight: 800; letter-spacing: .02em; }
   </style>
 </head>
 <body>
@@ -30,11 +28,11 @@
     <h1>🎄 CONCOURS DES FÊTES PORTEÀPORTE 2026</h1>
     <p class="lede"><strong>AUCUN ACHAT REQUIS.</strong> L'inscription à PorteàPorte est gratuite.</p>
 
-    <!-- Texte de Denis, tel quel (22 nov. 2026). Les [crochets] sont à remplir par Denis. -->
+    <!-- Texte de Denis (22 nov. 2026). La date du lancement est remplie par js/reglement-fetes.js. -->
     <section id="organisateur"><h2>1. Organisateur</h2>
-      <p>Le concours est organisé par Pieds en L'air S.E.N.C., qui exploite PorteàPorte (porteaporte.site), <span class="a-ecrire">[adresse postale complète]</span>, Lévis (Québec) (l'« Organisateur »).</p></section>
+      <p>Le concours est organisé par Pieds en L'air S.E.N.C., qui exploite PorteàPorte (porteaporte.site), 1469, rue Fréchette, Lévis (Québec) G7A 4N5 (l'« Organisateur »).</p></section>
     <section id="duree"><h2>2. Durée</h2>
-      <p>Le concours commence le <span class="a-ecrire">[date du lancement]</span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec.</p></section>
+      <p>Le concours commence le <span id="date-lancement">à venir</span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec.</p></section>
     <section id="admissibilite"><h2>3. Admissibilité</h2>
       <p>Le concours s'adresse aux résidents du Québec âgés de 18 ans ou plus. Les associés de l'Organisateur et les personnes qui habitent avec eux ne sont pas admissibles.</p></section>
     <section id="prix"><h2>4. Prix</h2>
@@ -43,17 +41,18 @@
       <p>a) Inscription gratuite : toute personne qui a un compte PorteàPorte avec un courriel vérifié, ou qui s'inscrit gratuitement sur porteaporte.site avant la fin du concours, reçoit automatiquement une (1) participation. Limite d'une (1) participation par personne par ce moyen. Aucun achat ni utilisation du service n'est requis.</p>
       <p>b) Participations supplémentaires : chaque livraison complétée et payée sur PorteàPorte donne 1 participation de plus à l'expéditeur. Chaque trajet de covoiturage complété et payé donne 1 participation de plus au passager et 1 au conducteur. Une participation supplémentaire est validée seulement si aucun litige n'est en cours ou n'a été réglé contre le participant.</p></section>
     <section id="tirage"><h2>6. Tirage</h2>
-      <p>Le tirage au sort aura lieu le <span class="a-ecrire">[date, ex. 5 janvier 2027]</span> à <span class="a-ecrire">[heure]</span>, à Lévis, parmi toutes les participations validées. Les chances de gagner dépendent du nombre de participations validées.</p></section>
+      <p>Le tirage au sort aura lieu le mardi 5 janvier 2027 à 13 h, à Lévis, parmi toutes les participations validées. Les chances de gagner dépendent du nombre de participations validées.</p></section>
     <section id="reclamation"><h2>7. Réclamation du prix</h2>
       <p>La personne sélectionnée sera contactée par courriel et par téléphone dans les 2 jours suivant le tirage. Pour obtenir le prix, elle devra :</p>
       <ul>
         <li>répondre correctement, sans aide, à une question d'habileté mathématique ;</li>
         <li>signer un formulaire de déclaration et d'exonération ;</li>
-        <li>répondre dans les <span class="a-ecrire">[7]</span> jours suivant le premier contact.</li>
+        <li>répondre dans les 7 jours suivant le premier contact.</li>
       </ul>
       <p>Sinon, un nouveau tirage sera fait parmi les participations restantes.</p></section>
     <section id="conditions"><h2>8. Conditions générales</h2>
       <p>Un seul compte par personne. L'Organisateur peut annuler les participations d'un compte en double ou frauduleux, ou d'une transaction faite dans le but de participer sans intention réelle d'utiliser le service. En participant, le gagnant accepte que son prénom et sa ville soient publiés par PorteàPorte. Les renseignements personnels recueillis servent uniquement à la gestion du concours. Ce règlement est disponible sur porteaporte.site.</p></section>
   </main>
+  <script src="/js/reglement-fetes.js" defer></script>
 </body>
 </html>
