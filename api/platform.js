@@ -38,6 +38,7 @@ const {
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+const { adminAFaire } = require('../lib/_admin-a-faire');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
 // ─── Redistribution commission covoiturage ───
@@ -6692,6 +6693,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'my-livraisons') return await myLivraisons(req, res, ctx, body);
     if (endpoint === 'my-driver-livraisons') return await myDriverLivraisons(req, res, ctx, body);
     if (endpoint === 'admin-dashboard') return await adminDashboard(req, res, ctx, body);
+    if (endpoint === 'admin-a-faire') return await adminAFaire(req, res, ctx, body);
     if (endpoint === 'admin-pilotage') return await adminPilotage(req, res, ctx, body);
     if (endpoint === 'admin-delivery-proof') return await adminDeliveryProof(req, res, ctx, body);
     if (endpoint === 'admin-disputes') return await adminDisputes(req, res, ctx);
