@@ -9,7 +9,7 @@ const { URL } = require('node:url');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-function demarrer({ supabaseUrl, anonKey, serviceKey, port = 0 }) {
+function demarrer({ supabaseUrl, anonKey, serviceKey, port = 0, configNavigateurLocale = false }) {
   const u = new URL(supabaseUrl);
   if (!['127.0.0.1', 'localhost'].includes(u.hostname)) throw new Error('REFUS : la base doit être locale (127.0.0.1)');
   Object.assign(process.env, {
@@ -68,6 +68,14 @@ function demarrer({ supabaseUrl, anonKey, serviceKey, port = 0 }) {
     // Redirections simples de vercel.json
     const red = (vercel.redirects || []).find((r) => r.source === p);
     if (red) { res.writeHead(red.permanent ? 308 : 307, { location: red.destination }); return res.end(); }
+    // Captures d'écran : le navigateur parle à la base LOCALE (jamais à la production).
+    if (configNavigateurLocale && (p === '/js/supabase-config.js' || p === '/js/auth-api.js')) {
+      let js = fs.readFileSync(path.join(ROOT, p), 'utf8');
+      js = js.replace(/https:\/\/miqrircrfpzkmvvacgwt\.supabase\.co/g, supabaseUrl)
+        .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, anonKey);
+      res.writeHead(200, { 'content-type': 'text/javascript' });
+      return res.end(js);
+    }
     // Fichiers statiques (cleanUrls)
     let f = path.join(ROOT, decodeURIComponent(p));
     if (!f.startsWith(ROOT)) { res.statusCode = 403; return res.end(); }

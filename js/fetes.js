@@ -32,6 +32,7 @@
       '.fetes-neige i{position:absolute;top:-12px;width:6px;height:6px;border-radius:50%;background:#fff;opacity:.75;' +
       'animation:fetes-chute linear infinite}' +
       '@keyframes fetes-chute{to{transform:translate3d(var(--dx,20px),105vh,0)}}' +
+      '@media (max-width:560px){.fetes-banniere{font-size:.8rem;padding:7px 10px;gap:4px 8px}}' +
       '@media (prefers-reduced-motion: reduce){.fetes-neige{display:none}}';
     document.head.appendChild(s);
   }
