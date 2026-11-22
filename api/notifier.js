@@ -409,7 +409,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: data.expediteur_email,
         from: { email: fromEmail, name: fromName },
-        subject: `📦 Livraison créée — Code destinataire : ${data.recipient_code}`,
+        subject: `📦 Livraison créée — tes deux codes (ramassage et réception)`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
@@ -422,9 +422,9 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="margin-top:8px;font-size:.85rem;color:#a8b0ba">${data.type_colis} · ${parseFloat(data.prix_total || 0).toFixed(2)} $</div>
             </div>
             <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
-              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">⚠️ CODE DE RÉCEPTION — CONFIDENTIEL</div>
-              <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.recipient_code}</div>
-              <div style="font-size:.82rem;color:#a8b0ba">Donne ce code <strong>uniquement</strong> au destinataire du colis.<br>Il devra l'entrer pour confirmer la réception et libérer ton paiement au livreur.</div>
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">📬 CODE DE RÉCEPTION — CONFIDENTIEL</div>
+              <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${escapeHtml(data.recipient_code)}</div>
+              <div style="font-size:.82rem;color:#a8b0ba"><strong>À donner à la personne qui reçoit le colis.</strong><br>Elle le donne au livreur à la remise : c'est ce code qui libère le paiement. Il ne changera pas.</div>
             </div>
             <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin:16px 0">
               <div style="font-size:.8rem;color:#00d9ff;font-weight:700;margin-bottom:6px">🔗 Lien de confirmation à envoyer au destinataire :</div>
@@ -433,9 +433,9 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             </div>
             ${data.pickup_code ? `
             <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
-              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">🔑 CODE DE RAMASSAGE (PICKUP)</div>
-              <div style="font-size:2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.pickup_code}</div>
-              <div style="font-size:.82rem;color:#a8b0ba">À donner au livreur <strong>seulement</strong> quand il arrive chez toi pour récupérer le colis. Cela garantit que personne ne peut prendre ton colis sans ton accord.</div>
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">🔑 CODE DE RAMASSAGE</div>
+              <div style="font-size:2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${escapeHtml(data.pickup_code)}</div>
+              <div style="font-size:.82rem;color:#a8b0ba"><strong>À donner au livreur quand il vient chercher le colis.</strong> Personne ne peut prendre ton colis sans ce code. Il ne changera pas.</div>
             </div>
             ` : ''}
             <p style="color:#6d7886;font-size:.8rem;margin-top:20px">PorteàPorte · Livraison sécurisée au Québec</p>
@@ -697,9 +697,9 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="margin-top:8px;font-size:.85rem;color:#a8b0ba">${data.type_colis || 'Colis'}</div>
             </div>
             <div style="background:rgba(255,200,0,.08);border:2px solid rgba(255,200,0,.4);border-radius:12px;padding:20px;margin:20px 0;text-align:center">
-              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">🔑 TON CODE DE RÉCEPTION</div>
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.08em;margin-bottom:8px">📬 TON CODE DE RÉCEPTION</div>
               <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${data.recipient_code}</div>
-              <div style="font-size:.82rem;color:#a8b0ba">Garde ce code. Tu le saisiras à la réception du colis pour confirmer la livraison.</div>
+              <div style="font-size:.82rem;color:#a8b0ba">Garde ce code. Donne-le au livreur quand il te remet le colis : c'est ce qui confirme la livraison.</div>
             </div>
             <div style="text-align:center;margin:24px 0">
               <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">✅ Confirmer la réception</a>
@@ -800,21 +800,26 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
     // ── CODE DE CONFIRMATION LIVRAISON (envoyé à l'expéditeur quand livreur accepte) ──
     case 'code_confirmation_livraison': {
+      // Rappel des MÊMES codes qu'à la création (ils ne changent jamais).
+      const bloc = (titre, aide, code) => `
+            <div style="background:rgba(184,245,62,.08);border:2px solid rgba(184,245,62,.4);border-radius:12px;padding:18px;text-align:center;margin:14px 0">
+              <div style="font-size:.8rem;color:#ffd700;font-weight:700;letter-spacing:.06em;margin-bottom:6px">${titre}</div>
+              ${code ? `<div style="font-size:2.2rem;font-weight:900;letter-spacing:6px;color:#b8f53e">${escapeHtml(code)}</div>` : '<div style="color:#d8dde6">Le même code que dans le courriel « Livraison créée » et sur ton tableau de bord.</div>'}
+              <div style="color:#a8b0ba;font-size:.82rem;margin-top:6px">${aide}</div>
+            </div>`;
       emails.push({
         to: data.expediteur_email,
         from: { email: fromEmail, name: fromName },
-        subject: `🔐 Votre code de livraison : ${data.code}`,
+        subject: `🚚 Un livreur a accepté ton colis ${data.code_livraison || ''} — rappel de tes codes`.replace(/\s+—/, ' —'),
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#b8f53e;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE</div>
-            <h2 style="margin:0 0 14px;color:#fff">🔐 Votre code de confirmation de livraison</h2>
-            <p style="color:#d8dde6;line-height:1.6">Bonjour ${escapeHtml(data.prenom || 'Expéditeur')},<br><br>Un livreur a accepté votre colis <strong>${escapeHtml(data.ville_depart || '')} → ${escapeHtml(data.ville_arrivee || '')}</strong>.<br><br>Au moment de la livraison, donnez ce code au livreur pour confirmer la remise :</p>
-            <div style="background:rgba(184,245,62,.08);border:2px solid rgba(184,245,62,.4);border-radius:12px;padding:24px;text-align:center;margin:20px 0">
-              <div style="font-size:2.4rem;font-weight:900;letter-spacing:6px;color:#b8f53e">${escapeHtml(data.code)}</div>
-              <div style="color:#a8b0ba;font-size:.8rem;margin-top:6px">Code de livraison — référence ${escapeHtml(data.code_livraison || '')}</div>
-            </div>
-            <p style="color:#a8b0ba;line-height:1.6;font-size:.88rem">⚠️ Ne partagez ce code qu'avec le livreur au moment de la remise. Le paiement n'est libéré qu'après la saisie du code.</p>
-            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Questions ? Contactez-nous à bonjour@porteaporte.site 💙</p>
+            <h2 style="margin:0 0 14px;color:#fff">🚚 Un livreur a accepté ton colis</h2>
+            <p style="color:#d8dde6;line-height:1.6">Bonjour ${escapeHtml(data.prenom || 'Expéditeur')},<br><br>Un livreur a accepté ton colis <strong>${escapeHtml(data.ville_depart || '')} → ${escapeHtml(data.ville_arrivee || '')}</strong> (référence ${escapeHtml(data.code_livraison || '')}).<br>Voici un rappel de tes deux codes. Ce sont les mêmes qu'à la création : ils ne changent pas.</p>
+            ${bloc('🔑 CODE DE RAMASSAGE', 'À donner au livreur quand il vient chercher le colis.', data.code_ramassage)}
+            ${bloc('📬 CODE DE RÉCEPTION', 'À donner à la personne qui reçoit le colis. Le paiement est libéré seulement avec ce code.', data.code_reception)}
+            ${data.dashboard_url ? `<p style="color:#a8b0ba;font-size:.88rem">Tes codes sont aussi sur la fiche de la livraison : <a href="${escapeHtml(data.dashboard_url)}" style="color:#b8f53e">mon tableau de bord</a>.</p>` : ''}
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Questions ? Écris-nous à bonjour@porteaporte.site 💙</p>
           </div>`
       });
       break;

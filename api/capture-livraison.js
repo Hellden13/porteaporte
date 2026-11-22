@@ -6,26 +6,9 @@ const CORS = {
 };
 
 const { normalizeRole, alertAdmin, siteOrigin, internalHeaders } = require('../lib/_lib');
-const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+const { verifierCodeReception, insertAudit } = require('../lib/_codes-livraison');
 
-// Protection du code destinataire (6 chiffres) contre les essais en série :
-// 5 essais ratés par livraison -> livraison bloquée pour la libération par code
-// (seul l'admin peut encore valider, avec une raison). Le compte est tenu dans le
-// journal d'audit existant (transaction_audit_events), sans nouvelle colonne.
-const CODE_MAX_ESSAIS = 5;
-const CODE_ECHEC_EVENT = 'recipient_code_failed';
-const CODE_BLOQUE_EVENT = 'recipient_code_blocked';
-const CODE_IP_MAX_PAR_HEURE = 20;
-
-const RETENTION_MS = 7 * 365 * 24 * 60 * 60 * 1000;
-
-function hashCode(value, salt) {
-  const crypto = require('crypto');
-  return crypto
-    .createHash('sha256')
-    .update(`${String(value || '').trim()}|${String(salt || '')}`)
-    .digest('hex');
-}
+// Protection du code de réception (5 essais par livraison) : voir lib/_codes-livraison.js.
 
 async function getSessionUser(req, sbUrl, sbKey) {
   const auth = req.headers.authorization || '';
@@ -76,32 +59,6 @@ async function patchSupabase(url, sbKey, patch) {
   });
   const text = await r.text().catch(() => '');
   return { ok: r.ok, status: r.status, text };
-}
-
-async function insertAudit(sbUrl, sbKey, payload) {
-  await fetch(`${sbUrl}/rest/v1/transaction_audit_events`, {
-    method: 'POST',
-    headers: sbHeaders(sbKey),
-    body: JSON.stringify({
-      ...payload,
-      retention_until: payload.retention_until || new Date(Date.now() + RETENTION_MS).toISOString()
-    })
-  }).catch(() => {});
-}
-
-// Compte les codes faux déjà enregistrés pour une livraison. Échec fermé : { ok:false } si illisible.
-async function compterEchecsCode(sbUrl, sbKey, livraisonId) {
-  try {
-    const r = await fetch(
-      `${sbUrl}/rest/v1/transaction_audit_events?livraison_id=eq.${encodeURIComponent(livraisonId)}&event_type=eq.${CODE_ECHEC_EVENT}&select=id&limit=100`,
-      { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
-    );
-    if (!r.ok) return { ok: false, n: 0 };
-    const rows = await r.json();
-    return Array.isArray(rows) ? { ok: true, n: rows.length } : { ok: false, n: 0 };
-  } catch (_) {
-    return { ok: false, n: 0 };
-  }
 }
 
 async function fetchJson(url, sbKey) {
@@ -249,11 +206,6 @@ module.exports = async function handler(req, res) {
   if (!session && !recipient_code) return res.status(401).json({ error: 'Session ou code destinataire requis' });
 
   const codeFourni = recipient_code !== undefined && recipient_code !== null && String(recipient_code).trim() !== '';
-  if (codeFourni) {
-    const ip = getClientIp(req) || 'inconnue';
-    const rlIp = await checkRateLimit(`recipient-code:ip:${ip}`, CODE_IP_MAX_PAR_HEURE, 3600);
-    if (!rlIp.allowed) return res.status(429).json({ error: 'Trop d\'essais de code. Réessaie plus tard.', code: 'RATE_LIMIT' });
-  }
 
   const livRes = await fetchJson(
     `${SB_URL}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=*&limit=1`,
@@ -269,58 +221,12 @@ module.exports = async function handler(req, res) {
   const admin = session ? await isAdmin(session.id, SB_URL, SB_KEY) : false;
   const confirmationHash = livraison.recipient_confirmation_hash || livraison.code_reception_hash || null;
 
-  // Blocage AVANT toute comparaison : après 5 échecs, même le bon code est refusé.
-  let echecs = 0;
+  // Code de réception : même vérification partout (5 essais, journal, blocage), voir lib/_codes-livraison.
+  let recipientCodeValid = false;
   if (codeFourni && confirmationHash) {
-    const compte = await compterEchecsCode(SB_URL, SB_KEY, livraison.id);
-    if (!compte.ok) return res.status(503).json({ error: 'Vérification du code indisponible. Réessaie dans un instant.' });
-    echecs = compte.n;
-    if (echecs >= CODE_MAX_ESSAIS) {
-      return res.status(423).json({
-        error: 'Trop d\'essais de code : cette livraison est bloquée. L\'équipe PorteàPorte a été prévenue et va vérifier.',
-        code: 'code_bloque',
-      });
-    }
-    // Deuxième garde, atomique (même si deux essais arrivent en même temps).
-    const rlLiv = await checkRateLimit(`recipient-code:liv:${livraison.id}`, CODE_MAX_ESSAIS, 30 * 86400);
-    if (!rlLiv.allowed) return res.status(423).json({ error: 'Trop d\'essais de code : cette livraison est bloquée.', code: 'code_bloque' });
-  }
-
-  const suppliedHash = confirmationHash ? hashCode(recipient_code, livraison.id) : null;
-  const recipientCodeValid = Boolean(confirmationHash && recipient_code && suppliedHash === confirmationHash);
-
-  if (codeFourni && confirmationHash && !recipientCodeValid) {
-    const total = echecs + 1;
-    await insertAudit(SB_URL, SB_KEY, {
-      livraison_id: livraison.id,
-      user_id: livraison.expediteur_id || null,
-      actor_id: session?.id || null,
-      event_type: CODE_ECHEC_EVENT,
-      status: 'echec',
-      evidence: { source: 'api/capture-livraison', essai: total, max: CODE_MAX_ESSAIS, ip_hash: hashCode(getClientIp(req) || '', 'ip') },
-    });
-    if (total >= CODE_MAX_ESSAIS) {
-      await insertAudit(SB_URL, SB_KEY, {
-        livraison_id: livraison.id,
-        user_id: livraison.expediteur_id || null,
-        actor_id: session?.id || null,
-        event_type: CODE_BLOQUE_EVENT,
-        status: 'bloque',
-        evidence: { source: 'api/capture-livraison', essais: total },
-      });
-      await alertAdmin(
-        'Livraison bloquée : trop d\'essais de code destinataire',
-        `La livraison ${livraison.code || livraison.id} a reçu ${total} codes destinataire faux. La libération du paiement par code est bloquée. Seul un admin peut la valider (avec une raison).`,
-        { severity: 'critical', details: { livraison_id: livraison.id, essais: total } }
-      );
-    }
-    return res.status(403).json({
-      error: total >= CODE_MAX_ESSAIS
-        ? 'Code invalide. Trop d\'essais : la livraison est bloquée et l\'équipe a été prévenue.'
-        : 'Code de reception destinataire invalide. Le paiement reste protege.',
-      essais_restants: Math.max(0, CODE_MAX_ESSAIS - total),
-      code: total >= CODE_MAX_ESSAIS ? 'code_bloque' : 'code_invalide',
-    });
+    const v = await verifierCodeReception({ sbUrl: SB_URL, sbKey: SB_KEY, livraison, code: recipient_code, req, acteurId: session?.id });
+    if (!v.ok) return res.status(v.status).json(v.body);
+    recipientCodeValid = true;
   }
 
   if (!recipientCodeValid && !admin && livraison.expediteur_id !== session?.id) {

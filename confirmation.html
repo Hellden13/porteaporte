@@ -87,10 +87,11 @@
     <div class="ref" id="reference"></div>
 
     <div id="code-panel" class="code-panel" style="display:none">
-      <strong>📬 Code de réception destinataire</strong>
-      <div class="code-value" id="code-value">—</div>
-      <p class="code-note">Transmets ce code <strong>uniquement</strong> au destinataire. Il le saisira sur la page de confirmation pour libérer le paiement au livreur.</p>
-      <button onclick="copyCode()" style="margin-top:10px;padding:8px 16px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;cursor:pointer;font-size:.82rem">📋 Copier le code</button>
+      <strong>Tes deux codes</strong>
+      <div id="codes-livraison"></div>
+      <p class="code-note">Ils ne changeront pas. Tu les retrouves aussi sur la fiche de la livraison, dans ton tableau de bord.</p>
+      <button onclick="copyCode()" style="margin-top:10px;padding:8px 16px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;cursor:pointer;font-size:.82rem">📋 Copier le code de réception et le lien</button>
+      <div id="copie-msg" class="code-note" role="status" aria-live="polite"></div>
     </div>
 
     <div class="steps">
@@ -106,6 +107,9 @@
     <div class="countdown" id="countdown"></div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/codes-livraison.js"></script>
   <script>
     const params     = new URLSearchParams(window.location.search);
     const livraisonId = params.get('livraison_id');
@@ -125,25 +129,33 @@
       document.getElementById('reference').textContent = '🔑 Réf : ' + livraisonId + (pi ? ' · Stripe : ' + pi.slice(0, 24) + '…' : '');
     }
 
-    // Code destinataire depuis localStorage
-    if (livraisonId) {
-      const code = localStorage.getItem('pap_reception_code_' + livraisonId);
-      if (code) {
+    // Les deux codes, lus sur le serveur (réservé à l'expéditeur).
+    let codeReception = '';
+    async function chargerCodes() {
+      if (!livraisonId || !window.PAPCodes) return;
+      const out = await window.PAPCodes.afficher(document.getElementById('codes-livraison'), livraisonId);
+      if (out) {
+        codeReception = out.code_reception || '';
         document.getElementById('code-panel').style.display = 'block';
-        document.getElementById('code-value').textContent = code;
+        stopCountdown();
       }
     }
+    chargerCodes();
 
     function copyCode() {
-      const code = document.getElementById('code-value').textContent;
+      const msg = document.getElementById('copie-msg');
+      if (!codeReception) { msg.textContent = 'Code de réception indisponible ici : regarde le courriel « Livraison créée ».'; return; }
       const link = livraisonId ? window.location.origin + '/confirmation-destinataire.html?livraison_id=' + encodeURIComponent(livraisonId) : '';
-      const text = 'Code de réception PorteàPorte : ' + code + (link ? '\n\nLien de confirmation : ' + link : '');
-      navigator.clipboard?.writeText(text).then(() => alert('✅ Code et lien copiés !')).catch(() => {});
+      const text = 'Code de réception PorteàPorte (à donner au livreur à la remise du colis) : ' + codeReception + (link ? '\n\nLien de confirmation : ' + link : '');
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(() => { msg.textContent = '✅ Code et lien copiés !'; })
+        .catch(() => { msg.textContent = 'Copie impossible : note le code à la main.'; });
     }
 
     // Countdown redirect
     let secs = 12;
     const countEl = document.getElementById('countdown');
+    function stopCountdown() { clearInterval(timer); countEl.textContent = ''; }
     const timer = setInterval(() => {
       secs--;
       countEl.textContent = 'Redirection vers ton dashboard dans ' + secs + ' secondes…';

@@ -800,6 +800,8 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/modal-helper.js"></script>
+    <script src="/js/dialogues.js"></script>
+    <script src="/js/codes-livraison.js"></script>
     <script src="/js/supabase-config.js"></script>
     <script src="/js/auth-complete.js"></script>
     
@@ -1196,15 +1198,27 @@
           }
         }
 
-        function openRecipientConfirmation(livraisonId) {
+        async function chargerCodesMission(id) {
+            const box = document.getElementById('codes-' + id);
+            if (!box || box.dataset.ok) return;
+            const out = window.PAPCodes ? await window.PAPCodes.afficher(box, id) : null;
+            if (out) box.dataset.ok = '1';
+            else box.textContent = 'Codes indisponibles pour le moment. Regarde le courriel « Livraison créée ».';
+        }
+
+        async function openRecipientConfirmation(livraisonId) {
             const link = `${window.location.origin}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraisonId)}`;
-            const savedCode = localStorage.getItem('pap_reception_code_' + livraisonId);
-            if (savedCode) {
-                const msg = `Lien de confirmation:\n${link}\n\nCode destinataire: ${savedCode}\n\nTransmets ce code UNIQUEMENT au destinataire.`;
-                navigator.clipboard?.writeText(msg).catch(() => {});
-                alert('📋 Code et lien copiés!\n\nCode: ' + savedCode + '\nLien: ' + link + '\n\nTransmets ce code UNIQUEMENT au destinataire pour qu\'il confirme la réception.');
+            const out = window.PAPCodes ? await window.PAPCodes.lire(livraisonId) : null;
+            const code = out?.code_reception || '';
+            const msg = code
+                ? `Lien de confirmation :\n${link}\n\nCode de réception : ${code}\n(à donner à la personne qui reçoit le colis)`
+                : link;
+            navigator.clipboard?.writeText(msg).catch(() => {});
+            if (window.PAPDialog) {
+                window.PAPDialog.alert(code
+                    ? '📋 Code de réception et lien copiés.\n\nCode de réception : ' + code + '\nLien : ' + link + '\n\nDonne-les seulement à la personne qui reçoit le colis.'
+                    : '📋 Lien copié : ' + link, { title: 'Confirmation du destinataire' });
             } else {
-                navigator.clipboard?.writeText(link).catch(() => {});
                 window.open(link, '_blank', 'noopener,noreferrer');
             }
         }
@@ -1462,6 +1476,11 @@
                         <div class="mission-price">${money(mission.prix_total)}</div>
                         ${livreurBlock}
                     </div>
+                    ${['payee','paid','annule','annulee','cancelled','rembourse'].includes(mission.statut) ? '' : `
+                    <details class="mission-codes" ontoggle="if(this.open) chargerCodesMission('${esc(mission.id)}')" style="margin-top:10px">
+                        <summary style="cursor:pointer;font-weight:800;color:#ffd84d">🔑 Mes deux codes (ramassage et réception)</summary>
+                        <div id="codes-${esc(mission.id)}" style="margin-top:6px;color:#c9d1db;font-size:.85rem">Chargement…</div>
+                    </details>`}
                     <div class="mission-actions">${actionButtons(mission)}</div>
                     ${reviewBox(mission)}
                 </div>`;

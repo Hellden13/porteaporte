@@ -7,6 +7,7 @@
     <title>Suivi GPS en Direct · PorteàPorte</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-config.js"></script>
+<script src="/js/dialogues.js"></script>
 <script src="/js/auth.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
@@ -383,6 +384,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         async function confirmerLivraison() {
             const btn = document.getElementById('confirm-btn');
+            // Le code de réception est vérifié AVANT tout changement de statut.
+            const code = window.PAPDialog
+                ? await window.PAPDialog.prompt('Demande le code de réception à la personne qui reçoit le colis (6 chiffres).', '', { title: 'Code de réception', ok: 'Valider la livraison', inputmode: 'numeric' })
+                : null;
+            if (code === null || String(code).trim().length < 6) { showAlert('Rien n\'a changé : entre le code de réception à 6 chiffres pour confirmer la livraison.', 'error'); return; }
             btn.disabled = true;
             btn.textContent = 'Envoi en cours...';
             try {
@@ -393,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const res = await fetch('/api/confirm-delivery', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-                    body: JSON.stringify({ livraison_id: livraisonId })
+                    body: JSON.stringify({ livraison_id: livraisonId, recipient_code: String(code).trim() })
                 });
                 const result = await res.json();
                 if (res.ok) {

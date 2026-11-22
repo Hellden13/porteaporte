@@ -47,6 +47,7 @@ const {
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
+const { codesLivraison, codesAffichables, verifierCodeReception, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
@@ -283,8 +284,10 @@ async function createLivraison(req, res, ctx, body) {
       cta_label: '📦 Voir dans Operations →'
     }
   );
-  let receptionCode = livraison?.id ? generateReceptionCode() : null;
-  let pickupCode = livraison?.id ? generateReceptionCode() : null;
+  // Les deux codes sont créés ici, une seule fois, et ne changent plus (voir lib/_codes-livraison).
+  const codes = livraison?.id ? (codesLivraison(livraison.id) || { ramassage: generateReceptionCode(), reception: generateReceptionCode() }) : null;
+  let receptionCode = codes ? codes.reception : null;
+  let pickupCode = codes ? codes.ramassage : null;
   if (receptionCode) {
     const hash = hashReceptionCode(receptionCode, livraison.id);
     const pickupHash = pickupCode ? hashReceptionCode(pickupCode, livraison.id) : null;
@@ -465,7 +468,7 @@ async function assignDriver(req, res, ctx, body) {
   const livreurId = body.livreur_id || body.livreurId || ctx.session.id;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,poids_kg`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,poids_kg,pickup_code_hash,recipient_confirmation_hash`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -497,12 +500,8 @@ async function assignDriver(req, res, ctx, body) {
     }
   }
 
-  // Générer un code de confirmation 6 chiffres pour la livraison
-  const receptionCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const crypto = require('crypto');
-  const receptionHash = crypto.createHash('sha256').update(receptionCode + '|' + livraisonId).digest('hex');
-
-  const patch = { livreur_id: livreurId, statut: body.statut || 'confirme', recipient_confirmation_hash: receptionHash };
+  // Les codes ne changent JAMAIS ici : ils ont été créés avec la livraison (test complet du 22 nov.).
+  const patch = { livreur_id: livreurId, statut: body.statut || 'confirme' };
   const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey),
@@ -528,8 +527,10 @@ async function assignDriver(req, res, ctx, body) {
         data: {
           expediteur_email: expProfile?.email,
           prenom: expProfile?.prenom || 'Expéditeur',
-          code: receptionCode,
-          code_livraison: livraison.id?.slice(0, 8)?.toUpperCase(),
+          code_ramassage: codesAffichables(livraison).ramassage,
+          code_reception: codesAffichables(livraison).reception,
+          code_livraison: livraison.code || livraison.id?.slice(0, 8)?.toUpperCase(),
+          dashboard_url: `${siteOrigin()}/dashboard-expediteur.html`,
           ville_depart: livraison.ville_depart,
           ville_arrivee: livraison.ville_arrivee
         }
@@ -1050,6 +1051,33 @@ async function livreurRescueAccept(req, res, ctx, body) {
   });
 }
 
+// ── Les deux codes d'une livraison, pour l'expéditeur (ou l'admin) seulement ──
+async function livraisonCodes(req, res, ctx, body) {
+  const livraisonId = body.livraison_id || req.query?.livraison_id;
+  if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,expediteur_id,statut,pickup_code_hash,recipient_confirmation_hash`, {
+    headers: sbHeaders(ctx.sbKey)
+  }).catch(() => ({ ok: false }));
+  const livraison = lr.ok ? (await lr.json().catch(() => []))[0] : null;
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (livraison.expediteur_id !== ctx.session.id && !roleIn(ctx.profile, ['admin'])) {
+    return res.status(403).json({ error: 'Réservé à l\'expéditeur de cette livraison' });
+  }
+  res.setHeader('Cache-Control', 'no-store');
+  const c = codesAffichables(livraison);
+  return res.status(200).json({
+    success: true,
+    livraison_id: livraison.id,
+    code_ramassage: c.ramassage,
+    code_reception: c.reception,
+    noms: {
+      ramassage: 'Code de ramassage — à donner au livreur quand il vient chercher le colis',
+      reception: 'Code de réception — à donner à la personne qui reçoit le colis',
+    },
+    note: (!c.ramassage || !c.reception) ? 'Livraison créée avant le 22 novembre 2026 : ce code est seulement dans le courriel reçu à la création.' : null,
+  });
+}
+
 // ── Code de récupération expéditeur (pickup) ──
 async function livraisonPickup(req, res, ctx, body) {
   const { livraison_id, pickup_code, selfie_data_url, gps_lat, gps_lng } = body;
@@ -1081,8 +1109,9 @@ async function livraisonPickup(req, res, ctx, body) {
   const expectedHash = livraison.pickup_code_hash;
   if (!expectedHash) return res.status(409).json({ error: 'Aucun code pickup configuré pour cette livraison' });
   const suppliedHash = hashReceptionCode(pickup_code, livraison.id);
-  if (suppliedHash !== expectedHash && !admin) {
-    return res.status(403).json({ error: 'Code de récupération invalide' });
+  // Le bon code de ramassage est exigé pour TOUT le monde, admin compris.
+  if (suppliedHash !== expectedHash) {
+    return res.status(403).json({ error: `${NOM_RAMASSAGE} invalide. Demande-le à l'expéditeur.` });
   }
 
   // Upload selfie au storage Supabase (optionnel)
@@ -1587,7 +1616,7 @@ async function confirmDelivery(req, res, ctx, body) {
     return res.status(403).json({ error: 'Livreur verifie requis' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,expediteur_id,livreur_id,statut,stripe_payment_intent,code,prix_total`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,expediteur_id,livreur_id,statut,stripe_payment_intent,code,prix_total,recipient_confirmation_hash`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -1599,6 +1628,11 @@ async function confirmDelivery(req, res, ctx, body) {
   if (!['confirme', 'en_route', 'ramasse'].includes(livraison.statut)) {
     return res.status(409).json({ error: 'Statut livraison incompatible avec livraison terminee' });
   }
+
+  // Le code de réception est vérifié AVANT tout changement de statut (5 essais au maximum).
+  // Code faux, absent ou annulé : rien ne change, la livraison reste sur l'écran du livreur.
+  const verif = await verifierCodeReception({ sbUrl: ctx.sbUrl, sbKey: ctx.sbKey, livraison, code: body.recipient_code, req, acteurId: ctx.session.id });
+  if (!verif.ok) return res.status(verif.status).json(verif.body);
 
   const r = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}`, {
     method: 'PATCH',
@@ -6184,6 +6218,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
     if (endpoint === 'livraison-imprevu') return await livraisonImprevu(req, res, ctx, body);
     if (endpoint === 'livraison-pickup') return await livraisonPickup(req, res, ctx, body);
+    if (endpoint === 'livraison-codes') return await livraisonCodes(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
     if (endpoint === 'livraison-withdraw') return await livraisonWithdraw(req, res, ctx, body);

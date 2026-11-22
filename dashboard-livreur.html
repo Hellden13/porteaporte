@@ -13,6 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
+  <script src="/js/dialogues.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -1945,6 +1946,10 @@
     const selfieData = {};
 
     async function startSelfie(id) {
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        selfieSansCamera(id, 'Aucune caméra disponible ici. Téléverse une photo de toi à la place (bouton « Téléverser une photo »).');
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } }
@@ -1956,8 +1961,43 @@
         document.getElementById('selfie-start-' + id).style.display = 'none';
         document.getElementById('selfie-capture-' + id).style.display = 'inline-flex';
       } catch (e) {
-        alert('Impossible d\'accéder à la caméra : ' + e.message);
+        selfieSansCamera(id, e && e.name === 'NotAllowedError'
+          ? 'Caméra refusée. Tu peux téléverser une photo de toi à la place (bouton « Téléverser une photo »).'
+          : 'Aucune caméra disponible sur cet appareil. Téléverse une photo de toi à la place (bouton « Téléverser une photo »).');
       }
+    }
+
+    // Sans caméra (ordinateur) ou caméra refusée : photo téléversée, message clair, aucune fenêtre d'alerte.
+    function selfieSansCamera(id, message) {
+      const aide = document.getElementById('selfie-aide-' + id);
+      if (aide) { aide.style.color = '#ffd84d'; aide.textContent = '📷 ' + message; }
+      const start = document.getElementById('selfie-start-' + id);
+      if (start) start.style.display = 'none';
+    }
+
+    function selfieDepuisFichier(id, input) {
+      const fichier = input && input.files && input.files[0];
+      const aide = document.getElementById('selfie-aide-' + id);
+      if (!fichier) return;
+      if (!/^image\//.test(fichier.type)) { if (aide) { aide.style.color = '#ffb0b0'; aide.textContent = 'Ce fichier n\'est pas une photo. Choisis une image (JPG, PNG, HEIC).'; } return; }
+      const url = URL.createObjectURL(fichier);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.getElementById('selfie-canvas-' + id);
+        const size = 320;
+        canvas.width = size; canvas.height = size;
+        const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+        canvas.getContext('2d').drawImage(img, (img.naturalWidth - minDim) / 2, (img.naturalHeight - minDim) / 2, minDim, minDim, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        selfieData[id] = dataUrl;
+        const preview = document.getElementById('selfie-preview-' + id);
+        preview.src = dataUrl; preview.style.display = 'block';
+        if (aide) { aide.style.color = '#7dffc1'; aide.textContent = '✅ Photo ajoutée.'; }
+        verifyFaceMatch(id, dataUrl);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); if (aide) { aide.style.color = '#ffb0b0'; aide.textContent = 'Impossible de lire cette photo. Essaie une autre image (JPG ou PNG).'; } };
+      img.src = url;
     }
 
     async function captureSelfie(id) {
@@ -2055,14 +2095,14 @@
     async function submitPickup(id) {
       const msgEl = document.getElementById('pickup-msg-' + id);
       const code = document.getElementById('pickup-code-' + id)?.value.trim();
-      if (!code || code.length < 4) {
+      if (!code || code.length < 6) {
         msgEl.style.color = '#ffb0b0';
-        msgEl.textContent = '⚠️ Code invalide (4 caractères min.)';
+        msgEl.textContent = '⚠️ Entre le code de ramassage à 6 chiffres donné par l\'expéditeur.';
         return;
       }
       // Selfie recommandée mais pas bloquante
       if (!selfieData[id]) {
-        if (!confirm('⚠️ Pas de selfie capturée. Continuer sans selfie ? (admin sera notifié)')) return;
+        if (!(await PAPDialog.confirm('Pas de selfie ni de photo. Continuer sans photo ? L\'équipe sera avisée.', { title: 'Pickup sans photo', ok: 'Continuer sans photo' }))) return;
       }
       msgEl.style.color = '#a8b0ba';
       msgEl.textContent = '⏳ Récupération GPS + envoi…';
@@ -2178,41 +2218,41 @@
       }
     }
 
+    // « Marquer livré » : le code de réception est vérifié AVANT tout changement de statut.
+    // Code faux ou fenêtre annulée : rien ne change et la carte reste à l'écran.
     async function markDelivered(id) {
-      // Étape 1 : marquer comme livré
+      const code = await PAPDialog.prompt('Demande le code de réception à la personne qui reçoit le colis (6 chiffres).', '', {
+        title: 'Code de réception', ok: 'Valider la livraison', inputmode: 'numeric', placeholder: 'Ex. : 123456', maxlength: 12
+      });
+      if (code === null) return; // annulé : rien ne change
+      const propre = String(code).trim();
+      if (propre.length < 6) {
+        await PAPDialog.alert('Le code de réception a 6 chiffres. Rien n\'a changé : la livraison est toujours à faire.', { title: 'Code incomplet' });
+        return;
+      }
       const res1 = await fetch('/api/platform?endpoint=confirm-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ livraison_id: id })
-      });
-      if (!res1.ok) {
-        const out = await res1.json().catch(() => ({}));
-        alert(out.error || 'Erreur lors de la mise à jour');
+        body: JSON.stringify({ livraison_id: id, recipient_code: propre })
+      }).catch(() => null);
+      const out1 = res1 ? await res1.json().catch(() => ({})) : {};
+      if (!res1 || !res1.ok) {
+        const reste = Number.isFinite(out1.essais_restants) ? `\nEssais restants : ${out1.essais_restants}.` : '';
+        await PAPDialog.alert((out1.error || 'Erreur réseau. Réessaie dans un instant.') + reste + '\nRien n\'a changé : la livraison est toujours à faire.', { title: 'Livraison non validée' });
         return;
       }
-
-      // Étape 2 : demander le code de confirmation au destinataire
-      const code = prompt('Demandez le code de livraison au destinataire et entrez-le ici :');
-      if (!code || code.trim().length < 6) {
-        alert('Code invalide. La livraison est marquée comme livrée mais le paiement n\'est pas encore libéré. Contactez le support.');
-        await loadMyDeliveries();
-        return;
-      }
-
-      // Étape 3 : capturer le paiement avec le code
       const res2 = await fetch('/api/capture-livraison', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ livraison_id: id, recipient_code: code.trim() })
-      });
-      const out2 = await res2.json().catch(() => ({}));
-      if (res2.ok) {
-        alert('✅ Livraison confirmée ! Le paiement a été libéré.');
-        await loadMyDeliveries();
+        body: JSON.stringify({ livraison_id: id, recipient_code: propre })
+      }).catch(() => null);
+      const out2 = res2 ? await res2.json().catch(() => ({})) : {};
+      if (res2 && res2.ok) {
+        await PAPDialog.alert('✅ Livraison confirmée ! Le paiement est libéré.', { title: 'Merci !' });
       } else {
-        alert('Code invalide ou erreur : ' + (out2.error || 'Erreur inconnue') + '\nLe paiement reste bloqué en sécurité. Contactez le support si nécessaire.');
-        await loadMyDeliveries();
+        await PAPDialog.alert('Livraison confirmée avec le bon code, mais le paiement n\'a pas pu être libéré tout de suite : ' + (out2.error || 'erreur inconnue') + '.\nL\'équipe va le libérer, tu n\'as rien à refaire.', { title: 'Paiement en attente' });
       }
+      await loadMyDeliveries();
     }
 
     async function cancelAssignedDelivery(id) {
@@ -2469,8 +2509,8 @@
               <div id="pickup-${row.id}" style="display:none;margin-top:8px;padding:14px;background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.25);border-radius:10px">
                 <div style="font-weight:800;color:#7de4ff;margin-bottom:10px">🔑 Pickup sécurisé (code + selfie + GPS)</div>
 
-                <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">1. Code de récupération (donné par l'expéditeur)</label>
-                <input id="pickup-code-${row.id}" type="text" placeholder="Ex: 123456" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:12px;font-size:1rem;letter-spacing:.15em;text-align:center;font-weight:800;text-transform:uppercase;margin-bottom:12px">
+                <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">1. Code de ramassage (l'expéditeur te le donne quand tu viens chercher le colis)</label>
+                <input id="pickup-code-${row.id}" type="text" inputmode="numeric" autocomplete="off" placeholder="Ex. : 123456" style="width:100%;background:#0a0e14;color:#fff;border:1px solid #1E2535;border-radius:8px;padding:12px;font-size:1rem;letter-spacing:.15em;text-align:center;font-weight:800;text-transform:uppercase;margin-bottom:12px">
 
                 <label style="font-size:.78rem;color:#a8b0ba;font-weight:700;display:block;margin-bottom:4px">2. Selfie au pickup (preuve d'identité)</label>
                 <div id="selfie-zone-${row.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:#05080c;border:1px dashed #1E2535;border-radius:10px;margin-bottom:12px">
@@ -2480,6 +2520,10 @@
                   <button class="btn-sm" type="button" onclick="startSelfie('${row.id}')" id="selfie-start-${row.id}" style="background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);color:#5dbfff">📷 Activer la caméra</button>
                   <button class="btn-sm" type="button" onclick="captureSelfie('${row.id}')" id="selfie-capture-${row.id}" style="display:none;background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006">📸 Capturer ma selfie</button>
                   <button class="btn-sm" type="button" onclick="retakeSelfie('${row.id}')" id="selfie-retake-${row.id}" style="display:none;background:#1E2535;color:#fff">🔄 Reprendre</button>
+                  <label class="btn-sm" id="selfie-upload-btn-${row.id}" style="cursor:pointer;background:#1E2535;color:#fff;border:1px solid #2b3442">🖼️ Téléverser une photo à la place
+                    <input type="file" accept="image/*" capture="user" id="selfie-file-${row.id}" onchange="selfieDepuisFichier('${row.id}', this)" style="display:none">
+                  </label>
+                  <div id="selfie-aide-${row.id}" style="font-size:.78rem;color:#c9d1db;text-align:center"></div>
                 </div>
 
                 <button class="btn-sm primary" style="width:100%" onclick="submitPickup('${row.id}')">✅ Valider le pickup (envoie code + selfie + GPS)</button>
