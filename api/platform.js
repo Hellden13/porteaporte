@@ -21,7 +21,7 @@ const {
 const { pushSubscribe, deliverPush, pushSend } = require('../lib/_push');
 const {
   getRideSettings,
-  rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel,
+  rideDriverProfile, rideCreate, rideUpdate, rideSearch, rideDetail, rideBook, rideCancel, rideDelete,
   rideDriverContact, rideSendMeetupMessage, ridePaymentCreate, ridePaymentSync, emergencyContactsGet, emergencyContactsSet, rideGpsUpdate, rideSafetyAlert,
   rideSafetyCodeStatus, rideSafetyCodeSet, rideSafetyCodeReset, rideDriverComplete, rideComplete: rideCompleteSecure, rideCaptureEligible, adminCleanupPhantomBookings,
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
@@ -3943,7 +3943,7 @@ async function rideActiveCities(req, res, ctx) {
 
   // Fallback : sans filtre status si vide
   if (!rides.length || !r.ok) {
-    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
+    const r2 = await fetch(`${ctx.sbUrl}/rest/v1/rides?status=neq.supprime&select=start_city,start_sector,end_city,end_sector,departure_time,is_recurring&limit=500`, {
       headers: sbHeaders(ctx.sbKey)
     });
     if (r2.ok) rides = await r2.json();
@@ -6743,6 +6743,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
+    if (endpoint === 'ride-delete')          return await rideDelete(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);
     if (endpoint === 'ride-report')          return await rideReport(req, res, ctx, body);

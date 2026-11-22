@@ -255,6 +255,7 @@
   </div>
 </main>
 
+<script src="/js/ride-delete.js"></script>
 <script src="/js/auth-state.js"></script>
 <script src="/js/app-launcher.js" defer></script>
 <script src="/js/pending-payment-banner.js" defer></script>
@@ -609,9 +610,11 @@
     const { data: rides } = await db.from('rides')
       .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,is_recurring')
       .eq('driver_id', session.user.id)
+      .neq('status', 'supprime')
       .order('departure_time', { ascending: false })
       .limit(20);
     if (!rides?.length) return;
+    window.__drvRides = rides;
 
     document.getElementById('sectionConducteur').style.display = 'block';
     document.getElementById('drvCount').textContent = rides.length;
@@ -647,11 +650,21 @@
         '<td>' + fmtDT(r.departure_time) + '</td>' +
         '<td>' + (r.available_seats||0) + ' place' + ((r.available_seats||0)>1?'s':'') + '</td>' +
         '<td>' + statusPill(r.status) + '</td>' +
-        '<td><div class="row-actions">' + captureBtn + '<a class="ra-view" href="/covoiturage-trajet.html?ride_id=' + esc(r.id) + '">👁️ Voir</a></div></td>' +
+        '<td><div class="row-actions">' + captureBtn + '<a class="ra-view" href="/covoiturage-trajet.html?ride_id=' + esc(r.id) + '">👁️ Voir</a>' +
+          '<button type="button" class="ra-delete" onclick="window.supprimerTrajet(\'' + esc(encodeURIComponent(r.id)) + '\')" style="border:1px solid rgba(255,80,80,.35);background:rgba(255,80,80,.08);color:#ff9999;border-radius:7px;padding:5px 10px;font-weight:700;cursor:pointer">🗑️ Supprimer</button></div></td>' +
         '</tr>';
     }).join('');
     document.getElementById('drvTable').innerHTML = '<table><thead><tr><th>Trajet</th><th>Date</th><th>Places</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
+
+  // Supprimer un trajet (conducteur) : fenêtre dans la page, le serveur décide (ride-delete).
+  window.supprimerTrajet = async function (rideIdEnc) {
+    const rideId = decodeURIComponent(rideIdEnc);
+    const ride = (window.__drvRides || []).find((r) => r.id === rideId);
+    const libelle = ride ? (ride.start_city || '?') + ' → ' + (ride.end_city || '?') : 'Trajet';
+    const ok = await window.PAPRideDelete.ouvrir(rideId, libelle);
+    if (ok) window.location.reload();
+  };
 
   // Capture les paiements d'un trajet côté conducteur
   window.captureRideTrip = async function (rideId, count, total) {
