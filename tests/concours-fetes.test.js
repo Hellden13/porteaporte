@@ -16,7 +16,7 @@ const DANS = '2026-12-15T15:00:00Z';
 const vraiNow = Date.now;
 afterEach(() => { Date.now = vraiNow; });
 
-describe('participations : seulement en utilisant le service', () => {
+describe('participations par le service (sans comptes membres : aucune participation d\'inscription)', () => {
   const base = () => ({
     livraisons: [], litiges: [], bookings: [], rides: [{ id: 'r1', driver_id: U(9) }], reports: [],
   });
@@ -189,12 +189,15 @@ function makeRes() {
 }
 const DRAW = 'd0000000-0000-4000-8000-000000000001';
 
-function base({ moi = U(50), role = 'admin', concours = true, gagnant = null, verrouOk = true, sourceKo = null, theme = null } = {}) {
+function base({ moi = U(50), role = 'admin', concours = true, gagnant = null, verrouOk = true, sourceKo = null, theme = null, profils = [], comptes = [], session = {}, profilMoi = {} } = {}) {
   const ecritures = [];
   const fetchImpl = async (url, o = {}) => {
     const m = o.method || 'GET';
     if (m !== 'GET' && !url.includes('/rpc/check_rate_limit')) ecritures.push({ m, url, body: o.body ? JSON.parse(o.body) : null });
-    if (url.includes('/auth/v1/user')) return rep({ id: moi });
+    if (url.includes('/auth/v1/user')) return rep({ id: moi, ...session });
+    if (sourceKo && url.includes(sourceKo)) return rep({}, false, 500);
+    if (url.includes('/auth/v1/admin/users')) return rep({ users: comptes });
+    if (url.includes('/rest/v1/profiles?select=id,prenom,nom,email,role,suspendu,email_verified,created_at')) return rep(profils);
     if (url.includes('/rpc/check_rate_limit')) return rep(true);
     if (sourceKo && url.includes(sourceKo)) return rep({}, false, 500);
     if (url.includes('/rest/v1/monthly_draws') && m === 'PATCH') return verrouOk ? rep([{ id: DRAW, status: 'completed' }]) : rep([]);
@@ -214,7 +217,7 @@ function base({ moi = U(50), role = 'admin', concours = true, gagnant = null, ve
     if (url.includes('/rest/v1/rides')) return rep([{ id: 'r1', driver_id: U(3) }]);
     if (url.includes('/rest/v1/ride_reports')) return rep([]);
     if (url.includes('/rest/v1/profiles?id=in.')) return rep([{ id: U(1), prenom: 'Ana', nom: 'B', email: 'ana@exemple.test', role: 'expediteur' }, { id: U(2), prenom: 'Bo', nom: 'C', email: 'bo@exemple.test', role: 'expediteur' }]);
-    if (url.includes('/rest/v1/profiles')) return rep([{ id: moi, role, suspendu: false }]);
+    if (url.includes('/rest/v1/profiles')) return rep([{ id: moi, role, suspendu: false, ...profilMoi }]);
     return rep([]);
   };
   return { ecritures, fetchImpl };
@@ -258,7 +261,7 @@ describe('admin-concours-fetes', () => {
     const res = await appel(base(), 'admin-concours-fetes', { mode: 'csv' });
     assert.equal(res._status, 200);
     const lignes = String(res._body).replace(/^﻿/, '').split('\n');
-    assert.equal(lignes[0], 'prenom,nom,courriel,participations,suspendues_litige,livraisons,trajets_passager,trajets_conducteur');
+    assert.equal(lignes[0], 'prenom,nom,courriel,participations,inscription,suspendues_litige,livraisons,trajets_passager,trajets_conducteur');
     assert.equal(lignes.length, 4);
     assert.match(res._h['Content-Type'], /text\/csv/);
   });
@@ -367,8 +370,8 @@ describe('aucune participation sans service : protections des tirages génériqu
   test('aucun formulaire de participation gratuite (règlement et pages)', () => {
     const regl = lire('concours-fetes-reglement.html');
     assert.doesNotMatch(regl, /<form|<input/i);
-    for (const s of ['Organisateur', 'Admissibilité', 'Durée', 'Prix', 'Façon de participer', 'Tirage', 'Réclamation du prix']) assert.match(regl, new RegExp(s));
-    assert.equal((regl.match(/TEXTE À ÉCRIRE PAR DENIS/g) || []).length, 7);
+    for (const s of ['1. Organisateur', '2. Durée', '3. Admissibilité', '4. Prix', '5. Façons de participer', '6. Tirage', '7. Réclamation du prix', '8. Conditions générales']) assert.match(regl, new RegExp(s));
+    assert.doesNotMatch(regl, /TEXTE À ÉCRIRE PAR DENIS/);
     assert.doesNotMatch(lire('js/fetes.js'), /<form|draw-enter/);
   });
 });
@@ -422,7 +425,7 @@ async function executerFetes({ now, accueil = true, info = { theme_actif: true, 
 describe('js/fetes.js (navigateur)', () => {
   test('décembre : bannière avec le texte demandé, lien règlement, compte à rebours et flocons sur l\'accueil', async () => {
     const r = await executerFetes({ now: Date.parse('2026-12-20T12:00:00-05:00') });
-    assert.match(r.texte, /🎄 Concours des Fêtes : chaque livraison ou trajet = 1 chance de gagner une carte-cadeau de 100 \$ !/);
+    assert.match(r.texte, /^🎄 Concours des Fêtes : inscris-toi et gagne une carte-cadeau Super C de 100 \$ ! Chaque livraison ou trajet = 1 chance de plus\. /);
     assert.match(r.texte, /Règlement/);
     assert.match(r.texte, /J-11/);
     assert.ok(r.neige);
@@ -545,5 +548,272 @@ describe('page du membre : compteur « Trajets covoit »', () => {
     assert.equal(ctx.compterTrajetsCovoit(resa, [{ status: 'termine' }]), 4);
     assert.match(html, /id="statCovTrips"/);
     assert.match(html, /loadConcoursFetes\(session\),\s*\n\s*loadCovTripsStat\(session, profile\),/, 'appelé au chargement');
+  });
+});
+
+// ─── Participation d'inscription (Denis, 22 nov. 2026 ; règlement art. 5 a) ────────────────────────────
+describe('participation d\'inscription : 1 par compte, courriel vérifié, non suspendu', () => {
+  const AVANT = '2026-09-01T12:00:00Z'; // inscrit bien avant le lancement
+  const m = (n, extra = {}) => ({ id: U(n), email: `membre${n}@gmail.com`, role: 'expediteur', suspendu: false, created_at: AVANT, email_confirmed_at: AVANT, ...extra });
+  const calc = (membres, service = {}) => C.calculerParticipations(
+    { livraisons: [], litiges: [], bookings: [], rides: [], reports: [], ...service, membres },
+    { debut: DEBUT, fin: C.CONCOURS.fin });
+  const de = (r, n) => r.find((p) => p.user_id === U(n));
+
+  test('membre au courriel vérifié, sans aucun service : 1 participation (inscrit avant le lancement)', () => {
+    const p = de(calc([m(1)]), 1);
+    assert.equal(p.total, 1);
+    assert.equal(p.inscription, 1);
+    assert.equal(p.livraisons + p.trajets_passager + p.trajets_conducteur, 0);
+  });
+
+  test('une seule par compte, même si le compte apparaît deux fois', () => {
+    const r = calc([m(1), m(1), { ...m(1), email: 'autre@gmail.com' }]);
+    assert.equal(r.length, 1);
+    assert.equal(de(r, 1).total, 1);
+    assert.equal(de(r, 1).inscription, 1);
+  });
+
+  test('courriel non vérifié : 0', () => {
+    assert.equal(de(calc([m(1, { email_confirmed_at: null, email_verified: false })]), 1), undefined);
+    assert.equal(de(calc([m(1, { email_confirmed_at: null })]), 1), undefined);
+  });
+
+  test('courriel vérifié par le drapeau du profil seulement (sans date) : 1', () => {
+    assert.equal(de(calc([m(1, { email_confirmed_at: null, email_verified: true })]), 1).total, 1);
+  });
+
+  test('compte suspendu (ou archivé) : 0 ; bloqué dans Supabase Auth : 0 ; débloqué : 1', () => {
+    assert.equal(de(calc([m(1, { suspendu: true })]), 1), undefined);
+    assert.equal(de(calc([m(1, { banned_until: '2099-01-01T00:00:00Z' })]), 1), undefined);
+    assert.equal(de(calc([m(1, { banned_until: '2020-01-01T00:00:00Z' })]), 1).total, 1);
+  });
+
+  test('admin (l\'Organisateur, règlement art. 3) : 0', () => {
+    assert.equal(de(calc([m(1, { role: 'admin' })]), 1), undefined);
+  });
+
+  test('comptes de test : 0 ; vraies adresses (même avec « + ») : 1', () => {
+    for (const email of ['audit-test@porteaporte.site', 'test123@gmail.com', 'capt-ab12-julie@exemple.test', 'x@example.com', 'demo.denis@gmail.com',
+      'compte-fictif@hotmail.com', 'e2e-pass@porteaporte.site', 'julie@monsite.local', 'sans-arobase', '']) {
+      assert.equal(C.estCompteTest(email), true, email);
+      assert.equal(de(calc([m(1, { email })]), 1), undefined, email);
+    }
+    for (const email of ['celeste.tremblay@gmail.com', 'denis+porte@gmail.com', 'contestant@videotron.ca', 'attestation@sympatico.ca', 'julie.roy@exemple-transport.ca']) {
+      assert.equal(C.estCompteTest(email), false, email);
+      assert.equal(de(calc([m(1, { email })]), 1).total, 1, email);
+    }
+  });
+
+  test('nouveaux membres jusqu\'au 31 décembre 2026, 23 h 59 (Québec) ; après : 0', () => {
+    assert.equal(de(calc([m(1, { created_at: '2026-12-31T23:59:00-05:00', email_confirmed_at: '2026-12-31T23:59:30-05:00' })]), 1).total, 1);
+    assert.equal(de(calc([m(1, { created_at: '2027-01-01T00:00:01-05:00', email_confirmed_at: '2027-01-01T00:01:00-05:00' })]), 1), undefined);
+    // Inscrit à temps, mais courriel vérifié trop tard : 0
+    assert.equal(de(calc([m(1, { created_at: '2026-12-31T23:00:00-05:00', email_confirmed_at: '2027-01-01T00:05:00-05:00' })]), 1), undefined);
+    assert.equal(de(calc([m(1, { created_at: null })]), 1), undefined);
+    // Compte créé après la fin, courriel vérifié par le drapeau du profil (sans date) : 0
+    assert.equal(de(calc([m(1, { created_at: '2027-01-01T00:00:01-05:00', email_confirmed_at: null, email_verified: true })]), 1), undefined);
+  });
+
+  test('cumul : 1 pour l\'inscription + les participations du service', () => {
+    const r = calc([m(1), m(2), m(3)], {
+      livraisons: [{ id: 'l1', expediteur_id: U(1), statut: 'payee', livre_le: DANS }, { id: 'l2', expediteur_id: U(1), statut: 'payee', livre_le: DANS }],
+      bookings: [{ id: 'b1', ride_id: 'r1', passenger_id: U(2), status: 'paye', payment_status: 'succeeded', paid_at: DANS }],
+      rides: [{ id: 'r1', driver_id: U(3) }],
+    });
+    assert.deepEqual([1, 2, 3].map((n) => [de(r, n).total, de(r, n).inscription]), [[3, 1], [2, 1], [2, 1]]);
+  });
+
+  test('litige : retire une participation du service, jamais celle de l\'inscription', () => {
+    const r = calc([m(1)], {
+      livraisons: [{ id: 'l1', expediteur_id: U(1), statut: 'payee', livre_le: DANS }],
+      litiges: [{ livraison_id: 'l1', statut: 'resolu', plaignant_id: U(77) }],
+    });
+    assert.equal(de(r, 1).total, 1);
+    assert.equal(de(r, 1).inscription, 1);
+  });
+
+  test('membre non admissible garde quand même ses participations du service', () => {
+    const r = calc([m(1, { email_confirmed_at: null })], { livraisons: [{ id: 'l1', expediteur_id: U(1), statut: 'payee', livre_le: DANS }] });
+    assert.deepEqual([de(r, 1).total, de(r, 1).inscription, de(r, 1).livraisons], [1, 0, 1]);
+  });
+
+  test('tirage : un membre avec SEULEMENT l\'inscription peut gagner (1 chance)', () => {
+    const r = calc([m(1)], { livraisons: [{ id: 'l1', expediteur_id: U(2), statut: 'payee', livre_le: DANS }] });
+    const t = C.tirerPondere(r, () => 1); // 1re chance dans l'ordre des identifiants : U(1)
+    assert.equal(t.gagnant.user_id, U(1));
+    assert.equal(t.totalPoids, 2);
+  });
+});
+
+describe('participation d\'inscription : endpoints', () => {
+  const OK = '2026-09-01T12:00:00Z';
+  const profils = [
+    { id: U(1), prenom: 'Ana', nom: 'B', email: 'ana@gmail.com', role: 'expediteur', suspendu: false, created_at: OK },
+    { id: U(4), prenom: 'Dom', nom: 'E', email: 'dom@gmail.com', role: 'expediteur', suspendu: false, created_at: OK },
+    { id: U(5), prenom: 'Non', nom: 'Verifie', email: 'nv@gmail.com', role: 'expediteur', suspendu: false, created_at: OK },
+    { id: U(6), prenom: 'Sus', nom: 'Pendu', email: 'sp@gmail.com', role: 'expediteur', suspendu: true, created_at: OK },
+    { id: U(7), prenom: 'Te', nom: 'St', email: 'audit-test@porteaporte.site', role: 'expediteur', suspendu: false, created_at: OK },
+    { id: U(50), prenom: 'Denis', nom: 'Admin', email: 'denis@gmail.com', role: 'admin', suspendu: false, created_at: OK },
+  ];
+  const comptes = profils.map((p) => ({ id: p.id, email: p.email, created_at: OK, email_confirmed_at: p.id === U(5) ? null : OK }));
+
+  test('admin : colonne « inscription » séparée ; seuls les admissibles la reçoivent', async () => {
+    const sb = base({ profils, comptes });
+    const res = await appel(sb, 'admin-concours-fetes', { mode: 'liste' });
+    assert.equal(res._status, 200);
+    const par = Object.fromEntries(res._body.participants.map((p) => [p.user_id, [p.total, p.inscription]]));
+    assert.deepEqual(par, { [U(1)]: [3, 1], [U(2)]: [1, 0], [U(3)]: [1, 0], [U(4)]: [1, 1] });
+    assert.equal(res._body.total_participations, 6);
+    assert.equal(res._body.participants.find((p) => p.user_id === U(4)).prenom, 'Dom');
+    const up = sb.ecritures.find((e) => e.m === 'POST' && e.url.includes('/draw_entries'));
+    assert.deepEqual(up.body.find((l) => l.user_id === U(4)), { draw_id: DRAW, user_id: U(4), entries: 1, cost_coins: 0 });
+  });
+
+  test('export CSV : colonne « inscription »', async () => {
+    const res = await appel(base({ profils, comptes }), 'admin-concours-fetes', { mode: 'csv' });
+    const lignes = String(res._body).replace(/^﻿/, '').split('\n');
+    assert.equal(lignes[0].split(',')[4], 'inscription');
+    assert.ok(lignes.includes('Dom,E,dom@gmail.com,1,1,0,0,0,0'));
+    assert.ok(lignes.includes('Ana,B,ana@gmail.com,3,1,0,2,0,0'));
+  });
+
+  test('liste des comptes (Auth) ou des profils illisible : erreur, jamais de liste incomplète ni de tirage', async () => {
+    for (const ko of ['/auth/v1/admin/users', '/rest/v1/profiles?select=id,prenom']) {
+      Date.now = () => Date.parse('2027-01-02T10:00:00-05:00');
+      const sb = base({ profils, comptes, sourceKo: ko });
+      for (const mode of ['liste', 'csv', 'tirer']) {
+        const res = await appel(sb, 'admin-concours-fetes', { mode });
+        assert.equal(res._status, 502, `${ko} ${mode}`);
+      }
+      assert.ok(!sb.ecritures.some((e) => /draw_entries|draw_winners|monthly_draws/.test(e.url)), ko);
+    }
+  });
+
+  test('réponse Auth mal formée (pas de liste de comptes) : erreur, rien d\'enregistré', async () => {
+    const sb = base({ profils, comptes });
+    const brut = sb.fetchImpl;
+    sb.fetchImpl = async (url, o) => (url.includes('/auth/v1/admin/users') ? rep({ message: 'inattendu' }) : brut(url, o));
+    const res = await appel(sb, 'admin-concours-fetes', { mode: 'liste' });
+    assert.equal(res._status, 502);
+    assert.ok(!sb.ecritures.some((e) => /draw_entries/.test(e.url)));
+  });
+
+  test('membre au courriel vérifié : 1 pour l\'inscription + 2 grâce au service', async () => {
+    const res = await appel(base({ moi: U(1), role: 'expediteur', session: { email: 'ana@gmail.com', created_at: OK, email_confirmed_at: OK } }), 'concours-fetes-moi');
+    assert.equal(res._status, 200);
+    assert.deepEqual([res._body.participations, res._body.inscription, res._body.service], [3, 1, 2]);
+  });
+
+  test('membre sans service, courriel vérifié : 1 (inscription seulement)', async () => {
+    const res = await appel(base({ moi: U(44), role: 'expediteur', session: { email: 'zoe@gmail.com', created_at: OK, email_confirmed_at: OK } }), 'concours-fetes-moi');
+    assert.deepEqual([res._body.participations, res._body.inscription, res._body.service], [1, 1, 0]);
+  });
+
+  test('membre : courriel non vérifié = 0 d\'inscription ; compte suspendu = refusé', async () => {
+    const nv = await appel(base({ moi: U(44), role: 'expediteur', session: { email: 'zoe@gmail.com', created_at: OK, email_confirmed_at: null } }), 'concours-fetes-moi');
+    assert.deepEqual([nv._body.participations, nv._body.inscription], [0, 0]);
+    const sp = await appel(base({ moi: U(44), role: 'expediteur', profilMoi: { suspendu: true }, session: { email: 'zoe@gmail.com', created_at: OK, email_confirmed_at: OK } }), 'concours-fetes-moi');
+    assert.equal(sp._status, 403); // compte suspendu : refusé dès l'entrée (aucune participation)
+  });
+
+  test('concours pas encore lancé : rien (ni inscription ni service)', async () => {
+    const res = await appel(base({ concours: false, moi: U(1), role: 'expediteur', session: { email: 'ana@gmail.com', created_at: OK, email_confirmed_at: OK } }), 'concours-fetes-moi');
+    assert.deepEqual([res._body.lance, res._body.participations], [false, 0]);
+  });
+
+  test('aucune participation par lettre, aucun formulaire ; règlement : texte de Denis, informations remplies', () => {
+    const regl = lire('concours-fetes-reglement.html');
+    assert.doesNotMatch(regl, /<form|<input|par la poste|par lettre/i);
+    assert.match(regl, /AUCUN ACHAT REQUIS\.<\/strong> L'inscription à PorteàPorte est gratuite\./);
+    // Aucun crochet ni surlignage « à remplir » ne reste sur la page.
+    assert.doesNotMatch(regl.replace(/<!--[\s\S]*?-->/g, ''), /[\[\]]/);
+    assert.doesNotMatch(regl, /a-ecrire|TEXTE À ÉCRIRE|#f5d061/);
+    assert.match(regl, /\(porteaporte\.site\), 1469, rue Fréchette, Lévis \(Québec\) G7A 4N5 \(l'« Organisateur »\)\./);
+    assert.equal((regl.match(/Lévis \(Québec\)/g) || []).length, 1, 'pas de doublon « Lévis (Québec) »');
+    assert.match(regl, /Le concours commence le <span id="date-lancement">à venir<\/span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec\./);
+    assert.match(regl, /Le tirage au sort aura lieu le mardi 5 janvier 2027 à 13 h, à Lévis, parmi toutes les participations validées\./);
+    assert.match(regl, /<li>répondre dans les 7 jours suivant le premier contact\.<\/li>/);
+    assert.match(regl, /<script src="\/js\/reglement-fetes\.js" defer><\/script>/);
+    assert.match(regl, /une carte-cadeau d'épicerie Super C d'une valeur de 100 \$\. Le prix doit être accepté tel quel\./);
+    assert.match(regl, /Super C n'est ni commanditaire ni organisateur de ce concours\./);
+    assert.match(regl, /reçoit automatiquement une \(1\) participation\. Limite d'une \(1\) participation par personne par ce moyen\. Aucun achat ni utilisation du service n'est requis\./);
+    assert.match(regl, /répondre correctement, sans aide, à une question d'habileté mathématique ;/);
+    assert.match(regl, /Ce règlement est disponible sur porteaporte\.site\.<\/p>/);
+  });
+});
+
+describe('tableau de bord du membre : « 1 participation pour ton inscription + X »', () => {
+  const html = lire('dashboard.html');
+  const ctx = { Number, Math };
+  vm.createContext(ctx);
+  vm.runInContext(html.slice(html.indexOf('  function texteParticipationsFetes('), html.indexOf('  async function loadConcoursFetes(')), ctx);
+
+  test('inscription + service', () => {
+    const t = ctx.texteParticipationsFetes({ participations: 3, inscription: 1, detail: { trajets_passager: 2 } });
+    assert.equal(t.titre, '🎄 Tu as 3 participations au tirage des Fêtes');
+    assert.ok(t.sous.startsWith('1 participation pour ton inscription + 2 grâce à tes livraisons et trajets (2 trajets comme passager).'), t.sous);
+  });
+  test('inscription seulement', () => {
+    const t = ctx.texteParticipationsFetes({ participations: 1, inscription: 1 });
+    assert.equal(t.titre, '🎄 Tu as 1 participation au tirage des Fêtes');
+    assert.ok(t.sous.startsWith('1 participation pour ton inscription + 0 grâce à tes livraisons et trajets.'), t.sous);
+  });
+  test('courriel pas encore vérifié : on l\'invite à le vérifier', () => {
+    const t = ctx.texteParticipationsFetes({ participations: 0, inscription: 0 });
+    assert.match(t.sous, /^0 grâce à tes livraisons et trajets\. Vérifie ton courriel pour recevoir ta participation d'inscription\./);
+  });
+});
+
+describe('règlement : date du lancement automatique', () => {
+  async function page(reponse) {
+    const el = { id: 'date-lancement', textContent: '' }; // vide : c'est le script qui doit écrire
+    const ctx = {
+      document: { getElementById: (id) => (id === 'date-lancement' ? el : null) },
+      window: {}, Intl, Date, isFinite,
+      fetch: async (url) => { assert.equal(url, '/api/platform?endpoint=concours-fetes-public'); if (reponse instanceof Error) throw reponse; return reponse; },
+    };
+    vm.createContext(ctx);
+    vm.runInContext(lire('js/reglement-fetes.js'), ctx);
+    await new Promise((r) => setTimeout(r, 5));
+    page.api = ctx.window.PAPReglementFetes;
+    return el.textContent;
+  }
+  const ok = (d) => ({ ok: true, json: async () => d });
+
+  test('lancé : date du clic « Lancer le concours », format « 23 novembre 2026 » (heure du Québec)', async () => {
+    const tz = process.env.TZ;
+    process.env.TZ = 'UTC'; // le serveur ou le navigateur peut être dans un autre fuseau
+    try {
+      assert.equal(await page(ok({ lance_le: '2026-11-24T04:30:00Z' })), '23 novembre 2026');
+    } finally { if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz; }
+    assert.equal(await page(ok({ lance_le: '2026-11-23T15:00:00Z' })), '23 novembre 2026');
+    // 23 h 30 le 23 nov. au Québec = 24 nov. en UTC : c'est la date du Québec qui compte.
+    assert.equal(await page(ok({ lance_le: '2026-11-24T04:30:00Z' })), '23 novembre 2026');
+    assert.equal(await page(ok({ lance_le: '2026-12-01T17:00:00Z' })), '1er décembre 2026');
+  });
+
+  test('pas encore lancé, réponse en erreur ou réseau coupé : « à venir »', async () => {
+    assert.equal(await page(ok({ lance_le: null })), 'à venir');
+    assert.equal(await page({ ok: false, json: async () => ({}) }), 'à venir');
+    assert.equal(await page(new Error('réseau')), 'à venir');
+    assert.equal(await page(ok({ lance_le: 'nimporte' })), 'à venir');
+    assert.equal(page.api.dateLongue('nimporte'), null);
+    assert.equal(page.api.dateLongue(''), null);
+  });
+
+  test('API publique : lance_le = date de création du concours, null tant qu\'il n\'est pas lancé', async () => {
+    Date.now = () => Date.parse('2026-12-10T12:00:00-05:00');
+    const lance = await appel(base(), 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(lance._body.lance_le, DEBUT);
+    const pas = await appel(base({ concours: false }), 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(pas._body.lance_le, null);
+    // Concours annulé : pas de date de lancement affichée.
+    const sb = base();
+    const brut = sb.fetchImpl;
+    sb.fetchImpl = async (url, o) => (url.includes('/rest/v1/monthly_draws')
+      ? rep([{ id: DRAW, created_at: DEBUT, status: 'cancelled', eligibility_badge_slug: 'concours-fetes-2026' }]) : brut(url, o));
+    const annule = await appel(sb, 'concours-fetes-public', {}, { auth: false, method: 'GET' });
+    assert.equal(annule._body.lance_le, null);
   });
 });

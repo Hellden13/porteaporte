@@ -34,7 +34,8 @@ async function main() {
   const marque = 'capt-' + crypto.randomBytes(3).toString('hex');
   const comptes = {}; const rides = []; let drawId = null;
   const creer = async (nom, role, extra = {}) => {
-    const email = `${marque}-${nom}@exemple.test`; const mdp = crypto.randomBytes(18).toString('base64url') + 'Aa1!';
+    // Adresse ordinaire : un compte « test » n'aurait pas sa participation d'inscription.
+    const email = `${marque}-${nom.toLowerCase()}@courriel-capture.ca`; const mdp = crypto.randomBytes(18).toString('base64url') + 'Aa1!';
     const ins = await j('POST', `${SB}/auth/v1/signup`, { key: ANON, body: { email, password: mdp, data: { prenom: nom, nom: 'Exemple', role } } });
     const id = ins.d?.user?.id || ins.d?.id;
     await svc('PUT', `/auth/v1/admin/users/${id}`, { email_confirm: true });
@@ -61,7 +62,7 @@ async function main() {
       await svc('PATCH', `/rest/v1/ride_bookings?id=eq.${bid}`, { status: 'paye', payment_status: 'succeeded', paid_at: new Date().toISOString() });
     }
     const moi = await api('concours-fetes-moi', {}, comptes.Julie.session.access_token);
-    console.log('participations de Julie :', moi.d?.participations);
+    console.log('participations de Julie :', moi.d?.participations, '(inscription', moi.d?.inscription, '+ service', moi.d?.service + ')');
 
     profil = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-capt-'));
     const port = 9300 + Math.floor(Math.random() * 500);

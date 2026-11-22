@@ -69,7 +69,7 @@
     var ouvert = maintenant() <= FIN_CONCOURS && info.concours_ouvert !== false;
     var span = document.createElement('span');
     span.textContent = ouvert
-      ? '🎄 Concours des Fêtes : chaque livraison ou trajet = 1 chance de gagner une carte-cadeau de 100 $ !'
+      ? '🎄 Concours des Fêtes : inscris-toi et gagne une carte-cadeau Super C de 100 $ ! Chaque livraison ou trajet = 1 chance de plus.'
       : '🎄 Concours des Fêtes terminé : merci ! Le tirage aura lieu bientôt.';
     b.appendChild(span);
     if (accueil && ouvert) {
