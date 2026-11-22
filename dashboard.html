@@ -367,6 +367,7 @@
       loadExpediteurDeliveries(session),
       loadLivreurMissions(session, profile),
       loadConcoursFetes(session),
+      loadCovTripsStat(session, profile),
     ]);
 
     document.getElementById('loading').style.display = 'none';
@@ -447,7 +448,7 @@
     stats.innerHTML = `
       <div class="stat"><div class="stat-val">${profile.livraisons || profile.livraisons_count || 0}</div><div class="stat-label">Livraisons</div></div>
       <div class="stat"><div class="stat-val">${Number(profile.score_confiance || profile.score || 0).toFixed(1)}</div><div class="stat-label">Score</div></div>
-      <div class="stat"><div class="stat-val">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
+      <div class="stat"><div class="stat-val" id="statCovTrips">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
       <div class="stat"><div class="stat-val">${profile.coins || 0}</div><div class="stat-label">Points impact</div></div>
     `;
   }
@@ -609,6 +610,27 @@
     }
   };
 
+  // ─── Compteur « Trajets covoit » : comme passager ET comme conducteur ──────────
+  // Avant, il affichait profile.cov_total_rides, qui ne comptait pas les trajets faits comme passager.
+  const STATUTS_TRAJET_FAIT = ['paye', 'complete', 'completed', 'termine'];
+  function compterTrajetsCovoit(reservations, trajetsConducteur) {
+    const passager = (reservations || []).filter((b) => STATUTS_TRAJET_FAIT.includes(String(b.status || '').toLowerCase())).length;
+    const conducteur = (trajetsConducteur || []).filter((r) => String(r.status || '').toLowerCase() === 'termine').length;
+    return passager + conducteur;
+  }
+  async function loadCovTripsStat(session, profile) {
+    const el = document.getElementById('statCovTrips');
+    if (!el) return;
+    try {
+      const [b, r] = await Promise.all([
+        db.from('ride_bookings').select('id,status').eq('passenger_id', session.user.id).limit(1000),
+        db.from('rides').select('id,status').eq('driver_id', session.user.id).eq('status', 'termine').limit(1000),
+      ]);
+      if (b.error || r.error) return; // garde la valeur du profil
+      el.textContent = String(Math.max(compterTrajetsCovoit(b.data, r.data), 0));
+    } catch (_) { /* valeur du profil conservée */ }
+  }
+
   // ─── Concours des Fêtes : « Tu as X participations au tirage des Fêtes » ──────
   function texteParticipationsFetes(d) {
     const n = Number(d && d.participations) || 0;
@@ -618,9 +640,11 @@
     if (det && det.livraisons) parts.push(det.livraisons + ' livraison' + (det.livraisons > 1 ? 's' : ''));
     if (det && det.trajets_passager) parts.push(det.trajets_passager + ' trajet' + (det.trajets_passager > 1 ? 's' : '') + ' comme passager');
     if (det && det.trajets_conducteur) parts.push(det.trajets_conducteur + ' trajet' + (det.trajets_conducteur > 1 ? 's' : '') + ' comme conducteur');
-    const sous = n > 0
+    const susp = Number(d && d.suspendues) || 0;
+    const sous = (n > 0
       ? 'Grâce à : ' + parts.join(', ') + '. Chaque livraison ou trajet payé = 1 chance de plus.'
-      : 'Chaque livraison ou trajet de covoiturage complété et payé te donne 1 chance de gagner une carte-cadeau de 100 $.';
+      : 'Chaque livraison ou trajet de covoiturage complété et payé te donne 1 chance de gagner une carte-cadeau de 100 $.') +
+      (susp ? ' ' + susp + ' participation' + (susp > 1 ? 's' : '') + ' en attente : un litige est en cours.' : '');
     return { titre, sous };
   }
 

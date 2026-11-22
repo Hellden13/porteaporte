@@ -29,9 +29,23 @@
       'body.theme-fetes .btn-primary,body.theme-fetes .btn-go{box-shadow:0 0 0 2px rgba(200,16,46,.35)}' +
       'body.theme-fetes h1{text-shadow:0 2px 14px rgba(31,111,67,.35)}' +
       '.fetes-neige{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}' +
-      '.fetes-neige i{position:absolute;top:-12px;width:6px;height:6px;border-radius:50%;background:#fff;opacity:.75;' +
-      'animation:fetes-chute linear infinite}' +
-      '@keyframes fetes-chute{to{transform:translate3d(var(--dx,20px),105vh,0)}}' +
+      '.fetes-neige i{position:absolute;top:-40px;font-style:normal;line-height:1;color:#fff;opacity:.9;' +
+      'text-shadow:0 0 6px rgba(190,225,255,.9);animation:fetes-chute linear infinite;will-change:transform}' +
+      '@keyframes fetes-chute{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(var(--dx,20px),55vh,0) rotate(180deg)}' +
+      '100%{transform:translate3d(0,112vh,0) rotate(360deg)}}' +
+      'body.theme-fetes .hero{position:relative}' +
+      '.fetes-guirlande{position:absolute;left:0;right:0;top:6px;height:34px;display:flex;justify-content:space-around;pointer-events:none;z-index:2}' +
+      '.fetes-guirlande::before{content:"";position:absolute;left:0;right:0;top:-14px;height:26px;border-bottom:2px solid #2b4a35;border-radius:0 0 50% 50%/0 0 100% 100%}' +
+      '.fetes-guirlande b{position:relative;width:11px;height:17px;border-radius:50% 50% 45% 45%;margin-top:9px;' +
+      'background:var(--c);box-shadow:0 0 10px 2px var(--c);animation:fetes-scintille 3.2s ease-in-out infinite}' +
+      '.fetes-guirlande b::before{content:"";position:absolute;left:3px;top:-4px;width:5px;height:5px;border-radius:1px;background:#3b3b3b}' +
+      '@keyframes fetes-scintille{0%,100%{opacity:1;filter:brightness(1.15)}50%{opacity:.45;filter:brightness(.7)}}' +
+      '.fetes-voeux{list-style:none;margin-top:10px;font-weight:700;color:#ffd7d7}' +
+      'body.theme-fetes .brand{position:relative}' +
+      '.fetes-sapin{position:absolute;left:24px;top:-7px;font-size:15px;line-height:1;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}' +
+      'a.btn.fetes-rouge{background:linear-gradient(180deg,#e0303f,#a40f22)!important;color:#fff!important;border-color:#f5d061!important;' +
+      'box-shadow:0 6px 20px rgba(200,16,46,.45)!important}' +
+      '@media (prefers-reduced-motion: reduce){.fetes-guirlande b{animation:none}}' +
       '@media (max-width:560px){.fetes-banniere{font-size:.8rem;padding:7px 10px;gap:4px 8px}}' +
       '@media (prefers-reduced-motion: reduce){.fetes-neige{display:none}}';
     document.head.appendChild(s);
@@ -79,17 +93,58 @@
     var box = document.createElement('div');
     box.className = 'fetes-neige';
     box.setAttribute('aria-hidden', 'true');
-    for (var k = 0; k < 18; k++) {
+    var petit = window.innerWidth && window.innerWidth < 600;
+    var nombre = petit ? 9 : 14;
+    for (var k = 0; k < nombre; k++) {
       var f = document.createElement('i');
-      var taille = 3 + Math.round(Math.random() * 4);
-      f.style.left = (Math.random() * 100).toFixed(1) + '%';
-      f.style.width = f.style.height = taille + 'px';
-      f.style.animationDuration = (9 + Math.random() * 9).toFixed(1) + 's';
-      f.style.animationDelay = (-Math.random() * 15).toFixed(1) + 's';
-      f.style.setProperty('--dx', (Math.random() * 60 - 30).toFixed(0) + 'px');
+      f.textContent = '❄';
+      f.style.left = ((k + Math.random()) * 100 / nombre).toFixed(1) + '%';
+      f.style.fontSize = (12 + Math.round(Math.random() * 16)) + 'px';
+      f.style.opacity = (0.6 + Math.random() * 0.35).toFixed(2);
+      f.style.animationDuration = (14 + Math.random() * 10).toFixed(1) + 's';
+      f.style.animationDelay = (-Math.random() * 20).toFixed(1) + 's';
+      f.style.setProperty('--dx', (Math.random() * 80 - 40).toFixed(0) + 'px');
       box.appendChild(f);
     }
     document.body.appendChild(box);
+  }
+
+  function decorerAccueil() {
+    // Guirlande de lumières en haut de la section d'accueil (CSS seulement).
+    var hero = document.querySelector('.hero');
+    if (hero && !hero.querySelector('.fetes-guirlande')) {
+      var g = document.createElement('div');
+      g.className = 'fetes-guirlande';
+      g.setAttribute('aria-hidden', 'true');
+      var couleurs = ['#ff3b4e', '#34d17a', '#ffd24d', '#4fb3ff'];
+      for (var n = 0; n < 22; n++) {
+        var b = document.createElement('b');
+        b.style.setProperty('--c', couleurs[n % couleurs.length]);
+        b.style.animationDelay = (-(n % 7) * 0.45).toFixed(2) + 's';
+        g.appendChild(b);
+      }
+      hero.insertBefore(g, hero.firstChild);
+    }
+    // Petite ligne de vœux sous « La communauté gagne. »
+    var fil = document.querySelector('.hero-thread');
+    if (fil && !fil.querySelector('.fetes-voeux')) {
+      var li = document.createElement('li');
+      li.className = 'fetes-voeux';
+      li.textContent = '🎁 Joyeuses Fêtes de la part de l\'équipe PorteàPorte !';
+      fil.appendChild(li);
+    }
+    // Petit sapin discret posé sur le coin du logo (ne change pas la mise en page).
+    var marque = document.querySelector('.brand');
+    if (marque && !marque.querySelector('.fetes-sapin')) {
+      var sapin = document.createElement('span');
+      sapin.className = 'fetes-sapin';
+      sapin.setAttribute('aria-hidden', 'true');
+      sapin.textContent = '🎄';
+      marque.appendChild(sapin);
+    }
+    // Bouton « Trouver un trajet » en rouge festif.
+    var bouton = document.querySelector('.hero-actions a[href="/covoiturage.html"]');
+    if (bouton) bouton.classList.add('fetes-rouge');
   }
 
   function appliquer(info) {
@@ -97,7 +152,7 @@
     css();
     document.body.classList.add('theme-fetes');
     banniere(info);
-    if (accueil) neige();
+    if (accueil) { neige(); decorerAccueil(); }
   }
 
   function demarrer() {

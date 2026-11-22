@@ -3255,7 +3255,7 @@
       ? '<tr><td colspan="5" class="empty-msg">Aucune participation validée pour l\'instant</td></tr>'
       : d.participants.map((p) => `<tr${d.gagnant && d.gagnant.user_id === p.user_id ? ' style="background:rgba(245,208,97,.12)"' : ''}>
           <td>${afEsc([p.prenom, p.nom].filter(Boolean).join(' ') || '—')}${d.gagnant && d.gagnant.user_id === p.user_id ? ' 🏆' : ''}<div style="color:var(--brand-muted);font-size:.72rem">${afEsc(p.email || '')}</div></td>
-          <td style="font-weight:800">${Number(p.total) || 0}</td>
+          <td style="font-weight:800">${Number(p.total) || 0}${Number(p.suspendues) ? ` <span style="color:#FFB800;font-weight:600;font-size:.78rem" title="Suspendues pendant un litige">(+${Number(p.suspendues)} suspendue(s))</span>` : ''}</td>
           <td>${Number(p.livraisons) || 0}</td><td>${Number(p.trajets_passager) || 0}</td><td>${Number(p.trajets_conducteur) || 0}</td>
         </tr>`).join('');
   }

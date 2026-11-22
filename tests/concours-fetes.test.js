@@ -44,12 +44,31 @@ describe('participations : seulement en utilisant le service', () => {
     assert.deepEqual(calc(s), []);
   });
 
-  test('litige sur une livraison (même arrivé après) : participation retirée', () => {
-    const s = base();
-    s.livraisons = [{ id: 'l1', expediteur_id: U(1), statut: 'payee', livre_le: DANS }, { id: 'l2', expediteur_id: U(1), statut: 'payee', livre_le: DANS }];
-    assert.equal(calc(s)[0].total, 2);
-    s.litiges = [{ livraison_id: 'l2' }];
-    assert.equal(calc(s)[0].total, 1);
+  // Litiges : suspendue pendant, rendue si refusé ou réglé en faveur du membre, retirée si réglé contre lui.
+  const uneLiv = () => { const s = base(); s.livraisons = [{ id: 'l1', expediteur_id: U(1), statut: 'payee', livre_le: DANS }]; return s; };
+  const etatLiv = (litiges) => { const s = uneLiv(); s.litiges = litiges; const p = calc(s)[0]; return p ? [p.total, p.suspendues] : [0, 0]; };
+
+  test('livraison : litige ouvert ou en analyse → participation SUSPENDUE', () => {
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'ouvert', plaignant_id: U(5) }]), [0, 1]);
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'en_analyse', plaignant_id: U(1) }]), [0, 1]);
+  });
+
+  test('livraison : litige refusé → la participation REVIENT', () => {
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'rejete', plaignant_id: U(5) }]), [1, 0]);
+  });
+
+  test('livraison : réglé en faveur du membre (il était le plaignant) → REVIENT', () => {
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'resolu', plaignant_id: U(1) }]), [1, 0]);
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'rembourse', plaignant_id: U(1) }]), [1, 0]);
+  });
+
+  test('livraison : réglé CONTRE le membre → RETIRÉE', () => {
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'resolu', plaignant_id: U(5) }]), [0, 0]);
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'rembourse', plaignant_id: U(5) }]), [0, 0]);
+  });
+
+  test('livraison : un litige réglé contre lui l\'emporte sur un autre encore ouvert', () => {
+    assert.deepEqual(etatLiv([{ livraison_id: 'l1', statut: 'ouvert', plaignant_id: U(5) }, { livraison_id: 'l1', statut: 'resolu', plaignant_id: U(6) }]), [0, 0]);
   });
 
   test('trajet complété et payé : 1 au passager ET 1 au conducteur', () => {
@@ -73,13 +92,33 @@ describe('participations : seulement en utilisant le service', () => {
     assert.deepEqual(calc(s), []);
   });
 
-  test('signalement (litige) sur la réservation ou le trajet : participations retirées', () => {
+  const unTrajet = (reports) => {
     const s = base();
     s.bookings = [{ id: 'b1', ride_id: 'r1', passenger_id: U(2), status: 'paye', payment_status: 'succeeded', paid_at: DANS }];
-    s.reports = [{ booking_id: 'b1', ride_id: 'r1' }];
-    assert.deepEqual(calc(s), []);
-    s.reports = [{ booking_id: null, ride_id: 'r1' }];
-    assert.deepEqual(calc(s), []);
+    s.reports = reports;
+    const par = Object.fromEntries(calc(s).map((x) => [x.user_id, [x.total, x.suspendues]]));
+    return { passager: par[U(2)] || [0, 0], conducteur: par[U(9)] || [0, 0] };
+  };
+
+  test('covoiturage : signalement ouvert ou en traitement → passager et conducteur SUSPENDUS', () => {
+    assert.deepEqual(unTrajet([{ booking_id: 'b1', ride_id: 'r1', status: 'ouvert', reporter_id: U(2), reported_id: U(9) }]), { passager: [0, 1], conducteur: [0, 1] });
+    assert.deepEqual(unTrajet([{ booking_id: null, ride_id: 'r1', status: 'en_traitement' }]), { passager: [0, 1], conducteur: [0, 1] });
+  });
+
+  test('covoiturage : signalement refusé (fermé) → tout REVIENT', () => {
+    assert.deepEqual(unTrajet([{ booking_id: 'b1', ride_id: 'r1', status: 'ferme', reporter_id: U(2), reported_id: U(9) }]), { passager: [1, 0], conducteur: [1, 0] });
+  });
+
+  test('covoiturage : réglé contre le conducteur signalé → RETIRÉE pour lui seulement, le passager la garde', () => {
+    assert.deepEqual(unTrajet([{ booking_id: 'b1', ride_id: 'r1', status: 'resolu', reporter_id: U(2), reported_id: U(9) }]), { passager: [1, 0], conducteur: [0, 0] });
+  });
+
+  test('covoiturage : réglé contre le passager signalé → RETIRÉE pour lui seulement', () => {
+    assert.deepEqual(unTrajet([{ booking_id: 'b1', ride_id: 'r1', status: 'resolu', reporter_id: U(9), reported_id: U(2) }]), { passager: [0, 0], conducteur: [1, 0] });
+  });
+
+  test('suspendue : ne compte pas au tirage', () => {
+    assert.equal(C.tirerPondere([{ user_id: 'a', total: 0, suspendues: 3 }]), null);
   });
 
   test('avant le lancement ou après le 31 décembre 23 h 59 (Québec) : 0', () => {
@@ -219,7 +258,7 @@ describe('admin-concours-fetes', () => {
     const res = await appel(base(), 'admin-concours-fetes', { mode: 'csv' });
     assert.equal(res._status, 200);
     const lignes = String(res._body).replace(/^﻿/, '').split('\n');
-    assert.equal(lignes[0], 'prenom,nom,courriel,participations,livraisons,trajets_passager,trajets_conducteur');
+    assert.equal(lignes[0], 'prenom,nom,courriel,participations,suspendues_litige,livraisons,trajets_passager,trajets_conducteur');
     assert.equal(lignes.length, 4);
     assert.match(res._h['Content-Type'], /text\/csv/);
   });
@@ -337,20 +376,28 @@ describe('aucune participation sans service : protections des tirages génériqu
 // ─── Navigateur : js/fetes.js avec un faux document ──────────────────────────
 function fauxDocument() {
   const tous = [];
-  const el = (tag) => {
-    const e = { tag, children: [], attrs: {}, style: { setProperty() {} }, className: '', textContent: '', id: '',
-      classList: { set: new Set(), add(c) { this.set.add(c); } },
+  const el = (tag, className = '') => {
+    const e = { tag, children: [], attrs: {}, style: { setProperty(k, v) { this[k] = v; } }, className, textContent: '', id: '',
+      classList: { set: new Set(className ? [className] : []), add(c) { this.set.add(c); } },
       setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; },
       appendChild(c) { this.children.push(c); tous.push(c); return c; },
-      insertBefore(c) { this.children.unshift(c); tous.push(c); return c; } };
+      insertBefore(c) { this.children.unshift(c); tous.push(c); return c; },
+      querySelector(sel) { return this.children.find((x) => sel.startsWith('.') && x.className === sel.slice(1)) || null; } };
     return e;
   };
   const body = el('body'); const head = el('head');
+  // Éléments de l'accueil (index.html) : section d'accueil, fil, logo, bouton « Trouver un trajet ».
+  const hero = el('section', 'hero'); const fil = el('ul', 'hero-thread'); const marque = el('a', 'brand'); const bouton = el('a', 'btn');
+  tous.push(hero, fil, marque, bouton);
+  hero.children.push(el('div', 'contenu-existant')); // la section d'accueil a déjà du contenu
   return {
-    tous, body, head, readyState: 'complete',
-    createElement: el,
+    tous, body, head, hero, fil, marque, bouton, readyState: 'complete',
+    createElement: (t) => el(t),
     getElementById: (id) => tous.find((x) => x.id === id) || null,
-    querySelector: (sel) => tous.find((x) => sel.startsWith('.') && x.className === sel.slice(1)) || null,
+    querySelector: (sel) => {
+      if (sel === '.hero-actions a[href="/covoiturage.html"]') return bouton;
+      return tous.find((x) => sel.startsWith('.') && x.className === sel.slice(1)) || null;
+    },
     addEventListener() {},
   };
 }
@@ -359,7 +406,7 @@ async function executerFetes({ now, accueil = true, info = { theme_actif: true, 
   let appels = 0;
   const ctx = {
     document: { ...doc, currentScript: { getAttribute: (k) => (k === 'data-fetes' && accueil ? 'accueil' : null) } },
-    window: { __fetesNow: () => now, matchMedia: () => ({ matches: reduit }) },
+    window: { __fetesNow: () => now, matchMedia: () => ({ matches: reduit }), innerWidth: 1280 },
     fetch: async () => { appels += 1; return { ok: true, json: async () => info }; },
     setInterval: () => 0, Date, Math, Promise,
   };
@@ -369,7 +416,7 @@ async function executerFetes({ now, accueil = true, info = { theme_actif: true, 
   await new Promise((r) => setTimeout(r, 5));
   const banniere = doc.tous.find((x) => x.className === 'fetes-banniere');
   const neige = doc.tous.find((x) => x.className === 'fetes-neige');
-  return { banniere, neige, appels, texte: banniere ? banniere.children.map((c) => c.textContent).join(' ') : '', body: doc.body };
+  return { banniere, neige, appels, doc, texte: banniere ? banniere.children.map((c) => c.textContent).join(' ') : '', body: doc.body };
 }
 
 describe('js/fetes.js (navigateur)', () => {
@@ -417,7 +464,55 @@ describe('js/fetes.js (navigateur)', () => {
       assert.match(lire(f), /<script src="\/js\/fetes\.js" defer><\/script>/, f);
     }
     assert.doesNotMatch(lire('js/fetes.js'), /<audio|new Audio|\.mp3|\.ogg/i);
-    assert.ok(fs.statSync(path.join(ROOT, 'js/fetes.js')).size < 8000, 'script léger');
+    assert.ok(fs.statSync(path.join(ROOT, 'js/fetes.js')).size < 12000, 'script léger (aucune image)');
+    assert.doesNotMatch(lire('js/fetes.js'), /\.(png|jpe?g|gif|webp|svg)['"]/i, 'aucune image');
+  });
+});
+
+describe('accueil : on sent les Fêtes', () => {
+  const DEC = Date.parse('2026-12-20T12:00:00-05:00');
+
+  test('vrais flocons ❄ (tailles variées, chute douce), moins nombreux mais visibles', async () => {
+    const r = await executerFetes({ now: DEC });
+    const flocons = r.neige.children;
+    assert.ok(flocons.length >= 8 && flocons.length <= 16, `${flocons.length} flocons`);
+    assert.ok(flocons.every((f) => f.textContent === '❄'));
+    const tailles = new Set(flocons.map((f) => f.style.fontSize));
+    assert.ok(tailles.size > 3, 'tailles variées');
+    assert.ok(flocons.every((f) => parseFloat(f.style.animationDuration) >= 14), 'chute douce');
+  });
+
+  test('guirlande de lumières en haut de la section d\'accueil, ligne de vœux, sapin près du logo, bouton rouge', async () => {
+    const r = await executerFetes({ now: DEC });
+    const g = r.doc.hero.children.find((x) => x.className === 'fetes-guirlande');
+    assert.ok(g && g.children.length >= 15, 'guirlande');
+    assert.equal(r.doc.hero.children[0], g, 'en haut de la section');
+    const voeux = r.doc.fil.children.find((x) => x.className === 'fetes-voeux');
+    assert.equal(voeux.textContent, '🎁 Joyeuses Fêtes de la part de l\'équipe PorteàPorte !');
+    assert.ok(r.doc.marque.children.some((x) => x.className === 'fetes-sapin'));
+    assert.ok(r.doc.bouton.classList.set.has('fetes-rouge'));
+  });
+
+  test('« réduire les animations » : pas de flocons, guirlande sans scintillement (CSS)', async () => {
+    const r = await executerFetes({ now: DEC, reduit: true });
+    assert.ok(!r.neige);
+    assert.match(lire('js/fetes.js'), /prefers-reduced-motion: reduce\)\{\.fetes-guirlande b\{animation:none\}/);
+  });
+
+  test('interrupteur admin coupé ou 7 janvier : aucune décoration, bouton de couleur normale', async () => {
+    for (const r of [await executerFetes({ now: DEC, info: { theme_actif: false } }), await executerFetes({ now: Date.parse('2027-01-07T00:00:00-05:00') })]) {
+      assert.equal(r.doc.hero.children.length, 1);
+      assert.equal(r.doc.fil.children.length, 0);
+      assert.equal(r.doc.marque.children.length, 0);
+      assert.ok(!r.doc.bouton.classList.set.has('fetes-rouge'));
+    }
+  });
+
+  test('autres pages : bannière seulement, pas de décorations d\'accueil', async () => {
+    const r = await executerFetes({ now: DEC, accueil: false });
+    assert.ok(r.banniere);
+    assert.equal(r.doc.hero.children.length, 1);
+    assert.ok(!r.doc.bouton.classList.set.has('fetes-rouge'));
   });
 });
 
@@ -431,6 +526,24 @@ describe('tableau de bord du membre', () => {
     vm.runInContext(html.slice(i, j), ctx);
     assert.equal(ctx.texteParticipationsFetes({ participations: 3, detail: { livraisons: 2, trajets_passager: 1 } }).titre, '🎄 Tu as 3 participations au tirage des Fêtes');
     assert.equal(ctx.texteParticipationsFetes({ participations: 1 }).titre, '🎄 Tu as 1 participation au tirage des Fêtes');
+    assert.match(ctx.texteParticipationsFetes({ participations: 1, suspendues: 1 }).sous, /1 participation en attente : un litige est en cours/);
     assert.match(html, /endpoint=concours-fetes-moi/);
+  });
+});
+
+describe('page du membre : compteur « Trajets covoit »', () => {
+  test('compte les trajets faits comme passager ET comme conducteur', () => {
+    const html = lire('dashboard.html');
+    const i = html.indexOf('  const STATUTS_TRAJET_FAIT');
+    const j = html.indexOf('  async function loadCovTripsStat(');
+    const ctx = { String };
+    vm.createContext(ctx);
+    vm.runInContext(html.slice(i, j) + '\nthis.compterTrajetsCovoit = compterTrajetsCovoit;', ctx);
+    const resa = [{ status: 'paye' }, { status: 'paye' }, { status: 'annule_passager' }, { status: 'confirme' }, { status: 'completed' }];
+    assert.equal(ctx.compterTrajetsCovoit(resa, []), 3, 'passager seulement');
+    assert.equal(ctx.compterTrajetsCovoit([], [{ status: 'termine' }, { status: 'publie' }]), 1, 'conducteur seulement');
+    assert.equal(ctx.compterTrajetsCovoit(resa, [{ status: 'termine' }]), 4);
+    assert.match(html, /id="statCovTrips"/);
+    assert.match(html, /loadConcoursFetes\(session\),\s*\n\s*loadCovTripsStat\(session, profile\),/, 'appelé au chargement');
   });
 });
