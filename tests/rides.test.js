@@ -349,13 +349,15 @@ describe('coherence affichages prix et pourcentages', () => {
     assert.doesNotMatch(securite, /8 % au conducteur/);
   });
 
-  test('paiement et mur missions lisent la part livreur configuree', () => {
+  // Test complet du 22 nov. 2026 : l'affichage suit la règle du paiement RÉEL (lib/_gain-livreur.js),
+  // pas le réglage admin pct_livreur, que le paiement n'utilise pas (voir AUDIT-REPARTITION.md).
+  test('paiement et mur missions affichent la part du paiement réel', () => {
     const paiement = read('paiement.html');
     const browse = read('browse-missions.html');
     assert.match(paiement, /deliverySharePct/);
-    assert.match(paiement, /platform-shares\.js/);
-    assert.match(browse, /basePct/);
-    assert.match(browse, /platform-shares\.js/);
+    assert.match(paiement, /gain-livreur\.js/);
+    assert.match(browse, /PAPGain/);
+    assert.match(browse, /gain-livreur\.js/);
   });
 
   test('email de bienvenue oriente le nouveau membre vers le covoiturage', () => {

@@ -144,8 +144,10 @@ describe('estimateRouteKm', () => {
     assert.equal(estimateRouteKm(null, null), null);
   });
 
-  test('Lévis-Québec → distance directe', () => {
-    assert.equal(estimateRouteKm('Lévis', 'Québec'), 3);
+  // Test complet du 22 nov. 2026 : 3 km était la largeur du fleuve. Un livreur passe par les ponts.
+  test('Lévis-Québec → par les ponts (~20 km), plus 3 km', () => {
+    assert.equal(estimateRouteKm('Lévis', 'Québec'), 20);
+    assert.equal(estimateRouteKm('Québec', 'Lévis'), 20);
   });
 
   test('Montréal-Laval → distance directe', () => {
