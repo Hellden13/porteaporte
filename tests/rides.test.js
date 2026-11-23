@@ -149,11 +149,10 @@ describe('calcRidePrice', () => {
     assert.equal(price.platformFeePerSeat, RIDE_PLATFORM_FEE_HIGH);
   });
 
-  test('bonus groupe 2 passagers → prix base réduit', () => {
+  test('bonus de groupe abandonné (décision de Denis) : même prix avec 2 passagers confirmés', () => {
     const sans = calcRidePrice({ ...base, confirmedPassengers: 0 });
     const avec = calcRidePrice({ ...base, confirmedPassengers: 2 });
-    // paxBase doit être réduit de 5%
-    assert.ok(avec.paxBase < sans.paxBase, 'prix de base réduit avec groupe');
+    assert.equal(avec.paxBase, sans.paxBase, 'le conducteur garde toute sa part');
   });
 
   test('distance passager partielle (< trajet total)', () => {

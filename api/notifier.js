@@ -11,6 +11,7 @@
 // ============================================================
 
 const { gainLivreurCents } = require('../lib/_gain-livreur');
+const { primeProtectionCents } = require('../js/repartition');
 const crypto = require('crypto');
 const { internalSecret, NOM_EXPEDITEUR_COURRIEL } = require('../lib/_lib');
 
@@ -1504,7 +1505,7 @@ function templateLivreurConfirme(d) {
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Trajet</span><strong>${d.ville_depart} → ${d.ville_arrivee}</strong></div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Adresse ramassage</span><strong>${d.adresse_depart || 'À confirmer'}</strong></div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #c8e8d0;"><span style="color:#888;">Date souhaitée</span><strong>${d.date_souhaitee || 'Flexible'}</strong></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#888;">Tu gagnes</span><strong style="color:#1D6B3A;">${d.montant_livreur != null ? d.montant_livreur : (gainLivreurCents(Math.round((Number(d.prix_total) || 0) * 100)).netCents / 100).toFixed(2).replace('.', ',')} $</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#888;">Tu gagnes</span><strong style="color:#1D6B3A;">${d.montant_livreur != null ? d.montant_livreur : (gainLivreurCents(Math.max(0, Math.round((Number(d.prix_total) || 0) * 100) - primeProtectionCents(d.assurance_plan))).netCents / 100).toFixed(2).replace('.', ',')} $</strong></div>
     </div>
     <p style="font-size:12px;color:#888;">N'oublie pas de prendre une photo du colis au ramassage et à la livraison.</p>`
   );
@@ -1529,7 +1530,7 @@ function templatePaiementLibere(d) {
     <p style="color:#555;line-height:1.7;">L'expéditeur a confirmé la réception. Ton paiement de <strong style="color:#1D6B3A;">${d.montant_livreur} $</strong> a été libéré et sera dans ton compte sous 2-5 jours ouvrables.</p>
     <div style="background:#f0faf4;border:1px solid #b8f53e;border-radius:6px;padding:16px;margin:16px 0;text-align:center;">
       <div style="font-size:36px;font-weight:900;color:#1D6B3A;">${d.montant_livreur} $</div>
-      <div style="font-size:12px;color:#888;margin-top:4px;">Tu gagnes : 60 % du prix total, plus ton bonus fidélité s'il y a lieu</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Tu gagnes : 60 % du prix de la livraison (sans la prime de protection), plus ton bonus fidélité s'il y a lieu</div>
     </div>
     <p style="font-size:12px;color:#aaa;">Merci pour ta fiabilité ! Tes badges et ton XP sont mis à jour sur ton tableau de bord.</p>`
   );

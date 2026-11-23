@@ -19,10 +19,16 @@
     return { pct: pct, baseCents: base, bonusCents: bonus, netCents: net, plateformeCents: brut - net };
   }
 
+  // Primes de protection (copie de js/repartition.js ; un test vérifie l'égalité) : la prime va au fonds
+  // de protection, hors des 60 % du livreur.
+  var PRIMES_PROTECTION_CENTS = { none: 0, base: 100, standard: 299, plus: 599 };
   function texte(prixDollars, opts) {
-    var g = cents(Math.round((Number(prixDollars) || 0) * 100), opts);
+    opts = opts || {};
+    var total = Math.round((Number(prixDollars) || 0) * 100);
+    var prime = Math.min(total, PRIMES_PROTECTION_CENTS[String(opts.planProtection || 'none').toLowerCase()] || 0);
+    var g = cents(total - prime, opts);
     return (g.netCents / 100).toFixed(2).replace('.', ',') + ' $';
   }
 
-  window.PAPGain = { cents: cents, texte: texte, PART_LIVREUR_PCT: PART_LIVREUR_PCT };
+  window.PAPGain = { cents: cents, texte: texte, PART_LIVREUR_PCT: PART_LIVREUR_PCT, PRIMES_PROTECTION_CENTS: PRIMES_PROTECTION_CENTS };
 })();

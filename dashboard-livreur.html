@@ -14,6 +14,7 @@
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="/js/gain-livreur.js"></script>
   <script src="/js/repartition.js"></script>
@@ -466,7 +467,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
         <div style="flex:1;min-width:220px">
           <div style="font-weight:900;color:#ffd700;font-size:.95rem;margin-bottom:4px">🏆 Bonus Fidélité actif</div>
-          <div style="color:#a8b0ba;font-size:.82rem">Plus tu es engagé, plus ta part bonifiée devient intéressante.</div>
+          <div style="color:#a8b0ba;font-size:.82rem">Tu commences à 60 % exact. Après 10 livraisons payées : +2 si ta fiabilité est de 95 ou plus, +1 avec 3 badges, +1 après 10 mois, +2 après 50 livraisons (maximum 70 %).</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:2rem;font-weight:900;color:var(--brand-lime);line-height:1" id="loyaltyPart">—</div>
@@ -678,7 +679,7 @@
         <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--brand-border)">
           <div class="card-title" style="margin-bottom:12px">Où va l’argent d’une livraison de 10,00 $</div>
           <div class="rev-bar">
-            <span class="rev-label" id="revYouLabel">Toi (60 % du prix total)</span>
+            <span class="rev-label" id="revYouLabel">Toi (60 % du prix de la livraison)</span>
             <div class="rev-track"><div class="rev-fill" id="revYouBar" style="width:0%;background:var(--brand-lime)"></div></div>
             <span class="rev-amount" id="revYou">—</span>
           </div>
@@ -875,8 +876,8 @@
     function deliverySharePct() {
       return window.PAPGain.cents(10000, { fidelitePct: Number(profile?.loyalty_bonus_pct) || 0 }).pct;
     }
-    function gainTexte(prixTotal) {
-      return window.PAPGain.texte(prixTotal, { fidelitePct: Number(profile?.loyalty_bonus_pct) || 0 });
+    function gainTexte(prixTotal, planProtection) {
+      return window.PAPGain.texte(prixTotal, { fidelitePct: Number(profile?.loyalty_bonus_pct) || 0, planProtection });
     }
 
     function showError(message) {
@@ -1097,7 +1098,7 @@
       /* --- Répartition réelle (exemple 10,00 $) --- */
       const rep = repartitionExemple();
       const tienCents = rep ? rep.livreurCents : Math.floor(REV_EXEMPLE_CENTS * basePct / 100);
-      document.getElementById('revYouLabel').textContent = `Toi (${basePct} % du prix total)`;
+      document.getElementById('revYouLabel').textContent = `Toi (${basePct} % du prix de la livraison)`;
       document.getElementById('revYouBar').style.width   = Math.min(basePct, 100) + '%';
       document.getElementById('revYou').textContent      = money(tienCents / 100);
       document.getElementById('revEcoRow').style.display = 'none';
@@ -1236,7 +1237,7 @@
             <div class="mission-route">${m.ville_depart || '?'} → ${m.ville_arrivee || '?'}</div>
             <div class="mission-meta">${m.type_colis || 'Colis'}${m.quantite_colis > 1 ? ' <strong>×' + m.quantite_colis + '</strong>' : ''}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
           </div>
-          <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total)}</span>
+          <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total, m.assurance_plan)}</span>
           <button class="accept-btn" onclick="openBioModal('${m.id}')">Accepter</button>
         </div>
       `).join('');
@@ -1431,7 +1432,7 @@
           <div class="delivery-row">
             <div>
               <div class="delivery-route">${row.type_colis || 'Colis'}${row.taille_colis ? ` (${row.taille_colis})` : ''}${row.quantite_colis > 1 ? ` <strong>×${row.quantite_colis}</strong>` : ''} · ${row.code || row.id.slice(0,8)}</div>
-              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · Tu gagnes : ${gainTexte(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+              <div class="delivery-meta">${row.ville_depart || '?'} → ${row.ville_arrivee || '?'} · Tu gagnes : ${gainTexte(row.prix_total, row.assurance_plan)} · ${deliveryStatusLabel(row.statut)}</div>
               ${prefsHtml}
             </div>
             <div class="delivery-actions">
@@ -2387,7 +2388,7 @@
                 <div class="mission-meta">${m.type_colis || 'Colis'}${m.poids_kg ? ' · ' + m.poids_kg + ' kg' : ''}${m.distance_km ? ' · ' + m.distance_km + ' km' : ''}</div>
                 ${expName ? `<div style="display:flex;align-items:center;margin-top:4px;font-size:.78rem;color:#8A9BB0">${expPhoto}${expName}${expRating}</div>` : ''}
               </div>
-              <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total)}</span>
+              <span class="mission-price" title="Payé par l'expéditeur : ${money(m.prix_total)}">Tu gagnes : ${gainTexte(m.prix_total, m.assurance_plan)}</span>
             </div>
             ${m.adresse_masquees ? `
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.22);border-radius:8px;padding:10px;font-size:.82rem;color:#d9f99d">
@@ -2438,7 +2439,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
                 <div>
                   <div class="delivery-route">${row.type_colis || 'Colis'} · ${row.code || row.id.slice(0,8)}</div>
-                  <div class="delivery-meta" style="margin-top:2px">Tu gagnes : ${gainTexte(row.prix_total)} · ${deliveryStatusLabel(row.statut)}</div>
+                  <div class="delivery-meta" style="margin-top:2px">Tu gagnes : ${gainTexte(row.prix_total, row.assurance_plan)} · ${deliveryStatusLabel(row.statut)}</div>
                   ${expName ? `<div style="display:flex;align-items:center;margin-top:3px;font-size:.78rem;color:#8A9BB0">${expPhoto}Expéditeur : ${expName}</div>` : ''}
                 </div>
               </div>
@@ -2806,7 +2807,8 @@
         });
         const d = await r.json().catch(() => ({}));
         const livraisons = (d.livraisons || []).filter(l =>
-          ['livree', 'livre', 'confirmee', 'payee', 'succeeded'].includes(l.statut) && Number(l.prix_total) > 0
+          // Revenus : seulement les livraisons dont le paiement est capturé (pas « livre » en attente).
+          ['payee', 'paid', 'succeeded'].includes(l.statut) && Number(l.prix_total) > 0
         );
 
         // Agréger par mois (12 derniers mois)
@@ -2891,7 +2893,7 @@
       .from('livraisons')
       .select('prix_total, prix_final, livre_le, created_at')
       .eq('livreur_id', session.user.id)
-      .in('statut', ['livre', 'payee'])
+      .in('statut', ['payee', 'paid', 'succeeded']) // paiement capturé seulement
       .gte('created_at', from)
       .lt('created_at', to)
       .order('created_at', { ascending: true });

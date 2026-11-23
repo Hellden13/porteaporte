@@ -39,21 +39,21 @@ const liv = (n, champ = 'livreur_id', uid = U) => Array.from({ length: n }, (_, 
 
 describe('badges automatiques : chaque condition déclenche son badge', () => {
   const cas = [
-    ['première livraison payée', { livraisons: liv(1) }, ['premiere_livraison', 'fondateur_livreur']],
-    ['10 livraisons payées', { livraisons: liv(10) }, ['premiere_livraison', 'livreur_fiable', 'fondateur_livreur']],
-    ['50 livraisons payées', { livraisons: liv(50) }, ['premiere_livraison', 'livreur_fiable', 'gros_colis', 'fondateur_livreur']],
-    ['note 4,8 sur 10 livraisons', { livraisons: liv(10), reviews: Array.from({ length: 10 }, (_, i) => ({ reviewed_id: U, rating: i ? 5 : 4, delivery_id: `l-${i}` })) }, ['premiere_livraison', 'livreur_fiable', 'cinq_etoiles', 'fondateur_livreur']],
-    ['note 4,7 : pas de « Service 5 étoiles »', { livraisons: liv(10), reviews: Array.from({ length: 10 }, (_, i) => ({ reviewed_id: U, rating: i < 3 ? 4 : 5, delivery_id: `l-${i}` })) }, ['premiere_livraison', 'livreur_fiable', 'fondateur_livreur']],
+    ['première livraison payée', { livraisons: liv(1) }, ['premiere_livraison', 'fondateur_livreur', 'pionnier']],
+    ['10 livraisons payées', { livraisons: liv(10) }, ['premiere_livraison', 'livreur_fiable', 'fondateur_livreur', 'pionnier']],
+    ['50 livraisons payées', { livraisons: liv(50) }, ['premiere_livraison', 'livreur_fiable', 'gros_colis', 'fondateur_livreur', 'pionnier']],
+    ['note 4,8 sur 10 livraisons', { livraisons: liv(10), reviews: Array.from({ length: 10 }, (_, i) => ({ reviewed_id: U, rating: i ? 5 : 4, delivery_id: `l-${i}` })) }, ['premiere_livraison', 'livreur_fiable', 'cinq_etoiles', 'fondateur_livreur', 'pionnier']],
+    ['note 4,7 : pas de « Service 5 étoiles »', { livraisons: liv(10), reviews: Array.from({ length: 10 }, (_, i) => ({ reviewed_id: U, rating: i < 3 ? 4 : 5, delivery_id: `l-${i}` })) }, ['premiere_livraison', 'livreur_fiable', 'fondateur_livreur', 'pionnier']],
     ['identité vérifiée', { profiles: [{ id: U, xp: 0, driver_status: 'verified' }] }, ['profil_verifie']],
     ['profil covoiturage créé', { ride_driver_profiles: [{ user_id: U }] }, ['nouveau_covoit']],
-    ['premier trajet payé comme passager', { ride_bookings: [{ id: 'rb1', passenger_id: U, ride_id: 'r9', status: 'paye' }] }, ['premier_trajet_cov']],
-    ['trajet de 60 km avec 2 passagers payés (conducteur)', { rides: [{ id: 'r1', driver_id: U, total_distance_km: 60 }], ride_bookings: [{ id: 'b1', ride_id: 'r1', status: 'paye', seats_reserved: 1 }, { id: 'b2', ride_id: 'r1', status: 'paye', seats_reserved: 1 }] }, ['premier_trajet_cov', 'eco_route']],
-    ['trajet de 40 km : pas d\'éco-route', { rides: [{ id: 'r1', driver_id: U, total_distance_km: 40 }], ride_bookings: [{ id: 'b1', ride_id: 'r1', status: 'paye', seats_reserved: 2 }] }, ['premier_trajet_cov']],
+    ['premier trajet payé comme passager', { ride_bookings: [{ id: 'rb1', passenger_id: U, ride_id: 'r9', status: 'paye', paid_at: '2026-11-01T10:00:00Z' }] }, ['premier_trajet_cov', 'pionnier']],
+    ['trajet de 60 km avec 2 passagers payés (conducteur)', { rides: [{ id: 'r1', driver_id: U, total_distance_km: 60 }], ride_bookings: [{ id: 'b1', ride_id: 'r1', status: 'paye', seats_reserved: 1, paid_at: '2026-11-01T10:00:00Z' }, { id: 'b2', ride_id: 'r1', status: 'paye', seats_reserved: 1, paid_at: '2026-11-01T10:00:00Z' }] }, ['premier_trajet_cov', 'eco_route', 'pionnier']],
+    ['trajet de 40 km : pas d\'éco-route', { rides: [{ id: 'r1', driver_id: U, total_distance_km: 40 }], ride_bookings: [{ id: 'b1', ride_id: 'r1', status: 'paye', seats_reserved: 2, paid_at: '2026-11-01T10:00:00Z' }] }, ['premier_trajet_cov', 'pionnier']],
     ['trajet non payé : rien', { rides: [{ id: 'r1', driver_id: U, total_distance_km: 90 }], ride_bookings: [{ id: 'b1', ride_id: 'r1', status: 'confirme', seats_reserved: 3 }] }, []],
     ['parrainage récompensé', { referrals: [{ id: 'rf', referrer_id: U, referee_id: AUTRE, status: 'rewarded' }] }, ['parrain_actif']],
     ['niveau Ambassadeur + note 4,8', { profiles: [{ id: U, xp: 1200 }], reviews: [{ reviewed_id: U, rating: 5, ride_id: 'r1' }] }, ['partenaire_confiance']],
     ['niveau 3 seulement : pas « Partenaire confiance »', { profiles: [{ id: U, xp: 900 }], reviews: [{ reviewed_id: U, rating: 5, ride_id: 'r1' }] }, []],
-    ['premier expéditeur payé', { livraisons: liv(1, 'expediteur_id') }, ['fondateur_expediteur']],
+    ['premier expéditeur payé', { livraisons: liv(1, 'expediteur_id') }, ['fondateur_expediteur', 'pionnier']],
   ];
   for (const [nom, tables, attendu] of cas) {
     test(nom, async () => {
@@ -75,7 +75,8 @@ describe('badges automatiques : chaque condition déclenche son badge', () => {
   });
   test('les badges sans condition vérifiable ne sont jamais donnés automatiquement', () => {
     const auto = REC.REGLES.map((r) => r.slug);
-    for (const s of ['zero_retard', 'pionnier', 'auto_pleine', 'trajet_solidaire', 'communaute_active', 'ambassadeur_local']) assert.ok(!auto.includes(s), s);
+    for (const s of ['trajet_solidaire', 'communaute_active', 'ambassadeur_local']) assert.ok(!auto.includes(s), s);
+    for (const s of ['zero_retard', 'pionnier', 'auto_pleine']) assert.ok(auto.includes(s), s + ' (décision de Denis : branché)');
   });
 });
 
@@ -88,8 +89,8 @@ describe('jamais deux fois', () => {
     await REC.verifierBadgesAuto(CTX, U);
     assert.equal(db.rpc.filter((x) => x.fn === 'grant_badge_v2').length, avant, 'un badge déjà obtenu n\'est même plus redemandé');
     assert.equal(db.tables.user_badges.filter((b) => b.badges.slug === 'premiere_livraison').length, 1);
-    assert.equal(xpDe(db, U), 30 + 500);
-    assert.equal(ptsDe(db, U), 20 + 200);
+    assert.equal(xpDe(db, U), 30 + 500 + 100, 'première livraison + fondateur livreur + pionnier');
+    assert.equal(ptsDe(db, U), 20 + 200 + 100);
   });
   test('base illisible : aucune décision, aucun badge', async () => {
     const db = base({ livraisons: liv(5) });
@@ -212,8 +213,8 @@ describe('rien d\'affiché qui ne soit pas réel', () => {
   const lire = (f) => fs.readFileSync(f, 'utf8');
   test('programme Points Impact : plus d\'avantages de niveau ni de missions jamais déclenchées', () => {
     const h = lire('programme-points.html');
-    for (const x of [/Missions spéciales/, /Meilleure visibilité/, /Support prioritaire/, /Mission complétée/, /Zéro retard/, /Auto pleine/, /missions exclusives/i, /Accès aux gros colis/]) assert.doesNotMatch(h, x);
-    assert.match(h, /Les avantages liés aux niveaux sont en préparation/);
+    for (const x of [/Missions spéciales/, /Meilleure visibilité/, /Support prioritaire/, /Mission complétée/, /missions exclusives/i, /Accès aux gros colis/]) assert.doesNotMatch(h, x);
+    assert.match(h, /Un seul avantage de niveau : à partir du niveau 2 \(200 XP\), tes trajets de covoiturage apparaissent plus haut dans les résultats de recherche\./);
     assert.doesNotMatch(lire('lib/_growth.js'), /Missions exclusives, support prioritaire|Meilleure visibilité sur les missions/);
   });
   test('bonus éco (jamais versé) retiré : KYC, tableau du livreur, missions', () => {

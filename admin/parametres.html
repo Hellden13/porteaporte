@@ -6,6 +6,7 @@
   <title>Paramètrès financiers — Admin</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
@@ -61,7 +62,7 @@
     <div class="panel">
       <h2 style="margin:0 0 8px">💸 Répartition des fonds</h2>
       <div style="color:var(--brand-muted);font-size:.88rem;margin-bottom:14px">Sur un ticket de <strong style="color:#fff" id="ticketDisplay">15 $</strong>, voici où va <strong>réellement</strong> chaque dollar (même calcul que le paiement, js/repartition.js) :
-        <br>• La part du livreur est fixée à <strong>60 % du prix total</strong> (règle de paiement) ; son bonus fidélité (0 à 10 points) est pris sur la part de la plateforme.
+        <br>• La part du livreur est fixée à <strong>60 % du prix de la livraison</strong> (règle de paiement ; la prime de protection va à 100 % au fonds de protection) ; son bonus fidélité (0 à 10 points) est pris sur la part de la plateforme.
         <br>• Les frais Stripe <strong>réels</strong> (environ 2,9 % + 0,30 $) sont payés par la plateforme. Le % « Frais Stripe » ci-dessous ne sert qu'à faire le total de 100 %.
         <br>• Ce qui reste est partagé entre les autres postes <strong>au prorata</strong> de leurs %. La colonne en dollars montre le montant exact.</div>
 

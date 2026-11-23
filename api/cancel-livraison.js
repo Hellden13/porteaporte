@@ -1,4 +1,5 @@
 // api/cancel-livraison.js - WITH AUDIT LOGGING + REFUND POLICY + ADMIN ALERT
+const { enregistrerAnnulation } = require('../lib/_repartition-journal');
 const { log } = require('../lib/logger');
 const { normalizeRole, alertAdmin, callNotifier } = require('../lib/_lib');
 
@@ -257,6 +258,16 @@ module.exports = async function handler(req, res) {
           });
         }
       }
+    }
+
+    // Journal : où va l'argent de cette annulation (remboursement, dédommagement, fonds, Stripe).
+    if (livraison.stripe_payment_intent && totalCents > 0) {
+      const j = await enregistrerAnnulation({ sbUrl: SB_URL, sbKey: SB_KEY }, {
+        sorte: 'annulation_livraison', refId: livraison_id, livraisonId: livraison_id, userId: livraison.expediteur_id || null,
+        paymentIntent: livraison.stripe_payment_intent, totalCents,
+        remboursementCents: refundCents, dedommagementCents: livreurCompensationCents, fondsCents: fundCents, qui: 'livreur',
+      }).catch(() => ({ ok: false }));
+      if (!j.ok) log('ERROR', 'annulation_journal_non_ecrite', session.id, { livraison_id });
     }
 
     // Marquer comme annulée

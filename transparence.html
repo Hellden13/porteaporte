@@ -74,6 +74,7 @@
   <meta name="twitter:description" content="Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
@@ -126,10 +127,12 @@
 
     <div class="section-title">📊 Répartition de chaque dollar payé</div>
     <div class="panel" style="padding:24px">
-      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Exemple : une livraison de <strong>10,00 $</strong>, calculée par <strong>le même code que le paiement réel</strong>. Le livreur touche 60 % du prix total. Les frais Stripe (2,9 % + 0,30 $) sont payés par PorteàPorte. Le reste est partagé entre les postes ci-dessous, selon les proportions réglées dans l'admin.</p>
+      <p style="color:var(--brand-muted);margin:0 0 18px;font-size:.95rem">Exemple : une livraison de <strong>10,00 $</strong>, calculée par <strong>le même code que le paiement réel</strong>. Le livreur touche 60 % du prix de la livraison (une prime de protection, s’il y en a une, va entière au fonds de protection). Les frais Stripe (2,9 % + 0,30 $) sont payés par PorteàPorte. Le reste est partagé entre les postes ci-dessous, selon les proportions réglées dans l'admin.</p>
       <div id="repartition-table" style="display:grid;gap:8px">
         <div style="text-align:center;color:var(--brand-muted);padding:20px">La répartition apparaîtra ici dès que les données seront disponibles.</div>
       </div>
+      <p style="color:var(--brand-muted);margin:18px 0 10px;font-size:.95rem">La même livraison avec la protection <strong>Standard (2,99 $)</strong> : 12,99 $ payés. La prime va <strong>à 100 % au fonds de protection</strong>, hors des 60 % du livreur.</p>
+      <div id="repartition-protection-table" style="display:grid;gap:8px"></div>
       <p style="margin-top:18px;text-align:center;font-size:.85rem;color:var(--brand-muted)">
         💡 Pour l’instant, le fondateur ne prend aucun salaire : le surplus est dirigé vers la protection, la communauté et la réserve.
       </p>
@@ -152,6 +155,12 @@
       <div id="journal-table" style="display:grid;gap:8px">
         <div style="text-align:center;color:var(--brand-muted);padding:20px">Aucun paiement capturé n'a encore été écrit au journal.</div>
       </div>
+    </div>
+
+    <div class="section-title">🤝 Versements approuvés (organismes, fonds d’urgence)</div>
+    <div class="panel" style="padding:24px">
+      <p style="color:var(--brand-muted);margin:0 0 14px;font-size:.95rem">Chaque trimestre, Denis approuve dans l’admin le montant réservé au journal. Le virement est ensuite fait à la main ; rien n’est versé automatiquement.</p>
+      <div id="versements-table" style="display:grid;gap:8px"></div>
     </div>
 
     <div class="section-title">🛡️ Fonds de sécurité</div>
@@ -242,7 +251,7 @@
       return d.toLocaleDateString('fr-CA',{month:'long',year:'numeric',timeZone:'UTC'});
     }
     const escT=(v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const ICONES={livreur:'🚗',conducteur:'🚗',stripe:'💳',protection:'🛡️',urgence:'🆘',communaute:'💚',developpement:'🔧',marketing:'📢',operations:'🏛️',profit:'💪',securite:'🛡️',dons:'❤️',developpeur:'💻',deficit:'➖'};
+    const ICONES={remboursement:'↩️',dedommagement:'🤝',fonds_securite:'🛡️',plateforme:'🏛️',prime_protection:'🛡️',livreur:'🚗',conducteur:'🚗',stripe:'💳',protection:'🛡️',urgence:'🆘',communaute:'💚',developpement:'🔧',marketing:'📢',operations:'🏛️',profit:'💪',securite:'🛡️',dons:'❤️',developpeur:'💻',deficit:'➖'};
     // Affiche les lignes d'une répartition (cents) : la somme égale le montant payé, au cent près.
     function lignesRepartition(rep){
       const total=rep.montantPayeCents||0;
@@ -260,14 +269,18 @@
     function afficherRepartition(impact){
       const ex=impact&&impact.exemples;
       if(ex&&ex.livraison) document.getElementById('repartition-table').innerHTML=lignesRepartition(ex.livraison);
+      if(ex&&ex.livraison_protection&&document.getElementById('repartition-protection-table')) document.getElementById('repartition-protection-table').innerHTML=lignesRepartition(ex.livraison_protection);
       if(ex&&ex.covoiturage) document.getElementById('ride-redist-table').innerHTML=lignesRepartition(ex.covoiturage);
+      const va=document.getElementById('versements-table');
+      const vs=(impact&&impact.versements_approuves)||[];
+      if(va) va.innerHTML=vs.length?vs.map(v=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 16px;background:rgba(255,255,255,.03);border-radius:8px"><span style="color:#fff;font-weight:700">${escT(v.trimestre)} · ${escT(v.label)}</span><span style="color:var(--brand-lime);font-weight:900">${money(v.montant_cents)}</span></div>`).join(''):'<div style="text-align:center;color:var(--brand-muted);padding:14px">Aucun versement approuvé pour l’instant.</div>';
       const j=impact&&impact.repartition_reelle;
       const jt=document.getElementById('journal-table');
       if(j&&j.paiements>0&&jt){
         const postes=Object.values(j.postes||{}).sort((a,b)=>a.sorte.localeCompare(b.sorte)||b.cents-a.cents);
         jt.innerHTML=postes.map(p=>`<div style="display:grid;grid-template-columns:36px 1fr 110px;gap:12px;align-items:center;padding:10px 16px;background:rgba(255,255,255,.03);border-radius:8px">
           <div style="font-size:1.2rem">${ICONES[p.poste]||'•'}</div>
-          <div style="font-weight:700;color:#fff;font-size:.9rem">${escT(p.label)} <span style="color:var(--brand-muted);font-weight:400">· ${p.sorte==='covoiturage'?'covoiturage':'livraison'}</span></div>
+          <div style="font-weight:700;color:#fff;font-size:.9rem">${escT(p.label)} <span style="color:var(--brand-muted);font-weight:400">· ${({covoiturage:'covoiturage',livraison:'livraison',annulation_livraison:'annulation de livraison',annulation_covoiturage:'annulation de trajet'})[p.sorte]||p.sorte}</span></div>
           <div style="color:var(--brand-lime);font-weight:900;text-align:right;font-variant-numeric:tabular-nums">${money(p.cents)}</div></div>`).join('')
           +`<div style="padding:14px 16px;background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.2);border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;color:#fff;font-weight:800"><span>${j.paiements} paiement(s) capturé(s)</span><span style="color:var(--brand-cyan)">${money(j.montant_cents)}</span></div>`;
       }

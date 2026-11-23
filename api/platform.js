@@ -52,10 +52,11 @@ const { distanceLivraison } = require('../lib/_distance');
 const { calculerBonusFidelite } = require('../lib/_fidelite');
 const { apresCaptureLivraison } = require('../lib/_apres-capture');
 const { verifierBadgesAuto, recompenserParrainage, recompenseAvis5Etoiles, badgeProfilVerifie, jalonSansReclamation } = require('../lib/_recompenses');
-const { totauxRepartition, repartitionLivraison: repartitionLivraisonCalc, repartitionTrajet: repartitionTrajetCalc } = require('../lib/_repartition-journal');
+const { totauxRepartition, enregistrerAnnulation, repartitionLivraison: repartitionLivraisonCalc, repartitionTrajet: repartitionTrajetCalc } = require('../lib/_repartition-journal');
 const { validerParametres, prixMinimumTotal } = require('../js/repartition');
 const { livraisonsTestIds, adminLivraisonTest, idsLivraisonsTest } = require('../lib/_livraisons-test');
 const { adminRemettreRamasse } = require('../lib/_livraisons-coincees');
+const { adminVersements, adminVersementApprouver, versementsApprouvesPublics } = require('../lib/_versements');
 // Champs de distance envoyés par les formulaires (codes postaux facultatifs).
 function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
@@ -305,7 +306,8 @@ async function createLivraison(req, res, ctx, body) {
       id: livraison?.id,
       ville_depart: livraison?.ville_depart || payload.ville_depart,
       ville_arrivee: livraison?.ville_arrivee || payload.ville_arrivee,
-      prix_total: livraison?.prix_total ?? payload.prix_total
+      prix_total: livraison?.prix_total ?? payload.prix_total,
+      assurance_plan: livraison?.assurance_plan ?? payload.assurance_plan ?? null
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
 
@@ -1657,7 +1659,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
     return res.status(400).json({ error: 'Position GPS obligatoire pour un depot sans destinataire' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total,ville_depart,ville_arrivee,rescue_livreur_original,rescue_bonus_pct`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total,ville_depart,ville_arrivee,rescue_livreur_original,rescue_bonus_pct,assurance_plan`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -1873,7 +1875,7 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,statut,description,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,assurance_plan,statut,description,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -2990,6 +2992,14 @@ async function refundPayment(req, res, ctx, body) {
   const params = { payment_intent: paymentIntent, reason: 'requested_by_customer' };
   if (body.amount || body.montant_cents) params.amount = String(Math.round(Number(body.amount || body.montant_cents)));
   const refund = await stripeRequest('POST', '/v1/refunds', params, ctx.stripeKey);
+
+  // Journal : remboursement par l'admin (frais Stripe déjà comptés à la capture).
+  if (livraisonId && refund && refund.amount > 0) {
+    await enregistrerAnnulation({ sbUrl: ctx.sbUrl, sbKey: ctx.sbKey }, {
+      sorte: 'annulation_livraison', refId: `${livraisonId}:remboursement-admin:${refund.id || ''}`, livraisonId, paymentIntent,
+      totalCents: refund.amount, remboursementCents: refund.amount, qui: 'livreur', fraisStripeCents: 0,
+    }).catch(() => null);
+  }
 
   if (livraisonId) {
     await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}`, {
@@ -4261,6 +4271,8 @@ async function fetchImpactState(sbUrl, sbKey) {
   const fraisPlace = Math.max(0, toNumber(settings.ride_platform_fee, 1.5));
   const exemples = {
     livraison: repartitionLivraisonCalc({ montantPayeCents: 1000, settings }),
+    // Même livraison avec la protection Standard (2,99 $) : 12,99 $ payés, la prime va entière au fonds.
+    livraison_protection: repartitionLivraisonCalc({ montantPayeCents: 1299, settings, planProtection: 'standard' }),
     covoiturage: repartitionTrajetCalc({ montantPayeCents: 288, conducteurCents: Math.max(0, 288 - Math.round(fraisPlace * 100)), redistribution: rideRedistribution }),
   };
 
@@ -4339,7 +4351,8 @@ async function impactPublic(req, res, ctx) {
   // (protection colis, + réserve si le mode bêta la redirige vers le fonds).
   const postesJournal = Object.values(state.journal?.postes || {});
   const fundFromDeliveriesCents = postesJournal
-    .filter((p) => p.sorte === 'livraison' && (p.poste === 'protection' || (profitToInsurance && p.poste === 'profit')))
+    .filter((p) => (p.sorte === 'livraison' && (p.poste === 'protection' || p.poste === 'prime_protection' || (profitToInsurance && p.poste === 'profit')))
+      || (p.sorte === 'annulation_livraison' && p.poste === 'fonds_securite'))
     .reduce((t, p) => t + (Number(p.cents) || 0), 0);
   const founderRevenueCents = Math.round(totalRevenueCents * founderRevenuePct);
 
@@ -4362,7 +4375,7 @@ async function impactPublic(req, res, ctx) {
   );
   // Part covoiturage du fonds : postes « sécurité » réservés au journal à chaque capture de trajet.
   const fundFromCovoiturageCents = postesJournal
-    .filter((p) => p.sorte === 'covoiturage' && /secur|sécur/i.test(`${p.poste} ${p.label}`))
+    .filter((p) => (p.sorte === 'covoiturage' && /secur|sécur/i.test(`${p.poste} ${p.label}`)) || (p.sorte === 'annulation_covoiturage' && p.poste === 'fonds_securite'))
     .reduce((t, p) => t + (Number(p.cents) || 0), 0);
 
   const fundTotalCents = fundFromDeliveriesCents + fundFromCovoiturageCents + fundTopupCents;
@@ -4443,6 +4456,8 @@ async function impactPublic(req, res, ctx) {
       : 'Fonds volontaire bêta — pas un contrat d\'assurance.'
   };
 
+  // Versements trimestriels approuvés par Denis (organismes, fonds d'urgence) : montants du journal.
+  publicState.versements_approuves = await versementsApprouvesPublics(ctx).catch(() => []);
   return res.status(200).json({ success: true, impact: publicState, draws, winners, protection_fund: protectionFund });
 }
 
@@ -6248,6 +6263,8 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'livraisons-test-ids') return await livraisonsTestIds(req, res, ctx);
     if (endpoint === 'admin-livraison-test') return await adminLivraisonTest(req, res, ctx, body);
     if (endpoint === 'admin-remettre-ramasse') return await adminRemettreRamasse(req, res, ctx, body);
+    if (endpoint === 'admin-versements') return await adminVersements(req, res, ctx, body);
+    if (endpoint === 'admin-versement-approuver') return await adminVersementApprouver(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);
     if (endpoint === 'livraison-withdraw') return await livraisonWithdraw(req, res, ctx, body);

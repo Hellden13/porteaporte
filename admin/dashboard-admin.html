@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
@@ -675,6 +676,18 @@
           <tbody id="repartition-complet-body">
             <tr><td colspan="4" class="empty-msg">Chargement de la répartition...</td></tr>
           </tbody>
+        </table>
+      </div>
+
+      <!-- ─── VERSEMENTS À APPROUVER (organismes, fonds d'urgence) — décision de Denis ─── -->
+      <div class="table-card" style="margin-bottom:20px" id="versements-card">
+        <div style="padding:14px 18px;background:rgba(125,255,193,.06);border-bottom:1px solid var(--brand-border)">
+          <strong style="color:#fff">🤝 Versements à approuver</strong>
+          <span style="color:#A8B0BA;font-size:.85rem;margin-left:10px">Par trimestre, montants du journal. Approuver note la décision au journal : <strong>aucun virement automatique</strong>, le virement se fait à la main.</span>
+        </div>
+        <table>
+          <thead><tr><th>Trimestre</th><th>Poste</th><th style="text-align:right">Montant</th><th>État</th><th></th></tr></thead>
+          <tbody id="versements-body"><tr><td colspan="5" class="empty-msg">Chargement…</td></tr></tbody>
         </table>
       </div>
 
@@ -1754,6 +1767,7 @@
     };
     dessiner(null);
     fetch('/api/impact-public').then(r => r.ok ? r.json() : null).then(d => dessiner(d && d.impact && d.impact.repartition_reelle)).catch(() => {});
+    chargerVersements();
 
     document.getElementById('rev-body').innerHTML = rows.length === 0
       ? '<tr><td colspan="6" class="empty-msg">Aucune livraison payée ce mois</td></tr>'
@@ -2053,7 +2067,9 @@
     }
 
     if (livraisons) {
-      const delivered = livraisons.filter(l => ['livre', 'livree', 'delivered', 'payee', 'paid', 'succeeded', 'confirmee'].includes(normalizedLivraisonStatus(l))).length;
+      // « livrées/payées » : seulement les livraisons dont le paiement est CAPTURÉ (statut payee).
+      // Une livraison « livre » attend encore la confirmation et la capture : elle n'est pas comptée.
+      const delivered = livraisons.filter(l => PAIEMENT_CAPTURE.includes(normalizedLivraisonStatus(l))).length;
       document.getElementById('stat-livraisons').textContent = delivered > 0 ? `${livraisons.length} (${delivered} livrées/payées)` : livraisons.length;
       await chargerLivraisonsTest();
       document.getElementById('livraisons-body').innerHTML = livraisons.length === 0
@@ -2111,6 +2127,44 @@
     const out = await res.json().catch(() => ({}));
     if (!res.ok) { await PAPDialog.alert(out.error || 'Action impossible.'); return; }
     await loadData();
+  }
+
+  const PAIEMENT_CAPTURE = ['payee', 'paid', 'succeeded'];
+
+  // Versements trimestriels (organismes, fonds d'urgence) : liste et approbation par Denis.
+  async function chargerVersements() {
+    const body = document.getElementById('versements-body');
+    if (!body) return;
+    const session = AUTH_API.getUser()?.session;
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    try {
+      const r = await fetch(apiUrl('/api/platform?endpoint=admin-versements'), { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) { body.innerHTML = `<tr><td colspan="5" class="empty-msg">${esc(out.error || 'Lecture impossible')}</td></tr>`; return; }
+      const v = out.versements || [];
+      const etat = { en_cours: 'Trimestre en cours', a_approuver: 'À approuver', approuve: 'Approuvé' };
+      body.innerHTML = v.length ? v.map(x => `<tr>
+          <td>${esc(x.trimestre)}</td><td>${esc(x.label)}</td>
+          <td style="text-align:right;font-weight:800">${$m(x.montant_cents / 100)}</td>
+          <td>${esc(etat[x.statut] || x.statut)}${x.approuve_le ? ' · ' + new Date(x.approuve_le).toLocaleDateString('fr-CA') : ''}</td>
+          <td>${x.statut === 'a_approuver' ? `<button class="action-btn" onclick="approuverVersement('${esc(x.trimestre)}','${esc(x.poste)}',${Number(x.montant_cents)})">Approuver</button>` : ''}</td>
+        </tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Aucun montant au journal pour l’instant.</td></tr>';
+    } catch (_) { body.innerHTML = '<tr><td colspan="5" class="empty-msg">Lecture impossible.</td></tr>'; }
+  }
+  async function approuverVersement(trimestre, poste, cents) {
+    const ok = await PAPDialog.confirm(`Approuver le versement ${poste === 'urgence' ? 'du fonds d’urgence' : 'aux organismes'} pour ${trimestre} : ${(cents / 100).toFixed(2).replace('.', ',')} $ ?\n\nAucun virement n'est fait automatiquement : l'approbation est notée au journal et tu fais le virement à la main.`, { title: 'Versement à approuver', ok: 'Approuver' });
+    if (!ok) return;
+    const note = await PAPDialog.prompt('Note (facultatif : organisme, référence du virement…)', '', { title: 'Note du versement', ok: 'Enregistrer' });
+    if (note === null) return;
+    const session = AUTH_API.getUser()?.session;
+    const res = await fetch(apiUrl('/api/platform?endpoint=admin-versement-approuver'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint: 'admin-versement-approuver', trimestre, poste, note })
+    });
+    const out = await res.json().catch(() => ({}));
+    await PAPDialog.alert(res.ok ? 'Versement approuvé et noté au journal.' : (out.error || 'Action impossible.'));
+    chargerVersements();
   }
 
   // Les 2 livraisons coincées du test complet : remises à « Ramassé » (statut et date de livraison

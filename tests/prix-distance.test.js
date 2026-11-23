@@ -133,14 +133,15 @@ describe('11. gain du livreur', () => {
   });
   test('les écrans du livreur affichent « Tu gagnes » et la vraie part', () => {
     const dl = fs.readFileSync('dashboard-livreur.html', 'utf8');
-    assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(m\.prix_total\)\}/g) || []).length, 2);
-    assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(row\.prix_total\)\}/g) || []).length, 2);
+    // La prime de protection va au fonds de protection : elle est retirée avant le calcul du gain.
+    assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(m\.prix_total, m\.assurance_plan\)\}/g) || []).length, 2);
+    assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(row\.prix_total, row\.assurance_plan\)\}/g) || []).length, 2);
     assert.doesNotMatch(dl, /<span class="mission-price">\$\{money\(m\.prix_total\)\}<\/span>/);
-    assert.match(dl, /`Toi \(\$\{basePct\} % du prix total\)`/);
+    assert.match(dl, /`Toi \(\$\{basePct\} % du prix de la livraison\)`/);
     assert.match(dl, /return window\.PAPGain\.cents\(10000, \{ fidelitePct: Number\(profile\?\.loyalty_bonus_pct\) \|\| 0 \}\)\.pct;/);
     const bm = fs.readFileSync('browse-missions.html', 'utf8');
     // Avec le bonus fidélité du livreur, comme le paiement réel.
-    assert.match(bm, /Tu gagnes : \$\{window\.PAPGain\.texte\(m\.prix_total \|\| 0, \{ fidelitePct: window\._livreurFidelite \|\| 0 \}\)\}/);
+    assert.match(bm, /Tu gagnes : \$\{window\.PAPGain\.texte\(m\.prix_total \|\| 0, \{ fidelitePct: window\._livreurFidelite \|\| 0, planProtection: m\.assurance_plan \}\)\}/);
     assert.match(bm, /window\._livreurFidelite = Number\(prof\?\.loyalty_bonus_pct\) \|\| 0;/);
     assert.doesNotMatch(bm, /<div class="price">\$\{money\(m\.prix_total\)\}<\/div>/);
   });

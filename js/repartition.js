@@ -3,7 +3,7 @@
    le paiement réel, le journal, l'admin et la page Transparence lisent tous ce calcul.
 
    Livraison (règle de Denis, option B, 22 nov. 2026) :
-     1. Le livreur touche 60 % du prix total (+ bonus fidélité 0 à 10 points, + bonus sauvetage),
+     1. Le livreur touche 60 % du prix de la livraison, sans la prime de protection (+ bonus fidélité 0 à 10 points, + bonus sauvetage),
         calculé sur le prix AVANT rabais : un code promo est payé par la plateforme, jamais par le livreur.
      2. Les frais Stripe réels (lus sur Stripe à la capture ; sinon estimés 2,9 % + 0,30 $) sont payés
         par la plateforme.
@@ -32,6 +32,14 @@
     { key: 'pct_operations', poste: 'operations', label: 'Opérations' },
     { key: 'pct_profit', poste: 'profit', label: 'Réserve / pérennité' }
   ];
+
+  // Primes de protection colis (mêmes montants que le formulaire create-mission.html).
+  // Décision de Denis : la prime va à 100 % au fonds de protection, hors des 60 % du livreur.
+  var PRIMES_PROTECTION_CENTS = { none: 0, base: 100, standard: 299, plus: 599 };
+  function primeProtectionCents(plan) {
+    var k = String(plan || 'none').toLowerCase();
+    return Object.prototype.hasOwnProperty.call(PRIMES_PROTECTION_CENTS, k) ? PRIMES_PROTECTION_CENTS[k] : 0;
+  }
 
   var DEFAUTS = {
     pct_livreur: 60, pct_stripe: 7, pct_developpement: 5, pct_protection: 10, pct_urgence: 6,
@@ -66,7 +74,7 @@
   // Si tous les postes sont à 0 %, le reste n'est pas perdu : il reste à la plateforme, non réparti.
   function ajouterNonReparti(lignes, reste) {
     if (!(reste > 0)) return;
-    var dejaPartage = lignes.slice(2).reduce(function (t, l) { return t + l.cents; }, 0);
+    var dejaPartage = lignes.filter(function (l) { return l.partage; }).reduce(function (t, l) { return t + l.cents; }, 0);
     if (dejaPartage < reste) lignes.push({ poste: 'non_reparti', label: 'Plateforme (non réparti)', cents: reste - dejaPartage, detail: 'aucun poste n’a de pourcentage' });
   }
 
@@ -91,23 +99,25 @@
     var rabais = Math.max(0, cents(o.rabaisCents));
     var reglages = o.settings || {};
     var prixAvantRabais = paye + rabais;
-    var gain = gainLivreurCents(prixAvantRabais, { fidelitePct: o.fidelitePct, sauvetagePct: o.sauvetagePct });
+    // Prime de protection : sortie du prix avant le calcul du livreur, versée entière au fonds de protection.
+    var prime = Math.min(prixAvantRabais, Math.max(0, cents(o.primeProtectionCents != null ? o.primeProtectionCents : primeProtectionCents(o.planProtection))));
+    var gain = gainLivreurCents(prixAvantRabais - prime, { fidelitePct: o.fidelitePct, sauvetagePct: o.sauvetagePct });
     var stripeReel = o.fraisStripeCents != null && Number.isFinite(Number(o.fraisStripeCents));
     var stripe = stripeReel ? Math.max(0, cents(o.fraisStripeCents)) : fraisStripeEstimes(paye);
-    var reste = paye - gain.netCents - stripe;
+    var reste = paye - gain.netCents - prime - stripe;
     var postes = partager(Math.max(0, reste), POSTES_LIVRAISON.map(function (p) {
       return { poste: p.poste, label: p.label, cle: p.key, poids: Math.max(0, nombre(reglages[p.key], DEFAUTS[p.key])) };
     }));
     var lignes = [
       { poste: 'livreur', label: 'Livreur', cents: gain.netCents,
-        detail: gain.pct + ' % du prix total' + (gain.bonusCents ? ' + bonus sauvetage' : '') + (rabais ? ' (calculé avant le rabais)' : '') },
+        detail: gain.pct + ' % du prix de la livraison' + (prime ? ' (sans la prime de protection)' : '') + (gain.bonusCents ? ' + bonus sauvetage' : '') + (rabais ? ' (calculé avant le rabais)' : '') },
       { poste: 'stripe', label: 'Frais Stripe', cents: stripe, detail: stripeReel ? 'frais réels Stripe' : 'estimés : 2,9 % + 0,30 $' }
-    ].concat(postes.map(function (p) { return { poste: p.poste, label: p.label, cents: p.cents, detail: 'part du reste plateforme' }; }));
+    ].concat(prime ? [{ poste: 'prime_protection', label: 'Prime de protection → fonds de protection', cents: prime, detail: '100 % de la prime payée' }] : []).concat(postes.map(function (p) { return { poste: p.poste, label: p.label, cents: p.cents, detail: 'part du reste plateforme', partage: true }; }));
     ajouterNonReparti(lignes, reste);
     var deficit = reste < 0 ? -reste : 0;
     if (deficit) lignes.push({ poste: 'deficit', label: 'Payé par PorteàPorte (rabais)', cents: -deficit, detail: 'la plateforme couvre la différence' });
     return {
-      sorte: 'livraison', montantPayeCents: paye, rabaisCents: rabais, prixAvantRabaisCents: prixAvantRabais,
+      sorte: 'livraison', montantPayeCents: paye, rabaisCents: rabais, prixAvantRabaisCents: prixAvantRabais, primeProtectionCents: prime,
       livreurCents: gain.netCents, livreurPct: gain.pct, fraisStripeCents: stripe, fraisStripeReels: stripeReel,
       restePlateformeCents: Math.max(0, reste), deficitCents: deficit, lignes: lignes,
       total: lignes.reduce(function (s, l) { return s + l.cents; }, 0)
@@ -129,7 +139,7 @@
     var lignes = [
       { poste: 'conducteur', label: 'Conducteur', cents: conducteur, detail: 'partage des frais du trajet' },
       { poste: 'stripe', label: 'Frais Stripe', cents: stripe, detail: stripeReel ? 'frais réels Stripe' : 'estimés : 2,9 % + 0,30 $' }
-    ].concat(postes.map(function (p) { return { poste: p.poste, label: p.label, cents: p.cents, detail: 'part des frais de service' }; }));
+    ].concat(postes.map(function (p) { return { poste: p.poste, label: p.label, cents: p.cents, detail: 'part des frais de service', partage: true }; }));
     ajouterNonReparti(lignes, reste);
     var deficit = reste < 0 ? -reste : 0;
     if (deficit) lignes.push({ poste: 'deficit', label: 'Payé par PorteàPorte', cents: -deficit, detail: 'les frais de service ne couvrent pas Stripe' });
@@ -137,6 +147,35 @@
       sorte: 'covoiturage', montantPayeCents: paye, conducteurCents: conducteur, fraisStripeCents: stripe, fraisStripeReels: stripeReel,
       restePlateformeCents: Math.max(0, reste), deficitCents: deficit, lignes: lignes,
       total: lignes.reduce(function (s, l) { return s + l.cents; }, 0)
+    };
+  }
+
+  /* Annulation (livraison ou covoiturage) : où va le montant payé.
+     totalCents : montant autorisé ; remboursementCents : rendu au payeur ; dedommagementCents : au livreur
+     ou au conducteur ; fondsCents : fonds de sécurité. Le reste va à la plateforme. Les frais Stripe
+     (sur la partie gardée) sont payés par la plateforme ; s'ils dépassent son reste, ligne « deficit ». */
+  function repartitionAnnulation(o) {
+    o = o || {};
+    var total = Math.max(0, cents(o.totalCents));
+    var remb = Math.min(total, Math.max(0, cents(o.remboursementCents)));
+    var dedo = Math.min(total - remb, Math.max(0, cents(o.dedommagementCents)));
+    var fonds = Math.min(total - remb - dedo, Math.max(0, cents(o.fondsCents)));
+    var garde = total - remb;
+    var stripeReel = o.fraisStripeCents != null && Number.isFinite(Number(o.fraisStripeCents));
+    var stripe = garde > 0 ? (stripeReel ? Math.max(0, cents(o.fraisStripeCents)) : fraisStripeEstimes(garde)) : 0;
+    var reste = total - remb - dedo - fonds - stripe;
+    var qui = o.qui === 'conducteur' ? 'Conducteur' : 'Livreur';
+    var lignes = [
+      { poste: 'remboursement', label: 'Remboursé au payeur', cents: remb, detail: 'annulation' },
+      { poste: 'dedommagement', label: 'Dédommagement ' + qui.toLowerCase(), cents: dedo, detail: 'annulation' },
+      { poste: 'fonds_securite', label: 'Fonds de sécurité', cents: fonds, detail: 'part de la pénalité' },
+      { poste: 'stripe', label: 'Frais Stripe', cents: stripe, detail: stripeReel ? 'frais réels Stripe' : (stripe ? 'estimés : 2,9 % + 0,30 $' : 'aucun') }
+    ];
+    if (reste > 0) lignes.push({ poste: 'plateforme', label: 'Plateforme', cents: reste, detail: 'reste de la pénalité' });
+    if (reste < 0) lignes.push({ poste: 'deficit', label: 'Payé par PorteàPorte', cents: reste, detail: 'frais Stripe non couverts' });
+    return {
+      sorte: o.sorte || 'annulation', montantPayeCents: total, lignes: lignes.filter(function (l) { return l.cents !== 0 || l.poste === 'remboursement'; }),
+      total: lignes.reduce(function (t, l) { return t + l.cents; }, 0), fraisStripeReels: stripeReel
     };
   }
 
@@ -198,7 +237,8 @@
     PART_LIVREUR_PCT: PART_LIVREUR_PCT, BONUS_FIDELITE_MAX: BONUS_FIDELITE_MAX,
     STRIPE_POURCENT: STRIPE_POURCENT, STRIPE_FIXE_CENTS: STRIPE_FIXE_CENTS, POSTES_LIVRAISON: POSTES_LIVRAISON,
     fraisStripeEstimes: fraisStripeEstimes, partager: partager, gainLivreurCents: gainLivreurCents,
-    repartitionLivraison: repartitionLivraison, repartitionTrajet: repartitionTrajet,
+    repartitionLivraison: repartitionLivraison, repartitionTrajet: repartitionTrajet, repartitionAnnulation: repartitionAnnulation,
+    PRIMES_PROTECTION_CENTS: PRIMES_PROTECTION_CENTS, primeProtectionCents: primeProtectionCents,
     validerParametres: validerParametres, dollars: dollars,
     fraisServiceLivraison: fraisServiceLivraison, prixMinimumTotal: prixMinimumTotal,
     REDISTRIBUTION_TRAJET_DEFAUT: REDISTRIBUTION_TRAJET_DEFAUT, normaliserRedistribution: normaliserRedistribution

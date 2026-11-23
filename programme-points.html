@@ -120,6 +120,7 @@
   <meta name="twitter:description" content="Découvrez le programme Points Impact de PorteàPorte : gagnez des points à chaque action, montez en niveau et participez aux tirages mensuels.">
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
@@ -188,10 +189,10 @@
 
     <!-- NIVEAUX -->
     <div class="section-title">Les 5 niveaux</div>
-    <p class="desc" style="color:var(--brand-muted);margin:0 0 12px">Les avantages liés aux niveaux sont en préparation : rien n’est promis tant qu’ils ne sont pas en place.</p>
+    <p class="desc" style="color:var(--brand-muted);margin:0 0 12px">Un seul avantage de niveau : à partir du niveau 2 (200 XP), tes trajets de covoiturage apparaissent plus haut dans les résultats de recherche.</p>
     <div class="levels-grid">
       <div class="level-row"><div class="level-num">🟢</div><div class="level-info"><div class="level-name">Niveau 1 — Nouveau</div><div class="level-req">0 XP requis · Accès dès l'inscription</div></div><div class="level-xp">0–199 XP</div></div>
-      <div class="level-row"><div class="level-num">🔵</div><div class="level-info"><div class="level-name">Niveau 2 — Fiable</div><div class="level-req">200 XP requis</div></div><div class="level-xp">200–499 XP</div></div>
+      <div class="level-row"><div class="level-num">🔵</div><div class="level-info"><div class="level-name">Niveau 2 — Fiable</div><div class="level-req">200 XP requis · meilleur classement dans les résultats de recherche du covoiturage</div></div><div class="level-xp">200–499 XP</div></div>
       <div class="level-row"><div class="level-num">🟩</div><div class="level-info"><div class="level-name">Niveau 3 — Habitué</div><div class="level-req">500 XP requis</div></div><div class="level-xp">500–999 XP</div></div>
       <div class="level-row"><div class="level-num">🟡</div><div class="level-info"><div class="level-name">Niveau 4 — Ambassadeur</div><div class="level-req">1 000 XP requis</div></div><div class="level-xp">1 000–1 999 XP</div></div>
       <div class="level-row"><div class="level-num">⭐</div><div class="level-info"><div class="level-name">Niveau 5 — Capitaine régional</div><div class="level-req">2 000 XP requis</div></div><div class="level-xp">2 000+ XP</div></div>
@@ -204,15 +205,18 @@
       <div class="badge-card"><span class="badge-icon">✅</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Profil vérifié</div><div class="badge-desc">Identité confirmée — tu es digne de confiance.</div></div></div>
       <div class="badge-card"><span class="badge-icon">📦</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Premier trajet utile</div><div class="badge-desc">Tu as complété ta première livraison.</div></div></div>
       <div class="badge-card"><span class="badge-icon">⭐</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Livreur fiable</div><div class="badge-desc">10 livraisons complétées.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">⏱️</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Zéro retard</div><div class="badge-desc">10 livraisons de suite livrées avant la fin de la plage horaire choisie par l’expéditeur.</div></div></div>
 
       <div class="badge-card"><span class="badge-icon">🌟</span><div><div class="badge-cat">Livraison</div><div class="badge-name">Service 5 étoiles</div><div class="badge-desc">Note moyenne ≥ 4.8 sur 10 livraisons.</div></div></div>
       <div class="badge-card"><span class="badge-icon">🌱</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Nouveau covoitureur</div><div class="badge-desc">Profil covoiturage créé.</div></div></div>
       <div class="badge-card"><span class="badge-icon">🚗</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Premier trajet partagé</div><div class="badge-desc">Ton premier covoiturage effectué.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🎯</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Auto pleine</div><div class="badge-desc">Toutes les places payées sur un même trajet.</div></div></div>
 
       <div class="badge-card"><span class="badge-icon">🌿</span><div><div class="badge-cat">Covoiturage</div><div class="badge-name">Éco-route</div><div class="badge-desc">50km+ avec 2 passagers ou plus.</div></div></div>
       <div class="badge-card"><span class="badge-icon">❤️</span><div><div class="badge-cat">Communauté</div><div class="badge-name">Trajet solidaire</div><div class="badge-desc">Aide un aîné ou une personne vulnérable.</div></div></div>
       <div class="badge-card"><span class="badge-icon">🤝</span><div><div class="badge-cat">Communauté</div><div class="badge-name">Parrain actif</div><div class="badge-desc">Tu as parrainé un ami qui a complété une action.</div></div></div>
       <div class="badge-card"><span class="badge-icon">🏆</span><div><div class="badge-cat">Fidélité</div><div class="badge-name">Partenaire confiance</div><div class="badge-desc">Niveau Ambassadeur ou plus, note ≥ 4.8.</div></div></div>
+      <div class="badge-card"><span class="badge-icon">🌟</span><div><div class="badge-cat">Fidélité</div><div class="badge-name">Pionnier</div><div class="badge-desc">Parmi les 50 premiers membres à avoir une transaction payée.</div></div></div>
     </div>
 
     <!-- AVIS LÉGAL -->

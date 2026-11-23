@@ -195,9 +195,10 @@ describe('le paiement réel écrit la répartition au journal, une seule fois', 
     assert.equal(r.repartition.total, 800);
     assert.equal(r.repartition.rabaisCents, 200);
   });
-  test('bonus fidélité recalculé à la capture (fiabilité 100 → +2) : versé ET écrit au journal, pris sur la plateforme', async () => {
+  test('bonus fidélité recalculé à la capture (10 livraisons payées + fiabilité 100 → +2) : versé ET écrit au journal, pris sur la plateforme', async () => {
     const db = base();
     db.tables.v_user_fiabilite = [{ id: LIVREUR, score: 100 }];
+    db.tables.livraisons = Array.from({ length: 10 }, (_, i) => ({ id: `p${i}`, livreur_id: LIVREUR, statut: 'payee' }));
     db.stripeReponse = (url) => (url.includes('/v1/charges/') ? { ok: true, status: 200, json: async () => ({ balance_transaction: { fee: 59 } }) } : { ok: true, status: 200, json: async () => ({ id: 'tr_test' }) });
     global.fetch = db.fetch;
     const { apresCaptureLivraison } = require('../lib/_apres-capture');

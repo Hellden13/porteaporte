@@ -6,6 +6,7 @@
   <title>Connexion admin - PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
@@ -93,7 +94,15 @@
       }
 
       status('Connexion admin validée. Redirection...', 'success');
-      setTimeout(() => { window.location.href = '/admin/dashboard-admin.html'; }, 500);
+      // Retour à la page admin d'où la session expirée a renvoyé (même site, /admin/ seulement).
+      const suivante = (() => {
+        try {
+          const n = new URLSearchParams(window.location.search).get('next') || '';
+          const u = new URL(n, window.location.origin);
+          return u.origin === window.location.origin && /^\/admin\/(?!login)/.test(u.pathname) ? u.pathname + u.search : '';
+        } catch (_) { return ''; }
+      })();
+      setTimeout(() => { window.location.href = suivante || '/admin/dashboard-admin.html'; }, 500);
       return true;
     }
 
