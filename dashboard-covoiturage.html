@@ -262,6 +262,23 @@ async function supprimerTrajet(rideIdEnc) {
 }
 
 // Annuler un trajet publié (conducteur)
+// Trajet récurrent : annuler UNE date seulement (les autres jours restent publiés).
+async function annulerUnJour(rideId) {
+  const aujourdhui = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const date = await PAPDialog.prompt('Quelle date annuler ? (AAAA-MM-JJ)\nLes autres jours du trajet restent publiés. Si des passagers ont réservé pour ce jour-là, ils sont remboursés au complet et avertis.', aujourdhui, { title: 'Annuler un seul jour', ok: 'Continuer', inputmode: 'numeric' });
+  if (date === null) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())) { await PAPDialog.alert('Date invalide : écris-la comme 2026-11-24.'); return; }
+  if (!(await PAPDialog.confirm('Annuler le trajet le ' + String(date).trim() + ' seulement ?', { title: 'Confirmer', ok: 'Annuler ce jour', danger: true }))) return;
+  const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
+  const res = await fetch('/api/platform?endpoint=ride-annuler-date', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+    body: JSON.stringify({ endpoint: 'ride-annuler-date', ride_id: rideId, date: String(date).trim() })
+  });
+  const out = await res.json().catch(() => ({}));
+  await PAPDialog.alert(res.ok ? ('Trajet annulé le ' + out.date + ' seulement.' + (out.reservations_annulees ? ' ' + out.reservations_annulees + ' réservation(s) remboursée(s) et avertie(s).' : '')) : (out.error || 'Action impossible.'));
+}
+
 async function annulerTrajet(rideId) {
   try {
     const db = getSupabaseClient();
@@ -673,6 +690,7 @@ function buildTrajets() {
       <td>
         <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
         ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
+        ${(canCancel && r.is_recurring && Array.isArray(r.recurrence_days) && r.recurrence_days.length) ? `<button type="button" onclick="annulerUnJour('${r.id}')" style="margin-left:10px;background:rgba(255,200,0,.1);color:#ffd23f;border:1px solid rgba(255,200,0,.4);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📅 Annuler un seul jour</button>` : ''}
         ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
         <button type="button" onclick="supprimerTrajet('${encodeURIComponent(r.id)}')" style="margin-left:10px;background:rgba(255,80,80,.08);color:#ff9999;border:1px solid rgba(255,80,80,.3);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
         ${(canCancel && r.status === 'publie' && new Date(r.departure_time) <= new Date()) ? `<button onclick="terminerTrajet('${r.id}')" style="margin-left:10px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Terminer</button>` : ''}

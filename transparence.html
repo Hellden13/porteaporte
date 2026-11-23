@@ -92,7 +92,7 @@
     <div class="container">
       <span class="status">Transparence en direct</span>
       <h1>Chaque mois, on montre où va l'argent.</h1>
-      <p>Les dons PorteàPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont estimés en direct à partir des livraisons complétées, puis confirmés à la clôture du mois.</p>
+      <p>Les dons PorteàPorte sont répartis entre les organismes sélectionnés par l'administration. Les montants ci-dessous sont les montants réels écrits au journal à chaque paiement capturé.</p>
     </div>
   </header>
 
@@ -297,7 +297,7 @@
         document.getElementById('impact-pool').textContent=money(impact.totals.donation_pool_cents);
         document.getElementById('impact-deliveries').textContent=(impact.repartition_reelle&&impact.repartition_reelle.paiements)||0;
         afficherRepartition(impact);
-        document.getElementById('impact-note').textContent=impact.note;
+        // La méthode est le texte de la page (montants réels du journal) : l'ancienne note « estimés » de la base n'est plus affichée.
         const esc=(v)=>escT(v);
         const orgs=impact.allocations||[];
         // Show beta notice if no deliveries yet

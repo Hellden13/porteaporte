@@ -12,6 +12,7 @@
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
+<script src="/js/code-securite.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -152,6 +153,8 @@
   </div>
 
   <div id="content" style="display:none">
+    <!-- Code de sécurité : bien visible juste après la réservation (js/code-securite.js) -->
+    <div id="code-securite-confirmation"></div>
     <!-- Success hero -->
     <div class="success-hero">
       <div class="check">✓</div>
@@ -270,6 +273,10 @@
     if (window.PapSOS) window.PapSOS.setContext({ ride_id: booking.ride_id || null, booking_id: booking.id || null });
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
+    if (window.PAPCodeSecurite && booking.passenger_id === session.user.id && ['en_attente', 'confirme'].includes(booking.status)) {
+      const affiche = await window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session, bookingId: booking.id, mode: 'encadre' });
+      if (affiche && location.hash === '#code-securite') document.getElementById('code-securite').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   async function fetchDriverContact() {

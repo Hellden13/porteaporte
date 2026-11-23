@@ -35,6 +35,7 @@ const {
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
   rideOgPage, rideOgImage,
+  rideAnnulerDate,
 } = require('../lib/_rides');
 const {
   growthDashboard, referralGet, referralUse, badgesList, badgesGrant,
@@ -4175,7 +4176,7 @@ async function fetchImpactState(sbUrl, sbKey) {
     pct_tirage: 0, pct_developpeur: 5, pct_securite: 10, pct_assurance: 10,
     ride_platform_fee: 1.50, ride_platform_fee_high: 3, ride_fee_threshold: 15,
     ride_fee_luggage: 5, ride_fee_pet: 8, ride_fee_stop: 3,
-    public_note: 'Montants estimes en direct, confirmes mensuellement.'
+    public_note: 'Montants réels écrits au journal à chaque paiement capturé.'
   };
   let settings = impactSettings;
   try {
@@ -4436,7 +4437,8 @@ async function impactPublic(req, res, ctx) {
   const publicState = {
     month: state.month,
     generated_at: state.generated_at,
-    note: state.settings.public_note || 'Montants estimes en direct, confirmes mensuellement.',
+    // Montants réels du journal (plus d'estimation) : la vieille note « estimés » de la base n'est plus publiée.
+    note: 'Montants réels écrits au journal à chaque paiement capturé.',
     totals: state.totals,
     exemples: state.exemples,
     repartition_reelle: state.journal,
@@ -6801,6 +6803,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-upsert') return await adminSafePointsUpsert(req, res, ctx, body);
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
+    if (endpoint === 'ride-annuler-date')    return await rideAnnulerDate(req, res, ctx, body);
     if (endpoint === 'ride-delete')          return await rideDelete(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);

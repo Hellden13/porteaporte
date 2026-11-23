@@ -760,7 +760,9 @@
 
   // Capture les paiements d'un trajet côté conducteur
   window.captureRideTrip = async function (rideId, count, total) {
-    if (!(await PAPDialog.confirm('Confirmer que tu as fait ce trajet pour ' + count + ' passager(s) ?\n\nTu recevras ' + total + ' $ sur ton compte Stripe Connect (transfert sous 2 jours ouvrés).'))) return;
+    // Le conducteur marque le trajet terminé ; le paiement est prélevé quand le passager entre son code,
+    // ou automatiquement 4 h plus tard s'il n'y a pas d'alerte. (Avant : prélèvement immédiat sans le code.)
+    if (!(await PAPDialog.confirm('Confirmer que tu as fait ce trajet pour ' + count + ' passager(s) ?\n\nTu recevras ' + total + ' $ quand chaque passager aura entré son code à l\'arrivée, ou automatiquement 4 h plus tard s\'il n\'y a pas d\'alerte.'))) return;
     try {
       const { data: { session } } = await db.auth.getSession();
       const { data: bookings } = await db.from('ride_bookings')
@@ -770,15 +772,14 @@
         .is('paid_at', null);
       let ok = 0, fail = 0;
       for (const b of (bookings || [])) {
-        const r = await fetch('/api/platform?endpoint=ride-capture-eligible', {
+        const r = await fetch('/api/platform?endpoint=ride-driver-complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-          body: JSON.stringify({ endpoint: 'ride-capture-eligible', booking_id: b.id })
+          body: JSON.stringify({ endpoint: 'ride-driver-complete', booking_id: b.id })
         });
-        const d = await r.json();
-        if (r.ok && (d.captured?.length || 0) > 0) ok++; else fail++;
+        if (r.ok) ok++; else fail++;
       }
-      (await PAPDialog.alert('✅ ' + ok + ' paiement(s) capturé(s).' + (fail > 0 ? '\n⚠️ ' + fail + ' échec(s). Contacte le support.' : '\nTransfert bancaire sous ~2 jours ouvrés.')));
+      (await PAPDialog.alert('✅ Trajet marqué terminé pour ' + ok + ' passager(s). Le paiement suivra quand le passager entre son code, ou dans 4 h.' + (fail > 0 ? '\n⚠️ ' + fail + ' échec(s). Contacte le support.' : '')));
       location.reload();
     } catch (e) {
       (await PAPDialog.alert('❌ ' + e.message));

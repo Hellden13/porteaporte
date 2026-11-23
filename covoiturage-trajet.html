@@ -12,6 +12,7 @@
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
+<script src="/js/code-securite.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body { background: #f7f8fa; }
@@ -751,13 +752,14 @@ async function showPostPaymentConfirmation(bookingId) {
   var hasCode = await getRideSafetyCodeStatus(bookingId);
   card.innerHTML = `
     <h3>✅ Réservation confirmée</h3>
+    <div id="code-securite-confirmation"></div>
     <div class="post-confirm-grid">
       <div class="post-confirm-row"><strong>🛣️ Trajet</strong>${esc(ride.start_city || booking.pickup_city || '?')} → ${esc(ride.end_city || booking.dropoff_city || '?')}</div>
       <div class="post-confirm-row"><strong>📅 Départ</strong>${esc(formatDate(ride.departure_time || currentRide?.departure_time || ''))}</div>
       <div class="post-confirm-row"><strong>📍 Embarquement</strong>${esc(ride.pickup_city || booking.pickup_city || '?')}${ride.pickup_sector || booking.pickup_sector ? ' · ' + esc(ride.pickup_sector || booking.pickup_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🏁 Débarquement</strong>${esc(ride.dropoff_city || booking.dropoff_city || '?')}${ride.dropoff_sector || booking.dropoff_sector ? ' · ' + esc(ride.dropoff_sector || booking.dropoff_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🚗 Conducteur</strong>${esc(driver.prenom || 'Conducteur')}${String(driver.telephone || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '').length === 10 ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
-      <div class="post-confirm-row"><strong>🔐 Code sécurité</strong>${hasCode ? 'Code configuré' : 'Aucun code par défaut détecté. Ajoute un code dans ton compte pour sécuriser les prochains trajets.'}</div>
+      <div class="post-confirm-row"><strong>🔐 Code sécurité</strong>${hasCode ? 'Code configuré. ' + esc(window.PAPCodeSecurite ? window.PAPCodeSecurite.PHRASE : '') : 'À créer dans l’encadré jaune ci-dessus.'}</div>
     </div>
     <div class="post-confirm-actions">
       <a href="/covoiturage-confirme.html?booking_id=${encodeURIComponent(bookingId || '')}">Voir ma confirmation</a>
@@ -765,6 +767,10 @@ async function showPostPaymentConfirmation(bookingId) {
     </div>`;
   card.classList.add('active');
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Code de sécurité : encadré bien visible juste après la réservation, avec le champ directement là.
+  if (!hasCode && window.PAPCodeSecurite && currentSession) {
+    window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session: currentSession, bookingId: bookingId, mode: 'encadre' });
+  }
 }
 
 function updatePkgPrice() {
@@ -1201,6 +1207,31 @@ function renderRide(r) {
   document.getElementById('sidebar-real').style.display     = '';
 }
 
+// Fiche d'un trajet réservé : si le passager n'a pas encore de code de sécurité, avertissement en haut.
+async function avertirCodeSecurite() {
+  try {
+    if (!window.PAPCodeSecurite) return;
+    var db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+    var s = currentSession || (db && db.auth ? (await db.auth.getSession()).data.session : null);
+    if (!s) return;
+    var r = await fetch('/api/platform?endpoint=ride-my-rides', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ endpoint: 'ride-my-rides' }) });
+    var d = await r.json().catch(function(){ return {}; });
+    var resa = (d.my_bookings || []).find(function (b) { return b.ride_id === rideId && ['en_attente', 'confirme'].indexOf(b.status) >= 0; });
+    if (!resa) return;
+    var zone = document.getElementById('code-securite-avertissement');
+    if (!zone) {
+      zone = document.createElement('div');
+      zone.id = 'code-securite-avertissement';
+      zone.style.cssText = 'max-width:1100px;margin:12px auto 0;padding:0 16px;box-sizing:border-box';
+      // Tout en haut de la page, au-dessus des deux colonnes (sur cellulaire, la colonne du prix passe avant).
+      var haut = document.getElementById('main-wrapper');
+      if (haut && haut.parentNode) haut.parentNode.insertBefore(zone, haut);
+      else document.body.insertBefore(zone, document.body.firstChild);
+    }
+    window.PAPCodeSecurite.afficher(zone, { session: s, bookingId: resa.id, mode: 'avertissement' });
+  } catch (_) {}
+}
+
 async function loadRide() {
   if (!rideId) { showToast('Trajet introuvable.', 'error'); return; }
   try {
@@ -1227,6 +1258,7 @@ async function loadRide() {
     currentRide  = ridePayload;
     rideSettings = settingsData.settings || settingsData || {};
     renderRide(ridePayload);
+    avertirCodeSecurite();
 
     // Affiche la carte des points safe si au moins un des deux points a des coords
     try {

@@ -1064,6 +1064,12 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div><strong>Débarquement :</strong> ${data.dropoff_label || data.ville_arrivee}<br>${data.dropoff_address || ''}</div>
             </div>
 
+            <div style="background:rgba(255,200,0,.1);border:2px solid rgba(255,200,0,.55);border-radius:10px;padding:16px;margin-bottom:18px">
+              <strong style="color:#ffd23f;display:block;margin-bottom:6px">🔐 Ton code de sécurité</strong>
+              <div style="color:#fff3c4;margin-bottom:12px">Tu l'entreras à l'arrivée pour confirmer que tu es bien arrivé(e). Si tu ne l'as pas encore créé, fais-le maintenant.</div>
+              <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}#code-securite" style="display:inline-block;background:#ffd23f;color:#141000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:900">Créer mon code de sécurité</a>
+            </div>
+
             <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📋 Voir tous les détails</a>
 
             <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">💡 Ton paiement est protégé. Le conducteur sera payé après la livraison du trajet. Tu peux contacter le conducteur directement par email ou téléphone si besoin.</p>
