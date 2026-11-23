@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const originalFetch = global.fetch;
 
 function makeMockFetch({ rejectColumns = [], failAll = false } = {}) {
-  return async (url, opts) => {
+  return require('./aide-fausse-base').avecVehicule(async (url, opts) => {
     const body = opts?.body ? JSON.parse(opts.body) : null;
     // Si on simule un échec de toutes les requêtes
     if (failAll) {
@@ -39,7 +39,7 @@ function makeMockFetch({ rejectColumns = [], failAll = false } = {}) {
       json: async () => [{ id: 'ride_test_' + Date.now(), ...body }],
       text: async () => JSON.stringify(body)
     };
-  };
+  });
 }
 
 function makeMockReq() {

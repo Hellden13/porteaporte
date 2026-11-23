@@ -31,6 +31,13 @@ function filtres(url) {
 }
 
 function correspond(ligne, [cle, v]) {
+  if (cle === 'or') {
+    // or=(a.eq.x,b.eq.y) : au moins une condition vraie
+    return v.replace(/^\(|\)$/g, '').split(',').some((c) => {
+      const m = c.match(/^([a-z_]+)\.(eq\..*)$/);
+      return m ? correspond(ligne, [m[1], m[2]]) : true;
+    });
+  }
   const x = valeur(ligne, cle);
   if (v.startsWith('eq.')) return String(x) === v.slice(3);
   if (v.startsWith('neq.')) return String(x) !== v.slice(4);
@@ -58,6 +65,12 @@ function creerBase(tables = {}) {
       return rep({ id: 'tr_test' });
     }
     if (url.includes('/api/notifier')) { db.courriels.push(body); return rep({ success: true }); }
+    if (url.includes('/storage/v1/object/sign/')) return rep({ signedURL: '/object/sign/' + url.split('/storage/v1/object/sign/')[1] + '?token=t' });
+    if (url.includes('/storage/v1/object/')) {
+      db.stockage = db.stockage || [];
+      db.stockage.push({ m, chemin: url.split('/storage/v1/object/')[1], body: m === 'DELETE' ? body : null });
+      return rep({ Key: url.split('/storage/v1/object/')[1] });
+    }
     const rpc = url.match(/\/rest\/v1\/rpc\/([a-z_0-9]+)/);
     if (rpc) {
       const fn = rpc[1];
@@ -89,6 +102,10 @@ function creerBase(tables = {}) {
       const res = lignes.filter((l) => f.every((x) => correspond(l, x)));
       const tri = (url.match(/order=([a-z_]+)\.asc/) || [])[1];
       if (tri) res.sort((a, b) => (String(a[tri]) < String(b[tri]) ? -1 : String(a[tri]) > String(b[tri]) ? 1 : (a.id < b.id ? -1 : 1)));
+      const triDesc = (url.match(/order=([a-z_]+)\.desc/) || [])[1];
+      if (triDesc) res.sort((a, b) => (String(a[triDesc]) > String(b[triDesc]) ? -1 : String(a[triDesc]) < String(b[triDesc]) ? 1 : (a.id > b.id ? -1 : 1)));
+      const lim = Number((url.match(/[?&]limit=(\d+)/) || [])[1]);
+      if (lim > 0) res.splice(lim);
       return rep(res.map((x) => ({ ...x })), true, 200, { 'content-range': `0-${Math.max(0, res.length - 1)}/${res.length}` });
     }
     if (m === 'POST') {
@@ -121,4 +138,11 @@ function makeRes() {
   return { _status: 200, _body: null, status(c) { this._status = c; return this; }, json(b) { this._body = b; return this; }, end() { return this; }, setHeader() { return this; } };
 }
 
-module.exports = { creerBase, rep, makeRes };
+// Pour les anciens tests de publication de trajet : un véhicule enregistré (auto, 4 places)
+// est exigé à la publication depuis la branche vehicules-debut-journee.
+const VEHICULE_TEST = { id: 'veh-evt', event_type: 'vehicule_enregistre', created_at: '2026-11-01T00:00:00Z', evidence: { vehicule_id: 'veh-test', type: 'auto', numero: 'ABC 123', capacite: { taille_max: 'gros', poids_max_kg: 100, places: 4 } } };
+function avecVehicule(fetchFn) {
+  return async (url, o) => (String(url).includes('event_type=in.(vehicule_enregistre') ? rep([VEHICULE_TEST]) : fetchFn(url, o));
+}
+
+module.exports = { creerBase, rep, makeRes, avecVehicule, VEHICULE_TEST };

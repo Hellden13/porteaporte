@@ -52,6 +52,9 @@ before(async () => {
   SB = st.API_URL; ANON = st.ANON_KEY; SVC = st.SERVICE_ROLE_KEY;
   assert.match(SB, /^http:\/\/(127\.0\.0\.1|localhost):/, 'base locale seulement');
   S = await demarrer({ supabaseUrl: SB, anonKey: ANON, serviceKey: SVC });
+  // Bucket privé des photos (véhicules, début de journée) : créé dans la base LOCALE s'il manque.
+  const b = await svc('GET', '/storage/v1/bucket/kyc-documents');
+  if (b.status !== 200) await svc('POST', '/storage/v1/bucket', { id: 'kyc-documents', name: 'kyc-documents', public: false });
   await creerCompte('conducteur', 'les deux', { driver_status: 'verified' });
   await creerCompte('passager', 'expediteur');
   await creerCompte('admin', 'admin');
@@ -88,6 +91,19 @@ describe('parcours complet (local)', () => {
     const t = await fetch(S.adresse + '/trajets', { redirect: 'manual' });
     assert.ok([307, 308].includes(t.status));
     assert.equal(t.headers.get('location'), '/covoiturage.html');
+  });
+
+  test('véhicule obligatoire : sans véhicule, publication refusée ; auto enregistrée, puis début de journée', async () => {
+    const non = await api('ride-create', { start_city: 'Lévis', end_city: 'Québec', departure_time: ALLER.toISOString(), available_seats: 3, total_distance_km: 30 }, comptes.conducteur.token);
+    assert.equal(non.status, 409, JSON.stringify(non.d));
+    assert.equal(non.d.code, 'vehicule_requis');
+    const m = await api('vehicules-mes', {}, comptes.conducteur.token);
+    assert.equal(m.d.doit_enregistrer, true, 'membre actuel : enregistrement obligatoire');
+    const PHOTO = 'data:image/jpeg;base64,' + Buffer.from('photo-e2e').toString('base64');
+    const v = await api('vehicule-enregistrer', { type: 'auto', numero: 'E2E 123', photo_data_url: PHOTO, places: 4 }, comptes.conducteur.token);
+    assert.equal(v.status, 200, JSON.stringify(v.d));
+    const d = await api('debut-journee', { vehicule_id: v.d.vehicule.vehicule_id, selfie_data_url: PHOTO, photo_data_url: PHOTO }, comptes.conducteur.token);
+    assert.equal(d.status, 200, JSON.stringify(d.d));
   });
 
   test('publication par le conducteur : aller + retour créés', async () => {

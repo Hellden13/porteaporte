@@ -1563,6 +1563,13 @@
         } else {
           document.getElementById('err-msg').style.display = 'block';
           document.getElementById('err-msg').textContent = '⚠️ ' + (data.error || (isEditMode ? 'Erreur lors de la modification.' : 'Erreur lors de la publication.'));
+          if (data.code === 'vehicule_requis') {
+            // Véhicule exigé à la publication : lien vers « Mes véhicules ».
+            const lien = document.createElement('a');
+            lien.href = '/vehicules.html'; lien.textContent = ' Enregistrer mon véhicule →';
+            lien.style.cssText = 'color:#5dbfff;font-weight:800';
+            document.getElementById('err-msg').appendChild(lien);
+          }
           btn.disabled = false; btn.textContent = isEditMode ? '✏️ Modifier le trajet' : '🚗 Publier mon trajet';
         }
       } catch(e) {

@@ -8,7 +8,7 @@
   if (window.__papSessionExpiree) return;
   window.__papSessionExpiree = true;
 
-  var PROTEGEES = /^\/(admin\/(?!login).*|dashboard[a-z-]*|compte|profile|paiement|create-mission|browse-missions|gps-tracker|messagerie|kyc|historique-paiements|covoiturage-publier|conducteur-paiements|mes-donnees|parrainage|depot-preuve|pickup-confirm|livreur-card|confirmation)(\.html)?$/;
+  var PROTEGEES = /^\/(admin\/(?!login).*|dashboard[a-z-]*|compte|profile|paiement|create-mission|browse-missions|gps-tracker|messagerie|kyc|historique-paiements|covoiturage-publier|conducteur-paiements|mes-donnees|parrainage|depot-preuve|pickup-confirm|livreur-card|confirmation|vehicules)(\.html)?$/;
   function protegee() { return PROTEGEES.test(window.location.pathname); }
 
   function versConnexion() {

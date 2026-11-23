@@ -176,6 +176,12 @@
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error((out.error || `Erreur ${res.status}`) + (out.details ? ': ' + out.details : ''));
 
+        if (out.debut_journee_requis) {
+          // Début de journée obligatoire avant toute mission.
+          document.getElementById('missions-list').innerHTML = '<div class="empty" style="padding:24px;text-align:center">Fais ton début de journée (véhicule, selfie, photo du véhicule) pour voir les missions.<br><a href="/vehicules.html#debut" style="display:inline-block;margin-top:12px;padding:10px 16px;background:#5dbfff;color:#071006;border-radius:8px;font-weight:900;text-decoration:none">Commencer ma journée</a></div>';
+          setStatus('Début de journée requis.', 'info');
+          return;
+        }
         missions = out.livraisons || [];
         renderMissions(out.transport_mode || 'unknown');
       } catch (err) {

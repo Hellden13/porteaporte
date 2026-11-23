@@ -57,6 +57,7 @@ const { validerParametres, prixMinimumTotal } = require('../js/repartition');
 const { livraisonsTestIds, adminLivraisonTest, idsLivraisonsTest } = require('../lib/_livraisons-test');
 const { adminRemettreRamasse } = require('../lib/_livraisons-coincees');
 const { adminVersements, adminVersementApprouver, versementsApprouvesPublics } = require('../lib/_versements');
+const { mesVehicules, enregistrerVehicule, retirerVehicule, commencerJournee, adminVehicules, debutDuJour, eligibiliteVehicule } = require('../lib/_vehicules');
 // Champs de distance envoyés par les formulaires (codes postaux facultatifs).
 function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
@@ -467,7 +468,7 @@ async function assignDriver(req, res, ctx, body) {
   const livreurId = body.livreur_id || body.livreurId || ctx.session.id;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,poids_kg,pickup_code_hash,recipient_confirmation_hash`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,pickup_code_hash,recipient_confirmation_hash`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -488,10 +489,13 @@ async function assignDriver(req, res, ctx, body) {
   const targetVerified = roleIn(targetProfile, ['livreur', 'les deux', 'admin']) && targetProfile.driver_status === 'verified' && targetProfile.email_verified !== false;
   if (!admin && !targetVerified) return res.status(403).json({ error: 'Livreur cible non verifie' });
   if (!admin) {
-    const eligibility = deliveryEligibility(targetProfile, livraison);
+    // Début de journée obligatoire, et le colis doit convenir au véhicule du jour.
+    const jour = await debutDuJour(ctx, livreurId);
+    if (!jour) return res.status(409).json({ error: 'Fais ton début de journée (véhicule, selfie, photo du véhicule) avant d’accepter une mission.', code: 'debut_journee_requis' });
+    const eligibility = eligibiliteVehicule(jour.vehicule, livraison, targetProfile);
     if (!eligibility.allowed) {
       return res.status(403).json({
-        error: 'Livraison incompatible avec le mode de transport du livreur',
+        error: 'Livraison incompatible avec ton véhicule du jour',
         reason: eligibility.reason,
         mode: eligibility.mode,
         distance_km: eligibility.routeKm
@@ -986,11 +990,17 @@ async function livreurRescueAccept(req, res, ctx, body) {
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
   if (!isVerifiedDriver(ctx.session, ctx.profile)) return res.status(403).json({ error: 'Livreur vérifié requis' });
 
-  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,rescue_mode,rescue_livreur_original,rescue_bonus_pct,prix_total,expediteur_id`, {
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,rescue_mode,rescue_livreur_original,rescue_bonus_pct,prix_total,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const livraison = lr.ok ? (await lr.json())[0] : null;
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  if (!roleIn(ctx.profile, ['admin'])) {
+    const jour = await debutDuJour(ctx, ctx.session.id);
+    if (!jour) return res.status(409).json({ error: 'Fais ton début de journée avant d’accepter un sauvetage.', code: 'debut_journee_requis' });
+    const el = eligibiliteVehicule(jour.vehicule, livraison, ctx.profile);
+    if (!el.allowed) return res.status(403).json({ error: 'Livraison incompatible avec ton véhicule du jour', reason: el.reason });
+  }
   if (!livraison.rescue_mode) return res.status(409).json({ error: 'Cette livraison n\'est pas en rescue' });
   if (livraison.rescue_livreur_original === ctx.session.id) return res.status(409).json({ error: 'Tu ne peux pas accepter ta propre rescue' });
 
@@ -1880,8 +1890,15 @@ async function availableLivraisons(req, res, ctx) {
   );
   const rows = r.ok ? await r.json() : [];
   if (!r.ok) return res.status(400).json({ error: 'Lecture livraisons impossible', details: rows });
+  // Début de journée obligatoire : sans véhicule du jour, aucune mission n'est proposée.
+  // Le jumelage utilise le véhicule du jour (lib/_vehicules.js), pas l'ancien choix du navigateur.
+  const estAdmin = roleIn(ctx.profile, ['admin']);
+  const jour = estAdmin ? null : await debutDuJour(ctx, ctx.session.id);
+  if (!estAdmin && !jour) {
+    return res.status(200).json({ success: true, livraisons: [], debut_journee_requis: true, message: 'Fais ton début de journée (véhicule, selfie, photo du véhicule) pour voir les missions.' });
+  }
   const filtered = rows
-    .map((row) => ({ row, eligibility: deliveryEligibility(ctx.profile, row) }))
+    .map((row) => ({ row, eligibility: estAdmin ? deliveryEligibility(ctx.profile, row) : eligibiliteVehicule(jour.vehicule, row, ctx.profile) }))
     .filter((item) => item.eligibility.allowed);
 
   // IA matching Haversine : prioriser missions sur la route du livreur
@@ -6264,6 +6281,12 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-livraison-test') return await adminLivraisonTest(req, res, ctx, body);
     if (endpoint === 'admin-remettre-ramasse') return await adminRemettreRamasse(req, res, ctx, body);
     if (endpoint === 'admin-versements') return await adminVersements(req, res, ctx, body);
+    if (endpoint === 'vehicules-mes') return await mesVehicules(req, res, ctx, body);
+    if (endpoint === 'vehicule-enregistrer') return await enregistrerVehicule(req, res, ctx, body);
+    if (endpoint === 'vehicule-retirer') return await retirerVehicule(req, res, ctx, body);
+    if (endpoint === 'debut-journee') return await commencerJournee(req, res, ctx, body);
+    if (endpoint === 'admin-vehicules') return await adminVehicules(req, res, ctx, body);
+    if (endpoint === 'admin-vehicule-retirer') return await retirerVehicule(req, res, ctx, body, { parAdmin: true });
     if (endpoint === 'admin-versement-approuver') return await adminVersementApprouver(req, res, ctx, body);
     if (endpoint === 'xl-confirmation-request') return await xlConfirmationRequest(req, res, ctx, body);
     if (endpoint === 'livreur-route-update') return await livreurRouteUpdate(req, res, ctx, body);

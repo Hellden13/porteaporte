@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Véhicules et débuts de journée - Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/flottants.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    body{background:#05080c;color:#f0f2f5;font-family:Inter,system-ui,sans-serif;margin:0}
+    .page{max-width:1100px;margin:0 auto;padding:20px 16px 100px}
+    .muted{color:#a8b0ba;font-size:.88rem}
+    .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{background:#0d1118;border:1px solid #1E2535;border-radius:12px;padding:12px}
+    .card img{width:100%;height:170px;object-fit:cover;border-radius:8px;background:#111}
+    .photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+    .btn{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,100,100,.45);background:transparent;color:#ff8a8a;font-weight:800;cursor:pointer}
+    input[type=date]{padding:8px;border-radius:8px;border:1px solid #2b3442;background:#05080c;color:#fff}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a href="/admin/dashboard-admin.html" style="color:#5dbfff;text-decoration:none">← Admin</a>
+    <h1>Véhicules et débuts de journée</h1>
+    <p class="muted">Photos consultables seulement (aucune vérification automatique). Liens valables quelques minutes. Selfies et photos du jour conservés 90 jours, sauf litige ouvert. Pour comparer un selfie au selfie d'identité : <a href="/admin/face-verify.html" style="color:#5dbfff">vérification des visages</a>.</p>
+    <h2>Débuts de journée du <input type="date" id="jour"></h2>
+    <div id="debuts" class="grille"><div class="muted">Chargement…</div></div>
+    <h2>Véhicules enregistrés</h2>
+    <div id="vehicules" class="grille"><div class="muted">Chargement…</div></div>
+  </main>
+  <script>
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const img = (u, alt) => u ? `<img src="${esc(u)}" alt="${esc(alt)}" loading="lazy">` : '<div class="muted" style="height:170px;display:flex;align-items:center;justify-content:center">Aucune photo</div>';
+    let session = null;
+    async function charger() {
+      const jour = document.getElementById('jour').value;
+      const r = await fetch('/api/platform?endpoint=admin-vehicules', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ endpoint: 'admin-vehicules', date: jour }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { document.getElementById('debuts').innerHTML = `<div class="muted">${esc(d.error || 'Lecture impossible')}</div>`; return; }
+      document.getElementById('debuts').innerHTML = (d.debuts_journee || []).length ? d.debuts_journee.map((x) => `<div class="card">
+          <div class="photos">${img(x.selfie_url, 'Selfie')}${img(x.photo_url, 'Véhicule')}</div>
+          <strong>${esc(x.label || x.type)}</strong><div class="muted">Membre ${esc(String(x.user_id).slice(0, 8))} · ${new Date(x.commence_le).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' })}${x.photos_supprimees ? ' · photos supprimées (90 jours)' : ''}</div>
+        </div>`).join('') : '<div class="muted">Aucun début de journée ce jour-là.</div>';
+      document.getElementById('vehicules').innerHTML = (d.vehicules || []).length ? d.vehicules.map((v) => `<div class="card">
+          ${img(v.photo_url, 'Véhicule')}
+          <strong>${esc(v.label)}</strong>${v.description ? ' · ' + esc(v.description) : ''}
+          <div class="muted">Membre ${esc(String(v.user_id).slice(0, 8))}${v.numero ? ' · N° ' + esc(v.numero) : ''} · ${esc(v.capacite?.tailleMax)} · ${esc(v.capacite?.poidsMax)} kg${v.capacite?.places ? ' · ' + v.capacite.places + ' places' : ''}</div>
+          <button class="btn" style="margin-top:8px" data-u="${esc(v.user_id)}" data-v="${esc(v.vehicule_id)}">Retirer ce véhicule</button>
+        </div>`).join('') : '<div class="muted">Aucun véhicule enregistré.</div>';
+      document.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', async () => {
+        const raison = await PAPDialog.prompt('Retirer ce véhicule ? Le membre ne pourra plus l’utiliser. Raison :', '', { title: 'Retirer le véhicule', ok: 'Retirer' });
+        if (raison === null) return;
+        const rr = await fetch('/api/platform?endpoint=admin-vehicule-retirer', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ endpoint: 'admin-vehicule-retirer', user_id: b.dataset.u, vehicule_id: b.dataset.v, raison }) });
+        const o = await rr.json().catch(() => ({}));
+        await PAPDialog.alert(rr.ok ? 'Véhicule retiré.' : (o.error || 'Action impossible.'));
+        charger();
+      }));
+    }
+    (async () => {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { location.href = '/admin/login.html?next=' + encodeURIComponent('/admin/vehicules.html'); return; }
+      session = data.session;
+      const { data: prof } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      if (prof?.role !== 'admin') { await PAPDialog.alert('Accès admin requis'); location.href = '/'; return; }
+      const j = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      document.getElementById('jour').value = j;
+      document.getElementById('jour').addEventListener('change', charger);
+      charger();
+    })();
+  </script>
+</body>
+</html>

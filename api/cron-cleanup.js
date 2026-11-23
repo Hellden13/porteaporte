@@ -182,6 +182,14 @@ module.exports = async function handler(req, res) {
     results.ride_capture = 'exception: ' + e.message;
   }
 
+  // ─── 6. SELFIES ET PHOTOS DU DÉBUT DE JOURNÉE : 90 jours, sauf litige ouvert ───
+  try {
+    const { purgerPhotosDuJour } = require('../lib/_vehicules');
+    results.photos_debut_journee = await purgerPhotosDuJour({ sbUrl, sbKey });
+  } catch (e) {
+    results.photos_debut_journee = 'exception: ' + e.message;
+  }
+
   console.log('[cron-cleanup]', results);
   return res.status(200).json({ success: true, results, ts: new Date().toISOString() });
 };

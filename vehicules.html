@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes véhicules et début de journée - PorteàPorte</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/flottants.js"></script>
+  <style>
+    body{background:var(--brand-bg-dark,#05080c);color:var(--brand-text,#f0f2f5);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;margin:0}
+    .page{max-width:720px;margin:0 auto;padding:20px 16px 110px}
+    h1{font-size:1.5rem;margin:6px 0 4px}
+    h2{font-size:1.1rem;margin:0 0 10px}
+    .muted{color:#a8b0ba;font-size:.9rem;line-height:1.5}
+    .panneau{background:#0d1118;border:1px solid #1E2535;border-radius:14px;padding:16px;margin:16px 0}
+    .alerte{background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.45);color:#ffe08a;border-radius:10px;padding:12px 14px;margin:12px 0;font-weight:600}
+    .ok{background:rgba(125,255,193,.08);border:1px solid rgba(125,255,193,.4);color:#b9ffe0}
+    label{display:block;font-weight:700;font-size:.9rem;margin:12px 0 6px}
+    input,select{width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #2b3442;background:#05080c;color:#fff;font-size:16px}
+    .ligne{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-radius:10px;border:0;font-weight:900;font-size:1rem;cursor:pointer;background:#5dbfff;color:#071006;min-height:46px}
+    .btn.secondaire{background:#1a1f28;color:#fff;border:1px solid #2b3442}
+    .btn.danger{background:transparent;color:#ff8a8a;border:1px solid rgba(255,100,100,.45)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .vehicule-card{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:12px;border:1px solid #1E2535;border-radius:12px;margin:10px 0;background:#090c12}
+    button.vehicule-card{background:#090c12!important;color:#f0f2f5!important;font-weight:400!important;box-shadow:none!important;padding:12px!important;border:1px solid #1E2535!important}
+    .vehicule-card.choisi,button.vehicule-card.choisi{border-color:#5dbfff!important;box-shadow:0 0 0 2px rgba(93,191,255,.35)!important}
+    .vehicule-icone{font-size:1.8rem;width:44px;text-align:center}
+    .petit{font-size:.82rem;color:#a8b0ba}
+    .photo-zone{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .photo-boite{border:1px dashed #2b3442;border-radius:12px;padding:10px;text-align:center;min-height:120px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+    .photo-boite img{max-width:100%;max-height:140px;border-radius:8px;object-fit:cover}
+    .photo-boite input{display:none}
+    @media (max-width:420px){.ligne,.photo-zone{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a href="/dashboard-livreur.html" class="petit" style="color:#5dbfff;text-decoration:none">← Tableau de bord</a>
+    <h1>Mes véhicules</h1>
+    <p class="muted">Tu ne peux livrer ou conduire qu'avec un véhicule enregistré ici. Un véhicule non enregistré (par exemple un vélo emprunté) ne peut pas servir tant que tu ne l'as pas ajouté.</p>
+    <div id="obligatoire" class="alerte" hidden>Enregistre ton véhicule pour continuer : c'est maintenant obligatoire pour tous les livreurs et conducteurs. Les anciens choix « véhicule du jour » ne comptent plus.</div>
+    <div id="message" role="status"></div>
+
+    <section class="panneau" id="debut">
+      <h2>🚦 Début de journée</h2>
+      <p class="muted" id="debutEtat">Avant d'accepter une mission ou de partir pour un trajet : choisis ton véhicule du jour, prends un selfie et une photo du véhicule. Si tu changes de véhicule dans la journée, refais-le.</p>
+      <div id="choixVehicules"></div>
+      <div class="photo-zone">
+        <div class="photo-boite">
+          <div id="selfieApercu" class="petit">Selfie</div>
+          <label class="btn secondaire" for="selfieFichier" style="margin:0">📷 Prendre un selfie</label>
+          <input id="selfieFichier" type="file" accept="image/*" capture="user">
+        </div>
+        <div class="photo-boite" id="photoVehiculeBoite">
+          <div id="photoApercu" class="petit">Photo du véhicule</div>
+          <label class="btn secondaire" for="photoFichier" style="margin:0">📷 Photo du véhicule</label>
+          <input id="photoFichier" type="file" accept="image/*" capture="environment">
+        </div>
+      </div>
+      <button class="btn" id="btnCommencer" style="width:100%;margin-top:14px" disabled>Commencer ma journée</button>
+    </section>
+
+    <section class="panneau">
+      <h2>➕ Enregistrer un véhicule</h2>
+      <label for="type">Type</label>
+      <select id="type"></select>
+      <div id="champsDetail">
+        <label for="numero">Numéro de série ou plaque</label>
+        <input id="numero" autocomplete="off" maxlength="40" placeholder="Ex. SN-48213 ou ABC 123">
+        <label for="description">Description (facultatif)</label>
+        <input id="description" maxlength="80" placeholder="Ex. trottinette grise, vélo rouge">
+      </div>
+      <div class="ligne">
+        <div><label for="tailleMax">Taille max des colis</label><select id="tailleMax"></select></div>
+        <div><label for="poidsMax">Poids max (kg)</label><input id="poidsMax" type="number" min="1" inputmode="numeric"></div>
+      </div>
+      <div id="champPlaces"><label for="places">Places passagers</label><input id="places" type="number" min="0" inputmode="numeric" value="0"></div>
+      <div id="photoVehiculeEnregistrement">
+        <div class="photo-boite" style="margin-top:12px">
+          <div id="photoEnregApercu" class="petit">Photo du véhicule (obligatoire)</div>
+          <label class="btn secondaire" for="photoEnreg" style="margin:0">📷 Ajouter la photo</label>
+          <input id="photoEnreg" type="file" accept="image/*" capture="environment">
+        </div>
+      </div>
+      <p class="petit" id="plafonds"></p>
+      <button class="btn" id="btnEnregistrer" style="width:100%;margin-top:10px">Enregistrer ce véhicule</button>
+    </section>
+
+    <section class="panneau">
+      <h2>Mes véhicules enregistrés</h2>
+      <div id="liste" class="muted">Chargement…</div>
+    </section>
+  </main>
+  <script>
+    const ICONES = { a_pied: '🚶', trottinette_electrique: '🛴', velo: '🚲', velo_electrique: '🚲⚡', moto: '🏍️', auto: '🚗', vus: '🚙', camionnette: '🚐' };
+    const TAILLES = { petit: 'Petit', moyen: 'Moyen', gros: 'Gros', xl: 'XL (meubles)' };
+    let session = null, types = {}, vehicules = [], choisi = null, selfie = null, photoJour = null, photoEnreg = null;
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function message(texte, ok) {
+      const m = $('message');
+      m.className = ok ? 'alerte ok' : 'alerte';
+      m.textContent = texte;
+      m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Réduit la photo (1280 px, JPEG) pour rester sous la limite du serveur.
+    function lirePhoto(fichier) {
+      return new Promise((ok, non) => {
+        if (!fichier) return non(new Error('Aucune photo'));
+        const img = new Image();
+        const url = URL.createObjectURL(fichier);
+        img.onload = () => {
+          const max = 1280, k = Math.min(1, max / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          ok(c.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); non(new Error('Photo illisible')); };
+        img.src = url;
+      });
+    }
+    function apercu(idZone, dataUrl) {
+      const z = $(idZone);
+      z.textContent = '';
+      const img = document.createElement('img');
+      img.src = dataUrl; img.alt = 'Aperçu';
+      z.appendChild(img);
+    }
+
+    async function api(endpoint, corps) {
+      const r = await fetch('/api/platform?endpoint=' + endpoint, {
+        method: corps ? 'POST' : 'GET',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: corps ? JSON.stringify({ endpoint, ...corps }) : undefined,
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Action impossible');
+      return d;
+    }
+
+    function majFormulaire() {
+      const t = types[$('type').value];
+      if (!t) return;
+      $('champsDetail').hidden = !t.numero;
+      $('photoVehiculeEnregistrement').hidden = !t.photo;
+      $('champPlaces').hidden = !t.covoiturage;
+      const ordre = ['petit', 'moyen', 'gros', 'xl'];
+      $('tailleMax').innerHTML = ordre.slice(0, ordre.indexOf(t.tailleMax) + 1).map((k) => `<option value="${k}" ${k === t.tailleMax ? 'selected' : ''}>${TAILLES[k]}</option>`).join('');
+      $('poidsMax').max = t.poidsMax; $('poidsMax').value = t.poidsMax;
+      $('places').max = t.placesMax; if (Number($('places').value) > t.placesMax) $('places').value = t.placesMax;
+      $('plafonds').textContent = `Plafonds pour ce type : colis « ${TAILLES[t.tailleMax]} » au plus, ${t.poidsMax} kg au plus${t.covoiturage ? `, ${t.placesMax} places passagers au plus` : ', pas de covoiturage'}.`;
+    }
+
+    function dessinerChoix() {
+      const z = $('choixVehicules');
+      if (!vehicules.length) { z.innerHTML = '<div class="alerte">Aucun véhicule enregistré : ajoute-en un plus bas.</div>'; return; }
+      z.innerHTML = vehicules.map((v) => `<button type="button" class="vehicule-card ${choisi === v.vehicule_id ? 'choisi' : ''}" data-id="${esc(v.vehicule_id)}" style="width:100%;text-align:left;color:inherit;cursor:pointer">
+          <div class="vehicule-icone">${ICONES[v.type] || '🚗'}</div>
+          <div><strong>${esc(v.label)}</strong>${v.description ? ' · ' + esc(v.description) : ''}<div class="petit">${v.numero ? 'N° ' + esc(v.numero) + ' · ' : ''}${TAILLES[v.capacite.tailleMax]} · ${v.capacite.poidsMax} kg${v.capacite.places ? ' · ' + v.capacite.places + ' places' : ''}</div></div>
+        </button>`).join('');
+      z.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => { choisi = b.dataset.id; dessinerChoix(); majBoutonDebut(); }));
+    }
+    function majBoutonDebut() {
+      const v = vehicules.find((x) => x.vehicule_id === choisi);
+      const photoRequise = v && types[v.type] && types[v.type].photo;
+      $('photoVehiculeBoite').hidden = !photoRequise;
+      $('btnCommencer').disabled = !(v && selfie && (!photoRequise || photoJour));
+    }
+    function dessinerListe() {
+      $('liste').innerHTML = vehicules.length ? vehicules.map((v) => `<div class="vehicule-card">
+          <div class="vehicule-icone">${ICONES[v.type] || '🚗'}</div>
+          <div><strong>${esc(v.label)}</strong>${v.description ? ' · ' + esc(v.description) : ''}<div class="petit">${v.numero ? 'N° ' + esc(v.numero) + ' · ' : ''}enregistré le ${new Date(v.enregistre_le).toLocaleDateString('fr-CA')}</div>
+          <button type="button" class="btn danger" data-retirer="${esc(v.vehicule_id)}" style="margin-top:8px;min-height:38px;padding:8px 12px;font-size:.88rem">Retirer</button></div>
+        </div>`).join('') : 'Aucun véhicule pour l’instant.';
+      document.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', async () => {
+        if (!(await PAPDialog.confirm('Retirer ce véhicule ? Il ne pourra plus servir (tu pourras l’enregistrer de nouveau).', { title: 'Retirer le véhicule', ok: 'Retirer', danger: true }))) return;
+        try { await api('vehicule-retirer', { vehicule_id: b.dataset.retirer }); message('Véhicule retiré.', true); await charger(); } catch (e) { message(e.message); }
+      }));
+    }
+
+    async function charger() {
+      const d = await api('vehicules-mes');
+      types = d.types || {};
+      vehicules = d.vehicules || [];
+      if (!$('type').options.length) {
+        $('type').innerHTML = Object.entries(types).map(([k, t]) => `<option value="${k}">${ICONES[k] || ''} ${esc(t.label)}</option>`).join('');
+        majFormulaire();
+      }
+      if (d.debut_journee) {
+        $('debutEtat').textContent = `Journée commencée avec : ${d.debut_journee.label}. Pour changer de véhicule, choisis-en un autre, prends un nouveau selfie et une nouvelle photo.`;
+        if (!choisi) choisi = d.debut_journee.vehicule_id;
+      }
+      if (!choisi && vehicules.length === 1) choisi = vehicules[0].vehicule_id;
+      $('obligatoire').hidden = !(new URLSearchParams(location.search).get('obligatoire') === '1' && !vehicules.length);
+      dessinerChoix(); dessinerListe(); majBoutonDebut();
+    }
+
+    $('type').addEventListener('change', majFormulaire);
+    $('selfieFichier').addEventListener('change', async (e) => { try { selfie = await lirePhoto(e.target.files[0]); apercu('selfieApercu', selfie); } catch (err) { message(err.message); } majBoutonDebut(); });
+    $('photoFichier').addEventListener('change', async (e) => { try { photoJour = await lirePhoto(e.target.files[0]); apercu('photoApercu', photoJour); } catch (err) { message(err.message); } majBoutonDebut(); });
+    $('photoEnreg').addEventListener('change', async (e) => { try { photoEnreg = await lirePhoto(e.target.files[0]); apercu('photoEnregApercu', photoEnreg); } catch (err) { message(err.message); } });
+
+    $('btnEnregistrer').addEventListener('click', async () => {
+      const b = $('btnEnregistrer'); b.disabled = true;
+      try {
+        const d = await api('vehicule-enregistrer', {
+          type: $('type').value, numero: $('numero').value, description: $('description').value,
+          taille_max: $('tailleMax').value, poids_max_kg: Number($('poidsMax').value), places: Number($('places').value || 0),
+          photo_data_url: photoEnreg || undefined,
+        });
+        message(`Véhicule enregistré : ${d.vehicule.label}. Tu peux maintenant commencer ta journée avec ce véhicule.`, true);
+        photoEnreg = null; $('photoEnregApercu').textContent = 'Photo du véhicule (obligatoire)'; $('numero').value = ''; $('description').value = '';
+        choisi = d.vehicule.vehicule_id;
+        await charger();
+      } catch (e) { message(e.message); } finally { b.disabled = false; }
+    });
+
+    $('btnCommencer').addEventListener('click', async () => {
+      const b = $('btnCommencer'); b.disabled = true;
+      try {
+        const d = await api('debut-journee', { vehicule_id: choisi, selfie_data_url: selfie, photo_data_url: photoJour || undefined });
+        message(`Bonne journée ! Véhicule du jour : ${d.debut_journee.label}. Les missions proposées conviennent à ce véhicule.`, true);
+        selfie = null; photoJour = null; $('selfieApercu').textContent = 'Selfie'; $('photoApercu').textContent = 'Photo du véhicule';
+        await charger();
+      } catch (e) { message(e.message); majBoutonDebut(); }
+    });
+
+    (async () => {
+      const db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
+      const { data } = await db.auth.getSession();
+      if (!data?.session) { location.href = '/login.html?next=' + encodeURIComponent('/vehicules.html'); return; }
+      session = data.session;
+      try { await charger(); } catch (e) { message(e.message); }
+    })();
+  </script>
+</body>
+</html>

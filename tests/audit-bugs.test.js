@@ -23,7 +23,7 @@ function makeRes() {
   return { _status: 200, _body: null, status(c) { this._status = c; return this; }, json(b) { this._body = b; return this; }, end() { return this; }, setHeader() { return this; } };
 }
 async function appel(endpoint, body, fetchImpl, extra = {}) {
-  global.fetch = fetchImpl;
+  global.fetch = require('./aide-fausse-base').avecVehicule(fetchImpl);
   const res = makeRes();
   await handler({ method: 'POST', url: '/api/platform', body: { endpoint, ...body }, headers: { 'content-type': 'application/json', ...(extra.auth ? { authorization: 'Bearer t' } : {}) } }, res);
   return res;
@@ -225,6 +225,7 @@ describe('promotion « 10 premiers trajets sans frais » : retirée', () => {
   test('publication : même le tout premier trajet d\'un conducteur paie les frais', async () => {
     const posts = [];
     global.fetch = async (url, o = {}) => {
+      if (url.includes('event_type=in.(vehicule_enregistre')) return rep([require('./aide-fausse-base').VEHICULE_TEST]);
       if (url.includes('/auth/v1/user')) return rep({ id: 'd1' });
       if (url.includes('/rpc/check_rate_limit')) return rep(true);
       if (url.includes('/rest/v1/profiles')) return rep([{ id: 'd1', role: 'conducteur', suspendu: false }]);
