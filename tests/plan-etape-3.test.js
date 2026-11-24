@@ -255,4 +255,14 @@ describe('liens du site et petites corrections', () => {
     const s = lire('sitemap.xml');
     assert.doesNotMatch(s, /badges\.html|parrainage\.html/);
   });
+  test('barres internes des pages : aucun libellé « Accueil » (pas de confusion avec l\'onglet Accueil)', () => {
+    for (const k of MEMBRES) {
+      const h = lire(`membre-${k}.html`).replace(/<title>[\s\S]*?<\/title>/, '').replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');
+      assert.doesNotMatch(h, />[^<>]*\bAccueil\b[^<>]*</, k);
+    }
+    const c = lire('membre-covoiturage.html');
+    assert.match(c, /<div class="mob-tab active" onclick="showSection\('overview'\)"><span class="ico">📊<\/span>Résumé<\/div>/);
+    assert.doesNotMatch(c, /showSection\('overview'\)"><span class="[a-z-]+">🏠/);
+    assert.match(lire('membre-recus.html'), /href="\/index\.html">← Le site<\/a>/);
+  });
 });
