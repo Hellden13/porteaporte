@@ -152,7 +152,7 @@
     const btn = document.getElementById('pc-confirm-btn');
     const msg = document.getElementById('pc-msg');
     const reason = document.getElementById('pc-reason')?.value?.trim() || '';
-    if (!(await PAPDialog.confirm('Es-tu CERTAIN(E) de vouloir annuler ?\nCette action est irréversible.'))) return;
+    if (!(await PAPDialog.confirm('Es-tu certain(e) de vouloir annuler ?\nCette action est irréversible.', { title: 'Annuler la livraison', annuler: 'Garder ma livraison', ok: 'Oui, annuler', danger: true }))) return;
     btn.disabled = true;
     btn.textContent = 'Annulation en cours...';
     msg.className = 'pc-msg';

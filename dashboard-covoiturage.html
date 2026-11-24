@@ -269,7 +269,7 @@ async function annulerUnJour(rideId) {
   const date = await PAPDialog.prompt('Quelle date annuler ? (AAAA-MM-JJ)\nLes autres jours du trajet restent publiés. Si des passagers ont réservé pour ce jour-là, ils sont remboursés au complet et avertis.', aujourdhui, { title: 'Annuler un seul jour', ok: 'Continuer', inputmode: 'numeric' });
   if (date === null) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())) { await PAPDialog.alert('Date invalide : écris-la comme 2026-11-24.'); return; }
-  if (!(await PAPDialog.confirm('Annuler le trajet le ' + String(date).trim() + ' seulement ?', { title: 'Confirmer', ok: 'Annuler ce jour', danger: true }))) return;
+  if (!(await PAPDialog.confirm('Annuler le trajet le ' + String(date).trim() + ' seulement ?', { title: 'Annuler ce jour', annuler: 'Garder ce jour', ok: 'Oui, annuler ce jour', danger: true }))) return;
   const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
   const res = await fetch('/api/platform?endpoint=ride-annuler-date', {
     method: 'POST',
@@ -298,7 +298,7 @@ async function annulerTrajet(rideId) {
       `${Number(preview.total_refund || 0).toFixed(2)} $ seront remboursés aux passagers (100 %).\n` +
       `Cette annulation sera inscrite à ton taux d’annulation et pourra affecter ta fiabilité.\n\n` +
       `Cette action est irréversible. Confirmer ?`;
-    if (!(await PAPDialog.confirm(warning))) return;
+    if (!(await PAPDialog.confirm(warning, { title: 'Annuler le trajet', annuler: 'Garder mon trajet', ok: 'Oui, annuler', danger: true }))) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -340,7 +340,7 @@ async function annulerReservation(bookingId) {
       `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
       `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
       `Cette action est irréversible. Confirmer ?`;
-    if (!(await PAPDialog.confirm(warning))) return;
+    if (!(await PAPDialog.confirm(warning, { title: 'Annuler la réservation', annuler: 'Garder ma réservation', ok: 'Oui, annuler', danger: true }))) return;
     const res = await fetch('/api/ride-cancel', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },

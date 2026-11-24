@@ -1327,7 +1327,7 @@
                 return;
             }
             // Fallback ancien comportement si script pas chargé
-            if (!(await PAPDialog.confirm('Annuler cette livraison?'))) return;
+            if (!(await PAPDialog.confirm('Annuler cette livraison ?', { title: 'Annuler la livraison', annuler: 'Garder ma livraison', ok: 'Oui, annuler', danger: true }))) return;
             const res = await fetch('/api/cancel-livraison', {
                 method: 'POST',
                 headers: {

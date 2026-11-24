@@ -150,3 +150,74 @@ describe('3. « Niveau » ne cache plus le menu de gauche', () => {
     assert.ok(h.includes('/js/layer-mode.js') && h.includes('/js/flottants.js'));
   });
 });
+
+describe('Décision 24 nov. : sans paiement, rien au grand livre', () => {
+  function fauxTardif(booking, piStatus) {
+    const appels = [];
+    global.fetch = async (url, o = {}) => {
+      const m = o.method || 'GET';
+      appels.push({ url, m, body: o.body });
+      const ok = (d) => ({ ok: true, status: 200, json: async () => d });
+      if (url.includes('/ride_bookings?id=eq.') && m === 'GET') return ok([booking]);
+      // départ dans 1 h : annulation tardive (50 % rendu, 40 % conducteur, 10 % fonds)
+      if (url.includes('/rides?id=eq.') && m === 'GET') return ok([{ id: 'ride-1', driver_id: 'driver-1', departure_time: new Date(Date.now() + 3600000).toISOString(), available_seats: 1, start_city: 'Lévis', end_city: 'Rimouski' }]);
+      if (url.includes('/impact_settings')) return ok([{ ride_cancel_free_window_h: 24, ride_cancel_late_window_h: 2 }]);
+      if (url.includes('api.stripe.com') && url.includes('/payment_intents/') && m === 'GET') return ok({ id: booking.stripe_payment_intent, status: piStatus, currency: 'cad', amount: 1250 });
+      if (url.includes('api.stripe.com')) return ok({ id: 'x', status: 'succeeded' });
+      if (url.includes('/profiles?id=in.')) return ok([{ id: 'passenger-1', email: 'p@test.ca' }, { id: 'driver-1', email: 'd@test.ca' }]);
+      if (url.includes('/api/notifier')) return ok({ success: true });
+      if (m === 'PATCH' || m === 'POST') return { ok: true, status: 201, json: async () => ([{}]) };
+      return ok([]);
+    };
+    return appels;
+  }
+  const B = { id: 'b9', ride_id: 'ride-1', passenger_id: 'passenger-1', status: 'en_attente', total_passenger: 12.5, seats_reserved: 1, stripe_payment_intent: null, payment_currency: 'cad' };
+  const grandLivre = (appels) => appels.filter((a) => a.m === 'POST' && a.url.includes('/rest/v1/transactions'));
+
+  test('annulation TARDIVE sans paiement : aucune écriture au grand livre, montants à 0', async () => {
+    const appels = fauxTardif(B);
+    const r = res();
+    await rideCancel({}, r, ctx(), { booking_id: 'b9' });
+    assert.equal(r._status, 200);
+    assert.equal(r._body.tier, 'tardif');
+    assert.equal(grandLivre(appels).length, 0, 'ni dédommagement ni fonds');
+    assert.equal(r._body.driver_compensation, 0);
+    assert.equal(r._body.security_fund, 0);
+    assert.equal(r._body.refund, 0);
+    assert.equal(r._body.admin_review_required, false);
+  });
+
+  test('intention Stripe jamais autorisée : rien au grand livre non plus', async () => {
+    const appels = fauxTardif({ ...B, stripe_payment_intent: 'pi_reel_jamais_autorise_123456' }, 'requires_payment_method');
+    const r = res();
+    await rideCancel({}, r, ctx(), { booking_id: 'b9' });
+    assert.equal(grandLivre(appels).length, 0);
+    assert.equal(r._body.driver_compensation, 0);
+  });
+
+  test('annulation tardive AVEC paiement autorisé : dédommagement et fonds inscrits (inchangé)', async () => {
+    const appels = fauxTardif({ ...B, status: 'confirme', stripe_payment_intent: 'pi_reel_autorise_tardif_123456' }, 'requires_capture');
+    const r = res();
+    await rideCancel({}, r, ctx(), { booking_id: 'b9' });
+    const types = grandLivre(appels).map((a) => JSON.parse(a.body).type).sort();
+    assert.deepEqual(types, ['dedommagement_covoiturage', 'fond_securite_covoiturage']);
+    assert.ok(r._body.driver_compensation > 0);
+  });
+});
+
+describe('Décision 24 nov. : « Garder ma réservation » / « Oui, annuler »', () => {
+  test('toutes les fenêtres d’annulation', () => {
+    const R = "{ title: 'Annuler la réservation', annuler: 'Garder ma réservation', ok: 'Oui, annuler', danger: true }";
+    assert.ok(lire('dashboard.html').includes(R));
+    const dc = lire('dashboard-covoiturage.html');
+    assert.ok(dc.includes(R));
+    assert.ok(dc.includes("annuler: 'Garder mon trajet', ok: 'Oui, annuler'"));
+    assert.ok(dc.includes("annuler: 'Garder ce jour', ok: 'Oui, annuler ce jour'"));
+    assert.ok(lire('dashboard-expediteur.html').includes("annuler: 'Garder ma livraison', ok: 'Oui, annuler'"));
+    assert.ok(lire('js/cancel-livraison.js').includes("annuler: 'Garder ma livraison', ok: 'Oui, annuler'"));
+    const dl = lire('js/dialogues.js');
+    assert.ok(dl.includes("'.pap-dlg button.danger{border-color:transparent!important;background:#ef4444!important;color:#fff!important}'"), '« Oui, annuler » reste rouge');
+    assert.ok(dl.includes('background:#1a1f28!important'), '« Garder… » reste neutre');
+    for (const f of ['dashboard.html', 'dashboard-covoiturage.html']) assert.ok(!/PAPDialog\.confirm\(warning\)\)/.test(lire(f)), f + ' : plus de « Annuler / OK »');
+  });
+});

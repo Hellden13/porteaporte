@@ -19,9 +19,11 @@
       '.pap-dlg p{margin:0 0 14px;color:#d3d8df;white-space:pre-wrap;word-break:break-word}' +
       '.pap-dlg input{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #3a4556;background:#0b0d12;color:#fff;font-size:16px;margin:0 0 14px}' +
       '.pap-dlg-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}' +
-      '.pap-dlg button{border:1px solid #3a4556;border-radius:8px;padding:10px 16px;font-weight:800;cursor:pointer;background:#1a1f28;color:#f0f2f5;font-size:15px}' +
-      '.pap-dlg button.ok{border-color:transparent;background:#00d9ff;color:#06121a}' +
-      '.pap-dlg button.danger{border-color:transparent;background:#ef4444;color:#fff}';
+      // !important : le style général des boutons du site (bleu) écrasait ces couleurs ;
+      // « Oui, annuler » doit rester rouge et « Garder… » neutre (vu le 24 nov. 2026).
+      '.pap-dlg button{border:1px solid #3a4556!important;border-radius:8px;padding:10px 16px;min-height:48px;font-weight:800;cursor:pointer;background:#1a1f28!important;color:#f0f2f5!important;font-size:15px;box-shadow:none!important}' +
+      '.pap-dlg button.ok{border-color:transparent!important;background:#00d9ff!important;color:#06121a!important}' +
+      '.pap-dlg button.danger{border-color:transparent!important;background:#ef4444!important;color:#fff!important}';
     document.head.appendChild(s);
   }
 
