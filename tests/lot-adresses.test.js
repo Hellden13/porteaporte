@@ -379,6 +379,9 @@ describe('navigateur : clé jamais exposée, mention Google, gros caractères, t
     assert.match(js, /\.adr-opt\{[^}]*min-height:60px/);
     assert.match(js, /\.adr-opt\{[^}]*font-size:18px/);
     assert.match(js, /\.adr-champ\{font-size:18px!important;min-height:52px\}/);
+    // Les boutons flottants ne cachent plus la liste ; la liste remonte si elle dépasse l'écran.
+    assert.ok(js.includes('body.adr-ouvert #pia-launch,body.adr-ouvert .pap-launcher-btn,body.adr-ouvert .pp-layer-pill,body.adr-ouvert #pap-gps-status{display:none!important}'));
+    assert.ok(js.includes("document.body.classList.add('adr-ouvert');") && js.includes("document.body.classList.remove('adr-ouvert');"));
   });
 
   test('le texte libre est toujours accepté : choix « Garder ce que j’ai écrit », aucune obligation de choisir', () => {

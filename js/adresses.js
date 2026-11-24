@@ -40,6 +40,8 @@
       '.adr-choisi{margin-top:8px;font-size:16px;line-height:1.4;color:#c4f135;font-weight:700}',
       '.adr-choisi[hidden],.adr-avert[hidden]{display:none!important}',
       '.adr-avert{margin-top:6px;font-size:16px;line-height:1.4;color:#ffd166}',
+      // Liste ouverte : les boutons flottants (menu, aide, niveau, GPS) ne cachent plus les suggestions.
+      'body.adr-ouvert #pia-launch,body.adr-ouvert .pap-launcher-btn,body.adr-ouvert .pp-layer-pill,body.adr-ouvert #pap-gps-status{display:none!important}',
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -120,6 +122,7 @@
 
     function fermer() {
       boite.hidden = true;
+      document.body.classList.remove('adr-ouvert');
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
       actif = -1;
@@ -163,8 +166,14 @@
       // Mention obligatoire du fournisseur sous les suggestions
       attrib.textContent = suggestions.length && d.attribution ? 'Suggestions : ' + d.attribution : '';
       attrib.hidden = !attrib.textContent;
+      var dejaOuverte = !boite.hidden;
       boite.hidden = false;
+      document.body.classList.add('adr-ouvert');
       input.setAttribute('aria-expanded', 'true');
+      // Cellulaire : si la liste dépasse l'écran, on remonte le champ en haut pour voir les choix et la mention.
+      if (!dejaOuverte && boite.getBoundingClientRect().bottom > window.innerHeight) {
+        window.scrollBy({ top: input.getBoundingClientRect().top - 12, behavior: 'auto' });
+      }
       actif = -1;
     }
 
