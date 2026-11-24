@@ -92,18 +92,14 @@ module.exports = async function handler(req, res) {
   if (type === 'account.updated') {
     const acctId = obj.id;
     const status =
-      obj.charges_enabled && obj.payouts_enabled ? 'active'
+      obj.payouts_enabled && obj.details_submitted ? 'active'
       : obj.details_submitted ? 'onboarding'
       : 'pending';
 
     await sbPatch(sbUrl, sbKey, 'stripe_connect_accounts',
       `stripe_account_id=eq.${acctId}`,
-      {
-        status,
-        charges_enabled:   obj.charges_enabled   || false,
-        payouts_enabled:   obj.payouts_enabled    || false,
-        details_submitted: obj.details_submitted  || false,
-      });
+      // Statut seulement : la table n'a pas de colonnes payouts_enabled / charges_enabled / details_submitted.
+      { status, updated_at: new Date().toISOString() });
 
     /* Notification in-app si compte activé */
     if (status === 'active') {

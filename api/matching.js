@@ -1,6 +1,7 @@
 // api/matching.js - Matching et publication livraison, schema Supabase production.
 
 const { normalizeRole, roleIn } = require('../lib/_lib');
+const { etatConnect } = require('../lib/_virements');
 
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
@@ -242,11 +243,9 @@ module.exports = async function handler(req, res) {
       // ─── GATE STRIPE CONNECT : le livreur doit avoir un compte qui peut recevoir des paiements ──
       // Sinon il livrera et son paiement sera bloqué à la capture (litige garanti).
       try {
-        const scRes = await fetch(`${SB_URL}/rest/v1/stripe_connect_accounts?user_id=eq.${session.id}&select=stripe_account_id,charges_enabled,payouts_enabled,details_submitted&limit=1`, {
-          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-        });
-        const scRows = scRes.ok ? await scRes.json() : [];
-        const sc = scRows[0];
+        // Lit le statut local (seule colonne d'état de la table) et vérifie chez Stripe s'il n'est pas « active ».
+        const etat = await etatConnect({ sbUrl: SB_URL, sbKey: SB_KEY, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY) }, session.id);
+        const sc = etat.compte ? { stripe_account_id: etat.compte.stripe_account_id, status: etat.statut, payouts_enabled: etat.actif } : null;
         if (!sc || !sc.payouts_enabled) {
           return res.status(403).json({
             error: 'Compte Stripe Connect incomplet',

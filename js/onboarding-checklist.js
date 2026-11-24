@@ -115,10 +115,10 @@
   async function checkStripe(session) {
     try {
       const db = getDb();
-      // On tente une lecture directe; si la table existe, on lit payouts_enabled
-      const { data, error } = await db.from('stripe_connect_accounts').select('payouts_enabled').eq('user_id', session.user.id).single();
+      // La table n'a que le statut (pas de colonne payouts_enabled) : « active » = virements possibles.
+      const { data, error } = await db.from('stripe_connect_accounts').select('status').eq('user_id', session.user.id).single();
       if (error || !data) return false;
-      return Boolean(data.payouts_enabled);
+      return data.status === 'active';
     } catch (_) {
       return false;
     }

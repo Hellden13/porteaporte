@@ -96,6 +96,16 @@ function creerBase(tables = {}) {
     if (!tab) return rep({}, false, 404);
     const nom = tab[1];
     if (db.illisible && db.illisible.includes(nom)) return rep({ message: 'illisible' }, false, 500);
+    // Schéma optionnel (db.colonnes = { table: [colonnes] }) : comme PostgREST, une colonne inconnue donne 400.
+    const cols = db.colonnes && db.colonnes[nom];
+    if (cols) {
+      const sel = decodeURIComponent((url.match(/[?&]select=([^&]*)/) || [])[1] || '');
+      const lues = sel && sel !== '*' ? sel.split(',').map((c) => c.trim()).filter((c) => c && !c.includes('(') && !c.includes('->')) : [];
+      const ecrites = (m === 'PATCH' || m === 'POST') && body && typeof body === 'object' ? (Array.isArray(body) ? body : [body]).flatMap((b) => Object.keys(b)) : [];
+      const filtrees = filtres(url).map(([c]) => c.split('->')[0]).filter((c) => c !== 'or');
+      const inconnue = [...lues, ...ecrites, ...filtrees].find((c) => !cols.includes(c));
+      if (inconnue) { db.refus = db.refus || []; db.refus.push({ table: nom, colonne: inconnue, m }); return rep({ code: '42703', message: `column ${nom}.${inconnue} does not exist` }, false, 400); }
+    }
     const f = filtres(url);
     const lignes = t(nom);
     if (m === 'GET') {

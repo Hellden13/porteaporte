@@ -5693,7 +5693,7 @@ module.exports = async function handler(req, res) {
       }
 
       // Verifier ce qui serait supprime (nombre de comptes Connect lies)
-      const chk = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(userId)}&select=id,stripe_account_id,charges_enabled,payouts_enabled`, {
+      const chk = await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${encodeURIComponent(userId)}&select=id,stripe_account_id,status`, {
         headers: sbHeaders(sbKey)
       });
       const existing = chk.ok ? await chk.json().catch(() => []) : [];
@@ -5704,7 +5704,7 @@ module.exports = async function handler(req, res) {
           dry_run: true,
           user_id: userId,
           would_delete_count: existing.length,
-          accounts: existing.map(a => ({ stripe_account_id: a.stripe_account_id, charges_enabled: a.charges_enabled, payouts_enabled: a.payouts_enabled })),
+          accounts: existing.map(a => ({ stripe_account_id: a.stripe_account_id, status: a.status })),
           message: existing.length
             ? `${existing.length} compte(s) Stripe Connect seraient supprimes. Renvoie avec dry_run:false pour confirmer.`
             : 'Aucun compte Stripe Connect a supprimer pour cet utilisateur.'
@@ -7102,7 +7102,7 @@ module.exports = async function handler(req, res) {
         await fetch(`${sbUrl}/rest/v1/stripe_connect_accounts?user_id=eq.${uid}`, {
           method: 'PATCH',
           headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'active', payouts_enabled: true, details_submitted: true })
+          body: JSON.stringify({ status: 'active', updated_at: new Date().toISOString() })
         });
       }
       return res.status(200).json({ status, payouts_enabled: stripeAcct.payouts_enabled, details_submitted: stripeAcct.details_submitted, stripe_account_id: acctId });
