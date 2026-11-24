@@ -153,7 +153,7 @@
   </div>
 
   <div id="content" style="display:none">
-    <!-- Code de sécurité : bien visible juste après la réservation (js/code-securite.js) -->
+    <!-- Code de sécurité du trajet, créé par PorteàPorte, affiché en gros au passager (js/code-securite.js) -->
     <div id="code-securite-confirmation"></div>
     <!-- Success hero -->
     <div class="success-hero">
@@ -273,8 +273,8 @@
     if (window.PapSOS) window.PapSOS.setContext({ ride_id: booking.ride_id || null, booking_id: booking.id || null });
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-    if (window.PAPCodeSecurite && booking.passenger_id === session.user.id && ['en_attente', 'confirme'].includes(booking.status)) {
-      const affiche = await window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session, bookingId: booking.id, mode: 'encadre' });
+    if (window.PAPCodeSecurite && booking.passenger_id === session.user.id && ['confirme', 'driver_completed'].includes(booking.status)) {
+      const affiche = await window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session, bookingId: booking.id });
       if (affiche && location.hash === '#code-securite') document.getElementById('code-securite').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }

@@ -368,11 +368,7 @@
           <div class="payment-title" id="ride-payment-title">Paiement sécurisé</div>
           <div id="ride-payment-element"></div>
           <div class="payment-note">La carte est autorisée maintenant. Le paiement est capturé seulement après validation du trajet.</div>
-          <div style="margin-top:12px;background:var(--brand-bg-surface,#f7f8ff);border:1px solid rgba(0,217,255,.25);border-radius:12px;padding:12px">
-            <label for="ride-custom-safety-code" style="display:block;font-weight:800;color:#1a1a2e;margin-bottom:6px">Code sécurité personnalisé</label>
-            <input id="ride-custom-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:1.4rem;letter-spacing:.2em;text-align:center;border:1px solid rgba(0,217,255,.35);border-radius:10px;padding:10px">
-            <div class="payment-note">Optionnel. Si vide, ton code sécurité par défaut sera utilisé.</div>
-          </div>
+          <div class="payment-note" style="margin-top:10px">🔐 Ton code de sécurité est créé par PorteàPorte dès que le paiement est autorisé. Tu le verras sur la confirmation et dans ton courriel.</div>
         </div>
         <div class="post-confirm-card" id="post-confirm-card"></div>
 
@@ -759,7 +755,6 @@ async function showPostPaymentConfirmation(bookingId) {
       <div class="post-confirm-row"><strong>📍 Embarquement</strong>${esc(ride.pickup_city || booking.pickup_city || '?')}${ride.pickup_sector || booking.pickup_sector ? ' · ' + esc(ride.pickup_sector || booking.pickup_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🏁 Débarquement</strong>${esc(ride.dropoff_city || booking.dropoff_city || '?')}${ride.dropoff_sector || booking.dropoff_sector ? ' · ' + esc(ride.dropoff_sector || booking.dropoff_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🚗 Conducteur</strong>${esc(driver.prenom || 'Conducteur')}${String(driver.telephone || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '').length === 10 ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
-      <div class="post-confirm-row"><strong>🔐 Code sécurité</strong>${hasCode ? 'Code configuré. ' + esc(window.PAPCodeSecurite ? window.PAPCodeSecurite.PHRASE : '') : 'À créer dans l’encadré jaune ci-dessus.'}</div>
     </div>
     <div class="post-confirm-actions">
       <a href="/covoiturage-confirme.html?booking_id=${encodeURIComponent(bookingId || '')}">Voir ma confirmation</a>
@@ -767,9 +762,9 @@ async function showPostPaymentConfirmation(bookingId) {
     </div>`;
   card.classList.add('active');
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  // Code de sécurité : encadré bien visible juste après la réservation, avec le champ directement là.
-  if (!hasCode && window.PAPCodeSecurite && currentSession) {
-    window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session: currentSession, bookingId: bookingId, mode: 'encadre' });
+  // Code de sécurité du trajet, en gros, juste après la réservation (passager seulement).
+  if (window.PAPCodeSecurite && currentSession) {
+    window.PAPCodeSecurite.afficher(document.getElementById('code-securite-confirmation'), { session: currentSession, bookingId: bookingId });
   }
 }
 
@@ -1207,8 +1202,8 @@ function renderRide(r) {
   document.getElementById('sidebar-real').style.display     = '';
 }
 
-// Fiche d'un trajet réservé : si le passager n'a pas encore de code de sécurité, avertissement en haut.
-async function avertirCodeSecurite() {
+// Fiche d'un trajet réservé : le code de sécurité du passager, tout en haut (passager seulement).
+async function afficherCodeTrajet() {
   try {
     if (!window.PAPCodeSecurite) return;
     var db = window.getSupabaseClient ? window.getSupabaseClient() : window.db;
@@ -1216,19 +1211,19 @@ async function avertirCodeSecurite() {
     if (!s) return;
     var r = await fetch('/api/platform?endpoint=ride-my-rides', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ endpoint: 'ride-my-rides' }) });
     var d = await r.json().catch(function(){ return {}; });
-    var resa = (d.my_bookings || []).find(function (b) { return b.ride_id === rideId && ['en_attente', 'confirme'].indexOf(b.status) >= 0; });
+    var resa = (d.my_bookings || []).find(function (b) { return b.ride_id === rideId && ['confirme', 'driver_completed'].indexOf(b.status) >= 0; });
     if (!resa) return;
-    var zone = document.getElementById('code-securite-avertissement');
+    var zone = document.getElementById('code-securite-fiche');
     if (!zone) {
       zone = document.createElement('div');
-      zone.id = 'code-securite-avertissement';
+      zone.id = 'code-securite-fiche';
       zone.style.cssText = 'max-width:1100px;margin:12px auto 0;padding:0 16px;box-sizing:border-box';
       // Tout en haut de la page, au-dessus des deux colonnes (sur cellulaire, la colonne du prix passe avant).
       var haut = document.getElementById('main-wrapper');
       if (haut && haut.parentNode) haut.parentNode.insertBefore(zone, haut);
       else document.body.insertBefore(zone, document.body.firstChild);
     }
-    window.PAPCodeSecurite.afficher(zone, { session: s, bookingId: resa.id, mode: 'avertissement' });
+    window.PAPCodeSecurite.afficher(zone, { session: s, bookingId: resa.id });
   } catch (_) {}
 }
 
@@ -1258,7 +1253,7 @@ async function loadRide() {
     currentRide  = ridePayload;
     rideSettings = settingsData.settings || settingsData || {};
     renderRide(ridePayload);
-    avertirCodeSecurite();
+    afficherCodeTrajet();
 
     // Affiche la carte des points safe si au moins un des deux points a des coords
     try {
@@ -1484,7 +1479,6 @@ async function confirmRidePayment() {
     throw new Error(sync.error || 'Paiement non autorise par Stripe');
   }
   const bId = pendingRidePayment?.booking_id || sync?.booking_id;
-  await saveCustomRideSafetyCode(bId);
   await showPostPaymentConfirmation(bId);
   showToast('✅ Paiement réussi ! Réservation confirmée.', 'success');
   setTimeout(function() {

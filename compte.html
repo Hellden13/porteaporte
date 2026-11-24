@@ -51,7 +51,7 @@
     <section class="card">
       <h2>🔐 Code de sécurité trajet</h2>
       <p>Ce code numérique sert à confirmer la fin d'un covoiturage. Il est stocké uniquement sous forme de hash bcrypt.</p>
-      <p style="margin:0 0 8px;color:#a8b0ba">Tu l'entreras à l'arrivée pour confirmer que tu es bien arrivé(e).</p>
+      <p style="margin:0 0 8px;color:#a8b0ba">Pour chaque trajet réservé, PorteàPorte crée un code de sécurité dès que le paiement est autorisé. Tu le trouves sur ta confirmation de réservation et dans ton courriel : donne-le au conducteur à l'arrivée. Le code ci-dessous ne sert qu'aux anciennes réservations.</p>
       <label for="ride-safety-code">Code par défaut (4 à 8 chiffres)</label>
       <input id="ride-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000">
       <div class="grid" style="margin-top:14px">

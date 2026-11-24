@@ -35,7 +35,7 @@ const {
   rideMyRides, rideAdmin, rideReport, ridePackageBook, safeMeetingPoints,
   covDashboard, covOnboard, covProgress,
   rideOgPage, rideOgImage,
-  rideAnnulerDate,
+  rideAnnulerDate, rideCodeTrajet,
 } = require('../lib/_rides');
 const {
   growthDashboard, referralGet, referralUse, badgesList, badgesGrant,
@@ -6804,6 +6804,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'admin-safe-points-delete') return await adminSafePointsDelete(req, res, ctx, body);
     if (endpoint === 'ride-cancel')          return await rideCancel(req, res, ctx, body);
     if (endpoint === 'ride-annuler-date')    return await rideAnnulerDate(req, res, ctx, body);
+    if (endpoint === 'ride-code-trajet')     return await rideCodeTrajet(req, res, ctx, body);
     if (endpoint === 'ride-delete')          return await rideDelete(req, res, ctx, body);
     if (endpoint === 'ride-my-rides')        return await rideMyRides(req, res, ctx, body);
     if (endpoint === 'ride-admin')           return await rideAdmin(req, res, ctx, body);

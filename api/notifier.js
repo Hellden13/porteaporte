@@ -37,6 +37,7 @@ const PUBLIC_TYPES = new Set([
   'xl_confirmation_destinataire',
   'xl_confirmation_resultat',
   'ride_booking_confirmed',
+  'ride_code_trajet',
   'ride_booking_to_driver',
   'ride_booking_cancelled',
   'ride_driver_completed_to_passenger',
@@ -1064,15 +1065,42 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div><strong>Débarquement :</strong> ${data.dropoff_label || data.ville_arrivee}<br>${data.dropoff_address || ''}</div>
             </div>
 
-            <div style="background:rgba(255,200,0,.1);border:2px solid rgba(255,200,0,.55);border-radius:10px;padding:16px;margin-bottom:18px">
+            ${data.safety_code ? `<div style="background:rgba(255,200,0,.1);border:2px solid rgba(255,200,0,.6);border-radius:12px;padding:18px;margin-bottom:18px;text-align:center">
+              <div style="color:#ffd23f;font-weight:900;font-size:.85rem;letter-spacing:.08em;margin-bottom:8px">🔐 TON CODE DE SÉCURITÉ POUR CE TRAJET</div>
+              <div style="font-size:2.6rem;font-weight:900;letter-spacing:.3em;color:#fff;font-family:monospace">${escapeHtml(String(data.safety_code))}</div>
+              <div style="color:#fff3c4;margin-top:10px">Donne ce code au conducteur à l'arrivée pour confirmer que tu es bien arrivé(e).</div>
+              <div style="color:#c9b977;font-size:.8rem;margin-top:6px">Ne le donne pas avant d'être arrivé(e) à destination.</div>
+            </div>` : `<div style="background:rgba(255,200,0,.1);border:2px solid rgba(255,200,0,.55);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#ffd23f;display:block;margin-bottom:6px">🔐 Ton code de sécurité</strong>
-              <div style="color:#fff3c4;margin-bottom:12px">Tu l'entreras à l'arrivée pour confirmer que tu es bien arrivé(e). Si tu ne l'as pas encore créé, fais-le maintenant.</div>
-              <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}#code-securite" style="display:inline-block;background:#ffd23f;color:#141000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:900">Créer mon code de sécurité</a>
-            </div>
+              <div style="color:#fff3c4;margin-bottom:12px">Donne ce code au conducteur à l'arrivée pour confirmer que tu es bien arrivé(e).</div>
+              <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}#code-securite" style="display:inline-block;background:#ffd23f;color:#141000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:900">Voir mon code de sécurité</a>
+            </div>`}
 
             <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📋 Voir tous les détails</a>
 
             <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">💡 Ton paiement est protégé. Le conducteur sera payé après la livraison du trajet. Tu peux contacter le conducteur directement par email ou téléphone si besoin.</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ─── COVOITURAGE : CODE DE SÉCURITÉ (réservations payées avant la règle du code automatique) ───
+    case 'ride_code_trajet': {
+      const route = `${data.ville_depart || '?'} → ${data.ville_arrivee || '?'}`;
+      emails.push({
+        to: data.passenger_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `🔐 Ton code de sécurité pour le trajet ${route}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — CODE DE SÉCURITÉ</div>
+            <h1 style="color:#fff;font-size:1.3rem;margin:0 0 12px">Bonjour ${escapeHtml(data.prenom || '')},</h1>
+            <p style="color:#a8b0ba;margin:0 0 16px">Voici le code de sécurité de ton trajet ${escapeHtml(route)}${data.departure_time ? ' (' + heureQc(data.departure_time) + ')' : ''}.</p>
+            <div style="background:rgba(255,200,0,.1);border:2px solid rgba(255,200,0,.6);border-radius:12px;padding:18px;margin-bottom:18px;text-align:center">
+              <div style="font-size:2.6rem;font-weight:900;letter-spacing:.3em;color:#fff;font-family:monospace">${escapeHtml(String(data.safety_code || ''))}</div>
+              <div style="color:#fff3c4;margin-top:10px">Donne ce code au conducteur à l'arrivée pour confirmer que tu es bien arrivé(e).</div>
+            </div>
+            <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:800">Voir ma réservation</a>
           </div>`
       });
       break;

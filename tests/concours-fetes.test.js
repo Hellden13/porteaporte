@@ -736,8 +736,10 @@ describe('participation d\'inscription : endpoints', () => {
     // Aucun crochet ni surlignage « à remplir » ne reste sur la page.
     assert.doesNotMatch(regl.replace(/<!--[\s\S]*?-->/g, ''), /[\[\]]/);
     assert.doesNotMatch(regl, /a-ecrire|TEXTE À ÉCRIRE|#f5d061/);
-    assert.match(regl, /\(porteaporte\.site\), 1469, rue Fréchette, Lévis \(Québec\) G7A 4N5 \(l'« Organisateur »\)\./);
-    assert.equal((regl.match(/Lévis \(Québec\)/g) || []).length, 1, 'pas de doublon « Lévis (Québec) »');
+    // Décision de Denis (23 nov. 2026) : ni nom de société ni adresse personnelle dans le règlement.
+    assert.match(regl, /organisé par PorteàPorte \(porteaporte\.site\) \(l'« Organisateur »\)\./);
+    assert.doesNotMatch(regl, /Fréchette|G7A 4N5|Pieds en L.air/i);
+    assert.ok((regl.match(/Lévis \(Québec\)/g) || []).length <= 1, 'pas de doublon « Lévis (Québec) »');
     assert.match(regl, /Le concours commence le <span id="date-lancement">à venir<\/span> et se termine le 31 décembre 2026 à 23 h 59, heure du Québec\./);
     assert.match(regl, /Le tirage au sort aura lieu le mardi 5 janvier 2027 à 13 h, à Lévis, parmi toutes les participations validées\./);
     assert.match(regl, /<li>répondre dans les 7 jours suivant le premier contact\.<\/li>/);

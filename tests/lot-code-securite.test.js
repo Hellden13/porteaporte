@@ -21,7 +21,7 @@ const lire = (f) => fs.readFileSync(f, 'utf8');
 const CTX = { sbUrl: 'https://fake.supabase.co', sbKey: 'k', stripeKey: 'sk_test_fake123' };
 const D = '11111111-1111-4111-8111-111111111111'; // conducteur
 const P = '22222222-2222-4222-8222-222222222222'; // passagère
-const PHRASE = "Tu l'entreras à l'arrivée pour confirmer que tu es bien arrivé(e).";
+const PHRASE = 'Donne ce code au conducteur à l’arrivée pour confirmer que tu es bien arrivé(e).';
 
 // ── 1. Code de sécurité ───────────────────────────────────────────────────
 function domMini() {
@@ -55,70 +55,131 @@ function chargerComposant(reponses) {
 }
 const SESSION = { access_token: 'jeton' };
 
-describe('1. code de sécurité du passager', () => {
-  test('écran de confirmation : encadré « Crée ton code de sécurité maintenant » avec le champ directement là', async () => {
-    const { C, el, trouver } = chargerComposant(() => ({ body: { has_code: false, has_profile_code: false, has_booking_code: false } }));
-    const zone = el('div');
-    assert.equal(await C.afficher(zone, { session: SESSION, bookingId: 'b1', mode: 'encadre' }), true);
-    assert.equal(trouver(zone, (n) => n.tagName === 'h3').textContent, '🔐 Crée ton code de sécurité maintenant');
-    assert.match(trouver(zone, (n) => n.tagName === 'p').textContent, /Tu l'entreras à l'arrivée pour confirmer que tu es bien arrivé\(e\)\./);
-    const champ = trouver(zone, (n) => n.tagName === 'input');
-    assert.ok(champ, 'le champ est directement là');
-    assert.equal(champ.inputMode, 'numeric');
+describe('1. code de sécurité du trajet, créé par PorteàPorte', () => {
+  const rides = require('../lib/_rides');
+  const bcrypt = require('bcryptjs');
+  const BID = 'aaaaaaaa-1111-4111-8111-000000000001';
+  function base(extraBooking = {}) {
+    const db = creerBase({
+      ride_bookings: [{ id: BID, ride_id: 'r1', passenger_id: P, status: 'confirme', payment_status: 'requires_capture', safety_code_hash: null, safety_code_custom: null, seats_reserved: 1, total_passenger: 4.2, driver_amount: 2.7, ...extraBooking }],
+      rides: [{ id: 'r1', driver_id: D, start_city: 'Lévis', end_city: 'Rimouski', departure_time: new Date(Date.now() + 86400000).toISOString() }],
+      profiles: [{ id: P, email: 'p@courriel-capture.ca', prenom: 'Laura' }, { id: D, email: 'd@courriel-capture.ca', prenom: 'Denis' }],
+    });
+    global.fetch = db.fetch;
+    return db;
+  }
+  const ctxDe = (uid, role = 'expediteur') => ({ ...CTX, session: { id: uid }, profile: { role } });
+  const appelCode = async (ctx) => { const res = makeRes(); await rides.rideCodeTrajet({}, res, ctx, { booking_id: BID }); return res; };
+
+  test('6 chiffres, toujours le même pour une réservation, différent d\'une réservation à l\'autre, jamais sans secret', () => {
+    const c = rides.codeTrajet(BID);
+    assert.match(c, /^\d{6}$/);
+    assert.equal(rides.codeTrajet(BID), c);
+    assert.notEqual(rides.codeTrajet('aaaaaaaa-1111-4111-8111-000000000002'), c);
+    const avant = process.env.INTERNAL_API_SECRET;
+    process.env.INTERNAL_API_SECRET = '';
+    assert.equal(rides.codeTrajet(BID), null);
+    process.env.INTERNAL_API_SECRET = avant;
   });
-  test('fiche du trajet réservé : « Tu n\'as pas encore de code de sécurité »', async () => {
-    const { C, el, trouver } = chargerComposant(() => ({ body: { has_code: false } }));
-    const zone = el('div');
-    await C.afficher(zone, { session: SESSION, bookingId: 'b1', mode: 'avertissement' });
-    assert.equal(trouver(zone, (n) => n.tagName === 'h3').textContent, "⚠️ Tu n'as pas encore de code de sécurité");
+  test('en base : seulement la version brouillée (jamais le code en clair)', async () => {
+    const db = base();
+    const r = await rides.assurerCodeTrajet(CTX, { ...db.tables.ride_bookings[0] });
+    const b = db.tables.ride_bookings[0];
+    assert.equal(r.code, rides.codeTrajet(BID));
+    assert.ok(await bcrypt.compare(r.code, b.safety_code_hash));
+    assert.equal(b.safety_code_custom, false);
+    assert.ok(!JSON.stringify(db.tables).includes(r.code), 'le code en clair n\'est nulle part en base');
   });
-  test('code déjà créé, ou état inconnu : rien n\'est affiché', async () => {
-    let t = chargerComposant(() => ({ body: { has_profile_code: true } }));
-    let zone = t.el('div');
-    assert.equal(await t.C.afficher(zone, { session: SESSION, mode: 'encadre' }), false);
-    assert.equal(zone.children.length, 0);
-    t = chargerComposant(() => ({ ok: false, body: { error: 'x' } }));
-    zone = t.el('div');
-    assert.equal(await t.C.afficher(zone, { session: SESSION, mode: 'avertissement' }), false);
+  test('le passager voit son code ; le conducteur et l\'admin jamais', async () => {
+    base();
+    const pax = await appelCode(ctxDe(P));
+    assert.equal(pax._status, 200);
+    assert.equal(pax._body.code, rides.codeTrajet(BID));
+    assert.equal(pax._body.phrase, PHRASE);
+    assert.equal((await appelCode(ctxDe(D, 'conducteur')))._status, 403);
+    const adm = await appelCode(ctxDe('adm', 'admin'));
+    assert.equal(adm._status, 403);
+    assert.equal(adm._body.code, undefined);
   });
-  test('enregistrer : 4 à 8 chiffres, envoyé au serveur (code du compte), puis confirmation', async () => {
-    const t = chargerComposant((url) => ({ body: url.includes('status') ? { has_code: false } : { success: true, has_profile_code: true } }));
+  test('pas de code avant que le paiement soit autorisé', async () => {
+    base({ status: 'en_attente', payment_status: 'requires_payment_method' });
+    const r = await appelCode(ctxDe(P));
+    assert.equal(r._body.disponible, false);
+    assert.equal(r._body.code, undefined);
+  });
+  test('un ancien code choisi par le passager n\'est pas écrasé', async () => {
+    base({ safety_code_hash: await bcrypt.hash('9999', 4), safety_code_custom: true });
+    const r = await appelCode(ctxDe(P));
+    assert.equal(r._body.propre, true);
+    assert.equal(r._body.code, undefined);
+  });
+  test('le passager ne peut plus choisir le code d\'un trajet (seul l\'admin peut en poser un)', async () => {
+    base();
+    const res = makeRes();
+    await rides.rideSafetyCodeSet({}, res, ctxDe(P), { booking_id: BID, code: '1234' });
+    assert.equal(res._status, 403);
+  });
+  test('le conducteur saisit le code donné par la passagère : un mauvais code compte un essai, le blocage après 5 essais reste', async () => {
+    const db = base({ safety_code_failed_attempts: 0 });
+    await rides.assurerCodeTrajet(CTX, { ...db.tables.ride_bookings[0] });
+    db.tables.rides[0].departure_time = new Date(Date.now() - 3600000).toISOString();
+    const essai = async (code) => { const res = makeRes(); await rides.rideComplete({}, res, ctxDe(D, 'conducteur'), { booking_id: BID, code, actor: 'driver' }); return res; };
+    const faux = await essai('000000' === rides.codeTrajet(BID) ? '111111' : '000000');
+    assert.ok(faux._status >= 400);
+    assert.ok(db.tables.transaction_audit_events.some((e) => e.event_type === 'ride_safety_code_failed'));
+    assert.match(lire('lib/_rides.js'), /if \(Number\(booking\.safety_code_failed_attempts \|\| 0\) >= RIDE_CODE_MAX_ESSAIS\) \{\s*return res\.status\(423\)/);
+  });
+  test('courriel de confirmation : le code au passager, jamais au conducteur', async () => {
+    const db = base();
+    await rides.sendBookingConfirmationEmails(CTX, { ...db.tables.ride_bookings[0] });
+    const pax = db.courriels.find((c) => c.type === 'ride_booking_confirmed');
+    const cond = db.courriels.find((c) => c.type === 'ride_booking_to_driver');
+    assert.equal(pax.data.safety_code, rides.codeTrajet(BID));
+    assert.ok(!JSON.stringify(cond).includes(rides.codeTrajet(BID)), 'le conducteur ne reçoit pas le code');
+    const { buildEmails } = require('../api/notifier');
+    const html = buildEmails('ride_booking_confirmed', pax.data, 'a@b.c', 'n@b.c', 'PorteàPorte')[0].html;
+    assert.ok(html.includes(rides.codeTrajet(BID)));
+    assert.match(html, /Donne ce code au conducteur à l'arrivée pour confirmer que tu es bien arrivé\(e\)\./);
+  });
+  test('réservations existantes sans code : code créé et envoyé UNE fois', async () => {
+    const db = base();
+    assert.deepEqual(await rides.envoyerCodesTrajetManquants(CTX), { envoyes: 1 });
+    assert.deepEqual(await rides.envoyerCodesTrajetManquants(CTX), { envoyes: 0 });
+    const m = db.courriels.filter((c) => c.type === 'ride_code_trajet');
+    assert.equal(m.length, 1);
+    assert.equal(m[0].data.safety_code, rides.codeTrajet(BID));
+    const { buildEmails } = require('../api/notifier');
+    assert.ok(buildEmails('ride_code_trajet', m[0].data, 'a@b.c', 'n@b.c', 'PorteàPorte')[0].html.includes(m[0].data.safety_code));
+    assert.match(lire('api/cron-cleanup.js'), /results\.codes_trajet = await envoyerCodesTrajetManquants\(\{ sbUrl, sbKey \}\);/);
+  });
+  test('créé dès l\'autorisation du paiement (page de paiement ET webhook Stripe)', () => {
+    const src = lire('lib/_rides.js');
+    assert.match(src, /const fraiche = await lireReservationCode\(ctx, booking\.id\);\s*if \(fraiche\) await assurerCodeTrajet\(ctx, fraiche\)/);
+    const wh = lire('api/stripe-webhook.js');
+    assert.match(wh, /await R\.assurerCodeTrajet\(ctxR, booking\);\s*await R\.sendBookingConfirmationEmails\(ctxR, booking\);/);
+  });
+  test('écran : le code en gros avec la phrase ; aucun champ de création', async () => {
+    const t = chargerComposant(() => ({ body: { disponible: true, code: '482917', phrase: PHRASE } }));
     const zone = t.el('div');
-    await t.C.afficher(zone, { session: SESSION, bookingId: 'b1', mode: 'encadre' });
-    const champ = t.trouver(zone, (n) => n.tagName === 'input');
-    const bouton = t.trouver(zone, (n) => n.tagName === 'button');
-    champ.value = '12';
-    await bouton.listeners.click[0]();
-    assert.match(t.trouver(zone, (n) => n.className === 'msg').textContent, /4 à 8 chiffres/);
-    assert.equal(t.appels.filter((a) => a.url.includes('ride-safety-code-set')).length, 0);
-    champ.value = '4821';
-    await bouton.listeners.click[0]();
-    const set = t.appels.find((a) => a.url.includes('ride-safety-code-set'));
-    assert.deepEqual({ endpoint: set.corps.endpoint, code: set.corps.code }, { endpoint: 'ride-safety-code-set', code: '4821' });
-    assert.equal(zone.children[0].className, 'pap-cs ok');
+    assert.equal(await t.C.afficher(zone, { session: SESSION, bookingId: BID }), true);
+    assert.equal(t.trouver(zone, (n) => n.className === 'code').textContent, '482917');
+    assert.ok(t.trouver(zone, (n) => n.tagName === 'p' && n.textContent === PHRASE));
+    assert.equal(t.trouver(zone, (n) => n.tagName === 'input'), undefined);
+    const t2 = chargerComposant(() => ({ body: { disponible: false } }));
+    const z2 = t2.el('div');
+    assert.equal(await t2.C.afficher(z2, { session: SESSION, bookingId: BID }), false);
   });
-  test('branché : écran de confirmation (2 endroits), fiche réservée, courriel, Mon compte', () => {
+  test('pages : plus d\'encadré « Crée ton code », plus d\'avertissement, plus de champ dans le formulaire', () => {
+    for (const f of ['js/code-securite.js', 'covoiturage-trajet.html', 'covoiturage-confirme.html']) {
+      const h = lire(f);
+      assert.doesNotMatch(h, /Crée ton code de sécurité maintenant|Tu n'as pas encore de code de sécurité/, f);
+    }
     const trajet = lire('covoiturage-trajet.html');
-    assert.match(trajet, /<script src="\/js\/code-securite\.js"><\/script>/);
-    assert.match(trajet, /<div id="code-securite-confirmation"><\/div>/);
-    assert.match(trajet, /window\.PAPCodeSecurite\.afficher\(document\.getElementById\('code-securite-confirmation'\), \{ session: currentSession, bookingId: bookingId, mode: 'encadre' \}\)/);
-    assert.match(trajet, /window\.PAPCodeSecurite\.afficher\(zone, \{ session: s, bookingId: resa\.id, mode: 'avertissement' \}\)/);
-    assert.match(trajet, /renderRide\(ridePayload\);\s*avertirCodeSecurite\(\);/, 'appelé au chargement de la fiche');
-    const conf = lire('covoiturage-confirme.html');
-    assert.match(conf, /<script src="\/js\/code-securite\.js"><\/script>/);
-    assert.match(conf, /mode: 'encadre'/);
-    const n = lire('api/notifier.js');
-    assert.match(n, /covoiturage-confirme\.html\?booking_id=\$\{encodeURIComponent\(data\.booking_id \|\| ''\)\}#code-securite" [^>]*>Créer mon code de sécurité<\/a>/);
-    assert.ok(n.includes(PHRASE));
-    assert.ok(lire('compte.html').includes(PHRASE));
-  });
-  test('le courriel de confirmation au passager contient le bouton (rendu réel)', () => {
-    const notifier = require('../api/notifier');
-    const build = notifier.buildEmails || notifier._buildEmails;
-    if (!build) return; // buildEmails non exporté : le test de source ci-dessus suffit
-    const m = build('ride_booking_confirmed', { passenger_email: 'p@courriel-capture.ca', booking_id: 'b1' }, 'a@b.c', 'n@b.c', 'PorteàPorte')[0];
-    assert.match(m.html, /Créer mon code de sécurité/);
-    assert.match(m.html, /#code-securite/);
+    assert.doesNotMatch(trajet, /<input id="ride-custom-safety-code"/);
+    assert.doesNotMatch(trajet, /await saveCustomRideSafetyCode\(bId\);/);
+    assert.match(trajet, /window\.PAPCodeSecurite\.afficher\(document\.getElementById\('code-securite-confirmation'\), \{ session: currentSession, bookingId: bookingId \}\)/);
+    assert.match(trajet, /renderRide\(ridePayload\);\s*afficherCodeTrajet\(\);/);
+    assert.match(lire('covoiturage-confirme.html'), /window\.PAPCodeSecurite\.afficher\(document\.getElementById\('code-securite-confirmation'\), \{ session, bookingId: booking\.id \}\)/);
   });
 });
 
@@ -285,6 +346,7 @@ describe('5-6. Transparence sans « estimés » ; plus de mention publique de Pi
     const fichiers = [];
     for (const d of ['.', 'admin', 'covoiturage', 'js']) for (const f of fs.readdirSync(d)) if (/\.(html|js)$/.test(f)) fichiers.push(`${d}/${f}`);
     for (const f of fichiers) assert.doesNotMatch(lire(f), /Pieds en L.air/i, f);
-    assert.match(lire('concours-fetes-reglement.html'), /Le concours est organisé par PorteàPorte \(porteaporte\.site\)/);
+    assert.match(lire('concours-fetes-reglement.html'), /Le concours est organisé par PorteàPorte \(porteaporte\.site\) \(l'« Organisateur »\)\./);
+    assert.doesNotMatch(lire('concours-fetes-reglement.html'), /Fréchette|G7A 4N5|1469/, 'aucune adresse personnelle');
   });
 });

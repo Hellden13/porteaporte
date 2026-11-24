@@ -182,6 +182,14 @@ module.exports = async function handler(req, res) {
     results.ride_capture = 'exception: ' + e.message;
   }
 
+  // ─── 7. CODES DE SÉCURITÉ DES TRAJETS : réservations payées sans code → code créé et envoyé une fois ───
+  try {
+    const { envoyerCodesTrajetManquants } = require('../lib/_rides');
+    results.codes_trajet = await envoyerCodesTrajetManquants({ sbUrl, sbKey });
+  } catch (e) {
+    results.codes_trajet = 'exception: ' + e.message;
+  }
+
   // ─── 6. SELFIES ET PHOTOS DU DÉBUT DE JOURNÉE : 90 jours, sauf litige ouvert ───
   try {
     const { purgerPhotosDuJour } = require('../lib/_vehicules');

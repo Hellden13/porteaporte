@@ -195,6 +195,21 @@ module.exports = async function handler(req, res) {
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id, ride_id: obj.metadata?.ride_id || null, booking_id: bookingId }
       }), 'ride payment authorize audit insert');
+
+      // Code de sécurité du trajet (créé dès l'autorisation) et confirmation au passager avec le code,
+      // même si le passager a fermé la page avant la fin du paiement. Une seule fois (courriel dédoublonné).
+      try {
+        const R = require('../lib/_rides');
+        const ctxR = { sbUrl, sbKey };
+        const bRes = await fetch(`${sbUrl}/rest/v1/ride_bookings?id=eq.${encodeURIComponent(bookingId)}&select=*&limit=1`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } });
+        const booking = bRes.ok ? (await bRes.json())[0] : null;
+        if (booking) {
+          await R.assurerCodeTrajet(ctxR, booking);
+          await R.sendBookingConfirmationEmails(ctxR, booking);
+        }
+      } catch (e) {
+        console.warn('[stripe-webhook] code trajet / confirmation :', e.message);
+      }
     }
 
     const livraisonId = obj.metadata?.livraison_id;

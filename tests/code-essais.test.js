@@ -204,7 +204,9 @@ describe('ride-safety-code-verify — code de sécurité du passager', () => {
     global.fetch = s.fetchImpl;
     const res = makeRes();
     await platform({ method: 'POST', url: '/api/platform', body: { endpoint: 'ride-safety-code-set', booking_id: BOOKING, code: '9999' }, headers: { authorization: 'Bearer t', 'content-type': 'application/json' } }, res);
-    assert.equal(res._status, 423);
+    // Depuis le 23 nov. 2026, le code d'un trajet est créé par PorteàPorte : le passager ne peut jamais
+    // en poser un (403), bloqué ou non. Seul l'admin peut remettre un code (test suivant).
+    assert.equal(res._status, 403);
     assert.ok(!s.appels.some((x) => x.m === 'PATCH' && x.url.includes('/ride_bookings')));
   });
 
