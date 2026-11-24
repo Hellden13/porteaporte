@@ -103,35 +103,27 @@ describe('Google en principal : sessions, français, Canada, priorité Lévis/Qu
     assert.equal(vers(GEO).length, 0, 'pas de secours quand Google répond');
   });
 
-  test('le choix ferme la session : détails avec le MÊME jeton, champs Essentials seulement, position gardée au serveur', async () => {
+  test('le choix ferme la session : détails avec le MÊME jeton, champs Essentials seulement, Google seul', async () => {
     const r = await det({ id: ID_G, session: JETON });
     assert.equal(r._status, 200);
     const d = vers(G + '/v1/places/')[0];
     assert.ok(d.url.includes('sessionToken=' + JETON));
-    assert.equal(d.o.headers['X-Goog-FieldMask'], 'id,formattedAddress,addressComponents,location,types');
-    assert.ok(!/displayName|rating|reviews|opening/.test(d.o.headers['X-Goog-FieldMask']));
+    assert.equal(d.o.headers['X-Goog-FieldMask'], 'id,formattedAddress,addressComponents,types');
+    assert.ok(!/displayName|rating|reviews|opening|location/.test(d.o.headers['X-Goog-FieldMask']));
     const a = r._body.adresse;
     assert.equal(a.ligne1, '390 Route Marie-Victorin');
     assert.equal(a.ville, 'Lévis');
     assert.equal(a.code_postal, 'G7A 2X5');
-    assert.equal(a.secteur, 'Saint-Nicolas', 'secteur précis, pas l’arrondissement');
+    assert.equal(a.secteur, '', 'Google ne donne que l’arrondissement : rien n’est ajouté');
     assert.equal(a.etablissement, true);
-    assert.equal(a._position, undefined);
-    assert.ok(!JSON.stringify(r._body).includes('46.72'), 'aucune coordonnée renvoyée au navigateur');
+    assert.equal(vers(GEO).length, 0, 'décision de Denis : aucun appel Geoapify pour compléter une réponse Google');
   });
 
-  test('sans secteur précis (Geoapify en panne), l’arrondissement n’est jamais affiché comme secteur', async () => {
-    reglages.inverseErreur = true;
+  test('un quartier fourni par Google (pas un arrondissement) est gardé tel quel', async () => {
+    global.fetch = ((f) => async (u, o) => (String(u).startsWith(G + '/v1/places/') ? rep({ ...G_DETAILS, addressComponents: [...G_DETAILS.addressComponents, { types: ['neighborhood'], longText: 'Charny', shortText: 'Charny' }] }) : f(u, o)))(global.fetch);
     const r = await det({ id: ID_G, session: JETON });
-    assert.equal(r._status, 200);
-    assert.equal(r._body.adresse.secteur, '');
-    assert.equal(r._body.adresse.ville, 'Lévis');
-  });
-
-  test('un secteur d’une autre ville n’est pas pris', async () => {
-    global.fetch = ((f) => async (u, o) => (String(u).includes('/geocode/reverse') ? rep({ results: [{ suburb: 'Lauzon', city: 'Québec' }] }) : f(u, o)))(global.fetch);
-    const r = await det({ id: ID_G, session: JETON });
-    assert.equal(r._body.adresse.secteur, '');
+    assert.equal(r._body.adresse.secteur, 'Charny');
+    assert.equal(vers(GEO).length, 0);
   });
 });
 
