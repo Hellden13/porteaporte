@@ -57,7 +57,7 @@
         if (profile?.role) role = profile.role;
         window.__papUserName = profile?.prenom || (session.user.email || '').split('@')[0];
       } catch (_) {}
-      const dashUrl = DASH[role] || '/dashboard-expediteur.html';
+      const dashUrl = DASH[role] || '/dashboard.html?onglet=envois';
       const firstName = window.__papUserName || 'Mon compte';
 
       // Trouver tous les liens vers login.html → remplacer par "Dashboard"
@@ -71,7 +71,7 @@
       document.querySelectorAll('a[href="/role-choice.html"], a[href="role-choice.html"], a[href="/signup.html"], a[href="signup.html"]').forEach(a => {
         // Ne pas modifier si c'est explicitement un CTA d'inscription (data-keep-cta)
         if (a.dataset.keepCta) return;
-        a.href = '/profile.html';
+        a.href = '/dashboard.html?onglet=compte';
         a.textContent = '👤 ' + firstName;
         a.title = 'Mon profil';
       });

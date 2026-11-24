@@ -36,7 +36,7 @@
   <main class="wrap">
     <div class="top">
       <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" id="driverDashboardLink" href="/dashboard-livreur.html">Dashboard</a>
+      <a class="btn secondary" id="driverDashboardLink" href="/dashboard.html?onglet=livrer">Dashboard</a>
     </div>
 
     <section class="panel">
@@ -89,7 +89,7 @@
 
       <div class="actions">
         <button class="btn" type="submit">Envoyer ma vérification</button>
-        <a class="btn secondary" href="/profile.html">Mon profil</a>
+        <a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a>
       </div>
     </form>
   </main>
@@ -106,14 +106,14 @@
       let html = '';
 
       if (profile.role === 'admin') {
-        html = '<div class="state-title">Acces admin detecte</div><p class="state-note">Ton compte admin peut ouvrir les outils d administration ou les espaces de test.</p><div class="actions"><a class="btn" href="/admin/dashboard-admin.html">Dashboard admin</a><a class="btn secondary" href="/dashboard-livreur.html">Espace livreur</a></div>';
+        html = '<div class="state-title">Acces admin detecte</div><p class="state-note">Ton compte admin peut ouvrir les outils d administration ou les espaces de test.</p><div class="actions"><a class="btn" href="/admin/dashboard-admin.html">Dashboard admin</a><a class="btn secondary" href="/dashboard.html?onglet=livrer">Espace livreur</a></div>';
       } else if (!isDriverRole) {
         html = '<div class="state-title">Ajouter le role livreur</div><p class="state-note">Ton compte est expéditeur. Remplis ce formulaire pour demander aussi l acces livreur.</p>';
       } else if (status === 'verified') {
-        html = '<div class="state-title">Profil livreur verifie</div><p class="state-note">Ton profil est actif. Tu peux voir les missions compatibles avec ton mode de transport.</p><div class="actions"><a class="btn" href="/dashboard-livreur.html">Ouvrir mon dashboard livreur</a><a class="btn secondary" href="/profile.html">Mon profil</a></div>';
+        html = '<div class="state-title">Profil livreur verifie</div><p class="state-note">Ton profil est actif. Tu peux voir les missions compatibles avec ton mode de transport.</p><div class="actions"><a class="btn" href="/dashboard.html?onglet=livrer">Ouvrir mon dashboard livreur</a><a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a></div>';
         form.style.display = 'none';
       } else if (status === 'pending_review') {
-        html = '<div class="state-title">Dossier en revision</div><p class="state-note">Ta demande livreur est envoyée. Les vraies missions et les adresses restent bloquees jusqu a validation admin.</p><div class="actions"><a class="btn secondary" href="/dashboard-expediteur.html">Espace expéditeur</a><a class="btn secondary" href="/profile.html">Mon profil</a></div>';
+        html = '<div class="state-title">Dossier en revision</div><p class="state-note">Ta demande livreur est envoyée. Les vraies missions et les adresses restent bloquees jusqu a validation admin.</p><div class="actions"><a class="btn secondary" href="/dashboard.html?onglet=envois">Espace expéditeur</a><a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a></div>';
         form.style.display = 'none';
       } else if (status === 'rejected') {
         html = '<div class="state-title">Vérification a reprendre</div><p class="state-note">Ton dossier doit etre corrige. Mets tes informations a jour puis renvoie la demande.</p>';

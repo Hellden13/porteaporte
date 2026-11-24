@@ -384,7 +384,7 @@ describe('42. « livrées/payées » seulement si le paiement est capturé', () 
     assert.match(h, /const delivered = livraisons\.filter\(l => PAIEMENT_CAPTURE\.includes\(normalizedLivraisonStatus\(l\)\)\)\.length;/);
   });
   test('livreur : revenus et relevé seulement sur les paiements capturés', () => {
-    const h = lire('dashboard-livreur.html');
+    const h = lire('membre-livrer.html');
     assert.match(h, /\['payee', 'paid', 'succeeded'\]\.includes\(l\.statut\) && Number\(l\.prix_total\) > 0/);
     assert.match(h, /\.in\('statut', \['payee', 'paid', 'succeeded'\]\)/);
     assert.doesNotMatch(h, /\.in\('statut', \['livre', 'payee'\]\)/);

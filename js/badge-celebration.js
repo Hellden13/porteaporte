@@ -45,7 +45,7 @@
         <button id="pap-celeb-close" style="padding:14px 32px;background:linear-gradient(135deg,#5dbfff,#b8f53e);color:#001828;border:none;border-radius:12px;font-weight:900;font-size:.95rem;cursor:pointer;position:relative">🎊 Génial !</button>
 
         <div style="margin-top:14px;font-size:.78rem;color:#6d7886;position:relative">
-          <a href="/badges.html" style="color:#7de4ff;text-decoration:none">Voir tous mes badges →</a>
+          <a href="/dashboard.html?onglet=compte&vue=badges" style="color:#7de4ff;text-decoration:none">Voir tous mes badges →</a>
         </div>
       </div>
     `;

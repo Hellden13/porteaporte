@@ -11,6 +11,11 @@
 
   // Détecter le rôle (livreur, expediteur, destinataire) selon la page courante
   function detectRole() {
+    // Tableau de bord à onglets : la page hébergée est connue par window.__PAP_PAGE (js/onglets-membre.js)
+    const page = window.__PAP_PAGE || '';
+    if (page === 'livrer') return 'livreur';
+    if (page === 'envois') return 'expediteur';
+    if (page === 'recus') return 'destinataire';
     const path = window.location.pathname;
     if (path.includes('dashboard-livreur')) return 'livreur';
     if (path.includes('dashboard-expediteur')) return 'expediteur';

@@ -45,7 +45,7 @@
   <main class="wrap">
     <div class="top">
       <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" href="/dashboard-livreur.html" id="dashBtn">Dashboard</a>
+      <a class="btn secondary" href="/dashboard.html?onglet=livrer" id="dashBtn">Dashboard</a>
     </div>
 
     <section class="panel">
@@ -57,7 +57,7 @@
         <a id="gpsLink" class="btn" href="/gps-tracker.html">Ouvrir le GPS</a>
         <a id="mapsLink" class="btn secondary" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:none">Ouvrir la carte</a>
         <button class="btn secondary" type="button" onclick="loadTracking(true)">Rafraîchir</button>
-        <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard expéditeur</a>
+        <a class="btn secondary" href="/dashboard.html?onglet=envois">Dashboard expéditeur</a>
       </div>
     </section>
 
@@ -237,9 +237,9 @@
       }
       // Set dashboard link based on user role
       db.from('profiles').select('role').eq('id', data.session.user.id).single().then(({ data: p }) => {
-        const dashMap = { livreur: '/dashboard-livreur.html', expediteur: '/dashboard-expediteur.html', 'les deux': '/role-choice.html', admin: '/admin/dashboard-admin.html' };
+        const dashMap = { livreur: '/dashboard.html?onglet=livrer', expediteur: '/dashboard.html?onglet=envois', 'les deux': '/role-choice.html', admin: '/admin/dashboard-admin.html' };
         const btn = document.getElementById('dashBtn');
-        if (btn && p?.role) btn.href = dashMap[p.role] || '/dashboard-expediteur.html';
+        if (btn && p?.role) btn.href = dashMap[p.role] || '/dashboard.html?onglet=envois';
       });
       const res = await fetch('/api/tracking', {
         method: 'POST',

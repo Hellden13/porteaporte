@@ -39,7 +39,7 @@
   <main class="wrap">
     <div class="top">
       <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" href="/dashboard-livreur.html">Dashboard livreur</a>
+      <a class="btn secondary" href="/dashboard.html?onglet=livrer">Dashboard livreur</a>
     </div>
     <section class="card">
       <h1>Depot avec preuve</h1>
@@ -168,7 +168,7 @@
         if (!res.ok) throw new Error(out.error || 'Depot avec preuve impossible');
         show('ok', '✅ Livraison confirmée !\n\nPhoto + GPS enregistrés. Le paiement est libéré automatiquement.\n\nRedirection vers ton dashboard...');
         document.getElementById('proof-form').style.display = 'none';
-        setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 3000);
+        setTimeout(() => { window.location.href = '/dashboard.html?onglet=livrer'; }, 3000);
       } catch (err) {
         show('err', err.message || 'Depot avec preuve impossible');
       } finally {

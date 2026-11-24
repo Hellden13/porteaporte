@@ -227,7 +227,7 @@
           <div id="notif-empty">Aucune notification</div>
         </div>
         <div id="notif-footer">
-          <a href="/compte.html#notifications">Voir toutes les notifications</a>
+          <a href="/dashboard.html?onglet=compte&vue=securite#notifications">Voir toutes les notifications</a>
         </div>
       </div>
     `;

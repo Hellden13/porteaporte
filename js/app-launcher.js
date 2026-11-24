@@ -14,7 +14,7 @@
   const SECTIONS = [
     { group: 'Mon espace', items: [
       { href: '/dashboard.html',            icon: '✨', label: 'Mon dashboard',       desc: 'Tout en un seul endroit' },
-      { href: '/profile.html',              icon: '👤', label: 'Mon profil',          desc: 'Photo, infos, préférences' },
+      { href: '/dashboard.html?onglet=compte',              icon: '👤', label: 'Mon profil',          desc: 'Photo, infos, préférences' },
     ]},
     { group: 'Covoiturage', items: [
       { href: '/covoiturage.html',          icon: '🔍', label: 'Chercher un trajet',  desc: 'Trouver un lift' },
@@ -25,8 +25,8 @@
       { href: '/browse-missions.html',      icon: '🚚', label: 'Livrer des colis',    desc: 'Missions disponibles' },
     ]},
     { group: 'Autres', items: [
-      { href: '/badges.html',               icon: '🎖️', label: 'Mes badges',          desc: 'Récompenses et progression' },
-      { href: '/parrainage.html',           icon: '🤝', label: 'Parrainage',          desc: 'Inviter des amis' },
+      { href: '/dashboard.html?onglet=compte&vue=badges',               icon: '🎖️', label: 'Mes badges',          desc: 'Récompenses et progression' },
+      { href: '/dashboard.html?onglet=compte&vue=parrainage',           icon: '🤝', label: 'Parrainage',          desc: 'Inviter des amis' },
       { href: '/index.html',                icon: '🏠', label: 'Accueil',             desc: 'Page d\'accueil' },
     ]},
   ];

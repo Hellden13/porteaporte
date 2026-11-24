@@ -202,7 +202,7 @@
     session = data.session;
 
     const { data: p } = await db.from('profiles').select('role,nom').eq('id', session.user.id).single();
-    if (p?.role !== 'admin') { window.location.href = '/dashboard-livreur.html'; return; }
+    if (p?.role !== 'admin') { window.location.href = '/dashboard.html?onglet=livrer'; return; }
     document.getElementById('adminName').textContent = p.nom || session.user.email;
 
     await loadDossiers();

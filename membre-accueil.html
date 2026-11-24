@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+<script src="/js/onglets-membre.js"></script>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mon dashboard — PorteàPorte</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/vehicule-obligatoire.js" defer></script>
+<script src="/js/flottants.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root {
+      --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
+      --border:#1E2A3A; --primary:#5dbfff; --cyan:#5dbfff;
+      --text:#E8EDF5; --muted:#8A9BB0; --good:#7dffc1; --warn:#ffd700; --danger:#ff7a7a;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      background:rgba(10,15,30,0.96); border-bottom:1px solid var(--border);
+      padding:14px clamp(18px,4vw,48px);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      position:sticky; top:0; z-index:90; backdrop-filter:blur(12px);
+    }
+    .brand { font-weight:900; color:var(--primary); font-size:1.05rem; letter-spacing:.02em; }
+    .topbar-actions { display:flex; gap:8px; align-items:center; }
+    .btn { padding:8px 16px; border-radius:8px; font-weight:700; font-size:.85rem; cursor:pointer; border:none; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    .btn.primary { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; }
+    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn.sm { padding:6px 12px; font-size:.78rem; }
+    .referral-card {
+      background:linear-gradient(135deg, rgba(93,191,255,.07), rgba(93,191,255,.035));
+      border:1px solid rgba(93,191,255,.22);
+      border-radius:12px;
+      padding:18px 20px;
+      margin:0 0 22px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:16px;
+      align-items:center;
+    }
+    .referral-card h2 { font-size:1rem; margin:0 0 6px; }
+    .referral-card p { color:var(--muted); font-size:.88rem; line-height:1.45; margin:0; }
+    .referral-link { margin-top:12px; display:flex; gap:8px; align-items:center; }
+    .referral-link input {
+      min-width:0;
+      flex:1;
+      background:var(--surface);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:10px 12px;
+      font-size:.84rem;
+    }
+    .chance-pill {
+      min-width:104px;
+      text-align:center;
+      border-radius:10px;
+      background:rgba(93,191,255,.11);
+      border:1px solid rgba(93,191,255,.34);
+      padding:12px;
+    }
+    .chance-pill strong { display:block; font-size:1.55rem; color:var(--cyan); line-height:1; }
+    .chance-pill span { color:var(--muted); font-size:.74rem; font-weight:800; text-transform:uppercase; }
+    .activity-card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:18px 20px;
+      margin:0 0 22px;
+    }
+    .activity-card h2 { font-size:1rem; margin:0 0 6px; }
+    .activity-card p { color:var(--muted); font-size:.88rem; line-height:1.45; margin:0 0 14px; }
+    .activity-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+    .activity-toggle {
+      border:1px solid var(--border);
+      background:var(--bg);
+      border-radius:10px;
+      padding:12px;
+      cursor:pointer;
+      display:flex;
+      gap:9px;
+      align-items:center;
+      font-weight:800;
+      font-size:.86rem;
+    }
+    .activity-toggle input { width:18px; height:18px; accent-color:var(--cyan); }
+    .activity-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+    .activity-msg { color:var(--muted); font-size:.82rem; }
+
+    .wrap { max-width:1200px; margin:0 auto; padding:28px clamp(16px,4vw,32px) 80px; }
+
+    /* HEADER */
+    .header-card {
+      background:linear-gradient(135deg, rgba(93,191,255,0.06), rgba(93,191,255,0.03));
+      border:1px solid var(--border); border-radius:18px;
+      padding:24px 28px; margin-bottom:22px;
+      display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center;
+    }
+    .avatar {
+      width:72px; height:72px; border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.8rem; font-weight:900; color:#051022;
+      overflow:hidden;
+    }
+    .avatar img { width:100%; height:100%; object-fit:cover; }
+    .greet h1 { font-size:1.5rem; font-weight:900; margin-bottom:4px; }
+    .greet .roles { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .role-chip { background:rgba(93,191,255,0.12); border:1px solid rgba(93,191,255,0.3); color:var(--primary); padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+    .role-chip.admin { background:rgba(255,200,0,0.12); border-color:rgba(255,200,0,0.3); color:var(--warn); }
+
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:22px; }
+    .stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+    .stat-val { font-size:1.6rem; font-weight:900; color:var(--primary); line-height:1; }
+    .stat-label { font-size:.75rem; color:var(--muted); margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+
+    /* QUICK ACTIONS */
+    .quick-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:28px; }
+    .qa { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 16px; display:flex; align-items:center; gap:12px; transition:all .15s; }
+    .qa:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 8px 24px rgba(93,191,255,0.15); }
+    .qa-ico { font-size:1.6rem; }
+    .qa-text { font-weight:700; font-size:.92rem; }
+
+    /* SECTIONS */
+    .section { margin-bottom:32px; }
+    .section h2 { font-size:1.05rem; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+    .section h2 .count { background:rgba(93,191,255,0.15); color:var(--primary); padding:2px 10px; border-radius:99px; font-size:.78rem; font-weight:700; }
+    .section h2 .actions-link { margin-left:auto; font-size:.78rem; color:var(--cyan); font-weight:600; }
+
+    .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:var(--surface2); font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:10px 14px; text-align:left; }
+    td { padding:11px 14px; font-size:.85rem; border-top:1px solid var(--border); }
+    .empty { text-align:center; padding:28px; color:var(--muted); font-size:.88rem; }
+    .empty a { color:var(--primary); font-weight:700; }
+
+    .status-pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:.7rem; font-weight:700; }
+    .pill-warn { background:rgba(255,200,0,0.12); color:var(--warn); }
+    .pill-good { background:rgba(125,255,193,0.12); color:var(--good); }
+    .pill-info { background:rgba(93,191,255,0.12); color:var(--primary); }
+    .pill-danger { background:rgba(255,90,90,0.12); color:var(--danger); }
+    .pill-muted { background:rgba(255,255,255,0.05); color:var(--muted); }
+
+    .row-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .row-actions a, .row-actions button { padding:5px 11px; border-radius:6px; font-size:.75rem; font-weight:700; text-decoration:none; border:1px solid; white-space:nowrap; }
+    .ra-pay { background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#051022; border-color:transparent; }
+    .ra-view { background:rgba(93,191,255,0.08); color:var(--primary); border-color:rgba(93,191,255,0.3); }
+    .ra-cancel { background:rgba(255,90,90,0.08); color:var(--danger); border-color:rgba(255,90,90,0.3); cursor:pointer; }
+
+    .loading-state { text-align:center; padding:60px; color:var(--muted); }
+    .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media (max-width:640px) {
+      .header-card { grid-template-columns:1fr; text-align:center; }
+      .avatar { margin:0 auto; }
+      .referral-card { grid-template-columns:1fr; }
+      .referral-link { flex-direction:column; align-items:stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/">PorteàPorte</a>
+  <div class="topbar-actions">
+    <a class="btn ghost sm" href="/dashboard.html?onglet=compte">👤 Profil</a>
+    <button class="btn ghost sm" onclick="papLogout && papLogout()">↩ Déconnexion</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="loading" class="loading-state">
+    <div class="spinner"></div>
+    Chargement de ton dashboard...
+  </div>
+  <div id="dashboard-content" style="display:none">
+    <!-- Header utilisateur -->
+    <div class="header-card">
+      <div class="avatar" id="userAvatar"></div>
+      <div class="greet">
+        <h1 id="userGreet">Bonjour</h1>
+        <div id="userSub" style="color:var(--muted);font-size:.88rem"></div>
+        <div class="roles" id="userRoles"></div>
+      </div>
+      <div>
+        <div class="stat-val" id="userXp">0</div>
+        <div class="stat-label" style="margin-top:0">XP</div>
+      </div>
+    </div>
+
+    <!-- Concours des Fêtes (affiché seulement si le concours est lancé, jusqu'au 6 janvier 2027) -->
+    <div id="concoursFetesCard" class="section" style="display:none;border:1px solid rgba(200,16,46,.45);background:linear-gradient(90deg,rgba(31,111,67,.18),rgba(200,16,46,.14));border-radius:14px;padding:14px 16px;margin:12px 0"></div>
+
+    <!-- Stats globales -->
+    <div class="stats" id="globalStats"></div>
+
+    <!-- Actions rapides selon rôle -->
+    <div class="quick-actions" id="quickActions"></div>
+
+    <section class="referral-card" id="referralCard" style="display:none">
+      <div>
+        <h2>Mon lien de parrainage</h2>
+        <p>Invite tes proches au concours des 100 premiers membres. Chaque filleul inscrit ajoute une chance.</p>
+        <div class="referral-link">
+          <input id="referralLink" readonly value="Chargement...">
+          <button class="btn primary sm" type="button" id="copyReferralBtn">Copier</button>
+        </div>
+      </div>
+      <div class="chance-pill">
+        <strong id="referralChances">1</strong>
+        <span>chance(s)</span>
+      </div>
+    </section>
+
+    <section class="activity-card" id="activityCard">
+      <h2>Mes activités</h2>
+      <p>Choisis ce que tu veux faire sur PorteàPorte. Tu peux cumuler plusieurs activités.</p>
+      <div class="activity-grid">
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_passager"> Passager</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_conducteur"> Conducteur</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_expediteur"> Expéditeur</label>
+        <label class="activity-toggle"><input type="checkbox" data-capability="est_livreur"> Livreur</label>
+      </div>
+      <div class="activity-actions">
+        <button class="btn primary sm" type="button" id="saveActivitiesBtn">Enregistrer</button>
+        <span class="activity-msg" id="activityMsg"></span>
+      </div>
+    </section>
+
+    <!-- Sections dynamiques -->
+    <div id="sectionPassager" class="section" style="display:none">
+      <h2>🎫 Mes réservations <span class="count" id="paxCount">0</span><a class="actions-link" href="/covoiturage.html">Chercher un trajet →</a></h2>
+      <div class="table-wrap" id="paxTable"></div>
+    </div>
+
+    <div id="sectionConducteur" class="section" style="display:none">
+      <h2>🚗 Mes trajets publiés <span class="count" id="drvCount">0</span><a class="actions-link" href="/covoiturage-publier.html">Publier un trajet →</a></h2>
+      <div class="table-wrap" id="drvTable"></div>
+    </div>
+
+    <div id="sectionExpediteur" class="section" style="display:none">
+      <h2>📦 Mes envois <span class="count" id="expCount">0</span><a class="actions-link" href="/create-mission.html">Envoyer un colis →</a></h2>
+      <div class="table-wrap" id="expTable"></div>
+    </div>
+
+    <div id="sectionLivreur" class="section" style="display:none">
+      <h2>🚚 Mes livraisons <span class="count" id="livCount">0</span><a class="actions-link" href="/browse-missions.html">Voir les missions →</a></h2>
+      <div class="table-wrap" id="livTable"></div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/ride-delete.js"></script>
+<script src="/js/auth-state.js"></script>
+<script src="/js/app-launcher.js" defer></script>
+<script src="/js/pending-payment-banner.js" defer></script>
+<script src="/js/onboarding-checklist.js" defer></script>
+<script src="/js/cookie-consent.js" defer></script>
+<script src="/js/support-widget.js"></script>
+
+<script>
+  const db = window.db || window.getSupabaseClient();
+  let currentUser = null;
+  let currentProfile = null;
+
+  function fmt(n) { return Number(n||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+  function fmtDate(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-CA',{day:'2-digit',month:'short',year:'numeric'}); }
+  function fmtDT(s) { if(!s) return '—'; const d=new Date(s); return d.toLocaleString('fr-CA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function profileCapabilities(profile) {
+    const role = String(profile?.role || '').toLowerCase();
+    const hasColumns = ['est_livreur','est_expediteur','est_passager','est_conducteur'].some(k => Object.prototype.hasOwnProperty.call(profile || {}, k));
+    return {
+      est_livreur: hasColumns ? profile.est_livreur === true : (role === 'livreur' || role === 'les deux' || role === 'admin'),
+      est_expediteur: hasColumns ? profile.est_expediteur === true : (role === 'expediteur' || role === 'les deux' || role === 'admin'),
+      est_passager: hasColumns ? profile.est_passager === true : role !== 'admin',
+      est_conducteur: hasColumns ? profile.est_conducteur === true : role !== 'admin'
+    };
+  }
+  function collectActivityCapabilities() {
+    const caps = { est_livreur:false, est_expediteur:false, est_passager:false, est_conducteur:false };
+    document.querySelectorAll('#activityCard [data-capability]').forEach(input => { caps[input.dataset.capability] = input.checked === true; });
+    return caps;
+  }
+  function renderActivityToggles(profile) {
+    const caps = profileCapabilities(profile);
+    document.querySelectorAll('#activityCard [data-capability]').forEach(input => {
+      input.checked = caps[input.dataset.capability] === true;
+    });
+  }
+  function cleanReferralCode(v) {
+    return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 32);
+  }
+  async function claimStoredReferral(session) {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = cleanReferralCode(params.get('ref'));
+    if (fromUrl) localStorage.setItem('PAP_REFERRAL_CODE', fromUrl);
+    const code = cleanReferralCode(localStorage.getItem('PAP_REFERRAL_CODE'));
+    if (!code) return;
+    try {
+      const r = await fetch('/api/platform?endpoint=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'referral', action: 'claim', code })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && out.success && out.claim && out.claim.reason !== 'insert_failed') {
+        localStorage.removeItem('PAP_REFERRAL_CODE');
+      }
+    } catch (_) {}
+  }
+  async function loadReferralCard(session) {
+    try {
+      const r = await fetch('/api/platform?endpoint=referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'referral', action: 'my-link' })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok || !out.success) return;
+      document.getElementById('referralCard').style.display = 'grid';
+      document.getElementById('referralLink').value = out.link || '';
+      document.getElementById('referralChances').textContent = out.chances || 1;
+    } catch (_) {}
+  }
+  // Code d'arrêt (« depart », « arrivee ») gardé par d'anciennes réservations : jamais affiché tel quel.
+  function villeArret(v) {
+    const t = String(v || '').trim();
+    if (!t || t === 'depart') return 'Point de départ';
+    if (t === 'arrivee') return 'Arrivée';
+    return t;
+  }
+
+  function statusPill(s) {
+    const x = String(s||'').toLowerCase();
+    const map = {
+      en_attente: ['pill-warn','En attente'], pending: ['pill-warn','En attente'], unpaid: ['pill-warn','À payer'],
+      confirme: ['pill-info','Confirmé'], confirmed: ['pill-info','Confirmé'], accepte: ['pill-info','Accepté'],
+      paye: ['pill-good','Payé'], payee: ['pill-good','Payé'], paid: ['pill-good','Payé'],
+      en_route: ['pill-info','En route'], livre: ['pill-info','Livré'], delivered: ['pill-info','Livré'], livree: ['pill-info','Livré'],
+      complete: ['pill-good','Complété'], completed: ['pill-good','Complété'], termine: ['pill-good','Terminé'],
+      annule: ['pill-muted','Annulé'], cancelled: ['pill-muted','Annulé'], rembourse: ['pill-muted','Remboursé'],
+      publie: ['pill-info','Publié'], complet: ['pill-good','Complet'],
+      litige: ['pill-danger','Litige'], driver_completed: ['pill-warn','Terminé — attente du passager'],
+      en_attente_paiement: ['pill-warn','Paiement à faire'], refunded: ['pill-muted','Remboursé'], ramasse: ['pill-info','Ramassé'],
+      paiement_autorise: ['pill-info','Paiement sécurisé'], publiee: ['pill-info','Publiée']
+    };
+    // Jamais de statut brut : libellé français, ou au pire le code rendu lisible.
+    const [cls, lbl] = map[x] || ['pill-muted', String(s || '—').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())];
+    return `<span class="status-pill ${cls}">${lbl}</span>`;
+  }
+
+  async function loadDashboard() {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    currentUser = session.user;
+
+    const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+    if (!profile) { document.getElementById('loading').textContent = 'Profil introuvable.'; return; }
+    currentProfile = profile;
+    await claimStoredReferral(session);
+
+    renderHeader(session, profile);
+    renderQuickActions(profile);
+    renderActivityToggles(profile);
+    await Promise.all([
+      loadReferralCard(session),
+      loadPassengerBookings(session),
+      loadDriverRides(session),
+      loadExpediteurDeliveries(session),
+      loadLivreurMissions(session, profile),
+      loadConcoursFetes(session),
+      loadCovTripsStat(session, profile),
+    ]);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+  }
+
+  document.getElementById('copyReferralBtn').addEventListener('click', async () => {
+    const input = document.getElementById('referralLink');
+    try {
+      await navigator.clipboard.writeText(input.value);
+      document.getElementById('copyReferralBtn').textContent = 'Copié';
+      setTimeout(() => { document.getElementById('copyReferralBtn').textContent = 'Copier'; }, 1600);
+    } catch (_) {
+      input.select();
+      document.execCommand('copy');
+    }
+  });
+
+  document.getElementById('saveActivitiesBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('activityMsg');
+    const caps = collectActivityCapabilities();
+    if (!Object.values(caps).some(Boolean)) {
+      msg.textContent = 'Choisis au moins une activité.';
+      return;
+    }
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const r = await fetch('/api/platform?endpoint=set-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ endpoint: 'set-role', capabilities: caps })
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        msg.textContent = out.error || 'Mise à jour impossible.';
+        return;
+      }
+      currentProfile = { ...(currentProfile || {}), ...(out.profile || {}), ...caps, role: out.role || out.profile?.role || currentProfile?.role };
+      renderHeader(session, currentProfile);
+      renderQuickActions(currentProfile);
+      msg.textContent = 'Activités enregistrées.';
+    } catch (e) {
+      msg.textContent = 'Erreur réseau.';
+    }
+  });
+
+  function renderHeader(session, profile) {
+    const name = profile.prenom || session.user.email?.split('@')[0] || 'Utilisateur';
+    const fullName = `${profile.prenom||''} ${profile.nom||''}`.trim();
+    document.getElementById('userGreet').textContent = `Bonjour ${name} 👋`;
+    document.getElementById('userSub').textContent = profile.ville ? `${profile.ville}, ${profile.province||'QC'}` : session.user.email;
+    document.getElementById('userXp').textContent = profile.xp || 0;
+
+    const av = document.getElementById('userAvatar');
+    if (profile.photo_url && profile.photo_status === 'approved') {
+      av.innerHTML = `<img loading="lazy" decoding="async" src="${esc(profile.photo_url)}" alt="${esc(fullName)}">`;
+    } else {
+      const initials = (profile.prenom?.[0]||'').toUpperCase() + (profile.nom?.[0]||'').toUpperCase();
+      av.textContent = initials || '👤';
+    }
+
+    const roles = document.getElementById('userRoles');
+    const role = profile.role || 'expediteur';
+    const roleLabels = { expediteur: 'Expéditeur', livreur: 'Livreur', 'les deux': 'Passager + Conducteur', admin: 'Admin' };
+    const caps = profileCapabilities(profile);
+    roles.innerHTML = '';
+    if (role === 'admin') {
+      roles.innerHTML = `<span class="role-chip admin">⚡ ${roleLabels.admin}</span>`;
+    } else {
+      if (caps.est_expediteur) roles.innerHTML += '<span class="role-chip">📦 Expéditeur</span>';
+      if (caps.est_livreur) roles.innerHTML += '<span class="role-chip">🚚 Livreur</span>';
+      if (caps.est_passager) roles.innerHTML += '<span class="role-chip">🎫 Passager</span>';
+      if (caps.est_conducteur) roles.innerHTML += '<span class="role-chip">🚗 Conducteur</span>';
+    }
+
+    // Stats globales
+    const stats = document.getElementById('globalStats');
+    stats.innerHTML = `
+      <div class="stat"><div class="stat-val">${profile.livraisons || profile.livraisons_count || 0}</div><div class="stat-label">Livraisons</div></div>
+      <div class="stat"><div class="stat-val">${Number(profile.score_confiance || profile.score || 0).toFixed(1)}</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-val" id="statCovTrips">${profile.cov_total_rides || 0}</div><div class="stat-label">Trajets covoit</div></div>
+      <div class="stat"><div class="stat-val">${profile.coins || 0}</div><div class="stat-label">Points impact</div></div>
+    `;
+  }
+
+  function renderQuickActions(profile) {
+    const role = profile.role || 'expediteur';
+    const caps = profileCapabilities(profile);
+    const isLiv = caps.est_livreur;
+    const isExp = caps.est_expediteur;
+    const isAdmin = role === 'admin';
+
+    const actions = [];
+    if (caps.est_passager || isAdmin) actions.push({ ico:'🔍', label:'Chercher un trajet', href:'/covoiturage.html' });
+    if (caps.est_conducteur || isAdmin) actions.push({ ico:'🚗', label:'Publier un trajet', href:'/covoiturage-publier.html' });
+    if (isExp || role === 'admin') actions.push({ ico:'📦', label:'Envoyer un colis', href:'/create-mission.html' });
+    if (isLiv || role === 'admin') actions.push({ ico:'🚚', label:'Livrer des colis', href:'/browse-missions.html' });
+    if (isAdmin) actions.push({ ico:'⚙️', label:'Centre admin', href:'/admin/dashboard-admin.html' });
+
+    document.getElementById('quickActions').innerHTML = actions.map(a => `
+      <a class="qa" href="${a.href}">
+        <span class="qa-ico">${a.ico}</span>
+        <span class="qa-text">${a.label}</span>
+      </a>
+    `).join('');
+  }
+
+  // ─── PASSAGER : mes réservations covoiturage ──────────────────────────
+  async function loadPassengerBookings(session) {
+    const { data: bookings } = await db.from('ride_bookings')
+      .select('id,ride_id,status,total_passenger,pickup_city,dropoff_city,created_at,seats_reserved')
+      .eq('passenger_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (!bookings?.length) return;
+
+    document.getElementById('sectionPassager').style.display = 'block';
+    document.getElementById('paxCount').textContent = bookings.length;
+
+    const rows = bookings.map(b => {
+      const bookingStatus = String(b.status||'').toLowerCase();
+      const isPending = ['en_attente','pending','unpaid'].includes(bookingStatus);
+      const canCancel = !['annule','annule_passager','annule_chauffeur','complete','cancelled','refunded','rembourse','termine','completed','done'].includes(bookingStatus);
+      const canConfirmArrival = ['confirme','driver_completed','paye'].includes(bookingStatus);
+      const actions = [];
+      if (isPending) actions.push(`<a class="ra-pay" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}&booking_id=${esc(b.id)}">💳 Payer</a>`);
+      actions.push(`<a class="ra-view" href="/covoiturage-trajet.html?ride_id=${esc(b.ride_id)}">👁️ Voir</a>`);
+      if (canConfirmArrival) actions.push(`<button class="ra-arrive" type="button" onclick="window.confirmPassengerArrival('${esc(b.id)}')" style="background:rgba(125,255,193,.14);color:#0a5a34;border:1px solid rgba(125,255,193,.6);padding:6px 12px;border-radius:8px;font-weight:800;cursor:pointer">✅ Je suis arrivé(e)</button>`);
+      if (canCancel) actions.push(`<button class="ra-cancel" type="button" onclick="window.cancelPassengerBooking('${esc(b.id)}')">❌ Annuler</button>`);
+      return `<tr>
+        <td><strong>${esc(villeArret(b.pickup_city))} → ${esc(villeArret(b.dropoff_city))}</strong><div style="font-size:.72rem;color:var(--muted)">${fmtDT(b.created_at)}</div></td>
+        <td>${b.seats_reserved||1} place${(b.seats_reserved||1)>1?'s':''}</td>
+        <td><strong>${fmt(b.total_passenger)}</strong></td>
+        <td>${statusPill(b.status)}</td>
+        <td><div class="row-actions">${actions.join('')}</div></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('paxTable').innerHTML = `
+      <table><thead><tr><th>Trajet</th><th>Places</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    `;
+  }
+
+  // Annuler une réservation depuis le tableau de bord principal.
+  window.cancelPassengerBooking = async function (bookingId) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        window.location.href = '/login.html?redirect=/dashboard.html';
+        return;
+      }
+      const previewRes = await fetch('/api/ride-cancel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId, preview_only: true })
+      });
+      const preview = await previewRes.json().catch(() => ({}));
+      if (!previewRes.ok) {
+        (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || ('erreur ' + previewRes.status))));
+        return;
+      }
+      // Aucun paiement autorisé ni prélevé : on ne parle pas de remboursement.
+      const warning = preview.paiement === false
+        ? `ANNULATION DE LA RÉSERVATION\n\nAucun paiement n’a été fait pour cette réservation : rien à rembourser.\n\nConfirmer l’annulation ?`
+        : `ANNULATION DE LA RÉSERVATION\n\n` +
+        `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
+        `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
+        `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
+        `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
+        `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
+        `Cette action est irréversible. Confirmer ?`;
+      if (!(await PAPDialog.confirm(warning, { title: 'Annuler la réservation', annuler: 'Garder ma réservation', ok: 'Oui, annuler', danger: true }))) return;
+      const res = await fetch('/api/ride-cancel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        (await PAPDialog.alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status))));
+        return;
+      }
+      (await PAPDialog.alert('✅ ' + (out.message || (out.paiement === false ? 'Réservation annulée.' : 'Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + Number(out.refund).toFixed(2) + ' $.' : '')))));
+      window.location.reload();
+    } catch (e) {
+      (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
+    }
+  };
+
+  // Confirmer son arrivée (passager) depuis le tableau de bord principal.
+  window.confirmPassengerArrival = async function (bookingId) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session?.access_token) {
+        window.location.href = '/login.html?redirect=/dashboard.html';
+        return;
+      }
+      // Vérifie d'abord si un code de sécurité est configuré (évite un message d'erreur cryptique).
+      try {
+        const statusRes = await fetch('/api/platform', {
+          method: 'POST',
+          headers: { 'Authorization': '***' + session.access_token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: 'ride-safety-code-status', booking_id: bookingId })
+        });
+        const st = await statusRes.json().catch(() => ({}));
+        if (statusRes.ok && !st.has_booking_code && !st.has_profile_code) {
+          if ((await PAPDialog.confirm('Aucun code de sécurité n\'est encore configuré sur ton compte.\n\nCe code (4 à 8 chiffres) sert à confirmer ton arrivée et à libérer le paiement au conducteur.\n\nVeux-tu le créer maintenant ?'))) {
+            window.location.href = '/dashboard.html?onglet=compte&vue=securite#ride-safety-code';
+          }
+          return;
+        }
+      } catch (_) { /* si la vérif échoue, on tente quand même la saisie */ }
+      const code = (await PAPDialog.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au conducteur :\n\n(Tu l\'as défini dans Compte → Code de sécurité trajet.)'));
+      if (code === null) return;
+      const cleanCode = String(code || '').replace(/\D/g, '');
+      if (!/^[0-9]{4,8}$/.test(cleanCode)) {
+        (await PAPDialog.alert('Code invalide. Entre un code de 4 à 8 chiffres.'));
+        return;
+      }
+      const res = await fetch('/api/platform', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, actor: 'passenger', code: cleanCode })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const remaining = out.attempts_remaining;
+        if (typeof remaining !== 'undefined') {
+          (await PAPDialog.alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : '')));
+        } else if (/code de securit/i.test(String(out.error || '')) || /aucun code/i.test(String(out.error || ''))) {
+          if ((await PAPDialog.confirm('Aucun code de sécurité configuré. Veux-tu le créer maintenant dans ton compte ?'))) {
+            window.location.href = '/dashboard.html?onglet=compte&vue=securite#ride-safety-code';
+          }
+        } else {
+          (await PAPDialog.alert('❌ Confirmation impossible : ' + (out.error || ('erreur ' + res.status))));
+        }
+        return;
+      }
+      (await PAPDialog.alert('✅ Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au conducteur a été déclenché.'));
+      window.location.reload();
+    } catch (e) {
+      (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
+    }
+  };
+
+  // ─── Compteur « Trajets covoit » : comme passager ET comme conducteur ──────────
+  // Avant, il affichait profile.cov_total_rides, qui ne comptait pas les trajets faits comme passager.
+  const STATUTS_TRAJET_FAIT = ['paye', 'complete', 'completed', 'termine'];
+  function compterTrajetsCovoit(reservations, trajetsConducteur) {
+    const passager = (reservations || []).filter((b) => STATUTS_TRAJET_FAIT.includes(String(b.status || '').toLowerCase())).length;
+    const conducteur = (trajetsConducteur || []).filter((r) => String(r.status || '').toLowerCase() === 'termine').length;
+    return passager + conducteur;
+  }
+  async function loadCovTripsStat(session, profile) {
+    const el = document.getElementById('statCovTrips');
+    if (!el) return;
+    try {
+      const [b, r] = await Promise.all([
+        db.from('ride_bookings').select('id,status').eq('passenger_id', session.user.id).limit(1000),
+        db.from('rides').select('id,status').eq('driver_id', session.user.id).eq('status', 'termine').limit(1000),
+      ]);
+      if (b.error || r.error) return; // garde la valeur du profil
+      el.textContent = String(Math.max(compterTrajetsCovoit(b.data, r.data), 0));
+    } catch (_) { /* valeur du profil conservée */ }
+  }
+
+  // ─── Concours des Fêtes : « Tu as X participations au tirage des Fêtes » ──────
+  // « 1 participation pour ton inscription + X grâce à tes livraisons et trajets » (Denis, 22 nov. 2026).
+  function texteParticipationsFetes(d) {
+    const n = Number(d && d.participations) || 0;
+    const insc = Number(d && d.inscription) > 0 ? 1 : 0;
+    const service = Math.max(n - insc, 0);
+    const titre = '🎄 Tu as ' + n + ' participation' + (n > 1 ? 's' : '') + ' au tirage des Fêtes';
+    const det = d && d.detail;
+    const parts = [];
+    if (det && det.livraisons) parts.push(det.livraisons + ' livraison' + (det.livraisons > 1 ? 's' : ''));
+    if (det && det.trajets_passager) parts.push(det.trajets_passager + ' trajet' + (det.trajets_passager > 1 ? 's' : '') + ' comme passager');
+    if (det && det.trajets_conducteur) parts.push(det.trajets_conducteur + ' trajet' + (det.trajets_conducteur > 1 ? 's' : '') + ' comme conducteur');
+    const susp = Number(d && d.suspendues) || 0;
+    const detail = (parts.length ? ' (' + parts.join(', ') + ')' : '') + '.';
+    const repartition = insc
+      ? '1 participation pour ton inscription + ' + service + ' grâce à tes livraisons et trajets' + detail
+      : service + ' grâce à tes livraisons et trajets' + detail + ' Vérifie ton courriel pour recevoir ta participation d\'inscription.';
+    const sous = repartition +
+      ' Chaque livraison ou trajet payé = 1 chance de plus.' +
+      (susp ? ' ' + susp + ' participation' + (susp > 1 ? 's' : '') + ' en attente : un litige est en cours.' : '');
+    return { titre, sous };
+  }
+
+  async function loadConcoursFetes(session) {
+    const el = document.getElementById('concoursFetesCard');
+    if (!el || Date.now() >= Date.parse('2027-01-07T05:00:00.000Z')) return;
+    try {
+      const r = await fetch('/api/platform?endpoint=concours-fetes-moi', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const d = await r.json().catch(() => null);
+      if (!r.ok || !d || !d.lance) return;
+      const t = texteParticipationsFetes(d);
+      el.innerHTML = '<div style="font-weight:800;font-size:1.05rem">' + esc(t.titre) + '</div>' +
+        '<div style="color:var(--muted);font-size:.86rem;margin-top:4px">' + esc(t.sous) +
+        ' <a href="' + esc(d.reglement || '/concours-fetes-reglement.html') + '" style="color:#f5d061;font-weight:700">Règlement</a></div>';
+      el.style.display = 'block';
+    } catch (_) { /* carte cachée si indisponible */ }
+  }
+
+  // ─── CONDUCTEUR : mes trajets publiés + capture paiement ──────────────
+  async function loadDriverRides(session) {
+    const { data: tousRides } = await db.from('rides')
+      .select('id,start_city,end_city,departure_time,available_seats,status,cost_per_km,is_recurring')
+      .eq('driver_id', session.user.id)
+      .order('departure_time', { ascending: false })
+      .limit(40);
+    // Trajets supprimés (annulés + marque « ride_deleted » au journal) : jamais dans « Mes trajets ».
+    let supprimes = new Set();
+    if ((tousRides || []).some(r => r.status === 'annule')) {
+      try {
+        const { data: marques } = await db.from('transaction_audit_events')
+          .select('evidence')
+          .eq('event_type', 'ride_deleted')
+          .eq('status', 'supprime')
+          .eq('user_id', session.user.id)
+          .limit(1000);
+        supprimes = new Set((marques || []).map(m => m.evidence && m.evidence.ride_id).filter(Boolean));
+      } catch (e) { /* journal illisible : les trajets restent affichés comme annulés */ }
+    }
+    const rides = (tousRides || []).filter(r => !(r.status === 'annule' && supprimes.has(r.id))).slice(0, 20);
+    if (!rides.length) return;
+    window.__drvRides = rides;
+
+    document.getElementById('sectionConducteur').style.display = 'block';
+    document.getElementById('drvCount').textContent = rides.length;
+
+    // Charger les réservations confirmées dont le paiement est sécurisé
+    // jusqu'à la fin du trajet.
+    const rideIds = rides.map(r => r.id);
+    let pendingByRide = {};
+    try {
+      const { data: pending } = await db.from('ride_bookings')
+        .select('id,ride_id,status,driver_amount')
+        .in('ride_id', rideIds)
+        .eq('status', 'confirme')
+        .is('paid_at', null);
+      (pending || []).forEach(b => {
+        if (!pendingByRide[b.ride_id]) pendingByRide[b.ride_id] = [];
+        pendingByRide[b.ride_id].push(b);
+      });
+    } catch (e) { /* silent */ }
+
+    const rows = rides.map(r => {
+      const pending = pendingByRide[r.id] || [];
+      const totalDue = pending.reduce((s, b) => s + Number(b.driver_amount || 0), 0);
+      const dep = r.departure_time ? new Date(r.departure_time).getTime() : 0;
+      const tripPast = dep > 0 && dep < (Date.now() - 30 * 60 * 1000); // trajet passé +30min
+      const captureBtn = (pending.length > 0 && tripPast)
+        ? '<button class="ra-pay" onclick="window.captureRideTrip(\'' + esc(r.id) + '\',' + pending.length + ',' + totalDue.toFixed(2) + ')" style="border:none;cursor:pointer">💰 Recevoir mon paiement (' + totalDue.toFixed(2) + ' $)</button>'
+        : (pending.length > 0
+          ? '<span class="status-pill pill-ok" title="Réservation confirmée. Le paiement est sécurisé par Stripe jusqu\'à la fin du trajet">✅ ' + pending.length + ' réservation' + (pending.length > 1 ? 's' : '') + ' confirmée' + (pending.length > 1 ? 's' : '') + ' · paiement sécurisé</span>'
+          : '');
+      return '<tr>' +
+        '<td><strong>' + esc(r.start_city||'?') + ' → ' + esc(r.end_city||'?') + '</strong>' + (r.is_recurring ? ' <span class="status-pill pill-info">🔁</span>' : '') + '</td>' +
+        '<td>' + fmtDT(r.departure_time) + '</td>' +
+        '<td>' + (r.available_seats||0) + ' place' + ((r.available_seats||0)>1?'s':'') + '</td>' +
+        '<td>' + statusPill(r.status) + '</td>' +
+        '<td><div class="row-actions">' + captureBtn + '<a class="ra-view" href="/covoiturage-trajet.html?ride_id=' + esc(r.id) + '">👁️ Voir</a>' +
+          '<button type="button" class="ra-delete" onclick="window.supprimerTrajet(\'' + esc(encodeURIComponent(r.id)) + '\')" style="border:1px solid rgba(255,80,80,.35);background:rgba(255,80,80,.08);color:#ff9999;border-radius:7px;padding:5px 10px;font-weight:700;cursor:pointer">🗑️ Supprimer</button></div></td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('drvTable').innerHTML = '<table><thead><tr><th>Trajet</th><th>Date</th><th>Places</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  // Supprimer un trajet (conducteur) : fenêtre dans la page, le serveur décide (ride-delete).
+  window.supprimerTrajet = async function (rideIdEnc) {
+    const rideId = decodeURIComponent(rideIdEnc);
+    const ride = (window.__drvRides || []).find((r) => r.id === rideId);
+    const libelle = ride ? (ride.start_city || '?') + ' → ' + (ride.end_city || '?') : 'Trajet';
+    const ok = await window.PAPRideDelete.ouvrir(rideId, libelle);
+    if (ok) window.location.reload();
+  };
+
+  // Capture les paiements d'un trajet côté conducteur
+  window.captureRideTrip = async function (rideId, count, total) {
+    // Le conducteur marque le trajet terminé ; le paiement est prélevé quand le passager entre son code,
+    // ou automatiquement 4 h plus tard s'il n'y a pas d'alerte. (Avant : prélèvement immédiat sans le code.)
+    if (!(await PAPDialog.confirm('Confirmer que tu as fait ce trajet pour ' + count + ' passager(s) ?\n\nTu recevras ' + total + ' $ quand chaque passager aura entré son code à l\'arrivée, ou automatiquement 4 h plus tard s\'il n\'y a pas d\'alerte.'))) return;
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const { data: bookings } = await db.from('ride_bookings')
+        .select('id')
+        .eq('ride_id', rideId)
+        .eq('status', 'confirme')
+        .is('paid_at', null);
+      let ok = 0, fail = 0;
+      for (const b of (bookings || [])) {
+        const r = await fetch('/api/platform?endpoint=ride-driver-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify({ endpoint: 'ride-driver-complete', booking_id: b.id })
+        });
+        if (r.ok) ok++; else fail++;
+      }
+      (await PAPDialog.alert('✅ Trajet marqué terminé pour ' + ok + ' passager(s). Le paiement suivra quand le passager entre son code, ou dans 4 h.' + (fail > 0 ? '\n⚠️ ' + fail + ' échec(s). Contacte le support.' : '')));
+      location.reload();
+    } catch (e) {
+      (await PAPDialog.alert('❌ ' + e.message));
+    }
+  };
+
+  // ─── EXPÉDITEUR : mes envois ──────────────────────────────────────────
+  async function loadExpediteurDeliveries(session) {
+    const { data: livs } = await db.from('livraisons')
+      .select('id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le,livreur_id')
+      .eq('expediteur_id', session.user.id)
+      .order('cree_le', { ascending: false })
+      .limit(20);
+    if (!livs?.length) return;
+
+    document.getElementById('sectionExpediteur').style.display = 'block';
+    document.getElementById('expCount').textContent = livs.length;
+
+    const rows = livs.map(l => `
+      <tr>
+        <td><strong>${esc(l.ville_depart||'?')} → ${esc(l.ville_arrivee||'?')}</strong><div style="font-size:.7rem;color:var(--muted);font-family:monospace">${esc(l.code||l.id.slice(0,8))}</div></td>
+        <td>${fmtDT(l.cree_le)}</td>
+        <td><strong>${fmt(l.prix_total)}</strong></td>
+        <td>${statusPill(l.statut)}</td>
+        <td><div class="row-actions"><a class="ra-view" href="/suivi-livraison.html?id=${esc(l.id)}">👁️ Suivre</a></div></td>
+      </tr>
+    `).join('');
+    document.getElementById('expTable').innerHTML = `<table><thead><tr><th>Trajet</th><th>Créée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ─── LIVREUR : mes missions acceptées ─────────────────────────────────
+  async function loadLivreurMissions(session, profile) {
+    const role = profile.role || '';
+    if (!['livreur', 'les deux', 'admin'].includes(role)) return;
+    const { data: livs } = await db.from('livraisons')
+      .select('id,code,statut,prix_total,ville_depart,ville_arrivee,cree_le')
+      .eq('livreur_id', session.user.id)
+      .order('cree_le', { ascending: false })
+      .limit(20);
+    if (!livs?.length) return;
+
+    document.getElementById('sectionLivreur').style.display = 'block';
+    document.getElementById('livCount').textContent = livs.length;
+
+    const rows = livs.map(l => `
+      <tr>
+        <td><strong>${esc(l.ville_depart||'?')} → ${esc(l.ville_arrivee||'?')}</strong><div style="font-size:.7rem;color:var(--muted);font-family:monospace">${esc(l.code||l.id.slice(0,8))}</div></td>
+        <td>${fmtDT(l.cree_le)}</td>
+        <td><strong>${fmt(l.prix_total)}</strong></td>
+        <td>${statusPill(l.statut)}</td>
+        <td><div class="row-actions"><a class="ra-view" href="/suivi-livraison.html?id=${esc(l.id)}">👁️ Suivre</a></div></td>
+      </tr>
+    `).join('');
+    document.getElementById('livTable').innerHTML = `<table><thead><tr><th>Mission</th><th>Acceptée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  loadDashboard().catch(e => {
+    document.getElementById('loading').innerHTML = `<div style="color:#ff7a7a">Erreur : ${e.message}</div>`;
+  });
+</script>
+
+</body>
+</html>

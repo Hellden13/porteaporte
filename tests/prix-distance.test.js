@@ -132,7 +132,7 @@ describe('11. gain du livreur', () => {
     assert.doesNotMatch(plat, /Math\.floor\(grossCents \* 0\.60\)/, 'plus de 60 % fixe à part');
   });
   test('les écrans du livreur affichent « Tu gagnes » et la vraie part', () => {
-    const dl = fs.readFileSync('dashboard-livreur.html', 'utf8');
+    const dl = fs.readFileSync('membre-livrer.html', 'utf8');
     // La prime de protection va au fonds de protection : elle est retirée avant le calcul du gain.
     assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(m\.prix_total, m\.assurance_plan\)\}/g) || []).length, 2);
     assert.equal((dl.match(/Tu gagnes : \$\{gainTexte\(row\.prix_total, row\.assurance_plan\)\}/g) || []).length, 2);

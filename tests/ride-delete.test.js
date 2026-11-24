@@ -364,7 +364,7 @@ describe('trajet supprimé caché, trajets passés cachés', () => {
   });
 
   test('tableau de bord unifié (dashboard.html) : filtre les trajets marqués « ride_deleted »', () => {
-    const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
+    const dash = fs.readFileSync(path.join(ROOT, 'membre-accueil.html'), 'utf8');
     assert.match(dash, /\.from\('transaction_audit_events'\)[\s\S]{0,200}\.eq\('event_type', 'ride_deleted'\)/);
     assert.match(dash, /!\(r\.status === 'annule' && supprimes\.has\(r\.id\)\)/);
     assert.doesNotMatch(dash, /neq\('status', 'supprime'\)/);
@@ -387,7 +387,7 @@ describe('pages et migration', () => {
     assert.match(js, /esc\(libelle\)/);
   });
 
-  for (const page of ['dashboard-covoiturage.html', 'dashboard.html', 'admin/dashboard-admin.html']) {
+  for (const page of ['membre-covoiturage.html', 'membre-accueil.html', 'admin/dashboard-admin.html']) {
     test(`${page} : bouton Supprimer branché sur la fenêtre`, () => {
       const html = lire(page);
       assert.match(html, /<script src="\/js\/ride-delete\.js"><\/script>/);

@@ -332,7 +332,7 @@
           </label>
           <div id="pet-card-hint" class="pet-card-hint">
             Pour voyager avec un animal, sa carte et sa photo doivent etre approuvees.
-            <a href="/profile.html?pet=1#pet-card-section">Completer la carte animal</a>
+            <a href="/dashboard.html?onglet=compte&pet=1#pet-card-section">Completer la carte animal</a>
           </div>
           <div class="form-group">
             <label>Remarque pour le chauffeur <span style="font-weight:400;color:#aaa">(optionnel)</span></label>
@@ -758,7 +758,7 @@ async function showPostPaymentConfirmation(bookingId) {
     </div>
     <div class="post-confirm-actions">
       <a href="/covoiturage-confirme.html?booking_id=${encodeURIComponent(bookingId || '')}">Voir ma confirmation</a>
-      <a href="/dashboard-covoiturage.html">Ouvrir mon dashboard</a>
+      <a href="/dashboard.html?onglet=covoiturage">Ouvrir mon dashboard</a>
     </div>`;
   card.classList.add('active');
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1345,7 +1345,7 @@ function updatePetCardHint(message, ok) {
   if (!petBox || !hint) return;
   hint.style.display = petBox.checked ? 'block' : 'none';
   if (message) {
-    hint.innerHTML = message + ' <a href="/profile.html?pet=1#pet-card-section">Completer la carte animal</a>';
+    hint.innerHTML = message + ' <a href="/dashboard.html?onglet=compte&pet=1#pet-card-section">Completer la carte animal</a>';
     hint.style.background = ok ? '#e8f5e9' : '#fff7e6';
     hint.style.borderColor = ok ? '#7fe5a3' : '#ffd166';
     hint.style.color = ok ? '#1b5e20' : '#7a4a00';
@@ -1433,7 +1433,7 @@ async function bookPassenger() {
     // Cas spécial : déjà réservé → redirection vers le dashboard
     if (res.status === 409 && data.existing_booking) {
       if ((await PAPDialog.confirm(data.error + '\n\n' + (data.action || 'Va voir ta réservation existante.')))) {
-        window.location.href = data.action_url || '/dashboard-covoiturage.html';
+        window.location.href = data.action_url || '/dashboard.html?onglet=covoiturage';
       }
       return;
     }
@@ -1520,7 +1520,7 @@ async function bookPackage() {
   var data = await res.json().catch(function(){ return {}; });
   if (!res.ok || data.error) throw new Error(data.error || 'Erreur envoi colis');
   showToast('Colis enregistre !', 'success');
-  setTimeout(function() { location.href = '/dashboard-expediteur.html'; }, 2000);
+  setTimeout(function() { location.href = '/dashboard.html?onglet=envois'; }, 2000);
 }
 
 (async function() {

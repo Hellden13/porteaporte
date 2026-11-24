@@ -1237,7 +1237,7 @@
             <label for="notif-body">Message</label>
             <textarea id="notif-body" placeholder="Découvrez les nouvelles mises à jour…" required></textarea>
             <label for="notif-url">URL à ouvrir (optionnel)</label>
-            <input id="notif-url" placeholder="/dashboard-livreur.html">
+            <input id="notif-url" placeholder="/dashboard.html?onglet=livrer">
             <label for="notif-role">Destinataires</label>
             <select id="notif-role">
               <option value="">Tous les abonnés</option>
@@ -3127,7 +3127,7 @@
     const btn = document.getElementById('notif-send-btn');
     const title = document.getElementById('notif-title').value.trim();
     const body  = document.getElementById('notif-body').value.trim();
-    const url   = document.getElementById('notif-url').value.trim() || '/dashboard-livreur.html';
+    const url   = document.getElementById('notif-url').value.trim() || '/dashboard.html?onglet=livrer';
     const role  = document.getElementById('notif-role').value;
 
     if (!(await PAPDialog.confirm(`Envoyer "${title}" à tous les abonnés${role ? ' (' + role + ')' : ''} ?`))) return;

@@ -528,7 +528,7 @@ describe('accueil : on sent les Fêtes', () => {
 
 describe('tableau de bord du membre', () => {
   test('« Tu as X participations au tirage des Fêtes »', () => {
-    const html = lire('dashboard.html');
+    const html = lire('membre-accueil.html');
     const i = html.indexOf('  function texteParticipationsFetes(');
     const j = html.indexOf('  async function loadConcoursFetes(');
     const ctx = { Number };
@@ -543,7 +543,7 @@ describe('tableau de bord du membre', () => {
 
 describe('page du membre : compteur « Trajets covoit »', () => {
   test('compte les trajets faits comme passager ET comme conducteur', () => {
-    const html = lire('dashboard.html');
+    const html = lire('membre-accueil.html');
     const i = html.indexOf('  const STATUTS_TRAJET_FAIT');
     const j = html.indexOf('  async function loadCovTripsStat(');
     const ctx = { String };
@@ -753,7 +753,7 @@ describe('participation d\'inscription : endpoints', () => {
 });
 
 describe('tableau de bord du membre : « 1 participation pour ton inscription + X »', () => {
-  const html = lire('dashboard.html');
+  const html = lire('membre-accueil.html');
   const ctx = { Number, Math };
   vm.createContext(ctx);
   vm.runInContext(html.slice(html.indexOf('  function texteParticipationsFetes('), html.indexOf('  async function loadConcoursFetes(')), ctx);

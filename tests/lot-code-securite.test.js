@@ -233,7 +233,7 @@ describe('2. prélèvement covoiturage : seulement un trajet complété', () => 
   });
   test('branché : la fin de trajet avec code transmet « trajet complété » ; le bouton du conducteur ne prélève plus', () => {
     assert.match(lire('lib/_rides.js'), /await rideCaptureEligible\(req, fakeRes, ctx, \{ booking_id: booking\.id, force: true, grace_hours: 0 \}, \{ trajetComplete: true \}\);/);
-    const d = lire('dashboard.html');
+    const d = lire('membre-accueil.html');
     assert.match(d, /endpoint=ride-driver-complete/);
     assert.doesNotMatch(d, /body: JSON\.stringify\(\{ endpoint: 'ride-capture-eligible', booking_id: b\.id \}\)/);
     assert.match(lire('admin/ride-payments.html'), /endpoint: 'ride-capture-eligible', booking_id: bookingId, force: true/);
@@ -310,7 +310,7 @@ describe('3. annuler une seule date d\'un trajet récurrent', () => {
     assert.equal(res._body.code, 'date_annulee');
   });
   test('bouton « Annuler un seul jour » dans le tableau du conducteur (trajets récurrents)', () => {
-    const h = lire('dashboard-covoiturage.html');
+    const h = lire('membre-covoiturage.html');
     assert.match(h, /onclick="annulerUnJour\('\$\{r\.id\}'\)"/);
     assert.match(h, /endpoint=ride-annuler-date/);
     assert.match(lire('api/platform.js'), /if \(endpoint === 'ride-annuler-date'\)\s+return await rideAnnulerDate\(req, res, ctx, body\);/);

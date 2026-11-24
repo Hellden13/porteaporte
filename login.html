@@ -444,9 +444,9 @@
         <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Tu es connecté en tant qu'administrateur.<br>Où veux-tu aller ?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
           <a href="/admin/dashboard-admin.html" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">⚡ Dashboard Admin</a>
-          <a href="/dashboard-expediteur.html"  style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">📦 Expéditeur</a>
-          <a href="/dashboard-livreur.html"     style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚚 Livreur</a>
-          <a href="/dashboard-covoiturage.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚗 Covoiturage</a>
+          <a href="/dashboard.html?onglet=envois"  style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">📦 Expéditeur</a>
+          <a href="/dashboard.html?onglet=livrer"     style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚚 Livreur</a>
+          <a href="/dashboard.html?onglet=covoiturage" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">🚗 Covoiturage</a>
         </div>
         <button onclick="db.auth.signOut().then(()=>window.location.reload())" style="background:transparent;border:1px solid #1E2A3A;color:#8A9BB0;padding:10px 24px;border-radius:8px;font-size:.85rem;cursor:pointer">Se déconnecter</button>
       `;
@@ -457,7 +457,7 @@
       const overlay = document.getElementById('user-portal-overlay');
       if (overlay) { overlay.style.display = 'flex'; return; }
       const driverReady = profile?.driver_status === 'verified';
-      const driverHref = driverReady ? '/dashboard-livreur.html' : '/livreur.html';
+      const driverHref = driverReady ? '/dashboard.html?onglet=livrer' : '/livreur.html';
       const driverText = driverReady ? 'Livraisons' : 'Vérification livreur';
       const el = document.createElement('div');
       el.id = 'user-portal-overlay';
@@ -466,10 +466,10 @@
         <div style="font-size:1.5rem;font-weight:900;color:#5dbfff">PorteàPorte</div>
         <div style="color:#8A9BB0;font-size:.95rem;text-align:center">Ton compte peut utiliser plusieurs espaces.<br>Choisis ou tu veux aller.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
-          <a href="/dashboard-expediteur.html" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">Expéditeur</a>
+          <a href="/dashboard.html?onglet=envois" style="background:#5dbfff;color:#0A0F1E;padding:18px 16px;border-radius:12px;font-weight:800;text-align:center;text-decoration:none;font-size:.95rem">Expéditeur</a>
           <a href="${driverHref}" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">${driverText}</a>
-          <a href="/dashboard-covoiturage.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Covoiturage</a>
-          <a href="/profile.html" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Profil</a>
+          <a href="/dashboard.html?onglet=covoiturage" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Covoiturage</a>
+          <a href="/dashboard.html?onglet=compte" style="background:#1A2235;color:#E8EDF5;padding:18px 16px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;font-size:.95rem;border:1px solid #1E2A3A">Profil</a>
         </div>
         <button onclick="db.auth.signOut().then(()=>window.location.reload())" style="background:transparent;border:1px solid #1E2A3A;color:#8A9BB0;padding:10px 24px;border-radius:8px;font-size:.85rem;cursor:pointer">Se déconnecter</button>
       `;

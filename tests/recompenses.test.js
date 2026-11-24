@@ -221,7 +221,7 @@ describe('rien d\'affiché qui ne soit pas réel', () => {
     const k = lire('kyc.html');
     assert.doesNotMatch(k, /Ton bonus écologique est actif/);
     assert.doesNotMatch(k, /tu reçois un bonus de \$\{m\.eco\}%/);
-    assert.match(lire('dashboard-livreur.html'), /if \(banner\) banner\.style\.display = 'none';/);
+    assert.match(lire('membre-livrer.html'), /if \(banner\) banner\.style\.display = 'none';/);
     assert.match(lire('browse-missions.html'), /if \(false && ecoBonus > 0\)/);
     assert.doesNotMatch(lire('lib/_fidelite.js'), /eco_bonus/, 'plus de point de fidélité « éco » non annoncé');
   });
@@ -244,7 +244,7 @@ describe('rien d\'affiché qui ne soit pas réel', () => {
     for (const x of [/50 PorteCoins/, /valeur 5 \$/i, /Valeur : 5,00 \$/, /Tarifs préférentiels/, /Badge exclusif "Fondateur"/, /PorteCoins bonus/, /accéder aux bonus mensuels/]) assert.doesNotMatch(n, x);
   });
   test('parrainage : pas de « bonus de bienvenue » pour le filleul', () => {
-    assert.doesNotMatch(lire('parrainage.html'), /bonus de bienvenue/);
+    assert.doesNotMatch(lire('membre-parrainage.html'), /bonus de bienvenue/);
   });
   test('organismes : plus de « 5 % de chaque livraison va à… » (le versement n\'existe pas encore)', () => {
     for (const f of ['organismes.html', 'manifeste.html', 'vote-communautaire.html', 'admin/presse-kit.html']) {

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 test('dashboard classifies cancelled and past bookings as history', () => {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'dashboard-covoiturage.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'membre-covoiturage.html'), 'utf8');
   assert.match(html, /'annule_passager','annule_chauffeur'/);
   assert.match(html, /ride_departure_time.*Date\.now\(\)/);
   assert.match(html, /fmtDate\(b\.ride_departure_time \|\| b\.created_at\)/);

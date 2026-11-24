@@ -52,14 +52,14 @@
       "name": "Mon tableau de bord",
       "short_name": "Dashboard",
       "description": "Voir mes livraisons en cours",
-      "url": "/dashboard-expediteur.html?utm_source=pwa_shortcut",
+      "url": "/dashboard.html?onglet=envois&utm_source=pwa_shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Livrer",
       "short_name": "Livrer",
       "description": "Voir les missions disponibles",
-      "url": "/dashboard-livreur.html?utm_source=pwa_shortcut",
+      "url": "/dashboard.html?onglet=livrer&utm_source=pwa_shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {

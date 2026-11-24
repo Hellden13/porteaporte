@@ -46,7 +46,7 @@ test('le mode express saute directement du trajet au prix', () => {
 });
 
 test('le tableau de bord principal permet au passager d annuler une reservation active', () => {
-  const html = fs.readFileSync(path.join(projectRoot, 'dashboard.html'), 'utf8');
+  const html = fs.readFileSync(path.join(projectRoot, 'membre-accueil.html'), 'utf8');
 
   assert.match(html, /window\.cancelPassengerBooking = async function/);
   assert.match(html, /fetch\('\/api\/ride-cancel'/);

@@ -69,24 +69,24 @@
     {
       keys: ['dashboard covoiturage','mon covoiturage','tableau de bord covoiturage'],
       title: '📊 Tableau de bord covoiturage',
-      response: 'Ton tableau de bord covoiturage regroupe :\n\n🚗 Conducteur : trajets publiés, réservations reçues, places restantes\n🎫 Passager : mes réservations, trajets à venir, historique\n🎯 Missions en cours avec barre de progression\n🏆 Badges obtenus et à débloquer\n⭐ Avis reçus\n📈 Niveau XP et progression\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Ouvrir mon dashboard</a>'
+      response: 'Ton tableau de bord covoiturage regroupe :\n\n🚗 Conducteur : trajets publiés, réservations reçues, places restantes\n🎫 Passager : mes réservations, trajets à venir, historique\n🎯 Missions en cours avec barre de progression\n🏆 Badges obtenus et à débloquer\n⭐ Avis reçus\n📈 Niveau XP et progression\n\n➡️ <a href="/dashboard.html?onglet=covoiturage" style="color:#B8F53E">Ouvrir mon dashboard</a>'
     },
 
     // ── MISSIONS & BADGES & XP ──
     {
       keys: ['mission','missions','defi','defis','objectif'],
       title: '🎯 Missions',
-      response: 'Voici quelques missions covoiturage :\n\n🚗 Premier trajet partagé → +50 XP\n🎯 Trajet complet (auto pleine) → +100 XP\n🌿 Éco-route (50km+ avec 2 pax) → +150 XP\n⏱️ Ponctualité (5 trajets sans retard) → +200 XP\n🤝 Aide communautaire → +180 XP\n⭐ Ambassadeur (10 trajets, note 4.8+) → +300 XP\n\nChaque mission complétée attribue un badge visible sur ton profil !\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Voir mes missions</a>'
+      response: 'Voici quelques missions covoiturage :\n\n🚗 Premier trajet partagé → +50 XP\n🎯 Trajet complet (auto pleine) → +100 XP\n🌿 Éco-route (50km+ avec 2 pax) → +150 XP\n⏱️ Ponctualité (5 trajets sans retard) → +200 XP\n🤝 Aide communautaire → +180 XP\n⭐ Ambassadeur (10 trajets, note 4.8+) → +300 XP\n\nChaque mission complétée attribue un badge visible sur ton profil !\n\n➡️ <a href="/dashboard.html?onglet=covoiturage" style="color:#B8F53E">Voir mes missions</a>'
     },
     {
       keys: ['badge','badges','trophee'],
       title: '🏆 Badges',
-      response: 'Les badges PorteàPorte :\n\n🌱 Nouveau covoitureur\n✅ Conducteur vérifié\n🚗 Premier trajet utile\n🎯 Auto pleine\n🌿 Éco-route\n⭐ Ambassadeur PorteàPorte\n🗺️ Connecteur régional\n❤️ Trajet solidaire\n🏆 Groupe optimisé\n🎖️ Capitaine régional\n\nChaque badge est visible sur ton profil et renforce ta réputation dans la communauté.\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Voir mes badges</a>'
+      response: 'Les badges PorteàPorte :\n\n🌱 Nouveau covoitureur\n✅ Conducteur vérifié\n🚗 Premier trajet utile\n🎯 Auto pleine\n🌿 Éco-route\n⭐ Ambassadeur PorteàPorte\n🗺️ Connecteur régional\n❤️ Trajet solidaire\n🏆 Groupe optimisé\n🎖️ Capitaine régional\n\nChaque badge est visible sur ton profil et renforce ta réputation dans la communauté.\n\n➡️ <a href="/dashboard.html?onglet=covoiturage" style="color:#B8F53E">Voir mes badges</a>'
     },
     {
       keys: ['xp','experience','niveau','niveaux','progression','points'],
       title: '📈 XP et niveaux',
-      response: 'Système de progression :\n\n🟢 Niveau 1 — Nouveau (0–199 XP)\n🔵 Niveau 2 — Fiable (200–499 XP)\n🟩 Niveau 3 — Habitué (500–999 XP)\n🟡 Niveau 4 — Ambassadeur (1000–1999 XP)\n⭐ Niveau 5 — Capitaine régional (2000+ XP)\n\nLes niveaux élevés donnent : meilleure visibilité, missions exclusives, accès gros trajets, support prioritaire.\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Voir ma progression</a>'
+      response: 'Système de progression :\n\n🟢 Niveau 1 — Nouveau (0–199 XP)\n🔵 Niveau 2 — Fiable (200–499 XP)\n🟩 Niveau 3 — Habitué (500–999 XP)\n🟡 Niveau 4 — Ambassadeur (1000–1999 XP)\n⭐ Niveau 5 — Capitaine régional (2000+ XP)\n\nLes niveaux élevés donnent : meilleure visibilité, missions exclusives, accès gros trajets, support prioritaire.\n\n➡️ <a href="/dashboard.html?onglet=covoiturage" style="color:#B8F53E">Voir ma progression</a>'
     },
     {
       keys: ['bonus groupe','reduction groupe','auto pleine','economie groupe'],

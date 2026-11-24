@@ -265,7 +265,7 @@ describe('le livreur ne voit plus les coordonnées du destinataire', () => {
     assert.match(s, /data\.livraisons_livrees = r2\.ok \? \(await r2\.json\(\)\)\.map\(sansCoordonneesDestinataire\)/);
   });
   test('tableau du livreur : plus de lien tel:, boutons de messagerie à la place', () => {
-    const h = lire('dashboard-livreur.html');
+    const h = lire('membre-livrer.html');
     assert.doesNotMatch(h, /telDestinataire|href="tel:\$\{/);
     assert.match(h, /message-livraison\.html\?l=\$\{encodeURIComponent\(row\.id\)\}&avec=destinataire/);
   });

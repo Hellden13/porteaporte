@@ -546,7 +546,7 @@ async function assignDriver(req, res, ctx, body) {
           code_ramassage: codesAffichables(livraison).ramassage,
           code_reception: codesAffichables(livraison).reception,
           code_livraison: livraison.code || livraison.id?.slice(0, 8)?.toUpperCase(),
-          dashboard_url: `${siteOrigin()}/dashboard-expediteur.html`,
+          dashboard_url: `${siteOrigin()}/dashboard.html?onglet=envois`,
           ville_depart: livraison.ville_depart,
           ville_arrivee: livraison.ville_arrivee
         }
@@ -7026,8 +7026,8 @@ module.exports = async function handler(req, res) {
       }
       const baseUrl = (process.env.BASE_URL || 'https://porteaporte.site').trim().replace(/\/+$/, '');
       const linkParams = new URLSearchParams({ account: stripeAccountId,
-        refresh_url: `${baseUrl}/conducteur-paiements.html?stripe=refresh`,
-        return_url: `${baseUrl}/conducteur-paiements.html?stripe=success`,
+        refresh_url: `${baseUrl}/dashboard.html?onglet=paiements&vue=versements&stripe=refresh`,
+        return_url: `${baseUrl}/dashboard.html?onglet=paiements&vue=versements&stripe=success`,
         type: 'account_onboarding' });
       const linkRes = await fetch('https://api.stripe.com/v1/account_links', {
         method: 'POST',

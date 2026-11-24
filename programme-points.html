@@ -129,7 +129,7 @@
   <header class="site-header">
     <a class="brand-mark" href="/index.html"><img src="/logo.svg" alt=""><span>PorteàPorte</span></a>
     <nav style="display:flex;gap:12px">
-      <a class="btn btn-ghost" href="/parrainage.html">Parrainage</a>
+      <a class="btn btn-ghost" href="/dashboard.html?onglet=compte&vue=parrainage">Parrainage</a>
       <a class="btn btn-primary" id="nav-compte-btn" href="/login.html">Mon compte</a>
     </nav>
   </header>
@@ -239,8 +239,8 @@
       // Utilisateur connecté — déterminer son dashboard selon son rôle
       const role = session.user?.user_metadata?.role || '';
       const dashUrl = (role === 'livreur' || role === 'les deux')
-        ? '/dashboard-livreur.html'
-        : '/dashboard-expediteur.html';
+        ? '/dashboard.html?onglet=livrer'
+        : '/dashboard.html?onglet=envois';
 
       const navBtn  = document.getElementById('nav-compte-btn');
       const heroBtn = document.getElementById('hero-cta-btn');
@@ -291,7 +291,7 @@
           </div>
         </div>` : ''}
         <div style="margin-top:16px;text-align:right;">
-          <a href="/dashboard-livreur.html" class="btn btn-ghost" style="font-size:0.82rem">Tableau de bord complet →</a>
+          <a href="/dashboard.html?onglet=livrer" class="btn btn-ghost" style="font-size:0.82rem">Tableau de bord complet →</a>
         </div>
       `;
     })();

@@ -510,7 +510,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               ? `Le destinataire a confirmé sa présence pour la livraison <strong style="color:#fff">#${data.code}</strong>. Tu peux partir avec le colis XL en toute sécurité.`
               : `Le destinataire a refusé ou n'a pas répondu pour la livraison <strong style="color:#fff">#${data.code}</strong>. La livraison passe en retour expéditeur. Tu recevras une compensation pour ton temps.`}</p>
             <div style="text-align:center;margin:20px 0">
-              <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Dashboard livreur</a>
+              <a href="https://porteaporte.site/dashboard.html?onglet=livrer" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Dashboard livreur</a>
             </div>
           </div>`
       });
@@ -548,7 +548,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               ${prefsHtml}
               <p style="color:#a8b0ba;font-size:.9rem">⚠️ <strong>Respecte ces consignes</strong>. En cas d'imprévu (absence, refus…), utilise les boutons « 🚨 Imprévu » de ton dashboard pour signaler et être protégé.</p>
               <div style="text-align:center;margin:20px 0">
-                <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Voir sur mon dashboard</a>
+                <a href="https://porteaporte.site/dashboard.html?onglet=livrer" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Voir sur mon dashboard</a>
               </div>
             </div>`
         });
@@ -696,7 +696,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             ${compMsg}
             <p style="color:#a8b0ba;font-size:.9rem">Tu peux suivre l'évolution et contacter le support depuis ton dashboard.</p>
             <div style="text-align:center;margin:20px 0">
-              <a href="https://porteaporte.site/dashboard-expediteur.html" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Mon dashboard</a>
+              <a href="https://porteaporte.site/dashboard.html?onglet=envois" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Mon dashboard</a>
             </div>
           </div>`
       });
@@ -1094,7 +1094,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
     case 'ride_nouveau_message': {
       if (!data.to_email) break;
       const route = `${escapeHtml(data.ville_depart || '?')} → ${escapeHtml(data.ville_arrivee || '?')}`;
-      const lien = 'https://porteaporte.site' + (String(data.lien || '').startsWith('/') ? String(data.lien) : '/dashboard-covoiturage.html');
+      const lien = 'https://porteaporte.site' + (String(data.lien || '').startsWith('/') ? String(data.lien) : '/dashboard.html?onglet=covoiturage');
       emails.push({
         to: data.to_email,
         from: { email: fromEmail, name: fromName },
@@ -1279,7 +1279,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="color:#a8b0ba;margin-top:8px">Chauffeur : <strong style="color:#fff">${data.driver_name || 'Conducteur'}</strong></div>
             </div>
 
-            <a href="https://porteaporte.site/dashboard-covoiturage.html?section=reservations&booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Confirmer mon arrivée</a>
+            <a href="https://porteaporte.site/dashboard.html?onglet=covoiturage&section=reservations&booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Confirmer mon arrivée</a>
 
             <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Si quelque chose ne va pas, ne confirme pas l'arrivée et contacte PorteàPorte depuis ton tableau de bord.</p>
           </div>`
@@ -1494,7 +1494,7 @@ function templateBienvenue(d) {
     <p style="color:#555;line-height:1.7;">Ton compte PorteàPorte est créé. Tu fais maintenant partie de la première plateforme canadienne de livraison entre particuliers.</p>
     <p style="color:#555;line-height:1.7;">Chaque livraison ou trajet payé te donne de l'XP, des badges et des Points Impact (sans valeur en argent), qui servent aux tirages mensuels.</p>
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://porteaporte.site/compte.html" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">
+      <a href="https://porteaporte.site/dashboard.html?onglet=compte&vue=securite" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">
         Accéder à mon compte →
       </a>
     </div>
@@ -1539,7 +1539,7 @@ function templateCarteLivreur(d) {
     </div>
     <p style="color:#555;line-height:1.7;">Pour devenir actif, complète la vérification d'identité. Les livreurs non vérifiés ne voient pas les colis réels ni les informations sensibles.</p>
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://porteaporte.site/dashboard-livreur.html" style="background:#B8F53E;color:#0A1628;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:800;">Ouvrir mon dashboard</a>
+      <a href="https://porteaporte.site/dashboard.html?onglet=livrer" style="background:#B8F53E;color:#0A1628;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:800;">Ouvrir mon dashboard</a>
     </div>`
   );
 }
@@ -1577,7 +1577,7 @@ function templateLivraisonConfirmee(d) {
     </div>
     <p style="color:#555;line-height:1.7;font-size:13px;">🔒 Ton paiement est sécurisé en escrow. Il sera libéré uniquement quand tu confirmeras la réception de ton colis.</p>
     <div style="text-align:center;margin:20px 0;">
-      <a href="https://porteaporte.site/compte.html" style="background:#1A3A7C;color:#ffffff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:700;font-size:13px;display:inline-block;">Suivre ma livraison →</a>
+      <a href="https://porteaporte.site/dashboard.html?onglet=compte&vue=securite" style="background:#1A3A7C;color:#ffffff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:700;font-size:13px;display:inline-block;">Suivre ma livraison →</a>
     </div>`
   );
 }
@@ -1604,7 +1604,7 @@ function templateLivraisonComplete(d) {
     `<h2 style="font-size:22px;margin:0 0 16px;">🎉 Colis livré avec succès !</h2>
     <p style="color:#555;line-height:1.7;">Ton colis <strong>${d.code}</strong> a été livré. N'oublie pas de confirmer la réception pour libérer le paiement au livreur.</p>
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://porteaporte.site/compte.html" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">✅ Confirmer la réception →</a>
+      <a href="https://porteaporte.site/dashboard.html?onglet=compte&vue=securite" style="background:#B8F53E;color:#0A1628;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:800;font-size:14px;display:inline-block;">✅ Confirmer la réception →</a>
     </div>
     <p style="font-size:12px;color:#aaa;">Une fois confirmé, tu peux laisser une évaluation au livreur et il recevra son paiement. Tu gagneras aussi des PorteCoins.</p>`
   );
@@ -1635,7 +1635,7 @@ function templateAchatCoins(d) {
     </div>
     ${d.gift_email ? `<p style="color:#555;line-height:1.7;font-size:13px;">🎁 Ces PorteCoins ont été envoyés à <strong>${d.gift_email}</strong> avec ton message.</p>` : ''}
     <div style="text-align:center;margin:20px 0;">
-      <a href="https://porteaporte.site/compte.html" style="background:#7F77DD;color:#ffffff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:700;font-size:13px;display:inline-block;">Voir mon solde →</a>
+      <a href="https://porteaporte.site/dashboard.html?onglet=compte&vue=securite" style="background:#7F77DD;color:#ffffff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:700;font-size:13px;display:inline-block;">Voir mon solde →</a>
     </div>`
   );
 }

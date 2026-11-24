@@ -46,7 +46,7 @@
 
         <div class="btn-row">
           <button class="btn" type="button" onclick="submitContestation()">📨 Envoyer ma contestation</button>
-          <a class="btn secondary" href="/dashboard-livreur.html">Annuler</a>
+          <a class="btn secondary" href="/dashboard.html?onglet=livrer">Annuler</a>
         </div>
         <div id="result" class="result"></div>
       </div>
@@ -126,7 +126,7 @@
       }
       result.className = 'result ok';
       result.textContent = '✅ Contestation envoyée. Un administrateur va trancher dans les 48h. Tu seras notifié par courriel.';
-      setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 3000);
+      setTimeout(() => { window.location.href = '/dashboard.html?onglet=livrer'; }, 3000);
     }
 
     load();

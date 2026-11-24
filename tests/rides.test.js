@@ -374,13 +374,13 @@ describe('coherence affichages prix et pourcentages', () => {
   test('reservation covoiturage avec animal exige une carte et une photo approuvee', () => {
     const rides = read('lib/_rides.js');
     const detail = read('covoiturage-trajet.html');
-    const profile = read('profile.html');
+    const profile = read('membre-profil.html');
     assert.match(rides, /select=pet_name,pet_species,pet_photo_url,pet_photo_status/);
     assert.match(rides, /pet_photo_status !== 'approved'/);
     assert.match(rides, /Carte animal requise avant de r[ée]server avec un animal/);
     assert.match(detail, /ensurePetCardApprovedForRide/);
     assert.match(detail, /pet-card-get/);
-    assert.match(detail, /profile\.html\?pet=1#pet-card-section/);
+    assert.match(detail, /dashboard\.html\?onglet=compte&pet=1#pet-card-section/);
     assert.match(profile, /new URLSearchParams\(location\.search\)\.get\('pet'\) === '1'/);
     assert.match(profile, /dispatchEvent\(new Event\('change'\)\)/);
   });

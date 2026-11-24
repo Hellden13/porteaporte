@@ -203,13 +203,13 @@ describe('aucune vraie coordonnée entre conducteur et passager', () => {
   });
 
   test('pages membres : aucun lien mailto/tel vers l’autre membre, bouton messagerie à la place', () => {
-    for (const f of ['covoiturage-confirme.html', 'dashboard-covoiturage.html', 'covoiturage-trajet.html']) {
+    for (const f of ['covoiturage-confirme.html', 'membre-covoiturage.html', 'covoiturage-trajet.html']) {
       const h = lire(f);
       assert.doesNotMatch(h, /mailto:\$\{|tel:\$\{|'tel:' \+|'mailto:' \+|openDriverContact|ride-driver-contact|driver\.telephone|driver\.email/, f);
     }
     assert.match(lire('covoiturage-confirme.html'), /Écrire au conducteur/);
-    assert.match(lire('dashboard-covoiturage.html'), /ouvrirMessagerie\(/);
-    for (const f of ['covoiturage-confirme.html', 'dashboard-covoiturage.html', 'covoiturage-trajet.html']) assert.match(lire(f), /\/js\/ride-chat\.js/, f);
+    assert.match(lire('membre-covoiturage.html'), /ouvrirMessagerie\(/);
+    for (const f of ['covoiturage-confirme.html', 'membre-covoiturage.html', 'covoiturage-trajet.html']) assert.match(lire(f), /\/js\/ride-chat\.js/, f);
   });
 
   test('widget : Signaler sans boîte de dialogue du navigateur, état fermé, rappel de confidentialité', () => {

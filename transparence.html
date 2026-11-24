@@ -429,7 +429,7 @@
       if (!session) return;
       const role = session.user?.user_metadata?.role || '';
       const dashUrl = (role === 'livreur' || role === 'les deux')
-        ? '/dashboard-livreur.html' : '/dashboard-expediteur.html';
+        ? '/dashboard.html?onglet=livrer' : '/dashboard.html?onglet=envois';
       const btn = document.getElementById('nav-compte-btn');
       if (btn) { btn.href = dashUrl; btn.textContent = 'Mon dashboard'; }
     })();

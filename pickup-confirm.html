@@ -115,7 +115,7 @@
         msgEl.textContent = '✅ Colis récupéré ! L\'expéditeur a été notifié. Bonne route !';
         msgEl.style.display = 'block';
         btn.textContent = '✅ Récupéré';
-        setTimeout(() => { window.location.href = '/dashboard-livreur.html'; }, 2500);
+        setTimeout(() => { window.location.href = '/dashboard.html?onglet=livrer'; }, 2500);
       } catch (err) {
         msgEl.className = 'msg err';
         msgEl.textContent = '❌ ' + err.message;

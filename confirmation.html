@@ -101,8 +101,8 @@
     </div>
 
     <div class="actions">
-      <a id="trackingLink" class="btn" href="/dashboard-expediteur.html">📦 Voir ma livraison</a>
-      <a class="btn secondary" href="/dashboard-expediteur.html">Dashboard →</a>
+      <a id="trackingLink" class="btn" href="/dashboard.html?onglet=envois">📦 Voir ma livraison</a>
+      <a class="btn secondary" href="/dashboard.html?onglet=envois">Dashboard →</a>
     </div>
     <div class="countdown" id="countdown"></div>
   </main>
@@ -164,7 +164,7 @@
       countEl.textContent = 'Redirection vers ton dashboard dans ' + secs + ' secondes…';
       if (secs <= 0) {
         clearInterval(timer);
-        window.location.href = '/dashboard-expediteur.html';
+        window.location.href = '/dashboard.html?onglet=envois';
       }
     }, 1000);
   </script>

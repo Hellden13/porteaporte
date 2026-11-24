@@ -13,7 +13,7 @@ const fonction = (src, nom) => {
 };
 
 test('5. pickup sans caméra : photo téléversée à la place, message clair, aucune fenêtre d\'alerte', () => {
-  const html = lire('dashboard-livreur.html');
+  const html = lire('membre-livrer.html');
   assert.match(html, /<input type="file" accept="image\/\*" capture="user" id="selfie-file-\$\{row\.id\}" onchange="selfieDepuisFichier\('\$\{row\.id\}', this\)"/);
   assert.match(html, /Téléverser une photo à la place/);
   const start = fonction(html, 'startSelfie');
@@ -85,7 +85,7 @@ test('17. impossible de terminer ou valider un trajet avant son heure de départ
 });
 
 test('18. vue d\'ensemble : réservations reçues comptées, statuts en français', () => {
-  const html = lire('dashboard-covoiturage.html');
+  const html = lire('membre-covoiturage.html');
   assert.match(html, /\[\.\.\.bookings, \.\.\.\(dashData\.ride_bookings \|\| \[\]\)\]/);
   assert.match(html, /const STATUTS_CONFIRMES = \['confirme', 'paye', 'paid', 'driver_completed'\];/);
   for (const code of ['paye', 'driver_completed']) assert.match(html, new RegExp(`${code}: \\['`));
@@ -165,14 +165,14 @@ test('23. boutons flottants rangés : place réservée en bas, aucun empilement,
   assert.match(js, /\.pap-launcher-btn\{right:21px!important;bottom:88px!important\}/, 'menu au-dessus de la bulle, plus superposé');
   assert.match(js, /#pap-gps-status\{left:50%!important/);
   assert.match(js, /\.pp-layer-pill > :not\(\.pp-layer-chevron\)\{display:none!important\}/);
-  for (const f of ['dashboard-livreur.html', 'dashboard.html', 'covoiturage-trajet.html', 'index.html']) {
+  for (const f of ['membre-livrer.html', 'membre-accueil.html', 'covoiturage-trajet.html', 'index.html']) {
     const h = lire(f);
     assert.ok(h.indexOf('/js/flottants.js') > 0, f);
   }
 });
 
 test('24. livreur : prénom (jamais le nom), carte sans débordement, menu cellulaire sur une rangée', () => {
-  const html = lire('dashboard-livreur.html');
+  const html = lire('membre-livrer.html');
   assert.doesNotMatch(html, /greetName'\)\.textContent = p\.nom/);
   assert.match(html, /const prenomAccueil = String\(p\.prenom/);
   assert.match(html, /grid-template-columns: minmax\(0, 1\.6fr\) minmax\(0, 1fr\);/);
@@ -205,7 +205,7 @@ test('25. livraisons de test : cachées aux livreurs par un drapeau admin, jamai
 });
 
 test('26. nouveau membre : tableau de bord unifié, plus de bannière « Essayer »', () => {
-  for (const f of ['dashboard-livreur.html', 'dashboard-expediteur.html', 'dashboard-covoiturage.html', 'dashboard-destinataire.html']) {
+  for (const f of ['membre-livrer.html', 'membre-envois.html', 'membre-covoiturage.html', 'membre-recus.html']) {
     assert.doesNotMatch(lire(f), /pap-redirect-banner|Essayer →/, f);
   }
   assert.match(lire('signup.html'), /emailRedirectTo: window\.location\.origin \+ '\/dashboard\.html' \+ redirectSuffix/);

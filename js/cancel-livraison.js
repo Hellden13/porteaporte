@@ -139,7 +139,7 @@
       html += `
         <div class="pc-actions">
           <button class="pc-cancel-btn" onclick="PapCancel.closeModal()" style="flex:1">Fermer</button>
-          ${data.statut && ['livre','livree','payee','paid','confirmee'].includes(data.statut) ? `<a class="pc-confirm" href="/dashboard-expediteur.html?tab=manquements" style="text-decoration:none;text-align:center;flex:1;display:inline-flex;align-items:center;justify-content:center">⚠️ Signaler un manquement</a>` : ''}
+          ${data.statut && ['livre','livree','payee','paid','confirmee'].includes(data.statut) ? `<a class="pc-confirm" href="/dashboard.html?onglet=envois&tab=manquements" style="text-decoration:none;text-align:center;flex:1;display:inline-flex;align-items:center;justify-content:center">⚠️ Signaler un manquement</a>` : ''}
         </div>
       `;
     }

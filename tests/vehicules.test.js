@@ -352,12 +352,12 @@ describe('écrans', () => {
     assert.match(lire('js/session-expiree.js'), /confirmation\|vehicules\)/);
   });
   test('tableau du livreur : véhicule du jour lu sur le serveur, plus de choix libre ; obligatoire à la connexion', () => {
-    const d = lire('dashboard-livreur.html');
+    const d = lire('membre-livrer.html');
     assert.match(d, /endpoint=vehicules-mes/);
     assert.match(d, /window\.location\.href = '\/vehicules\.html\?obligatoire=1';/);
     assert.doesNotMatch(d, /id="modeButtons"/);
     assert.match(d, /out\.debut_journee_requis/);
-    for (const f of ['dashboard.html', 'dashboard-covoiturage.html']) assert.match(lire(f), /src="\/js\/vehicule-obligatoire\.js"/, f);
+    for (const f of ['membre-accueil.html', 'membre-covoiturage.html']) assert.match(lire(f), /src="\/js\/vehicule-obligatoire\.js"/, f);
     assert.match(lire('browse-missions.html'), /out\.debut_journee_requis/);
     assert.match(lire('covoiturage-publier.html'), /data\.code === 'vehicule_requis'/);
   });

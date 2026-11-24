@@ -91,7 +91,7 @@ if (!window.__PIA_LOADED__) {
         answer: 'Tu veux livrer des colis (sans necessairement covoiturer) ? Cree ton compte, choisis le role livreur, termine la vérification d identité. Tu vois ensuite les missions sur ta route. Tu garde 60 a 70 % du prix par colis.',
         actions: [
           ['Devenir livreur', '/devenir-livreur.html'],
-          ['Dashboard livreur', '/dashboard-livreur.html']
+          ['Dashboard livreur', '/dashboard.html?onglet=livrer']
         ]
       },
       {

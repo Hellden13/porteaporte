@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+<script src="/js/onglets-membre.js"></script>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mon covoiturage — PorteàPorte</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/vehicule-obligatoire.js" defer></script>
+<script src="/js/flottants.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="/js/supabase-config.js"></script>
+  <style>
+    :root {
+      --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
+      --border:#1E2A3A; --green:#5dbfff; --cyan:#5dbfff;
+      --text:#E8EDF5; --muted:#8A9BB0; --danger:#FF6B6B; --radius:14px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    a{color:inherit;text-decoration:none;}
+
+    /* NAV */
+    nav{background:rgba(10,15,30,.96);border-bottom:1px solid var(--border);padding:14px clamp(18px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;}
+    .nav-logo{font-weight:800;color:var(--green);font-size:1.1rem;}
+    .nav-links{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .nav-links a{padding:7px 14px;border-radius:8px;font-size:.85rem;font-weight:600;color:var(--muted);transition:all .15s;}
+    .nav-links a:hover,.nav-links a.active{background:var(--surface2);color:var(--text);}
+    .btn-green{background:var(--green);color:#0A0F1E;padding:8px 18px;border-radius:8px;font-weight:800;font-size:.85rem;}
+
+    /* LAYOUT */
+    .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px);}
+    @media(max-width:768px){.layout{grid-template-columns:1fr;} .sidebar{display:none;}}
+    .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 16px;}
+    .sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;margin-bottom:4px;}
+    .sidebar-item:hover,.sidebar-item.active{background:var(--surface2);color:var(--text);}
+    .sidebar-item.active{color:var(--green);}
+    .sidebar-icon{font-size:1rem;width:20px;text-align:center;}
+    .sidebar-sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
+    .main{padding:clamp(20px,3vw,36px) clamp(18px,3vw,36px);overflow-y:auto;}
+
+    /* HEADER */
+    .dash-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+    .dash-header h1{font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:900;}
+    .dash-header p{color:var(--muted);font-size:.9rem;margin-top:4px;}
+    .role-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.25);color:var(--green);border-radius:100px;padding:5px 14px;font-size:.78rem;font-weight:700;margin-top:8px;}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;}
+    .stat-val{font-size:1.8rem;font-weight:900;line-height:1;margin-bottom:5px;}
+    .stat-label{font-size:.78rem;color:var(--muted);font-weight:600;}
+
+    /* SECTION */
+    .section-block{margin-bottom:32px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+    .section-head h2{font-size:1rem;font-weight:800;}
+    .section-head a,.section-head button{font-size:.8rem;color:var(--cyan);background:none;border:none;cursor:pointer;font-weight:600;padding:0;}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(125,255,193,.4)}50%{box-shadow:0 0 0 6px rgba(125,255,193,0)}}
+
+    /* XP BAR */
+    .xp-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;margin-bottom:28px;}
+    .xp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+    .xp-level{font-size:1.2rem;font-weight:800;}
+    .xp-next{font-size:.82rem;color:var(--muted);}
+    .xp-bar{height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+    .xp-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:100px;transition:width .8s ease;}
+    .xp-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:7px;}
+
+    /* RIDES TABLE */
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;overflow-y:hidden;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:var(--surface2);font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left;}
+    td{padding:12px 14px;font-size:.87rem;border-top:1px solid var(--border);}
+    .empty-msg{text-align:center;color:var(--muted);font-size:.85rem;padding:32px;}
+    .status-chip{display:inline-block;border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+    .ride-action{display:inline-block;margin-left:10px;}
+    @media(max-width:768px){
+      .bookings-table-wrap{background:transparent;border:0;overflow:visible;}
+      .bookings-table{display:block;width:100%;}
+      .bookings-table thead{display:none;}
+      .bookings-table tbody{display:grid;gap:12px;}
+      .bookings-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;overflow:hidden;}
+      .bookings-table td{display:grid;grid-template-columns:minmax(88px,32%) minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--border);overflow-wrap:anywhere;align-items:start;}
+      .bookings-table td:first-child{border-top:0;padding-top:0;font-size:1rem;font-weight:800;}
+      .bookings-table td::before{content:attr(data-label);color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;}
+      .bookings-table td:first-child::before{color:var(--green);}
+      .bookings-table .booking-actions{display:flex;flex-wrap:wrap;gap:8px;}
+      .bookings-table .booking-actions a,.bookings-table .booking-actions button{display:block;width:100%;min-height:44px;margin:0!important;text-align:center;}
+      .bookings-table .driver-contact{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+      .bookings-table .driver-contact button{display:block;width:100%;min-height:44px;margin:0!important;white-space:normal;}
+    }
+
+    /* BADGES */
+    .badges-row{display:flex;flex-wrap:wrap;gap:10px;}
+    .badge-pill{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;}
+    .badge-pill .ico{font-size:1.1rem;}
+    .badge-pill.earned{border-color:rgba(93,191,255,.3);background:rgba(93,191,255,.06);}
+    .badge-pill .bname{font-weight:600;}
+    .badge-pill .bloc{color:var(--muted);font-size:.75rem;}
+    .locked-icon{opacity:.35;filter:grayscale(1);}
+
+    /* MISSIONS */
+    .missions-list{display:flex;flex-direction:column;gap:10px;}
+    .mission-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+    .mission-icon{font-size:1.2rem;flex-shrink:0;}
+    .mission-info{flex:1;min-width:0;}
+    .mission-name{font-size:.9rem;font-weight:700;margin-bottom:3px;}
+    .mission-desc{font-size:.78rem;color:var(--muted);}
+    .mission-prog-wrap{min-width:100px;text-align:right;}
+    .mission-prog-bar{height:6px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-bottom:4px;}
+    .mission-prog-fill{height:100%;background:var(--green);border-radius:100px;transition:width .5s;}
+    .mission-prog-label{font-size:.72rem;color:var(--muted);}
+    .mission-done{color:var(--green);font-size:.8rem;font-weight:700;}
+
+    /* REVIEWS */
+    .reviews-list{display:flex;flex-direction:column;gap:10px;}
+    .review-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+    .review-stars{color:#FFB74D;font-size:1rem;margin-bottom:5px;}
+    .review-text{font-size:.85rem;color:var(--text);margin-bottom:6px;}
+    .review-meta{font-size:.75rem;color:var(--muted);}
+
+    /* TABS */
+    .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;}
+    .tab{padding:9px 16px;border-radius:8px 8px 0 0;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;border:none;background:none;}
+    .tab.active{color:var(--green);border-bottom:2px solid var(--green);}
+
+    /* LOADING */
+    .loading{text-align:center;padding:40px;color:var(--muted);}
+    .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* MOBILE TAB BAR */
+    /* z-index:1000 : au-dessus des composants premium-system (max 851) et du reste.
+       brand-uniform.css ciblait <nav> globalement → fond semi-transparent + mauvais border.
+       Corrigé dans brand-uniform.css (exclusion .mobile-tabs), confirmé ici par specifité. */
+    .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface) !important;border-top:1px solid var(--border) !important;border-bottom:none !important;padding:8px 0 env(safe-area-inset-bottom);z-index:1000;}
+    @media(max-width:768px){
+      .mobile-tabs{display:flex;}
+      /* Espace sous le contenu = hauteur approx de la bottom nav (65px) + safe area,
+         pour que le bas de page ne reste pas caché derrière la barre fixe. */
+      .main{padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));}
+    }
+    .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.65rem;color:var(--muted);padding:6px 4px;cursor:pointer;transition:color .15s;}
+    .mob-tab.active{color:var(--green);}
+    .mob-tab .ico{font-size:1.2rem;}
+  </style>
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">PorteàPorte</a>
+  <div class="nav-links">
+    <a href="/covoiturage.html">Trouver un trajet</a>
+    <a href="/dashboard.html?onglet=livrer">📦 Espace livreur</a>
+    <a id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--green);color:#0A0F1E;padding:7px 14px;border-radius:8px;font-weight:800;font-size:.85rem">⚡ Admin</a>
+    <a href="/covoiturage-publier.html" class="btn-green">+ Publier</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-item active" onclick="showSection('overview')"><span class="sidebar-icon">🏠</span> Vue d'ensemble</div>
+    <div class="sidebar-item" onclick="showSection('trajets')"><span class="sidebar-icon">🚗</span> Mes trajets</div>
+    <div class="sidebar-item" onclick="showSection('reservations')"><span class="sidebar-icon">🎫</span> Réservations</div>
+    <div class="sidebar-item" onclick="showSection('missions')"><span class="sidebar-icon">🎯</span> Missions</div>
+    <div class="sidebar-item" onclick="showSection('badges')"><span class="sidebar-icon">🏆</span> Badges</div>
+    <div class="sidebar-item" onclick="showSection('avis')"><span class="sidebar-icon">⭐</span> Avis</div>
+    <div id="payments-sidebar-link" class="sidebar-item" style="display:none" onclick="window.location.href='/dashboard.html?onglet=paiements&vue=versements'"><span class="sidebar-icon">💳</span> Mes paiements</div>
+    <hr class="sidebar-sep">
+    <div class="sidebar-item" onclick="showSection('signalements')"><span class="sidebar-icon">🚩</span> Signalements</div>
+    <div class="sidebar-item" onclick="window.location.href='/covoiturage-info.html'"><span class="sidebar-icon">ℹ️</span> Guide</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-content">
+    <div class="loading" id="initial-loading">
+      <div class="spinner"></div>
+      <p>Ton tableau de bord covoiturage apparaitra ici quand tes trajets ou réservations seront disponibles.</p>
+    </div>
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-tabs">
+  <div class="mob-tab active" onclick="showSection('overview')"><span class="ico">🏠</span>Accueil</div>
+  <div class="mob-tab" onclick="showSection('trajets')"><span class="ico">🚗</span>Trajets</div>
+  <div class="mob-tab" onclick="showSection('reservations')"><span class="ico">🎫</span>Réservations</div>
+  <div class="mob-tab" onclick="showSection('missions')"><span class="ico">🎯</span>Missions</div>
+  <div class="mob-tab" onclick="showSection('badges')"><span class="ico">🏆</span>Badges</div>
+</nav>
+
+<script src="/js/auth-api.js"></script>
+<script src="/js/ride-delete.js"></script>
+<script src="/js/ride-chat.js"></script>
+<script>
+let dashData  = null;
+let userProfile = null;
+let currentSection = 'overview';
+
+const LEVELS = [
+  { n:1, name:'Nouveau',          min:0,    max:199,  color:'#8B9BB0' },
+  { n:2, name:'Fiable',           min:200,  max:499,  color:'#5dbfff' },
+  { n:3, name:'Habitué',          min:500,  max:999,  color:'#5dbfff' },
+  { n:4, name:'Ambassadeur',      min:1000, max:1999, color:'#FFB74D' },
+  { n:5, name:'Capitaine régional', min:2000, max:9999, color:'#5dbfff' },
+];
+
+function getLevel(xp) {
+  return LEVELS.slice().reverse().find(l => xp >= l.min) || LEVELS[0];
+}
+
+async function init() {
+  const il = document.getElementById('initial-loading');
+  try {
+    const db = getSupabaseClient();
+    if (!db) throw new Error('Client Supabase indisponible (script non chargé)');
+    const { data: _sd } = await db.auth.getSession(); const session = _sd?.session;
+    if (!session) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+
+    // Timeout pour ne JAMAIS rester figé si le réseau traîne (surtout sur mobile)
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 15000);
+    let profileRes, dashRes;
+    try {
+      [profileRes, dashRes] = await Promise.all([
+        db.from('profiles').select('id,role,cov_role,xp,prenom').eq('id', session.user.id).single(),
+        fetch('/api/cov-dashboard', { headers: { 'Authorization': 'Bearer ' + session.access_token }, signal: ctrl.signal })
+      ]);
+    } finally { clearTimeout(to); }
+
+    userProfile = (profileRes && profileRes.data) || {};
+    dashData    = (dashRes && dashRes.ok) ? await dashRes.json() : {};
+
+    if (userProfile.role === 'admin') { const b = document.getElementById('admin-back-btn'); if (b) b.style.display = ''; }
+    const payLink = document.getElementById('payments-sidebar-link');
+    if (payLink && (userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux')) payLink.style.display = '';
+
+    if (il) il.remove();
+    renderSection('overview');
+  } catch (e) {
+    console.error('[dashboard-covoiturage init]', e);
+    if (il) il.innerHTML = '⚠️ Chargement impossible. Vérifie ta connexion.<br><button onclick="location.reload()" style="margin-top:12px;background:#5dbfff;color:#051022;border:none;padding:10px 18px;border-radius:8px;font-weight:800;cursor:pointer">🔄 Réessayer</button>';
+  }
+}
+
+// Supprimer un trajet (conducteur) : fenêtre dans la page, le serveur décide (ride-delete).
+async function supprimerTrajet(rideIdEnc) {
+  const rideId = decodeURIComponent(rideIdEnc);
+  const ride = (dashData.my_rides || []).find((r) => r.id === rideId);
+  const libelle = ride ? `${ride.start_city || '?'} → ${ride.end_city || '?'}` : 'Trajet';
+  const ok = await window.PAPRideDelete.ouvrir(rideId, libelle);
+  if (ok) window.location.reload();
+}
+
+// Annuler un trajet publié (conducteur)
+// Trajet récurrent : annuler UNE date seulement (les autres jours restent publiés).
+async function annulerUnJour(rideId) {
+  const aujourdhui = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const date = await PAPDialog.prompt('Quelle date annuler ? (AAAA-MM-JJ)\nLes autres jours du trajet restent publiés. Si des passagers ont réservé pour ce jour-là, ils sont remboursés au complet et avertis.', aujourdhui, { title: 'Annuler un seul jour', ok: 'Continuer', inputmode: 'numeric' });
+  if (date === null) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())) { await PAPDialog.alert('Date invalide : écris-la comme 2026-11-24.'); return; }
+  if (!(await PAPDialog.confirm('Annuler le trajet le ' + String(date).trim() + ' seulement ?', { title: 'Annuler ce jour', annuler: 'Garder ce jour', ok: 'Oui, annuler ce jour', danger: true }))) return;
+  const { data: { session } } = await (window.db || window.getSupabaseClient()).auth.getSession();
+  const res = await fetch('/api/platform?endpoint=ride-annuler-date', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+    body: JSON.stringify({ endpoint: 'ride-annuler-date', ride_id: rideId, date: String(date).trim() })
+  });
+  const out = await res.json().catch(() => ({}));
+  await PAPDialog.alert(res.ok ? ('Trajet annulé le ' + out.date + ' seulement.' + (out.reservations_annulees ? ' ' + out.reservations_annulees + ' réservation(s) annulée(s) et avertie(s)' + (out.reservations_remboursees ? ', dont ' + out.reservations_remboursees + ' remboursée(s).' : '.') : '')) : (out.error || 'Action impossible.'));
+}
+
+async function annulerTrajet(rideId) {
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+    const previewRes = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ride_id: rideId, preview_only: true })
+    });
+    const preview = await previewRes.json().catch(() => ({}));
+    if (!previewRes.ok) { (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || previewRes.status))); return; }
+    const warning = `ANNULATION DU TRAJET\n\n` +
+      `${preview.bookings_affected || 0} réservation(s) seront annulées.\n` +
+      `${Number(preview.total_refund || 0).toFixed(2)} $ seront remboursés aux passagers (100 %).\n` +
+      `Cette annulation sera inscrite à ton taux d’annulation et pourra affecter ta fiabilité.\n\n` +
+      `Cette action est irréversible. Confirmer ?`;
+    if (!(await PAPDialog.confirm(warning, { title: 'Annuler le trajet', annuler: 'Garder mon trajet', ok: 'Oui, annuler', danger: true }))) return;
+    const res = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ride_id: rideId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      (await PAPDialog.alert('❌ Annulation impossible : ' + (err.error || ('erreur ' + res.status))));
+      return;
+    }
+    (await PAPDialog.alert('✅ Trajet annulé.'));
+    window.location.reload();
+  } catch (e) {
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
+  }
+}
+
+// Annuler une réservation (passager)
+async function annulerReservation(bookingId) {
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+    const previewRes = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId, preview_only: true })
+    });
+    const preview = await previewRes.json().catch(() => ({}));
+    if (!previewRes.ok) { (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || previewRes.status))); return; }
+    // Aucun paiement autorisé ni prélevé : on ne parle pas de remboursement.
+    const warning = preview.paiement === false
+      ? `ANNULATION DE LA RÉSERVATION\n\nAucun paiement n’a été fait pour cette réservation : rien à rembourser.\n\nConfirmer l’annulation ?`
+      : `ANNULATION DE LA RÉSERVATION\n\n` +
+      `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
+      `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
+      `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
+      `• Conducteur : ${Number(preview.driver_compensation || 0).toFixed(2)} $\n` +
+      `• Fonds de sécurité : ${Number(preview.security_fund || 0).toFixed(2)} $\n\n` +
+      `Cette action est irréversible. Confirmer ?`;
+    if (!(await PAPDialog.confirm(warning, { title: 'Annuler la réservation', annuler: 'Garder ma réservation', ok: 'Oui, annuler', danger: true }))) return;
+    const res = await fetch('/api/ride-cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      (await PAPDialog.alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status))));
+      return;
+    }
+    (await PAPDialog.alert('✅ ' + (out.message || (out.paiement === false ? 'Réservation annulée.' : 'Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + Number(out.refund).toFixed(2) + ' $.' : '')))));
+    window.location.reload();
+  } catch (e) {
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
+  }
+}
+
+// Terminer un trajet (conducteur)
+async function terminerTrajet(rideId) {
+  if (!(await PAPDialog.confirm('Confirmer la fin de ce trajet ?\n\nLes passagers seront notifiés et devront confirmer leur arrivée. Le paiement sera capturé automatiquement.'))) return;
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+    const res = await fetch('/api/platform', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'ride-complete', ride_id: rideId, actor: 'driver' })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { (await PAPDialog.alert('❌ ' + (out.error || 'Erreur ' + res.status))); return; }
+    (await PAPDialog.alert('✅ Trajet marqué comme terminé !\n\nLes passagers vont recevoir une notification pour confirmer leur arrivée.'));
+    window.location.reload();
+  } catch (e) {
+    (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
+  }
+}
+
+// Confirmer l'arrivée (passager) — demande le code de sécurité
+async function confirmerArrivee(bookingId) {
+  const code = (await PAPDialog.prompt('Entre ton code de sécurité (4 à 8 chiffres) pour confirmer ton arrivée et déclencher le paiement au chauffeur :'));
+  if (code === null) return;
+  const cleanCode = String(code || '').replace(/\D/g, '');
+  if (!/^[0-9]{4,8}$/.test(cleanCode)) {
+    (await PAPDialog.alert('Code invalide. Entre un code de 4 à 8 chiffres.'));
+    return;
+  }
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+    const res = await fetch('/api/platform', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'ride-safety-code-verify', booking_id: bookingId, actor: 'passenger', code: cleanCode })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const remaining = out.attempts_remaining;
+      if (typeof remaining !== 'undefined') {
+        (await PAPDialog.alert('Code incorrect. ' + remaining + ' tentative(s) restante(s).' + (out.alert_triggered ? '\n\nAlerte de sécurité déclenchée.' : '')));
+      } else {
+        (await PAPDialog.alert('Erreur : ' + (out.error || 'Erreur ' + res.status)));
+      }
+      return;
+    }
+    (await PAPDialog.alert('Arrivée confirmée ! Merci d\'avoir voyagé avec PorteàPorte.\n\nTon paiement au chauffeur a été déclenché.'));
+    window.location.reload();
+  } catch (e) {
+    (await PAPDialog.alert('Erreur réseau. Réessaie dans un instant.'));
+  }
+}
+
+
+// Aucune vraie coordonnée entre conducteur et passager : messagerie du trajet seulement (js/ride-chat.js).
+function ouvrirMessagerie(rideId, autreId, nom) {
+  if (!window.RideChat || !rideId || !autreId) return;
+  window.RideChat.open({ ride_id: rideId, other_user_id: autreId, other_name: nom || 'Conversation' });
+}
+
+function escHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function toggleMeetupForm(rideId) {
+  const el = document.getElementById('meetup-form-' + rideId);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function sendMeetupToRide(rideId) {
+  const textarea = document.getElementById('meetup-message-' + rideId);
+  const message = (textarea?.value || '').trim();
+  if (!message) { (await PAPDialog.alert('Entre un court message de point de rencontre.')); return; }
+  if (message.length > 300) { (await PAPDialog.alert('Maximum 300 caracteres.')); return; }
+  const bookings = (dashData.ride_bookings || []).filter(b => b.ride_id === rideId && String(b.status || '').toLowerCase() === 'confirme');
+  if (!bookings.length) { (await PAPDialog.alert('Aucun passager confirme pour ce trajet.')); return; }
+  try {
+    const db = getSupabaseClient();
+    const { data: _sd } = await db.auth.getSession();
+    const token = _sd?.session?.access_token;
+    if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return; }
+    let sent = 0;
+    const errors = [];
+    for (const booking of bookings) {
+      const res = await fetch('/api/platform', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'ride-send-meetup-message', booking_id: booking.id, message })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.success) sent += 1;
+      else errors.push(out.error || ('Erreur ' + res.status));
+    }
+    if (sent) (await PAPDialog.alert('Message envoye a ' + sent + ' passager(s) confirme(s).'));
+    if (errors.length) (await PAPDialog.alert('Certains messages n ont pas ete envoyes : ' + errors[0]));
+    window.location.reload();
+  } catch (e) {
+    (await PAPDialog.alert('Erreur reseau. Reessaie dans un instant.'));
+  }
+}
+
+
+function showSection(name) {
+  currentSection = name;
+  document.querySelectorAll('.sidebar-item[onclick^="showSection"]').forEach((el,i) => {
+    const sections = ['overview','trajets','reservations','missions','badges','avis','signalements'];
+    el.classList.toggle('active', sections[i] === name);
+  });
+  document.querySelectorAll('.mob-tab').forEach((el,i) => {
+    const sections = ['overview','trajets','reservations','missions','badges'];
+    el.classList.toggle('active', sections[i] === name);
+  });
+  renderSection(name);
+}
+
+function renderSection(name) {
+  const main = document.getElementById('main-content');
+  switch(name) {
+    case 'overview':      main.innerHTML = buildOverview(); break;
+    case 'trajets':       main.innerHTML = buildTrajets(); break;
+    case 'reservations':  main.innerHTML = buildReservations(); break;
+    case 'missions':      main.innerHTML = buildMissions(); break;
+    case 'badges':        main.innerHTML = buildBadges(); break;
+    case 'avis':          main.innerHTML = buildAvis(); break;
+    case 'signalements':  main.innerHTML = buildSignalements(); break;
+  }
+}
+
+function $m(v) { return Number(v||0).toLocaleString('fr-CA',{style:'currency',currency:'CAD'}); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-CA',{dateStyle:'medium'}) : '—'; }
+function fmtDT(d)   { return d ? new Date(d).toLocaleString('fr-CA',{dateStyle:'short',timeStyle:'short'}) : '—'; }
+
+// Les réservations gardent parfois le code de l'arrêt (« depart », « arrivee ») : on affiche la ville.
+function villeArret(v, b, sens) {
+  const t = String(v || '').trim();
+  const ride = (b && (b.ride || b.rides)) || {};
+  if (!t || t === 'depart') return ride.start_city || b?.start_city || 'Point de départ';
+  if (t === 'arrivee') return ride.end_city || b?.end_city || 'Arrivée';
+  return t;
+}
+
+function statusChip(s) {
+  const map = {
+    publie: ['#5dbfff','#0D2A00','Publié'],
+    complet: ['#5dbfff','#002233','Complet'],
+    annule: ['#FF6B6B','#2A0000','Annulé'],
+    termine: ['#5A6A7A','#111','Terminé'],
+    confirme: ['#5dbfff','#0D2A00','Confirmé'],
+    en_attente: ['#FFB74D','#1A0F00','En attente'],
+    annule_passager: ['#FF6B6B','#2A0000','Annulé'],
+    annule_chauffeur: ['#FF6B6B','#2A0000','Annulé'],
+    complete: ['#5A6A7A','#111','Complété'],
+    completed: ['#5A6A7A','#111','Complété'],
+    paye: ['#7DFFC1','#062016','Payé'],
+    paid: ['#7DFFC1','#062016','Payé'],
+    driver_completed: ['#FFD166','#2A1E00','Terminé — attente du passager'],
+    en_attente_paiement: ['#FFB74D','#1A0F00','Paiement à faire'],
+    pending: ['#FFB74D','#1A0F00','En attente'],
+    rembourse: ['#A8B0BA','#111','Remboursé'],
+    refunded: ['#A8B0BA','#111','Remboursé'],
+    litige: ['#FF6B6B','#2A0000','En litige'],
+  };
+  // Jamais de statut brut à l'écran : libellé français, ou au pire le code rendu lisible.
+  const lisible = String(s || '—').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  const [bg,fg,label] = map[s] || ['#3A4A5A','#E0E6EE',lisible];
+  return `<span class="status-chip" style="background:${bg};color:${fg}">${label}</span>`;
+}
+
+// ── OVERVIEW ──
+function buildOverview() {
+  const xp     = userProfile.xp || 0;
+  const level  = getLevel(xp);
+  const nextL  = LEVELS.find(l => l.n === level.n + 1) || level;
+  const pct    = level.n < 5 ? Math.round((xp - level.min) / (nextL.min - level.min) * 100) : 100;
+
+  const rides     = dashData.my_rides     || [];
+  const bookings  = dashData.my_bookings  || [];
+  const missions  = dashData.missions     || [];
+  const badges    = dashData.badges       || [];
+
+  const activeRides   = rides.filter(r => r.status === 'publie').length;
+  // Réservations confirmées : les miennes (passager) ET celles reçues sur mes trajets (conducteur).
+  const STATUTS_CONFIRMES = ['confirme', 'paye', 'paid', 'driver_completed'];
+  const toutes = new Map();
+  [...bookings, ...(dashData.ride_bookings || [])].forEach((b) => { if (b && b.id) toutes.set(b.id, b); });
+  const confirmedBook = [...toutes.values()].filter(b => STATUTS_CONFIRMES.includes(String(b.status || '').toLowerCase())).length;
+  const earnedBadges  = badges.filter(b => b.earned).length;
+  const doneMissions  = missions.filter(m => m.done).length;
+  const isConducteur  = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux';
+  const roleLabel     = { conducteur:'🚗 Conducteur', passager:'🧳 Passager', les_deux:'🔄 Conducteur & Passager' }[userProfile.cov_role] || '—';
+
+  return `
+  <div class="dash-header">
+    <div>
+      <h1>Bonjour, ${userProfile.prenom || 'vous'} 👋</h1>
+      <p>Votre tableau de bord covoiturage PorteàPorte</p>
+      <div class="role-badge">${roleLabel}</div>
+    </div>
+    ${isConducteur ? `<a href="/covoiturage-publier.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem;white-space:nowrap">+ Publier un trajet</a>` : `<a href="/covoiturage.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem;white-space:nowrap">Trouver un trajet</a>`}
+  </div>
+
+  <!-- XP BAR -->
+  <div class="xp-bar-wrap">
+    <div class="xp-top">
+      <span class="xp-level" style="color:${level.color}">Niveau ${level.n} — ${level.name}</span>
+      <span class="xp-next">${xp} XP${level.n < 5 ? ` · ${nextL.min - xp} XP avant ${nextL.name}` : ' · Niveau maximum'}</span>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
+    <div class="xp-labels"><span>${level.min} XP</span><span>${level.n < 5 ? nextL.min + ' XP' : '∞'}</span></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${activeRides}</div><div class="stat-label">Trajets actifs</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${confirmedBook}</div><div class="stat-label">Réservations confirmées</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#FFB74D">${earnedBadges}</div><div class="stat-label">Badges obtenus</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${doneMissions}/${missions.length}</div><div class="stat-label">Missions complétées</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--text)">${xp}</div><div class="stat-label">XP total</div></div>
+  </div>
+
+  <!-- PROCHAINS TRAJETS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Prochains trajets</h2><button onclick="showSection('trajets')">Voir tout →</button></div>
+    <div class="table-wrap">
+      ${rides.filter(r=>r.status==='publie').slice(0,3).length === 0
+        ? `<p class="empty-msg">Aucun trajet publié. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publiez votre premier trajet →</a></p>`
+        : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th></tr></thead><tbody>
+          ${rides.filter(r=>r.status==='publie').slice(0,3).map(r=>`<tr>
+            <td>${r.start_city||'?'} → ${r.end_city||'?'}</td>
+            <td style="color:var(--muted)">${fmtDT(r.departure_time)}</td>
+            <td>${r.available_seats} pl.</td>
+            <td>${statusChip(r.status)}</td>
+          </tr>`).join('')}
+        </tbody></table>`}
+    </div>
+  </div>
+
+  <!-- MISSIONS EN COURS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Missions en cours</h2><button onclick="showSection('missions')">Voir tout →</button></div>
+    <div class="missions-list">
+      ${missions.filter(m=>!m.done).slice(0,3).map(m=>`
+      <div class="mission-row">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc">${m.description} · <span style="color:var(--green);font-weight:700">+${m.xp_reward} XP</span></div>
+        </div>
+        <div class="mission-prog-wrap">
+          <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>
+          <div class="mission-prog-label">${m.progress||0}/${m.target||1}</div>
+        </div>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;padding:12px 0">Aucune mission en cours.</p>'}
+    </div>
+  </div>
+
+  <!-- BADGES RÉCENTS -->
+  <div class="section-block">
+    <div class="section-head"><h2>Badges récents</h2><button onclick="showSection('badges')">Voir tout →</button></div>
+    <div class="badges-row">
+      ${badges.filter(b=>b.earned).slice(0,6).map(b=>`
+      <div class="badge-pill earned"><span class="ico">${b.icon||'🏅'}</span><div><div class="bname">${b.name}</div><div class="bloc">${fmtDate(b.earned_at)}</div></div></div>
+      `).join('') || '<p style="color:var(--muted);font-size:.85rem">Complétez des missions pour gagner vos premiers badges.</p>'}
+    </div>
+  </div>`;
+}
+
+// ── TRAJETS ──
+function buildTrajets() {
+  const rides    = dashData.my_rides    || [];
+  const bookings = dashData.my_bookings || [];
+  const receivedBookings = dashData.ride_bookings || [];
+  // Affiche les trajets publiés si role conducteur OU s'il existe déjà des trajets publiés (sécurité)
+  const isConducteur = userProfile.cov_role === 'conducteur' || userProfile.cov_role === 'les_deux' || rides.length > 0;
+
+  return `
+  <div class="dash-header">
+    <div><h1>Mes trajets</h1><p>Trajets publiés et réservations en tant que passager</p></div>
+    ${isConducteur ? `<a href="/covoiturage-publier.html" style="background:var(--green);color:#0A0F1E;padding:11px 22px;border-radius:10px;font-weight:800;font-size:.9rem">+ Publier</a>` : ''}
+  </div>
+
+  ${isConducteur ? (() => {
+    const finishedStatuses = ['termine','completed','done','annule','cancelled'];
+    const activeRides = rides.filter(r => !finishedStatuses.includes(String(r.status||'').toLowerCase()));
+    const finishedRides = rides.filter(r => finishedStatuses.includes(String(r.status||'').toLowerCase()));
+    const rideRow = (r, canCancel) => {
+      const confirmedForRide = receivedBookings.filter(b => b.ride_id === r.id && String(b.status || '').toLowerCase() === 'confirme');
+      const meetupBox = (canCancel && confirmedForRide.length)
+        ? `<div style="margin-top:8px">
+            <button type="button" onclick="toggleMeetupForm('${r.id}')" style="display:inline-block;background:rgba(93,191,255,.12);color:var(--cyan);border:1px solid rgba(93,191,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📍 Envoyer point de rencontre</button>
+            <div id="meetup-form-${r.id}" style="display:none;margin-top:8px;max-width:360px">
+              <div style="font-size:.78rem;color:var(--cyan);font-weight:800;margin-bottom:5px">📍 Message aux passagers</div>
+              <textarea id="meetup-message-${r.id}" maxlength="300" placeholder="Je serai au stationnement IGA, voiture rouge Toyota" style="width:100%;min-height:78px;background:#080d16;color:#fff;border:1px solid rgba(93,191,255,.35);border-radius:8px;padding:9px;resize:vertical"></textarea>
+              <button type="button" onclick="sendMeetupToRide('${r.id}')" style="margin-top:6px;width:100%;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border:0;padding:8px 12px;border-radius:8px;font-weight:900;cursor:pointer">Envoyer à tous les passagers confirmés (${confirmedForRide.length})</button>
+            </div>
+          </div>`
+        : '';
+      return `<tr>
+      <td><strong>${r.start_city||'?'} → ${r.end_city||'?'}</strong></td>
+      <td style="color:var(--muted);font-size:.8rem">${fmtDT(r.departure_time)}</td>
+      <td>${r.available_seats} pl.</td>
+      <td>${statusChip(r.status)}</td>
+      <td>
+        <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
+        ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(93,191,255,.12);color:var(--cyan);border:1px solid rgba(93,191,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
+        ${(canCancel && r.is_recurring && Array.isArray(r.recurrence_days) && r.recurrence_days.length) ? `<button type="button" onclick="annulerUnJour('${r.id}')" style="margin-left:10px;background:rgba(255,200,0,.1);color:#ffd23f;border:1px solid rgba(255,200,0,.4);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📅 Annuler un seul jour</button>` : ''}
+        ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
+        <button type="button" onclick="supprimerTrajet('${encodeURIComponent(r.id)}')" style="margin-left:10px;background:rgba(255,80,80,.08);color:#ff9999;border:1px solid rgba(255,80,80,.3);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
+        ${(canCancel && r.status === 'publie' && new Date(r.departure_time) <= new Date()) ? `<button onclick="terminerTrajet('${r.id}')" style="margin-left:10px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">✅ Terminer</button>` : ''}
+        ${meetupBox}
+      </td>
+    </tr>`;
+    };
+    return `
+    <div class="section-block">
+      <div class="section-head"><h2>🚀 Trajets en cours (${activeRides.length})</h2></div>
+      <div class="table-wrap">
+        ${activeRides.length === 0
+          ? `<p class="empty-msg">Aucun trajet en cours. <a href="/covoiturage-publier.html" style="color:var(--cyan)">Publier un nouveau trajet →</a></p>`
+          : `<table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${activeRides.map(r => rideRow(r, true)).join('')}</tbody></table>`}
+      </div>
+    </div>
+    ${finishedRides.length > 0 ? `
+    <details class="section-block" style="cursor:pointer">
+      <summary style="font-weight:800;color:var(--green);padding:8px 0;list-style:none;font-size:1.05rem">✅ Trajets terminés (${finishedRides.length}) — cliquer pour voir</summary>
+      <div class="table-wrap" style="margin-top:10px">
+        <table><thead><tr><th>Trajet</th><th>Départ</th><th>Places</th><th>Statut</th><th>Action</th></tr></thead><tbody>${finishedRides.map(r => rideRow(r, false)).join('')}</tbody></table>
+      </div>
+    </details>` : ''}`;
+  })() : ''}
+
+  ${(() => {
+    const finishedBookingStatuses = ['termine','complete','completed','done','annule','annule_passager','annule_chauffeur','cancelled','refunded','rembourse'];
+    const bookingIsPast = b => b.ride_departure_time && new Date(b.ride_departure_time).getTime() < Date.now();
+    const activeBookings = bookings.filter(b => !finishedBookingStatuses.includes(String(b.status||'').toLowerCase()) && !bookingIsPast(b));
+    const finishedBookings = bookings.filter(b => finishedBookingStatuses.includes(String(b.status||'').toLowerCase()) || bookingIsPast(b));
+    window.__activeBookings = activeBookings;
+    window.__finishedBookings = finishedBookings;
+    return '';
+  })()}
+  ${(() => {
+    const pending = (window.__activeBookings || []).filter(b => ['en_attente','pending','unpaid'].includes(String(b.status||'').toLowerCase()));
+    if (!pending.length) return '';
+    const first = pending[0];
+    return `<div style="background:linear-gradient(135deg,rgba(255,200,0,.1),rgba(255,200,0,.04));border:1px solid rgba(255,200,0,.4);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <strong style="color:#ffd700;font-size:1rem">⚠️ ${pending.length} réservation${pending.length>1?'s':''} en attente de paiement</strong>
+        <div style="color:var(--muted);font-size:.85rem;margin-top:3px">Ta place ${pending.length>1?'sera':'est'} libérée si tu ne paies pas dans les prochaines heures.</div>
+      </div>
+      <a href="/covoiturage-trajet.html?ride_id=${encodeURIComponent(first.ride_id)}&booking_id=${encodeURIComponent(first.id)}" style="padding:10px 18px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border-radius:8px;font-weight:900;text-decoration:none;box-shadow:0 6px 16px rgba(93,191,255,.45)">💳 Payer maintenant</a>
+    </div>`;
+  })()}
+  <div class="section-block">
+    <div class="section-head"><h2>🚀 Mes réservations en cours (${window.__activeBookings.length})</h2></div>
+    <div class="table-wrap bookings-table-wrap">
+      ${window.__activeBookings.length === 0
+        ? `<p class="empty-msg">Aucune réservation en cours. <a href="/covoiturage.html" style="color:var(--cyan)">Trouver un trajet →</a></p>`
+        : (() => {
+          const bookingRow = b => {
+            const drvContact = [];
+            const canContactDriver = ['confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
+            if (canContactDriver && b.driver_id) {
+              drvContact.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.driver_id)}','${escHtml(b.driver_prenom||'Conducteur')}')" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au conducteur</button>`);
+            }
+            // Bouton "Payer maintenant" si reservation en attente de paiement
+            const isPending = ['en_attente', 'pending', 'unpaid'].includes(String(b.status||'').toLowerCase());
+            const payBtn = isPending
+              ? `<a href="/covoiturage-trajet.html?ride_id=${encodeURIComponent(b.ride_id)}&booking_id=${encodeURIComponent(b.id)}" style="display:inline-block;padding:7px 13px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border-radius:7px;font-weight:900;font-size:.82rem;text-decoration:none;margin:2px;box-shadow:0 4px 12px rgba(93,191,255,.4)">💳 Payer maintenant</a>`
+              : '';
+            const canCancel = !['annule','annule_passager','annule_chauffeur','complete','cancelled','refunded','rembourse','termine','completed','done'].includes(String(b.status||'').toLowerCase());
+            const cancelBtn = canCancel
+              ? `<button onclick="annulerReservation('${b.id}')" style="margin:2px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:6px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>`
+              : '';
+            const canConfirm = b.status === 'driver_completed' || b.status === 'confirme';
+            const confirmBtn = canConfirm
+              ? `<button onclick="confirmerArrivee('${b.id}')" style="margin:2px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:800;cursor:pointer;animation:pulse 1.5s infinite">✅ Confirmer mon arrivée</button>`
+              : '';
+            const meetupMessage = b.meetup_message
+              ? `<div style="margin-top:7px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
+              : '';
+            return `<tr>
+              <td data-label="Trajet">${villeArret(b.pickup_city, b)} → ${villeArret(b.dropoff_city, b)}</td>
+              <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.ride_departure_time || b.created_at)}</td>
+              <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+              <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
+              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Messagerie ouverte après confirmation</span>'}</td>
+            </tr>`;
+          };
+          window.__bookingRowFn = bookingRow;
+          return `<table class="bookings-table"><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__activeBookings.map(bookingRow).join('')}</tbody></table>`;
+        })()}
+    </div>
+    <a href="/confidentialite.html" style="font-size:.75rem;color:var(--brand-muted,var(--muted));display:inline-block;margin-top:8px">🔒 Protection des données — Loi 25</a>
+  </div>
+  ${window.__finishedBookings && window.__finishedBookings.length > 0 ? `
+  <details class="section-block" style="cursor:pointer">
+    <summary style="font-weight:800;color:var(--green);padding:8px 0;list-style:none;font-size:1.05rem">✅ Réservations passées (${window.__finishedBookings.length}) — cliquer pour voir</summary>
+    <div class="table-wrap" style="margin-top:10px">
+      <table><thead><tr><th>Trajet</th><th>Date</th><th>Prix payé</th><th>Statut</th><th>Contacter conducteur</th></tr></thead><tbody>${window.__finishedBookings.map(window.__bookingRowFn).join('')}</tbody></table>
+    </div>
+  </details>` : ''}`;
+}
+
+// ── RÉSERVATIONS REÇUES ──
+function buildReservations() {
+  const rides = dashData.my_rides || [];
+  const allBookings = (dashData.ride_bookings || []);
+
+  return `
+  <div class="dash-header"><div><h1>Réservations reçues</h1><p>Passagers qui ont réservé vos trajets — contact direct par email/SMS</p></div></div>
+
+  <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
+    💡 <strong>Comment contacter tes passagers ?</strong><br>
+    Clique <strong>💬 Écrire</strong> sur la ligne du passager : vous vous écrivez par la messagerie PorteàPorte, vos coordonnées restent privées. Chaque passager a sa propre conversation. Elle se ferme 3 jours après le trajet ; en cas de problème, utilise « Signaler ».
+  </div>
+
+    <div class="table-wrap">
+    ${allBookings.length === 0
+      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son prénom et un bouton pour lui écrire apparaîtront ici.</p>`
+      : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
+        ${allBookings.map(b=>{
+          const contactInfo = [];
+          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire</button>`);
+
+          // Carte animal (visible si passager a un animal sur ce trajet)
+          let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';
+          if (b.has_pet && b.passenger_pet) {
+            // Stocke l'animal dans une map globale; on passe juste l'ID
+            window.__pets = window.__pets || {};
+            window.__pets[b.id] = b.passenger_pet;
+            const pet = b.passenger_pet;
+            const speciesIcon = ({ chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' }[pet.species]) || '🐾';
+            const petLabel = [pet.name, pet.breed].filter(Boolean).join(' · ') || pet.species || 'Animal';
+            const sizeWeight = pet.size ? (pet.size + (pet.weight_kg ? ' · ' + pet.weight_kg + ' kg' : '')) : '';
+            const petAvatar = pet.photo_url
+              ? '<img loading="lazy" decoding="async" src="' + escHtml(pet.photo_url) + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #ffd166;flex-shrink:0;">'
+              : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,209,102,.12);border:2px dashed rgba(255,209,102,.4);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">' + speciesIcon + '</div>';
+            petCell = '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__showPet(\'' + b.id + '\')" title="Voir la carte animal">' + petAvatar + '<div><div style="font-weight:700;font-size:.82rem">' + speciesIcon + ' ' + petLabel + '</div>' + (sizeWeight ? '<div style="font-size:.7rem;color:var(--muted)">' + sizeWeight + '</div>' : '') + '</div></div>';
+          }
+
+          const canComplete = ['confirme','driver_completed'].includes(String(b.status||'').toLowerCase());
+          const completeBtn = canComplete
+            ? `<button onclick="openRideCodeModal('${b.id}')" style="margin:2px;background:rgba(93,191,255,.14);color:var(--cyan);border:1px solid rgba(93,191,255,.45);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:900;cursor:pointer">Valider trajet</button>`
+            : '<span style="color:var(--muted);font-size:.75rem">—</span>';
+          return `<tr>
+            <td><strong>${b.passenger_prenom||'—'}</strong></td>
+            <td style="font-size:.8rem;color:var(--muted)">${villeArret(b.pickup_city, b)} → ${villeArret(b.dropoff_city, b)}</td>
+            <td>${b.seats_reserved} pl.</td>
+            <td>${petCell}</td>
+            <td style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
+            <td>${statusChip(b.status)}</td>
+            <td>${completeBtn}</td>
+            <td>${contactInfo.length ? contactInfo.join(' ') : '<span style="color:var(--muted);font-size:.78rem">—</span>'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`}
+
+  <!-- Modal carte animal complète -->
+  <div id="pet-modal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,.92);z-index:9999;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#0f1320;border:1px solid #2a3142;border-radius:18px;max-width:420px;width:100%;overflow:hidden;">
+      <div id="pet-modal-img-wrap" style="width:100%;height:280px;background:#1a2032;display:flex;align-items:center;justify-content:center;"><img id="pet-modal-img" loading="lazy" decoding="async" src="" alt="Photo de l’animal" style="width:100%;height:100%;object-fit:cover;display:none"><div id="pet-modal-emoji" style="font-size:5rem">🐾</div></div>
+      <div style="padding:20px;">
+        <h3 id="pet-modal-name" style="margin:0 0 4px;color:#5dbfff;font-size:1.2rem;"></h3>
+        <p id="pet-modal-meta" style="margin:0 0 14px;color:#aab2c5;font-size:.88rem;"></p>
+        <div id="pet-modal-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+        <p id="pet-modal-notes" style="color:#dbe5f3;font-size:.92rem;line-height:1.5;font-style:italic;"></p>
+        <button onclick="document.getElementById('pet-modal').style.display='none'" style="margin-top:14px;background:#1a2032;color:#fff;border:0;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;width:100%;">Fermer</button>
+      </div>
+    </div>
+  </div>
+  <div id="ride-code-modal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,.94);z-index:10000;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)closeRideCodeModal()">
+    <div style="background:var(--brand-bg-surface,#0f1320);border:1px solid rgba(93,191,255,.3);border-radius:18px;width:min(420px,100%);padding:22px;box-shadow:0 22px 70px rgba(0,0,0,.45)">
+      <h3 style="margin:0 0 8px;color:var(--brand-cyan,#5dbfff);font-size:1.25rem">Code sécurité passager</h3>
+      <p style="margin:0 0 16px;color:#aab2c5;font-size:.9rem;line-height:1.45">Entre le code remis par le passager pour valider et libérer le paiement. Sans code, le trajet sera marqué terminé et auto-validé après 4h si aucune alerte n’est déclenchée.</p>
+      <input id="ride-code-booking-id" type="hidden">
+      <input id="ride-code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:2rem;letter-spacing:.25em;text-align:center;background:#080d16;color:#fff;border:1px solid rgba(93,191,255,.45);border-radius:14px;padding:14px 12px;margin-bottom:14px">
+      <button onclick="submitRideCodeModal()" style="width:100%;background:var(--brand-cyan,#5dbfff);color:#061018;border:0;padding:13px;border-radius:12px;font-weight:900;font-size:1rem;cursor:pointer">Valider avec le code</button>
+      <button onclick="submitRideDriverCompletedOnly()" style="width:100%;margin-top:10px;background:transparent;color:#ffcf7a;border:1px solid rgba(255,207,122,.45);padding:12px;border-radius:12px;font-weight:800;cursor:pointer">Je n'ai pas le code</button>
+      <button onclick="closeRideCodeModal()" style="width:100%;margin-top:10px;background:transparent;color:#aab2c5;border:0;padding:10px;font-weight:700;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+  `;
+}
+
+// ── MISSIONS ──
+function openRideCodeModal(bookingId) {
+  const modal = document.getElementById('ride-code-modal');
+  const input = document.getElementById('ride-code-input');
+  document.getElementById('ride-code-booking-id').value = bookingId || '';
+  input.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 80);
+}
+
+function closeRideCodeModal() {
+  const modal = document.getElementById('ride-code-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function rideCodeRequest(endpoint, body) {
+  const db = getSupabaseClient();
+  const { data: _sd } = await db.auth.getSession();
+  const token = _sd?.session?.access_token;
+  if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent('/dashboard.html?onglet=covoiturage'); return null; }
+  const res = await fetch('/api/platform?endpoint=' + endpoint, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, ...body })
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error || 'Erreur validation');
+  return out;
+}
+
+async function submitRideCodeModal() {
+  const bookingId = document.getElementById('ride-code-booking-id').value;
+  const code = document.getElementById('ride-code-input').value.replace(/\D/g, '');
+  if (code.length < 4) { (await PAPDialog.alert('Entre un code de 4 à 8 chiffres.')); return; }
+  try {
+    await rideCodeRequest('ride-driver-complete', { booking_id: bookingId, code });
+    closeRideCodeModal();
+    (await PAPDialog.alert('Trajet validé. Le paiement est libéré.'));
+    await init();
+  } catch (e) {
+    (await PAPDialog.alert('Validation impossible : ' + e.message));
+  }
+}
+
+async function submitRideDriverCompletedOnly() {
+  const bookingId = document.getElementById('ride-code-booking-id').value;
+  if (!(await PAPDialog.confirm('Marquer ce trajet terminé sans code ? Le passager aura 4h pour confirmer ou signaler un problème.'))) return;
+  try {
+    await rideCodeRequest('ride-driver-complete', { booking_id: bookingId });
+    closeRideCodeModal();
+    (await PAPDialog.alert('Trajet marqué terminé. Auto-validation après 4h sans alerte passager.'));
+    await init();
+  } catch (e) {
+    (await PAPDialog.alert('Action impossible : ' + e.message));
+  }
+}
+
+function buildMissions() {
+  const missions = dashData.missions || [];
+  const done   = missions.filter(m=>m.done);
+  const active = missions.filter(m=>!m.done);
+
+  return `
+  <div class="dash-header"><div><h1>Missions</h1><p>Accomplissez des défis pour gagner XP et badges</p></div></div>
+
+  ${active.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>En cours (${active.length})</h2></div>
+    <div class="missions-list">
+      ${active.map(m=>`
+      <div class="mission-row">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc">${m.description}</div>
+          <div style="margin-top:5px"><span style="background:rgba(93,191,255,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(93,191,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
+        </div>
+        <div class="mission-prog-wrap" style="min-width:120px">
+          <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>
+          <div class="mission-prog-label">${m.progress||0} / ${m.target||1} — ${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${done.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>Complétées (${done.length})</h2></div>
+    <div class="missions-list">
+      ${done.map(m=>`
+      <div class="mission-row" style="opacity:.65">
+        <div class="mission-icon">${m.icon||'🎯'}</div>
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc" style="color:var(--muted)">${fmtDate(m.completed_at)}</div>
+        </div>
+        <div class="mission-done">✅ +${m.xp_reward} XP</div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${missions.length === 0 ? '<p style="color:var(--muted);text-align:center;padding:40px">Les missions se chargent au prochain trajet.</p>' : ''}`;
+}
+
+// ── BADGES ──
+function buildBadges() {
+  const badges = dashData.badges || [];
+  const earned = badges.filter(b=>b.earned);
+  const locked = badges.filter(b=>!b.earned);
+
+  return `
+  <div class="dash-header"><div><h1>Badges</h1><p>${earned.length} badge${earned.length!==1?'s':''} obtenu${earned.length!==1?'s':''} sur ${badges.length}</p></div></div>
+
+  ${earned.length > 0 ? `
+  <div class="section-block">
+    <div class="section-head"><h2>Obtenus</h2></div>
+    <div class="badges-row">
+      ${earned.map(b=>`
+      <div class="badge-pill earned">
+        <span class="ico">${b.icon||'🏅'}</span>
+        <div><div class="bname">${b.name}</div><div class="bloc">${fmtDate(b.earned_at)}</div></div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <div class="section-block">
+    <div class="section-head"><h2>À débloquer</h2></div>
+    <div class="badges-row">
+      ${locked.map(b=>`
+      <div class="badge-pill">
+        <span class="ico locked-icon">${b.icon||'🏅'}</span>
+        <div><div class="bname" style="color:var(--muted)">${b.name}</div><div class="bloc">${b.condition||''}</div></div>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem">Tous les badges débloqués. 🎉</p>'}
+    </div>
+  </div>`;
+}
+
+// ── AVIS ──
+function buildAvis() {
+  const reviews = dashData.reviews || [];
+  const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
+
+  return `
+  <div class="dash-header">
+    <div>
+      <h1>Avis reçus</h1>
+      ${avg ? `<p>Note moyenne : <strong style="color:var(--green);font-size:1.1rem">${avg} ⭐</strong> · ${reviews.length} avis</p>` : '<p style="color:var(--muted)">Aucun avis reçu pour l\'instant.</p>'}
+    </div>
+  </div>
+  <div class="reviews-list">
+    ${reviews.map(r=>`
+    <div class="review-row">
+      <div class="review-stars">${'⭐'.repeat(Math.round(r.rating||0))}</div>
+      <div class="review-text">${r.comment||'—'}</div>
+      <div class="review-meta">${fmtDate(r.created_at)}</div>
+    </div>`).join('') || '<p style="color:var(--muted);text-align:center;padding:40px">Les avis s\'afficheront après vos premiers trajets.</p>'}
+  </div>`;
+}
+
+// ── SIGNALEMENTS ──
+function buildSignalements() {
+  const reports = dashData.reports || [];
+
+  return `
+  <div class="dash-header"><div><h1>Signalements</h1><p>Signalements que vous avez soumis</p></div></div>
+  <div class="table-wrap">
+    ${reports.length === 0
+      ? `<p class="empty-msg">Aucun signalement soumis.</p>`
+      : `<table><thead><tr><th>Raison</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+        ${reports.map(r=>`<tr>
+          <td>${r.reason||'—'}</td>
+          <td>${statusChip(r.status)}</td>
+          <td style="color:var(--muted);font-size:.8rem">${fmtDate(r.created_at)}</td>
+        </tr>`).join('')}
+      </tbody></table>`}
+  </div>`;
+}
+
+init();
+</script>
+  <script>
+    // Carte animal — affichée dans modale globale (hors template literal pour éviter conflits parser)
+    window.__showPet = function(bookingId) {
+      var pet = (window.__pets || {})[bookingId];
+      if (!pet) return;
+      var m = document.getElementById('pet-modal');
+      if (!m) return;
+      var img = document.getElementById('pet-modal-img');
+      var emoji = document.getElementById('pet-modal-emoji');
+      var speciesIcons = { chien: '🐕', chat: '🐈', oiseau: '🐦', rongeur: '🐹', autre: '🐾' };
+      if (pet.photo_url) { img.src = pet.photo_url; img.style.display = 'block'; emoji.style.display = 'none'; }
+      else { img.style.display = 'none'; emoji.style.display = 'block'; emoji.textContent = speciesIcons[pet.species] || '🐾'; }
+      document.getElementById('pet-modal-name').textContent = pet.name || 'Animal du passager';
+      var metaParts = [pet.species, pet.breed, pet.size];
+      if (pet.weight_kg) metaParts.push(pet.weight_kg + ' kg');
+      var meta = metaParts.filter(function(x){ return !!x; }).join(' · ');
+      document.getElementById('pet-modal-meta').textContent = meta || 'Aucun détail';
+      var tags = [];
+      if (pet.vaccinated) tags.push('<span style="background:rgba(127,229,163,.12);color:#7fe5a3;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">💉 Vacciné</span>');
+      if (pet.carrier) tags.push('<span style="background:rgba(93,191,255,.12);color:#5dbfff;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700">📦 Cage de transport</span>');
+      document.getElementById('pet-modal-tags').innerHTML = tags.join('');
+      document.getElementById('pet-modal-notes').textContent = pet.notes || '';
+      m.style.display = 'flex';
+    };
+  </script>
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/app-launcher.js" defer></script>
+  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
+  <script src="/js/onboarding-checklist.js" defer></script>
+  <script src="/js/pending-payment-banner.js" defer></script>
+</body>
+</html>

@@ -15,10 +15,10 @@ const res = () => ({ _status: 200, _body: null, status(c) { this._status = c; re
 const ctx = () => ({ sbUrl: 'https://fake.supabase.co', sbKey: 'k', stripeKey: 'sk_test_fake', session: { id: 'passenger-1', email: 'p@test.ca' }, profile: { role: 'expediteur' } });
 
 describe('1. Mon compte : code de sécurité automatique', () => {
-  const h = lire('compte.html');
+  const h = lire('membre-securite.html');
   test('explication exacte et lien vers mes réservations', () => {
     assert.ok(h.includes('Ton code de sécurité est créé automatiquement à chaque réservation. Tu le trouves sur ta confirmation, dans ton courriel et sur la fiche du trajet réservé. Donne-le au conducteur à l\'arrivée.'));
-    assert.match(h, /<a class="btn btn-primary" href="\/dashboard-covoiturage\.html">Voir mes réservations<\/a>/);
+    assert.match(h, /<a class="btn btn-primary" href="\/dashboard\.html\?onglet=covoiturage">Voir mes réservations<\/a>/);
   });
   test('plus de champ ni de bouton Enregistrer côté passager', () => {
     for (const x of ['id="ride-safety-code"', 'safety-secret-question', 'safety-secret-answer', 'saveRideSafetyCode', 'ride-safety-code-set', 'ride-safety-code-status', 'Code par défaut']) assert.ok(!h.includes(x), x);
@@ -118,12 +118,12 @@ describe('2. Annulation : « remboursement » seulement si un paiement avait ét
   });
 
   test('écrans : l’aperçu et le message final suivent paiement', () => {
-    for (const p of ['dashboard.html', 'dashboard-covoiturage.html']) {
+    for (const p of ['membre-accueil.html', 'membre-covoiturage.html']) {
       const h = lire(p);
       assert.ok(h.includes('preview.paiement === false') && h.includes('Aucun paiement n’a été fait pour cette réservation : rien à rembourser.'), p);
       assert.ok(h.includes("out.message || (out.paiement === false ? 'Réservation annulée.'"), p);
     }
-    assert.ok(lire('dashboard-covoiturage.html').includes("' réservation(s) annulée(s) et avertie(s)'"));
+    assert.ok(lire('membre-covoiturage.html').includes("' réservation(s) annulée(s) et avertie(s)'"));
   });
 
   test('annulations par le conducteur : le courriel reçoit aussi paiement', () => {
@@ -145,7 +145,7 @@ describe('3. « Niveau » ne cache plus le menu de gauche', () => {
     assert.ok(fl.includes("'.pp-layer-pill.pp-dans-menu{position:static!important;"));
   });
   test('le tableau de bord covoiturage a bien un menu aside.sidebar avec Signalements', () => {
-    const h = lire('dashboard-covoiturage.html');
+    const h = lire('membre-covoiturage.html');
     assert.ok(/<aside class="sidebar">[\s\S]*Signalements[\s\S]*<\/aside>/.test(h));
     assert.ok(h.includes('/js/layer-mode.js') && h.includes('/js/flottants.js'));
   });
@@ -208,16 +208,16 @@ describe('Décision 24 nov. : sans paiement, rien au grand livre', () => {
 describe('Décision 24 nov. : « Garder ma réservation » / « Oui, annuler »', () => {
   test('toutes les fenêtres d’annulation', () => {
     const R = "{ title: 'Annuler la réservation', annuler: 'Garder ma réservation', ok: 'Oui, annuler', danger: true }";
-    assert.ok(lire('dashboard.html').includes(R));
-    const dc = lire('dashboard-covoiturage.html');
+    assert.ok(lire('membre-accueil.html').includes(R));
+    const dc = lire('membre-covoiturage.html');
     assert.ok(dc.includes(R));
     assert.ok(dc.includes("annuler: 'Garder mon trajet', ok: 'Oui, annuler'"));
     assert.ok(dc.includes("annuler: 'Garder ce jour', ok: 'Oui, annuler ce jour'"));
-    assert.ok(lire('dashboard-expediteur.html').includes("annuler: 'Garder ma livraison', ok: 'Oui, annuler'"));
+    assert.ok(lire('membre-envois.html').includes("annuler: 'Garder ma livraison', ok: 'Oui, annuler'"));
     assert.ok(lire('js/cancel-livraison.js').includes("annuler: 'Garder ma livraison', ok: 'Oui, annuler'"));
     const dl = lire('js/dialogues.js');
     assert.ok(dl.includes("'.pap-dlg button.danger{border-color:transparent!important;background:#ef4444!important;color:#fff!important}'"), '« Oui, annuler » reste rouge');
     assert.ok(dl.includes('background:#1a1f28!important'), '« Garder… » reste neutre');
-    for (const f of ['dashboard.html', 'dashboard-covoiturage.html']) assert.ok(!/PAPDialog\.confirm\(warning\)\)/.test(lire(f)), f + ' : plus de « Annuler / OK »');
+    for (const f of ['membre-accueil.html', 'membre-covoiturage.html']) assert.ok(!/PAPDialog\.confirm\(warning\)\)/.test(lire(f)), f + ' : plus de « Annuler / OK »');
   });
 });

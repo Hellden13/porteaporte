@@ -60,14 +60,14 @@
       key: 'profile',
       label: 'Complète ton profil (nom, ville, téléphone)',
       done: profileComplete,
-      href: profileComplete ? null : '/profile.html',
+      href: profileComplete ? null : '/dashboard.html?onglet=compte',
       hint: profileComplete ? null : 'Plus ton profil est complet, plus tu obtiens la confiance'
     });
     steps.push({
       key: 'photo',
       label: 'Ajoute une photo de profil (recommandé)',
       done: hasPhoto,
-      href: hasPhoto ? null : '/profile.html',
+      href: hasPhoto ? null : '/dashboard.html?onglet=compte',
       hint: hasPhoto ? null : 'Les profils avec photo ont 3x plus de réservations',
       optional: true
     });

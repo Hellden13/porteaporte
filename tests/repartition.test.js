@@ -276,7 +276,7 @@ describe('page Transparence : mêmes chiffres, même source', () => {
     assert.doesNotMatch(plat, /Math\.round\(totalRevenueCents \* effectiveInsurancePct\)/);
   });
   test('admin, livreur et calculateur public utilisent le même calcul (js/repartition.js)', () => {
-    for (const f of ['admin/dashboard-admin.html', 'admin/parametres.html', 'dashboard-livreur.html', 'calculateur-prix.html']) {
+    for (const f of ['admin/dashboard-admin.html', 'admin/parametres.html', 'membre-livrer.html', 'calculateur-prix.html']) {
       const html = fs.readFileSync(f, 'utf8');
       assert.match(html, /src="\/js\/repartition\.js"/, f);
       assert.match(html, /PAPRepartition\.repartitionLivraison\(/, f);
@@ -301,7 +301,7 @@ describe('« Tu gagnes » partout, et le formulaire parle du prix total', () => 
     assert.doesNotMatch(cap, /captured\.amount_received \* 0\.60/, 'le montant du courriel = le montant versé');
   });
   test('le gain affiché ne compte plus de bonus éco jamais versé', () => {
-    const dl = fs.readFileSync('dashboard-livreur.html', 'utf8');
+    const dl = fs.readFileSync('membre-livrer.html', 'utf8');
     assert.doesNotMatch(dl, /tu reçois \$\{basePct\}% \+ \$\{ecoBonus\}% de bonus éco/);
     assert.doesNotMatch(dl, /money\(earnings\)/, 'les PorteCoins ne sont plus affichés comme des dollars');
   });

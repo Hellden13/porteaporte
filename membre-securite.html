@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+<script src="/js/onglets-membre.js"></script>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon compte — PorteàPorte</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <link rel="stylesheet" href="/assets/premium-system.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/flottants.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; padding: 24px; background: var(--brand-bg-dark); color: var(--brand-text); display: grid; place-items: center; }
+    .wrap { width: min(760px, 100%); display: grid; gap: 16px; }
+    .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 24px; }
+    h1, h2 { margin: 0 0 10px; }
+    p { color: var(--brand-muted); line-height: 1.55; }
+    label { display: block; color: var(--brand-muted); font-size: .85rem; font-weight: 800; margin-bottom: 8px; }
+    input, select { width: 100%; background: #080d16; color: #fff; border: 1px solid rgba(93,191,255,.35); border-radius: 14px; padding: 14px; font-size: 1rem; }
+    .btn { display: inline-flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 900; cursor: pointer; }
+    .btn-primary { background: var(--brand-cyan); color: #061018; }
+    .btn-secondary { background: transparent; color: var(--brand-cyan); border: 1px solid rgba(93,191,255,.35); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .status { margin-top: 12px; color: var(--brand-muted); font-size: .9rem; }
+    .grid { display: grid; gap: 12px; }
+    .contact-row { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--brand-border); border-radius: 14px; background: rgba(255,255,255,.03); margin-top: 10px; }
+    .contact-row strong { color: var(--brand-cyan); }
+    .check-row { display: flex; align-items: center; gap: 8px; color: var(--brand-muted); font-weight: 800; }
+    .check-row input { width: auto; }
+  </style>
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Mon compte</h1>
+      <p>Ton profil complet reste disponible dans l'espace profil sécurisé.</p>
+      <a class="btn btn-secondary" href="/dashboard.html?onglet=compte">Ouvrir mon profil</a>
+    </section>
+
+    <section class="card" id="code-securite">
+      <h2>🔐 Code de sécurité trajet</h2>
+      <p>Ton code de sécurité est créé automatiquement à chaque réservation. Tu le trouves sur ta confirmation, dans ton courriel et sur la fiche du trajet réservé. Donne-le au conducteur à l'arrivée.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/dashboard.html?onglet=covoiturage">Voir mes réservations</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🆘 Contacts d'urgence</h2>
+      <p>Ajoute jusqu'à 3 contacts. Si aucun contact n'est configuré, PorteàPorte sera alerté par défaut.</p>
+      <div id="emergency-contacts"></div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveEmergencyContacts()">Enregistrer les contacts</button>
+      </div>
+      <div class="status" id="emergency-status">Chargement...</div>
+    </section>
+
+    <section class="card">
+      <h2>🤝 Mon code parrainage</h2>
+      <p>Partage ton code pour inviter des amis. Tu reçois +100 Points Impact pour chaque filleul actif.</p>
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(93,191,255,.08);border:2px dashed rgba(93,191,255,.35);border-radius:10px;padding:14px 20px;margin:14px 0">
+        <span id="parrainage-code" style="font-family:monospace;font-size:1.8rem;font-weight:900;color:var(--brand-bleu);letter-spacing:.15em">···</span>
+        <button class="btn btn-secondary" onclick="copyParrainageCode()" id="parrainage-copy-btn" style="padding:8px 14px;font-size:.82rem">Copier</button>
+      </div>
+      <a class="btn btn-secondary" href="/dashboard.html?onglet=compte&vue=parrainage" style="font-size:.85rem;margin-top:4px">Voir mes filleuls →</a>
+    </section>
+
+    <section class="card">
+      <h2>🏅 Mes badges</h2>
+      <div id="badges-list-wrap"><p style="color:var(--brand-muted);font-size:.88rem">Chargement...</p></div>
+    </section>
+  </main>
+
+  <script>
+    let currentSession = null;
+
+    async function initCompte() {
+      if (!await AUTH_API.requireAuth()) return;
+      currentSession = AUTH_API.getUser()?.session;
+      renderEmergencyContacts([]);
+      await Promise.all([
+        loadEmergencyContacts(),
+        loadParrainageCode(),
+        loadBadges()
+      ]);
+    }
+
+    async function loadParrainageCode() {
+      try {
+        const d = await rideSafetyApi('referral-get', {});
+        const code = d.referral?.code || d.code || '';
+        if (code) document.getElementById('parrainage-code').textContent = code;
+      } catch (e) { console.warn('parrainage:', e); }
+    }
+
+    function copyParrainageCode() {
+      const code = document.getElementById('parrainage-code').textContent;
+      if (!code || code === '···') return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('parrainage-copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copie !';
+        setTimeout(() => { btn.textContent = orig; }, 1800);
+      });
+    }
+
+    async function loadBadges() {
+      try {
+        const d = await rideSafetyApi('badges-list', {});
+        const earned = d.earned || [];
+        const wrap = document.getElementById('badges-list-wrap');
+        if (!earned.length) {
+          wrap.innerHTML = '<p style="color:var(--brand-muted);font-size:.88rem">Aucun badge encore. Complete des livraisons et covoiturages pour en gagner !</p>';
+          return;
+        }
+        wrap.innerHTML = '<div style="display:flex;flex-direction:column;gap:2px">' + earned.map(e => {
+          const b = e.badges || e;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brand-border)">
+            <span style="font-size:1.5rem">${esc(b.icon || '🏅')}</span>
+            <div>
+              <div style="font-weight:700;color:var(--brand-text)">${esc(b.name || '')}</div>
+              <div style="font-size:.78rem;color:var(--brand-muted)">${esc(b.description || '')}</div>
+            </div>
+          </div>`;
+        }).join('') + '</div>';
+      } catch (e) { console.warn('badges:', e); }
+    }
+
+    async function rideSafetyApi(endpoint, body) {
+      const res = await fetch('/api/platform?endpoint=' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+        body: JSON.stringify({ endpoint, ...body })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Erreur');
+      return out;
+    }
+
+    function renderEmergencyContacts(contacts) {
+      const byPriority = new Map((contacts || []).map(c => [Number(c.priority), c]));
+      document.getElementById('emergency-contacts').innerHTML = [1, 2, 3].map(priority => {
+        const c = byPriority.get(priority) || {};
+        return `<div class="contact-row" data-priority="${priority}">
+          <strong>Contact ${priority}</strong>
+          <input class="ec-name" type="text" placeholder="Nom" value="${esc(c.name || '')}">
+          <input class="ec-phone" type="tel" placeholder="Téléphone" value="${esc(c.phone || '')}">
+          <input class="ec-email" type="email" placeholder="Email" value="${esc(c.email || '')}">
+          <label class="check-row"><input class="ec-pap" type="checkbox" ${c.is_porteaporte ? 'checked' : ''}> Alerter PorteàPorte à la place</label>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadEmergencyContacts() {
+      try {
+        const out = await rideSafetyApi('emergency-contacts-get', {});
+        renderEmergencyContacts(out.contacts || []);
+        document.getElementById('emergency-status').textContent = (out.contacts || []).length
+          ? 'Contacts configurés.'
+          : 'Aucun contact configuré : PorteàPorte sera alerté par défaut.';
+      } catch (e) {
+        document.getElementById('emergency-status').textContent = 'Contacts indisponibles : ' + e.message;
+      }
+    }
+
+    async function saveEmergencyContacts() {
+      const contacts = Array.from(document.querySelectorAll('.contact-row')).map(row => ({
+        priority: Number(row.dataset.priority),
+        name: row.querySelector('.ec-name').value.trim(),
+        phone: row.querySelector('.ec-phone').value.trim(),
+        email: row.querySelector('.ec-email').value.trim(),
+        is_porteaporte: row.querySelector('.ec-pap').checked
+      })).filter(c => c.name || c.phone || c.email || c.is_porteaporte);
+      try {
+        await rideSafetyApi('emergency-contacts-set', { contacts });
+        document.getElementById('emergency-status').textContent = 'Contacts enregistrés.';
+        (await PAPDialog.alert('Contacts enregistrés.'));
+      } catch (e) {
+        (await PAPDialog.alert('Impossible d enregistrer les contacts : ' + e.message));
+      }
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+    }
+
+    initCompte();
+  </script>
+  <script src="/js/support-widget.js"></script>
+  <script src="/js/app-launcher.js" defer></script>
+  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v4
 // Stratégie : cache-first pour assets statiques, network-first pour pages HTML
-const SW_VERSION = 'pap-v112';
+const SW_VERSION = 'pap-v113';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
@@ -17,8 +17,10 @@ const PRECACHE = [
   '/assets/a11y.css',
   '/assets/premium-system.css',
   // Pages clés
-  '/dashboard-expediteur.html',
-  '/dashboard-livreur.html',
+  '/dashboard.html',
+  '/js/onglets-membre.js',
+  '/membre-envois.html',
+  '/membre-livrer.html',
   '/create-mission.html',
   '/suivi.html',
   // JS partagés
@@ -153,7 +155,7 @@ self.addEventListener('push', e => {
 // ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = e.notification.data?.url || '/dashboard-livreur.html';
+  const url = e.notification.data?.url || '/dashboard.html?onglet=livrer';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const existing = clients.find(c =>
