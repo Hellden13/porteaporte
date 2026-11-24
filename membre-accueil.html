@@ -532,7 +532,7 @@
     try {
       const { data: { session } } = await db.auth.getSession();
       if (!session?.access_token) {
-        window.location.href = '/login.html?redirect=/dashboard.html';
+        window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search);
         return;
       }
       const previewRes = await fetch('/api/ride-cancel', {
@@ -578,7 +578,7 @@
     try {
       const { data: { session } } = await db.auth.getSession();
       if (!session?.access_token) {
-        window.location.href = '/login.html?redirect=/dashboard.html';
+        window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search);
         return;
       }
       // Vérifie d'abord si un code de sécurité est configuré (évite un message d'erreur cryptique).

@@ -71,16 +71,17 @@ function charger({ chemin = '/dashboard.html', recherche = '', ancre = '', html 
     createElement: element,
     getElementById(id) { return [head, body].flatMap(tous).find((x) => x.id === id) || null; },
     querySelector(sel) { if (sel.startsWith('body > header')) return header; return tous(body).find((x) => correspond(x, sel)) || null; },
-    addEventListener() {},
+    _ecoute: {},
+    addEventListener(t, f) { this._ecoute[t] = f; },
     open() { ecrit.push('open'); }, write(t) { ecrit.push(t); }, close() { ecrit.push('close'); },
   };
   const window = {
     ...fenetre,
     document,
-    location: { pathname: chemin, search: recherche, hash: ancre, replace(u) { remplacee.push(u); }, reload() {} },
+    location: { href: 'https://porteaporte.site' + chemin + recherche + ancre, origin: 'https://porteaporte.site', pathname: chemin, search: recherche, hash: ancre, replace(u) { remplacee.push(u); }, reload() {} },
     fetch: (u, o) => { recup.push([u, o]); return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve(page || '<html>page</html>') }); },
     localStorage: { getItem: (k) => (k in stockage ? stockage[k] : null), setItem: (k, v) => { stockage[k] = String(v); } },
-    URLSearchParams,
+    URLSearchParams, URL,
   };
   window.window = window;
   vm.runInNewContext(SCRIPT, window);
@@ -264,5 +265,23 @@ describe('liens du site et petites corrections', () => {
     assert.match(c, /<div class="mob-tab active" onclick="showSection\('overview'\)"><span class="ico">📊<\/span>Résumé<\/div>/);
     assert.doesNotMatch(c, /showSection\('overview'\)"><span class="[a-z-]+">🏠/);
     assert.match(lire('membre-recus.html'), /href="\/index\.html">← Le site<\/a>/);
+  });
+  test('lien « Se connecter » sans destination dans une page hébergée : ?next= = l\'onglet en cours', () => {
+    const t = charger({ chemin: '/dashboard.html', recherche: '?onglet=compte&vue=parrainage', fenetre: { __PAP_PAGE: 'parrainage' } });
+    const clic = t.document._ecoute.click;
+    assert.equal(typeof clic, 'function');
+    const lien = (href) => { const a = element('a'); a.setAttribute('href', href); a.href = href; a.closest = () => a; return a; };
+    let a = lien('/login.html');
+    clic({ target: a });
+    assert.equal(a.href, '/login.html?next=%2Fdashboard.html%3Fonglet%3Dcompte%26vue%3Dparrainage');
+    a = lien('/login.html?redirect=%2Fautre.html');
+    clic({ target: a });
+    assert.equal(a.href, '/login.html?redirect=%2Fautre.html', 'destination déjà donnée : gardée');
+    a = lien('/badges-publics.html');
+    clic({ target: a });
+    assert.equal(a.href, '/badges-publics.html', 'autres liens inchangés');
+    a = lien('https://exemple.com/login.html');
+    clic({ target: a });
+    assert.equal(a.href, 'https://exemple.com/login.html', 'autre site inchangé');
   });
 });

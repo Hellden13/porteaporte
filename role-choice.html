@@ -638,7 +638,8 @@
             let nextUrl = '';
             try {
                 const params = new URLSearchParams(window.location.search);
-                const raw = params.get('next') || params.get('redirect') || params.get('return');
+                let raw = params.get('next') || params.get('redirect') || params.get('return');
+                    if (!raw) { try { raw = sessionStorage.getItem('pap_next') || ''; sessionStorage.removeItem('pap_next'); } catch (_) {} }
                 if (raw) {
                     const u = new URL(raw, window.location.origin);
                     const p = u.pathname || '';
@@ -767,7 +768,8 @@
                 let nextUrl = '';
                 try {
                     const params = new URLSearchParams(window.location.search);
-                    const raw = params.get('next') || params.get('redirect') || params.get('return');
+                    let raw = params.get('next') || params.get('redirect') || params.get('return');
+                    if (!raw) { try { raw = sessionStorage.getItem('pap_next') || ''; sessionStorage.removeItem('pap_next'); } catch (_) {} }
                     if (raw) {
                         const u = new URL(raw, window.location.origin);
                         const p = u.pathname || '';

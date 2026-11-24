@@ -192,5 +192,19 @@
     }).catch(function () {});
   }
 
+  // Liens vers /login.html sans destination (ex. « Se connecter » de Parrainage, « Mon profil » de Badges) :
+  // on ajoute ?next= pour revenir au même onglet après la connexion.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a) return;
+    try {
+      var u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || u.pathname !== '/login.html') return;
+      if (u.searchParams.get('next') || u.searchParams.get('redirect') || u.searchParams.get('return')) return;
+      u.searchParams.set('next', location.pathname + location.search);
+      a.href = u.pathname + u.search + u.hash;
+    } catch (_) {}
+  }, true);
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', construire); else construire();
 })();

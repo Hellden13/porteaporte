@@ -133,7 +133,7 @@
       const db = window.getSupabaseClient?.();
       if (!db) return;
       const { data } = await db.auth.getSession();
-      if (!data?.session) { window.location.href = '/login.html'; return; }
+      if (!data?.session) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
       _token = data.session.access_token;
       await load();
     }

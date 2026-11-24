@@ -499,7 +499,7 @@
       const nextUrl = getSafeNextUrl();
 
       if (nextUrl) {
-        showStatus('emailStatus', 'Connexion reussie ! Retour au trajet...', 'success');
+        showStatus('emailStatus', 'Connexion réussie ! Retour à ta page...', 'success');
         setTimeout(() => { window.location.href = nextUrl; }, 700);
         return;
       }
@@ -632,6 +632,8 @@
     /* ---- TAB 3 : OAuth ---- */
     async function oauthLogin(provider) {
       showStatus('oauthStatus', 'Redirection vers ' + provider + '...', 'info');
+      // Connexion Google, etc. : la page d'origine est gardée pour la session (role-choice.html y retourne).
+      try { const n = getSafeNextUrl(); if (n) sessionStorage.setItem('pap_next', n); else sessionStorage.removeItem('pap_next'); } catch (_) {}
       try {
         const { error } = await db.auth.signInWithOAuth({
           provider,

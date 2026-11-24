@@ -76,7 +76,7 @@
       const headers = { 'Content-Type': 'application/json' };
       if (!lien) {
         const token = await getToken();
-        if (!token) { window.location.href = '/login.html'; return { ok: false, d: {} }; }
+        if (!token) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return { ok: false, d: {} }; }
         headers.Authorization = 'Bearer ' + token;
       }
       const r = await fetch('/api/platform?endpoint=' + endpoint, {
@@ -96,7 +96,7 @@
   async function fetchThread(opts) {
     if (opts.api) return opts.api.thread();
     const token = await getToken();
-    if (!token) { window.location.href = '/login.html'; return null; }
+    if (!token) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return null; }
     const r = await fetch('/api/platform?endpoint=ride-message-thread', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
@@ -197,7 +197,7 @@
         const { data: { user } } = await window.db.auth.getUser();
         myId = user?.id || null;
       }
-      if (!myId) { window.location.href = '/login.html'; return; }
+      if (!myId) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
     }
     currentCtx = { ...opts, myId };
 

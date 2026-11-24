@@ -84,7 +84,8 @@
 
     if (error || !data.session) {
       console.error('ERREUR auth: connexion requise', error?.message || '');
-      window.location.href = '/login.html';
+      // Après la connexion, on revient à la même page (même onglet du tableau de bord).
+      window.location.href = '/login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       return false;
     }
 

@@ -626,7 +626,7 @@
         async function loadProfile() {
             try {
                 const { data } = await db.auth.getSession();
-                if (!data?.session) { window.location.href = '/login.html'; return; }
+                if (!data?.session) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
 
                 const userId    = data.session.user.id;
                 const userEmail = data.session.user.email;

@@ -902,7 +902,7 @@
     ============================= */
     async function init() {
       const { data } = await db.auth.getSession();
-      if (!data?.session) { window.location.href = '/login.html'; return; }
+      if (!data?.session) { window.location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
       session = data.session;
 
       const { data: p } = await db.from('profiles')
