@@ -754,7 +754,7 @@ async function showPostPaymentConfirmation(bookingId) {
       <div class="post-confirm-row"><strong>📅 Départ</strong>${esc(formatDate(ride.departure_time || currentRide?.departure_time || ''))}</div>
       <div class="post-confirm-row"><strong>📍 Embarquement</strong>${esc(ride.pickup_city || booking.pickup_city || '?')}${ride.pickup_sector || booking.pickup_sector ? ' · ' + esc(ride.pickup_sector || booking.pickup_sector) : ''}</div>
       <div class="post-confirm-row"><strong>🏁 Débarquement</strong>${esc(ride.dropoff_city || booking.dropoff_city || '?')}${ride.dropoff_sector || booking.dropoff_sector ? ' · ' + esc(ride.dropoff_sector || booking.dropoff_sector) : ''}</div>
-      <div class="post-confirm-row"><strong>🚗 Conducteur</strong>${esc(driver.prenom || 'Conducteur')}${String(driver.telephone || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '').length === 10 ? ' · ' + esc(driver.telephone) : ''}${driver.email ? '<br>' + esc(driver.email) : ''}${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
+      <div class="post-confirm-row"><strong>🚗 Conducteur</strong>${esc(driver.prenom || 'Conducteur')}<br><span style="font-size:.85em;opacity:.8">💬 Écris-lui par la messagerie du trajet : vos coordonnées restent privées.</span>${driver.cov_rating_avg != null ? '<br>⭐ ' + esc(Number(driver.cov_rating_avg).toFixed(1)) : ''}</div>
     </div>
     <div class="post-confirm-actions">
       <a href="/covoiturage-confirme.html?booking_id=${encodeURIComponent(bookingId || '')}">Voir ma confirmation</a>
@@ -1028,6 +1028,12 @@ function renderRide(r) {
       });
     });
     actionsWrap.appendChild(btnChat);
+  }
+  // Lien « Lire et répondre » du courriel d'avis : ouvre la conversation (le serveur vérifie la participation).
+  var autreParam = new URLSearchParams(location.search).get('message');
+  if (currentUser && autreParam && autreParam !== currentUser.id && window.RideChat && !window.__messageOuvert) {
+    window.__messageOuvert = true;
+    window.RideChat.open({ ride_id: r.id || rideId, other_user_id: autreParam, other_name: autreParam === driverIdForBadge ? (prenom || 'Conducteur') : 'Ton passager' });
   }
   // Bouton Évaluer (si trajet terminé OU dans le passé)
   var statusLower = String(r.status || '').toLowerCase();

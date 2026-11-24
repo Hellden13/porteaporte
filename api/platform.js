@@ -47,6 +47,7 @@ const {
   stripeConnectPayout, livreurEarnings, subscriptionCreate, subscriptionStatus,
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
+const M = require('../lib/_messagerie');
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
@@ -4081,72 +4082,7 @@ async function adminTopSearches(req, res, ctx, body) {
 // ─────────────────────────────────────────────────────────────────
 // MESSAGERIE COVOITURAGE — in-app, sécurisée RLS
 // ─────────────────────────────────────────────────────────────────
-async function rideMessageSend(req, res, ctx, body) {
-  const session = ctx.session;
-  if (!session) return res.status(401).json({ error: 'Connexion requise' });
-
-  const rideId = String(body.ride_id || '').trim();
-  const recipientId = String(body.recipient_id || '').trim();
-  const text = String(body.body || body.text || '').trim().slice(0, 2000);
-  if (!rideId || !recipientId || !text) return res.status(400).json({ error: 'ride_id, recipient_id, body requis' });
-  if (recipientId === session.id) return res.status(400).json({ error: 'Impossible de s\'écrire à soi-même' });
-
-  // Vérifier que sender et recipient sont liés au trajet (chauffeur ou passager)
-  const [rideRes, bookRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/rides?id=eq.${encodeURIComponent(rideId)}&select=id,driver_id`, { headers: sbHeaders(ctx.sbKey) }),
-    fetch(`${ctx.sbUrl}/rest/v1/ride_bookings?ride_id=eq.${encodeURIComponent(rideId)}&select=passenger_id,status`, { headers: sbHeaders(ctx.sbKey) })
-  ]);
-  const ride = (await rideRes.json())[0];
-  const bookings = await bookRes.json();
-  if (!ride) return res.status(404).json({ error: 'Trajet introuvable' });
-
-  const participants = new Set([ride.driver_id, ...bookings.map(b => b.passenger_id)]);
-  if (!participants.has(session.id) || !participants.has(recipientId)) {
-    return res.status(403).json({ error: 'Vous ne participez pas à ce trajet' });
-  }
-
-  // Rate limit : 30 messages / 5min / user
-  const rl = await checkRateLimit(`ridemsg:${session.id}`, 30, 300);
-  if (!rl.allowed) return res.status(429).json({ error: 'Trop de messages — attendez quelques minutes' });
-
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_messages`, {
-    method: 'POST',
-    headers: { ...sbHeaders(ctx.sbKey), Prefer: 'return=representation' },
-    body: JSON.stringify({ ride_id: rideId, sender_id: session.id, recipient_id: recipientId, body: text })
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(400).json({ error: 'Envoi message impossible', details: data });
-
-  return res.status(200).json({ success: true, message: Array.isArray(data) ? data[0] : data });
-}
-
-async function rideMessageThread(req, res, ctx, body) {
-  const session = ctx.session;
-  if (!session) return res.status(401).json({ error: 'Connexion requise' });
-
-  const rideId = String(body.ride_id || '').trim();
-  const otherId = String(body.other_user_id || '').trim();
-  if (!rideId || !otherId) return res.status(400).json({ error: 'ride_id et other_user_id requis' });
-
-  // Récupérer la conversation entre session.id et otherId pour ce ride
-  const q = `ride_id=eq.${encodeURIComponent(rideId)}&or=(and(sender_id.eq.${session.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${session.id}))&order=created_at.asc&limit=200`;
-  const r = await fetch(`${ctx.sbUrl}/rest/v1/ride_messages?${q}&select=id,sender_id,recipient_id,body,created_at,read_at`, {
-    headers: sbHeaders(ctx.sbKey)
-  });
-  const messages = r.ok ? await r.json() : [];
-
-  // Marquer comme lus les messages reçus par session.id
-  const unread = messages.filter(m => m.recipient_id === session.id && !m.read_at).map(m => m.id);
-  if (unread.length) {
-    await fetch(`${ctx.sbUrl}/rest/v1/ride_messages?id=in.(${unread.join(',')})`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({ read_at: new Date().toISOString() })
-    }).catch(() => {});
-  }
-
-  return res.status(200).json({ ride_id: rideId, other_user_id: otherId, messages });
-}
+// rideMessageSend / rideMessageThread / signalement : lib/_messagerie.js (fermeture 3 jours après le trajet, avis sans adresse).
 
 async function rideMessageUnreadCount(req, res, ctx) {
   const session = ctx.session;
@@ -6812,8 +6748,11 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-package-book')    return await ridePackageBook(req, res, ctx, body);
     if (endpoint === 'ride-review-create')   return await rideReviewCreate(req, res, ctx, body);
     if (endpoint === 'ride-user-rating')     return await rideUserRating(req, res, ctx, body);
-    if (endpoint === 'ride-message-send')    return await rideMessageSend(req, res, ctx, body);
-    if (endpoint === 'ride-message-thread')  return await rideMessageThread(req, res, ctx, body);
+    if (endpoint === 'ride-message-send')    return await M.rideMessageSend(req, res, { ...ctx, checkRateLimit }, body);
+    if (endpoint === 'ride-message-thread')  return await M.rideMessageThread(req, res, ctx, body);
+    if (endpoint === 'ride-message-report')  return await M.rideMessageReport(req, res, ctx, body);
+    if (endpoint === 'ride-message-reports') return await M.rideMessageReports(req, res, ctx);
+    if (endpoint === 'ride-message-admin-thread') return await M.rideMessageAdminThread(req, res, ctx, body);
     if (endpoint === 'ride-message-unread')  return await rideMessageUnreadCount(req, res, ctx);
     if (endpoint === 'ride-active-cities')   return await rideActiveCities(req, res, ctx);
     if (endpoint === 'ride-search-log')      return await rideSearchLog(req, res, ctx, body);

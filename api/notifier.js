@@ -38,6 +38,7 @@ const PUBLIC_TYPES = new Set([
   'xl_confirmation_resultat',
   'ride_booking_confirmed',
   'ride_code_trajet',
+  'ride_nouveau_message',
   'ride_booking_to_driver',
   'ride_booking_cancelled',
   'ride_driver_completed_to_passenger',
@@ -1054,8 +1055,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">👨‍✈️ Ton conducteur</strong>
               <div><strong>${data.driver_name || 'Conducteur'}</strong></div>
-              ${data.driver_email ? `<div style="margin-top:4px"><a href="mailto:${data.driver_email}" style="color:#5dbfff">${data.driver_email}</a></div>` : ''}
-              ${telephoneValide(data.driver_phone) ? `<div><a href="tel:+1${telephoneValide(data.driver_phone)}" style="color:#7dffc1">📞 ${telephoneAffiche(data.driver_phone)}</a></div>` : ''}
+              <div style="color:#a8b0ba;margin-top:4px">💬 Pour lui écrire, utilise la messagerie de ta réservation : vos coordonnées restent privées.</div>
               ${data.driver_vehicle ? `<div style="color:#a8b0ba;margin-top:6px">🚙 ${data.driver_vehicle}</div>` : ''}
             </div>
 
@@ -1078,7 +1078,28 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
             <a href="https://porteaporte.site/covoiturage-confirme.html?booking_id=${encodeURIComponent(data.booking_id || '')}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">📋 Voir tous les détails</a>
 
-            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">💡 Ton paiement est protégé. Le conducteur sera payé après la livraison du trajet. Tu peux contacter le conducteur directement par email ou téléphone si besoin.</p>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">💡 Ton paiement est protégé. Le conducteur sera payé après le trajet. Pour écrire au conducteur, utilise la messagerie de ta réservation sur PorteàPorte.</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ─── COVOITURAGE : NOUVEAU MESSAGE (sans l'adresse ni le texte de l'autre personne) ───
+    case 'ride_nouveau_message': {
+      if (!data.to_email) break;
+      const route = `${escapeHtml(data.ville_depart || '?')} → ${escapeHtml(data.ville_arrivee || '?')}`;
+      const lien = 'https://porteaporte.site' + (String(data.lien || '').startsWith('/') ? String(data.lien) : '/dashboard-covoiturage.html');
+      emails.push({
+        to: data.to_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `💬 Tu as un nouveau message (trajet ${data.ville_depart || ''} → ${data.ville_arrivee || ''})`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — MESSAGERIE</div>
+            <h1 style="color:#fff;font-size:1.3rem;margin:0 0 12px">Bonjour ${escapeHtml(data.prenom || '')},</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px;line-height:1.6">Tu as un nouveau message de <strong style="color:#fff">${escapeHtml(data.expediteur_prenom || 'un membre')}</strong> au sujet du trajet ${route}.</p>
+            <a href="${escapeHtml(lien)}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 22px;border-radius:8px;font-weight:900;text-decoration:none">Lire et répondre</a>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Ne réponds pas à ce courriel : il n'est pas transmis. Tes coordonnées restent privées ; ne les partage pas dans la messagerie.</p>
           </div>`
       });
       break;
@@ -1121,9 +1142,8 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
             <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin-bottom:18px">
               <strong style="color:#5dbfff;display:block;margin-bottom:8px">🎫 Ton passager</strong>
-              <div><strong>${data.passenger_name || 'Passager'}</strong></div>
-              ${data.passenger_email ? `<div style="margin-top:4px"><a href="mailto:${data.passenger_email}" style="color:#5dbfff">${data.passenger_email}</a></div>` : ''}
-              ${telephoneValide(data.passenger_phone) ? `<div><a href="tel:+1${telephoneValide(data.passenger_phone)}" style="color:#7dffc1">📞 ${telephoneAffiche(data.passenger_phone)}</a></div>` : ''}
+              <div><strong>${escapeHtml(data.passenger_name || 'Passager')}</strong></div>
+              <div style="color:#a8b0ba;margin-top:4px">💬 Pour lui écrire, utilise la messagerie du trajet : vos coordonnées restent privées.</div>
               ${data.has_luggage ? '<div style="color:#ffd700;margin-top:6px">🧳 A des bagages volumineux</div>' : ''}
               ${data.has_pet ? '<div style="color:#ffd700;margin-top:6px">🐾 Voyage avec un animal</div>' : ''}
               ${data.special_requests ? `<div style="color:#a8b0ba;margin-top:8px;font-style:italic">"${data.special_requests}"</div>` : ''}
@@ -1149,7 +1169,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
         subject: `🎫 Réservation : ${route} (${data.total_price || '—'} $)`,
         html: templateAdminNotif('Nouvelle réservation covoiturage', [
           { label: 'Route', value: route },
-          { label: 'Passager', value: `${data.passenger_name || ''} (${data.passenger_email || ''})` },
+          { label: 'Passager', value: `${data.passenger_name || ''} (${data.admin_passenger_email || ''})` },
           { label: 'Conducteur', value: `${data.driver_name || ''} (${data.driver_email || ''})` },
           { label: 'Date trajet', value: data.departure_time || '?' },
           { label: 'Places', value: data.seats || 1 },

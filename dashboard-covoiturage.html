@@ -201,6 +201,7 @@
 
 <script src="/js/auth-api.js"></script>
 <script src="/js/ride-delete.js"></script>
+<script src="/js/ride-chat.js"></script>
 <script>
 let dashData  = null;
 let userProfile = null;
@@ -413,36 +414,10 @@ async function confirmerArrivee(bookingId) {
 }
 
 
-async function fetchDriverContact(bookingId) {
-  const db = getSupabaseClient();
-  const { data: _sd } = await db.auth.getSession();
-  const token = _sd?.session?.access_token;
-  if (!token) { window.location.href = '/login.html?redirect=/dashboard-covoiturage.html'; return null; }
-  const res = await fetch('/api/platform', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint: 'ride-driver-contact', booking_id: bookingId })
-  });
-  const out = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    (await PAPDialog.alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status)));
-    return null;
-  }
-  return out;
-}
-
-async function openDriverContact(bookingId, type) {
-  const contact = await fetchDriverContact(bookingId);
-  if (!contact) return;
-  if (type === 'phone' && contact.telephone) {
-    window.location.href = 'tel:' + contact.telephone;
-    return;
-  }
-  if (type === 'email' && contact.email) {
-    window.location.href = 'mailto:' + contact.email;
-    return;
-  }
-  (await PAPDialog.alert('Coordonnee non disponible pour ce conducteur.'));
+// Aucune vraie coordonnée entre conducteur et passager : messagerie du trajet seulement (js/ride-chat.js).
+function ouvrirMessagerie(rideId, autreId, nom) {
+  if (!window.RideChat || !rideId || !autreId) return;
+  window.RideChat.open({ ride_id: rideId, other_user_id: autreId, other_name: nom || 'Conversation' });
 }
 
 function escHtml(value) {
@@ -746,9 +721,8 @@ function buildTrajets() {
           const bookingRow = b => {
             const drvContact = [];
             const canContactDriver = ['confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
-            if (canContactDriver) {
-              drvContact.push(`<button type="button" onclick="openDriverContact('${b.id}','phone')" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">📞 Appeler le chauffeur</button>`);
-              drvContact.push(`<button type="button" onclick="openDriverContact('${b.id}','email')" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">✉️ Contacter</button>`);
+            if (canContactDriver && b.driver_id) {
+              drvContact.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.driver_id)}','${escHtml(b.driver_prenom||'Conducteur')}')" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au conducteur</button>`);
             }
             // Bouton "Payer maintenant" si reservation en attente de paiement
             const isPending = ['en_attente', 'pending', 'unpaid'].includes(String(b.status||'').toLowerCase());
@@ -771,7 +745,7 @@ function buildTrajets() {
               <td data-label="Date" style="color:var(--muted);font-size:.8rem">${fmtDate(b.ride_departure_time || b.created_at)}</td>
               <td data-label="Prix payé" style="color:var(--green);font-weight:700">${$m(b.total_passenger)}</td>
               <td data-label="Statut"><div class="booking-actions">${statusChip(b.status)} ${payBtn} ${confirmBtn} ${cancelBtn}</div>${meetupMessage}</td>
-              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Coordonnees masquées jusqu a confirmation</span>'}</td>
+              <td data-label="Conducteur"><strong>${b.driver_prenom||'Chauffeur'}</strong>${drvContact.length ? `<div class="driver-contact">${drvContact.join(' ')}</div>` : '<br><span style="color:var(--muted);font-size:.75rem">Messagerie ouverte après confirmation</span>'}</td>
             </tr>`;
           };
           window.__bookingRowFn = bookingRow;
@@ -799,17 +773,16 @@ function buildReservations() {
 
   <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
     💡 <strong>Comment contacter tes passagers ?</strong><br>
-    Clique le bouton <strong>💬 Contacter</strong> sur chaque ligne ci-dessous pour envoyer un courriel direct (ou téléphoner). Si tu as 1 passager : 1 conversation. Si tu as 3 passagers : 3 conversations séparées (chacun reçoit ses propres messages). Une messagerie in-app intégrée arrive bientôt — en attendant, le courriel est le moyen le plus fiable.
+    Clique <strong>💬 Écrire</strong> sur la ligne du passager : vous vous écrivez par la messagerie PorteàPorte, vos coordonnées restent privées. Chaque passager a sa propre conversation. Elle se ferme 3 jours après le trajet ; en cas de problème, utilise « Signaler ».
   </div>
 
     <div class="table-wrap">
     ${allBookings.length === 0
-      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son nom + contact apparaîtront ici.</p>`
+      ? `<p class="empty-msg">Aucune réservation reçue pour l'instant. Quand un passager réservera, son prénom et un bouton pour lui écrire apparaîtront ici.</p>`
       : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
         ${allBookings.map(b=>{
           const contactInfo = [];
-          if (b.passenger_email) contactInfo.push(`<a href="mailto:${b.passenger_email}?subject=PorteàPorte%20-%20Trajet%20${encodeURIComponent((b.pickup_city||'')+' → '+(b.dropoff_city||''))}" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">💬 Email</a>`);
-          if (b.passenger_phone) contactInfo.push(`<a href="tel:${b.passenger_phone}" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--green);font-size:.78rem;font-weight:700;text-decoration:none;margin:2px">📞 Appeler</a>`);
+          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire</button>`);
 
           // Carte animal (visible si passager a un animal sur ce trajet)
           let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';

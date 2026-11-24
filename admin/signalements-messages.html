@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚩 Conversations signalées — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/design-system.css">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+<script src="/js/flottants.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    body { margin: 0; background: #05080c; color: var(--brand-text, #f7f8fb); font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: 1.4rem; margin: 0 0 6px; }
+    .note { color: #9fb3c8; font-size: .86rem; margin: 0 0 18px; line-height: 1.5; }
+    .sig-card { background: #111827; border: 1px solid #1f2d40; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .sig-card .ligne { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: .88rem; }
+    .sig-card .raison { font-weight: 800; color: #ff9c9c; }
+    .sig-card .quand { color: #8a9bb0; font-size: .8rem; }
+    .sig-card button { background: rgba(93,191,255,.14); color: #5dbfff; border: 1px solid rgba(93,191,255,.4); border-radius: 8px; padding: 7px 12px; font-weight: 800; cursor: pointer; }
+    .fil { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .msg { padding: 8px 12px; border-radius: 10px; font-size: .9rem; max-width: 85%; background: rgba(255,255,255,.06); }
+    .msg.signaleur { align-self: flex-end; background: rgba(93,191,255,.14); }
+    .msg .qui { font-size: .72rem; color: #8a9bb0; margin-bottom: 2px; }
+    .vide { color: #8a9bb0; padding: 20px 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🚩 Conversations signalées</h1>
+  <p class="note">Une conversation entre conducteur et passager ne se lit qu’à partir d’un signalement. Chaque lecture est notée au journal (messages_lus_admin).</p>
+  <div id="liste"><div class="vide">Chargement…</div></div>
+</div>
+<script>
+  let session = null;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const quand = (s) => (s ? new Date(s).toLocaleString('fr-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+
+  async function api(endpoint, extra) {
+    const r = await fetch('/api/platform?endpoint=' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint, ...(extra || {}) }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('Erreur ' + r.status));
+    return d;
+  }
+
+  async function lireConversation(reportId, bouton) {
+    const zone = document.getElementById('fil-' + reportId);
+    bouton.disabled = true;
+    try {
+      const d = await api('ride-message-admin-thread', { report_id: reportId });
+      const sig = d.signalement;
+      zone.innerHTML = d.messages.length ? d.messages.map((m) => `
+        <div class="msg ${m.sender_id === sig.reporter_id ? 'signaleur' : ''}">
+          <div class="qui">${m.sender_id === sig.reporter_id ? 'Personne qui signale' : 'Personne signalée'} · ${esc(quand(m.created_at))}</div>
+          ${esc(m.body)}
+        </div>`).join('') : '<div class="vide">Aucun message dans cette conversation.</div>';
+    } catch (e) {
+      zone.innerHTML = '<div class="vide">' + esc(e.message) + '</div>';
+      bouton.disabled = false;
+    }
+  }
+
+  async function init() {
+    if (!await AUTH_API.requireAuth('admin')) return;
+    session = AUTH_API.getUser()?.session;
+    const liste = document.getElementById('liste');
+    try {
+      const d = await api('ride-message-reports');
+      if (!d.signalements.length) { liste.innerHTML = '<div class="vide">Aucune conversation signalée.</div>'; return; }
+      const voulu = new URLSearchParams(location.search).get('report');
+      liste.innerHTML = d.signalements.map((s) => `
+        <div class="sig-card" id="sig-${esc(s.id)}">
+          <div class="ligne">
+            <span class="raison">${esc(s.raison)}</span>
+            <span class="quand">${esc(quand(s.created_at))} · ${esc(s.status || 'ouvert')}</span>
+            <button type="button" data-report="${esc(s.id)}">Lire la conversation</button>
+          </div>
+          ${s.details ? `<div style="margin-top:6px;color:#c9d4e0;font-size:.86rem">« ${esc(s.details)} »</div>` : ''}
+          <div class="fil" id="fil-${esc(s.id)}"></div>
+        </div>`).join('');
+      liste.querySelectorAll('button[data-report]').forEach((b) => b.addEventListener('click', () => lireConversation(b.dataset.report, b)));
+      if (voulu) document.getElementById('sig-' + voulu)?.scrollIntoView({ block: 'center' });
+    } catch (e) {
+      liste.innerHTML = '<div class="vide">' + esc(e.message) + '</div>';
+    }
+  }
+  init();
+</script>
+</body>
+</html>

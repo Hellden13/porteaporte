@@ -13,6 +13,7 @@
 <script src="/js/session-expiree.js"></script>
 <script src="/js/flottants.js"></script>
 <script src="/js/code-securite.js"></script>
+<script src="/js/ride-chat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <style>
@@ -74,6 +75,11 @@
     .badge.verified { background:rgba(125,255,193,.15); color:var(--good); }
     .badge.score { background:rgba(255,200,0,.12); color:var(--warn); }
     .contact-btns { display:flex; flex-direction:column; gap:6px; }
+    /* Cellulaire : la zone de contact passe SOUS la carte du conducteur (sinon la colonne du texte s'écrase). */
+    @media (max-width: 560px) {
+      .driver-row { grid-template-columns:auto minmax(0,1fr); }
+      .driver-row > .contact-btns { grid-column:1 / -1; }
+    }
     .contact-btn {
       padding:7px 14px; border-radius:7px; font-weight:700; font-size:.78rem;
       text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center; gap:5px;
@@ -218,7 +224,7 @@
     <div class="card">
       <h2>📋 Étapes suivantes</h2>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body">Ton conducteur a été notifié. Il peut te contacter par <strong>email ou téléphone</strong> pour confirmer.</div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-body">Ton conducteur a été avisé. Vous pouvez vous écrire par la <strong>messagerie PorteàPorte</strong> (vos coordonnées restent privées).</div></div>
         <div class="step"><div class="step-num">2</div><div class="step-body">Le jour du trajet, va au <strong>point de rencontre</strong> indiqué ci-dessus à l'heure prévue.</div></div>
         <div class="step"><div class="step-num">3</div><div class="step-body">À l'arrivée, le conducteur libère ton paiement. Tu pourras lui donner un avis.</div></div>
       </div>
@@ -279,33 +285,10 @@
     }
   }
 
-  async function fetchDriverContact() {
-    if (!currentSession) return null;
-    const res = await fetch('/api/platform', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-      body: JSON.stringify({ endpoint: 'ride-driver-contact', booking_id: bookingId })
-    });
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      (await PAPDialog.alert('Contact indisponible : ' + (out.error || 'Erreur ' + res.status)));
-      return null;
-    }
-    return out;
-  }
-
-  async function openDriverContact(type) {
-    const contact = await fetchDriverContact();
-    if (!contact) return;
-    if (type === 'phone' && contact.telephone) {
-      location.href = 'tel:' + contact.telephone;
-      return;
-    }
-    if (type === 'email' && contact.email) {
-      location.href = 'mailto:' + contact.email;
-      return;
-    }
-    (await PAPDialog.alert('Coordonnee non disponible pour ce conducteur.'));
+  // Aucune vraie coordonnée entre conducteur et passager : on s'écrit par la messagerie du trajet.
+  function ecrireAuConducteur() {
+    if (!window.RideChat || !window.__conv) return;
+    window.RideChat.open(window.__conv);
   }
 
   function renderAll(booking, rideData) {
@@ -334,12 +317,12 @@
     if (driver.verified) badges.innerHTML += '<span class="badge verified">✓ Identité vérifiée</span>';
     if (driver.score) badges.innerHTML += `<span class="badge score">⭐ ${Number(driver.score).toFixed(1)}/5</span>`;
 
-    // Contact conducteur: coordonnées récupérées seulement au clic après autorisation serveur.
+    // Contact conducteur : messagerie du trajet seulement (aucun courriel ni téléphone affiché).
     const contacts = document.getElementById('contact-btns');
+    window.__conv = { ride_id: booking.ride_id, other_user_id: ride.driver_id, other_name: driver.prenom || 'Conducteur' };
     contacts.innerHTML = `
-      <button type="button" class="contact-btn tel" onclick="openDriverContact('phone')">📞 Appeler le chauffeur</button>
-      <button type="button" class="contact-btn email" onclick="openDriverContact('email')">✉️ Contacter</button>
-      <span style="color:var(--muted);font-size:.72rem;line-height:1.35">Vos informations personnelles sont protégées conformément à la Loi 25.</span>
+      ${ride.driver_id && ride.driver_id !== currentSession?.user?.id ? '<button type="button" class="contact-btn email" onclick="ecrireAuConducteur()">💬 Écrire au conducteur</button>' : ''}
+      <span style="color:var(--muted);font-size:.72rem;line-height:1.35">Vos coordonnées restent privées : vous vous écrivez par la messagerie PorteàPorte.</span>
       <a href="/confidentialite.html" style="font-size:.75rem;color:var(--brand-muted,var(--muted));text-decoration:none">🔒 Protection des données — Loi 25</a>
     `;
 

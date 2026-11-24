@@ -87,15 +87,11 @@ describe('contenu des courriels', () => {
     }
   });
 
-  test('téléphone du conducteur : affiché seulement s\'il a 10 chiffres', () => {
+  test('confidentialité (23 nov. 2026) : ni le téléphone ni le courriel du conducteur dans le courriel du passager, même valides', () => {
     const base = { passenger_email: 'p@courriel-capture.ca', ville_depart: 'Lévis', ville_arrivee: 'Québec', departure_time: '2026-11-25T13:00:00Z', total_price: '10.00' };
-    const bon = buildEmails('ride_booking_confirmed', { ...base, driver_phone: '1 (418) 555-1234' }, 'a@b.c', 'n@b.c', 'PorteàPorte')[0].html;
-    assert.match(bon, /418 555-1234/);
-    assert.match(bon, /tel:\+14185551234/);
-    for (const mauvais of ['418555', '12345', 'abc', '']) {
-      const h = buildEmails('ride_booking_confirmed', { ...base, driver_phone: mauvais }, 'a@b.c', 'n@b.c', 'PorteàPorte')[0].html;
-      assert.doesNotMatch(h, /📞/, mauvais);
-    }
+    const h = buildEmails('ride_booking_confirmed', { ...base, driver_phone: '1 (418) 555-1234', driver_email: 'cond@exemple.ca' }, 'a@b.c', 'n@b.c', 'PorteàPorte')[0].html;
+    assert.doesNotMatch(h, /555-1234|5551234|tel:|cond@exemple\.ca|mailto:/);
+    assert.match(h, /messagerie/);
   });
 
   test('date ISO convertie à l\'heure du Québec (13 h UTC = 08 h au Québec en novembre)', () => {

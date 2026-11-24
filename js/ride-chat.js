@@ -6,7 +6,7 @@
  */
 (function () {
   const STYLE = `
-    .rc-overlay { position: fixed; inset: 0; background: rgba(5,8,16,.8); backdrop-filter: blur(6px); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 12px; }
+    .rc-overlay { position: fixed; inset: 0; background: rgba(5,8,16,.8); backdrop-filter: blur(6px); z-index: 2147483000; display: flex; align-items: center; justify-content: center; padding: 12px; }
     .rc-box { background: #0f1320; border: 1px solid rgba(0,217,255,.3); border-radius: 16px; width: 100%; max-width: 460px; height: 80vh; max-height: 640px; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden; }
     .rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(0,217,255,.06); border-bottom: 1px solid rgba(255,255,255,.08); }
     .rc-header .name { font-weight: 800; color: #00d9ff; font-size: 1.02rem; }
@@ -26,6 +26,18 @@
     .rc-send:disabled { opacity: .4; cursor: not-allowed; }
     .rc-empty { color: #666; text-align: center; padding: 30px 14px; font-size: .88rem; line-height: 1.5; }
     .rc-err { color: #ff8c8c; font-size: .82rem; padding: 6px 12px; }
+    .rc-prive { font-size: .74rem; color: #9fb3c8; padding: 7px 14px; background: rgba(125,255,193,.05); border-bottom: 1px solid rgba(255,255,255,.06); line-height: 1.35; }
+    .rc-ferme { font-size: .84rem; color: #ffd166; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(255,209,102,.06); line-height: 1.4; }
+    .rc-actions { display: flex; gap: 6px; align-items: center; }
+    #rc-overlay .rc-signaler { background: transparent !important; border: 1px solid rgba(255,120,120,.55) !important; color: #ff9c9c !important; box-shadow: none !important; border-radius: 8px !important; padding: 6px 10px !important; min-height: 0 !important; font-size: .78rem !important; font-weight: 800; cursor: pointer; }
+    #rc-overlay .rc-close { background: transparent !important; box-shadow: none !important; border: 0 !important; color: #aab2c5 !important; min-height: 0 !important; padding: 0 4px !important; }
+    .rc-sig { padding: 12px 14px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(255,120,120,.05); display: flex; flex-direction: column; gap: 8px; }
+    .rc-sig select, .rc-sig textarea { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #e9edf4; padding: 8px 10px; font: inherit; font-size: .88rem; }
+    .rc-sig .rc-sig-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .rc-sig button { border-radius: 10px; padding: 8px 14px; font-weight: 800; cursor: pointer; border: 0; }
+    #rc-overlay .rc-sig .ok { background: #ff7a7a !important; color: #200 !important; box-shadow: none !important; border: 0 !important; }
+    #rc-overlay .rc-sig .non { background: rgba(255,255,255,.08) !important; color: #e9edf4 !important; box-shadow: none !important; border: 0 !important; }
+    .rc-sig-msg { font-size: .84rem; color: #7dffc1; }
     @media (max-width: 520px) { .rc-box { max-height: none; height: 92vh; } }
   `;
 
@@ -160,9 +172,29 @@
             <div class="name">💬 ${escHtml(opts.other_name || 'Conversation')}</div>
             <div class="sub">À propos du trajet</div>
           </div>
-          <button class="rc-close" id="rc-close" aria-label="Fermer">✕</button>
+          <div class="rc-actions">
+            <button type="button" class="rc-signaler" id="rc-signaler">🚩 Signaler</button>
+            <button class="rc-close" id="rc-close" aria-label="Fermer">✕</button>
+          </div>
         </div>
+        <div class="rc-prive">🔒 Tes coordonnées restent privées. Ne partage pas ton numéro ni ton courriel ; ne paie jamais en dehors de PorteàPorte.</div>
         <div class="rc-body"><div class="rc-empty">Chargement…</div></div>
+        <div class="rc-sig" id="rc-sig" hidden>
+          <strong style="color:#ff9c9c;font-size:.9rem">Signaler cette conversation</strong>
+          <select id="rc-sig-raison" aria-label="Raison du signalement">
+            <option value="">Choisis une raison…</option>
+            <option value="propos">Propos déplacés ou menaçants</option>
+            <option value="coordonnees">Demande mes coordonnées personnelles</option>
+            <option value="paiement">Demande de paiement hors de PorteàPorte</option>
+            <option value="harcelement">Harcèlement ou insistance</option>
+            <option value="autre">Autre</option>
+          </select>
+          <textarea id="rc-sig-details" rows="2" maxlength="1000" placeholder="Détails (facultatif)"></textarea>
+          <div style="font-size:.74rem;color:#9fb3c8">L'équipe PorteàPorte pourra lire cette conversation pour traiter ton signalement.</div>
+          <div class="rc-sig-btns"><button type="button" class="non" id="rc-sig-non">Annuler</button><button type="button" class="ok" id="rc-sig-ok">Envoyer le signalement</button></div>
+          <div class="rc-sig-msg" id="rc-sig-msg"></div>
+        </div>
+        <div class="rc-ferme" id="rc-ferme" hidden></div>
         <div class="rc-input">
           <textarea placeholder="Votre message..." maxlength="2000" rows="1"></textarea>
           <button class="rc-send" aria-label="Envoyer">▶</button>
@@ -177,17 +209,48 @@
       if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
     });
 
-    const ta = overlay.querySelector('textarea');
+    const ta = overlay.querySelector('.rc-input textarea');
     const sendBtn = overlay.querySelector('.rc-send');
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(opts); }
     });
     sendBtn.addEventListener('click', () => sendMessage(opts));
 
+    // Signaler : petit formulaire dans la fenêtre (aucune boîte de dialogue du navigateur).
+    const sig = overlay.querySelector('#rc-sig');
+    overlay.querySelector('#rc-signaler').addEventListener('click', () => { sig.hidden = !sig.hidden; });
+    overlay.querySelector('#rc-sig-non').addEventListener('click', () => { sig.hidden = true; });
+    overlay.querySelector('#rc-sig-ok').addEventListener('click', async () => {
+      const raison = overlay.querySelector('#rc-sig-raison').value;
+      const msg = overlay.querySelector('#rc-sig-msg');
+      if (!raison) { msg.style.color = '#ff9c9c'; msg.textContent = 'Choisis une raison.'; return; }
+      const token = await getToken();
+      const r = await fetch('/api/platform?endpoint=ride-message-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ endpoint: 'ride-message-report', ride_id: opts.ride_id, other_user_id: opts.other_user_id, raison, details: overlay.querySelector('#rc-sig-details').value })
+      }).catch(() => null);
+      const d = r ? await r.json().catch(() => ({})) : {};
+      msg.style.color = r && r.ok ? '#7dffc1' : '#ff9c9c';
+      msg.textContent = r && r.ok ? (d.message || 'Signalement reçu.') : ('Signalement impossible : ' + (d.error || 'réessaie plus tard'));
+      if (r && r.ok) overlay.querySelector('#rc-sig-ok').disabled = true;
+    });
+
     // Charge initial + poll 8s
     const refresh = async () => {
       const thread = await fetchThread(opts);
       if (thread && thread.messages) renderMessages(myId, thread.messages);
+      if (thread && thread.ferme) {
+        const f = overlay.querySelector('#rc-ferme');
+        f.hidden = false;
+        f.textContent = '🔒 Conversation fermée : on ne peut plus écrire 3 jours après le trajet. Tu peux encore la lire et la signaler.';
+        const zone = overlay.querySelector('.rc-input');
+        if (zone) zone.remove();
+      }
+      if (thread && thread.error) {
+        const b = overlay.querySelector('.rc-body');
+        if (b) b.innerHTML = '<div class="rc-err">' + escHtml(thread.error) + '</div>';
+      }
     };
     await refresh();
     pollTimer = setInterval(refresh, 8000);

@@ -12,8 +12,10 @@
     'body{padding-bottom:max(var(--pap-reserve-bas,92px),env(safe-area-inset-bottom))}' +
     // Point 43 : le texte d'une carte (adresse, nom, courriel, code, description longue) ne déborde plus :
     // il passe à la ligne à l'intérieur de la carte, et une carte ne dépasse jamais l'écran.
+    // break-word (et non anywhere) : un mot long passe à la ligne, mais une colonne étroite ne s'écrase plus
+    // jusqu'à une lettre par ligne (bogue du texte vertical, fiche du conducteur, 23 nov. 2026).
     '[class*="card"]{min-width:0;max-width:100%;box-sizing:border-box}' +
-    '[class*="card"],[class*="card"] *{overflow-wrap:anywhere;word-break:normal}' +
+    '[class*="card"],[class*="card"] *{overflow-wrap:break-word;word-break:normal}' +
     '[class*="card"] img,[class*="card"] video,[class*="card"] canvas{max-width:100%}' +
     /* Ordinateur : bulle d'aide en bas à droite, menu juste au-dessus, GPS au centre, Niveau à gauche. */
     '#pia-launch{right:20px!important;bottom:20px!important}' +

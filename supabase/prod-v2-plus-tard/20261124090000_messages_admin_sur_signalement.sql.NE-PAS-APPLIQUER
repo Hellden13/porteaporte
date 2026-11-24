@@ -1,0 +1,20 @@
+-- PorteàPorte — Lecture admin des messages covoiturage SEULEMENT à partir d'un signalement (décision de Denis, 23 nov. 2026).
+-- NE PAS APPLIQUER sans l'accord de Denis. Le site applique déjà la règle (lib/_messagerie.js, lecture journalisée) ;
+-- ce fichier ferme aussi la lecture directe par la base (politique RLS « ridemsg_read » qui laissait tout lire à un admin).
+begin;
+drop policy if exists "ridemsg_read" on public.ride_messages;
+create policy "ridemsg_read" on public.ride_messages for select using (
+  sender_id = auth.uid()
+  or recipient_id = auth.uid()
+  or exists (
+    select 1
+    from public.profiles p
+    join public.ride_reports r
+      on r.ride_id = ride_messages.ride_id
+     and r.reason like 'messagerie:%'
+     and ((r.reporter_id = ride_messages.sender_id and r.reported_id = ride_messages.recipient_id)
+       or (r.reporter_id = ride_messages.recipient_id and r.reported_id = ride_messages.sender_id))
+    where p.id = auth.uid() and p.role = 'admin'
+  )
+);
+commit;

@@ -22,7 +22,7 @@ h1, h2, h3, .page-title, .section-title, .card-title, .hero-title {
 
 p, li, .note, .hint, .muted, .mission-note {
   line-height: 1.58;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 button,

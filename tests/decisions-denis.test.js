@@ -393,6 +393,6 @@ describe('43. le texte d\'une carte ne déborde plus', () => {
   test('règle commune (js/flottants.js, chargé sur 116 pages) : passage à la ligne dans la carte, carte jamais plus large que l\'écran', () => {
     const js = lire('js/flottants.js');
     assert.match(js, /\[class\*="card"\]\{min-width:0;max-width:100%;box-sizing:border-box\}/);
-    assert.match(js, /\[class\*="card"\],\[class\*="card"\] \*\{overflow-wrap:anywhere;word-break:normal\}/);
+    assert.match(js, /\[class\*="card"\],\[class\*="card"\] \*\{overflow-wrap:break-word;word-break:normal\}/);
   });
 });
