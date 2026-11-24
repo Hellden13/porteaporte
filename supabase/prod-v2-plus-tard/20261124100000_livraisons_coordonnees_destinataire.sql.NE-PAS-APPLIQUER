@@ -1,0 +1,19 @@
+-- PorteàPorte — Coordonnées du destinataire invisibles pour le livreur, même en lisant la base directement
+-- (décision de Denis, 24 nov. 2026). NE PAS APPLIQUER sans l'accord de Denis (prod-v2).
+-- Le site applique déjà la règle (api/platform.js : sansCoordonneesDestinataire ; messagerie par lien).
+-- Il reste la lecture directe par la base : la politique « livraisons_select_livreur… » laisse un livreur
+-- lire toutes les colonnes, dont destinataire_tel et destinataire_email.
+begin;
+-- 1. Les membres connectés ne lisent plus ces 2 colonnes directement ; le serveur (service_role) les garde.
+revoke select (destinataire_tel, destinataire_email) on public.livraisons from authenticated, anon;
+-- (Les pages de l'expéditeur qui lisent ces colonnes directement devront passer par le serveur : à vérifier avant.)
+
+-- 2. Ancienne messagerie (écriture directe, sans masquage) : plus d'écriture par les membres.
+drop policy if exists "envoyer un message" on public.messages;
+drop policy if exists "participants_only" on public.messages;
+create policy "messages_lecture_participants" on public.messages for select
+  using (auth.uid() = expediteur_id or auth.uid() = destinataire_id);
+
+-- 3. Une vraie table pour la messagerie des livraisons (aujourd'hui dans le journal transaction_audit_events).
+--    À créer et migrer ensemble, avec la même règle (masquage côté serveur, fermeture, signalement).
+commit;

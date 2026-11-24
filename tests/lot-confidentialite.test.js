@@ -220,6 +220,7 @@ describe('aucune vraie coordonnée entre conducteur et passager', () => {
     assert.doesNotMatch(js, /window\.(prompt|confirm)\(/);
     assert.match(js, /const ta = overlay\.querySelector\('\.rc-input textarea'\)/, 'Entrée envoie le message, pas le champ du signalement');
     assert.match(js, /z-index: 2147483000/, 'au-dessus des boutons flottants');
+    assert.match(js, /#rc-overlay \[hidden\] \{ display: none !important; \}/, 'le panneau Signaler reste fermé tant qu’on ne clique pas');
   });
 });
 

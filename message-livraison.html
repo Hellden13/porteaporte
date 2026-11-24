@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Messagerie de livraison — PorteàPorte</title>
+  <link rel="stylesheet" href="/design-system.css">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <script src="/js/dialogues.js"></script>
+<script src="/js/session-expiree.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/ride-chat.js"></script>
+  <style>
+    body { margin: 0; background: #05080c; color: #f7f8fb; font-family: 'Inter', system-ui, sans-serif; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; }
+    .note { color: #9fb3c8; font-size: .88rem; line-height: 1.5; margin: 0 0 18px; }
+    .liv-card { background: #111827; border: 1px solid #1f2d40; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .liv-card .titre { font-weight: 800; }
+    .liv-card .sous { color: #8a9bb0; font-size: .82rem; margin: 2px 0 10px; }
+    .liv-card .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-msg { background: rgba(0,217,255,.12); color: #00d9ff; border: 1px solid rgba(0,217,255,.4); border-radius: 10px; padding: 9px 14px; font-weight: 800; cursor: pointer; font-size: .9rem; }
+    .alerte { background: rgba(255,209,102,.08); border: 1px solid rgba(255,209,102,.4); color: #ffd166; border-radius: 12px; padding: 14px 16px; line-height: 1.5; }
+    .vide { color: #8a9bb0; padding: 18px 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>💬 Messagerie de livraison</h1>
+  <p class="note">Ici, on s’écrit sans partager son numéro ni son courriel. Les coordonnées et les codes de livraison écrits dans un message sont masqués automatiquement.</p>
+  <div id="zone"><div class="vide">Chargement…</div></div>
+</div>
+<script>
+(function () {
+  const p = new URLSearchParams(location.search);
+  const livraisonId = p.get('l') || p.get('livraison');
+  const jeton = p.get('t');
+  const avecParam = p.get('avec');
+  const zone = document.getElementById('zone');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const NOMS = { livreur: 'Ton livreur', expediteur: 'L’expéditeur', destinataire: 'Le destinataire' };
+
+  function ouvrir(id, avec, t, code) {
+    const api = window.RideChat.livraisonApi({ livraison_id: id, avec, t });
+    window.RideChat.open({ api, other_name: NOMS[avec] || 'Conversation', sous_titre: 'Livraison ' + (code || '') });
+  }
+
+  // Destinataire sans compte : lien personnel.
+  async function modeLien() {
+    const api = window.RideChat.livraisonApi({ livraison_id: livraisonId, t: jeton });
+    const d = await api.thread();
+    if (d.error) { zone.innerHTML = '<div class="alerte">' + esc(d.error) + '</div>'; return; }
+    const code = d.livraison && d.livraison.code;
+    zone.innerHTML = '<div class="liv-card"><div class="titre">📦 Livraison ' + esc(code || '') + '</div>'
+      + '<div class="sous">' + esc((d.livraison && d.livraison.ville_depart) || '') + ' → ' + esc((d.livraison && d.livraison.ville_arrivee) || '') + '</div>'
+      + '<div class="btns"><button type="button" class="btn-msg" id="rouvrir">💬 Écrire au livreur</button></div></div>'
+      + '<p class="note">Ce lien est personnel : ne le transfère pas. Il cesse de fonctionner 3 jours après la livraison.</p>';
+    document.getElementById('rouvrir').addEventListener('click', () => ouvrir(livraisonId, 'livreur', jeton, code));
+    ouvrir(livraisonId, 'livreur', jeton, code);
+  }
+
+  // Membre connecté : ses livraisons et ses conversations.
+  async function modeMembre() {
+    const db = window.db;
+    const { data } = db ? await db.auth.getSession() : { data: {} };
+    const session = data && data.session;
+    if (!session) { location.href = '/login.html?redirect=' + encodeURIComponent(location.pathname + location.search); return; }
+    const r = await fetch('/api/platform?endpoint=livraison-conversations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ endpoint: 'livraison-conversations' }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { zone.innerHTML = '<div class="alerte">' + esc(d.error || 'Messagerie indisponible') + '</div>'; return; }
+    let livs = d.livraisons || [];
+    if (livraisonId) livs = livs.filter((l) => l.id === livraisonId);
+    if (!livs.length) { zone.innerHTML = '<div class="vide">Aucune livraison avec une conversation possible.</div>'; return; }
+    zone.innerHTML = livs.map((l) => '<div class="liv-card"><div class="titre">📦 ' + esc(l.code || '') + '</div>'
+      + '<div class="sous">' + esc(l.ville_depart || '') + ' → ' + esc(l.ville_arrivee || '') + (l.ferme ? ' · conversation fermée' : '') + '</div>'
+      + '<div class="btns">' + (l.avec.length ? l.avec.map((a) => '<button type="button" class="btn-msg" data-l="' + esc(l.id) + '" data-avec="' + esc(a) + '" data-code="' + esc(l.code || '') + '">💬 ' + esc(NOMS[a] === 'Ton livreur' ? 'Écrire au livreur' : 'Écrire ' + (a === 'expediteur' ? 'à l’expéditeur' : 'au destinataire')) + '</button>').join('') : '<span class="sous">Pas encore de livreur assigné.</span>') + '</div></div>').join('');
+    zone.querySelectorAll('button[data-l]').forEach((b) => b.addEventListener('click', () => ouvrir(b.dataset.l, b.dataset.avec, null, b.dataset.code)));
+    if (livraisonId && avecParam && livs[0] && livs[0].avec.includes(avecParam)) ouvrir(livraisonId, avecParam, null, livs[0].code);
+  }
+
+  if (jeton && livraisonId) modeLien(); else modeMembre();
+})();
+</script>
+</body>
+</html>

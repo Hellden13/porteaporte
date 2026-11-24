@@ -1044,7 +1044,7 @@
                 buttons.push(`<a class="btn btn-ghost" href="/map.html?id=${id}">Suivi GPS</a>`);
             }
             if (mission.livreur_id && ['confirme','en_route','ramasse','livre','livree','delivered'].includes(mission.statut)) {
-                buttons.push(`<a class="btn btn-ghost" href="/messagerie.html?livraison=${id}">💬 Livreur</a>`);
+                buttons.push(`<a class="btn btn-ghost" href="/message-livraison.html?l=${id}&avec=livreur">💬 Livreur</a>`);
             }
 
             if (['en_attente', 'publie'].includes(mission.statut)) {
@@ -1443,7 +1443,7 @@
                         </div>
                         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                           <a href="/livreur-card.html?id=${esc(mission.livreur_id)}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:8px;color:#5dbfff;font-weight:800;text-decoration:none;font-size:.85rem">🆔 Voir sa carte d'identité</a>
-                          <a href="/messagerie.html?livraison=${esc(mission.id)}" style="flex:1;text-align:center;padding:10px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
+                          <a href="/message-livraison.html?l=${esc(mission.id)}&avec=livreur" style="flex:1;text-align:center;padding:10px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
                         </div>
                         <p style="margin:10px 0 0;font-size:.75rem;color:#a8b0ba;text-align:center">⚠️ Vérifie son identité avant d'ouvrir : compare son visage à la photo</p>
                       </div>`

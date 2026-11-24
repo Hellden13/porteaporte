@@ -48,6 +48,13 @@ const {
 } = require('../lib/_connect');
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
 const M = require('../lib/_messagerie');
+const ML = require('../lib/_messagerie-livraison');
+// Le livreur ne voit plus les coordonnées du destinataire (décision de Denis, 24 nov. 2026) : messagerie seulement.
+function sansCoordonneesDestinataire(l) {
+  const c = { ...l };
+  for (const k of ['destinataire_tel', 'destinataire_email', 'telephone_destinataire', 'email_destinataire', 'tel_destinataire']) delete c[k];
+  return c;
+}
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
@@ -377,7 +384,9 @@ async function createLivraison(req, res, ctx, body) {
       ville_arrivee:      livraison?.ville_arrivee || payload.ville_arrivee || '',
       adresse_arrivee:    payload.adresse_arrivee || '',
       type_colis:         payload.type_colis || 'Colis',
-      confirm_link:       `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}&t=${livraisonLinkToken(livraison?.id || '')}`
+      confirm_link:       `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison?.id || '')}&t=${livraisonLinkToken(livraison?.id || '')}`,
+      // Lien personnel de messagerie avec le livreur (sans compte) ; version 0 : aucune révocation à la création.
+      lien_messagerie:    livraison?.id ? `${siteOrigin()}/message-livraison.html?l=${encodeURIComponent(livraison.id)}&t=${encodeURIComponent(ML.jetonDestinataire(livraison.id, 0) || '')}` : null
     }).catch((err) => console.error('[notifier code_destinataire]', err.message));
   }
 
@@ -2150,7 +2159,7 @@ async function myDriverLivraisons(req, res, ctx) {
     if (pr.ok) { (await pr.json()).forEach(p => { expProfiles[p.id] = p; }); }
   }
   const enriched = livraisons.map(l => ({
-    ...l,
+    ...(roleIn(ctx.profile, ['admin']) ? l : sansCoordonneesDestinataire(l)),
     expediteur_profile: l.expediteur_id ? (expProfiles[l.expediteur_id] || null) : null
   }));
 
@@ -6097,6 +6106,16 @@ module.exports = async function handler(req, res) {
       return await pushSend(req, res, ctx, body);
     }
 
+    // ── Messagerie de livraison par lien personnel (destinataire sans compte) ──
+    if (endpoint === 'livraison-message-lien-thread' || endpoint === 'livraison-message-lien-send' || endpoint === 'livraison-message-lien-report') {
+      const rlIp = await checkRateLimit(`livmsg-lien:ip:${getClientIp(req) || 'inconnue'}`, 120, 600);
+      if (!rlIp.allowed) return res.status(429).json({ error: 'Trop de demandes — réessaie dans quelques minutes' });
+      const ctxL = { sbUrl, sbKey, checkRateLimit, session: null, profile: null };
+      if (endpoint === 'livraison-message-lien-thread') return await ML.threadLivraison(req, res, ctxL, body, true);
+      if (endpoint === 'livraison-message-lien-send') return await ML.envoyerLivraison(req, res, ctxL, body, true);
+      return await ML.signalerLivraison(req, res, ctxL, body, true);
+    }
+
     // ── Endpoints publics (sans auth) : organismes + compteur d'impact ──
     if (endpoint === 'organismes-list') {
       const r = await fetch(`${sbUrl}/rest/v1/organismes_partenaires?actif=eq.true&select=*&order=ordre.asc,est_principal.desc`, {
@@ -6541,7 +6560,7 @@ module.exports = async function handler(req, res) {
         const r1 = await fetch(`${sbUrl}/rest/v1/livraisons?select=*&expediteur_id=eq.${session.id}&limit=500`, { headers: sbHeaders(sbKey) });
         data.livraisons_envoyees = r1.ok ? await r1.json() : [];
         const r2 = await fetch(`${sbUrl}/rest/v1/livraisons?select=*&livreur_id=eq.${session.id}&limit=500`, { headers: sbHeaders(sbKey) });
-        data.livraisons_livrees = r2.ok ? await r2.json() : [];
+        data.livraisons_livrees = r2.ok ? (await r2.json()).map(sansCoordonneesDestinataire) : [];
       } catch (_) {}
       return res.status(200).json({ success: true, data });
     }
@@ -6751,7 +6770,22 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'ride-message-send')    return await M.rideMessageSend(req, res, { ...ctx, checkRateLimit }, body);
     if (endpoint === 'ride-message-thread')  return await M.rideMessageThread(req, res, ctx, body);
     if (endpoint === 'ride-message-report')  return await M.rideMessageReport(req, res, ctx, body);
-    if (endpoint === 'ride-message-reports') return await M.rideMessageReports(req, res, ctx);
+    if (endpoint === 'ride-message-reports') {
+      // Signalements de messagerie : covoiturage (ride_reports) + livraisons (journal), sans contenu.
+      const r1 = { _s: 200, _b: null, status(c) { this._s = c; return this; }, json(b) { this._b = b; return this; } };
+      await M.rideMessageReports(req, r1, ctx);
+      if (r1._s !== 200) return res.status(r1._s).json(r1._b);
+      const covoit = (r1._b.signalements || []).map((x) => ({ ...x, sorte: 'covoiturage' }));
+      const livr = await ML.signalementsLivraison(ctx);
+      const tous = [...covoit, ...livr].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+      return res.status(200).json({ signalements: tous });
+    }
+    if (endpoint === 'livraison-conversations')      return await ML.conversationsLivraison(req, res, ctx);
+    if (endpoint === 'livraison-message-thread')     return await ML.threadLivraison(req, res, ctx, body, false);
+    if (endpoint === 'livraison-message-send')       return await ML.envoyerLivraison(req, res, { ...ctx, checkRateLimit }, body, false);
+    if (endpoint === 'livraison-message-report')     return await ML.signalerLivraison(req, res, ctx, body, false);
+    if (endpoint === 'livraison-message-admin-thread') return await ML.adminThreadLivraison(req, res, ctx, body);
+    if (endpoint === 'livraison-lien-revoquer')      return await ML.adminRevoquerLien(req, res, ctx, body);
     if (endpoint === 'ride-message-admin-thread') return await M.rideMessageAdminThread(req, res, ctx, body);
     if (endpoint === 'ride-message-unread')  return await rideMessageUnreadCount(req, res, ctx);
     if (endpoint === 'ride-active-cities')   return await rideActiveCities(req, res, ctx);

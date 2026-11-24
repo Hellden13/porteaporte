@@ -39,6 +39,8 @@ const PUBLIC_TYPES = new Set([
   'ride_booking_confirmed',
   'ride_code_trajet',
   'ride_nouveau_message',
+  'livraison_nouveau_message',
+  'livraison_lien_destinataire',
   'ride_booking_to_driver',
   'ride_booking_cancelled',
   'ride_driver_completed_to_passenger',
@@ -727,6 +729,10 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             <div style="text-align:center;margin:24px 0">
               <a href="${data.confirm_link}" style="background:#b8f53e;color:#071006;padding:14px 28px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">✅ Confirmer la réception</a>
             </div>
+            ${data.lien_messagerie ? `<div style="text-align:center;margin:0 0 20px">
+              <a href="${escapeHtml(data.lien_messagerie)}" style="background:#5dbfff;color:#051022;padding:12px 22px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">💬 Écrire au livreur</a>
+              <div style="color:#6d7886;font-size:.78rem;margin-top:8px">Lien personnel, sans compte. Le livreur ne voit pas ton numéro ni ton courriel.</div>
+            </div>` : ''}
             <p style="color:#6d7886;font-size:.8rem;margin-top:20px;text-align:center">Tu peux aussi suivre la livraison en temps réel via ce lien.<br>PorteàPorte · Livraison sécurisée au Québec</p>
           </div>`
       });
@@ -1100,6 +1106,31 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             <p style="color:#a8b0ba;margin:0 0 18px;line-height:1.6">Tu as un nouveau message de <strong style="color:#fff">${escapeHtml(data.expediteur_prenom || 'un membre')}</strong> au sujet du trajet ${route}.</p>
             <a href="${escapeHtml(lien)}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 22px;border-radius:8px;font-weight:900;text-decoration:none">Lire et répondre</a>
             <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Ne réponds pas à ce courriel : il n'est pas transmis. Tes coordonnées restent privées ; ne les partage pas dans la messagerie.</p>
+          </div>`
+      });
+      break;
+    }
+
+    // ─── LIVRAISON : NOUVEAU MESSAGE (sans l'adresse ni le texte de l'autre personne) ───
+    case 'livraison_nouveau_message':
+    case 'livraison_lien_destinataire': {
+      if (!data.to_email) break;
+      const lien = String(data.lien || '');
+      const lienOk = /^https:\/\/porteaporte\.site\//.test(lien) || /^http:\/\/127\.0\.0\.1(:\d+)?\//.test(lien) ? lien : 'https://porteaporte.site/';
+      const nouveau = type === 'livraison_nouveau_message';
+      emails.push({
+        to: data.to_email,
+        from: { email: fromEmail, name: fromName },
+        subject: nouveau ? `💬 Tu as un nouveau message (livraison ${data.code_livraison || ''})` : `💬 Ton lien pour écrire au livreur (livraison ${data.code_livraison || ''})`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — MESSAGERIE</div>
+            <h1 style="color:#fff;font-size:1.3rem;margin:0 0 12px">Bonjour ${escapeHtml(data.prenom || '')},</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px;line-height:1.6">${nouveau
+              ? `Tu as un nouveau message de <strong style="color:#fff">${escapeHtml(data.expediteur_label || 'un participant')}</strong> au sujet de la livraison ${escapeHtml(data.code_livraison || '')}${data.ville_arrivee ? ' (vers ' + escapeHtml(data.ville_arrivee) + ')' : ''}.`
+              : `Voici ton nouveau lien personnel pour écrire au livreur de la livraison ${escapeHtml(data.code_livraison || '')}. L’ancien lien ne fonctionne plus.`}</p>
+            <a href="${escapeHtml(lienOk)}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 22px;border-radius:8px;font-weight:900;text-decoration:none">${nouveau ? 'Lire et répondre' : 'Ouvrir la messagerie'}</a>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Ce lien est personnel : ne le transfère pas. Ne réponds pas à ce courriel. Tes coordonnées restent privées ; ne les partage pas dans la messagerie.</p>
           </div>`
       });
       break;

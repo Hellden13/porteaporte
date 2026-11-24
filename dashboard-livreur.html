@@ -427,7 +427,7 @@
     <div class="topbar-right">
       <a class="topbar-btn" href="/browse-missions.html">Missions</a>
       <a class="topbar-btn" href="/dashboard-covoiturage.html">🚗 Covoiturage</a>
-      <a class="topbar-btn" href="/messagerie.html">💬 Messages</a>
+      <a class="topbar-btn" href="/message-livraison.html">💬 Messages</a>
       <a class="topbar-btn" href="/profile.html">Profil</a>
       <a class="topbar-btn" id="admin-back-btn" href="/admin/dashboard-admin.html" style="display:none;background:var(--brand-lime);color:#0A0F1E;border-color:var(--brand-lime);font-weight:800">⚡ Admin</a>
       <button class="topbar-btn" onclick="logout()">Déconnecter</button>
@@ -2425,7 +2425,6 @@
           const adresseDepart = row.adresse_depart || '';
           const adresseArrivee = row.adresse_arrivee || '';
           const notes = row.notes || row.description || '';
-          const telDestinataire = row.telephone_destinataire || row.tel_destinataire || '';
           const nomDestinataire = row.nom_destinataire || '';
           return `
             <div class="delivery-row" style="flex-direction:column;align-items:stretch;gap:10px">
@@ -2453,7 +2452,11 @@
                     <div style="font-weight:700;color:#5dbfff;font-size:.93rem">${esc(adresseArrivee || row.ville_arrivee || '?')}</div>
                     ${adresseArrivee && row.ville_arrivee ? `<div style="font-size:.8rem;color:#8A9BB0">${esc(row.ville_arrivee)}</div>` : ''}
                     ${nomDestinataire ? `<div style="font-size:.8rem;color:#8A9BB0;margin-top:2px">👤 ${esc(nomDestinataire)}</div>` : ''}
-                    ${telDestinataire ? `<div style="margin-top:3px"><a href="tel:${esc(telDestinataire)}" style="font-size:.85rem;color:#00d9ff;font-weight:700;text-decoration:none">📞 ${esc(telDestinataire)}</a></div>` : ''}
+                    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+                      <a href="/message-livraison.html?l=${encodeURIComponent(row.id)}&avec=destinataire" style="font-size:.82rem;color:#00d9ff;font-weight:700;text-decoration:none;border:1px solid rgba(0,217,255,.4);border-radius:8px;padding:5px 10px">💬 Écrire au destinataire</a>
+                      <a href="/message-livraison.html?l=${encodeURIComponent(row.id)}&avec=expediteur" style="font-size:.82rem;color:#00d9ff;font-weight:700;text-decoration:none;border:1px solid rgba(0,217,255,.4);border-radius:8px;padding:5px 10px">💬 Écrire à l’expéditeur</a>
+                    </div>
+                    <div style="font-size:.72rem;color:#6d7886;margin-top:4px">Coordonnées privées : on s’écrit par la messagerie PorteàPorte.</div>
                   </div>
                 </div>
                 ${notes ? `<div style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;font-size:.82rem;color:#a8b0ba">💬 <em>${esc(notes)}</em></div>` : ''}

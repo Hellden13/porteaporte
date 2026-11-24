@@ -33,6 +33,16 @@
 <div class="wrap">
   <h1>🚩 Conversations signalées</h1>
   <p class="note">Une conversation entre conducteur et passager ne se lit qu’à partir d’un signalement. Chaque lecture est notée au journal (messages_lus_admin).</p>
+  <div class="sig-card" style="margin-bottom:18px">
+    <strong>🔗 Révoquer le lien d’un destinataire (livraison)</strong>
+    <p class="note" style="margin:6px 0 10px">L’ancien lien cessera de fonctionner tout de suite. Option : envoyer un nouveau lien au destinataire.</p>
+    <div class="ligne">
+      <input id="rev-code" placeholder="Code de livraison (PP-…)" style="background:#05080c;border:1px solid #1f2d40;border-radius:8px;color:#fff;padding:8px 10px;min-width:0;flex:1">
+      <label style="font-size:.85rem"><input type="checkbox" id="rev-renvoyer"> envoyer un nouveau lien</label>
+      <button type="button" id="rev-ok">Révoquer</button>
+    </div>
+    <div id="rev-msg" class="quand" style="margin-top:6px"></div>
+  </div>
   <div id="liste"><div class="vide">Chargement…</div></div>
 </div>
 <script>
@@ -51,15 +61,16 @@
     return d;
   }
 
-  async function lireConversation(reportId, bouton) {
+  async function lireConversation(reportId, bouton, sorte) {
     const zone = document.getElementById('fil-' + reportId);
     bouton.disabled = true;
     try {
-      const d = await api('ride-message-admin-thread', { report_id: reportId });
+      const d = await api(sorte === 'livraison' ? 'livraison-message-admin-thread' : 'ride-message-admin-thread', { report_id: reportId });
       const sig = d.signalement;
+      const duSignaleur = (m) => (sorte === 'livraison' ? m.du_signaleur : m.sender_id === sig.reporter_id);
       zone.innerHTML = d.messages.length ? d.messages.map((m) => `
-        <div class="msg ${m.sender_id === sig.reporter_id ? 'signaleur' : ''}">
-          <div class="qui">${m.sender_id === sig.reporter_id ? 'Personne qui signale' : 'Personne signalée'} · ${esc(quand(m.created_at))}</div>
+        <div class="msg ${duSignaleur(m) ? 'signaleur' : ''}">
+          <div class="qui">${duSignaleur(m) ? 'Personne qui signale' : 'Personne signalée'}${m.de ? ' (' + esc(m.de) + ')' : ''} · ${esc(quand(m.created_at))}</div>
           ${esc(m.body)}
           ${m.original ? `<div style="margin-top:6px;font-size:.8rem;color:#ffd166">Original (masqué pour l’autre personne) : ${esc(m.original)}</div>` : ''}
         </div>`).join('') : '<div class="vide">Aucun message dans cette conversation.</div>';
@@ -69,9 +80,20 @@
     }
   }
 
+  async function revoquer() {
+    const msg = document.getElementById('rev-msg');
+    const code = document.getElementById('rev-code').value.trim();
+    if (!code) { msg.textContent = 'Entre un code de livraison.'; return; }
+    try {
+      const d = await api('livraison-lien-revoquer', { code, renvoyer: document.getElementById('rev-renvoyer').checked });
+      msg.textContent = 'Lien révoqué.' + (d.nouveau_lien_envoye ? ' Nouveau lien envoyé au destinataire.' : '');
+    } catch (e) { msg.textContent = e.message; }
+  }
+
   async function init() {
     if (!await AUTH_API.requireAuth('admin')) return;
     session = AUTH_API.getUser()?.session;
+    document.getElementById('rev-ok').addEventListener('click', revoquer);
     const liste = document.getElementById('liste');
     try {
       const d = await api('ride-message-reports');
@@ -80,14 +102,14 @@
       liste.innerHTML = d.signalements.map((s) => `
         <div class="sig-card" id="sig-${esc(s.id)}">
           <div class="ligne">
-            <span class="raison">${esc(s.raison)}</span>
+            <span class="raison">${s.sorte === 'livraison' ? '📦' : '🚗'} ${esc(s.raison)}</span>
             <span class="quand">${esc(quand(s.created_at))} · ${esc(s.status || 'ouvert')}</span>
-            <button type="button" data-report="${esc(s.id)}">Lire la conversation</button>
+            <button type="button" data-report="${esc(s.id)}" data-sorte="${esc(s.sorte || 'covoiturage')}">Lire la conversation</button>
           </div>
           ${s.details ? `<div style="margin-top:6px;color:#c9d4e0;font-size:.86rem">« ${esc(s.details)} »</div>` : ''}
           <div class="fil" id="fil-${esc(s.id)}"></div>
         </div>`).join('');
-      liste.querySelectorAll('button[data-report]').forEach((b) => b.addEventListener('click', () => lireConversation(b.dataset.report, b)));
+      liste.querySelectorAll('button[data-report]').forEach((b) => b.addEventListener('click', () => lireConversation(b.dataset.report, b, b.dataset.sorte)));
       if (voulu) document.getElementById('sig-' + voulu)?.scrollIntoView({ block: 'center' });
     } catch (e) {
       liste.innerHTML = '<div class="vide">' + esc(e.message) + '</div>';

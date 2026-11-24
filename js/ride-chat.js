@@ -38,6 +38,7 @@
     #rc-overlay .rc-sig .ok { background: #ff7a7a !important; color: #200 !important; box-shadow: none !important; border: 0 !important; }
     #rc-overlay .rc-sig .non { background: rgba(255,255,255,.08) !important; color: #e9edf4 !important; box-shadow: none !important; border: 0 !important; }
     .rc-sig-msg { font-size: .84rem; color: #7dffc1; }
+    #rc-overlay [hidden] { display: none !important; }
     @media (max-width: 520px) { .rc-box { max-height: none; height: 92vh; } }
   `;
 
@@ -67,7 +68,33 @@
     return null;
   }
 
+  // API de livraison (lib/_messagerie-livraison.js). Avec opts.t : destinataire sans compte (lien personnel).
+  function livraisonApi(o) {
+    const lien = Boolean(o.t);
+    const appel = async (suffixe, extra) => {
+      const endpoint = (lien ? 'livraison-message-lien-' : 'livraison-message-') + suffixe;
+      const headers = { 'Content-Type': 'application/json' };
+      if (!lien) {
+        const token = await getToken();
+        if (!token) { window.location.href = '/login.html'; return { ok: false, d: {} }; }
+        headers.Authorization = 'Bearer ' + token;
+      }
+      const r = await fetch('/api/platform?endpoint=' + endpoint, {
+        method: 'POST', headers,
+        body: JSON.stringify(Object.assign({ endpoint, livraison_id: o.livraison_id, avec: o.avec, t: o.t }, extra || {})),
+      });
+      const d = await r.json().catch(() => ({}));
+      return { ok: r.ok, d };
+    };
+    return {
+      thread: async () => { const x = await appel('thread'); return x.ok ? x.d : { error: x.d.error || 'Erreur', messages: [] }; },
+      send: (text) => appel('send', { body: text }),
+      report: (raison, details) => appel('report', { raison, details }),
+    };
+  }
+
   async function fetchThread(opts) {
+    if (opts.api) return opts.api.thread();
     const token = await getToken();
     if (!token) { window.location.href = '/login.html'; return null; }
     const r = await fetch('/api/platform?endpoint=ride-message-thread', {
@@ -104,11 +131,11 @@
     const body = document.querySelector('#rc-overlay .rc-body');
     if (!body) return;
     if (!messages.length) {
-      body.innerHTML = '<div class="rc-empty">💬 Commencez la conversation.<br>Soyez courtois et clair sur les détails du trajet (heure exacte, point de rencontre…).</div>';
+      body.innerHTML = '<div class="rc-empty">💬 Commencez la conversation.<br>Soyez courtois et clair sur les détails (heure exacte, point de rencontre…).</div>';
       return;
     }
     body.innerHTML = messages.map(m => {
-      const mine = m.sender_id === myId;
+      const mine = typeof m.moi === 'boolean' ? m.moi : m.sender_id === myId;
       const safe = escHtml(m.body || '');
       return `
         <div class="rc-msg ${mine ? 'mine' : 'theirs'}">${safe}</div>
@@ -125,13 +152,19 @@
     const text = ta.value.trim();
     btn.disabled = true;
     try {
-      const token = await getToken();
-      const r = await fetch('/api/platform?endpoint=ride-message-send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ endpoint: 'ride-message-send', ride_id: opts.ride_id, recipient_id: opts.other_user_id, body: text })
-      });
-      const d = await r.json().catch(() => ({}));
+      let r, d;
+      if (opts.api) {
+        const x = await opts.api.send(text);
+        r = { ok: x.ok }; d = x.d || {};
+      } else {
+        const token = await getToken();
+        r = await fetch('/api/platform?endpoint=ride-message-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ endpoint: 'ride-message-send', ride_id: opts.ride_id, recipient_id: opts.other_user_id, body: text })
+        });
+        d = await r.json().catch(() => ({}));
+      }
       if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || 'envoi impossible'))); btn.disabled = false; return; }
       ta.value = '';
       if (d.masque) {
@@ -150,20 +183,22 @@
   }
 
   async function open(opts) {
-    if (!opts || !opts.ride_id || !opts.other_user_id) {
-      console.error('[RideChat] ride_id + other_user_id requis');
+    if (!opts || (!opts.api && (!opts.ride_id || !opts.other_user_id))) {
+      console.error('[RideChat] ride_id + other_user_id (ou api) requis');
       return;
     }
     injectStyle();
     close();
 
-    // Récupérer mon user id
+    // Récupérer mon user id (covoiturage) ; la messagerie de livraison dit elle-même « moi ».
     let myId = null;
-    if (window.db && window.db.auth) {
-      const { data: { user } } = await window.db.auth.getUser();
-      myId = user?.id || null;
+    if (!opts.api) {
+      if (window.db && window.db.auth) {
+        const { data: { user } } = await window.db.auth.getUser();
+        myId = user?.id || null;
+      }
+      if (!myId) { window.location.href = '/login.html'; return; }
     }
-    if (!myId) { window.location.href = '/login.html'; return; }
     currentCtx = { ...opts, myId };
 
     const overlay = document.createElement('div');
@@ -174,7 +209,7 @@
         <div class="rc-header">
           <div>
             <div class="name">💬 ${escHtml(opts.other_name || 'Conversation')}</div>
-            <div class="sub">À propos du trajet</div>
+            <div class="sub">${escHtml(opts.sous_titre || 'À propos du trajet')}</div>
           </div>
           <div class="rc-actions">
             <button type="button" class="rc-signaler" id="rc-signaler">🚩 Signaler</button>
@@ -228,13 +263,20 @@
       const raison = overlay.querySelector('#rc-sig-raison').value;
       const msg = overlay.querySelector('#rc-sig-msg');
       if (!raison) { msg.style.color = '#ff9c9c'; msg.textContent = 'Choisis une raison.'; return; }
-      const token = await getToken();
-      const r = await fetch('/api/platform?endpoint=ride-message-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ endpoint: 'ride-message-report', ride_id: opts.ride_id, other_user_id: opts.other_user_id, raison, details: overlay.querySelector('#rc-sig-details').value })
-      }).catch(() => null);
-      const d = r ? await r.json().catch(() => ({})) : {};
+      const details = overlay.querySelector('#rc-sig-details').value;
+      let r, d = {};
+      if (opts.api) {
+        const x = await opts.api.report(raison, details).catch(() => null);
+        r = x ? { ok: x.ok } : null; d = (x && x.d) || {};
+      } else {
+        const token = await getToken();
+        r = await fetch('/api/platform?endpoint=ride-message-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ endpoint: 'ride-message-report', ride_id: opts.ride_id, other_user_id: opts.other_user_id, raison, details })
+        }).catch(() => null);
+        d = r ? await r.json().catch(() => ({})) : {};
+      }
       msg.style.color = r && r.ok ? '#7dffc1' : '#ff9c9c';
       msg.textContent = r && r.ok ? (d.message || 'Signalement reçu.') : ('Signalement impossible : ' + (d.error || 'réessaie plus tard'));
       if (r && r.ok) overlay.querySelector('#rc-sig-ok').disabled = true;
@@ -247,7 +289,7 @@
       if (thread && thread.ferme) {
         const f = overlay.querySelector('#rc-ferme');
         f.hidden = false;
-        f.textContent = '🔒 Conversation fermée : on ne peut plus écrire 3 jours après le trajet. Tu peux encore la lire et la signaler.';
+        f.textContent = '🔒 Conversation fermée : on ne peut plus écrire 3 jours après ' + (opts.api ? 'la livraison' : 'le trajet') + '. Tu peux encore la lire et la signaler.';
         const zone = overlay.querySelector('.rc-input');
         if (zone) zone.remove();
       }
@@ -275,5 +317,5 @@
     } catch { return { total: 0, threads: {} }; }
   }
 
-  window.RideChat = { open, close, unreadCount };
+  window.RideChat = { open, close, unreadCount, livraisonApi };
 })();
