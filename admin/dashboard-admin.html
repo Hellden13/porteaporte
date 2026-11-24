@@ -1701,10 +1701,10 @@
   async function loadRevenus(db) {
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const { data } = await db.from('livraisons')
-      .select('id,code,ville_depart,ville_arrivee,prix_total,created_at')
+      .select('id,code,ville_depart,ville_arrivee,prix_total,created_at:cree_le') // colonne réelle : cree_le
       .eq('statut', 'payee')
-      .gte('created_at', monthStart)
-      .order('created_at', { ascending: false });
+      .gte('cree_le', monthStart)
+      .order('cree_le', { ascending: false });
 
     const rows = data || [];
     const total      = rows.reduce((s, r) => s + Number(r.prix_total || 0), 0);
@@ -1805,9 +1805,9 @@
     } catch (err) {
       console.error('admin-disputes:', err);
       const { data } = await db.from('livraisons')
-        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at')
+        .select('id,code,ville_depart,ville_arrivee,statut,prix_total,created_at:cree_le')
         .in('statut', ['litige', 'rembourse'])
-        .order('created_at', { ascending: false })
+        .order('cree_le', { ascending: false })
         .limit(50);
       rows = data || [];
     }
@@ -3056,7 +3056,7 @@
     const db = window.db;
     if (!db) return;
     try {
-      const { data: subs, error } = await db.from('push_subscriptions').select('*').order('created_at', { ascending: false });
+      const { data: subs, error } = await db.from('push_subscriptions').select('*,created_at:cree_le').order('cree_le', { ascending: false });
       const list = error ? [] : (subs || []);
 
       document.getElementById('notif-count').textContent   = list.length;
@@ -3221,11 +3221,12 @@
     try {
       const [{ data: livAvis, error: e1 }, { data: covAvis, error: e2 }] = await Promise.all([
         db.from('reviews')
-          .select('id, note, commentaire, cree_le, livreur_id, expediteur_id, livraison_id')
-          .order('cree_le', { ascending: false })
+          // colonnes réelles (rating, comment, created_at, reviewed_id, reviewer_id, delivery_id), renommées pour l'affichage
+          .select('id, note:rating, commentaire:comment, cree_le:created_at, livreur_id:reviewed_id, expediteur_id:reviewer_id, livraison_id:delivery_id')
+          .order('created_at', { ascending: false })
           .limit(200),
         db.from('cov_reviews')
-          .select('id, rating, commentaire, created_at, reviewer_id, reviewed_id, ride_id')
+          .select('id, rating, commentaire:comment, created_at, reviewer_id, reviewed_id, ride_id')
           .order('created_at', { ascending: false })
           .limit(200)
       ]);

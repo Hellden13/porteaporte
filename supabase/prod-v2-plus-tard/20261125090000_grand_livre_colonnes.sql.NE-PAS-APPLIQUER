@@ -1,0 +1,27 @@
+-- PorteàPorte — prod-v2 SEULEMENT. NE PAS APPLIQUER sur la base actuelle (aucun accès DDL ; décision de Denis, 24 nov. 2026).
+-- Le code (lib/_grand-livre.js) écrit aujourd'hui dans les colonnes RÉELLES de transactions :
+--   montant_cad, meta (statut rangé dans meta.statut), stripe_id, cree_le.
+-- Cette migration donne à prod-v2 une vraie colonne statut et les index utiles, SANS changer les noms existants :
+-- le code actuel continue de fonctionner tel quel (meta.statut reste rempli).
+
+begin;
+
+-- 1. Grand livre : statut en colonne (copie de meta->>'statut'), index de recherche
+alter table public.transactions add column if not exists statut text;
+update public.transactions set statut = meta->>'statut' where statut is null and meta ? 'statut';
+create index if not exists transactions_stripe_id_idx on public.transactions (stripe_id);
+create index if not exists transactions_livraison_type_idx on public.transactions (livraison_id, type, cree_le desc);
+create index if not exists transactions_booking_idx on public.transactions ((meta->>'booking_id'));
+
+-- 2. Message de rendez-vous du conducteur (aujourd'hui gardé au journal transaction_audit_events, event ride_meetup_message)
+alter table public.ride_bookings add column if not exists meetup_message text;
+alter table public.ride_bookings add column if not exists meetup_message_at timestamptz;
+
+-- 3. Demande de suppression de compte (aujourd'hui au journal, event suppression_compte_demandee)
+alter table public.profiles add column if not exists deletion_requested_at timestamptz;
+alter table public.profiles add column if not exists deletion_reason text;
+
+commit;
+
+-- Modèles de courriel d'authentification (supabase/email-templates/) : à recopier dans le tableau de bord Supabase
+-- de prod-v2 (accès au tableau de bord actuel perdu : 2FA).

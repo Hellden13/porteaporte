@@ -197,16 +197,15 @@ module.exports = async function handler(req, res) {
 
       const payload = {
         expediteur_id: session.id,
-        type: 'colis',
-        description: p.description || '',
+        // colonnes réelles : pas de « type » ni de « notes » (les notes rejoignent la description)
+        description: [p.description || '', p.notes ? 'Notes : ' + p.notes : ''].filter(Boolean).join('\n'),
         ville_depart: p.ville_depart || '',
         ville_arrivee: p.ville_arrivee || '',
         adresse_depart: p.adresse_depart || p.address || '',
         adresse_arrivee: p.adresse_arrivee || '',
         poids_kg: p.poids_kg === undefined ? null : Number(p.poids_kg),
         type_colis: p.type_colis || 'Petit colis',
-        prix_total: Number(p.prix_total || p.prix || pricing.total_estime),
-        notes: p.notes || null
+        prix_total: Number(p.prix_total || p.prix || pricing.total_estime)
       };
 
       const r = await fetch(`${SB_URL}/rest/v1/livraisons`, {

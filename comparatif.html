@@ -36,6 +36,18 @@
     .sim-row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; margin-bottom:14px; }
     .sim-row label { color:#d8dde6; font-weight:700; font-size:.92rem; }
     .sim-row input[type=range] { width:100%; accent-color:var(--brand-bleu); }
+    /* Cellulaire : libellé au-dessus, curseur et valeur dessous (ils se chevauchaient à 360 px) */
+    @media (max-width: 560px) {
+      .sim-row { grid-template-columns: 1fr; gap: 8px; }
+      .sim-row > div { min-width: 0; }
+      .sim-row input[type=range] { flex: 1 1 auto; min-width: 0; }
+      .sim-row .val { flex: 0 0 auto; }
+      .sim-row select { width: 100%; }
+      /* En-tête : le nom n'est plus coupé par le bouton « Accueil » */
+      body > header { gap: 10px; padding: 12px 16px !important; }
+      body > header > a:first-child { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+      body > header > .btn { flex: 0 0 auto; width: auto !important; padding: 8px 12px !important; }
+    }
     .sim-row .val { background:rgba(93,191,255,.15); border:1px solid rgba(93,191,255,.4); padding:8px 14px; border-radius:8px; color:var(--brand-bleu); font-weight:900; font-variant-numeric:tabular-nums; min-width:90px; text-align:center; }
 
     /* Tableau prix */

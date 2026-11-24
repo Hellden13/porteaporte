@@ -63,12 +63,12 @@ async function saveChallenge(userId, challengeType, challenge, sbUrl, sbKey) {
   await fetch(`${sbUrl}/rest/v1/webauthn_challenges`, {
     method: 'POST',
     headers: sbHeaders(sbKey),
-    body: JSON.stringify({ user_id: userId, type: challengeType, challenge, expires_at: expiresAt })
+    body: JSON.stringify({ user_id: userId, purpose: challengeType, challenge, expires_at: expiresAt }) // colonne réelle : purpose
   });
 }
 
 async function consumeChallenge(userId, challengeType, challenge, sbUrl, sbKey) {
-  const r = await fetch(`${sbUrl}/rest/v1/webauthn_challenges?user_id=eq.${userId}&type=eq.${challengeType}&challenge=eq.${encodeURIComponent(challenge)}&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id&order=created_at.desc&limit=1`, {
+  const r = await fetch(`${sbUrl}/rest/v1/webauthn_challenges?user_id=eq.${userId}&purpose=eq.${challengeType}&challenge=eq.${encodeURIComponent(challenge)}&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id&order=created_at.desc&limit=1`, {
     headers: sbHeaders(sbKey)
   });
   const rows = r.ok ? await r.json() : [];

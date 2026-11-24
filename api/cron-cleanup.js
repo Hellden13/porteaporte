@@ -33,17 +33,7 @@ module.exports = async function handler(req, res) {
     results.rate_limits = 'exception: ' + e.message;
   }
 
-  // 2. Nettoyer les sessions GPS > 48h (gps_updates orphelins)
-  try {
-    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    const r = await fetch(
-      `${sbUrl}/rest/v1/gps_updates?created_at=lt.${cutoff}`,
-      { method: 'DELETE', headers: sbHeaders(sbKey) }
-    );
-    results.gps_updates = r.ok ? 'ok' : `erreur ${r.status}`;
-  } catch (e) {
-    results.gps_updates = 'exception: ' + e.message;
-  }
+  // 2. (retiré) la table gps_updates n'existe pas en production : la requête échouait à chaque passage.
 
   // 3. Auto-cancel XL livraisons : demande > 15 min sans réponse
   try {

@@ -2179,7 +2179,7 @@ async function adminDashboard(req, res, ctx) {
   const profiles = profilesRes.ok ? await profilesRes.json() : [];
 
   let livraisonsRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,livreur_id,expediteur_id,stripe_payment_intent,payment_intent_id,recipient_confirmed_at,recipient_confirmation_method,delivery_confirmation_mode,delivery_proof_required_admin_review&order=created_at.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,livreur_id,expediteur_id,stripe_payment_intent,payment_intent_id,recipient_confirmed_at,recipient_confirmation_method,delivery_confirmation_mode,delivery_proof_required_admin_review&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   let livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
@@ -3205,14 +3205,7 @@ async function recipientReview(req, res, sbUrl, sbKey, body) {
     body: JSON.stringify(payload)
   });
   let data = await r.json().catch(() => ({}));
-  // Fallback schema legacy
-  if (!r.ok) {
-    const legacy = { livreur_id: liv.livreur_id, note: rating, commentaire: comment, livraison_id: liv.id };
-    r = await fetch(`${sbUrl}/rest/v1/reviews`, {
-      method: 'POST', headers: sbHeaders(sbKey), body: JSON.stringify(legacy)
-    });
-    data = await r.json().catch(() => ({}));
-  }
+  // (ancien « schéma legacy » retiré : ces colonnes n'existent pas en production)
   if (!r.ok) return res.status(400).json({ error: 'Avis destinataire impossible', details: data });
   return res.status(200).json({ success: true });
 }
@@ -5183,16 +5176,17 @@ async function adminRewards(req, res, ctx, body) {
   }
 
   if (body.mode === 'create_mission') {
+    // Colonnes réelles de missions : titre, description, type, coins_reward, places_max, date_mission, actif
     const payload = {
-      title: String(body.title || '').trim().slice(0, 140),
+      titre: String(body.title || body.titre || '').trim().slice(0, 140),
       description: String(body.description || '').trim().slice(0, 800),
-      objective_type: String(body.objective_type || 'custom').trim().slice(0, 80),
-      objective_target: Math.max(1, Math.round(toNumber(body.objective_target, 1))),
-      reward_coins: Math.max(0, Math.round(toNumber(body.reward_coins, 0))),
-      deadline: body.deadline || null,
-      status: body.status || 'active'
+      type: String(body.objective_type || body.type || 'custom').trim().slice(0, 80),
+      places_max: Math.max(1, Math.round(toNumber(body.objective_target, 1))),
+      coins_reward: Math.max(0, Math.round(toNumber(body.reward_coins, 0))),
+      date_mission: body.deadline || null,
+      actif: (body.status || 'active') === 'active'
     };
-    if (!payload.title) return res.status(400).json({ error: 'Titre requis' });
+    if (!payload.titre) return res.status(400).json({ error: 'Titre requis' });
     const r = await fetch(`${ctx.sbUrl}/rest/v1/missions`, { method: 'POST', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(payload) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(400).json({ error: 'Creation mission impossible', details: data });
@@ -5201,13 +5195,11 @@ async function adminRewards(req, res, ctx, body) {
 
   if (body.mode === 'create_draw') {
     const payload = {
+      // colonnes réelles de monthly_draws : title, prize, draw_date, status, eligibility_badge_slug
       title: String(body.title || '').trim().slice(0, 140),
-      description: String(body.description || '').trim().slice(0, 800),
+      prize: String(body.prize || body.description || '').trim().slice(0, 300) || null,
       draw_date: body.draw_date,
       status: body.status || 'active',
-      rules_url: body.rules_url || '/reglements-concours.html',
-      auto_include_all_users: body.auto_include_all_users !== false,
-      admin_note: String(body.admin_note || '').trim().slice(0, 500),
       eligibility_badge_slug: body.eligibility_badge_slug || null
     };
     if (!payload.title || !payload.draw_date) return res.status(400).json({ error: 'Titre et date requis' });
@@ -5272,11 +5264,10 @@ async function adminRewards(req, res, ctx, body) {
     if (!id) return res.status(400).json({ error: 'id requis' });
     const patch = {};
     if (body.title !== undefined)                  patch.title = String(body.title).trim().slice(0, 140);
-    if (body.description !== undefined)            patch.description = String(body.description).trim().slice(0, 800);
+    if (body.prize !== undefined)                  patch.prize = String(body.prize).trim().slice(0, 300); // pas de colonne description
     if (body.draw_date !== undefined)              patch.draw_date = body.draw_date;
     if (body.eligibility_badge_slug !== undefined) patch.eligibility_badge_slug = body.eligibility_badge_slug || null;
-    if (body.admin_note !== undefined)             patch.admin_note = String(body.admin_note).trim().slice(0, 500);
-    patch.updated_at = new Date().toISOString();
+    // monthly_draws n'a ni admin_note ni updated_at en production
     const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(patch) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(400).json({ error: 'Modification tirage impossible', details: data });
@@ -5290,7 +5281,7 @@ async function adminRewards(req, res, ctx, body) {
     const srcRows = srcRes.ok ? await srcRes.json() : [];
     if (!srcRows.length) return res.status(404).json({ error: 'Tirage introuvable' });
     const src = srcRows[0];
-    const copy = { title: src.title + ' (copie)', description: src.description, draw_date: src.draw_date, status: 'draft', rules_url: src.rules_url, auto_include_all_users: src.auto_include_all_users, eligibility_badge_slug: src.eligibility_badge_slug || null };
+    const copy = { title: src.title + ' (copie)', prize: src.prize || null, draw_date: src.draw_date, status: 'draft', eligibility_badge_slug: src.eligibility_badge_slug || null }; // colonnes réelles
     const r = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws`, { method: 'POST', headers: sbHeaders(ctx.sbKey), body: JSON.stringify(copy) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(400).json({ error: 'Duplication tirage impossible', details: data });

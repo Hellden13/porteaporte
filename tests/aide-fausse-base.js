@@ -149,7 +149,10 @@ function creerBase(tables = {}) {
       const items = Array.isArray(body) ? body : [body];
       const crees = items.map((it) => {
         db.seq += 1;
-        const l = { id: it.id || `id-${String(db.seq).padStart(6, '0')}`, created_at: new Date(Date.UTC(2026, 10, 22, 12, 0, db.seq)).toISOString(), ...it };
+        // Horodatage par défaut sous le vrai nom de colonne de la table (created_at ou cree_le)
+        const quand = new Date(Date.UTC(2026, 10, 22, 12, 0, db.seq)).toISOString();
+        const colDate = SCHEMA[nom] && !SCHEMA[nom].includes('created_at') && SCHEMA[nom].includes('cree_le') ? 'cree_le' : 'created_at';
+        const l = { id: it.id || `id-${String(db.seq).padStart(6, '0')}`, [colDate]: quand, ...it };
         lignes.push(l);
         return l;
       });
