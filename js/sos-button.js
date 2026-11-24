@@ -30,6 +30,8 @@
       'border-radius:999px;padding:12px 18px;font-weight:900;font-size:.95rem;',
       'box-shadow:0 6px 24px rgba(255,59,59,.45);cursor:pointer;display:flex;',
       'align-items:center;gap:8px;letter-spacing:.04em}',
+      // Toujours rouge : le style général des boutons (bleu) ne doit jamais l'emporter sur l'urgence.
+      '.pap-sos-fab{background:linear-gradient(135deg,#ff3b3b,#c81e1e)!important;color:#fff!important}',
       '.pap-sos-fab:hover{filter:brightness(1.08)}',
       '.pap-sos-fab:focus-visible{outline:3px solid #fff;outline-offset:2px}',
       '.pap-sos-overlay{position:fixed;inset:0;z-index:9999;background:rgba(3,6,12,.78);',
@@ -159,8 +161,12 @@
   }
 
   function init() {
+    // Un seul bouton SOS, même si le script est chargé deux fois.
+    if (document.querySelector('.pap-sos-fab')) return;
     injectStyles();
     buildUI();
+    // Les autres boutons du coin (« Niveau ») se placent au-dessus du SOS (js/flottants.js).
+    document.body.classList.add('pap-avec-sos');
   }
 
   // API publique

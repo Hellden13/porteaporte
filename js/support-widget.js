@@ -346,8 +346,8 @@ if (!window.__PIA_LOADED__) {
       const button = document.createElement('button');
       button.id = 'pia-launch';
       button.type = 'button';
-      button.setAttribute('aria-label', 'Ouvrir Pia');
-      button.title = 'Pia';
+      button.setAttribute('aria-label', 'Aide (Pia)');
+      button.title = 'Aide';
       button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5c0 4.1-3.8 7.5-8.5 7.5-1 0-2-.15-2.9-.46L4 21l1.18-4.02C3.82 15.6 3 13.7 3 11.5 3 7.36 6.8 4 11.5 4S20 7.36 20 11.5Z"/></svg>';
       button.addEventListener('click', function () { isOpen ? close() : open(); });
 

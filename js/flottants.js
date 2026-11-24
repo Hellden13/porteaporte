@@ -22,11 +22,22 @@
     '.pap-launcher-btn{right:21px!important;bottom:88px!important}' +
     '#pap-gps-status{left:50%!important;right:auto!important;bottom:20px!important;transform:translateX(-50%);white-space:nowrap}' +
     '.pp-layer-pill{left:18px!important;bottom:20px!important}' +
+    /* 24 nov. 2026 (vu sur Brave Android) :
+       • la marge intérieure générale des boutons (12px 18px) écrasait l'icône à 6 px dans les boutons ronds;
+       • libellé visible « Menu » / « Aide » sous l'icône;
+       • le bouton « Niveau » était caché derrière le bouton SOS (même coin) : il monte au-dessus. */
+    '.pap-launcher-btn,#pia-launch{padding:0!important;flex-direction:column!important;gap:2px;line-height:1}' +
+    '.pap-launcher-btn svg,#pia-launch svg{max-width:none!important;flex:none!important;width:26px!important;height:26px!important}' +
+    '.pap-launcher-btn::after,#pia-launch::after{font:800 11px/1 system-ui,-apple-system,sans-serif;letter-spacing:.02em;color:#051022}' +
+    '.pap-launcher-btn::after{content:"Menu"}' +
+    '#pia-launch::after{content:"Aide"}' +
+    '#pia-launch{display:flex!important;align-items:center!important;justify-content:center!important}' +
+    'body.pap-avec-sos .pp-layer-pill{bottom:72px!important}' +
     '@media (max-width:640px){' +
-      'body{--pap-reserve-bas:76px}' +
-      '#pia-launch{width:44px!important;height:44px!important;border-radius:14px!important;right:12px!important;bottom:12px!important}' +
-      '#pia-launch svg{width:22px!important;height:22px!important}' +
-      '.pap-launcher-btn{width:44px!important;height:44px!important;font-size:19px!important;right:12px!important;bottom:64px!important}' +
+      'body{--pap-reserve-bas:84px}' +
+      '#pia-launch{width:58px!important;height:58px!important;border-radius:16px!important;right:12px!important;bottom:12px!important}' +
+      '.pap-launcher-btn{width:58px!important;height:58px!important;font-size:19px!important;right:12px!important;bottom:78px!important}' +
+      '.pap-launcher-btn svg,#pia-launch svg{width:26px!important;height:26px!important}' +
       '.pp-layer-pill{left:12px!important;bottom:12px!important;padding:0!important;width:44px!important;height:44px!important;min-width:0!important;justify-content:center!important;overflow:hidden}' +
       '.pp-layer-pill > :not(.pp-layer-chevron){display:none!important}' +
       '#pap-gps-status{bottom:20px!important;padding:6px 10px!important;font-size:.72rem!important;max-width:calc(100vw - 140px);overflow:hidden;text-overflow:ellipsis}' +

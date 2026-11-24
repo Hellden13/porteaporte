@@ -183,8 +183,8 @@
   // Bouton flottant
   const btn = document.createElement('button');
   btn.className = 'pap-launcher-btn';
-  btn.setAttribute('aria-label', 'Menu navigation');
-  btn.title = 'Ouvrir le menu de navigation';
+  btn.setAttribute('aria-label', 'Menu');
+  btn.title = 'Menu';
   btn.innerHTML = '⋮⋮⋮<span class="pap-dot"></span>';
   btn.style.fontSize = '20px';
   btn.style.letterSpacing = '-2px';
