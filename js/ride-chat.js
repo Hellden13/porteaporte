@@ -134,6 +134,10 @@
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { (await PAPDialog.alert('Erreur : ' + (d.error || 'envoi impossible'))); btn.disabled = false; return; }
       ta.value = '';
+      if (d.masque) {
+        const f = document.querySelector('#rc-overlay #rc-ferme');
+        if (f) { f.hidden = false; f.textContent = '🔒 ' + (d.avis || 'Tes coordonnées ont été masquées pour ta sécurité.'); }
+      }
       // Refresh thread
       const thread = await fetchThread(opts);
       if (thread && thread.messages) renderMessages(currentCtx.myId, thread.messages);

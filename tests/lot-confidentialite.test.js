@@ -235,3 +235,72 @@ describe('bogue du texte vertical', () => {
     assert.match(h, /@media \(max-width: 560px\)[\s\S]{0,200}\.driver-row > \.contact-btns \{ grid-column:1 \/ -1; \}/);
   });
 });
+
+describe('masquage des coordonnées dans la messagerie', () => {
+  const masques = [
+    '418-555-1234', '(418) 555 1234', '418.555.1234', '4185551234', '418 555 1234', '418 - 555 - 1234', '418/555/1234',
+    '1-800-555-1234', '1 800 555 1234', '+1 418 555 1234', '+14185551234', '418 555 12 34', '555-1234',
+    '4 1 8 5 5 5 1 2 3 4', '4-1-8-5-5-5-1-2-3-4', '418 555 et 1234', '4l8 555 l234', '４１８５５５１２３４',
+    'quatre un huit cinq cinq cinq un deux trois quatre', '418 cinq cinq cinq 1234', 'four one eight five five five one two three four',
+    'denis@gmail.com', 'DENIS.M@VIDEOTRON.CA', 'denis.morneau+pap@outlook.com', 'denis @ gmail . com', 'denis＠gmail.com',
+    'denis (at) gmail (dot) com', 'denis[at]gmail[.]com', 'denis at gmail dot com', 'denis arobase gmail point com',
+  ];
+  for (const t of masques) {
+    test(`masqué : « ${t} »`, () => {
+      const r = M.masquerCoordonnees(`Écris-moi : ${t} merci`);
+      assert.equal(r.masque, true);
+      assert.ok(r.texte.includes(M.MASQUE));
+      assert.doesNotMatch(r.texte.replace(M.MASQUE, ''), /\d{3}|@|＠|gmail|videotron|outlook|cinq|five/i, r.texte);
+    });
+  }
+  const gardes = [
+    'Rendez-vous le 2026-11-25 à 10 h 30', '3 places, 2 bagages, 4,20 $', 'Code PP-EA656834', 'Je suis au 1160 rue de la Concorde',
+    'On part à 10 et on arrive à 14 h', 'Il est 21:30 et je suis à 2 km', 'J’ai 2 sacs et 1 valise, 30 kg et 20 kg', 'un deux trois, on y va !',
+  ];
+  for (const t of gardes) {
+    test(`gardé tel quel : « ${t} »`, () => {
+      const r = M.masquerCoordonnees(t);
+      assert.equal(r.masque, false);
+      assert.equal(r.texte, t);
+    });
+  }
+
+  test('envoi : l’autre ne voit que la version masquée ; l’original est au journal, au nom de l’expéditeur seulement', async () => {
+    const db = base();
+    const res = await envoyer(db, PASS, COND, 'Texte-moi au 418 555-9876 ou pass@exemple.ca');
+    assert.equal(res._status, 200);
+    assert.equal(res._body.masque, true);
+    const enBase = db.tables.ride_messages[0].body;
+    assert.doesNotMatch(enBase, /555|9876|pass@exemple/);
+    const t = makeRes();
+    await M.rideMessageThread({}, t, ctxDe(COND), { ride_id: RIDE, other_user_id: PASS });
+    assert.doesNotMatch(JSON.stringify(t._body), /555-9876|pass@exemple\.ca/, 'le conducteur ne voit jamais l’original');
+    const o = db.tables.transaction_audit_events.filter((e) => e.event_type === 'message_original_masque');
+    assert.equal(o.length, 1);
+    assert.equal(o[0].user_id, PASS, 'lisible par son auteur et l’admin seulement (RLS du journal)');
+    assert.equal(o[0].evidence.original, 'Texte-moi au 418 555-9876 ou pass@exemple.ca');
+    assert.equal(o[0].evidence.message_id, db.tables.ride_messages[0].id);
+  });
+
+  test('admin, à partir d’un signalement : voit l’original à côté du message masqué', async () => {
+    const db = base();
+    await envoyer(db, COND, PASS, 'Paie-moi comptant, mon cell : 418 555 1234');
+    db.tables.ride_reports.push({ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', ride_id: RIDE, reporter_id: PASS, reported_id: COND, reason: 'messagerie:paiement', status: 'ouvert' });
+    const r = makeRes();
+    await M.rideMessageAdminThread({}, r, ctxDe(ADMIN, 'admin'), { report_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' });
+    assert.equal(r._status, 200);
+    assert.match(r._body.messages[0].body, /coordonnées masquées/);
+    assert.equal(r._body.messages[0].original, 'Paie-moi comptant, mon cell : 418 555 1234');
+  });
+
+  test('message sans coordonnées : rien au journal des originaux', async () => {
+    const db = base();
+    await envoyer(db, PASS, COND, 'Je serai au McDo à 10 h 25');
+    assert.equal(db.tables.transaction_audit_events.filter((e) => e.event_type === 'message_original_masque').length, 0);
+  });
+});
+
+test('masque propre : rien ne reste autour (parenthèse, +, point final gardé)', () => {
+  assert.equal(M.masquerCoordonnees('Appelle au (418) 555 1234 svp').texte, `Appelle au ${M.MASQUE} svp`);
+  assert.equal(M.masquerCoordonnees('Mon cell +1 418 555 1234.').texte, `Mon cell ${M.MASQUE}.`);
+});

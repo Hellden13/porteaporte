@@ -61,6 +61,7 @@
         <div class="msg ${m.sender_id === sig.reporter_id ? 'signaleur' : ''}">
           <div class="qui">${m.sender_id === sig.reporter_id ? 'Personne qui signale' : 'Personne signalée'} · ${esc(quand(m.created_at))}</div>
           ${esc(m.body)}
+          ${m.original ? `<div style="margin-top:6px;font-size:.8rem;color:#ffd166">Original (masqué pour l’autre personne) : ${esc(m.original)}</div>` : ''}
         </div>`).join('') : '<div class="vide">Aucun message dans cette conversation.</div>';
     } catch (e) {
       zone.innerHTML = '<div class="vide">' + esc(e.message) + '</div>';
