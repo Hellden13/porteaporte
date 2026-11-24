@@ -283,7 +283,7 @@ describe('paiement-livraison handler', () => {
         return { ok: true, status: 200, json: async () => [{ id: 'liv-1', code: 'L1', expediteur_id: 'user-123', prix_total: 5.60, statut: 'en_attente' }] };
       }
       if (url.includes('/rest/v1/transactions?livraison_id=eq.liv-1')) {
-        return { ok: true, status: 200, json: async () => [{ id: 'tx-1', stripe_payment_intent: 'pi_ready', created_at: '2026-01-01', statut: 'requires_payment_method' }] };
+        return { ok: true, status: 200, json: async () => [{ id: 'tx-1', stripe_id: 'pi_ready', cree_le: '2026-01-01', meta: { statut: 'requires_payment_method' } }] }; // forme réelle de la table
       }
       if (url.includes('api.stripe.com/v1/payment_intents/pi_ready')) {
         return { ok: true, status: 200, json: async () => ({ id: 'pi_ready', client_secret: 'cs_ready', status: 'requires_capture', amount: 560, currency: 'cad' }) };
@@ -1369,12 +1369,12 @@ describe('capture-livraison handler — confirmation destinataire + escrow', () 
           ok: true,
           status: 200,
           json: async () => [{
+            // forme réelle de la table transactions (production)
             id: 'tx-1',
             livraison_id: 'liv-1',
-            stripe_payment_intent: 'pi_test_123',
-            montant: 5.60,
-            statut: 'requires_capture',
-            metadata: {}
+            stripe_id: 'pi_test_123',
+            montant_cad: 5.60,
+            meta: { statut: 'requires_capture' }
           }]
         };
       }

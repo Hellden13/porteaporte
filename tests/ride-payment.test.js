@@ -485,7 +485,10 @@ describe('ride cancellation safeguards', () => {
     assert.equal(new URLSearchParams(captureCall.body).get('amount_to_capture'), '188');
     const driverLedger = calls.find(c => c.url.includes('/rest/v1/transactions') && c.method === 'POST' && String(c.body).includes('dedommagement_covoiturage'));
     assert.ok(driverLedger, 'grand livre conducteur requis');
-    assert.equal(JSON.parse(driverLedger.body).statut, 'manual_review');
+    // Grand livre réel : statut dans meta, montant dans montant_cad (plus de colonne statut)
+    const ligne = JSON.parse(driverLedger.body);
+    assert.equal(ligne.meta.statut, 'manual_review');
+    assert.ok(ligne.montant_cad > 0 && !('statut' in ligne) && !('montant' in ligne) && !('metadata' in ligne));
   });
 
   test('annulation passager bloque le statut si Stripe echoue', async () => {

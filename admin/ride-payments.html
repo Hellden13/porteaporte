@@ -256,24 +256,17 @@
     const earningByRide = new Map();
 
     if (piIds.length) {
+      // Grand livre réel : stripe_id / meta (pas stripe_payment_intent / metadata)
       const { data: txs } = await db
         .from('transactions')
-        .select('stripe_payment_intent,metadata')
-        .in('stripe_payment_intent', piIds);
+        .select('stripe_id,meta')
+        .in('stripe_id', piIds);
       (txs || []).forEach(t => {
-        if (t.stripe_payment_intent) txByPi.set(t.stripe_payment_intent, t);
+        if (t.stripe_id) txByPi.set(t.stripe_id, { stripe_payment_intent: t.stripe_id, metadata: t.meta || {} });
       });
     }
 
-    if (rideIds.length) {
-      const { data: earnings } = await db
-        .from('livreur_earnings')
-        .select('source_type,source_id,stripe_transfer_id')
-        .in('source_id', rideIds);
-      (earnings || []).filter(e => e.source_type === 'ride').forEach(e => {
-        if (!earningByRide.has(e.source_id) || e.stripe_transfer_id) earningByRide.set(e.source_id, e);
-      });
-    }
+    // livreur_earnings n'a ni source_type ni source_id en production : le virement du conducteur se lit dans meta.transfer_id.
 
     return bookings.map(b => {
       const transferId = txByPi.get(b.stripe_payment_intent)?.metadata?.transfer_id

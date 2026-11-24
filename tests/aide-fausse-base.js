@@ -50,6 +50,27 @@ function correspond(ligne, [cle, v]) {
   return true;
 }
 
+const SCHEMA = require('./schema-production.json').tables;
+// PAP_REFUS=fichier : note chaque refus (même avalé par le code testé) pour le balayage du schéma.
+function noterRefus(table, colonne, m) {
+  if (!process.env.PAP_REFUS) return;
+  const pile = (new Error().stack || '').split('\n').find((l) => /\/(lib|api)\//.test(l)) || '';
+  require('node:fs').appendFileSync(process.env.PAP_REFUS, JSON.stringify({ table, colonne, m, ou: pile.trim() }) + '\n');
+}
+// select=a,b:c,rel(x,y),autre:rel!fk(z) → colonnes simples seulement (les ressources liées sont ignorées)
+function colonnesLues(sel) {
+  const out = []; let prof = 0; let cur = '';
+  for (const ch of sel) {
+    if (ch === '(') { prof++; continue; }
+    if (ch === ')') { prof--; continue; }
+    if (prof) continue;
+    if (ch === ',') { out.push(cur); cur = ''; } else cur += ch;
+  }
+  out.push(cur);
+  return out.map((x) => x.trim()).filter(Boolean).map((x) => (x.includes(':') ? x.split(':').pop() : x).split('!')[0].split('->')[0].split('::')[0])
+    .filter((x) => x && x !== '*' && !SCHEMA[x] && !/^count$/.test(x));
+}
+
 function creerBase(tables = {}) {
   const db = { tables: { transaction_audit_events: [], ...JSON.parse(JSON.stringify(tables)) }, rpc: [], stripe: [], courriels: [], seq: 0, badges: new Set() };
   const t = (nom) => (db.tables[nom] = db.tables[nom] || []);
@@ -96,15 +117,21 @@ function creerBase(tables = {}) {
     if (!tab) return rep({}, false, 404);
     const nom = tab[1];
     if (db.illisible && db.illisible.includes(nom)) return rep({ message: 'illisible' }, false, 500);
-    // Schéma optionnel (db.colonnes = { table: [colonnes] }) : comme PostgREST, une colonne inconnue donne 400.
-    const cols = db.colonnes && db.colonnes[nom];
+    // Schéma de PRODUCTION par défaut (tests/schema-production.json, lu le 24 nov. 2026) : comme PostgREST,
+    // une table inconnue donne 404 et une colonne inconnue 400. db.colonnes = { table: [colonnes] } peut le préciser.
+    if (db.schemaProduction !== false && !SCHEMA[nom] && !(db.colonnes && db.colonnes[nom])) {
+      db.refus = db.refus || []; db.refus.push({ table: nom, colonne: null, m }); noterRefus(nom, null, m);
+      return rep({ code: 'PGRST205', message: `Could not find the table 'public.${nom}' in the schema cache` }, false, 404);
+    }
+    const cols = (db.colonnes && db.colonnes[nom]) || (db.schemaProduction !== false && SCHEMA[nom]);
     if (cols) {
       const sel = decodeURIComponent((url.match(/[?&]select=([^&]*)/) || [])[1] || '');
-      const lues = sel && sel !== '*' ? sel.split(',').map((c) => c.trim()).filter((c) => c && !c.includes('(') && !c.includes('->')) : [];
+      const lues = sel && sel !== '*' ? colonnesLues(sel) : [];
       const ecrites = (m === 'PATCH' || m === 'POST') && body && typeof body === 'object' ? (Array.isArray(body) ? body : [body]).flatMap((b) => Object.keys(b)) : [];
-      const filtrees = filtres(url).map(([c]) => c.split('->')[0]).filter((c) => c !== 'or');
-      const inconnue = [...lues, ...ecrites, ...filtrees].find((c) => !cols.includes(c));
-      if (inconnue) { db.refus = db.refus || []; db.refus.push({ table: nom, colonne: inconnue, m }); return rep({ code: '42703', message: `column ${nom}.${inconnue} does not exist` }, false, 400); }
+      const filtrees = filtres(url).map(([c]) => c.split('->')[0]).filter((c) => c !== 'or' && c !== 'and');
+      const triees = [...url.matchAll(/[?&]order=([a-z_0-9]+)/g)].map((x) => x[1]);
+      const inconnue = [...lues, ...ecrites, ...filtrees, ...triees].find((c) => !cols.includes(c));
+      if (inconnue) { db.refus = db.refus || []; db.refus.push({ table: nom, colonne: inconnue, m }); noterRefus(nom, inconnue, m); return rep(ecrites.includes(inconnue) ? { code: 'PGRST204', message: `Could not find the '${inconnue}' column of '${nom}' in the schema cache` } : { code: '42703', message: `column ${nom}.${inconnue} does not exist` }, false, 400); }
     }
     const f = filtres(url);
     const lignes = t(nom);

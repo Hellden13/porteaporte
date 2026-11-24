@@ -1,3 +1,4 @@
+const GL = require('../lib/_grand-livre');
 const CORS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://porteaporte.site',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -87,28 +88,18 @@ async function safePatchLivraisonPaid(sbUrl, sbKey, livraisonId, confirmationPat
   return false;
 }
 
+// Grand livre réel (montant_cad, meta, stripe_id, cree_le) : voir lib/_grand-livre.js
 async function getPaymentTransaction(sbUrl, sbKey, livraisonId) {
-  let r = await fetchJson(
-    `${sbUrl}/rest/v1/transactions?livraison_id=eq.${encodeURIComponent(livraisonId)}&type=eq.paiement_livraison&select=id,stripe_payment_intent,montant,statut,metadata,type&order=created_at.desc&limit=1`,
-    sbKey
-  );
-  if (r.ok && Array.isArray(r.data) && r.data[0]) return r.data[0];
-
-  r = await fetchJson(
-    `${sbUrl}/rest/v1/transactions?livraison_id=eq.${encodeURIComponent(livraisonId)}&select=id,stripe_payment_intent,montant,statut,metadata,type&order=created_at.desc&limit=1`,
-    sbKey
-  );
-  return r.ok && Array.isArray(r.data) ? (r.data[0] || null) : null;
+  const ctx = { sbUrl, sbKey };
+  const id = encodeURIComponent(livraisonId);
+  let r = await GL.lire(ctx, `livraison_id=eq.${id}&type=eq.paiement_livraison&order=cree_le.desc&limit=1`);
+  if (r.rows[0]) return r.rows[0];
+  r = await GL.lire(ctx, `livraison_id=eq.${id}&order=cree_le.desc&limit=1`);
+  return r.rows[0] || null;
 }
 
 async function insertTransactionIfMissing(sbUrl, sbKey, payload) {
-  const r = await fetch(`${sbUrl}/rest/v1/transactions`, {
-    method: 'POST',
-    headers: sbHeaders(sbKey, 'return=representation'),
-    body: JSON.stringify(payload)
-  });
-  const data = await r.json().catch(() => ({}));
-  return { ok: r.ok, data: Array.isArray(data) ? data[0] : data };
+  return GL.ecrire({ sbUrl, sbKey }, payload);
 }
 
 function sanitizeEnv(s) {
@@ -282,9 +273,9 @@ module.exports = async function handler(req, res) {
 
   if (intent.status === 'succeeded') {
     if (tx?.id) {
-      await patchSupabase(`${SB_URL}/rest/v1/transactions?id=eq.${encodeURIComponent(tx.id)}`, SB_KEY, {
+      await GL.majLignes({ sbUrl: SB_URL, sbKey: SB_KEY }, `id=eq.${encodeURIComponent(tx.id)}`, {
         statut: 'succeeded',
-        metadata: { ...(tx.metadata || {}), captured: true, reconciled_at: new Date().toISOString() }
+        metadata: { captured: true, reconciled_at: new Date().toISOString() },
       }).catch(() => false);
     }
     const livraisonUpdated = await safePatchLivraisonPaid(SB_URL, SB_KEY, livraison_id, recipientConfirmationPatch);
@@ -319,15 +310,10 @@ module.exports = async function handler(req, res) {
   const captured = capture.data;
   if (!capture.ok) return res.status(402).json({ error: captured.error?.message || 'Capture Stripe impossible' });
 
-  const txUpdated = tx?.id ? await patchSupabase(`${SB_URL}/rest/v1/transactions?id=eq.${encodeURIComponent(tx.id)}`, SB_KEY, {
+  const txUpdated = tx?.id ? await GL.majLignes({ sbUrl: SB_URL, sbKey: SB_KEY }, `id=eq.${encodeURIComponent(tx.id)}`, {
     statut: captured.status,
-    metadata: {
-      ...(tx.metadata || {}),
-      captured: true,
-      captured_at: new Date().toISOString(),
-      amount_captured: captured.amount_received
-    }
-  }).then(r => r.ok).catch(() => false) : false;
+    metadata: { captured: true, captured_at: new Date().toISOString(), amount_captured: captured.amount_received },
+  }).catch(() => false) : false;
 
   const livraisonUpdated = await safePatchLivraisonPaid(SB_URL, SB_KEY, livraison_id, recipientConfirmationPatch);
 

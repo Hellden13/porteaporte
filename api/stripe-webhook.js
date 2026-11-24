@@ -107,9 +107,9 @@ module.exports = async function handler(req, res) {
       if (rows.length) {
         await sbPost(sbUrl, sbKey, 'notifications', {
           user_id: rows[0].user_id,
-          type: 'system',
+          notif_type: 'system',
           title: 'Paiements activés !',
-          message: 'Ton compte Stripe est maintenant actif. Tu peux recevoir des virements.',
+          body: 'Ton compte Stripe est maintenant actif. Tu peux recevoir des virements.',
         }).catch(() => {});
       }
     }

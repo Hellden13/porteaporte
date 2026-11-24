@@ -72,6 +72,7 @@ function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
 }
 const ADR = require('../lib/_adresses');
+const GL = require('../lib/_grand-livre');
 const { codesLivraison, codesAffichables, verifierCodeReception, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
@@ -715,7 +716,7 @@ async function destinataireClaimAccount(req, res, ctx, body) {
   const { livraison_id } = body;
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
   // Vérifier que l'email destinataire correspond à celui de l'user connecté
-  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,destinataire_email,email_destinataire,destinataire_user_id`, {
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,destinataire_email,destinataire_user_id`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const livraison = lr.ok ? (await lr.json())[0] : null;
@@ -1170,7 +1171,7 @@ async function xlConfirmationRequest(req, res, ctx, body) {
   const { livraison_id } = body;
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
 
-  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,livreur_id,statut,taille_colis,destinataire_email,nom_destinataire,ville_arrivee`, {
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,livreur_id,statut,taille_colis,destinataire_email,destinataire_nom,ville_arrivee`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const livraison = lr.ok ? (await lr.json())[0] : null;
@@ -1192,7 +1193,7 @@ async function xlConfirmationRequest(req, res, ctx, body) {
   if (livraison.destinataire_email) {
     callNotifier('xl_confirmation_destinataire', {
       destinataire_email: livraison.destinataire_email,
-      destinataire_nom: livraison.nom_destinataire || '',
+      destinataire_nom: livraison.destinataire_nom || '',
       code: livraison.code || livraison_id.slice(0,8),
       ville_arrivee: livraison.ville_arrivee,
       confirm_link: `${siteOrigin()}/confirmation-destinataire.html?livraison_id=${encodeURIComponent(livraison_id)}&xl=1&t=${livraisonLinkToken(livraison_id)}`
@@ -1776,7 +1777,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
   // Notifications post-preuve — fire and forget
   try {
     const fullLivRes = await fetch(
-      `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,ville_depart,adresse_depart,ville_arrivee,adresse_arrivee,type_colis,prix_total,expediteur_id,email_destinataire,nom_destinataire`,
+      `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,code,ville_depart,adresse_depart,ville_arrivee,adresse_arrivee,type_colis,prix_total,expediteur_id,destinataire_email,destinataire_nom`,
       { headers: sbHeaders(ctx.sbKey) }
     );
     const fullLivRows = fullLivRes.ok ? await fullLivRes.json() : [];
@@ -1823,15 +1824,15 @@ async function submitDeliveryProof(req, res, ctx, body) {
         adresse_arrivee: fullLiv.adresse_arrivee || '',
         type_colis: fullLiv.type_colis || 'Colis',
         confirm_link: confirmLink,
-        nom_destinataire: fullLiv.nom_destinataire || ''
+        nom_destinataire: fullLiv.destinataire_nom || ''
       }).catch((e) => console.error('[notifier colis_livre_expediteur]', e.message));
     }
 
     // 3. Notif destinataire — si email disponible
-    if (fullLiv.email_destinataire) {
+    if (fullLiv.destinataire_email) {
       callNotifier('colis_livre_destinataire', {
-        destinataire_email: fullLiv.email_destinataire,
-        nom_destinataire: fullLiv.nom_destinataire || '',
+        destinataire_email: fullLiv.destinataire_email,
+        nom_destinataire: fullLiv.destinataire_nom || '',
         code: livraisonCode,
         livraison_id: livraisonId,
         ville_arrivee: fullLiv.ville_arrivee || '',
@@ -2178,7 +2179,7 @@ async function adminDashboard(req, res, ctx) {
   const profiles = profilesRes.ok ? await profilesRes.json() : [];
 
   let livraisonsRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,created_at,cree_le,livreur_id,expediteur_id,stripe_payment_intent,payment_intent_id,recipient_confirmed_at,recipient_confirmation_method,delivery_confirmation_mode,delivery_proof_required_admin_review&order=created_at.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=id,code,ville_depart,ville_arrivee,statut,prix_total,cree_le,livreur_id,expediteur_id,stripe_payment_intent,payment_intent_id,recipient_confirmed_at,recipient_confirmation_method,delivery_confirmation_mode,delivery_proof_required_admin_review&order=created_at.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   let livraisons = livraisonsRes.ok ? await livraisonsRes.json() : [];
@@ -2445,7 +2446,7 @@ async function adminDeliveryProof(req, res, ctx, body) {
   );
 
   const livRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(proof.livraison_id)}&select=id,code,ville_depart,ville_arrivee,statut,prix_total,livreur_id,expediteur_id,created_at,cree_le&limit=1`,
+    `${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(proof.livraison_id)}&select=id,code,ville_depart,ville_arrivee,statut,prix_total,livreur_id,expediteur_id,cree_le&limit=1`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const livraisons = livRes.ok ? await livRes.json().catch(() => []) : [];
@@ -2463,7 +2464,7 @@ async function adminDisputes(req, res, ctx) {
   }
 
   let livRes = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?select=*&or=(statut.in.(litige,rembourse),delivery_proof_required_admin_review.eq.true)&order=created_at.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?select=*&or=(statut.in.(litige,rembourse),delivery_proof_required_admin_review.eq.true)&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   let livraisons = livRes.ok ? await livRes.json().catch(() => []) : [];
@@ -2986,12 +2987,12 @@ async function notifications(req, res, ctx, body) {
   if (userId !== ctx.session.id && !admin) return res.status(403).json({ error: 'Notification refusée' });
 
   const payload = {
+    // Colonnes réelles de notifications : notif_type, title, body, action_url, read_at
     user_id: userId,
-    type: body.type || 'info',
-    titre: body.titre || body.title || 'PorteàPorte',
-    message: body.message || '',
-    lu: false,
-    metadata: body.metadata || {},
+    notif_type: String(body.type || body.notif_type || 'info').slice(0, 40),
+    title: String(body.titre || body.title || 'PorteàPorte').slice(0, 200),
+    body: String(body.message || body.body || '').slice(0, 2000),
+    action_url: body.action_url || body.url || null,
   };
   const r = await fetch(`${ctx.sbUrl}/rest/v1/notifications`, {
     method: 'POST',
@@ -3010,10 +3011,7 @@ async function refundPayment(req, res, ctx, body) {
   const livraisonId = body.livraison_id || body.livraisonId;
   let paymentIntent = body.payment_intent_id || body.paymentIntentId;
   if (!paymentIntent && livraisonId) {
-    const txRes = await fetch(`${ctx.sbUrl}/rest/v1/transactions?livraison_id=eq.${livraisonId}&type=eq.paiement_livraison&select=id,stripe_payment_intent&order=created_at.desc&limit=1`, {
-      headers: sbHeaders(ctx.sbKey)
-    });
-    const txs = txRes.ok ? await txRes.json() : [];
+    const { rows: txs } = await GL.lire(ctx, `livraison_id=eq.${encodeURIComponent(livraisonId)}&type=eq.paiement_livraison&order=cree_le.desc&limit=1`);
     paymentIntent = txs[0]?.stripe_payment_intent;
   }
   if (!paymentIntent) return res.status(400).json({ error: 'payment_intent_id ou livraison_id requis' });
@@ -4150,18 +4148,12 @@ async function fetchImpactState(sbUrl, sbKey) {
   const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   const month = monthStart.toISOString().slice(0, 10);
 
+  // Colonnes réelles : prix_total et cree_le (prix / prix_final / created_at n'existent pas en production)
   const livRes = await fetch(
-    `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at,cree_le&statut=in.(payee,paid,succeeded,confirmee)&cree_le=gte.${monthStart.toISOString()}&cree_le=lt.${nextMonth.toISOString()}&limit=1000`,
+    `${sbUrl}/rest/v1/livraisons?select=id,prix_total,statut,cree_le&statut=in.(payee,paid,succeeded,confirmee)&cree_le=gte.${monthStart.toISOString()}&cree_le=lt.${nextMonth.toISOString()}&limit=1000`,
     { headers: sbHeaders(sbKey) }
   );
-  let livraisons = livRes.ok ? await livRes.json() : [];
-  if (!livRes.ok) {
-    const fallback = await fetch(
-      `${sbUrl}/rest/v1/livraisons?select=id,prix_total,prix,prix_final,statut,created_at&statut=in.(payee,paid,succeeded,confirmee)&created_at=gte.${monthStart.toISOString()}&created_at=lt.${nextMonth.toISOString()}&limit=1000`,
-      { headers: sbHeaders(sbKey) }
-    );
-    livraisons = fallback.ok ? await fallback.json() : [];
-  }
+  const livraisons = livRes.ok ? await livRes.json() : [];
 
   const revenueCents = livraisons.reduce((sum, row) => {
     const amount = toNumber(row.prix_total ?? row.prix_final ?? row.prix, 0);
@@ -4364,7 +4356,7 @@ async function impactPublic(req, res, ctx) {
   const fundMaxClaimCents = Math.min(maxColisValueCents, Math.floor(fundNetBalanceCents * 0.5));
 
   const [drawsRes, winnersRes] = await Promise.all([
-    fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,description,draw_date,status,rules_url&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
+    fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=id,title,prize,draw_date,status&status=in.(active,closed,completed)&order=draw_date.desc&limit=12`, {
       headers: sbHeaders(ctx.sbKey)
     }).catch(() => null),
     fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=id,draw_id,user_email,user_role,prize_title,created_at&order=created_at.desc&limit=12`, {
@@ -4885,7 +4877,7 @@ function computeDriverLevel(profile, coinsBalance) {
 }
 
 async function rewardsDashboard(req, res, ctx) {
-  const missionsRes = await fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&status=eq.active&order=created_at.desc&limit=50`, {
+  const missionsRes = await fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&actif=eq.true&order=cree_le.desc&limit=50`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const missions = missionsRes.ok ? await missionsRes.json() : defaultRewardMissions();
@@ -5153,18 +5145,12 @@ async function runMonthlyDraw(ctx, drawId) {
   }
   if (!winnerRes.ok) return { ok: false, status: 400, error: 'Enregistrement gagnant impossible', details: winnerRes.data };
 
-  let drawPatchRes = await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
+  // monthly_draws n'a pas de winner_selected_at en production : statut seulement
+  await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
     method: 'PATCH',
     headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-    body: JSON.stringify({ status: 'completed', winner_selected_at: new Date().toISOString() })
-  }).catch(() => null);
-  if (drawPatchRes && !drawPatchRes.ok) {
-    await fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?id=eq.${encodeURIComponent(drawId)}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey, 'return=minimal'),
-      body: JSON.stringify({ status: 'completed' })
-    }).catch(() => {});
-  }
+    body: JSON.stringify({ status: 'completed' })
+  }).catch(() => {});
 
   return { ok: true, winner: Array.isArray(winnerRes.data) ? winnerRes.data[0] : winnerRes.data, candidates_count: candidates.length };
 }
@@ -5173,7 +5159,7 @@ async function adminRewards(req, res, ctx, body) {
   if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
   if (req.method === 'GET' || body.mode === 'list') {
     const [missionsRes, drawsRes, winnersRes, txRes] = await Promise.all([
-      fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&order=created_at.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
+      fetch(`${ctx.sbUrl}/rest/v1/missions?select=*&order=cree_le.desc&limit=100`, { headers: sbHeaders(ctx.sbKey) }),
       fetch(`${ctx.sbUrl}/rest/v1/monthly_draws?select=*&order=draw_date.desc&limit=50`, { headers: sbHeaders(ctx.sbKey) }),
       fetch(`${ctx.sbUrl}/rest/v1/draw_winners?select=*&order=created_at.desc&limit=50`, { headers: sbHeaders(ctx.sbKey) }).catch(() => null),
       fetch(`${ctx.sbUrl}/rest/v1/porte_coins_transactions?select=amount&limit=1000`, { headers: sbHeaders(ctx.sbKey) })
@@ -5574,7 +5560,7 @@ module.exports = async function handler(req, res) {
 
       // 1. Identifier les livraisons de test (sans expediteur réel OU sans payment_intent OU avec mots-clés)
       const testKeywords = ['test', 'demo', 'fictif', 'fake', 'exemple', 'sample'];
-      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,description,titre,prix_total,stripe_payment_intent,cree_le,expediteur_id`, {
+      const lr = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,description,prix_total,stripe_payment_intent,cree_le,expediteur_id`, {
         headers: sbHeaders(sbKey)
       });
       const allLivs = lr.ok ? await lr.json() : [];
@@ -5583,7 +5569,7 @@ module.exports = async function handler(req, res) {
         // Statut payé/livré = jamais touchable (vrai argent en jeu)
         if (['payee','paid','livre','livree','confirmee'].includes(l.statut)) return false;
         // Mot-clé test dans description ou titre
-        const text = `${l.description || ''} ${l.titre || ''}`.toLowerCase();
+        const text = `${l.description || ''}`.toLowerCase();
         if (testKeywords.some(k => text.includes(k))) return true;
         // Pas de stripe_payment_intent = jamais payée, probablement test
         if (!l.stripe_payment_intent && ['en_attente','publie'].includes(l.statut)) return true;
@@ -5834,7 +5820,7 @@ module.exports = async function handler(req, res) {
       const tpFilter = `code=eq.${encodeURIComponent(tpCode)}`;
       try {
         const tr = await fetch(
-          `${sbUrl}/rest/v1/livraisons?${tpFilter}&select=id,code,statut,ville_depart,ville_arrivee,type,type_colis,created_at,cree_le&limit=1`,
+          `${sbUrl}/rest/v1/livraisons?${tpFilter}&select=id,code,statut,ville_depart,ville_arrivee,type_colis,cree_le&limit=1`,
           { headers: sbHeaders(sbKey) }
         );
         if (!tr.ok) return res.status(400).json({ error: 'Suivi indisponible' });
@@ -5869,8 +5855,8 @@ module.exports = async function handler(req, res) {
             statut_step: si.step,
             ville_depart:  liv.ville_depart  || '—',
             ville_arrivee: liv.ville_arrivee || '—',
-            type: liv.type || liv.type_colis || 'colis',
-            created_at: liv.created_at || liv.cree_le,
+            type: liv.type_colis || 'colis',
+            created_at: liv.cree_le,
             position,
             steps: TRACK_STEPS,
             current_step: si.step,
@@ -6072,14 +6058,16 @@ module.exports = async function handler(req, res) {
       } catch (_) {}
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/reviews?livreur_id=eq.${encodeURIComponent(livreurId)}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
-          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
+          // Colonnes réelles : reviewed_id, rating, comment
+          const r = await fetch(`${sbUrl}/rest/v1/reviews?reviewed_id=eq.${encodeURIComponent(livreurId)}&select=rating,comment,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.rating, comment: x.comment, created_at: x.created_at }));
         } catch (_) {}
       }
       if (!reviews.length) {
         try {
-          const r = await fetch(`${sbUrl}/rest/v1/evaluations?cible_id=eq.${encodeURIComponent(livreurId)}&select=note,commentaire,created_at&order=created_at.desc&limit=20`, { headers: sbHeaders(sbKey) });
-          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.created_at }));
+          // Colonnes réelles : evalue_id, note, commentaire, cree_le
+          const r = await fetch(`${sbUrl}/rest/v1/evaluations?evalue_id=eq.${encodeURIComponent(livreurId)}&select=note,commentaire,cree_le&order=cree_le.desc&limit=20`, { headers: sbHeaders(sbKey) });
+          if (r.ok) reviews = (await r.json()).map(x => ({ rating: x.note, comment: x.commentaire, created_at: x.cree_le }));
         } catch (_) {}
       }
       const valid = reviews.filter(r => Number(r.rating) >= 1 && Number(r.rating) <= 5);
@@ -6424,7 +6412,7 @@ module.exports = async function handler(req, res) {
       if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Admin requis' });
 
       // 1. Toutes les livraisons groupées par statut (avec montants)
-      const livRes = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,prix_total,created_at,cree_le,stripe_payment_intent_id&order=created_at.desc&limit=200`, {
+      const livRes = await fetch(`${sbUrl}/rest/v1/livraisons?select=id,code,statut,prix_total,cree_le,stripe_payment_intent&order=cree_le.desc&limit=200`, {
         headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
       });
       const livs = livRes.ok ? await livRes.json() : [];
@@ -6435,17 +6423,14 @@ module.exports = async function handler(req, res) {
         if (!byStatus[s]) byStatus[s] = { count: 0, total_cad: 0, samples: [] };
         byStatus[s].count++;
         byStatus[s].total_cad += Number(l.prix_total) || 0;
-        if (byStatus[s].samples.length < 3) byStatus[s].samples.push({ id: l.id, code: l.code, prix: l.prix_total, pi: l.stripe_payment_intent_id, date: l.created_at || l.cree_le });
+        if (byStatus[s].samples.length < 3) byStatus[s].samples.push({ id: l.id, code: l.code, prix: l.prix_total, pi: l.stripe_payment_intent, date: l.cree_le });
         grandTotal += Number(l.prix_total) || 0;
       }
 
       // 2. Toutes les transactions Stripe enregistrées
       let transactions = [];
       try {
-        const tr = await fetch(`${sbUrl}/rest/v1/transactions?select=*&order=created_at.desc&limit=100`, {
-          headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
-        });
-        if (tr.ok) transactions = await tr.json();
+        transactions = (await GL.lire({ sbUrl, sbKey }, 'order=cree_le.desc&limit=100')).rows;
       } catch (_) {}
 
       // 3. Audit events
@@ -6573,9 +6558,10 @@ module.exports = async function handler(req, res) {
       const session = await getSession(req, sbUrl, sbKey);
       if (!session) return res.status(401).json({ error: 'Connexion requise' });
       const reason = String(body.reason || '').trim().slice(0, 500);
-      await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${session.id}`, {
-        method: 'PATCH', headers: sbHeaders(sbKey),
-        body: JSON.stringify({ deletion_requested_at: new Date().toISOString(), deletion_reason: reason })
+      // profiles n'a pas de colonnes deletion_* en production : la demande est gardée au journal.
+      await fetch(`${sbUrl}/rest/v1/transaction_audit_events`, {
+        method: 'POST', headers: sbHeaders(sbKey),
+        body: JSON.stringify({ event_type: 'suppression_compte_demandee', status: 'en_attente', user_id: session.id, actor_id: session.id, evidence: { raison: reason } })
       }).catch(() => {});
       alertAdmin(
         `Demande de suppression compte`,
@@ -6864,7 +6850,7 @@ module.exports = async function handler(req, res) {
       const { title: pbTitle, body: pbBody, url: pbUrl, role: pbRole } = body || {};
       if (!pbTitle || !pbBody) return res.status(400).json({ error: 'title et body sont requis' });
       webpush.setVapidDetails(vapidEmail, vapidPublic, vapidPrivate);
-      let subsUrl = `${sbUrl}/rest/v1/push_subscriptions?select=id,subscription,user_id`;
+      let subsUrl = `${sbUrl}/rest/v1/push_subscriptions?select=id,user_id,endpoint,p256dh,auth`;
       if (pbRole) {
         const prRes = await fetch(`${sbUrl}/rest/v1/profiles?role=eq.${pbRole}&select=id`, { headers: sbHeaders(sbKey) });
         if (!prRes.ok) return res.status(500).json({ error: 'Erreur lecture profils' });
@@ -6882,7 +6868,9 @@ module.exports = async function handler(req, res) {
       const pbStale = [];
       await Promise.all(pbSubs.map(async (row) => {
         let sub;
-        try { sub = typeof row.subscription === 'string' ? JSON.parse(row.subscription) : row.subscription; } catch { pbFailed++; return; }
+        // Colonnes réelles : endpoint, p256dh, auth
+        sub = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
+        if (!sub.endpoint) { pbFailed++; return; }
         try { await webpush.sendNotification(sub, pbPayload); pbSent++; }
         catch (e) { pbFailed++; if (e.statusCode === 410 || e.statusCode === 404) pbStale.push(row.id); }
       }));

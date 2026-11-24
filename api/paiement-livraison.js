@@ -1,3 +1,4 @@
+const GL = require('../lib/_grand-livre');
 // api/paiement-livraison.js - PaymentIntent Stripe escrow pour une livraison.
 
 const { checkRateLimit, getClientIp } = require('../lib/_ratelimit');
@@ -61,16 +62,8 @@ async function markPaymentAuthorized(sbUrl, sbKey, livraisonId, intent, transact
   });
 
   if (transactionId) {
-    await fetch(`${sbUrl}/rest/v1/transactions?id=eq.${encodeURIComponent(transactionId)}`, {
-      method: 'PATCH',
-      headers: {
-        apikey: sbKey,
-        Authorization: `Bearer ${sbKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify({ statut: intent.status })
-    }).catch(() => null);
+    // Grand livre réel : statut rangé dans meta.statut (lib/_grand-livre.js)
+    await GL.majLignes({ sbUrl, sbKey }, `id=eq.${encodeURIComponent(transactionId)}`, { statut: intent.status }).catch(() => null);
   }
 
   return livraisonUpdated;
@@ -172,11 +165,7 @@ module.exports = async function handler(req, res) {
 
   try {
     console.log('[paiement-livraison] livraison=%s montantCents=%s', livraison.id, montantCents);
-    const txListRes = await fetch(
-      `${SB_URL}/rest/v1/transactions?livraison_id=eq.${livraison.id}&type=eq.paiement_livraison&select=id,stripe_payment_intent,created_at,statut&order=created_at.desc&limit=5`,
-      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
-    );
-    const txRows = txListRes.ok ? await txListRes.json().catch(() => []) : [];
+    const { rows: txRows } = await GL.lire({ sbUrl: SB_URL, sbKey: SB_KEY }, `livraison_id=eq.${livraison.id}&type=eq.paiement_livraison&order=cree_le.desc&limit=5`);
     for (const row of txRows) {
       const piId = row.stripe_payment_intent;
       if (!piId) continue;
@@ -259,28 +248,17 @@ module.exports = async function handler(req, res) {
       return res.status(402).json({ error: intent.error?.message || 'Erreur Stripe' });
     }
 
-    await fetch(`${SB_URL}/rest/v1/transactions`, {
-      method: 'POST',
-      headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify({
-        user_id: session.id,
-        livraison_id: livraison.id,
-        type: 'paiement_livraison',
-        montant: montantDollars,
-        statut: intent.status,
-        description: 'Autorisation escrow livraison ' + colisId,
-        stripe_payment_intent: intent.id,
-        metadata: {
-          capture_method: 'manual',
-          client_secret_created: true
-        }
-      })
-    }).catch((err) => console.error('[paiement-livraison] transaction:', err.message));
+    const ecrit = await GL.ecrire({ sbUrl: SB_URL, sbKey: SB_KEY }, {
+      user_id: session.id,
+      livraison_id: livraison.id,
+      type: 'paiement_livraison',
+      montant: montantDollars,
+      statut: intent.status,
+      description: 'Autorisation escrow livraison ' + colisId,
+      stripe_payment_intent: intent.id,
+      metadata: { capture_method: 'manual', client_secret_created: true },
+    }, 'return=minimal');
+    if (!ecrit.ok) console.error('[paiement-livraison] transaction non écrite :', ecrit.status);
 
     await fetch(`${SB_URL}/rest/v1/transaction_audit_events`, {
       method: 'POST',
