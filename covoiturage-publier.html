@@ -756,6 +756,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
+  <script src="/js/adresses.js"></script>
   <script>
     let currentStep = 1;
     let stopCount = 0;
@@ -1578,6 +1579,35 @@
         btn.disabled = false; btn.textContent = isEditMode ? '✏️ Modifier le trajet' : '🚗 Publier mon trajet';
       }
     }
+  </script>
+  <script>
+    // ── Suggestions d'adresses — Google en principal, Geoapify en secours (clés côté serveur) ──
+    // Départ / destination : la ville et le secteur se remplissent ; lieux d'embarquement : lieu public suggéré.
+    // Le texte libre reste toujours accepté.
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.Adresses) return;
+      const $ = (id) => document.getElementById(id);
+      [['start_city', 'start_sector'], ['end_city', 'end_sector']].forEach(function (ids) {
+        const ville = $(ids[0]), secteur = $(ids[1]);
+        window.Adresses.brancher(ville, {
+          onChoix: function (a) {
+            window.Adresses.remplir(ville, a.ville || a.principal);
+            const s = a.secteur || a.nom;
+            if (s && secteur) window.Adresses.remplir(secteur, s);
+          },
+        });
+      });
+      ['start', 'end'].forEach(function (cote) {
+        const champ = $('meeting-point-label-' + cote);
+        window.Adresses.brancher(champ, {
+          lieuPublic: true,
+          onChoix: function (a) {
+            const adresse = [a.ligne1, a.ville].filter(Boolean).join(', ');
+            champ.value = a.nom ? a.nom + (adresse ? ' — ' + adresse : '') : (adresse || a.principal);
+          },
+        });
+      });
+    });
   </script>
   <script src="/js/qc-cities.js" defer></script>
   <script src="/js/support-widget.js"></script>

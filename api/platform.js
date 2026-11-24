@@ -71,6 +71,7 @@ const { mesVehicules, enregistrerVehicule, retirerVehicule, commencerJournee, ad
 function champsDistance(b) {
   return { ville_depart: b.ville_depart, ville_arrivee: b.ville_arrivee, cp_depart: b.code_postal_depart || b.cp_depart, cp_arrivee: b.code_postal_arrivee || b.cp_arrivee };
 }
+const ADR = require('../lib/_adresses');
 const { codesLivraison, codesAffichables, verifierCodeReception, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
@@ -6228,6 +6229,10 @@ module.exports = async function handler(req, res) {
     }
 
     const ctx = { sbUrl, sbKey, stripeKey: sanitizeEnv(process.env.STRIPE_SECRET_KEY), session, profile };
+
+    // Suggestions d'adresses (Google en principal, Geoapify en secours ; clés côté serveur seulement)
+    if (endpoint === 'adresse-suggestions') return await ADR.suggestions(req, res, ctx, body);
+    if (endpoint === 'adresse-details') return await ADR.details(req, res, ctx, body);
 
     if (endpoint === 'create-livraison') return await createLivraison(req, res, ctx, body);
     if (endpoint === 'assign-driver') return await assignDriver(req, res, ctx, body);
