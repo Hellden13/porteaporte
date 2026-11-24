@@ -6,7 +6,7 @@
   <meta name="description" content="Suivez votre livraison PorteàPorte en temps réel. Entrez votre code de suivi pour voir le statut, la position et l'historique.">
   <meta property="og:title" content="Suivi livraison · PorteàPorte">
   <meta property="og:description" content="Suivez votre livraison en temps réel avec votre code de suivi PorteàPorte.">
-  <title>Suivi livraison · PorteàPorte</title>
+  <title>Suivi livraison — PorteàPorte</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0A0C10">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -40,9 +40,9 @@
       outline: none; font-family: monospace; letter-spacing: 0.1em; text-transform: uppercase;
       transition: border-color 0.15s;
     }
-    .search-box input:focus { border-color: var(--brand-lime); }
+    .search-box input:focus { border-color: var(--brand-bleu); }
     .search-box button {
-      padding: 13px 22px; background: var(--brand-lime); color: var(--brand-bg-dark);
+      padding: 13px 22px; background: var(--brand-bleu); color: var(--brand-bg-dark);
       border: none; border-radius: 10px; font-weight: 800; cursor: pointer;
       font-size: 0.95rem; white-space: nowrap; transition: opacity 0.15s;
     }
@@ -63,13 +63,13 @@
     .code-pill {
       display: inline-block; font-family: monospace; font-weight: 800; font-size: 1rem;
       background: rgba(93,191,255,0.1); border: 1px solid rgba(93,191,255,0.3);
-      color: var(--brand-lime); border-radius: 8px; padding: 4px 14px; margin-bottom: 14px;
+      color: var(--brand-bleu); border-radius: 8px; padding: 4px 14px; margin-bottom: 14px;
     }
     .route-row {
       display: flex; align-items: center; justify-content: center; gap: 12px;
       font-weight: 700; font-size: 1rem; margin-top: 14px;
     }
-    .route-arrow { color: var(--brand-lime); font-size: 1.2rem; }
+    .route-arrow { color: var(--brand-bleu); font-size: 1.2rem; }
 
     /* Stepper */
     .stepper { display: flex; gap: 0; margin-bottom: 24px; }
@@ -88,9 +88,9 @@
       margin: 0 auto 8px; position: relative; z-index: 1; font-size: 0.85rem; font-weight: 800;
       transition: all 0.2s;
     }
-    .step.done .step-dot { background: var(--brand-lime); border-color: var(--brand-lime); color: var(--brand-bg-dark); }
-    .step.active .step-dot { background: var(--brand-bg-surface); border-color: var(--brand-lime); color: var(--brand-lime); box-shadow: 0 0 0 4px rgba(93,191,255,0.15); }
-    .step.done::before { background: var(--brand-lime); }
+    .step.done .step-dot { background: var(--brand-bleu); border-color: var(--brand-bleu); color: var(--brand-bg-dark); }
+    .step.active .step-dot { background: var(--brand-bg-surface); border-color: var(--brand-bleu); color: var(--brand-bleu); box-shadow: 0 0 0 4px rgba(93,191,255,0.15); }
+    .step.done::before { background: var(--brand-bleu); }
     .step-name { font-size: 0.7rem; color: var(--brand-muted); line-height: 1.3; }
     .step.done .step-name, .step.active .step-name { color: var(--brand-text); }
 
@@ -102,12 +102,12 @@
 
     /* Position GPS */
     .gps-card {
-      background: rgba(0,217,255,0.06); border: 1px solid rgba(0,217,255,0.2);
+      background: rgba(93,191,255,0.06); border: 1px solid rgba(93,191,255,0.2);
       border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
       display: flex; align-items: center; gap: 14px;
     }
     .gps-icon { font-size: 1.6rem; }
-    .gps-label { font-weight: 700; color: #00D9FF; font-size: 0.88rem; }
+    .gps-label { font-weight: 700; color: #5dbfff; font-size: 0.88rem; }
     .gps-sub { color: var(--brand-muted); font-size: 0.78rem; margin-top: 2px; }
 
     /* Actions */

@@ -5,7 +5,7 @@
     <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Dashboard expéditeur - PorteàPorte">
-    <title>Dashboard expéditeur - PorteàPorte</title>
+    <title>Dashboard expéditeur — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     
     <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -84,7 +84,7 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: 800;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
             line-height: 1;
         }
 
@@ -204,8 +204,8 @@
         .tab-button:hover { color: var(--brand-text); }
 
         .tab-button.active {
-            color: var(--brand-lime);
-            border-bottom-color: var(--brand-lime);
+            color: var(--brand-bleu);
+            border-bottom-color: var(--brand-bleu);
         }
 
         .missions-grid {
@@ -231,7 +231,7 @@
         }
 
         .mission-card:hover {
-            border-color: var(--brand-lime);
+            border-color: var(--brand-bleu);
             box-shadow: 0 4px 24px rgba(93,191,255,.10);
             transform: translateY(-2px);
         }
@@ -269,7 +269,7 @@
 
         .mission-status.active {
             background: rgba(11,255,203,.15);
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .mission-status.completed {
@@ -308,7 +308,7 @@
         .mission-price {
             font-size: 1.25rem;
             font-weight: 800;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .mission-driver {
@@ -365,7 +365,7 @@
         .sidebar-title {
             font-size: 0.95rem;
             font-weight: 700;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
             margin-bottom: 14px;
             text-transform: uppercase;
             letter-spacing: .05em;
@@ -390,9 +390,9 @@
         }
 
         .quick-action-btn:hover {
-            border-color: var(--brand-lime);
+            border-color: var(--brand-bleu);
             background: rgba(93,191,255,.05);
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .stats-list { display: grid; gap: 8px; }
@@ -411,7 +411,7 @@
 
         .stats-item-value {
             font-weight: 700;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .empty-state {
@@ -560,7 +560,7 @@
                 <div class="navbar-brand">PorteàPorte</div>
                 <div id="auth-user-info" class="flex items-center gap-md">
                     <span id="auth-user-name" class="text-sm font-semibold"></span>
-                    <a id="admin-back-btn" href="/admin/dashboard-admin.html" class="btn btn-sm" style="display:none;background:var(--brand-lime);color:#0A0F1E;font-weight:800;border:none;padding:7px 14px;border-radius:8px;text-decoration:none">⚡ Admin</a>
+                    <a id="admin-back-btn" href="/admin/dashboard-admin.html" class="btn btn-sm" style="display:none;background:var(--brand-bleu);color:#0A0F1E;font-weight:800;border:none;padding:7px 14px;border-radius:8px;text-decoration:none">⚡ Admin</a>
                     <button id="auth-logout-btn" class="btn btn-ghost btn-sm" onclick="AUTH_API.logout()">Déconnexion</button>
                 </div>
             </div>
@@ -1427,13 +1427,13 @@
                     : '';
                 const isActive = mission.livreur_id && ['confirme','en_route','ramasse','livre','livree','delivered'].includes(mission.statut);
                 const livreurBlock = mission.livreur_id && mission.livreur_profile && isActive
-                    ? `<div style="margin-top:14px;padding:16px;background:rgba(0,217,255,.06);border:2px solid rgba(0,217,255,.35);border-radius:12px">
+                    ? `<div style="margin-top:14px;padding:16px;background:rgba(93,191,255,.06);border:2px solid rgba(93,191,255,.35);border-radius:12px">
                         <div style="display:flex;align-items:center;gap:14px">
                           ${mission.livreur_profile.photo_url
-                              ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" alt="Photo du livreur" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(0,217,255,.5)">`
-                              : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#5dbfff);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
+                              ? `<img loading="lazy" decoding="async" src="${esc(mission.livreur_profile.photo_url)}" alt="Photo du livreur" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(93,191,255,.5)">`
+                              : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#5dbfff,#5dbfff);display:flex;align-items:center;justify-content:center;font-size:30px;color:#001828">🚚</div>`}
                           <div style="flex:1">
-                            <div style="font-size:.72rem;color:#00d9ff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
+                            <div style="font-size:.72rem;color:#5dbfff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
                             <div style="font-size:1.05rem;font-weight:900;color:#fff;margin-top:2px">${livreurNom}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:.85rem">
                               ${mission.livreur_profile.score_confiance ? `<span style="color:#ffd700">★ ${(mission.livreur_profile.score_confiance / 20).toFixed(1)}</span>` : ''}
@@ -1443,7 +1443,7 @@
                         </div>
                         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                           <a href="/livreur-card.html?id=${esc(mission.livreur_id)}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:8px;color:#5dbfff;font-weight:800;text-decoration:none;font-size:.85rem">🆔 Voir sa carte d'identité</a>
-                          <a href="/message-livraison.html?l=${esc(mission.id)}&avec=livreur" style="flex:1;text-align:center;padding:10px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
+                          <a href="/message-livraison.html?l=${esc(mission.id)}&avec=livreur" style="flex:1;text-align:center;padding:10px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:8px;color:#7de4ff;font-weight:800;text-decoration:none;font-size:.85rem">💬 Message</a>
                         </div>
                         <p style="margin:10px 0 0;font-size:.75rem;color:#a8b0ba;text-align:center">⚠️ Vérifie son identité avant d'ouvrir : compare son visage à la photo</p>
                       </div>`

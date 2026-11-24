@@ -6,7 +6,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0A0C10">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Covoiturage · PorteàPorte</title>
+  <title>Covoiturage — PorteàPorte</title>
   <link rel="canonical" href="https://porteaporte.site/covoiturage.html">
   <meta name="description" content="Partage les frais d'un trajet existant. Mise en relation entre conducteurs et passagers au Québec.">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -47,12 +47,12 @@
     /* ── BANNIÈRE LÉGALE ── */
     .legal-banner {
       background: rgba(93,191,255,0.08);
-      border-top: 2px solid var(--brand-lime);
+      border-top: 2px solid var(--brand-bleu);
       border-bottom: 1px solid rgba(93,191,255,0.2);
       padding: 14px clamp(18px,4vw,48px);
       text-align: center;
       font-size: 0.88rem;
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       line-height: 1.5;
     }
     .legal-banner strong { font-weight: 800; }
@@ -81,7 +81,7 @@
       font-size: clamp(1.4rem, 3vw, 2rem);
       color: var(--brand-text);
     }
-    .search-card h2 span { color: var(--brand-lime); }
+    .search-card h2 span { color: var(--brand-bleu); }
     .search-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 160px 120px;
@@ -116,7 +116,7 @@
       transition: border-color 0.2s;
       box-sizing: border-box;
     }
-    .field input:focus, .field select:focus { border-color: var(--brand-lime); }
+    .field input:focus, .field select:focus { border-color: var(--brand-bleu); }
     .field input::placeholder { color: var(--brand-muted); font-weight: 400; }
 
     /* ── FILTRES AVANCÉS ── */
@@ -130,7 +130,7 @@
       padding: 4px 0;
       text-decoration: underline;
     }
-    .filters-toggle:hover { color: var(--brand-lime); }
+    .filters-toggle:hover { color: var(--brand-bleu); }
     .filters-extra {
       display: none;
       margin-top: 16px;
@@ -153,9 +153,9 @@
       transition: border-color 0.2s, color 0.2s;
       user-select: none;
     }
-    .checkbox-option input { accent-color: var(--brand-lime); }
+    .checkbox-option input { accent-color: var(--brand-bleu); }
     .checkbox-option:has(input:checked) {
-      border-color: var(--brand-lime);
+      border-color: var(--brand-bleu);
       color: var(--brand-text);
     }
 
@@ -210,7 +210,7 @@
       font-weight: 700;
       color: var(--brand-text);
     }
-    .ride-route .arrow { color: var(--brand-lime); }
+    .ride-route .arrow { color: var(--brand-bleu); }
     .ride-meta {
       display: flex;
       flex-wrap: wrap;
@@ -228,15 +228,15 @@
       border: 1px solid var(--brand-border);
       font-size: 0.78rem;
     }
-    .badge.green  { background: rgba(93,191,255,0.08); border-color: rgba(93,191,255,0.3); color: var(--brand-lime); }
-    .badge.blue   { background: rgba(0,217,255,0.08); border-color: rgba(0,217,255,0.3); color: var(--brand-cyan); }
+    .badge.green  { background: rgba(93,191,255,0.08); border-color: rgba(93,191,255,0.3); color: var(--brand-bleu); }
+    .badge.blue   { background: rgba(93,191,255,0.08); border-color: rgba(93,191,255,0.3); color: var(--brand-cyan); }
     .ride-price {
       text-align: right;
     }
     .ride-price-amount {
       font-size: 1.5rem;
       font-weight: 900;
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       line-height: 1;
     }
     .ride-price-label { font-size: 0.75rem; color: var(--brand-muted); margin-top: 2px; }
@@ -266,7 +266,7 @@
       flex-direction: column;
       gap: 12px;
     }
-    .cta-card.primary { border-color: var(--brand-lime); }
+    .cta-card.primary { border-color: var(--brand-bleu); }
     .cta-icon { font-size: 2rem; }
     .cta-card h3 { margin: 0; font-size: 1.3rem; color: var(--brand-text); }
     .cta-card p  { margin: 0; color: var(--brand-muted); line-height: 1.65; font-size: 0.95rem; }
@@ -299,7 +299,7 @@
       width: 36px; height: 36px;
       border-radius: 50%;
       background: rgba(93,191,255,0.12);
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       font-weight: 900;
       font-size: 1rem;
       margin-bottom: 12px;
@@ -336,7 +336,7 @@
       font-size: 0.82rem;
       line-height: 1.7;
     }
-    .legal-footer a { color: var(--brand-lime); text-decoration: none; }
+    .legal-footer a { color: var(--brand-bleu); text-decoration: none; }
 
     /* ── NAVBAR ── */
     .site-header {
@@ -355,15 +355,15 @@
     .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
     .nav-links { display: flex; align-items: center; gap: 20px; }
     .nav-links a { color: var(--brand-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
-    .nav-links a:hover { color: var(--brand-lime); }
-    .nav-links a.active { color: var(--brand-lime); }
+    .nav-links a:hover { color: var(--brand-bleu); }
+    .nav-links a.active { color: var(--brand-bleu); }
     @media (max-width: 640px) { .nav-links { display: none; } }
 
     /* ── SPINNER ── */
     .spinner {
       display: inline-block; width: 18px; height: 18px;
       border: 2px solid var(--brand-border);
-      border-top-color: var(--brand-lime);
+      border-top-color: var(--brand-bleu);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
@@ -419,7 +419,7 @@
   <div class="legal-banner">
     <strong>ℹ️ Le covoiturage PorteàPorte repose sur le partage des frais d'un trajet existant.</strong>
     Il ne s'agit pas d'un service de taxi ou de transport commercial.
-    <a href="/covoiturage/regles.html" style="color:var(--brand-lime);margin-left:8px;font-weight:700;">En savoir plus →</a>
+    <a href="/covoiturage/regles.html" style="color:var(--brand-bleu);margin-left:8px;font-weight:700;">En savoir plus →</a>
   </div>
 
   <main>
@@ -430,7 +430,7 @@
         <div class="search-card">
           <h1 class="sr-only">Covoiturage au Québec avec PorteàPorte</h1>
           <h2>Trouver un trajet <span>près de toi</span></h2>
-          <p style="color:var(--brand-muted);font-size:.92rem;margin:-8px 0 18px;text-align:center">🔍 <strong style="color:var(--brand-lime)">Aucun compte requis</strong> pour chercher — explore les trajets disponibles avant de t'inscrire.</p>
+          <p style="color:var(--brand-muted);font-size:.92rem;margin:-8px 0 18px;text-align:center">🔍 <strong style="color:var(--brand-bleu)">Aucun compte requis</strong> pour chercher — explore les trajets disponibles avant de t'inscrire.</p>
           <div class="search-grid">
             <div class="field">
               <label>Départ</label>
@@ -519,11 +519,11 @@
           </div>
         </div>
         <div id="matching-info" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.25);border-radius:10px;font-size:.85rem;color:var(--brand-muted);">
-          🎯 <strong style="color:var(--brand-lime);">Tri intelligent activé.</strong> Les trajets sont classés selon : identité vérifiée, note moyenne, expérience chauffeur, proximité horaire, et plus encore.
+          🎯 <strong style="color:var(--brand-bleu);">Tri intelligent activé.</strong> Les trajets sont classés selon : identité vérifiée, note moyenne, expérience chauffeur, proximité horaire, et plus encore.
         </div>
 
         <!-- Bandeau conversion pour visiteurs non-connectés -->
-        <div id="visitor-conversion-banner" style="display:none;background:linear-gradient(135deg,rgba(93,191,255,.1),rgba(0,217,255,.06));border:1px solid rgba(93,191,255,.35);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none">
+        <div id="visitor-conversion-banner" style="display:none;background:linear-gradient(135deg,rgba(93,191,255,.1),rgba(93,191,255,.06));border:1px solid rgba(93,191,255,.35);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:none">
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:2rem">👋</div>
             <div style="flex:1;min-width:200px">
@@ -546,7 +546,7 @@
           <div class="cta-icon">🚗</div>
           <h3>Tu fais déjà la route ?</h3>
           <p>Publiez ton trajet, partagez les frais d'essence et de déplacement avec des passagers qui vont dans la même direction.</p>
-          <p style="font-size:0.82rem;color:var(--brand-lime);">Trajet de 250 km → économisez jusqu'à 60 $</p>
+          <p style="font-size:0.82rem;color:var(--brand-bleu);">Trajet de 250 km → économisez jusqu'à 60 $</p>
           <a class="btn" href="/covoiturage-publier.html">Publier mon trajet</a>
         </div>
         <div class="cta-card">

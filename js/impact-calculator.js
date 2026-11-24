@@ -1,5 +1,5 @@
 /**
- * PorteaPorte - Calculateur d'impact public.
+ * PorteàPorte - Calculateur d'impact public.
  * Affiche une repartition simple d'un paiement selon les parametres publics.
  */
 (function () {
@@ -19,7 +19,7 @@
     s.id = 'pap-calc-styles';
     s.textContent = `
       .pap-calc {
-        background: linear-gradient(160deg, rgba(184,245,62,.08), rgba(0,217,255,.05));
+        background: linear-gradient(160deg, rgba(184,245,62,.08), rgba(93,191,255,.05));
         border: 2px solid rgba(184,245,62,.35);
         border-radius: 20px;
         padding: 32px;
@@ -69,7 +69,7 @@
       const data = await res.json();
       if (data.settings) settings = { ...settings, ...data.settings };
     } catch (e) {
-      console.warn('[PorteaPorte] Impact calculator: parametres publics indisponibles', e);
+      console.warn('[PorteàPorte] Impact calculator: parametres publics indisponibles', e);
     }
   }
 
@@ -78,7 +78,7 @@
     container.innerHTML = `
       <div class="pap-calc">
         <h3>Ou va chaque dollar que tu paies?</h3>
-        <div class="subtitle">Une répartition simple pour comprendre le modele PorteaPorte pendant la beta.</div>
+        <div class="subtitle">Une répartition simple pour comprendre le modele PorteàPorte pendant la beta.</div>
 
         <div class="preset-row">
           <button class="preset-btn" type="button" onclick="window._papCalcSet(this, 5)">5 $ (mini)</button>
@@ -147,7 +147,7 @@
     const livreurUber = amount * 0.32;
     const livreurDoorDash = amount * 0.30;
     container.querySelector('.comparison-content').innerHTML = `
-      <div class="compare-row"><span>PorteaPorte, objectif beta</span> <strong style="color:#b8f53e">${livreurPaP.toFixed(2)} $</strong></div>
+      <div class="compare-row"><span>PorteàPorte, objectif beta</span> <strong style="color:#b8f53e">${livreurPaP.toFixed(2)} $</strong></div>
       <div class="compare-row"><span>Autres plateformes, estimation haute</span> <strong>${livreurUber.toFixed(2)} $</strong></div>
       <div class="compare-row"><span>Autres plateformes, estimation basse</span> <strong>${livreurDoorDash.toFixed(2)} $</strong></div>
       <div class="compare-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)"><span style="color:#7dffc1">Ecart estime en faveur du livreur</span> <strong style="color:#7dffc1">+${(livreurPaP - livreurUber).toFixed(2)} $</strong></div>

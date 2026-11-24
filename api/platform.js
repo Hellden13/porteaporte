@@ -1,4 +1,4 @@
-// api/platform.js — Gestionnaire principal PorteaPorte
+// api/platform.js — Gestionnaire principal PorteàPorte
 // Modules extraits : _lib.js · _push.js · _rides.js · _growth.js · _connect.js
 
 const crypto = require('crypto');
@@ -2988,7 +2988,7 @@ async function notifications(req, res, ctx, body) {
   const payload = {
     user_id: userId,
     type: body.type || 'info',
-    titre: body.titre || body.title || 'PorteaPorte',
+    titre: body.titre || body.title || 'PorteàPorte',
     message: body.message || '',
     lu: false,
     metadata: body.metadata || {},
@@ -3364,7 +3364,7 @@ async function rideUserRating(req, res, ctx, body) {
   // Calcul score confiance simple (badge)
   let badge = null;
   if (valid.length >= 20 && avg >= 4.7) badge = { label: '🌟 Élite', color: '#b8f53e' };
-  else if (valid.length >= 10 && avg >= 4.5) badge = { label: '✓ Confiance vérifiée', color: '#00d9ff' };
+  else if (valid.length >= 10 && avg >= 4.5) badge = { label: '✓ Confiance vérifiée', color: '#5dbfff' };
   else if (valid.length >= 3 && avg >= 4.0) badge = { label: '👍 Recommandé', color: '#ffd166' };
   else if (valid.length >= 1) badge = { label: '🌱 Nouveau membre', color: '#888' };
 
@@ -5125,7 +5125,7 @@ async function runMonthlyDraw(ctx, drawId) {
   const winnerPayload = {
     draw_id: drawId,
     user_id: winner.user_id,
-    prize_title: draw.title || 'Tirage PorteaPorte',
+    prize_title: draw.title || 'Tirage PorteàPorte',
     published: true,
     entries_weight: winner.entries_weight || 1,
     user_email: profile.email || winner.user_email || '',

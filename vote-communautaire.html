@@ -31,15 +31,15 @@
       background: radial-gradient(ellipse at center top, rgba(93,191,255,.15) 0%, transparent 70%);
       border-bottom: 1px solid var(--brand-border);
     }
-    .hero .tag { display: inline-block; padding: 6px 16px; background: rgba(93,191,255,.15); border: 1px solid rgba(93,191,255,.4); border-radius: 999px; color: var(--brand-lime); font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero .tag { display: inline-block; padding: 6px 16px; background: rgba(93,191,255,.15); border: 1px solid rgba(93,191,255,.4); border-radius: 999px; color: var(--brand-bleu); font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0 0 16px; font-weight: 900; }
-    .hero h1 span { background: linear-gradient(135deg, #00d9ff, #5dbfff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero h1 span { background: linear-gradient(135deg, #5dbfff, #5dbfff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .hero p { color: var(--brand-muted); max-width: 700px; margin: 0 auto; line-height: 1.7; font-size: 1.05rem; }
     .wrap { max-width: 880px; margin: 0 auto; padding: 50px 24px 80px; }
 
     .info-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 30px; }
     .info { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px; text-align: center; }
-    .info .val { font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); }
+    .info .val { font-size: 1.6rem; font-weight: 900; color: var(--brand-bleu); }
     .info .lbl { font-size: .78rem; color: var(--brand-muted); text-transform: uppercase; margin-top: 4px; letter-spacing: .05em; }
 
     .timer-box { background: linear-gradient(135deg, rgba(255,200,0,.06), rgba(255,150,0,.04)); border: 1px solid rgba(255,200,0,.4); border-radius: 14px; padding: 18px; margin-bottom: 24px; text-align: center; }
@@ -49,22 +49,22 @@
     .org-vote { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
     .org-vote .head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
     .org-vote h3 { margin: 0; font-size: 1.05rem; }
-    .org-vote .cause { color: var(--brand-lime); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+    .org-vote .cause { color: var(--brand-bleu); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
     .org-vote .desc { color: var(--brand-muted); font-size: .88rem; line-height: 1.5; margin-bottom: 14px; }
     .org-vote .slider-row { display: flex; gap: 12px; align-items: center; }
-    .org-vote input[type=range] { flex: 1; accent-color: var(--brand-lime); }
-    .org-vote .pct-display { font-size: 1.3rem; font-weight: 900; color: var(--brand-lime); min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+    .org-vote input[type=range] { flex: 1; accent-color: var(--brand-bleu); }
+    .org-vote .pct-display { font-size: 1.3rem; font-weight: 900; color: var(--brand-bleu); min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
     .org-vote .live-bar { height: 6px; background: rgba(0,0,0,.3); border-radius: 999px; overflow: hidden; margin-top: 12px; }
-    .org-vote .live-fill { height: 100%; background: linear-gradient(90deg, #00d9ff, #5dbfff); transition: width .8s ease; }
+    .org-vote .live-fill { height: 100%; background: linear-gradient(90deg, #5dbfff, #5dbfff); transition: width .8s ease; }
     .org-vote .live-pct { font-size: .8rem; color: var(--brand-muted); margin-top: 4px; }
 
     .total-bar { background: rgba(0,0,0,.3); border-radius: 10px; padding: 14px 18px; margin: 20px 0; text-align: center; }
     .total-bar.ok { background: rgba(93,191,255,.1); border: 1px solid rgba(93,191,255,.4); }
     .total-bar.err { background: rgba(255,90,90,.1); border: 1px solid rgba(255,90,90,.4); }
-    .total-bar .val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
+    .total-bar .val { font-size: 1.8rem; font-weight: 900; color: var(--brand-bleu); }
     .total-bar.err .val { color: #ffb0b0; }
 
-    .submit-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); color: #001828; border: none; border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
+    .submit-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-bleu)); color: #001828; border: none; border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
     .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
 
     .empty-state { text-align: center; padding: 60px 24px; color: var(--brand-muted); }
@@ -79,7 +79,7 @@
 </head>
 <body>
   <header style="position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(10,14,20,.95);border-bottom:1px solid var(--brand-border);backdrop-filter:blur(12px)">
-    <a href="/" style="font-weight:900;color:var(--brand-lime);text-decoration:none;font-size:1.15rem">PorteàPorte</a>
+    <a href="/" style="font-weight:900;color:var(--brand-bleu);text-decoration:none;font-size:1.15rem">PorteàPorte</a>
     <nav style="display:flex;gap:10px;flex-wrap:wrap">
       <a class="btn secondary" href="/organismes.html">Organismes</a>
       <a class="btn" href="/login.html">Se connecter</a>
@@ -119,7 +119,7 @@
 
     <div id="empty-state" class="empty-state" style="display:none">
       <h2>🗳️ Aucun vote en cours</h2>
-      <p>Le prochain vote trimestriel s'ouvrira bientôt. <a href="/organismes.html" style="color:var(--brand-lime)">Voir nos organismes partenaires →</a></p>
+      <p>Le prochain vote trimestriel s'ouvrira bientôt. <a href="/organismes.html" style="color:var(--brand-bleu)">Voir nos organismes partenaires →</a></p>
     </div>
   </main>
 
@@ -189,7 +189,7 @@
               <input type="range" min="0" max="100" step="1" value="${allocations[o.id]}" oninput="updateAlloc('${o.id}', this.value)">
             </div>
             <div class="live-bar"><div class="live-fill" style="width:${livePct.toFixed(1)}%"></div></div>
-            <div class="live-pct">📊 Tendance actuelle de la communauté : <strong style="color:var(--brand-lime)">${livePct.toFixed(0)}%</strong></div>
+            <div class="live-pct">📊 Tendance actuelle de la communauté : <strong style="color:var(--brand-bleu)">${livePct.toFixed(0)}%</strong></div>
           </div>
         `;
       }).join('');

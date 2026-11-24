@@ -27,7 +27,7 @@
     {
       keys: ['securite','verifie','verification','identite','confiance','arnaque','danger'],
       title: '🔒 Sécurité',
-      response: 'La confiance est au cœur de PorteÀPorte :\n\n✓ Profils vérifiés (photo, courriel, téléphone)\n✓ Évaluations 1–5 étoiles\n✓ Suivi GPS intelligent\n✓ Preuve de ramassage et livraison\n✓ Paiement sécurisé Stripe\n\nProblème ? Garde tes preuves et contacte notre équipe.'
+      response: 'La confiance est au cœur de PorteàPorte :\n\n✓ Profils vérifiés (photo, courriel, téléphone)\n✓ Évaluations 1–5 étoiles\n✓ Suivi GPS intelligent\n✓ Preuve de ramassage et livraison\n✓ Paiement sécurisé Stripe\n\nProblème ? Garde tes preuves et contacte notre équipe.'
     },
     {
       keys: ['remboursement','rembourser','annuler','annulation','litige'],
@@ -39,7 +39,7 @@
     {
       keys: ['covoiturage','covoit','partage','trajet partage','passager','embarquer'],
       title: '🚗 Covoiturage',
-      response: 'Le covoiturage PorteÀPorte permet de partager les frais d\'un trajet que tu fais déjà !\n\n✓ Légal au Québec (partage de frais, pas taxi)\n✓ Prix calculé automatiquement par km\n✓ Profils vérifiés\n✓ Adresses protégées jusqu\'à confirmation\n\n➡️ <a href="/covoiturage-info.html" style="color:#B8F53E">Tout savoir sur le covoiturage</a>\n➡️ <a href="/covoiturage.html" style="color:#B8F53E">Chercher un trajet</a>'
+      response: 'Le covoiturage PorteàPorte permet de partager les frais d\'un trajet que tu fais déjà !\n\n✓ Légal au Québec (partage de frais, pas taxi)\n✓ Prix calculé automatiquement par km\n✓ Profils vérifiés\n✓ Adresses protégées jusqu\'à confirmation\n\n➡️ <a href="/covoiturage-info.html" style="color:#B8F53E">Tout savoir sur le covoiturage</a>\n➡️ <a href="/covoiturage.html" style="color:#B8F53E">Chercher un trajet</a>'
     },
     {
       keys: ['publier trajet','offrir trajet','je conduis','je fais le trajet'],
@@ -59,7 +59,7 @@
     {
       keys: ['inscription covoiturage','creer profil covoiturage','m inscrire','sinscrire'],
       title: '✍️ Inscription covoiturage',
-      response: 'Créer ton profil covoiturage en 4 étapes :\n\n1. Choisis ton rôle : conducteur, passager, ou les deux\n2. Remplis ton profil (prénom, courriel, téléphone, ville)\n3. Ajoute les détails de ton véhicule et tes préférences\n4. Accepte les règlements et crée ton compte\n\n🎁 À l\'inscription : badge 🌱 "Nouveau covoitureur" + 50 XP offerts !\n\n➡️ <a href="/covoiturage/inscription.html" style="color:#B8F53E">S\'inscrire maintenant</a>'
+      response: 'Créer ton profil covoiturage en 4 étapes :\n\n1. Choisis ton rôle : conducteur, passager, ou les deux\n2. Remplis ton profil (prénom, courriel, téléphone, ville)\n3. Ajoute les détails de ton véhicule et tes préférences\n4. Accepte les règlements et crée ton compte\n\n🎁 À l\'inscription : badge 🌱 "Nouveau covoitureur" + 50 XP offerts !\n\n➡️ <a href="/signup.html" style="color:#B8F53E">S\'inscrire maintenant</a>'
     },
     {
       keys: ['regles covoiturage','reglements covoiturage','legal','legal quebec','loi covoiturage'],
@@ -81,7 +81,7 @@
     {
       keys: ['badge','badges','trophee'],
       title: '🏆 Badges',
-      response: 'Les badges PorteÀPorte :\n\n🌱 Nouveau covoitureur\n✅ Conducteur vérifié\n🚗 Premier trajet utile\n🎯 Auto pleine\n🌿 Éco-route\n⭐ Ambassadeur PorteÀPorte\n🗺️ Connecteur régional\n❤️ Trajet solidaire\n🏆 Groupe optimisé\n🎖️ Capitaine régional\n\nChaque badge est visible sur ton profil et renforce ta réputation dans la communauté.\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Voir mes badges</a>'
+      response: 'Les badges PorteàPorte :\n\n🌱 Nouveau covoitureur\n✅ Conducteur vérifié\n🚗 Premier trajet utile\n🎯 Auto pleine\n🌿 Éco-route\n⭐ Ambassadeur PorteàPorte\n🗺️ Connecteur régional\n❤️ Trajet solidaire\n🏆 Groupe optimisé\n🎖️ Capitaine régional\n\nChaque badge est visible sur ton profil et renforce ta réputation dans la communauté.\n\n➡️ <a href="/dashboard-covoiturage.html" style="color:#B8F53E">Voir mes badges</a>'
     },
     {
       keys: ['xp','experience','niveau','niveaux','progression','points'],
@@ -98,12 +98,12 @@
     {
       keys: ['communaute','reward','recompense','tirage','organisme','entraide'],
       title: '❤️ Communauté',
-      response: 'PorteÀPorte = communauté québécoise !\n\n🏆 Livreurs : bonus mensuels, badges, reconnaissance\n🎁 Tous : tirages mensuels, points fidélité\n❤️ Local : organismes soutenus, régions éloignées aidées\n🚗 Covoiturage : missions, badges, niveaux XP\n\nChaque trajet contribue à une mobilité plus humaine et abordable au Québec.'
+      response: 'PorteàPorte = communauté québécoise !\n\n🏆 Livreurs : bonus mensuels, badges, reconnaissance\n🎁 Tous : tirages mensuels, points fidélité\n❤️ Local : organismes soutenus, régions éloignées aidées\n🚗 Covoiturage : missions, badges, niveaux XP\n\nChaque trajet contribue à une mobilité plus humaine et abordable au Québec.'
     },
     {
       keys: ['compte','connexion','login','mot de passe','inscription','creer compte'],
       title: '👤 Compte',
-      response: 'Gestion de ton compte :\n\n🔑 Connexion : <a href="/login.html" style="color:#B8F53E">login.html</a>\n✍️ Inscription livraison : <a href="/register.html" style="color:#B8F53E">register.html</a>\n✍️ Inscription covoiturage : <a href="/covoiturage/inscription.html" style="color:#B8F53E">inscription covoiturage</a>\n📊 Mon profil : depuis le tableau de bord\n\nMot de passe oublié ? Utilise le lien "Mot de passe oublié" sur la page de connexion.'
+      response: 'Gestion de ton compte :\n\n🔑 Connexion : <a href="/login.html" style="color:#B8F53E">login.html</a>\n✍️ Inscription livraison : <a href="/signup.html" style="color:#B8F53E">inscription</a>\n✍️ Inscription covoiturage : <a href="/signup.html" style="color:#B8F53E">inscription covoiturage</a>\n📊 Mon profil : depuis le tableau de bord\n\nMot de passe oublié ? Utilise le lien "Mot de passe oublié" sur la page de connexion.'
     },
     {
       keys: ['urgent','probleme','erreur','souci','aide','crise','bogue'],
@@ -166,7 +166,7 @@
       #pia-panel.open{display:flex;}
       .pia-header{background:#0A0F1E;padding:14px 16px;display:flex;align-items:center;
         gap:10px;border-bottom:1px solid #1E2A3A;flex-shrink:0;}
-      .pia-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#B8F53E,#00D9FF);
+      .pia-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#B8F53E,#5dbfff);
         display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
       .pia-name{font-weight:800;color:#E8EDF5;font-size:.95rem;}
       .pia-status{font-size:.72rem;color:#B8F53E;margin-top:1px;}
@@ -185,7 +185,7 @@
       .pia-bubble.user{background:#B8F53E;color:#0A0F1E;border-bottom-right-radius:4px;
         align-self:flex-end;font-weight:600;}
       .pia-bubble a{color:#B8F53E;}
-      .pia-bubble.bot a{color:#00D9FF;}
+      .pia-bubble.bot a{color:#5dbfff;}
       .pia-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
       .pia-chip{background:#1E2A3A;border:1px solid #2A3A50;color:#A8B8C8;
         border-radius:20px;padding:5px 11px;font-size:.75rem;cursor:pointer;
@@ -219,7 +219,7 @@
     const btn = document.createElement('button');
     btn.id = 'pia-btn';
     btn.innerHTML = '💬<span class="notif" id="pia-notif"></span>';
-    btn.title = 'Parler à Pia — Support PorteÀPorte';
+    btn.title = 'Parler à Pia — Support PorteàPorte';
 
     // Panel
     const panel = document.createElement('div');
@@ -229,7 +229,7 @@
         <div class="pia-avatar">🤖</div>
         <div>
           <div class="pia-name">Pia</div>
-          <div class="pia-status">● En ligne — Support PorteÀPorte</div>
+          <div class="pia-status">● En ligne — Support PorteàPorte</div>
         </div>
         <button class="pia-close" id="pia-close" title="Fermer">✕</button>
       </div>
@@ -238,7 +238,7 @@
         <input class="pia-input" id="pia-input" placeholder="Pose ta question à Pia…" autocomplete="off" maxlength="200">
         <button class="pia-send" id="pia-send">➤</button>
       </div>
-      <div class="pia-branding">PorteÀPorte · Pia v2</div>
+      <div class="pia-branding">PorteàPorte · Pia v2</div>
     `;
 
     document.body.appendChild(btn);
@@ -308,7 +308,7 @@
       addTyping();
       setTimeout(() => {
         removeTyping();
-        addBubble('Salut ! 👋 Je suis <strong>Pia</strong>, l\'assistante de PorteÀPorte.<br><br>Je peux t\'aider avec :<br>📦 Livraisons · 🚗 Covoiturage · 💰 Prix · 🎯 Missions · 🔒 Sécurité<br><br>Comment puis-je t\'aider ?');
+        addBubble('Salut ! 👋 Je suis <strong>Pia</strong>, l\'assistante de PorteàPorte.<br><br>Je peux t\'aider avec :<br>📦 Livraisons · 🚗 Covoiturage · 💰 Prix · 🎯 Missions · 🔒 Sécurité<br><br>Comment puis-je t\'aider ?');
         addSuggestions();
       }, 800);
     }, 300);

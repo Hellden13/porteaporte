@@ -19,7 +19,7 @@
   <style>
     :root {
       --bg:#0A0F1E; --surface:#111827; --surface2:#1A2235;
-      --border:#1E2A3A; --green:#5dbfff; --cyan:#00D9FF;
+      --border:#1E2A3A; --green:#5dbfff; --cyan:#5dbfff;
       --text:#E8EDF5; --muted:#8A9BB0; --danger:#FF6B6B; --radius:14px;
     }
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -209,7 +209,7 @@ let currentSection = 'overview';
 
 const LEVELS = [
   { n:1, name:'Nouveau',          min:0,    max:199,  color:'#8B9BB0' },
-  { n:2, name:'Fiable',           min:200,  max:499,  color:'#00D9FF' },
+  { n:2, name:'Fiable',           min:200,  max:499,  color:'#5dbfff' },
   { n:3, name:'Habitué',          min:500,  max:999,  color:'#5dbfff' },
   { n:4, name:'Ambassadeur',      min:1000, max:1999, color:'#FFB74D' },
   { n:5, name:'Capitaine régional', min:2000, max:9999, color:'#5dbfff' },
@@ -507,7 +507,7 @@ function villeArret(v, b, sens) {
 function statusChip(s) {
   const map = {
     publie: ['#5dbfff','#0D2A00','Publié'],
-    complet: ['#00D9FF','#002233','Complet'],
+    complet: ['#5dbfff','#002233','Complet'],
     annule: ['#FF6B6B','#2A0000','Annulé'],
     termine: ['#5A6A7A','#111','Terminé'],
     confirme: ['#5dbfff','#0D2A00','Confirmé'],
@@ -652,10 +652,10 @@ function buildTrajets() {
       const confirmedForRide = receivedBookings.filter(b => b.ride_id === r.id && String(b.status || '').toLowerCase() === 'confirme');
       const meetupBox = (canCancel && confirmedForRide.length)
         ? `<div style="margin-top:8px">
-            <button type="button" onclick="toggleMeetupForm('${r.id}')" style="display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📍 Envoyer point de rencontre</button>
+            <button type="button" onclick="toggleMeetupForm('${r.id}')" style="display:inline-block;background:rgba(93,191,255,.12);color:var(--cyan);border:1px solid rgba(93,191,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📍 Envoyer point de rencontre</button>
             <div id="meetup-form-${r.id}" style="display:none;margin-top:8px;max-width:360px">
               <div style="font-size:.78rem;color:var(--cyan);font-weight:800;margin-bottom:5px">📍 Message aux passagers</div>
-              <textarea id="meetup-message-${r.id}" maxlength="300" placeholder="Je serai au stationnement IGA, voiture rouge Toyota" style="width:100%;min-height:78px;background:#080d16;color:#fff;border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:9px;resize:vertical"></textarea>
+              <textarea id="meetup-message-${r.id}" maxlength="300" placeholder="Je serai au stationnement IGA, voiture rouge Toyota" style="width:100%;min-height:78px;background:#080d16;color:#fff;border:1px solid rgba(93,191,255,.35);border-radius:8px;padding:9px;resize:vertical"></textarea>
               <button type="button" onclick="sendMeetupToRide('${r.id}')" style="margin-top:6px;width:100%;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border:0;padding:8px 12px;border-radius:8px;font-weight:900;cursor:pointer">Envoyer à tous les passagers confirmés (${confirmedForRide.length})</button>
             </div>
           </div>`
@@ -667,7 +667,7 @@ function buildTrajets() {
       <td>${statusChip(r.status)}</td>
       <td>
         <a href="/covoiturage-trajet.html?ride_id=${r.id}" style="color:var(--cyan);font-size:.8rem">Voir →</a>
-        ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(0,217,255,.12);color:var(--cyan);border:1px solid rgba(0,217,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
+        ${canCancel ? `<a href="/covoiturage-publier.html?edit=${encodeURIComponent(r.id)}" style="margin-left:10px;display:inline-block;background:rgba(93,191,255,.12);color:var(--cyan);border:1px solid rgba(93,191,255,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none">✏️ Modifier</a>` : ''}
         ${(canCancel && r.is_recurring && Array.isArray(r.recurrence_days) && r.recurrence_days.length) ? `<button type="button" onclick="annulerUnJour('${r.id}')" style="margin-left:10px;background:rgba(255,200,0,.1);color:#ffd23f;border:1px solid rgba(255,200,0,.4);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">📅 Annuler un seul jour</button>` : ''}
         ${canCancel ? `<button onclick="annulerTrajet('${r.id}')" style="margin-left:10px;background:rgba(255,80,80,.12);color:#ff6b6b;border:1px solid rgba(255,80,80,.35);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ Annuler</button>` : ''}
         <button type="button" onclick="supprimerTrajet('${encodeURIComponent(r.id)}')" style="margin-left:10px;background:rgba(255,80,80,.08);color:#ff9999;border:1px solid rgba(255,80,80,.3);padding:5px 11px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
@@ -725,7 +725,7 @@ function buildTrajets() {
             const drvContact = [];
             const canContactDriver = ['confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
             if (canContactDriver && b.driver_id) {
-              drvContact.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.driver_id)}','${escHtml(b.driver_prenom||'Conducteur')}')" style="display:inline-block;padding:5px 11px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au conducteur</button>`);
+              drvContact.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.driver_id)}','${escHtml(b.driver_prenom||'Conducteur')}')" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au conducteur</button>`);
             }
             // Bouton "Payer maintenant" si reservation en attente de paiement
             const isPending = ['en_attente', 'pending', 'unpaid'].includes(String(b.status||'').toLowerCase());
@@ -741,7 +741,7 @@ function buildTrajets() {
               ? `<button onclick="confirmerArrivee('${b.id}')" style="margin:2px;background:rgba(125,255,193,.12);color:#7dffc1;border:1px solid rgba(125,255,193,.35);padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:800;cursor:pointer;animation:pulse 1.5s infinite">✅ Confirmer mon arrivée</button>`
               : '';
             const meetupMessage = b.meetup_message
-              ? `<div style="margin-top:7px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
+              ? `<div style="margin-top:7px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.35);border-radius:8px;padding:7px 9px;color:var(--cyan);font-size:.78rem;line-height:1.35"><strong>📍 Point de rencontre du chauffeur :</strong><br>"${escHtml(b.meetup_message)}"</div>`
               : '';
             return `<tr>
               <td data-label="Trajet">${villeArret(b.pickup_city, b)} → ${villeArret(b.dropoff_city, b)}</td>
@@ -774,7 +774,7 @@ function buildReservations() {
   return `
   <div class="dash-header"><div><h1>Réservations reçues</h1><p>Passagers qui ont réservé vos trajets — contact direct par email/SMS</p></div></div>
 
-  <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
+  <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
     💡 <strong>Comment contacter tes passagers ?</strong><br>
     Clique <strong>💬 Écrire</strong> sur la ligne du passager : vous vous écrivez par la messagerie PorteàPorte, vos coordonnées restent privées. Chaque passager a sa propre conversation. Elle se ferme 3 jours après le trajet ; en cas de problème, utilise « Signaler ».
   </div>
@@ -785,7 +785,7 @@ function buildReservations() {
       : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
         ${allBookings.map(b=>{
           const contactInfo = [];
-          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire</button>`);
+          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire</button>`);
 
           // Carte animal (visible si passager a un animal sur ce trajet)
           let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';
@@ -805,7 +805,7 @@ function buildReservations() {
 
           const canComplete = ['confirme','driver_completed'].includes(String(b.status||'').toLowerCase());
           const completeBtn = canComplete
-            ? `<button onclick="openRideCodeModal('${b.id}')" style="margin:2px;background:rgba(0,217,255,.14);color:var(--cyan);border:1px solid rgba(0,217,255,.45);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:900;cursor:pointer">Valider trajet</button>`
+            ? `<button onclick="openRideCodeModal('${b.id}')" style="margin:2px;background:rgba(93,191,255,.14);color:var(--cyan);border:1px solid rgba(93,191,255,.45);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:900;cursor:pointer">Valider trajet</button>`
             : '<span style="color:var(--muted);font-size:.75rem">—</span>';
           return `<tr>
             <td><strong>${b.passenger_prenom||'—'}</strong></td>
@@ -834,12 +834,12 @@ function buildReservations() {
     </div>
   </div>
   <div id="ride-code-modal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,.94);z-index:10000;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)closeRideCodeModal()">
-    <div style="background:var(--brand-bg-surface,#0f1320);border:1px solid rgba(0,217,255,.3);border-radius:18px;width:min(420px,100%);padding:22px;box-shadow:0 22px 70px rgba(0,0,0,.45)">
-      <h3 style="margin:0 0 8px;color:var(--brand-cyan,#00d9ff);font-size:1.25rem">Code sécurité passager</h3>
+    <div style="background:var(--brand-bg-surface,#0f1320);border:1px solid rgba(93,191,255,.3);border-radius:18px;width:min(420px,100%);padding:22px;box-shadow:0 22px 70px rgba(0,0,0,.45)">
+      <h3 style="margin:0 0 8px;color:var(--brand-cyan,#5dbfff);font-size:1.25rem">Code sécurité passager</h3>
       <p style="margin:0 0 16px;color:#aab2c5;font-size:.9rem;line-height:1.45">Entre le code remis par le passager pour valider et libérer le paiement. Sans code, le trajet sera marqué terminé et auto-validé après 4h si aucune alerte n’est déclenchée.</p>
       <input id="ride-code-booking-id" type="hidden">
-      <input id="ride-code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:2rem;letter-spacing:.25em;text-align:center;background:#080d16;color:#fff;border:1px solid rgba(0,217,255,.45);border-radius:14px;padding:14px 12px;margin-bottom:14px">
-      <button onclick="submitRideCodeModal()" style="width:100%;background:var(--brand-cyan,#00d9ff);color:#061018;border:0;padding:13px;border-radius:12px;font-weight:900;font-size:1rem;cursor:pointer">Valider avec le code</button>
+      <input id="ride-code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000" style="width:100%;font-size:2rem;letter-spacing:.25em;text-align:center;background:#080d16;color:#fff;border:1px solid rgba(93,191,255,.45);border-radius:14px;padding:14px 12px;margin-bottom:14px">
+      <button onclick="submitRideCodeModal()" style="width:100%;background:var(--brand-cyan,#5dbfff);color:#061018;border:0;padding:13px;border-radius:12px;font-weight:900;font-size:1rem;cursor:pointer">Valider avec le code</button>
       <button onclick="submitRideDriverCompletedOnly()" style="width:100%;margin-top:10px;background:transparent;color:#ffcf7a;border:1px solid rgba(255,207,122,.45);padding:12px;border-radius:12px;font-weight:800;cursor:pointer">Je n'ai pas le code</button>
       <button onclick="closeRideCodeModal()" style="width:100%;margin-top:10px;background:transparent;color:#aab2c5;border:0;padding:10px;font-weight:700;cursor:pointer">Annuler</button>
     </div>
@@ -922,7 +922,7 @@ function buildMissions() {
         <div class="mission-info">
           <div class="mission-name">${m.name}</div>
           <div class="mission-desc">${m.description}</div>
-          <div style="margin-top:5px"><span style="background:rgba(93,191,255,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(0,217,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
+          <div style="margin-top:5px"><span style="background:rgba(93,191,255,.1);color:var(--green);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">+${m.xp_reward} XP</span>${m.badge_name ? ` <span style="background:rgba(93,191,255,.08);color:var(--cyan);border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700">${m.badge_icon||'🏅'} ${m.badge_name}</span>` : ''}</div>
         </div>
         <div class="mission-prog-wrap" style="min-width:120px">
           <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${Math.min(100,Math.round((m.progress||0)/(m.target||1)*100))}%"></div></div>

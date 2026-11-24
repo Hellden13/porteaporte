@@ -1,5 +1,5 @@
 /* ================================================================
-   PorteÀPorte — auth-api.js
+   PorteàPorte — auth-api.js
    Pont universel : charge Supabase si absent, expose getSupabaseClient()
    ================================================================ */
 (function () {

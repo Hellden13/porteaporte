@@ -16,7 +16,7 @@
     .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
     h1 { margin:0; font-size:1.5rem; }
     .panel { background: var(--brand-bg-surface); border:1px solid var(--brand-border); border-radius:14px; padding:22px; margin-bottom:18px; }
-    h2 { margin:0 0 12px; font-size:1.1rem; color:var(--brand-lime); }
+    h2 { margin:0 0 12px; font-size:1.1rem; color:var(--brand-bleu); }
     table { width:100%; border-collapse:collapse; font-size:.88rem; }
     th, td { padding:8px 10px; text-align:left; border-bottom:1px solid rgba(255,255,255,.06); }
     th { color:var(--brand-muted); font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
@@ -25,7 +25,7 @@
     .status-pill.payee, .status-pill.paid, .status-pill.confirmee, .status-pill.livre, .status-pill.succeeded { background:rgba(93,191,255,.15); color:#7dffc1; border:1px solid rgba(93,191,255,.3); }
     .status-pill.en_attente, .status-pill.paiement_autorise, .status-pill.processing { background:rgba(255,200,0,.12); color:#ffd700; border:1px solid rgba(255,200,0,.3); }
     .status-pill.annulee, .status-pill.refunded, .status-pill.failed { background:rgba(255,90,90,.12); color:#ff9999; border:1px solid rgba(255,90,90,.3); }
-    .big { font-size:2rem; font-weight:900; color:var(--brand-lime); }
+    .big { font-size:2rem; font-weight:900; color:var(--brand-bleu); }
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:18px; }
     .stat-card { background:rgba(255,255,255,.03); border:1px solid var(--brand-border); border-radius:10px; padding:16px; }
     .stat-card .label { font-size:.78rem; color:var(--brand-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
@@ -101,7 +101,7 @@
       html += '<div class="panel" style="border-left:4px solid #ffd700"><h2>🔎 Pourquoi tes compteurs sont à 0 ?</h2>';
 
       if (payedCount === 0 && d.total_livraisons === 0) {
-        html += `<div class="reco" style="background:rgba(0,217,255,.08);color:#7de4ff;border-color:#7de4ff"><strong>✅ Aucune livraison dans la base</strong> — c'est normal si tu n'as pas encore eu de vrais clients. Les compteurs vont monter dès la 1ère vraie livraison capturée.</div>`;
+        html += `<div class="reco" style="background:rgba(93,191,255,.08);color:#7de4ff;border-color:#7de4ff"><strong>✅ Aucune livraison dans la base</strong> — c'est normal si tu n'as pas encore eu de vrais clients. Les compteurs vont monter dès la 1ère vraie livraison capturée.</div>`;
       } else if (payedCount === 0 && totalUnpaid > 0) {
         html += `<div class="reco" style="background:rgba(255,90,90,.08);color:#ff9999;border-color:#ff7a7a"><strong>🚨 PROBLÈME TROUVÉ : ${fmtCad(totalUnpaid)} en attente de capture</strong><br>
           Tu as <strong>${Object.entries(d.livraisons_by_status).filter(([s]) => ['paiement_autorise','en_attente','publie','requires_capture'].includes(s)).reduce((s,[,i]) => s+i.count, 0)} livraison(s)</strong> avec statut "paiement_autorise" ou "publie" (= argent bloqué chez Stripe, pas encore dans ta poche).<br><br>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon profil - PorteàPorte</title>
+    <title>Mon profil — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
@@ -46,7 +46,7 @@
 
         h1 {
             font-size: 2rem;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .btn-back {
@@ -61,8 +61,8 @@
         }
 
         .btn-back:hover {
-            border-color: var(--brand-lime);
-            color: var(--brand-lime);
+            border-color: var(--brand-bleu);
+            color: var(--brand-bleu);
         }
 
         .profile-grid {
@@ -83,7 +83,7 @@
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--brand-lime) 0%, var(--brand-lime) 100%);
+            background: linear-gradient(135deg, var(--brand-bleu) 0%, var(--brand-bleu) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -119,7 +119,7 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .stat-label {
@@ -140,7 +140,7 @@
             font-size: 1.1rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
         }
 
         .info-row {
@@ -182,7 +182,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--brand-lime) 0%, var(--brand-lime) 100%);
+            background: linear-gradient(135deg, var(--brand-bleu) 0%, var(--brand-bleu) 100%);
             color: var(--brand-bg-dark);
         }
 
@@ -233,9 +233,9 @@
             color: var(--brand-text);
             transition: border-color 0.2s;
         }
-        .badge-chip:hover { border-color: var(--brand-lime); }
+        .badge-chip:hover { border-color: var(--brand-bleu); }
         .badge-chip .badge-icon { font-size: 1.1rem; }
-        .badge-chip .badge-pts { font-size: 0.72rem; color: var(--brand-lime); margin-left: 4px; }
+        .badge-chip .badge-pts { font-size: 0.72rem; color: var(--brand-bleu); margin-left: 4px; }
         .badges-empty { color: var(--brand-muted); font-size: 0.9rem; padding: 12px 0; }
 
         /* PARRAINAGE */
@@ -255,7 +255,7 @@
             font-family: 'Courier New', monospace;
             font-size: 1.5rem;
             font-weight: 900;
-            color: var(--brand-lime);
+            color: var(--brand-bleu);
             letter-spacing: 0.15em;
             background: rgba(93,191,255,0.08);
             border: 2px dashed rgba(93,191,255,0.35);
@@ -264,7 +264,7 @@
         }
         .referral-copy-btn {
             padding: 10px 18px;
-            background: var(--brand-lime);
+            background: var(--brand-bleu);
             color: var(--brand-bg-dark);
             border: none;
             border-radius: 8px;
@@ -400,7 +400,7 @@
                         <input type="checkbox" id="pref-nonsmoker" onchange="savePrefs()"> 🚭 Non-fumeur uniquement
                     </label>
                 </div>
-                <p id="prefs-saved" style="color:var(--brand-lime);font-size:.8rem;margin-top:10px;display:none;">✓ Préférences sauvegardées</p>
+                <p id="prefs-saved" style="color:var(--brand-bleu);font-size:.8rem;margin-top:10px;display:none;">✓ Préférences sauvegardées</p>
             </div>
 
             <!-- CARTE ANIMAL : visible au conducteur lors de la réservation -->
@@ -440,7 +440,7 @@
                         </div>
                         <textarea id="pet_notes" placeholder="Comportement (ex : calme, dort en voiture, sociable)…" maxlength="500" style="margin-top:8px;width:100%;min-height:60px;padding:8px 10px;background:#0a0c10;border:1px solid var(--brand-bg-surface-light);border-radius:6px;color:#fff;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
                         <button onclick="savePetCard()" style="margin-top:10px;background:linear-gradient(135deg,#5dbfff,#3da9ff);color:#051022;border:0;padding:10px 18px;border-radius:8px;font-weight:800;cursor:pointer;font-size:.88rem;">Sauvegarder la carte</button>
-                        <p id="pet-saved" style="color:var(--brand-lime);font-size:.8rem;margin-top:8px;display:none;">✓ Carte animal sauvegardée</p>
+                        <p id="pet-saved" style="color:var(--brand-bleu);font-size:.8rem;margin-top:8px;display:none;">✓ Carte animal sauvegardée</p>
                     </div>
                 </div>
             </div>
@@ -611,7 +611,7 @@
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap">
                     <button class="referral-copy-btn" onclick="copyReferralCode()">📋 Copier le code</button>
-                    <a class="referral-copy-btn" href="/parrainage.html" style="background:transparent;border:1px solid var(--brand-lime);color:var(--brand-lime);text-decoration:none">Voir ma page parrainage →</a>
+                    <a class="referral-copy-btn" href="/parrainage.html" style="background:transparent;border:1px solid var(--brand-bleu);color:var(--brand-bleu);text-decoration:none">Voir ma page parrainage →</a>
                 </div>
             </div>
 
@@ -901,7 +901,7 @@
         const input = document.createElement('input');
         input.type = opts.type || 'text';
         input.value = current;
-        input.style.cssText = 'padding:4px 8px;background:#0a0c10;border:1px solid var(--brand-lime);border-radius:6px;color:#fff;font:inherit;width:180px;';
+        input.style.cssText = 'padding:4px 8px;background:#0a0c10;border:1px solid var(--brand-bleu);border-radius:6px;color:#fff;font:inherit;width:180px;';
         if (opts.maxLength) input.maxLength = opts.maxLength;
         span.innerHTML = '';
         span.appendChild(input);

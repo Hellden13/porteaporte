@@ -8,27 +8,27 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 
 const META = {
-  'index.html':              { desc: 'PorteÀPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l\'argent comme livreur ou partagez vos trajets.', img: '/hero-center.jpg' },
+  'index.html':              { desc: 'PorteàPorte — Livraison collaborative et covoiturage entre particuliers au Québec. Envoyez vos colis, gagnez de l\'argent comme livreur ou partagez vos trajets.', img: '/hero-center.jpg' },
   'covoiturage.html':        { desc: 'Trouvez ou publiez un trajet de covoiturage au Québec. Partagez les frais, réduisez votre empreinte carbone et rencontrez de nouvelles personnes.', img: '/hero-center.jpg' },
-  'covoiturage-info.html':   { desc: 'Tout savoir sur le covoiturage PorteÀPorte : tarifs, assurance, comment ça marche et comment commencer à covoiturer dès aujourd\'hui.', img: '/hero-center.jpg' },
-  'expediteur.html':         { desc: 'Envoyez vos colis facilement entre particuliers avec PorteÀPorte. Prix transparents, suivi en temps réel et livraison écoresponsable.', img: '/hero-left.jpg' },
-  'devenir-livreur.html':    { desc: 'Devenez livreur PorteÀPorte et gagnez de l\'argent en livrant des colis sur vos trajets habituels. Inscription gratuite, paiements rapides.', img: '/hero-right.jpg' },
-  'parrainage.html':         { desc: 'Parrainez vos amis sur PorteÀPorte et gagnez des Points Impact. Partagez votre code unique et recevez des récompenses dès leur première action.', img: null },
-  'programme-points.html':   { desc: 'Découvrez le programme Points Impact de PorteÀPorte : gagnez des points à chaque action, montez en niveau et participez aux tirages mensuels.', img: null },
-  'abonnements.html':        { desc: 'Abonnements PorteÀPorte Pro — Profitez d\'avantages exclusifs, de réductions et d\'un accès prioritaire aux meilleures missions.', img: null },
-  'assurance.html':          { desc: 'Assurance colis PorteÀPorte — Protégez vos envois jusqu\'à 500 $ avec notre couverture intégrée. Simple, rapide et sans franchise.', img: null },
-  'faq.html':                { desc: 'Questions fréquentes sur PorteÀPorte : livraison, covoiturage, paiements, sécurité et plus. Toutes les réponses en un seul endroit.', img: null },
-  'contact.html':            { desc: 'Contactez l\'équipe PorteÀPorte pour toute question, demande de partenariat ou signalement. Nous répondons sous 24 heures.', img: null },
-  'transparence.html':       { desc: 'Rapport de transparence PorteÀPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.', img: null },
-  'partenaire.html':         { desc: 'Devenez partenaire PorteÀPorte — Offrez la livraison collaborative à vos clients et contribuez à une logistique plus humaine et écoresponsable.', img: null },
-  'cgu.html':                { desc: 'Conditions générales d\'utilisation de la plateforme PorteÀPorte.', img: null },
-  'cgv.html':                { desc: 'Conditions générales de vente des services PorteÀPorte.', img: null },
-  'confidentialite.html':    { desc: 'Politique de confidentialité PorteÀPorte — Comment nous collectons, utilisons et protégeons vos données personnelles.', img: null },
-  'reglements-concours.html':{ desc: 'Règlements officiels des concours et promotions PorteÀPorte. Aucun achat requis.', img: null },
-  'reglements-tirage.html':  { desc: 'Règlements des tirages au sort PorteÀPorte Points Impact. Aucun achat requis.', img: null },
+  'covoiturage-info.html':   { desc: 'Tout savoir sur le covoiturage PorteàPorte : tarifs, assurance, comment ça marche et comment commencer à covoiturer dès aujourd\'hui.', img: '/hero-center.jpg' },
+  'expediteur.html':         { desc: 'Envoyez vos colis facilement entre particuliers avec PorteàPorte. Prix transparents, suivi en temps réel et livraison écoresponsable.', img: '/hero-left.jpg' },
+  'devenir-livreur.html':    { desc: 'Devenez livreur PorteàPorte et gagnez de l\'argent en livrant des colis sur vos trajets habituels. Inscription gratuite, paiements rapides.', img: '/hero-right.jpg' },
+  'parrainage.html':         { desc: 'Parrainez vos amis sur PorteàPorte et gagnez des Points Impact. Partagez votre code unique et recevez des récompenses dès leur première action.', img: null },
+  'programme-points.html':   { desc: 'Découvrez le programme Points Impact de PorteàPorte : gagnez des points à chaque action, montez en niveau et participez aux tirages mensuels.', img: null },
+  'abonnements.html':        { desc: 'Abonnements PorteàPorte Pro — Profitez d\'avantages exclusifs, de réductions et d\'un accès prioritaire aux meilleures missions.', img: null },
+  'assurance.html':          { desc: 'Assurance colis PorteàPorte — Protégez vos envois jusqu\'à 500 $ avec notre couverture intégrée. Simple, rapide et sans franchise.', img: null },
+  'faq.html':                { desc: 'Questions fréquentes sur PorteàPorte : livraison, covoiturage, paiements, sécurité et plus. Toutes les réponses en un seul endroit.', img: null },
+  'contact.html':            { desc: 'Contactez l\'équipe PorteàPorte pour toute question, demande de partenariat ou signalement. Nous répondons sous 24 heures.', img: null },
+  'transparence.html':       { desc: 'Rapport de transparence PorteàPorte : impact environnemental, kilomètres parcourus, CO₂ économisé et organismes soutenus.', img: null },
+  'partenaire.html':         { desc: 'Devenez partenaire PorteàPorte — Offrez la livraison collaborative à vos clients et contribuez à une logistique plus humaine et écoresponsable.', img: null },
+  'cgu.html':                { desc: 'Conditions générales d\'utilisation de la plateforme PorteàPorte.', img: null },
+  'cgv.html':                { desc: 'Conditions générales de vente des services PorteàPorte.', img: null },
+  'confidentialite.html':    { desc: 'Politique de confidentialité PorteàPorte — Comment nous collectons, utilisons et protégeons vos données personnelles.', img: null },
+  'reglements-concours.html':{ desc: 'Règlements officiels des concours et promotions PorteàPorte. Aucun achat requis.', img: null },
+  'reglements-tirage.html':  { desc: 'Règlements des tirages au sort PorteàPorte Points Impact. Aucun achat requis.', img: null },
 };
 
-const OG_SITE   = 'PorteÀPorte';
+const OG_SITE   = 'PorteàPorte';
 const OG_ORIGIN = 'https://porteaporte.site';
 const OG_DEFAULT_IMG = '/hero-center.jpg';
 

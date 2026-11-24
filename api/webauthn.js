@@ -169,7 +169,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         publicKey: {
           challenge,
-          rp: { name: 'PorteaPorte', id: rpId },
+          rp: { name: 'PorteàPorte', id: rpId },
           user: {
             id: b64url(Buffer.from(session.id)),
             name: session.email || profile.email || session.id,

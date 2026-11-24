@@ -28,9 +28,9 @@
     `;
     overlay.innerHTML = `
       <div style="max-width:420px;width:100%;background:linear-gradient(160deg,#0e1620,#001828);border:3px solid rgba(184,245,62,.6);border-radius:24px;padding:40px 32px;text-align:center;position:relative;overflow:hidden;box-shadow:0 30px 100px rgba(184,245,62,.2)">
-        <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 30% 30%,rgba(184,245,62,.15) 0%,transparent 50%),radial-gradient(circle at 70% 70%,rgba(0,217,255,.12) 0%,transparent 50%);pointer-events:none"></div>
+        <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 30% 30%,rgba(184,245,62,.15) 0%,transparent 50%),radial-gradient(circle at 70% 70%,rgba(93,191,255,.12) 0%,transparent 50%);pointer-events:none"></div>
 
-        <div style="font-size:.85rem;color:var(--brand-lime);font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px;position:relative">🎉 Badge débloqué !</div>
+        <div style="font-size:.85rem;color:var(--brand-bleu);font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px;position:relative">🎉 Badge débloqué !</div>
 
         <div style="font-size:6rem;line-height:1;margin:14px 0;animation:papBadgeBounce .8s ease;position:relative">${badge.icon || '🏆'}</div>
 
@@ -39,10 +39,10 @@
 
         <div style="display:flex;gap:8px;justify-content:center;margin-bottom:24px;position:relative">
           <span style="padding:5px 12px;background:rgba(168,176,186,.15);color:#a8b0ba;border-radius:999px;font-size:.78rem;font-weight:800;text-transform:uppercase">${badge.rarity || 'common'}</span>
-          ${badge.xp_reward ? `<span style="padding:5px 12px;background:rgba(184,245,62,.15);color:var(--brand-lime);border-radius:999px;font-size:.78rem;font-weight:800">+${badge.xp_reward} XP</span>` : ''}
+          ${badge.xp_reward ? `<span style="padding:5px 12px;background:rgba(184,245,62,.15);color:var(--brand-bleu);border-radius:999px;font-size:.78rem;font-weight:800">+${badge.xp_reward} XP</span>` : ''}
         </div>
 
-        <button id="pap-celeb-close" style="padding:14px 32px;background:linear-gradient(135deg,#00d9ff,#b8f53e);color:#001828;border:none;border-radius:12px;font-weight:900;font-size:.95rem;cursor:pointer;position:relative">🎊 Génial !</button>
+        <button id="pap-celeb-close" style="padding:14px 32px;background:linear-gradient(135deg,#5dbfff,#b8f53e);color:#001828;border:none;border-radius:12px;font-weight:900;font-size:.95rem;cursor:pointer;position:relative">🎊 Génial !</button>
 
         <div style="margin-top:14px;font-size:.78rem;color:#6d7886;position:relative">
           <a href="/badges.html" style="color:#7de4ff;text-decoration:none">Voir tous mes badges →</a>

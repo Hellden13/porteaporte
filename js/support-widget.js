@@ -1,4 +1,4 @@
-/* PorteaPorte - Pia guide widget
+/* PorteàPorte - Pia guide widget
    Pia aide les nouveaux visiteurs a trouver le bon chemin sans cacher la plateforme complete.
 */
 
@@ -82,7 +82,7 @@ if (!window.__PIA_LOADED__) {
         actions: [
           ['Voir les trajets', '/covoiturage.html'],
           ['Beta Quebec', '/quebec-beta.html'],
-          ['Contacter PorteaPorte', '/contact.html']
+          ['Contacter PorteàPorte', '/contact.html']
         ]
       },
       {
@@ -174,10 +174,10 @@ if (!window.__PIA_LOADED__) {
           padding: 0;
           border: 1px solid rgba(255,255,255,.24);
           border-radius: 18px;
-          background: linear-gradient(135deg,#00d9ff,#b8f53e);
+          background: linear-gradient(135deg,#5dbfff,#b8f53e);
           color: #071006;
           font-weight: 900;
-          box-shadow: 0 18px 46px rgba(0,0,0,.45), 0 0 24px rgba(0,217,255,.22);
+          box-shadow: 0 18px 46px rgba(0,0,0,.45), 0 0 24px rgba(93,191,255,.22);
           cursor: pointer;
         }
         #pia-launch svg {
@@ -219,7 +219,7 @@ if (!window.__PIA_LOADED__) {
           border-radius: 50%;
           display: grid;
           place-items: center;
-          background: linear-gradient(135deg,#b8f53e,#00d9ff);
+          background: linear-gradient(135deg,#b8f53e,#5dbfff);
           color: #071006;
           font-weight: 950;
         }
@@ -353,13 +353,13 @@ if (!window.__PIA_LOADED__) {
 
       const panel = document.createElement('section');
       panel.id = 'pia-panel';
-      panel.setAttribute('aria-label', 'Guide Pia PorteaPorte');
+      panel.setAttribute('aria-label', 'Guide Pia PorteàPorte');
       panel.innerHTML = `
         <div class="pia-head">
           <div class="pia-avatar">P</div>
           <div>
             <div class="pia-title">Pia</div>
-            <div class="pia-subtitle">Guide simple PorteaPorte</div>
+            <div class="pia-subtitle">Guide simple PorteàPorte</div>
           </div>
           <button class="pia-close" type="button" aria-label="Fermer Pia">x</button>
         </div>

@@ -33,7 +33,7 @@
       '.adr-opt:last-child{border-bottom:0}',
       '.adr-opt .adr-p{font-weight:800}',
       '.adr-opt .adr-s{font-size:16px;color:#b9c6d6;font-weight:500}',
-      '.adr-opt.actif,.adr-opt:hover{background:#1b2a3d;box-shadow:inset 4px 0 0 #00d9ff}',
+      '.adr-opt.actif,.adr-opt:hover{background:#1b2a3d;box-shadow:inset 4px 0 0 #5dbfff}',
       '.adr-opt.adr-libre{color:#c4f135;font-weight:800;font-size:17px}',
       '.adr-attrib{font-size:14px;color:#9fb3c8;padding:6px 4px 0;text-align:right}',
       '.adr-note{font-size:16px;color:#b9c6d6;padding:10px 4px 0;line-height:1.4}',

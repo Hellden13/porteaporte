@@ -273,7 +273,9 @@ describe('le livreur ne voit plus les coordonnées du destinataire', () => {
     for (const f of fs.readdirSync(path.join(__dirname, '..')).filter((x) => x.endsWith('.html'))) {
       assert.doesNotMatch(lire(f), /\.from\(['"]messages['"]\)/, f);
     }
-    assert.match(lire('messagerie.html'), /location\.replace\('\/message-livraison\.html'/);
+    // Plan du site, étape 1 : l'ancienne page est retirée ; la redirection est dans vercel.json.
+    assert.ok(!fs.existsSync(path.join(__dirname, '..', 'messagerie.html')));
+    assert.ok(JSON.parse(lire('vercel.json')).redirects.some((r) => r.source === '/messagerie.html' && r.destination === '/message-livraison.html'));
   });
   test('points d’accès du lien : publics (avant la session), limités par adresse IP', () => {
     const s = lire('api/platform.js');

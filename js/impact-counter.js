@@ -12,7 +12,7 @@
     const s = document.createElement('style');
     s.id = 'pap-impact-styles';
     s.textContent = `
-      .pap-impact-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; padding: 28px 20px; background: linear-gradient(135deg, rgba(0,217,255,.05), rgba(184,245,62,.06)); border: 1px solid rgba(184,245,62,.25); border-radius: 16px; margin: 24px 0; }
+      .pap-impact-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; padding: 28px 20px; background: linear-gradient(135deg, rgba(93,191,255,.05), rgba(184,245,62,.06)); border: 1px solid rgba(184,245,62,.25); border-radius: 16px; margin: 24px 0; }
       .pap-impact-stat { text-align: center; padding: 14px; }
       .pap-impact-icon { font-size: 2.2rem; margin-bottom: 6px; }
       .pap-impact-val { font-size: 2.2rem; font-weight: 900; color: #b8f53e; line-height: 1; margin-bottom: 4px; transition: all .8s ease; font-variant-numeric: tabular-nums; }

@@ -63,7 +63,9 @@ describe('2-3-5. bonus éco, bonus de groupe et plans Pro : abandonnés / fermé
   });
   test('plans Pro : toujours fermés', () => {
     assert.match(lire('lib/_connect.js'), /PAP_PLANS_PRO_OUVERTS !== 'oui'/);
-    assert.doesNotMatch(lire('abonnements.html'), /onclick="subscribe\(/);
+    // Plan du site, étape 1 : la page des plans est retirée et redirigée vers l'accueil.
+    assert.ok(!require('node:fs').existsSync(require('node:path').join(__dirname, '..', 'abonnements.html')));
+    assert.ok(JSON.parse(lire('vercel.json')).redirects.some((r) => r.source === '/abonnements.html' && r.destination === '/index.html'));
   });
 });
 

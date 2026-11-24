@@ -22,33 +22,33 @@
 
     /* Carte */
     .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 24px; }
-    .card h2 { margin: 0 0 18px; font-size: 1rem; color: var(--brand-lime); }
+    .card h2 { margin: 0 0 18px; font-size: 1rem; color: var(--brand-bleu); }
 
     /* Formulaire */
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--brand-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
     .field input, .field select, .field textarea { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--brand-border); border-radius: 8px; color: var(--brand-text); padding: 10px 12px; font-size: .9rem; box-sizing: border-box; }
-    .field input:focus, .field select:focus { outline: none; border-color: var(--brand-lime); }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--brand-bleu); }
     .field .hint { font-size: .75rem; color: var(--brand-muted); margin-top: 4px; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     /* Bouton */
     .btn { padding: 11px 20px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .88rem; }
-    .btn-lime { background: var(--brand-lime); color: #071006; }
+    .btn-lime { background: var(--brand-bleu); color: #071006; }
     .btn-lime:hover { opacity: .88; }
     .btn-ghost { background: transparent; color: var(--brand-muted); border: 1px solid var(--brand-border); }
 
     /* Table codes */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .83rem; }
-    th { text-align: left; color: var(--brand-lime); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; padding: 8px 10px; border-bottom: 1px solid var(--brand-border); white-space: nowrap; }
+    th { text-align: left; color: var(--brand-bleu); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; padding: 8px 10px; border-bottom: 1px solid var(--brand-border); white-space: nowrap; }
     td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: top; }
     tr:last-child td { border-bottom: 0; }
     tr:hover td { background: rgba(255,255,255,.02); }
 
-    .code-badge { font-family: monospace; background: rgba(93,191,255,.1); border: 1px solid rgba(93,191,255,.3); border-radius: 6px; padding: 3px 8px; color: var(--brand-lime); font-size: .9rem; letter-spacing: .1em; }
+    .code-badge { font-family: monospace; background: rgba(93,191,255,.1); border: 1px solid rgba(93,191,255,.3); border-radius: 6px; padding: 3px 8px; color: var(--brand-bleu); font-size: .9rem; letter-spacing: .1em; }
     .type-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
-    .type-fixed_price { background: rgba(196,241,53,.12); color: var(--brand-lime); }
+    .type-fixed_price { background: rgba(196,241,53,.12); color: var(--brand-bleu); }
     .type-discount_pct { background: rgba(93,191,255,.12); color: #5dbfff; }
     .type-discount_cad { background: rgba(93,191,255,.12); color: #5dbfff; }
     .type-insurance_upgrade { background: rgba(251,191,36,.12); color: #fbbf24; }
@@ -57,7 +57,7 @@
     .badge-inactive { background: rgba(239,68,68,.1); color: #ef4444; border-radius: 999px; padding: 2px 9px; font-size: .72rem; font-weight: 700; }
 
     .toggle-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--brand-border); background: transparent; cursor: pointer; font-size: .75rem; font-weight: 700; color: var(--brand-muted); }
-    .toggle-btn:hover { border-color: var(--brand-lime); color: var(--brand-lime); }
+    .toggle-btn:hover { border-color: var(--brand-bleu); color: var(--brand-bleu); }
 
     #create-status { margin-top: 12px; font-size: .85rem; display: none; }
     #create-status.ok { color: #34d399; }
@@ -66,10 +66,10 @@
     .empty { text-align: center; color: var(--brand-muted); padding: 32px; font-size: .9rem; }
     .uses-bar { display: flex; align-items: center; gap: 6px; }
     .uses-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; min-width: 60px; }
-    .uses-bar-fill { height: 4px; background: var(--brand-lime); border-radius: 2px; }
+    .uses-bar-fill { height: 4px; background: var(--brand-bleu); border-radius: 2px; }
 
     .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-muted); text-decoration: none; font-size: .85rem; margin-bottom: 24px; }
-    .back-link:hover { color: var(--brand-lime); }
+    .back-link:hover { color: var(--brand-bleu); }
 
     .conditions-badge { font-size: .72rem; color: var(--brand-muted); background: rgba(255,255,255,.05); border-radius: 4px; padding: 2px 6px; margin-top: 3px; display: inline-block; }
   </style>
@@ -220,7 +220,7 @@
             ${c.partner_name ? `<div style="font-size:.72rem;color:var(--brand-muted);margin-top:3px">${esc(c.partner_name)}</div>` : ''}
           </td>
           <td><span class="type-pill type-${c.type}">${typeLabel}</span></td>
-          <td style="font-weight:700;color:var(--brand-lime)">${valueDisplay}</td>
+          <td style="font-weight:700;color:var(--brand-bleu)">${valueDisplay}</td>
           <td>
             <div class="uses-bar">
               <span style="white-space:nowrap">${usesLabel}</span>${bar}

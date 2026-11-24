@@ -1,13 +1,14 @@
-/* PorteaPorte brand consistency layer — Design System v1.0 */
+/* PorteàPorte brand consistency layer — Design System v1.0 */
 @import url('/assets/mobile-polish.css');
 :root {
   /* ── Palette principale ── */
   --brand-bg-dark: #0A0C10;
   --brand-bg-surface: #111318;
   --brand-bg-surface-light: #1A1F28;
-  --brand-cyan: #00D9FF;
+  --brand-cyan: var(--brand-bleu); /* le cyan rejoint le bleu (règle de marque, 24 nov. 2026) */
   --brand-cyan-dark: #00B8D4;
-  --brand-lime: #5dbfff;
+  --brand-bleu: #5dbfff;
+  --brand-lime: var(--brand-bleu); /* ancien nom (valait déjà du bleu), gardé pour compatibilité */
   --brand-blue: #2E7BFF;
   --brand-blue-nuit: #0051BA;
   --brand-text: #F0F2F5;
@@ -26,7 +27,7 @@
   --color-bg-surface-light: var(--brand-bg-surface-light);
   --color-cyan-primary: var(--brand-cyan);
   --color-cyan-dark: var(--brand-cyan-dark);
-  --color-lime-accent: var(--brand-lime);
+  --color-lime-accent: var(--brand-bleu);
   --color-blue-nuit: var(--brand-blue-nuit);
   --color-text-primary: var(--brand-text);
   --color-text-secondary: var(--brand-muted);
@@ -44,7 +45,7 @@
   --color-background: var(--brand-bg-dark);
   --color-surface: var(--brand-bg-surface);
   --color-primary: var(--brand-cyan);
-  --color-accent: var(--brand-lime);
+  --color-accent: var(--brand-bleu);
   --text-primary: var(--brand-text);
   --text-secondary: var(--brand-muted);
   --accent: var(--brand-cyan);
@@ -114,7 +115,7 @@ body {
 }
 
 body::selection {
-  background: rgba(0, 217, 255, 0.24);
+  background: rgba(93,191,255, 0.24);
   color: var(--brand-text);
 }
 
@@ -167,7 +168,7 @@ nav.tab-bar.bottom-nav {
 .sec-title span,
 .success-title,
 .plan-price {
-  color: var(--brand-lime) !important;
+  color: var(--brand-bleu) !important;
 }
 
 a,
@@ -184,7 +185,7 @@ a:focus-visible,
 .back:hover,
 .text-link-button:hover,
 .link-button:hover {
-  color: var(--brand-lime);
+  color: var(--brand-bleu);
 }
 
 .card,
@@ -222,9 +223,9 @@ a:focus-visible,
 .mission-card:hover,
 .dashboard-card:hover,
 .role-card:hover {
-  border-color: rgba(0, 217, 255, 0.32) !important;
+  border-color: rgba(93,191,255, 0.32) !important;
   transform: translateY(-2px);
-  box-shadow: 0 22px 62px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 217, 255, 0.08) !important;
+  box-shadow: 0 22px 62px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(93,191,255, 0.08) !important;
   transition: all var(--transition-base);
 }
 
@@ -254,7 +255,7 @@ textarea:focus,
   outline: none !important;
   border-color: var(--brand-cyan) !important;
   background: #0E141C !important;
-  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.14) !important;
+  box-shadow: 0 0 0 3px rgba(93,191,255, 0.14) !important;
 }
 
 button,
@@ -271,7 +272,7 @@ button[type="submit"] {
   padding: 12px 18px !important;
   border: 1px solid transparent !important;
   border-radius: var(--radius-md) !important;
-  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-bleu)) !important;
   color: var(--brand-bg-dark) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
   font-weight: 800 !important;
@@ -279,7 +280,7 @@ button[type="submit"] {
   text-decoration: none !important;
   cursor: pointer;
   transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+  box-shadow: 0 0 20px rgba(93,191,255, 0.3);
 }
 
 button:hover,
@@ -289,7 +290,7 @@ a.btn:hover,
 .pay-btn:hover,
 button[type="submit"]:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 40px rgba(0, 217, 255, 0.6);
+  box-shadow: 0 0 40px rgba(93,191,255, 0.6);
 }
 
 button:active,
@@ -305,7 +306,7 @@ button:focus-visible,
 a.btn:focus-visible,
 .link-button:focus-visible,
 .text-link-button:focus-visible {
-  outline: 3px solid rgba(0, 217, 255, 0.32);
+  outline: 3px solid rgba(93,191,255, 0.32);
   outline-offset: 3px;
 }
 
@@ -320,7 +321,7 @@ button.btn-secondary {
 
 .btn.secondary:hover,
 .btn-secondary:hover {
-  background: rgba(0, 217, 255, 0.1) !important;
+  background: rgba(93,191,255, 0.1) !important;
   transform: translateY(-2px);
 }
 
@@ -347,7 +348,7 @@ button.btn-ghost {
 
 .btn-learn:hover {
   color: var(--brand-cyan) !important;
-  border-color: rgba(0, 217, 255, 0.36) !important;
+  border-color: rgba(93,191,255, 0.36) !important;
 }
 
 button.link-button,

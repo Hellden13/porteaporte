@@ -17,13 +17,13 @@
     h1 { margin: 0; }
     .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .tab { padding: 8px 14px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 8px; cursor: pointer; font-weight: 700; color: var(--brand-muted); font-size: .85rem; }
-    .tab.active { background: var(--brand-lime); color: #071008; border-color: var(--brand-lime); }
+    .tab.active { background: var(--brand-bleu); color: #071008; border-color: var(--brand-bleu); }
     .tab .count { background: rgba(0,0,0,.15); padding: 2px 7px; border-radius: 999px; font-size: .7rem; margin-left: 6px; }
     .search { width: 100%; padding: 10px 14px; background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 8px; color: #fff; font-size: .9rem; margin-bottom: 14px; }
     .user-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
     .user-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
     .user-info { display: flex; gap: 12px; align-items: center; flex: 1; min-width: 200px; }
-    .avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)); display: flex; align-items: center; justify-content: center; color: #001828; font-weight: 900; }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-bleu)); display: flex; align-items: center; justify-content: center; color: #001828; font-weight: 900; }
     .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .68rem; font-weight: 800; text-transform: uppercase; }
     .pill.verified { background: rgba(93,191,255,.15); color: #7dffc1; }
     .pill.pending { background: rgba(255,200,0,.15); color: #ffd700; }
@@ -137,7 +137,7 @@
                 <button class="btn-sm" style="background:rgba(93,191,255,.15);color:#7dffc1;border:1px solid rgba(93,191,255,.4)" onclick="toggleSuspend('${u.id}',false)">✅ Réactiver</button>
               `}
               ${u.driver_status !== 'verified' && u.role && ['livreur','les deux'].includes(u.role) ? `
-                <button class="btn-sm" style="background:rgba(0,217,255,.15);color:#7de4ff;border:1px solid rgba(0,217,255,.4)" onclick="setStatus('${u.id}','verified')">⚡ Force verified</button>
+                <button class="btn-sm" style="background:rgba(93,191,255,.15);color:#7de4ff;border:1px solid rgba(93,191,255,.4)" onclick="setStatus('${u.id}','verified')">⚡ Force verified</button>
               ` : ''}
               <a class="btn-sm" style="background:rgba(93,191,255,.12);color:#5dbfff;border:1px solid rgba(93,191,255,.3);text-decoration:none" href="/livreur-card.html?id=${u.id}" target="_blank">🆔 Voir carte</a>
               <button class="btn-sm" style="background:rgba(255,60,60,.18);color:#ff8a8a;border:1px solid rgba(255,60,60,.5)" onclick="deleteUser('${u.id}','${(u.email||'').replace(/'/g,'')}')">🗑️ Supprimer</button>

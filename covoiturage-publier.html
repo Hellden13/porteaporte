@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publier un trajet · Covoiturage PorteàPorte</title>
+  <title>Publier un trajet — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
@@ -27,12 +27,12 @@
     .legal-note {
       background: rgba(93,191,255,0.07); border: 1px solid rgba(93,191,255,0.25);
       border-radius: 8px; padding: 14px 18px; font-size: 0.85rem;
-      color: var(--brand-lime); margin-bottom: 32px; line-height: 1.55;
+      color: var(--brand-bleu); margin-bottom: 32px; line-height: 1.55;
     }
     .driver-fee-banner {
       display: none;
-      background: linear-gradient(135deg, rgba(0,217,255,.10), rgba(93,191,255,.05));
-      border: 1px solid rgba(0,217,255,.28);
+      background: linear-gradient(135deg, rgba(93,191,255,.10), rgba(93,191,255,.05));
+      border: 1px solid rgba(93,191,255,.28);
       border-radius: 12px;
       padding: 14px 18px;
       margin: -16px 0 28px;
@@ -43,8 +43,8 @@
     .driver-fee-banner small { display:block; color: var(--brand-muted); margin-top:4px; }
     .edit-safety-note {
       display: none;
-      background: rgba(0,217,255,0.08);
-      border: 1px solid rgba(0,217,255,0.28);
+      background: rgba(93,191,255,0.08);
+      border: 1px solid rgba(93,191,255,0.28);
       border-radius: 10px;
       padding: 12px 16px;
       margin: -12px 0 24px;
@@ -81,7 +81,7 @@
     .form-section { margin-bottom: 28px; }
     .form-section h3 {
       font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--brand-lime); margin: 0 0 16px;
+      color: var(--brand-bleu); margin: 0 0 16px;
       border-bottom: 1px solid var(--brand-border); padding-bottom: 8px;
     }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -97,7 +97,7 @@
       color: var(--brand-text); font-size: 0.95rem; outline: none;
       transition: border-color 0.2s; font-family: inherit;
     }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-lime); }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-bleu); }
     .field textarea { resize: vertical; min-height: 80px; }
     .field .hint { font-size: 0.75rem; color: var(--brand-muted); margin-top: 2px; }
 
@@ -109,8 +109,8 @@
       border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: var(--brand-muted);
       transition: all 0.2s; user-select: none;
     }
-    .toggle-option input { accent-color: var(--brand-lime); width: 16px; height: 16px; }
-    .toggle-option:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(93,191,255,0.06); }
+    .toggle-option input { accent-color: var(--brand-bleu); width: 16px; height: 16px; }
+    .toggle-option:has(input:checked) { border-color: var(--brand-bleu); color: var(--brand-text); background: rgba(93,191,255,0.06); }
 
     /* RADIO CARD */
     .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; }
@@ -123,7 +123,7 @@
     }
     .radio-card input[type=radio] { display: none; }
     .radio-card .icon { font-size: 1.5rem; line-height: 1; }
-    .radio-card:has(input:checked) { border-color: var(--brand-lime); color: var(--brand-text); background: rgba(93,191,255,0.06); }
+    .radio-card:has(input:checked) { border-color: var(--brand-bleu); color: var(--brand-text); background: rgba(93,191,255,0.06); }
 
     /* POINTS D'ARRÊT */
     .stop-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -141,15 +141,15 @@
 
     /* PRIX PREVIEW */
     .price-preview {
-      background: var(--brand-bg-surface); border: 1px solid var(--brand-lime);
+      background: var(--brand-bg-surface); border: 1px solid var(--brand-bleu);
       border-radius: 12px; padding: 20px 24px; margin-top: 8px;
     }
     .price-preview h4 { margin: 0 0 14px; color: var(--brand-text); font-size: 1rem; }
     .price-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 5px 0; }
-    .price-row.total { border-top: 1px solid var(--brand-border); margin-top: 6px; padding-top: 10px; font-weight: 800; font-size: 1rem; color: var(--brand-lime); }
+    .price-row.total { border-top: 1px solid var(--brand-border); margin-top: 6px; padding-top: 10px; font-weight: 800; font-size: 1rem; color: var(--brand-bleu); }
     .price-row span:first-child { color: var(--brand-muted); }
     .price-row span:last-child  { color: var(--brand-text); }
-    .price-row.total span { color: var(--brand-lime); }
+    .price-row.total span { color: var(--brand-bleu); }
     .price-row.driver-gets span { color: var(--brand-cyan); }
     .over-limit-warning { color: #FFB800; font-size: 0.8rem; margin-top: 8px; }
 
@@ -191,7 +191,7 @@
     </div>
 
     <!-- MODE EXPRESS — pour publier en 1 minute -->
-    <div id="express-toggle" style="margin:18px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(93,191,255,.10),rgba(0,217,255,.06));border:1px solid rgba(93,191,255,.4);border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div id="express-toggle" style="margin:18px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(93,191,255,.10),rgba(93,191,255,.06));border:1px solid rgba(93,191,255,.4);border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div style="flex:1;min-width:200px;">
         <strong style="color:#5dbfff;font-size:1rem;">🚀 Pressé ? Mode express</strong>
         <div style="color:#aab2c5;font-size:.88rem;margin-top:2px;">Remplissez seulement <strong>Trajet</strong> + <strong>Prix</strong>. Les autres détails (véhicule, ambiance, arrêts) sont optionnels.</div>
@@ -291,7 +291,7 @@
           </div>
 
           <!-- Récapitulatif live -->
-          <div id="dt-recap" style="margin-top:10px;padding:12px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:8px;font-size:.92rem;color:var(--brand-lime);font-weight:700">
+          <div id="dt-recap" style="margin-top:10px;padding:12px 14px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:8px;font-size:.92rem;color:var(--brand-bleu);font-weight:700">
             📍 Sélectionne un jour et une heure
           </div>
 
@@ -315,7 +315,7 @@
         </div>
         <style>
           .quick-pick { min-height:44px; min-width:58px; padding: 9px 14px; background: #171c27; border: 2px solid #586174; color: #dce3ef; border-radius: 8px; font-size: .88rem; cursor: pointer; font-weight: 700; transition: all .15s; font-family: inherit; touch-action:manipulation; }
-          .quick-pick:hover { background: rgba(0,217,255,.15); border-color: rgba(0,217,255,.45); color: var(--brand-cyan); transform: translateY(-1px); }
+          .quick-pick:hover { background: rgba(93,191,255,.15); border-color: rgba(93,191,255,.45); color: var(--brand-cyan); transform: translateY(-1px); }
           .quick-pick.active { background: #b8f53e; color: #071006; border-color: #ffffff; box-shadow: 0 0 0 4px rgba(184,245,62,.48), 0 6px 18px rgba(0,0,0,.35); transform: translateY(-2px) scale(1.04); font-weight: 900; }
           .quick-pick.active::before { content: '✓ '; }
           .quick-pick:disabled { background:#11151d; border-color:#303746; color:#70798a; cursor:not-allowed; opacity:.58; text-decoration:line-through; transform:none; }
@@ -328,14 +328,14 @@
           <div class="field"><label>Date et heure du retour</label><input type="datetime-local" id="return_departure_time"></div>
         </div>
         <div id="recurring-section" style="display:none;margin-top:14px;padding:16px;background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px">
-          <strong style="color:var(--brand-lime);font-size:.92rem">🔁 Fréquence du trajet</strong>
+          <strong style="color:var(--brand-bleu);font-size:.92rem">🔁 Fréquence du trajet</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px">
             <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="weekly" checked> Chaque semaine</label>
             <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="biweekly"> Aux 2 semaines</label>
             <label class="toggle-option" style="padding:8px 14px"><input type="radio" name="recur-freq" value="monthly"> 1 fois par mois</label>
           </div>
 
-          <strong style="color:var(--brand-lime);font-size:.92rem">📅 Jours où tu fais ce trajet</strong>
+          <strong style="color:var(--brand-bleu);font-size:.92rem">📅 Jours où tu fais ce trajet</strong>
           <p style="color:var(--brand-muted);font-size:.82rem;margin:6px 0 10px">Coche les jours. Boutons rapides pour aller plus vite :</p>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
             <button type="button" class="quick-pick" onclick="presetDays('semaine')">Lun-Ven (semaine)</button>
@@ -452,7 +452,7 @@
           </div>
         </div>
 
-        <strong style="color:var(--brand-lime);font-size:.92rem;display:block;margin-bottom:6px">📦 Quels colis acceptes-tu ?</strong>
+        <strong style="color:var(--brand-bleu);font-size:.92rem;display:block;margin-bottom:6px">📦 Quels colis acceptes-tu ?</strong>
         <p style="color:var(--brand-muted);font-size:.82rem;margin:0 0 12px">Choisis ce qui rentre dans ton coffre. Pas besoin de mesurer :</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">
@@ -493,7 +493,7 @@
         <style>
           .package-size-card { display:block; padding:14px 12px; background:rgba(255,255,255,.04); border:2px solid var(--brand-border); border-radius:12px; cursor:pointer; text-align:center; transition:all .15s; }
           .package-size-card:hover { border-color:rgba(93,191,255,.5); transform:translateY(-1px); }
-          .package-size-card.selected { border-color:var(--brand-lime); background:rgba(93,191,255,.08); }
+          .package-size-card.selected { border-color:var(--brand-bleu); background:rgba(93,191,255,.08); }
           .package-size-card input { display:none; }
           .pkg-icon { font-size:1.8rem; margin-bottom:4px; }
           .pkg-name { font-weight:800; color:#fff; font-size:.9rem; }
@@ -606,7 +606,7 @@
       <div class="form-section">
         <h3>🛡️ Point de départ — Embarquement sécuritaire</h3>
         <p style="font-size:0.83rem;color:var(--brand-muted);margin:0 0 14px;">
-          Choisis un <strong style="color:var(--brand-lime)">lieu public bien éclairé</strong> où le passager te retrouve. Rassure tes passagers = + de réservations.
+          Choisis un <strong style="color:var(--brand-bleu)">lieu public bien éclairé</strong> où le passager te retrouve. Rassure tes passagers = + de réservations.
         </p>
 
         <strong style="display:block;color:var(--brand-cyan);font-size:.85rem;margin-bottom:8px">Lieux suggérés (clique pour pré-remplir)</strong>

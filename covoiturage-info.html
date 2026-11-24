@@ -19,7 +19,7 @@
       --surface2: #1A2235;
       --border: #1E2A3A;
       --green: #5dbfff;
-      --cyan: #00D9FF;
+      --cyan: #5dbfff;
       --text: #E8EDF5;
       --muted: #8A9BB0;
       --danger: #FF6B6B;
@@ -62,7 +62,7 @@
     .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
 
     /* LEGAL BANNER */
-    .legal-banner { background: rgba(0,217,255,.07); border: 1px solid rgba(0,217,255,.2); border-radius: var(--radius); padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; }
+    .legal-banner { background: rgba(93,191,255,.07); border: 1px solid rgba(93,191,255,.2); border-radius: var(--radius); padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; }
     .legal-banner .icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
     .legal-banner p { font-size: .9rem; color: #B0D4E0; line-height: 1.6; }
     .legal-banner strong { color: var(--cyan); }
@@ -137,7 +137,7 @@
     .security-card p { font-size: .85rem; color: var(--muted); line-height: 1.55; }
 
     /* RULES PREVIEW */
-    .rules-preview { background: var(--surface); border: 1.5px solid rgba(0,217,255,.2); border-radius: var(--radius); padding: 32px; }
+    .rules-preview { background: var(--surface); border: 1.5px solid rgba(93,191,255,.2); border-radius: var(--radius); padding: 32px; }
     .rules-preview h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--cyan); }
     .rule-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
     .rule-item:last-child { border-bottom: none; }
@@ -185,7 +185,7 @@
     <a href="/covoiturage.html">Chercher un trajet</a>
     <a href="/covoiturage-publier.html">Publier</a>
     <a href="/covoiturage-info.html#regles">Règles</a>
-    <a href="/covoiturage/inscription.html" class="btn-primary">S'inscrire</a>
+    <a href="/signup.html" class="btn-primary">S'inscrire</a>
   </div>
 </nav>
 
@@ -200,7 +200,7 @@
     <div class="hero-ctas">
       <a href="/covoiturage.html" class="btn-lg btn-green">Trouver une place</a>
       <a href="/covoiturage-publier.html" class="btn-lg btn-outline">Publier mon trajet</a>
-      <a href="/covoiturage/inscription.html" class="btn-lg btn-outline">M'inscrire</a>
+      <a href="/signup.html" class="btn-lg btn-outline">M'inscrire</a>
     </div>
   </div>
 </section>
@@ -295,7 +295,7 @@
         <div class="price-row"><span>Part de base</span><span class="val" id="r-base">—</span></div>
         <div class="price-row" id="r-bonus-row" style="display:none"><span>🎉 Bonus groupe (−<span id="r-bonus-pct">0</span>%)</span><span class="val" id="r-bonus" style="color:#5dbfff">—</span></div>
         <div class="price-row" id="r-extras-row" style="display:none"><span>Options</span><span class="val" id="r-extras">—</span></div>
-        <div class="price-row"><span>Frais de service PorteaPorte</span><span class="val" id="r-fee">—</span></div>
+        <div class="price-row"><span>Frais de service PorteàPorte</span><span class="val" id="r-fee">—</span></div>
         <div class="price-row total"><span>Vous payez</span><span class="val" id="r-total">—</span></div>
       </div>
       <div class="price-warn" id="price-warn">⚠️ Le montant dépasse le seuil recommandé de 0,50$/km. Vérifiez votre saisie.</div>
@@ -380,7 +380,7 @@
   <h2>Chaque place vide peut aider quelqu'un.</h2>
   <p>Rejoignez la communauté PorteàPorte. Publiez votre premier trajet ou trouvez une place en quelques secondes.</p>
   <div class="cta-buttons">
-    <a href="/covoiturage/inscription.html" class="btn-lg btn-green">Créer mon profil covoiturage</a>
+    <a href="/signup.html" class="btn-lg btn-green">Créer mon profil covoiturage</a>
     <a href="/covoiturage.html" class="btn-lg btn-outline">Voir les trajets disponibles</a>
     <a href="/covoiturage-publier.html" class="btn-lg btn-outline">Publier un trajet</a>
   </div>
@@ -388,7 +388,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>PorteàPorte — Covoiturage communautaire au Québec · <a href="/covoiturage/regles.html" style="color:var(--cyan)">Règlements</a> · <a href="/covoiturage/inscription.html" style="color:var(--cyan)">S'inscrire</a></p>
+  <p>PorteàPorte — Covoiturage communautaire au Québec · <a href="/covoiturage/regles.html" style="color:var(--cyan)">Règlements</a> · <a href="/signup.html" style="color:var(--cyan)">S'inscrire</a></p>
   <p style="margin-top:6px">Ce service facilite le partage de frais d'un trajet existant. Il ne constitue pas un service de taxi ni du transport commercial.</p>
 </footer>
 
@@ -455,7 +455,7 @@
     document.getElementById('r-extras').textContent = '+' + fmtCad(extras);
 
     const feeLabel = document.getElementById('r-fee')?.previousElementSibling;
-    if (feeLabel) feeLabel.textContent = `Frais de service PorteaPorte (${fmtCad(rideFeeSettings.low)} / ${fmtCad(rideFeeSettings.high)})`;
+    if (feeLabel) feeLabel.textContent = `Frais de service PorteàPorte (${fmtCad(rideFeeSettings.low)} / ${fmtCad(rideFeeSettings.high)})`;
     document.getElementById('r-fee').textContent   = fmtCad(fee);
     document.getElementById('r-total').textContent = fmtCad(total);
 

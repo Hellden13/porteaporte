@@ -124,7 +124,7 @@
     .payment-note { font-size:.76rem; color:#666; margin-top:8px; line-height:1.35; }
     .post-confirm-card { display:none; background:var(--brand-bg-surface,#111827); border:1px solid var(--brand-border,#1f2d40); border-radius:14px; padding:18px; margin:14px 0; color:var(--brand-text,#E8EDF5); }
     .post-confirm-card.active { display:block; }
-    .post-confirm-card h3 { margin:0 0 12px; font-size:1.05rem; color:var(--brand-cyan,#00D9FF); }
+    .post-confirm-card h3 { margin:0 0 12px; font-size:1.05rem; color:var(--brand-cyan,#5dbfff); }
     .post-confirm-grid { display:grid; gap:10px; }
     .post-confirm-row { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:11px 12px; font-size:.88rem; }
     .post-confirm-row strong { display:block; color:#fff; margin-bottom:3px; }
@@ -236,7 +236,7 @@
         <div class="route-date" id="ride-date-line"></div>
         <div class="meta-grid" id="meta-grid"></div>
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-          <button type="button" onclick="openShareCard()" style="background:linear-gradient(135deg,#00d9ff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.9rem">🖼️ Créer ma carte à partager</button>
+          <button type="button" onclick="openShareCard()" style="background:linear-gradient(135deg,#5dbfff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.9rem">🖼️ Créer ma carte à partager</button>
           <button type="button" onclick="shareThisRideFb()" style="background:#1877F2;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">📘 Facebook</button>
           <button type="button" onclick="shareThisRideMessenger()" style="background:#0099FF;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">💬 Messenger</button>
           <button type="button" onclick="shareThisRideWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">💬 WhatsApp</button>
@@ -382,7 +382,7 @@
 
 <!-- ── Modal : carte partageable (générée dans le navigateur) ─────────────── -->
 <div id="share-card-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(4,10,18,.82);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;overflow:auto">
-  <div style="background:#0e1a26;border:1px solid rgba(0,217,255,.25);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+  <div style="background:#0e1a26;border:1px solid rgba(93,191,255,.25);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <h3 style="margin:0;color:#fff;font-size:1.05rem">🖼️ Ta carte à partager</h3>
       <button type="button" onclick="closeShareCard()" style="background:none;border:none;color:#8aa;font-size:1.5rem;cursor:pointer;line-height:1">×</button>
@@ -397,7 +397,7 @@
     </div>
     <div style="display:flex;gap:10px;margin-top:16px">
       <button type="button" onclick="downloadShareCard()" style="flex:1;background:#f0f2f5;color:#0e1a26;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer">📥 Télécharger</button>
-      <button type="button" onclick="shareShareCard()" style="flex:1;background:linear-gradient(135deg,#00d9ff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer">📤 Partager</button>
+      <button type="button" onclick="shareShareCard()" style="flex:1;background:linear-gradient(135deg,#5dbfff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer">📤 Partager</button>
     </div>
     <p style="margin:12px 0 0;color:#7d96a6;font-size:.74rem;line-height:1.5;text-align:center">Astuce : poste l'image sur Facebook/Messenger avec le lien du trajet. La photo reste sur ton appareil.</p>
   </div>
@@ -449,7 +449,7 @@ function shareThisRideMessenger() {
   }
 }
 function shareThisRideWhatsApp() {
-  var msg = encodeURIComponent('Je covoiture sur PorteaPorte ! Reserve ta place : ' + rideShareUrl());
+  var msg = encodeURIComponent('Je covoiture sur PorteàPorte ! Reserve ta place : ' + rideShareUrl());
   window.open('https://wa.me/?text=' + msg, '_blank');
 }
 
@@ -525,12 +525,12 @@ function drawShareCard() {
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
   // Liseré cyan
-  ctx.strokeStyle = 'rgba(0,217,255,.55)'; ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(93,191,255,.55)'; ctx.lineWidth = 8;
   _scRoundRect(ctx, 24, 24, W - 48, H - 48, 36); ctx.stroke();
 
   // Marque
   ctx.textBaseline = 'top'; ctx.textAlign = 'left';
-  ctx.fillStyle = '#00d9ff';
+  ctx.fillStyle = '#5dbfff';
   ctx.font = '700 54px system-ui, -apple-system, sans-serif';
   ctx.fillText('PorteàPorte', 70, 70);
   ctx.fillStyle = '#7d96a6';
@@ -606,7 +606,7 @@ function drawShareCard() {
   }
 
   // CTA bas
-  ctx.fillStyle = '#00d9ff';
+  ctx.fillStyle = '#5dbfff';
   ctx.font = '700 36px system-ui, sans-serif';
   ctx.fillText('➡️ Réserve sur porteaporte.site', 70, H - 110);
 }
@@ -1018,7 +1018,7 @@ function renderRide(r) {
   if (currentUser && driverIdForBadge && driverIdForBadge !== currentUser.id) {
     var btnChat = document.createElement('button');
     btnChat.type = 'button';
-    btnChat.style.cssText = 'background:linear-gradient(135deg,#00d9ff,#00b8d4);color:#001828;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9rem;';
+    btnChat.style.cssText = 'background:linear-gradient(135deg,#5dbfff,#00b8d4);color:#001828;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9rem;';
     btnChat.innerHTML = '💬 Contacter le chauffeur';
     btnChat.addEventListener('click', function () {
       window.RideChat.open({

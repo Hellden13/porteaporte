@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Admin - PorteàPorte</title>
+  <title>Dashboard Admin — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
@@ -39,7 +39,7 @@
     .sidebar-brand {
       font-size: 1.1rem;
       font-weight: 900;
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       padding: 0 20px 24px;
       border-bottom: 1px solid var(--brand-bg-surface-light);
       margin-bottom: 16px;
@@ -66,7 +66,7 @@
     .nav-link:hover, .nav-link.active {
       color: var(--brand-text);
       background: rgba(93,191,255,.06);
-      border-left-color: var(--brand-lime);
+      border-left-color: var(--brand-bleu);
     }
     .nav-link .icon { font-size: 1rem; width: 20px; text-align: center; }
     .sidebar-bottom {
@@ -135,13 +135,13 @@
       color: var(--brand-muted-dark);
       margin-bottom: 10px;
     }
-    .stat-card-value { font-size: 2rem; font-weight: 800; color: var(--brand-lime); line-height: 1; }
+    .stat-card-value { font-size: 2rem; font-weight: 800; color: var(--brand-bleu); line-height: 1; }
     .stat-card-sub { font-size: .8rem; color: var(--brand-muted-dark); margin-top: 6px; }
     .section { margin-bottom: 32px; }
     .section-title {
       font-size: .95rem;
       font-weight: 700;
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       text-transform: uppercase;
       letter-spacing: .06em;
       margin-bottom: 14px;
@@ -189,16 +189,16 @@
       font-size: .72rem;
       font-weight: 700;
     }
-    .badge-admin     { background: rgba(93,191,255,.15);  color: var(--brand-lime); }
-    .badge-livreur   { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
+    .badge-admin     { background: rgba(93,191,255,.15);  color: var(--brand-bleu); }
+    .badge-livreur   { background: rgba(93,191,255,.12);   color: var(--brand-cyan); }
     .badge-expediteur{ background: rgba(46,123,255,.15);  color: var(--brand-blue); }
     .badge-les-deux  { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
-    .badge-capability{ background: rgba(0,217,255,.08);   color: var(--brand-cyan); border: 1px solid rgba(0,217,255,.22); margin: 3px 3px 0 0; }
+    .badge-capability{ background: rgba(93,191,255,.08);   color: var(--brand-cyan); border: 1px solid rgba(93,191,255,.22); margin: 3px 3px 0 0; }
     .badge-verified  { background: rgba(16,185,129,.15);  color: var(--brand-success); }
     .badge-pending   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
     .badge-rejected  { background: rgba(239,68,68,.15);   color: var(--brand-danger); }
     .badge-livre     { background: rgba(16,185,129,.15);  color: var(--brand-success); }
-    .badge-en-route  { background: rgba(0,217,255,.12);   color: var(--brand-cyan); }
+    .badge-en-route  { background: rgba(93,191,255,.12);   color: var(--brand-cyan); }
     .badge-attente   { background: rgba(245,158,11,.15);  color: var(--brand-warning); }
     .delivery-status-stack {
       display: grid;
@@ -234,8 +234,8 @@
       color: var(--brand-warning);
     }
     .workflow-pill.info {
-      border-color: rgba(0,217,255,.32);
-      background: rgba(0,217,255,.1);
+      border-color: rgba(93,191,255,.32);
+      background: rgba(93,191,255,.1);
       color: var(--brand-cyan);
     }
     .workflow-pill.danger {
@@ -262,7 +262,7 @@
       margin: 2px !important;
       border-radius: 8px !important;
       border: 1px solid rgba(93,191,255,.85) !important;
-      background: linear-gradient(135deg, var(--brand-cyan), var(--brand-lime)) !important;
+      background: linear-gradient(135deg, var(--brand-cyan), var(--brand-bleu)) !important;
       color: #071009 !important;
       font-size: .78rem !important;
       line-height: 1.15;
@@ -270,14 +270,14 @@
       white-space: nowrap;
       cursor: pointer;
       transition: all .15s;
-      box-shadow: 0 6px 18px rgba(0,217,255,.18), 0 0 0 1px rgba(93,191,255,.18) !important;
+      box-shadow: 0 6px 18px rgba(93,191,255,.18), 0 0 0 1px rgba(93,191,255,.18) !important;
     }
     .admin-layout .action-btn:hover {
       border-color: #ffffff !important;
       color: #020403 !important;
       background: linear-gradient(135deg, #58e9ff, #d8ff6f) !important;
       transform: translateY(-1px);
-      box-shadow: 0 10px 24px rgba(0,217,255,.24), 0 0 0 2px rgba(93,191,255,.16) !important;
+      box-shadow: 0 10px 24px rgba(93,191,255,.24), 0 0 0 2px rgba(93,191,255,.16) !important;
     }
     .admin-layout .action-btn:focus-visible {
       outline: 2px solid var(--brand-cyan);
@@ -340,7 +340,7 @@
     .impact-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
     .impact-mini{background:var(--brand-bg-dark);border:1px solid var(--brand-bg-surface-light);border-radius:10px;padding:12px}
     .impact-mini div:first-child{font-size:.7rem;color:var(--brand-muted-dark);text-transform:uppercase;letter-spacing:.05em}
-    .impact-mini div:last-child{font-size:1.2rem;color:var(--brand-lime);font-weight:900;margin-top:4px}
+    .impact-mini div:last-child{font-size:1.2rem;color:var(--brand-bleu);font-weight:900;margin-top:4px}
     @media (max-width: 900px) {
       .admin-layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
@@ -392,6 +392,7 @@
     <a href="/admin/users.html" class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
     <a href="/admin/face-verify.html" class="nav-link"><span class="icon">👤</span> Vérification faciale IA</a>
     <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Arbitrage manquements</a>
+    <a href="/admin/signalements-messages.html" class="nav-link"><span class="icon">🚩</span> Conversations signalées</a>
     <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
 
     <div class="sidebar-label" style="margin-top:16px">💰 Finances &amp; analytics</div>
@@ -404,7 +405,6 @@
     <div class="sidebar-label" style="margin-top:16px">🤝 Communauté &amp; partenariats</div>
     <a href="/admin/organismes.html" class="nav-link"><span class="icon">❤️</span> Organismes partenaires</a>
     <a href="/admin/votes.html" class="nav-link"><span class="icon">🗳️</span> Votes communautaires</a>
-    <a href="/admin/partenaire.html" class="nav-link"><span class="icon">🏢</span> Partenaires commerciaux</a>
     <a href="/admin/presse-kit.html" class="nav-link"><span class="icon">📰</span> Kit Presse (interne)</a>
 
     <div class="sidebar-label" style="margin-top:16px">📣 Promotion covoiturage</div>
@@ -694,7 +694,7 @@
       </div>
 
       <div class="table-card">
-        <div style="padding:14px 18px;background:rgba(0,217,255,.04);border-bottom:1px solid var(--brand-border)">
+        <div style="padding:14px 18px;background:rgba(93,191,255,.04);border-bottom:1px solid var(--brand-border)">
           <strong style="color:#fff">📦 Détail livraison par livraison</strong>
         </div>
         <table>
@@ -866,7 +866,7 @@
 
       <!-- Templates rapides -->
       <div style="background:rgba(93,191,255,.05);border:1px solid rgba(93,191,255,.15);border-radius:10px;padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:.8rem;color:var(--brand-lime);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">⚡ Lancer une campagne saisonnière rapide</div>
+        <div style="font-size:.8rem;color:var(--brand-bleu);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">⚡ Lancer une campagne saisonnière rapide</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn-action" style="background:rgba(0,200,83,.12);border:1px solid rgba(0,200,83,.3);color:#00c853" onclick="quickCampaign('launch')">🚀 Lancement (100 premiers)</button>
           <button class="btn-action" style="background:rgba(220,20,60,.1);border:1px solid rgba(220,20,60,.3);color:#ff6b6b" onclick="quickCampaign('halloween')">🎃 Halloween (octobre)</button>
@@ -949,7 +949,7 @@
               <input id="cf-until" class="form-input" type="datetime-local" style="width:100%">
             </div>
           </div>
-          <div style="background:rgba(0,217,255,.05);border:1px solid rgba(0,217,255,.15);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="background:rgba(93,191,255,.05);border:1px solid rgba(93,191,255,.15);border-radius:8px;padding:14px;margin-bottom:12px">
             <div style="font-size:.78rem;color:var(--brand-cyan);font-weight:700;margin-bottom:10px">🎁 Fenêtre du bénéfice saisonnier — attention : aucun avantage concret n’est encore appliqué par le code (décision de Denis requise). Le badge donne seulement ses XP et Points Impact.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
               <div>
@@ -999,7 +999,7 @@
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin-bottom:8px">— Répartition livraisons —</div>
             <div style="background:rgba(93,191,255,.06);border:1px solid var(--brand-border);border-radius:8px;padding:14px 16px;margin-bottom:8px;font-size:.85rem;color:var(--brand-muted);line-height:1.6">
               📦 La répartition des livraisons (livreur, communauté, protection, profit…) se règle à <strong>un seul endroit</strong> pour rester cohérente partout :
-              <a href="/admin/parametres.html" style="display:inline-block;margin-top:8px;color:var(--brand-lime);font-weight:800;text-decoration:none">⚙️ Ouvrir Paramètrès financiers →</a>
+              <a href="/admin/parametres.html" style="display:inline-block;margin-top:8px;color:var(--brand-bleu);font-weight:800;text-decoration:none">⚙️ Ouvrir Paramètrès financiers →</a>
               <div style="margin-top:6px;font-size:.78rem;color:var(--brand-muted)">Transparence (public) et Fondateur lisent automatiquement cette même source.</div>
             </div>
 
@@ -1055,14 +1055,14 @@
                 <span id="ride-redist-pct" style="font-weight:800;font-size:1rem">—%</span>
               </div>
               <div style="background:var(--brand-bg-dark);border-radius:4px;height:8px;overflow:hidden">
-                <div id="ride-redist-bar-fill" style="height:100%;background:var(--brand-lime);width:0%;transition:width .3s"></div>
+                <div id="ride-redist-bar-fill" style="height:100%;background:var(--brand-bleu);width:0%;transition:width .3s"></div>
               </div>
               <div id="ride-redist-msg" style="font-size:.75rem;margin-top:4px;color:var(--brand-muted)">Reste: —%</div>
             </div>
             <div id="ride-redist-list"></div>
             <div style="display:flex;gap:8px;margin-top:4px">
               <button type="button" onclick="addRidePost()" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-cyan);color:var(--brand-cyan);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">+ Ajouter un poste</button>
-              <button type="button" onclick="autoBalanceRide()" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-lime);color:var(--brand-lime);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
+              <button type="button" onclick="autoBalanceRide()" style="background:rgba(93,191,255,.08);border:1px solid var(--brand-bleu);color:var(--brand-bleu);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Auto-équilibrer à 100%</button>
             </div>
 
             <div style="color:var(--brand-cyan);font-size:.78rem;font-weight:700;margin:12px 0 4px">— Affichage public —</div>
@@ -1083,7 +1083,7 @@
             <label for="impact-org-percent">Pourcentage de répartition</label>
             <div style="display:flex;gap:8px;align-items:center">
               <input id="impact-org-percent" type="number" min="0" max="100" step="0.1" value="0" style="flex:1" oninput="updateOrgTotal()">
-              <button type="button" onclick="assignReste()" style="white-space:nowrap;padding:6px 10px;background:rgba(93,191,255,.1);border:1px solid var(--brand-lime);color:var(--brand-lime);border-radius:6px;cursor:pointer;font-size:.8rem">Assigner le reste</button>
+              <button type="button" onclick="assignReste()" style="white-space:nowrap;padding:6px 10px;background:rgba(93,191,255,.1);border:1px solid var(--brand-bleu);color:var(--brand-bleu);border-radius:6px;cursor:pointer;font-size:.8rem">Assigner le reste</button>
             </div>
             <div id="org-total-indicator" style="font-size:.78rem;color:var(--brand-muted)">Total actif : calcul...</div>
             <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input id="impact-org-active" type="checkbox" checked style="width:auto"> Organisme actif</label>
@@ -1256,7 +1256,7 @@
   <div class="proof-modal-card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px">
       <div>
-        <div style="color:var(--brand-lime);font-size:.8rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em">Preuve de depot</div>
+        <div style="color:var(--brand-bleu);font-size:.8rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em">Preuve de depot</div>
         <h3 id="proof-title" style="margin:4px 0 0;font-size:1.25rem">Preuve de livraison</h3>
       </div>
       <button class="action-btn" type="button" onclick="closeProofModal()">Fermer</button>
@@ -1506,7 +1506,7 @@
         <textarea id="rej-text" rows="3" placeholder="Raison (modifiable)…" style="width:100%;box-sizing:border-box;margin-top:10px;background:#0A0C10;border:1px solid #2A313C;color:#fff;border-radius:8px;padding:10px;font-size:.9rem;resize:vertical"></textarea>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
           <button type="button" id="rej-cancel" style="background:transparent;border:1px solid #2A313C;color:#A8ACB1;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">Annuler</button>
-          <button type="button" id="rej-ok" style="background:#00D9FF;border:none;color:#071016;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:800">Refuser & prévenir</button>
+          <button type="button" id="rej-ok" style="background:#5dbfff;border:none;color:#071016;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:800">Refuser & prévenir</button>
         </div>`;
       overlay.appendChild(box);
       document.body.appendChild(overlay);
@@ -1524,8 +1524,8 @@
             btn.style.color = '#d8dde6';
           } else {
             lines.push(bullet);
-            btn.style.borderColor = '#00D9FF';
-            btn.style.color = '#00D9FF';
+            btn.style.borderColor = '#5dbfff';
+            btn.style.color = '#5dbfff';
           }
           ta.value = lines.join('\n');
           ta.focus();
@@ -1752,8 +1752,8 @@
         const cle = reglage[l.poste];
         const pctTxt = cle ? `${Number(s[cle] ?? 0).toFixed(1)} %` : '—';
         const redirected = l.poste === 'profit' && profitToInsurance;
-        return `<tr ${redirected ? 'style="background:rgba(0,217,255,.04)"' : ''}>
-          <td><strong style="color:#fff">${escA(l.label)}</strong>${redirected ? ' <span style="color:#00d9ff;font-size:.75rem">→ fonds litige (bêta)</span>' : ''}<div style="color:#A8B0BA;font-size:.75rem">${escA(l.detail || '')}</div></td>
+        return `<tr ${redirected ? 'style="background:rgba(93,191,255,.04)"' : ''}>
+          <td><strong style="color:#fff">${escA(l.label)}</strong>${redirected ? ' <span style="color:#5dbfff;font-size:.75rem">→ fonds litige (bêta)</span>' : ''}<div style="color:#A8B0BA;font-size:.75rem">${escA(l.detail || '')}</div></td>
           <td style="text-align:right;color:#A8B0BA;font-variant-numeric:tabular-nums">${pctTxt}</td>
           <td style="text-align:right;color:#fff;font-weight:800;font-variant-numeric:tabular-nums">${$m(l.cents / 100)}</td>
           <td style="text-align:right;color:#7dffc1;font-weight:800;font-variant-numeric:tabular-nums">${reel[l.poste] != null ? $m(reel[l.poste] / 100) : '—'}</td>
@@ -1777,7 +1777,7 @@
           const prix = Number(r.prix_total || 0);
           const date = r.cree_le || r.created_at;
           return `<tr>
-            <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
+            <td style="font-family:monospace;color:#5dbfff;font-size:.8rem">${r.code || '—'}</td>
             <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}</td>
             <td style="color:#5dbfff;font-weight:700">${$m(prix)}</td>
             <td style="color:#A8B0BA">${$m(prix * pctPlateforme / 100)}</td>
@@ -1819,8 +1819,8 @@
           const hasProof = Boolean(r.delivery_proof);
           const needsReview = r.delivery_proof_required_admin_review || hasProof;
           return `<tr>
-            <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${r.code || '—'}</td>
-            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}${hasProof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve photo/GPS disponible</div>' : ''}</td>
+            <td style="font-family:monospace;color:#5dbfff;font-size:.8rem">${r.code || '—'}</td>
+            <td>${r.ville_depart || '?'} → ${r.ville_arrivee || '?'}${hasProof ? '<div style="color:#5dbfff;font-size:.72rem;margin-top:4px;font-weight:800">Preuve photo/GPS disponible</div>' : ''}</td>
             <td><span style="background:${isLitige ? '#7C2020' : '#1A3A1A'};color:${isLitige ? '#FF6B6B' : '#6BFF6B'};padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700">${isLitige ? '⚠️ Litige' : '✅ Remboursé'}</span></td>
             <td style="color:#5dbfff;font-weight:700">${$m(r.prix_total)}</td>
             <td style="color:#5A6A7A;font-size:.8rem">${date ? new Date(date).toLocaleDateString('fr-CA') : '—'}</td>
@@ -1916,7 +1916,7 @@
       document.getElementById('cov-rides-body').innerHTML = rides.length === 0
         ? '<tr><td colspan="6" class="empty-msg">Aucun trajet</td></tr>'
         : rides.map(r => {
-            const statusColor = r.supprime ? '#5A6A7A' : ({ publie: '#5dbfff', complet: '#00D9FF', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA');
+            const statusColor = r.supprime ? '#5A6A7A' : ({ publie: '#5dbfff', complet: '#5dbfff', annule: '#FF6B6B', termine: '#5A6A7A' }[r.status] || '#A8B0BA');
             // Colonnes alignées sur l'en-tête : Trajet, Départ, Places, Prix/km, Statut, Actions.
             const rid = afId(r.id);
             const libelle = `${r.start_city || '?'} → ${r.end_city || '?'}`;
@@ -1934,7 +1934,7 @@
                   ? `<span style="color:#FFB800;font-size:.78rem" title="Annule le trajet pour rembourser les passagers">${r.reservations_actives == null ? 'Réservations ?' : r.reservations_actives + ' réservation(s) active(s)'}</span>`
                   : `<button class="action-btn danger" data-ride-id="${rid}" data-ride-label="${afEsc(libelle)}" onclick="adminSupprimerTrajet(this)">🗑️ Supprimer</button>`) + retourBtn);
             return `<tr>
-              <td>${afEsc(libelle)}<div style="font-family:monospace;color:#00D9FF;font-size:.7rem">${afEsc(String(r.id || '').slice(0,8))}… · ${afEsc(r.driver_prenom || r.driver_id?.slice(0,8) || '—')}</div></td>
+              <td>${afEsc(libelle)}<div style="font-family:monospace;color:#5dbfff;font-size:.7rem">${afEsc(String(r.id || '').slice(0,8))}… · ${afEsc(r.driver_prenom || r.driver_id?.slice(0,8) || '—')}</div></td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.departure_time ? new Date(r.departure_time).toLocaleString('fr-CA', {dateStyle:'short',timeStyle:'short'}) : '—'}${r.is_recurring ? ' 🔁' : ''}</td>
               <td style="color:#A8B0BA">${r.available_seats ?? '—'} place(s)</td>
               <td style="color:#A8B0BA">${r.cost_per_km != null ? Number(r.cost_per_km).toFixed(2) + ' $' : '—'}</td>
@@ -1950,7 +1950,7 @@
             const canCapture = b.status === 'confirme';
             const dateStr = b.created_at ? new Date(b.created_at).toLocaleDateString('fr-CA') : '—';
             return `<tr>
-              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${b.id.slice(0,8)}…</td>
+              <td style="font-family:monospace;color:#5dbfff;font-size:.75rem">${b.id.slice(0,8)}…</td>
               <td style="font-family:monospace;color:#A8B0BA;font-size:.75rem">${b.ride_id?.slice(0,8) || '—'}…</td>
               <td style="color:#A8B0BA;font-size:.8rem">${b.passenger_prenom || b.passenger_id?.slice(0,8) || '—'}</td>
               <td style="color:#A8B0BA">${b.seats_reserved ?? '—'}</td>
@@ -1967,7 +1967,7 @@
         : reports.map(r => {
             const statusColor = { ouvert: '#FF6B6B', en_traitement: '#FFB347', resolu: '#5dbfff', ferme: '#5A6A7A' }[r.status] || '#A8B0BA';
             return `<tr>
-              <td style="font-family:monospace;color:#00D9FF;font-size:.75rem">${r.id.slice(0,8)}…</td>
+              <td style="font-family:monospace;color:#5dbfff;font-size:.75rem">${r.id.slice(0,8)}…</td>
               <td style="color:#A8B0BA;font-size:.8rem">${r.reporter_prenom || r.reporter_id?.slice(0,8) || '—'}</td>
               <td>${r.reason || '—'}</td>
               <td><span style="color:${statusColor};font-weight:700;font-size:.78rem">${r.status}</span></td>
@@ -2081,7 +2081,7 @@
             const status = normalizedLivraisonStatus(l);
             const workflow = livraisonWorkflow(l);
             const canManualCapture = ['livre', 'livree', 'delivered'].includes(status);
-            const proofNote = l.delivery_proof ? '<div style="color:#00D9FF;font-size:.72rem;margin-top:4px;font-weight:800">Preuve dépôt reçue</div>' : '';
+            const proofNote = l.delivery_proof ? '<div style="color:#5dbfff;font-size:.72rem;margin-top:4px;font-weight:800">Preuve dépôt reçue</div>' : '';
             const driverNote = l.livreur_id ? '<div style="color:#A8B0BA;font-size:.72rem;margin-top:4px">Livreur assigné</div>' : '<div style="color:#F59E0B;font-size:.72rem;margin-top:4px">Aucun livreur assigné</div>';
             const proofBtn = l.delivery_proof ? `<button class="action-btn" onclick="viewDeliveryProof('${l.id}')">Voir preuve</button>` : '';
             const captureLabel = l.delivery_proof || workflow.step === 'Preuve déposée'
@@ -2092,7 +2092,7 @@
               : '<span style="color:#5A6A7A;font-size:.78rem">Aucune action critique</span>';
             return `
             <tr>
-              <td style="font-family:monospace;color:#00D9FF;font-size:.8rem">${l.code||'—'}</td>
+              <td style="font-family:monospace;color:#5dbfff;font-size:.8rem">${l.code||'—'}</td>
               <td>${l.ville_depart||'?'} → ${l.ville_arrivee||'?'}${driverNote}${proofNote}</td>
               <td>${livBadge(l.statut)}</td>
               <td>${renderLivraisonWorkflow(l)}</td>
@@ -2558,11 +2558,11 @@
     const msg = document.getElementById('ride-redist-msg');
     if (!el) return;
     el.textContent = rounded + '%';
-    el.style.color = Math.abs(rounded - 100) < 0.1 ? 'var(--brand-lime)' : rounded > 100 ? '#FF5555' : 'var(--brand-muted)';
-    if (bar) { bar.style.width = Math.min(100, rounded) + '%'; bar.style.background = rounded > 100 ? '#FF5555' : 'var(--brand-lime)'; }
+    el.style.color = Math.abs(rounded - 100) < 0.1 ? 'var(--brand-bleu)' : rounded > 100 ? '#FF5555' : 'var(--brand-muted)';
+    if (bar) { bar.style.width = Math.min(100, rounded) + '%'; bar.style.background = rounded > 100 ? '#FF5555' : 'var(--brand-bleu)'; }
     if (msg) {
       msg.textContent = rounded > 100 ? `⚠ Dépasse de ${Math.round((rounded - 100) * 10) / 10}%` : rounded < 100 ? `Reste à allouer : ${Math.round((100 - rounded) * 10) / 10}%` : '✓ 100% alloué';
-      msg.style.color = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-lime)' : 'var(--brand-muted)';
+      msg.style.color = rounded > 100 ? '#FF5555' : rounded === 100 ? 'var(--brand-bleu)' : 'var(--brand-muted)';
     }
   }
 
@@ -2731,7 +2731,7 @@
     if (!wrap) return;
     wrap.innerHTML = MONTHS_FR.map((m, i) => `
       <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid var(--brand-border);border-radius:6px;padding:4px 10px">
-        <input type="checkbox" class="month-cb" value="${i+1}" style="accent-color:var(--brand-lime)"> ${m}
+        <input type="checkbox" class="month-cb" value="${i+1}" style="accent-color:var(--brand-bleu)"> ${m}
       </label>`).join('');
   }
 
@@ -2802,13 +2802,13 @@
           <td style="font-size:.82rem">${window}</td>
           <td>${benefitPill(b.benefit_active_now)}${seasonal}</td>
           <td style="font-size:.85rem;font-weight:600">${recipients}
-            ${b.max_recipients ? `<div style="width:80px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px"><div style="width:${Math.min(100,Math.round((b.recipients_count/b.max_recipients)*100))}%;height:100%;background:var(--brand-lime);border-radius:2px"></div></div>` : ''}</td>
+            ${b.max_recipients ? `<div style="width:80px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px"><div style="width:${Math.min(100,Math.round((b.recipients_count/b.max_recipients)*100))}%;height:100%;background:var(--brand-bleu);border-radius:2px"></div></div>` : ''}</td>
           <td class="action-cell">
             <button class="btn-action btn-approve" onclick="editCampaign(${JSON.stringify(b).replace(/"/g,'&quot;')})" style="font-size:.75rem;padding:5px 10px">✏️ Éditer</button>
             ${b.campaign_status === 'active' || b.campaign_status === 'scheduled'
               ? `<button class="btn-action btn-suspend" onclick="toggleCampaign('${b.id}','pause')" style="font-size:.75rem;padding:5px 10px">⏸ Pause</button>`
               : `<button class="btn-action btn-approve" onclick="toggleCampaign('${b.id}','activate')" style="font-size:.75rem;padding:5px 10px">? Activer</button>`}
-            <button class="btn-action" onclick="batchGrantCampaign('${b.id}','${b.slug}')" style="font-size:.75rem;padding:5px 10px;background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.2);color:var(--brand-cyan)">🚀 Batch</button>
+            <button class="btn-action" onclick="batchGrantCampaign('${b.id}','${b.slug}')" style="font-size:.75rem;padding:5px 10px;background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.2);color:var(--brand-cyan)">🚀 Batch</button>
           </td>
         </tr>`;
       }).join('');
@@ -3014,7 +3014,7 @@
             const actif = c.is_active !== false;
             const date  = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-CA') : '—';
             return `<tr>
-              <td style="font-family:monospace;color:#00D9FF;font-weight:700;font-size:.9rem">${c.code || '—'}</td>
+              <td style="font-family:monospace;color:#5dbfff;font-weight:700;font-size:.9rem">${c.code || '—'}</td>
               <td>${name}</td>
               <td style="color:#5dbfff;font-weight:700">${count}</td>
               <td style="color:#5A6A7A;font-size:.8rem">${date}</td>
@@ -3041,7 +3041,7 @@
             return `<tr>
               <td>${parrainN}</td>
               <td>${filleulN}</td>
-              <td style="font-family:monospace;color:#00D9FF;font-size:.82rem">${r.referral_code || r.code || '—'}</td>
+              <td style="font-family:monospace;color:#5dbfff;font-size:.82rem">${r.referral_code || r.code || '—'}</td>
               <td><span class="badge ${r.rewarded ? 'badge-verified' : 'badge-pending'}">${r.rewarded ? '✓ Oui' : '⏳ Non'}</span></td>
               <td style="color:#5A6A7A;font-size:.8rem">${date}</td>
             </tr>`;
@@ -3128,9 +3128,9 @@
       document.getElementById('email-health').textContent = ok ? 'OK' : 'À vérifier';
       document.getElementById('email-health-sub').textContent = out.from_domain || 'domaine inconnu';
       box.innerHTML = `
-        <div>Resend : <strong style="color:${out.resend_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.resend_configured ? 'configuré' : 'manquant'}</strong></div>
-        <div>FROM_EMAIL : <strong style="color:${out.from_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.from_domain || 'manquant'}</strong></div>
-        <div>ADMIN_EMAIL : <strong style="color:${out.admin_email_configured ? 'var(--brand-lime)' : 'var(--brand-danger)'}">${out.admin_email_configured ? 'configuré' : 'manquant'}</strong></div>
+        <div>Resend : <strong style="color:${out.resend_configured ? 'var(--brand-bleu)' : 'var(--brand-danger)'}">${out.resend_configured ? 'configuré' : 'manquant'}</strong></div>
+        <div>FROM_EMAIL : <strong style="color:${out.from_email_configured ? 'var(--brand-bleu)' : 'var(--brand-danger)'}">${out.from_domain || 'manquant'}</strong></div>
+        <div>ADMIN_EMAIL : <strong style="color:${out.admin_email_configured ? 'var(--brand-bleu)' : 'var(--brand-danger)'}">${out.admin_email_configured ? 'configuré' : 'manquant'}</strong></div>
         <div style="margin-top:8px;color:#8A9BB0">${out.spam_note || ''}</div>
       `;
     } catch (err) {
@@ -3198,7 +3198,7 @@
       const hasFail = Number(out.failed) > 0;
       const reason = hasFail && Array.isArray(out.errors) && out.errors.length ? ' — raison : ' + out.errors.join(' | ') : '';
       const msg = `${hasFail ? '⚠️' : '✅'} Envoyé : ${out.sent || 0} / ${out.total || 0}${hasFail ? ' — échecs : ' + out.failed : ''}${out.test_mode ? ' (mode test)' : ''}${reason}`;
-      resultBox.innerHTML = `<span style="color:${hasFail ? '#ff8a8a' : 'var(--brand-lime)'}"></span>`;
+      resultBox.innerHTML = `<span style="color:${hasFail ? '#ff8a8a' : 'var(--brand-bleu)'}"></span>`;
       resultBox.firstChild.textContent = msg;
       (await PAPDialog.alert(msg));
       if (!testMode && !hasFail) event.target.reset();
@@ -3288,7 +3288,7 @@
       return `<tr>
         <td style="color:${noteColor};font-weight:800;font-size:1rem">${stars(note)}</td>
         <td style="color:var(--brand-muted);font-size:.85rem;max-width:240px">${comment || '<em style="color:#5A6A7A">Sans commentaire</em>'}</td>
-        <td style="font-size:.78rem"><div style="color:#00D9FF">${dRole}</div><div style="font-family:monospace;color:#5A6A7A">${shortId(evalue)}</div></td>
+        <td style="font-size:.78rem"><div style="color:#5dbfff">${dRole}</div><div style="font-family:monospace;color:#5A6A7A">${shortId(evalue)}</div></td>
         <td style="font-size:.78rem"><div style="color:#A8B0BA">${rRole}</div><div style="font-family:monospace;color:#5A6A7A">${shortId(evalueur)}</div></td>
         <td style="color:#5A6A7A;font-size:.8rem">${fmt(date)}</td>
         <td><button class="action-btn danger" onclick="deleteAvis('${r.id}','${_avisTab}')">Supprimer</button></td>
@@ -3410,7 +3410,7 @@
     el.innerHTML = `
       <div>
         <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">COÛT/KM SUGGÉRÉ PAR ÉNERGIE</div>
-        <div style="font-size:.92rem;font-weight:700;color:var(--brand-lime);line-height:1.8">${lignes}</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--brand-bleu);line-height:1.8">${lignes}</div>
       </div>
       <div>
         <div style="font-size:.82rem;color:var(--brand-muted);margin-bottom:6px">MAXIMUM ABSOLU</div>

@@ -466,7 +466,7 @@ describe('js/fetes.js (navigateur)', () => {
     const versions = new Set();
     const v1 = lire('index.html').match(/<script src="\/js\/fetes\.js\?v=([0-9a-z]+)" data-fetes="accueil" defer><\/script>/);
     assert.ok(v1, 'index.html'); versions.add(v1[1]);
-    for (const f of ['covoiturage.html', 'covoiturage-trajet.html', 'covoiturage-publier.html', 'livraison.html']) {
+    for (const f of ['covoiturage.html', 'covoiturage-trajet.html', 'covoiturage-publier.html', 'expediteur.html']) {
       const v = lire(f).match(/<script src="\/js\/fetes\.js\?v=([0-9a-z]+)" defer><\/script>/);
       assert.ok(v, f); versions.add(v[1]);
     }

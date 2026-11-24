@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vérification livreur - PorteàPorte</title>
+  <title>Vérification d’identité — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
@@ -18,7 +18,7 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
 
     .topbar { display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,12,16,.97);border-bottom:1px solid var(--brand-border); }
-    .brand { font-weight:900;font-size:19px;color:var(--brand-lime);text-decoration:none; }
+    .brand { font-weight:900;font-size:19px;color:var(--brand-bleu);text-decoration:none; }
     .topbar-btn { padding:7px 13px;border:1px solid var(--brand-border);border-radius:7px;background:transparent;color:var(--brand-muted);font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s; }
     .topbar-btn:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
 
@@ -28,13 +28,13 @@
     .steps { display:flex;align-items:center;margin-bottom:36px; }
     .step { display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative; }
     .step:not(:last-child)::after { content:'';position:absolute;top:15px;left:55%;right:-45%;height:2px;background:var(--brand-border);z-index:0; }
-    .step.done:not(:last-child)::after { background:var(--brand-lime); }
+    .step.done:not(:last-child)::after { background:var(--brand-bleu); }
     .step-dot { width:30px;height:30px;border-radius:50%;border:2px solid var(--brand-border);background:var(--brand-bg-surface);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:var(--brand-muted);position:relative;z-index:1;transition:all .3s; }
     .step.active .step-dot { border-color:var(--brand-cyan);color:var(--brand-cyan); }
-    .step.done .step-dot { border-color:var(--brand-lime);background:var(--brand-lime);color:var(--brand-bg-dark); }
+    .step.done .step-dot { border-color:var(--brand-bleu);background:var(--brand-bleu);color:var(--brand-bg-dark); }
     .step-lbl { font-size:.65rem;font-weight:700;color:var(--brand-muted);text-align:center; }
     .step.active .step-lbl { color:var(--brand-text); }
-    .step.done .step-lbl { color:var(--brand-lime); }
+    .step.done .step-lbl { color:var(--brand-bleu); }
 
     /* ---- Panels ---- */
     .panel { display:none; }
@@ -49,8 +49,8 @@
       text-align:center;cursor:pointer;transition:all .2s;background:var(--brand-bg-surface);
       position:relative;
     }
-    .transport-card:hover { border-color:var(--brand-cyan);background:rgba(0,217,255,0.04); }
-    .transport-card.selected { border-color:var(--brand-lime);background:rgba(93,191,255,0.06); }
+    .transport-card:hover { border-color:var(--brand-cyan);background:rgba(93,191,255,0.04); }
+    .transport-card.selected { border-color:var(--brand-bleu);background:rgba(93,191,255,0.06); }
     .transport-card input[type=radio] { position:absolute;opacity:0;pointer-events:none; }
     .transport-icon { font-size:28px;margin-bottom:8px; }
     .transport-name { font-weight:800;font-size:.85rem;margin-bottom:4px; }
@@ -61,8 +61,8 @@
     }
     .eco-20 { background:rgba(93,191,255,.18);color:#5dbfff;border:1px solid rgba(93,191,255,.35); }
     .eco-15 { background:rgba(93,191,255,.12);color:#57ffbc;border:1px solid rgba(93,191,255,.25); }
-    .eco-10 { background:rgba(0,217,255,.12);color:#00D9FF;border:1px solid rgba(0,217,255,.25); }
-    .eco-5  { background:rgba(0,217,255,.07);color:#00aad4;border:1px solid rgba(0,217,255,.18); }
+    .eco-10 { background:rgba(93,191,255,.12);color:#5dbfff;border:1px solid rgba(93,191,255,.25); }
+    .eco-5  { background:rgba(93,191,255,.07);color:#00aad4;border:1px solid rgba(93,191,255,.18); }
     .eco-0  { background:rgba(168,172,177,.07);color:var(--brand-muted);border:1px solid var(--brand-border); }
 
     /* ---- Eco summary box ---- */
@@ -72,7 +72,7 @@
       border-radius:10px;margin-bottom:20px;
     }
     .eco-summary.show { display:block; }
-    .eco-summary h3 { color:var(--brand-lime);font-size:.95rem;margin-bottom:4px; }
+    .eco-summary h3 { color:var(--brand-bleu);font-size:.95rem;margin-bottom:4px; }
     .eco-summary p { color:var(--brand-muted);font-size:.82rem;line-height:1.6; }
 
     /* ---- Form fields ---- */
@@ -94,7 +94,7 @@
     .doc-required h3 { font-size:.88rem;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px; }
     .doc-required ul { list-style:none;padding:0;display:flex;flex-direction:column;gap:6px; }
     .doc-required li { font-size:.82rem;color:var(--brand-muted);display:flex;align-items:center;gap:8px; }
-    .doc-required li::before { content:'✓';color:var(--brand-lime);font-weight:900;flex-shrink:0; }
+    .doc-required li::before { content:'✓';color:var(--brand-bleu);font-weight:900;flex-shrink:0; }
 
     /* ---- Upload zones ---- */
     .upload-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px; }
@@ -103,14 +103,14 @@
       text-align:center;cursor:pointer;transition:all .2s;position:relative;
       background:var(--brand-bg-surface);
     }
-    .upload-zone:hover,.upload-zone.drag { border-color:var(--brand-cyan);background:rgba(0,217,255,.04); }
-    .upload-zone.done { border-color:var(--brand-lime);background:rgba(93,191,255,.04);border-style:solid; }
+    .upload-zone:hover,.upload-zone.drag { border-color:var(--brand-cyan);background:rgba(93,191,255,.04); }
+    .upload-zone.done { border-color:var(--brand-bleu);background:rgba(93,191,255,.04);border-style:solid; }
     .upload-zone.hidden { display:none; }
     .upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer; }
     .upload-icon { font-size:26px;margin-bottom:6px; }
     .upload-label { font-weight:800;font-size:.82rem;margin-bottom:3px; }
     .upload-hint { font-size:.72rem;color:var(--brand-muted); }
-    .upload-fname { font-size:.74rem;color:var(--brand-lime);font-weight:700;margin-top:5px;word-break:break-all; }
+    .upload-fname { font-size:.74rem;color:var(--brand-bleu);font-weight:700;margin-top:5px;word-break:break-all; }
 
     /* ---- Selfie ---- */
     .selfie-wrap { background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:12px;overflow:hidden;margin-bottom:16px; }
@@ -121,22 +121,22 @@
     /* ---- Consents ---- */
     .consents { display:flex;flex-direction:column;gap:10px;margin-bottom:22px; }
     .consent-row { display:flex;gap:12px;align-items:flex-start;padding:13px;background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:9px; }
-    .consent-row input[type=checkbox] { width:17px;height:17px;flex-shrink:0;accent-color:var(--brand-lime);margin-top:2px; }
+    .consent-row input[type=checkbox] { width:17px;height:17px;flex-shrink:0;accent-color:var(--brand-bleu);margin-top:2px; }
     .consent-text { font-size:.83rem;line-height:1.55;color:var(--brand-muted); }
     .consent-text strong { color:var(--brand-text); }
     .consent-text a { color:var(--brand-cyan); }
 
     /* ---- Status ---- */
     .status-msg { display:none;padding:11px 15px;border-radius:9px;font-size:.86rem;margin-bottom:14px;line-height:1.5; }
-    .status-msg.success { background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.3);color:var(--brand-lime);display:block; }
+    .status-msg.success { background:rgba(93,191,255,.1);border:1px solid rgba(93,191,255,.3);color:var(--brand-bleu);display:block; }
     .status-msg.error   { background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ffb4b4;display:block; }
-    .status-msg.info    { background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.25);color:var(--brand-cyan);display:block; }
+    .status-msg.info    { background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);color:var(--brand-cyan);display:block; }
 
     /* ---- Buttons ---- */
     .nav-btns { display:flex;gap:10px;justify-content:flex-end;margin-top:10px; }
     .btn-back { padding:12px 20px;border:1px solid var(--brand-border);border-radius:9px;background:transparent;color:var(--brand-muted);font-weight:700;font-size:14px;cursor:pointer; }
     .btn-back:hover { border-color:var(--brand-cyan);color:var(--brand-cyan); }
-    .btn-next { padding:12px 24px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--brand-lime),var(--brand-cyan));color:var(--brand-bg-dark);font-weight:800;font-size:14px;cursor:pointer;transition:opacity .2s,transform .2s; }
+    .btn-next { padding:12px 24px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--brand-bleu),var(--brand-cyan));color:var(--brand-bg-dark);font-weight:800;font-size:14px;cursor:pointer;transition:opacity .2s,transform .2s; }
     .btn-next:hover { opacity:.88;transform:translateY(-1px); }
     .btn-next:disabled { opacity:.4;cursor:not-allowed;transform:none; }
 
@@ -145,7 +145,7 @@
     .state-banner .icon { font-size:52px;margin-bottom:14px; }
     .state-banner h2 { margin-bottom:8px; }
     .state-banner p { color:var(--brand-muted);line-height:1.6;margin-bottom:20px; }
-    .state-banner a { display:inline-block;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;background:var(--brand-lime);color:var(--brand-bg-dark); }
+    .state-banner a { display:inline-block;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;background:var(--brand-bleu);color:var(--brand-bg-dark); }
 
     @media(max-width:600px) {
       .transport-grid { grid-template-columns:1fr 1fr; }
@@ -168,7 +168,7 @@
   <div id="stateVerified" style="display:none">
     <div class="state-banner" style="border:1px solid rgba(93,191,255,.3)">
       <div class="icon">✅</div>
-      <h2 style="color:var(--brand-lime)">Identité vérifiée</h2>
+      <h2 style="color:var(--brand-bleu)">Identité vérifiée</h2>
       <p>Tu es un livreur vérifié PorteàPorte. Tu touches 60 % du prix de chaque livraison (sans la prime de protection, qui va au fonds de protection).</p>
       <a href="/browse-missions.html">Voir les missions</a>
     </div>
@@ -187,7 +187,7 @@
   <!-- KYC form -->
   <div id="kycForm">
     <div style="margin-bottom:28px">
-      <h1 style="font-size:1.55rem;font-weight:900;margin-bottom:6px">Vérification livreur</h1>
+      <h1 style="font-size:1.55rem;font-weight:900;margin-bottom:6px">Vérification d’identité</h1>
       <p style="color:var(--brand-muted);line-height:1.65">Les documents requis varient selon ton mode de transport. Délai d'approbation : <strong>24 à 48 heures</strong>.</p>
     </div>
 
@@ -203,7 +203,7 @@
     <div id="statusMsg" class="status-msg"></div>
 
     <!-- ===== STRIPE IDENTITY (alternative rapide) ===== -->
-    <div style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(93,191,255,.08),rgba(0,217,255,.06));border:2px solid rgba(93,191,255,.4);border-radius:14px">
+    <div style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(93,191,255,.08),rgba(93,191,255,.06));border:2px solid rgba(93,191,255,.4);border-radius:14px">
       <div style="text-align:center">
         <div style="color:#5dbfff;font-weight:900;font-size:1.1rem;margin-bottom:6px">⚡ Vérification instantanée (30 secondes)</div>
         <p style="color:#a8b0ba;font-size:.92rem;line-height:1.6;margin:0 0 14px">Évite le formulaire long et la vérification manuelle (24-48h). Stripe Identity vérifie ton permis + selfie + détection de vie en 30 secondes.</p>
@@ -242,7 +242,7 @@
         <div class="field"><label>Nom de famille</label><input type="text" id="lastName" placeholder="Tremblay" autocomplete="family-name"></div>
         <div class="field"><label>Date de naissance</label><input type="date" id="dob" max="2006-01-01"></div>
         <div class="field"><label>Téléphone</label><input type="tel" id="phone" placeholder="+1 514 123 4567" autocomplete="tel"></div>
-        <div class="field form-full"><label>Adresse complète <button type="button" onclick="autoDetectCity()" style="margin-left:8px;padding:3px 9px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:6px;color:#7de4ff;font-size:.72rem;font-weight:700;cursor:pointer">📍 Auto-détecter</button></label><input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address"></div>
+        <div class="field form-full"><label>Adresse complète <button type="button" onclick="autoDetectCity()" style="margin-left:8px;padding:3px 9px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.3);border-radius:6px;color:#7de4ff;font-size:.72rem;font-weight:700;cursor:pointer">📍 Auto-détecter</button></label><input type="text" id="address" placeholder="123 rue Principale, Montréal, QC H2T 1V6" autocomplete="street-address"></div>
       </div>
 
       <div class="nav-btns">

@@ -18,7 +18,7 @@
       --brand-bg-surface: #111520;
       --brand-border: #1E2535;
       --brand-lime: #5dbfff;
-      --brand-cyan: #00D9FF;
+      --brand-cyan: #5dbfff;
       --brand-text: #E8EDF5;
       --brand-muted: #8A9BB0;
     }
@@ -34,14 +34,14 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .nav-logo { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
-    .nav-logo span { color: var(--brand-lime); }
+    .nav-logo span { color: var(--brand-bleu); }
     .nav-links { display: flex; gap: 2rem; list-style: none; }
     .nav-links a { color: var(--brand-muted); font-size: 0.9rem; transition: color 0.2s; }
     .nav-links a:hover { color: var(--brand-text); }
     .nav-cta { display: flex; gap: 0.75rem; align-items: center; }
 
     .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
-    .btn-primary { background: var(--brand-lime); color: #0A0C10; }
+    .btn-primary { background: var(--brand-bleu); color: #0A0C10; }
     .btn-primary:hover { background: #cffe5a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(93,191,255,0.25); }
     .btn-ghost { background: transparent; border: 1.5px solid var(--brand-border); color: var(--brand-text); }
     .btn-ghost:hover { border-color: var(--brand-text); }
@@ -49,7 +49,7 @@
 
     section { padding: 5rem 2rem; }
     .container { max-width: 1100px; margin: 0 auto; }
-    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-lime); margin-bottom: 0.75rem; }
+    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-bleu); margin-bottom: 0.75rem; }
     .section-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 1rem; }
     .section-sub { color: var(--brand-muted); font-size: 1.05rem; max-width: 580px; margin-bottom: 3rem; }
 
@@ -71,11 +71,11 @@
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: rgba(93,191,255,0.12); border: 1px solid rgba(93,191,255,0.3);
       border-radius: 999px; padding: 0.35rem 1rem;
-      font-size: 0.8rem; font-weight: 600; color: var(--brand-lime);
+      font-size: 0.8rem; font-weight: 600; color: var(--brand-bleu);
       margin-bottom: 1.5rem; letter-spacing: 0.04em; text-transform: uppercase;
     }
     .hero h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 900; line-height: 1.08; letter-spacing: -2px; margin-bottom: 1.25rem; }
-    .hero h1 em { font-style: normal; color: var(--brand-lime); }
+    .hero h1 em { font-style: normal; color: var(--brand-bleu); }
     .hero p { font-size: 1.1rem; color: var(--brand-muted); max-width: 520px; margin-bottom: 2.25rem; line-height: 1.75; }
     .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
     .hero-stats {
@@ -84,7 +84,7 @@
       background: rgba(17,21,32,0.75); border: 1px solid var(--brand-border);
       border-radius: 14px; backdrop-filter: blur(8px);
     }
-    .hero-stat strong { display: block; font-size: 1.6rem; font-weight: 900; color: var(--brand-lime); line-height: 1; }
+    .hero-stat strong { display: block; font-size: 1.6rem; font-weight: 900; color: var(--brand-bleu); line-height: 1; }
     .hero-stat span { font-size: 0.8rem; color: var(--brand-muted); }
 
     /* CALCULATEUR */
@@ -101,28 +101,28 @@
       border-radius: 10px; padding: 0.75rem 1rem; color: var(--brand-text);
       font-size: 0.95rem; outline: none; transition: border-color 0.2s; width: 100%;
     }
-    .calc-field select:focus { border-color: var(--brand-lime); }
-    .calc-field input[type=range] { padding: 0.35rem 0; accent-color: var(--brand-lime); cursor: pointer; }
-    .range-val { font-size: 0.9rem; color: var(--brand-lime); font-weight: 700; }
+    .calc-field select:focus { border-color: var(--brand-bleu); }
+    .calc-field input[type=range] { padding: 0.35rem 0; accent-color: var(--brand-bleu); cursor: pointer; }
+    .range-val { font-size: 0.9rem; color: var(--brand-bleu); font-weight: 700; }
     .calc-result {
       background: var(--brand-bg-dark); border: 1px solid var(--brand-border);
       border-radius: 20px; padding: 2.5rem; text-align: center;
       position: sticky; top: 80px;
     }
     .calc-result .result-label { font-size: 0.82rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
-    .calc-result .result-amount { font-size: 4rem; font-weight: 900; color: var(--brand-lime); line-height: 1; margin-bottom: 0.35rem; }
+    .calc-result .result-amount { font-size: 4rem; font-weight: 900; color: var(--brand-bleu); line-height: 1; margin-bottom: 0.35rem; }
     .calc-result .result-period { font-size: 0.9rem; color: var(--brand-muted); margin-bottom: 2rem; }
     .calc-result .result-breakdown { display: flex; flex-direction: column; gap: 0.6rem; text-align: left; }
     .breakdown-line { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--brand-border); }
     .breakdown-line:last-child { border: none; font-weight: 700; color: var(--brand-text); }
-    .breakdown-line span:last-child { color: var(--brand-lime); font-weight: 700; }
+    .breakdown-line span:last-child { color: var(--brand-bleu); font-weight: 700; }
     .calc-examples { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
     .calc-example {
       background: rgba(93,191,255,0.04); border: 1px solid rgba(93,191,255,0.12);
       border-radius: 12px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
     }
     .calc-example .desc { font-size: 0.88rem; color: var(--brand-muted); }
-    .calc-example .amount { font-size: 1.05rem; font-weight: 800; color: var(--brand-lime); }
+    .calc-example .amount { font-size: 1.05rem; font-weight: 800; color: var(--brand-bleu); }
 
     /* ÉTAPES */
     .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
@@ -131,7 +131,7 @@
       border-radius: 16px; padding: 2rem 1.75rem; position: relative; overflow: hidden;
       transition: border-color 0.25s, transform 0.25s;
     }
-    .step-card:hover { border-color: var(--brand-lime); transform: translateY(-4px); }
+    .step-card:hover { border-color: var(--brand-bleu); transform: translateY(-4px); }
     .step-num { font-size: 3.5rem; font-weight: 900; line-height: 1; color: rgba(93,191,255,0.07); position: absolute; top: 1rem; right: 1.25rem; }
     .step-icon { font-size: 2rem; margin-bottom: 1rem; }
     .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
@@ -144,7 +144,7 @@
       border-radius: 16px; padding: 1.75rem; display: flex; gap: 1rem; align-items: flex-start;
       transition: border-color 0.2s;
     }
-    .gain-card:hover { border-color: var(--brand-lime); }
+    .gain-card:hover { border-color: var(--brand-bleu); }
     .gain-icon {
       width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
       background: rgba(93,191,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
@@ -164,7 +164,7 @@
     .testi-author img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-border); }
     .testi-author strong { display: block; font-size: 0.92rem; font-weight: 700; }
     .testi-author span { font-size: 0.8rem; color: var(--brand-muted); }
-    .testi-earnings { display: inline-block; background: rgba(93,191,255,0.1); color: var(--brand-lime); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; }
+    .testi-earnings { display: inline-block; background: rgba(93,191,255,0.1); color: var(--brand-bleu); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; }
 
     /* PRÉREQUIS */
     .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
@@ -177,7 +177,7 @@
     .req-box .subtitle { font-size: 0.85rem; color: var(--brand-muted); margin-bottom: 1.5rem; }
     .req-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
     .req-box li { display: flex; gap: 0.6rem; font-size: 0.9rem; align-items: flex-start; }
-    .req-box li .ok { color: var(--brand-lime); font-weight: 700; flex-shrink: 0; }
+    .req-box li .ok { color: var(--brand-bleu); font-weight: 700; flex-shrink: 0; }
     .req-note {
       margin-top: 1.5rem; padding: 0.85rem 1.1rem;
       background: rgba(93,191,255,0.05); border: 1px solid rgba(93,191,255,0.15);
@@ -199,7 +199,7 @@
     .faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 780px; }
     .faq-item { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; overflow: hidden; }
     .faq-q { padding: 1.25rem 1.5rem; cursor: pointer; font-weight: 600; font-size: 0.97rem; display: flex; justify-content: space-between; align-items: center; user-select: none; transition: color 0.2s; }
-    .faq-q:hover { color: var(--brand-lime); }
+    .faq-q:hover { color: var(--brand-bleu); }
     .faq-q .arrow { font-size: 1.1rem; transition: transform 0.25s; }
     .faq-a { padding: 0 1.5rem 1.25rem; font-size: 0.9rem; color: var(--brand-muted); line-height: 1.7; display: none; }
     .faq-item.open .faq-a { display: block; }
@@ -249,7 +249,7 @@
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">Porte<span>à</span>Porte</div>
+  <div class="nav-logo">PorteàPorte</div>
   <ul class="nav-links">
     <li><a href="/index.html">Accueil</a></li>
     <li><a href="/expediteur.html">Expédier</a></li>
@@ -491,7 +491,7 @@
     <h2 class="section-title">C'est pour toi si tu fais<br>déjà le trajet dans ta propre voiture</h2>
     <p class="section-sub">PorteàPorte est conçu pour des particuliers qui utilisent leur véhicule personnel. Le véhicule de ton employeur n'est pas le tien — on ne peut pas t'y autoriser.</p>
     <div class="req-grid">
-      <div class="req-box" style="border-top: 3px solid var(--brand-lime);">
+      <div class="req-box" style="border-top: 3px solid var(--brand-bleu);">
         <h3>🚗 Pour livrer en voiture</h3>
         <div class="subtitle">Livraisons locales, interrégionales et longue distance</div>
         <ul>
@@ -515,7 +515,7 @@
           <li><span class="ok">✓</span>Capacité à soulever et transporter des charges</li>
           <li><span class="ok">✓</span>Zone de livraison définie dans ton profil</li>
         </ul>
-        <div class="req-note" style="background: rgba(0,217,255,0.04); border-color: rgba(0,217,255,0.15);">🚲 Pas de voiture ? Pas de problème. Beaucoup de nos livreurs les plus actifs livrent exclusivement à vélo.</div>
+        <div class="req-note" style="background: rgba(93,191,255,0.04); border-color: rgba(93,191,255,0.15);">🚲 Pas de voiture ? Pas de problème. Beaucoup de nos livreurs les plus actifs livrent exclusivement à vélo.</div>
       </div>
     </div>
   </div>
@@ -594,7 +594,7 @@
     <p>Inscription gratuite en 10 minutes. Enregistré ton trajet habituel — on s'occupe du reste quand un colis passe par là.</p>
     <div style="margin:0 auto 24px;max-width:520px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px 20px;text-align:left">
       <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:.88rem;color:var(--brand-muted);line-height:1.55">
-        <input type="checkbox" id="autonome-check" style="margin-top:3px;accent-color:var(--brand-lime);width:16px;height:16px;flex-shrink:0">
+        <input type="checkbox" id="autonome-check" style="margin-top:3px;accent-color:var(--brand-bleu);width:16px;height:16px;flex-shrink:0">
         <span>Je comprends que j'agis comme <strong style="color:var(--brand-text)">travailleur autonome indépendant</strong>, que je suis responsable de déclarer mes revenus à Revenu Québec, et que PorteàPorte n'est pas mon employeur. (<a href="/cgu.html#section-15" style="color:var(--brand-cyan)">Section 15 des CGU</a>)</span>
       </label>
     </div>

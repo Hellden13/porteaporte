@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carte des missions - PorteàPorte</title>
+  <title>Carte des missions — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
@@ -38,7 +38,7 @@
       border-bottom: 1px solid var(--brand-border);
       flex-shrink: 0;
     }
-    .brand { font-weight: 900; font-size: 19px; color: var(--brand-lime); text-decoration: none; letter-spacing: -0.5px; }
+    .brand { font-weight: 900; font-size: 19px; color: var(--brand-bleu); text-decoration: none; letter-spacing: -0.5px; }
     .topbar-right { display: flex; align-items: center; gap: 8px; }
     .topbar-btn {
       padding: 7px 13px;
@@ -53,7 +53,7 @@
       transition: all 0.2s;
     }
     .topbar-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
-    .topbar-btn.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(93,191,255,0.06); }
+    .topbar-btn.active { border-color: var(--brand-bleu); color: var(--brand-bleu); background: rgba(93,191,255,0.06); }
 
     /* ---- Layout: map + side panel ---- */
     .layout {
@@ -107,21 +107,21 @@
       transition: border-color 0.2s, background 0.2s;
       background: var(--brand-bg-dark);
     }
-    .mission-item:hover { border-color: var(--brand-cyan); background: rgba(0,217,255,0.03); }
-    .mission-item.selected { border-color: var(--brand-lime); background: rgba(93,191,255,0.04); }
+    .mission-item:hover { border-color: var(--brand-cyan); background: rgba(93,191,255,0.03); }
+    .mission-item.selected { border-color: var(--brand-bleu); background: rgba(93,191,255,0.04); }
 
     .mi-route { font-weight: 700; font-size: 0.88rem; }
     .mi-meta { color: var(--brand-muted); font-size: 0.76rem; margin-top: 3px; }
     .mi-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
-    .mi-price { font-weight: 800; color: var(--brand-lime); font-size: 1rem; }
+    .mi-price { font-weight: 800; color: var(--brand-bleu); font-size: 1rem; }
     .mi-pill {
       font-size: 0.7rem;
       font-weight: 700;
       padding: 2px 8px;
       border-radius: 999px;
-      background: rgba(0,217,255,0.1);
+      background: rgba(93,191,255,0.1);
       color: var(--brand-cyan);
-      border: 1px solid rgba(0,217,255,0.25);
+      border: 1px solid rgba(93,191,255,0.25);
     }
 
     /* ---- Map container ---- */
@@ -196,7 +196,7 @@
     .detail-price {
       font-size: 1.6rem;
       font-weight: 900;
-      color: var(--brand-lime);
+      color: var(--brand-bleu);
       margin: 16px 0;
       text-align: center;
     }
@@ -206,7 +206,7 @@
       padding: 14px;
       border: none;
       border-radius: 9px;
-      background: linear-gradient(135deg, var(--brand-lime), var(--brand-cyan));
+      background: linear-gradient(135deg, var(--brand-bleu), var(--brand-cyan));
       color: var(--brand-bg-dark);
       font-weight: 800;
       font-size: 15px;
@@ -261,7 +261,7 @@
     .bio-actions { display: flex; gap: 10px; }
     .bio-confirm {
       flex: 1; padding: 12px; border: none; border-radius: 9px;
-      background: linear-gradient(135deg, var(--brand-lime), var(--brand-cyan));
+      background: linear-gradient(135deg, var(--brand-bleu), var(--brand-cyan));
       color: var(--brand-bg-dark); font-weight: 800; font-size: 14px; cursor: pointer;
     }
     .bio-cancel {
@@ -290,7 +290,7 @@
       background: transparent;
       transition: all 0.15s;
     }
-    .filter-pill:hover, .filter-pill.active { border-color: var(--brand-lime); color: var(--brand-lime); background: rgba(93,191,255,0.07); }
+    .filter-pill:hover, .filter-pill.active { border-color: var(--brand-bleu); color: var(--brand-bleu); background: rgba(93,191,255,0.07); }
 
     /* ---- Empty / loading ---- */
     .side-loading { text-align: center; padding: 32px 16px; color: var(--brand-muted); font-size: 0.88rem; }
@@ -420,7 +420,7 @@
           <div style="font-weight:800;font-size:.88rem;margin-bottom:4px">${mission.ville_depart || '?'} → ${mission.ville_arrivee || '?'}</div>
           <div style="color:#A8ACB1;font-size:.76rem;margin-bottom:8px">${mission.type_colis || 'Colis'}${mission.poids_kg ? ' · ' + mission.poids_kg + ' kg' : ''}</div>
           <div style="font-weight:900;color:#5dbfff;font-size:1rem;margin-bottom:8px">${money(mission.prix_total)}</div>
-          <button onclick="showDetail('${mission.id}')" style="width:100%;padding:7px;border:none;border-radius:6px;background:linear-gradient(135deg,#5dbfff,#00D9FF);color:#0A0C10;font-weight:800;font-size:12px;cursor:pointer">
+          <button onclick="showDetail('${mission.id}')" style="width:100%;padding:7px;border:none;border-radius:6px;background:linear-gradient(135deg,#5dbfff,#5dbfff);color:#0A0C10;font-weight:800;font-size:12px;cursor:pointer">
             ${mission._locked ? '🔒 Déverrouiller' : 'Voir détails'}
           </button>
         </div>
@@ -548,7 +548,7 @@
                ${locked ? '🔒 Déverrouiller & accepter' : 'Accepter cette mission'}
              </button>
              <p class="bio-note">Confirmation biométrique requise</p>`
-          : `<a href="/login.html" style="display:block;width:100%;padding:14px;border:none;border-radius:9px;background:linear-gradient(135deg,#5dbfff,#00D9FF);color:#0A0C10;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none">Se connecter pour accepter</a>`
+          : `<a href="/login.html" style="display:block;width:100%;padding:14px;border:none;border-radius:9px;background:linear-gradient(135deg,#5dbfff,#5dbfff);color:#0A0C10;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none">Se connecter pour accepter</a>`
         }
       `;
 
@@ -631,7 +631,7 @@
         if (myMarker) myMarker.remove();
         myMarker = L.circleMarker([lat, lng], {
           radius: 10,
-          fillColor: '#00D9FF',
+          fillColor: '#5dbfff',
           color: '#0A0C10',
           weight: 2,
           fillOpacity: 1

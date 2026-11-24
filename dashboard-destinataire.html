@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mes colis reçus - PorteàPorte</title>
+  <title>Mes colis reçus — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/premium-system.css">
@@ -21,15 +21,15 @@
     h1 { margin: 0; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
     .stat { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; text-align: center; }
-    .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--brand-lime); }
+    .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--brand-bleu); }
     .stat-lbl { font-size: .82rem; color: var(--brand-muted); margin-top: 4px; }
     .liv-card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
     .liv-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
     .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
     .pill.payee { background: rgba(93,191,255,.15); color: #7dffc1; }
-    .pill.en_route { background: rgba(0,217,255,.15); color: #7de4ff; }
+    .pill.en_route { background: rgba(93,191,255,.15); color: #7de4ff; }
     .pill.livre { background: rgba(255,200,0,.15); color: #ffd700; }
-    .pill.publie, .pill.confirme, .pill.paiement_autorise { background: rgba(0,217,255,.1); color: #a8b0ba; }
+    .pill.publie, .pill.confirme, .pill.paiement_autorise { background: rgba(93,191,255,.1); color: #a8b0ba; }
     .pill.annule, .pill.retour_expediteur { background: rgba(255,90,90,.15); color: #ffb0b0; }
     .meta { color: var(--brand-muted); font-size: .85rem; line-height: 1.6; }
     .empty { text-align: center; color: var(--brand-muted); padding: 40px 20px; }
@@ -104,7 +104,7 @@
               ${l.taille_colis ? ` (${l.taille_colis})` : ''}
             </div>
             <div class="actions">
-              <a class="btn-sm" style="background:rgba(0,217,255,.12);color:#7de4ff;border:1px solid rgba(0,217,255,.3)" href="/suivi-livraison.html?id=${l.id}">📍 Suivi</a>
+              <a class="btn-sm" style="background:rgba(93,191,255,.12);color:#7de4ff;border:1px solid rgba(93,191,255,.3)" href="/suivi-livraison.html?id=${l.id}">📍 Suivi</a>
               ${['livre','livree','delivered'].includes(l.statut) ? `<a class="btn-sm" style="background:linear-gradient(135deg,#5dbfff,#78d900);color:#071006" href="/confirmation-destinataire.html?livraison_id=${l.id}">✅ Confirmer réception</a>` : ''}
               <a class="btn-sm" style="background:rgba(255,150,0,.12);color:#ffd700;border:1px solid rgba(255,150,0,.3)" href="/confirmation-destinataire.html?livraison_id=${l.id}">⚙️ Préférences</a>
             </div>

@@ -168,7 +168,7 @@ module.exports = async function handler(req, res) {
 
   const colisId = livraison.code || livraison.id;
   const currency = (body.currency || 'cad').toLowerCase();
-  const desc = 'Livraison PorteaPorte - ' + colisId;
+  const desc = 'Livraison PorteàPorte - ' + colisId;
 
   try {
     console.log('[paiement-livraison] livraison=%s montantCents=%s', livraison.id, montantCents);

@@ -132,7 +132,7 @@
         <h2 style="margin:0 0 12px;color:#fff;font-size:1.35rem">${step.title}</h2>
         <p style="color:#a8b0ba;line-height:1.65;margin:0 0 24px;font-size:.95rem">${step.text}</p>
         <div style="height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-bottom:24px">
-          <div style="width:${progress}%;height:100%;background:linear-gradient(90deg,#00d9ff,#b8f53e);border-radius:999px;transition:width .3s ease"></div>
+          <div style="width:${progress}%;height:100%;background:linear-gradient(90deg,#5dbfff,#b8f53e);border-radius:999px;transition:width .3s ease"></div>
         </div>
         <div style="display:flex;gap:10px;justify-content:center">
           ${stepIndex > 0 ? `<button id="pap-onb-prev" style="padding:12px 20px;background:rgba(255,255,255,.06);border:1px solid #1E2535;color:#fff;border-radius:10px;cursor:pointer;font-weight:700">← Précédent</button>` : ''}

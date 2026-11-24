@@ -231,9 +231,8 @@ describe('rien d\'affiché qui ne soit pas réel', () => {
     assert.match(h, /const bonusPct\s+= 0;/);
   });
   test('plans Pro fermés : avantages jamais appliqués, aucun abonnement vendu', async () => {
-    const h = lire('abonnements.html');
-    assert.doesNotMatch(h, /onclick="subscribe\(/);
-    assert.doesNotMatch(h, /Commission réduite|Frais de service offerts|Priorité dans les résultats/);
+    // Plan du site, étape 1 : la page des plans est retirée (redirigée vers l'accueil).
+    assert.ok(!fs.existsSync('abonnements.html'));
     const { subscriptionCreate } = require('../lib/_connect');
     const res = makeRes();
     await subscriptionCreate({ body: { plan: 'conducteur_pro' } }, res, { ...CTX, session: { id: U } });
@@ -248,7 +247,7 @@ describe('rien d\'affiché qui ne soit pas réel', () => {
     assert.doesNotMatch(lire('parrainage.html'), /bonus de bienvenue/);
   });
   test('organismes : plus de « 5 % de chaque livraison va à… » (le versement n\'existe pas encore)', () => {
-    for (const f of ['organismes.html', 'manifeste.html', 'heros.html', 'vote-communautaire.html', 'admin/presse-kit.html']) {
+    for (const f of ['organismes.html', 'manifeste.html', 'vote-communautaire.html', 'admin/presse-kit.html']) {
       assert.doesNotMatch(lire(f), /data-share="communaute"/, f);
     }
     assert.doesNotMatch(lire('manifeste.html'), /fondations environnementales/);

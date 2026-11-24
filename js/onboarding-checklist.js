@@ -129,7 +129,7 @@
     if (document.getElementById('pap-onboard-css')) return;
     const css = `
       .pap-onboard {
-        background: linear-gradient(135deg, rgba(93,191,255,.07), rgba(0,217,255,.04));
+        background: linear-gradient(135deg, rgba(93,191,255,.07), rgba(93,191,255,.04));
         border: 1px solid rgba(93,191,255,.3);
         border-radius: 14px; padding: 18px 22px; margin: 16px 0;
       }

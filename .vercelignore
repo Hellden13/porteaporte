@@ -48,3 +48,6 @@ _video-work/
 *.mov
 *.avi
 *.mkv
+
+# Outils internes : jamais publiés (plan du site, étape 1)
+outils-internes/

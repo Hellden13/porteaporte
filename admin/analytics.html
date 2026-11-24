@@ -19,9 +19,9 @@
     .grid { display: grid; gap: 14px; }
     .stats { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 18px; }
     .stat { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 18px; position: relative; overflow: hidden; }
-    .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime)); }
+    .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-bleu)); }
     .stat-lbl { font-size: .72rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .05em; }
-    .stat-val { font-size: 1.9rem; font-weight: 900; color: var(--brand-lime); margin-top: 4px; line-height: 1; }
+    .stat-val { font-size: 1.9rem; font-weight: 900; color: var(--brand-bleu); margin-top: 4px; line-height: 1; }
     .stat-sub { font-size: .76rem; color: var(--brand-muted); margin-top: 6px; }
     .stat-sub.up { color: #7dffc1; }
     .stat-sub.down { color: #ffb0b0; }
@@ -32,7 +32,7 @@
     .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: .85rem; }
     .bar-row .label { min-width: 100px; color: var(--brand-muted); }
     .bar-row .bar { flex: 1; height: 18px; background: rgba(255,255,255,.04); border-radius: 6px; overflow: hidden; }
-    .bar-row .fill { height: 100%; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-lime)); }
+    .bar-row .fill { height: 100%; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-bleu)); }
     .bar-row .val { min-width: 50px; text-align: right; color: var(--brand-text); font-weight: 700; }
     .list-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
     .list-row:last-child { border-bottom: none; }
@@ -145,7 +145,7 @@
         <div class="stat"><div class="stat-lbl">En cours</div><div class="stat-val" style="color:#7de4ff">${enCours}</div></div>
         <div class="stat"><div class="stat-lbl">Annulées</div><div class="stat-val" style="color:#ffb0b0">${annulees}</div></div>
         <div class="stat"><div class="stat-lbl">Revenus bruts</div><div class="stat-val">${revenusTotal.toFixed(0)} $</div><div class="stat-sub">CAD</div></div>
-        <div class="stat"><div class="stat-lbl">Commission plateforme (${PCT_COMMISSION}%)</div><div class="stat-val" style="color:#00d9ff">${commissionPF.toFixed(0)} $</div></div>
+        <div class="stat"><div class="stat-lbl">Commission plateforme (${PCT_COMMISSION}%)</div><div class="stat-val" style="color:#5dbfff">${commissionPF.toFixed(0)} $</div></div>
         <div class="stat"><div class="stat-lbl">Gains livreurs (${PCT_LIVREUR}%)</div><div class="stat-val">${gainsLivreurs.toFixed(0)} $</div></div>
         <div class="stat"><div class="stat-lbl">Utilisateurs total</div><div class="stat-val">${usersTotal||0}</div><div class="stat-sub">${livreursVerifies||0} livreurs vérifiés</div></div>
       `;

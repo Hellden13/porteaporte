@@ -451,8 +451,8 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="font-size:2.2rem;font-weight:900;letter-spacing:.25em;color:#fff;margin-bottom:10px">${escapeHtml(data.recipient_code)}</div>
               <div style="font-size:.82rem;color:#a8b0ba"><strong>À donner à la personne qui reçoit le colis.</strong><br>Elle le donne au livreur à la remise : c'est ce code qui libère le paiement. Il ne changera pas.</div>
             </div>
-            <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin:16px 0">
-              <div style="font-size:.8rem;color:#00d9ff;font-weight:700;margin-bottom:6px">🔗 Lien de confirmation à envoyer au destinataire :</div>
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.2);border-radius:10px;padding:14px;margin:16px 0">
+              <div style="font-size:.8rem;color:#5dbfff;font-weight:700;margin-bottom:6px">🔗 Lien de confirmation à envoyer au destinataire :</div>
               <a href="${data.confirm_link}" style="color:#b8f53e;word-break:break-all;font-size:.85rem">${data.confirm_link}</a>
               <div style="margin-top:8px;font-size:.78rem;color:#6d7886">Tu peux partager ce lien par SMS, WhatsApp ou courriel. Le destinataire entre le code sur cette page pour confirmer la réception.</div>
             </div>
@@ -527,7 +527,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
         boite_securisee: '🔐 Boîte sécurisée'
       };
       const prefsHtml = `
-        <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:16px;margin:16px 0">
+        <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin:16px 0">
           ${data.reception_mode ? `<div style="margin-bottom:6px"><strong>Mode :</strong> ${modeLabels[data.reception_mode] || data.reception_mode}</div>` : ''}
           ${data.reception_heure_debut ? `<div style="margin-bottom:6px"><strong>🕐 Plage horaire :</strong> ${data.reception_heure_debut.slice(0,5)} à ${(data.reception_heure_fin||'').slice(0,5)}</div>` : ''}
           ${data.reception_photo_obligatoire ? `<div style="margin-bottom:6px;color:#ffd700">📸 <strong>Photo de dépôt obligatoire</strong></div>` : ''}
@@ -577,7 +577,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       const severityColors = {
         critical: { bg: 'rgba(255,90,90,.1)', border: 'rgba(255,90,90,.4)', text: '#ff7a7a', label: '🚨 CRITIQUE' },
         warning:  { bg: 'rgba(255,200,0,.08)', border: 'rgba(255,200,0,.4)', text: '#ffd700', label: '⚠️ ATTENTION' },
-        info:     { bg: 'rgba(0,217,255,.08)', border: 'rgba(0,217,255,.3)', text: '#00d9ff', label: 'ℹ️ INFO' },
+        info:     { bg: 'rgba(93,191,255,.08)', border: 'rgba(93,191,255,.3)', text: '#5dbfff', label: 'ℹ️ INFO' },
         success:  { bg: 'rgba(0,255,159,.08)', border: 'rgba(0,255,159,.3)', text: '#7dffc1', label: '✅ BONNE NOUVELLE' }
       };
       const sev = severityColors[data.severity || 'info'];
@@ -651,8 +651,8 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="font-weight:800;color:#ffb0b0;margin-bottom:6px">Catégorie : ${data.categorie}</div>
               ${data.description ? `<div style="color:#a8b0ba;font-size:.9rem">Description : ${data.description}</div>` : ''}
             </div>
-            <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:10px;padding:16px;margin:18px 0">
-              <strong style="color:#00d9ff">⏱️ Tu as 48h pour contester</strong><br>
+            <div style="background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:16px;margin:18px 0">
+              <strong style="color:#5dbfff">⏱️ Tu as 48h pour contester</strong><br>
               <span style="color:#a8b0ba;font-size:.9rem">Délai jusqu'au ${data.conteste_avant ? new Date(data.conteste_avant).toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'long', timeStyle: 'short' }) : '48h'}. Sans réponse, le signalement sera validé automatiquement.</span>
             </div>
             <div style="text-align:center;margin:20px 0">
@@ -775,8 +775,8 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <div style="font-weight:700;color:#b8f53e">✅ Livré à : ${data.adresse_arrivee || data.ville_arrivee}</div>
               ${data.nom_destinataire ? `<div style="color:#a8b0ba;margin-top:4px">Destinataire : ${data.nom_destinataire}</div>` : ''}
             </div>
-            <div style="background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin:16px 0">
-              <div style="font-size:.85rem;color:#00d9ff;font-weight:700;margin-bottom:8px">📋 Prochaine étape</div>
+            <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.2);border-radius:10px;padding:14px;margin:16px 0">
+              <div style="font-size:.85rem;color:#5dbfff;font-weight:700;margin-bottom:8px">📋 Prochaine étape</div>
               <p style="color:#a8b0ba;font-size:.88rem;margin:0">Le destinataire doit confirmer la réception avec son code pour libérer le paiement au livreur. Transmets-lui ce lien si ce n'est pas encore fait :</p>
               <a href="${data.confirm_link}" style="display:block;margin-top:8px;color:#b8f53e;word-break:break-all;font-size:.82rem">${data.confirm_link}</a>
             </div>
@@ -966,7 +966,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: adminEmail,
         from: { email: fromEmail, name: fromName },
-        subject: '📬 Support PorteÀPorte : ' + (data.sujet || 'Sans sujet'),
+        subject: '📬 Support PorteàPorte : ' + (data.sujet || 'Sans sujet'),
         html: templateAdminNotif('Message support client', [
           { label: 'Prénom / nom', value: data.prenom || '' },
           { label: 'Courriel', value: data.email || '' },
@@ -1269,7 +1269,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
         subject: `Confirme ton arrivée : ${route}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
-            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEAPORTE - ARRIVÉE A CONFIRMER</div>
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE - ARRIVÉE A CONFIRMER</div>
             <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">Ton chauffeur a termine le trajet</h1>
             <p style="color:#a8b0ba;margin:0 0 18px">${route} - ${heureQc(data.departure_time) || 'Date du trajet'}</p>
 
@@ -1416,7 +1416,7 @@ const HEADER = (bg = '#0A1628') => `
 `;
 const LOGO_HTML = `
   <span style="font-size:24px;font-weight:900;color:#ffffff;letter-spacing:2px;">
-    Porte<span style="color:#B8F53E">à</span>Porte
+    PorteàPorte
   </span>
   <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:2px;">
     🍁 LIVRAISON DE CONFIANCE AU CANADA
@@ -1426,7 +1426,7 @@ const BODY_WRAP = `padding: 32px; color: #1a1a1a;`;
 const FOOTER_HTML = `
   <div style="padding:24px 32px;background:#0A1628;text-align:center;border-top:3px solid #B8F53E;">
     <div style="font-size:13px;color:#ffffff;font-weight:700;margin-bottom:10px;">
-      Porte<span style="color:#B8F53E">à</span>Porte 🍁
+      PorteàPorte 🍁
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;margin-bottom:12px;">
       Le réseau québécois de livraison entre voisins<br>
@@ -1673,7 +1673,7 @@ function templateAdminNotif(titre, rows, urgent = false) {
     <h2 style="font-size:18px;margin:0 0 16px;">${titre}</h2>
     <table style="width:100%;border-collapse:collapse;font-family:inherit;">${rowsHtml}</table>
     <div style="margin-top:16px;text-align:center;">
-      <a href="https://porteaporte.site/gestion-pp-8k2x.html" style="background:#0A1628;color:#ffffff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:12px;font-weight:600;display:inline-block;">Ouvrir le panneau admin →</a>
+      <a href="https://porteaporte.site/admin/dashboard-admin.html" style="background:#0A1628;color:#ffffff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:12px;font-weight:600;display:inline-block;">Ouvrir le panneau admin →</a>
     </div>
     <p style="font-size:11px;color:#aaa;margin-top:16px;">Généré automatiquement par PorteàPorte · ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'long', timeStyle: 'short' })}</p>`
   );

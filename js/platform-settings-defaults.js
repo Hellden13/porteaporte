@@ -1,4 +1,4 @@
-/* PorteaPorte - repartition officielle publique.
+/* PorteàPorte - repartition officielle publique.
    Source de verite applicative: platform_settings.default.
    Ce fichier fournit seulement les valeurs de secours et les libelles canoniques. */
 (function (root) {
@@ -26,7 +26,7 @@
     { key: 'pct_livreur', slug: 'livreur', emoji: '🚗', label: 'Livreur québécois', color: '#5dbfff' },
     { key: 'pct_stripe', slug: 'stripe', emoji: '💳', label: 'Frais Stripe (traitement des paiements)', color: '#A8ACB1' },
     { key: 'pct_developpement', slug: 'developpement', emoji: '🔧', label: 'Infrastructure & développement', color: '#A8ACB1' },
-    { key: 'pct_protection', slug: 'protection', emoji: '🛡️', label: 'Protection colis', color: '#00D9FF' },
+    { key: 'pct_protection', slug: 'protection', emoji: '🛡️', label: 'Protection colis', color: '#5dbfff' },
     { key: 'pct_urgence', slug: 'urgence', emoji: '🆘', label: 'Fonds d’urgence', color: '#ffa500' },
     { key: 'pct_communaute', slug: 'communaute', emoji: '💚', label: 'Communauté (organismes d’ici)', color: '#7dffc1' },
     { key: 'pct_profit', slug: 'profit', emoji: '💪', label: 'Réserve / pérennité', color: '#A8ACB1' },

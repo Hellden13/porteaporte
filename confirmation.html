@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paiement confirmé - PorteàPorte</title>
+  <title>Paiement confirmé — PorteàPorte</title>
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
   <link rel="stylesheet" href="/assets/visual-polish.css">
@@ -25,17 +25,17 @@
     }
     .success-icon { font-size:64px; margin-bottom:16px; animation:pop .6s ease; }
     @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
-    h1 { font-size:clamp(1.6rem,4vw,2.2rem); margin:0 0 10px; color:var(--brand-lime); }
+    h1 { font-size:clamp(1.6rem,4vw,2.2rem); margin:0 0 10px; color:var(--brand-bleu); }
     .sub { color:var(--brand-muted); line-height:1.65; margin:0 0 22px; font-size:.95rem; }
     .amount-box {
       background:rgba(93,191,255,.07); border:1px solid rgba(93,191,255,.2);
       border-radius:12px; padding:18px; margin:20px 0;
     }
-    .amount { font-size:2.4rem; font-weight:900; color:var(--brand-lime); line-height:1; }
+    .amount { font-size:2.4rem; font-weight:900; color:var(--brand-bleu); line-height:1; }
     .amount-label { color:var(--brand-muted); font-size:.82rem; margin-top:6px; }
     .ref { font-size:.78rem; color:var(--brand-muted); margin:8px 0 22px; word-break:break-all; }
     .code-panel {
-      background:rgba(0,217,255,.07); border:1px solid rgba(0,217,255,.25);
+      background:rgba(93,191,255,.07); border:1px solid rgba(93,191,255,.25);
       border-radius:12px; padding:16px 20px; margin:16px 0; text-align:left;
     }
     .code-panel strong { color:var(--brand-cyan); display:block; margin-bottom:6px; }
@@ -57,7 +57,7 @@
     }
     .step-num {
       width:22px; height:22px; border-radius:50%;
-      background:var(--brand-lime); color:#071008;
+      background:var(--brand-bleu); color:#071008;
       font-weight:900; font-size:.75rem;
       display:flex; align-items:center; justify-content:center;
       flex-shrink:0; margin-top:1px;
@@ -90,7 +90,7 @@
       <strong>Tes deux codes</strong>
       <div id="codes-livraison"></div>
       <p class="code-note">Ils ne changeront pas. Tu les retrouves aussi sur la fiche de la livraison, dans ton tableau de bord.</p>
-      <button onclick="copyCode()" style="margin-top:10px;padding:8px 16px;background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;cursor:pointer;font-size:.82rem">📋 Copier le code de réception et le lien</button>
+      <button onclick="copyCode()" style="margin-top:10px;padding:8px 16px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.3);border-radius:8px;color:var(--brand-cyan);font-weight:700;cursor:pointer;font-size:.82rem">📋 Copier le code de réception et le lien</button>
       <div id="copie-msg" class="code-note" role="status" aria-live="polite"></div>
     </div>
 

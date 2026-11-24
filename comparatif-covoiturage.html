@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comparatif covoiturage — PorteàPorte vs Amigo Express vs Groupes Facebook</title>
+  <title>Comparatif covoiturage — PorteàPorte</title>
   <meta name="description" content="Pourquoi choisir PorteàPorte pour ton covoiturage québécois ? Comparatif honnête vs Amigo Express, Poparide et les groupes Facebook. Sécurité, prix, simplicité.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="manifest" href="/manifest.json">
@@ -15,20 +15,20 @@
   <style>
     body { background: var(--brand-bg-dark); color: var(--brand-text); }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
-    .eyebrow { color: var(--brand-lime); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem; margin-bottom: 10px; }
+    .eyebrow { color: var(--brand-bleu); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem; margin-bottom: 10px; }
     h1 { font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 14px; letter-spacing: -0.02em; }
-    h1 span { color: var(--brand-lime); }
+    h1 span { color: var(--brand-bleu); }
     .lede { font-size: 1.1rem; color: var(--brand-muted); max-width: 760px; line-height: 1.55; margin-bottom: 40px; }
 
-    .verdict-box { background: linear-gradient(135deg, rgba(93,191,255,.12), rgba(0,217,255,.08)); border: 1px solid rgba(93,191,255,.3); border-radius: 18px; padding: 24px 26px; margin: 30px 0 40px; }
-    .verdict-box h2 { margin: 0 0 8px; font-size: 1.25rem; color: var(--brand-lime); }
+    .verdict-box { background: linear-gradient(135deg, rgba(93,191,255,.12), rgba(93,191,255,.08)); border: 1px solid rgba(93,191,255,.3); border-radius: 18px; padding: 24px 26px; margin: 30px 0 40px; }
+    .verdict-box h2 { margin: 0 0 8px; font-size: 1.25rem; color: var(--brand-bleu); }
     .verdict-box p { margin: 0; color: var(--brand-text); font-size: 1.02rem; line-height: 1.55; }
-    .verdict-box strong { color: var(--brand-lime); }
+    .verdict-box strong { color: var(--brand-bleu); }
 
     .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; background: rgba(255,255,255,.02); border: 1px solid var(--brand-border); border-radius: 16px; overflow: hidden; margin: 30px 0; font-size: 0.96rem; }
     .compare-table th, .compare-table td { padding: 16px 14px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--brand-border); }
     .compare-table th { background: rgba(255,255,255,.04); font-weight: 800; font-size: 1rem; color: var(--brand-text); text-align: center; }
-    .compare-table th.us { background: linear-gradient(135deg, rgba(93,191,255,.18), rgba(93,191,255,.08)); color: var(--brand-lime); }
+    .compare-table th.us { background: linear-gradient(135deg, rgba(93,191,255,.18), rgba(93,191,255,.08)); color: var(--brand-bleu); }
     .compare-table td { color: var(--brand-text); }
     .compare-table td.us-cell { background: rgba(93,191,255,.06); font-weight: 700; }
     .compare-table td:first-child { font-weight: 700; color: var(--brand-muted); width: 28%; }
@@ -39,16 +39,16 @@
 
     .arg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin: 40px 0; }
     .arg-card { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); border-radius: 14px; padding: 20px; }
-    .arg-card h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--brand-lime); display: flex; align-items: center; gap: 8px; }
+    .arg-card h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--brand-bleu); display: flex; align-items: center; gap: 8px; }
     .arg-card p { margin: 0; color: var(--brand-muted); line-height: 1.5; font-size: 0.93rem; }
 
     .price-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 30px 0; }
     .price-card { background: rgba(255,255,255,.03); border: 1px solid var(--brand-border); border-radius: 14px; padding: 22px; text-align: center; }
-    .price-card.us { background: linear-gradient(135deg, rgba(93,191,255,.12), rgba(0,217,255,.06)); border-color: rgba(93,191,255,.4); }
+    .price-card.us { background: linear-gradient(135deg, rgba(93,191,255,.12), rgba(93,191,255,.06)); border-color: rgba(93,191,255,.4); }
     .price-card .name { font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; }
-    .price-card .name.us-name { color: var(--brand-lime); }
+    .price-card .name.us-name { color: var(--brand-bleu); }
     .price-card .commission { font-size: 2rem; font-weight: 900; margin: 6px 0; }
-    .price-card .commission.us-com { color: var(--brand-lime); }
+    .price-card .commission.us-com { color: var(--brand-bleu); }
     .price-card .note { font-size: 0.82rem; color: var(--brand-muted); }
 
     .cta-final { background: linear-gradient(135deg, #5dbfff, #3da9ff); color: #071006; padding: 28px 24px; border-radius: 18px; text-align: center; margin-top: 50px; }
@@ -58,7 +58,7 @@
     .cta-final .btn-go:hover { transform: scale(1.05); }
 
     .back { display: inline-block; color: var(--brand-muted); text-decoration: none; margin-bottom: 20px; font-size: 0.9rem; }
-    .back:hover { color: var(--brand-lime); }
+    .back:hover { color: var(--brand-bleu); }
 
     @media (max-width: 720px) {
       .compare-table { font-size: 0.82rem; }
@@ -75,6 +75,7 @@
 <body>
   <div class="wrap">
     <a class="back" href="/">← Retour à l'accueil</a>
+    <div class="comparatif-onglets" role="navigation" aria-label="Comparatifs" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;margin:12px 0 20px;padding:0;background:none;border:0"><a href="/comparatif.html" style="display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;font-weight:800;font-size:16px;text-decoration:none;background:transparent;color:#e8eef5;border:1px solid rgba(255,255,255,.25);">📦 Livraison</a><a href="/comparatif-covoiturage.html" aria-current="page" style="display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;font-weight:800;font-size:16px;text-decoration:none;background:#5dbfff;color:#051022;">🚗 Covoiturage</a></div>
     <div class="eyebrow">Comparatif honnête</div>
     <h1>PorteàPorte vs <span>Amigo Express</span> vs <span>Groupes Facebook</span></h1>
     <p class="lede">On ne va pas te mentir : Amigo Express et les groupes Facebook ont leurs forces. Voici les vraies différences — pour que tu choisisses en connaissance de cause.</p>
@@ -240,7 +241,7 @@
     </div>
 
     <p style="text-align:center;color:var(--brand-muted);font-size:0.85rem;margin-top:30px;">
-      Une question ? Texte directement le fondateur Denis au <a href="sms:+14384492023" style="color:var(--brand-lime);">📱 438-449-2023</a><br>
+      Une question ? Texte directement le fondateur Denis au <a href="sms:+14384492023" style="color:var(--brand-bleu);">📱 438-449-2023</a><br>
       Données comparatives basées sur les sites publics d'Amigo Express et Poparide en 2026. Sources sur demande.
     </p>
     <p data-figures-disclaimer style="max-width:780px;margin:8px auto 0;text-align:center;color:var(--brand-muted);font-size:.8rem;opacity:.85"></p>

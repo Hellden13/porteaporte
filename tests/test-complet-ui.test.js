@@ -139,7 +139,7 @@ test('20. après l\'inscription : écran « Courriel envoyé à … — clique s
 test('21. neige des Fêtes nettement plus lente sur cellulaire', () => {
   const js = lire('js/fetes.js');
   assert.match(js, /var duree = petit \? \(34 \+ Math\.random\(\) \* 16\) : \(16 \+ Math\.random\(\) \* 10\);/);
-  for (const f of ['index.html', 'covoiturage.html', 'livraison.html']) assert.match(lire(f), /fetes\.js\?v=tc2211/, f);
+  for (const f of ['index.html', 'covoiturage.html', 'expediteur.html']) assert.match(lire(f), /fetes\.js\?v=tc2211/, f);
 });
 
 test('22. accents : plus de « Creer », « Reserver », « disponibilites », « Deconnexion »… dans le texte des pages', () => {
@@ -205,7 +205,7 @@ test('25. livraisons de test : cachées aux livreurs par un drapeau admin, jamai
 });
 
 test('26. nouveau membre : tableau de bord unifié, plus de bannière « Essayer »', () => {
-  for (const f of ['dashboard-livreur.html', 'dashboard-expediteur.html', 'dashboard-covoiturage.html', 'dashboard-marchand.html', 'dashboard-destinataire.html']) {
+  for (const f of ['dashboard-livreur.html', 'dashboard-expediteur.html', 'dashboard-covoiturage.html', 'dashboard-destinataire.html']) {
     assert.doesNotMatch(lire(f), /pap-redirect-banner|Essayer →/, f);
   }
   assert.match(lire('signup.html'), /emailRedirectTo: window\.location\.origin \+ '\/dashboard\.html' \+ redirectSuffix/);

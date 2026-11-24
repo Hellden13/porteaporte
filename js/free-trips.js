@@ -1,4 +1,4 @@
-/* PorteaPorte - synchronise les valeurs covoiturage publiques.
+/* PorteàPorte - synchronise les valeurs covoiturage publiques.
    Source: /api/platform?endpoint=platform-settings-get */
 (function () {
   'use strict';

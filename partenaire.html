@@ -15,12 +15,12 @@
     body { background: var(--brand-bg-dark); color: var(--brand-text); min-height: 100vh; }
 
     .hero {
-      background: linear-gradient(135deg, rgba(0,217,255,0.07), rgba(93,191,255,0.05));
+      background: linear-gradient(135deg, rgba(93,191,255,0.07), rgba(93,191,255,0.05));
       border-bottom: 1px solid var(--brand-border);
       padding: clamp(56px,9vw,112px) clamp(18px,4vw,48px);
       text-align: center;
     }
-    .hero-badge { display: inline-block; background: rgba(0,217,255,0.12); border: 1px solid rgba(0,217,255,0.3); color: #00D9FF; border-radius: 999px; padding: 6px 18px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 20px; text-transform: uppercase; }
+    .hero-badge { display: inline-block; background: rgba(93,191,255,0.12); border: 1px solid rgba(93,191,255,0.3); color: #5dbfff; border-radius: 999px; padding: 6px 18px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 20px; text-transform: uppercase; }
     .hero h1 { font-size: clamp(2rem,5vw,3.2rem); margin: 0 0 16px; line-height: 1.15; }
     .hero p { font-size: 1.05rem; color: var(--brand-muted); max-width: 600px; margin: 0 auto 36px; line-height: 1.7; }
     .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
@@ -29,7 +29,7 @@
 
     .section-label {
       font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--brand-lime); margin: 0 0 24px; display: flex; align-items: center; gap: 12px;
+      color: var(--brand-bleu); margin: 0 0 24px; display: flex; align-items: center; gap: 12px;
     }
     .section-label::after { content:''; flex:1; height:1px; background:var(--brand-border); }
 
@@ -40,11 +40,11 @@
       border-radius: 16px; padding: 28px 26px; position: relative; overflow: hidden;
       transition: border-color 0.2s, transform 0.2s;
     }
-    .ptype-card:hover { border-color: var(--brand-lime); transform: translateY(-2px); }
+    .ptype-card:hover { border-color: var(--brand-bleu); transform: translateY(-2px); }
     .ptype-icon { font-size: 2rem; margin-bottom: 14px; display: block; }
     .ptype-card h3 { margin: 0 0 10px; font-size: 1.1rem; }
     .ptype-card p { margin: 0 0 18px; font-size: 0.88rem; color: var(--brand-muted); line-height: 1.6; }
-    .ptype-tag { display: inline-block; background: rgba(93,191,255,0.1); border: 1px solid rgba(93,191,255,0.25); color: var(--brand-lime); border-radius: 999px; padding: 3px 12px; font-size: 0.75rem; font-weight: 700; }
+    .ptype-tag { display: inline-block; background: rgba(93,191,255,0.1); border: 1px solid rgba(93,191,255,0.25); color: var(--brand-bleu); border-radius: 999px; padding: 3px 12px; font-size: 0.75rem; font-weight: 700; }
 
     /* AVANTAGES */
     .benefits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 64px; }
@@ -59,19 +59,19 @@
       background: var(--brand-bg-surface); border: 1px solid var(--brand-border);
       border-radius: 16px; padding: 28px 24px;
     }
-    .plan-card.featured { border-color: var(--brand-lime); background: linear-gradient(160deg, rgba(93,191,255,0.06), var(--brand-bg-surface)); }
-    .plan-badge { display: inline-block; background: var(--brand-lime); color: var(--brand-bg-dark); border-radius: 999px; padding: 3px 12px; font-size: 0.72rem; font-weight: 900; margin-bottom: 12px; }
+    .plan-card.featured { border-color: var(--brand-bleu); background: linear-gradient(160deg, rgba(93,191,255,0.06), var(--brand-bg-surface)); }
+    .plan-badge { display: inline-block; background: var(--brand-bleu); color: var(--brand-bg-dark); border-radius: 999px; padding: 3px 12px; font-size: 0.72rem; font-weight: 900; margin-bottom: 12px; }
     .plan-card h3 { margin: 0 0 6px; font-size: 1.15rem; }
-    .plan-price { font-size: 2rem; font-weight: 900; color: var(--brand-lime); margin: 10px 0 4px; }
+    .plan-price { font-size: 2rem; font-weight: 900; color: var(--brand-bleu); margin: 10px 0 4px; }
     .plan-price span { font-size: 0.9rem; font-weight: 400; color: var(--brand-muted); }
     .plan-desc { font-size: 0.84rem; color: var(--brand-muted); margin: 0 0 18px; line-height: 1.5; }
     .plan-features { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
     .plan-features li { font-size: 0.84rem; color: var(--brand-muted); display: flex; align-items: flex-start; gap: 8px; }
-    .plan-features li::before { content: '✓'; color: var(--brand-lime); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+    .plan-features li::before { content: '✓'; color: var(--brand-bleu); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
 
     /* STATS */
     .stats-banner { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 16px; padding: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 24px; margin-bottom: 64px; text-align: center; }
-    .stat-val { font-size: 2rem; font-weight: 900; color: var(--brand-lime); }
+    .stat-val { font-size: 2rem; font-weight: 900; color: var(--brand-bleu); }
     .stat-lbl { font-size: 0.78rem; color: var(--brand-muted); margin-top: 4px; }
 
     /* TEMOIGNAGES */
@@ -96,16 +96,16 @@
       border: 1px solid var(--brand-border); border-radius: 8px;
       color: var(--brand-text); font-size: 0.92rem; outline: none; font-family: inherit;
     }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-lime); }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand-bleu); }
     .field textarea { resize: vertical; min-height: 100px; }
     .field select option { background: var(--brand-bg-dark); }
     .form-actions { margin-top: 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     #form-msg { font-size: 0.88rem; display: none; }
-    #form-msg.ok { color: var(--brand-lime); }
+    #form-msg.ok { color: var(--brand-bleu); }
     #form-msg.err { color: #EF4444; }
 
     /* CTA BOTTOM */
-    .cta-bottom { background: linear-gradient(135deg, rgba(93,191,255,0.08), rgba(0,217,255,0.06)); border: 1px solid var(--brand-border); border-radius: 16px; padding: 40px 32px; text-align: center; }
+    .cta-bottom { background: linear-gradient(135deg, rgba(93,191,255,0.08), rgba(93,191,255,0.06)); border: 1px solid var(--brand-border); border-radius: 16px; padding: 40px 32px; text-align: center; }
     .cta-bottom h2 { margin: 0 0 12px; font-size: 1.5rem; }
     .cta-bottom p { color: var(--brand-muted); margin: 0 0 24px; font-size: 0.95rem; }
     .cta-bottom-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
@@ -323,7 +323,7 @@
         <div style="color:var(--brand-muted);font-size:.85rem;margin-top:10px">Objectif partenariat type : Moisson, Centraide, banques alimentaires, refuges</div>
       </div>
     </div>
-    <p style="text-align:center;color:var(--brand-muted);font-size:.85rem;margin-top:18px">📌 <strong style="color:var(--brand-lime)">Bêta active</strong> — les premiers partenariats officiels seront annoncés ici dès signature. <a href="#formulaire" style="color:var(--brand-lime)">Sois le premier →</a></p>
+    <p style="text-align:center;color:var(--brand-muted);font-size:.85rem;margin-top:18px">📌 <strong style="color:var(--brand-bleu)">Bêta active</strong> — les premiers partenariats officiels seront annoncés ici dès signature. <a href="#formulaire" style="color:var(--brand-bleu)">Sois le premier →</a></p>
 
     <!-- FORMULAIRE -->
     <div class="section-label" id="formulaire">Demande de partenariat</div>

@@ -7,22 +7,22 @@
 (function () {
   const STYLE = `
     .rc-overlay { position: fixed; inset: 0; background: rgba(5,8,16,.8); backdrop-filter: blur(6px); z-index: 2147483000; display: flex; align-items: center; justify-content: center; padding: 12px; }
-    .rc-box { background: #0f1320; border: 1px solid rgba(0,217,255,.3); border-radius: 16px; width: 100%; max-width: 460px; height: 80vh; max-height: 640px; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden; }
-    .rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(0,217,255,.06); border-bottom: 1px solid rgba(255,255,255,.08); }
-    .rc-header .name { font-weight: 800; color: #00d9ff; font-size: 1.02rem; }
+    .rc-box { background: #0f1320; border: 1px solid rgba(93,191,255,.3); border-radius: 16px; width: 100%; max-width: 460px; height: 80vh; max-height: 640px; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden; }
+    .rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(93,191,255,.06); border-bottom: 1px solid rgba(255,255,255,.08); }
+    .rc-header .name { font-weight: 800; color: #5dbfff; font-size: 1.02rem; }
     .rc-header .sub { font-size: .75rem; color: #888; }
     .rc-close { background: transparent; border: 0; color: #aab2c5; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0 4px; }
     .rc-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
     .rc-msg { max-width: 78%; padding: 9px 13px; border-radius: 14px; font-size: .95rem; line-height: 1.35; word-wrap: break-word; }
-    .rc-msg.mine { align-self: flex-end; background: linear-gradient(135deg, #00d9ff, #00b8d4); color: #001828; border-bottom-right-radius: 4px; }
+    .rc-msg.mine { align-self: flex-end; background: linear-gradient(135deg, #5dbfff, #00b8d4); color: #001828; border-bottom-right-radius: 4px; }
     .rc-msg.theirs { align-self: flex-start; background: rgba(255,255,255,.08); color: #e9edf4; border-bottom-left-radius: 4px; }
     .rc-time { font-size: .68rem; color: rgba(255,255,255,.4); margin-top: 2px; padding: 0 6px; }
     .rc-time.mine { text-align: right; align-self: flex-end; }
     .rc-time.theirs { text-align: left; align-self: flex-start; }
     .rc-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); }
     .rc-input textarea { flex: 1; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: #e9edf4; padding: 9px 12px; font-family: inherit; font-size: .94rem; resize: none; min-height: 42px; max-height: 120px; }
-    .rc-input textarea:focus { outline: none; border-color: rgba(0,217,255,.5); }
-    .rc-send { background: linear-gradient(135deg, #00d9ff, #00b8d4); color: #001828; border: 0; padding: 0 16px; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 1.1rem; }
+    .rc-input textarea:focus { outline: none; border-color: rgba(93,191,255,.5); }
+    .rc-send { background: linear-gradient(135deg, #5dbfff, #00b8d4); color: #001828; border: 0; padding: 0 16px; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 1.1rem; }
     .rc-send:disabled { opacity: .4; cursor: not-allowed; }
     .rc-empty { color: #666; text-align: center; padding: 30px 14px; font-size: .88rem; line-height: 1.5; }
     .rc-err { color: #ff8c8c; font-size: .82rem; padding: 6px 12px; }

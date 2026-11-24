@@ -34,7 +34,7 @@
     .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .meta div{border:1px solid var(--brand-border);background:var(--brand-bg-dark);border-radius:8px;padding:9px}
     .meta span{display:block;color:var(--brand-muted);font-size:11px;margin-bottom:2px}
-    .price{font-size:26px;font-weight:900;color:var(--brand-lime);margin-top:4px}
+    .price{font-size:26px;font-weight:900;color:var(--brand-bleu);margin-top:4px}
     .empty{background:var(--brand-bg-surface);border:1px solid var(--brand-border);border-radius:10px;padding:40px 24px;color:var(--brand-muted);text-align:center}
     .empty-icon{font-size:48px;margin-bottom:12px}
     .empty h3{font-size:18px;color:var(--brand-text);margin-bottom:8px}
@@ -44,24 +44,24 @@
     .cta-box h3{font-size:22px;margin-bottom:8px}
     .cta-box p{color:var(--brand-muted);font-size:14px;line-height:1.6;max-width:420px;margin:0 auto 24px}
     .cta-box .btn{width:auto;display:inline-block;text-decoration:none;padding:13px 28px;font-size:15px}
-    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-lime));color:var(--brand-bg-dark)}
+    .btn{margin-top:auto;width:100%;border:none;border-radius:8px;padding:12px 14px;font-weight:850;cursor:pointer;background:linear-gradient(135deg,var(--brand-cyan),var(--brand-bleu));color:var(--brand-bg-dark)}
     .btn.secondary{width:auto;background:var(--brand-bg-surface-light);color:var(--brand-text);border:1px solid var(--brand-border);text-decoration:none}
     .btn:disabled{opacity:.6;cursor:not-allowed}
     /* Matching score */
     .match-bar{margin:6px 0 2px;height:5px;background:var(--brand-border);border-radius:999px;overflow:hidden}
-    .match-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-lime));transition:width .4s ease}
+    .match-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-cyan),var(--brand-bleu));transition:width .4s ease}
     .match-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--brand-muted);margin-bottom:8px}
-    .match-score{font-weight:800;color:var(--brand-lime)}
+    .match-score{font-weight:800;color:var(--brand-bleu)}
     .match-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
     .match-tag{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
-    .tag-green{color:var(--brand-lime);border-color:rgba(93,191,255,.3);background:rgba(93,191,255,.07)}
+    .tag-green{color:var(--brand-bleu);border-color:rgba(93,191,255,.3);background:rgba(93,191,255,.07)}
     .tag-yellow{color:#fbbf24;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07)}
     .tag-red{color:#ff8a8a;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
     /* Eco bonus */
     .eco-gain{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:8px 12px;border-radius:8px;background:rgba(93,191,255,.07);border:1px solid rgba(93,191,255,.2)}
-    .eco-gain-left{font-size:11px;color:var(--brand-lime);font-weight:700}
-    .eco-gain-right{font-size:13px;font-weight:900;color:var(--brand-lime)}
-    .eco-banner-top{margin-bottom:16px;padding:12px 14px;border-radius:9px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);font-size:13px;color:var(--brand-lime);font-weight:700;display:flex;align-items:center;gap:10px}
+    .eco-gain-left{font-size:11px;color:var(--brand-bleu);font-weight:700}
+    .eco-gain-right{font-size:13px;font-weight:900;color:var(--brand-bleu)}
+    .eco-banner-top{margin-bottom:16px;padding:12px 14px;border-radius:9px;background:rgba(93,191,255,.08);border:1px solid rgba(93,191,255,.25);font-size:13px;color:var(--brand-bleu);font-weight:700;display:flex;align-items:center;gap:10px}
     .eco-banner-top span{color:var(--brand-muted);font-weight:400;font-size:12px}
     @media(max-width:720px){.topbar{padding:14px 16px}.hero{display:block}.hero .btn{margin-top:14px}.page{padding:24px 14px}h1{font-size:28px}}
   </style>
@@ -265,10 +265,10 @@
       setStatus(`${scored.length} mission(s) · triées par compatibilité · Mode: ${mode}.`, 'info');
       container.innerHTML = bannerHtml + scored.map((m) => {
         const { score, tags } = m._match;
-        const fillColor = score >= 75 ? 'var(--brand-lime)' : score >= 50 ? '#fbbf24' : '#EF4444';
+        const fillColor = score >= 75 ? 'var(--brand-bleu)' : score >= 50 ? '#fbbf24' : '#EF4444';
 
         // Même règle que le paiement réel (js/gain-livreur.js). Pas de bonus éco : il n'est pas versé.
-        const gainHtml = `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Tu gagnes : <strong style="color:var(--brand-lime)">${window.PAPGain.texte(m.prix_total || 0, { fidelitePct: window._livreurFidelite || 0, planProtection: m.assurance_plan })}</strong></div>`;
+        const gainHtml = `<div style="font-size:12px;color:var(--brand-muted);margin:6px 0">Tu gagnes : <strong style="color:var(--brand-bleu)">${window.PAPGain.texte(m.prix_total || 0, { fidelitePct: window._livreurFidelite || 0, planProtection: m.assurance_plan })}</strong></div>`;
 
         const onRouteBadge = m.on_route
           ? `<span style="display:inline-block;padding:2px 8px;background:rgba(93,191,255,.15);color:#7dffc1;border:1px solid rgba(93,191,255,.4);border-radius:999px;font-size:.72rem;font-weight:800;margin-left:6px">🗺️ Sur ta route</span>`

@@ -1,6 +1,6 @@
 // PorteàPorte — Service Worker v4
 // Stratégie : cache-first pour assets statiques, network-first pour pages HTML
-const SW_VERSION = 'pap-v111';
+const SW_VERSION = 'pap-v112';
 
 const STATIC_CACHE  = `${SW_VERSION}-static`;
 const DYNAMIC_CACHE = `${SW_VERSION}-dynamic`;
@@ -20,7 +20,7 @@ const PRECACHE = [
   '/dashboard-expediteur.html',
   '/dashboard-livreur.html',
   '/create-mission.html',
-  '/track.html',
+  '/suivi.html',
   // JS partagés
   '/js/supabase-config.js',
   '/js/auth-complete.js',
