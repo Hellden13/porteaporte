@@ -70,6 +70,14 @@
 
     pill.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (pill.classList.contains('pp-dans-menu')) {
+        // Dans le menu de gauche : le choix s'ouvre juste au-dessus du bouton.
+        const r = pill.getBoundingClientRect();
+        menu.style.left = Math.round(r.left) + 'px';
+        menu.style.bottom = Math.round(window.innerHeight - r.top + 8) + 'px';
+      } else {
+        menu.style.left = ''; menu.style.bottom = '';
+      }
       menu.classList.toggle('open');
     });
     menu.addEventListener('click', (e) => {
@@ -103,10 +111,29 @@
     setTimeout(() => t.remove(), 2500);
   }
 
+  // Tableaux de bord avec un menu de gauche (aside.sidebar) : sur ordinateur, « Niveau » flottant cachait
+  // le bas du menu (Signalements, Guide). Il devient la dernière entrée du menu ; ailleurs, il reste flottant.
+  function placerPill() {
+    const pill = document.getElementById('pp-layer-pill');
+    if (!pill) return;
+    const menuGauche = document.querySelector('aside.sidebar');
+    const visible = menuGauche && getComputedStyle(menuGauche).display !== 'none' && window.innerWidth >= 769;
+    if (visible) {
+      if (pill.parentElement !== menuGauche) menuGauche.appendChild(pill);
+      pill.classList.add('pp-dans-menu');
+    } else {
+      if (pill.parentElement !== document.body) document.body.appendChild(pill);
+      pill.classList.remove('pp-dans-menu');
+    }
+  }
+
   function init() {
     const mode = getMode();
     document.body.dataset.layerMode = mode;
     buildPill();
+    placerPill();
+    let attente;
+    window.addEventListener('resize', () => { clearTimeout(attente); attente = setTimeout(placerPill, 150); });
     updatePillLabel(mode);
     updateMenuActive(mode);
   }

@@ -1223,17 +1223,19 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
         emails.push({
           to: data.passenger_email,
           from: { email: fromEmail, name: fromName },
-          subject: `Annulation confirmée : ${route}`,
+          // Aucun paiement autorisé ni prélevé : « Réservation annulée », sans parler de remboursement.
+          subject: data.paiement === false ? `Réservation annulée : ${route}` : `Annulation confirmée : ${route}`,
           html: `
             <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
               <div style="color:#ffd166;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — ANNULATION CONFIRMÉE</div>
               <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">${route}</h1>
               <p style="color:#a8b0ba;line-height:1.6">${cancelledByDriver ? 'Le conducteur a annulé ce trajet.' : 'Ta réservation a bien été annulée.'}</p>
+              ${data.paiement === false ? `<p style="color:#a8b0ba;line-height:1.6">Aucun paiement n’avait été fait pour cette réservation : tu n’as rien à recevoir ni à payer.</p>` : `
               <div style="background:rgba(125,255,193,.06);border:1px solid rgba(125,255,193,.25);border-radius:10px;padding:16px;margin:18px 0">
                 <div style="margin-bottom:8px">Montant payé : <strong style="color:#fff">${total} $ CA</strong></div>
                 <div>Montant rendu : <strong style="color:#7dffc1;font-size:1.15rem">${refund} $ CA</strong></div>
               </div>
-              <p style="color:#a8b0ba;line-height:1.6">Stripe traite l'opération immédiatement. Selon la banque, le crédit ou l'ajustement peut prendre <strong style="color:#fff">5 à 10 jours ouvrables</strong> avant d'apparaître.</p>
+              <p style="color:#a8b0ba;line-height:1.6">Stripe traite l'opération immédiatement. Selon la banque, le crédit ou l'ajustement peut prendre <strong style="color:#fff">5 à 10 jours ouvrables</strong> avant d'apparaître.</p>`}
               <a href="https://porteaporte.site/dashboard.html" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Voir mes réservations</a>
             </div>`
         });

@@ -25,7 +25,6 @@
     p { color: var(--brand-muted); line-height: 1.55; }
     label { display: block; color: var(--brand-muted); font-size: .85rem; font-weight: 800; margin-bottom: 8px; }
     input, select { width: 100%; background: #080d16; color: #fff; border: 1px solid rgba(0,217,255,.35); border-radius: 14px; padding: 14px; font-size: 1rem; }
-    #ride-safety-code { font-size: 2rem; letter-spacing: .25em; text-align: center; }
     .btn { display: inline-flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 900; cursor: pointer; }
     .btn-primary { background: var(--brand-cyan); color: #061018; }
     .btn-secondary { background: transparent; color: var(--brand-cyan); border: 1px solid rgba(0,217,255,.35); }
@@ -48,34 +47,12 @@
       <a class="btn btn-secondary" href="/profile.html">Ouvrir mon profil</a>
     </section>
 
-    <section class="card">
+    <section class="card" id="code-securite">
       <h2>🔐 Code de sécurité trajet</h2>
-      <p>Ce code numérique sert à confirmer la fin d'un covoiturage. Il est stocké uniquement sous forme de hash bcrypt.</p>
-      <p style="margin:0 0 8px;color:#a8b0ba">Pour chaque trajet réservé, PorteàPorte crée un code de sécurité dès que le paiement est autorisé. Tu le trouves sur ta confirmation de réservation et dans ton courriel : donne-le au conducteur à l'arrivée. Le code ci-dessous ne sert qu'aux anciennes réservations.</p>
-      <label for="ride-safety-code">Code par défaut (4 à 8 chiffres)</label>
-      <input id="ride-safety-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="0000">
-      <div class="grid" style="margin-top:14px">
-        <div>
-          <label for="safety-secret-question">Question secrète</label>
-          <select id="safety-secret-question">
-            <option value="">Choisir une question</option>
-            <option value="ville_naissance">Dans quelle ville es-tu né ?</option>
-            <option value="premier_animal">Quel était le nom de ton premier animal ?</option>
-            <option value="rue_enfance">Quel est le nom de ta rue d'enfance ?</option>
-            <option value="ecole_primaire">Quel était le nom de ton école primaire ?</option>
-            <option value="plat_prefere">Quel est ton plat préféré ?</option>
-          </select>
-        </div>
-        <div>
-          <label for="safety-secret-answer">Réponse secrète</label>
-          <input id="safety-secret-answer" type="text" autocomplete="off" placeholder="Réponse">
-        </div>
-      </div>
+      <p>Ton code de sécurité est créé automatiquement à chaque réservation. Tu le trouves sur ta confirmation, dans ton courriel et sur la fiche du trajet réservé. Donne-le au conducteur à l'arrivée.</p>
       <div class="actions">
-        <button class="btn btn-primary" onclick="saveRideSafetyCode()">Enregistrer</button>
-        <a class="btn btn-secondary" href="/dashboard-covoiturage.html">Retour covoiturage</a>
+        <a class="btn btn-primary" href="/dashboard-covoiturage.html">Voir mes réservations</a>
       </div>
-      <div class="status" id="ride-safety-status">Chargement...</div>
     </section>
 
     <section class="card">
@@ -112,7 +89,6 @@
       currentSession = AUTH_API.getUser()?.session;
       renderEmergencyContacts([]);
       await Promise.all([
-        loadRideSafetyStatus(),
         loadEmergencyContacts(),
         loadParrainageCode(),
         loadBadges()
@@ -169,37 +145,6 @@
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Erreur');
       return out;
-    }
-
-    async function loadRideSafetyStatus() {
-      try {
-        const out = await rideSafetyApi('ride-safety-code-status', {});
-        document.getElementById('ride-safety-status').textContent = out.has_code || out.has_profile_code
-          ? 'Code sécurité configuré.'
-          : 'Aucun code configuré.';
-      } catch (e) {
-        document.getElementById('ride-safety-status').textContent = 'Statut indisponible : ' + e.message;
-      }
-    }
-
-    async function saveRideSafetyCode() {
-      const code = document.getElementById('ride-safety-code').value.replace(/\D/g, '');
-      if (code.length < 4) { (await PAPDialog.alert('Entre un code de 4 à 8 chiffres.')); return; }
-      const question = document.getElementById('safety-secret-question').value;
-      const answer = document.getElementById('safety-secret-answer').value.trim();
-      try {
-        await rideSafetyApi('ride-safety-code-set', {
-          code,
-          safety_secret_question: question || undefined,
-          safety_secret_answer: answer || undefined
-        });
-        document.getElementById('ride-safety-code').value = '';
-        document.getElementById('safety-secret-answer').value = '';
-        document.getElementById('ride-safety-status').textContent = 'Code sécurité configuré.';
-        (await PAPDialog.alert('Code enregistré.'));
-      } catch (e) {
-        (await PAPDialog.alert('Impossible d enregistrer le code : ' + e.message));
-      }
     }
 
     function renderEmergencyContacts(contacts) {

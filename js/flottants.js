@@ -33,6 +33,8 @@
     '#pia-launch::after{content:"Aide"}' +
     '#pia-launch{display:flex!important;align-items:center!important;justify-content:center!important}' +
     'body.pap-avec-sos .pp-layer-pill{bottom:72px!important}' +
+    /* Dans le menu de gauche d'un tableau de bord : entrée normale, plus de bouton flottant par-dessus le menu. */
+    '.pp-layer-pill.pp-dans-menu{position:static!important;display:flex!important;width:100%!important;margin:14px 0 0!important;justify-content:space-between!important;box-sizing:border-box}' +
     '@media (max-width:640px){' +
       'body{--pap-reserve-bas:84px}' +
       '#pia-launch{width:58px!important;height:58px!important;border-radius:16px!important;right:12px!important;bottom:12px!important}' +

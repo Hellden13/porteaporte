@@ -544,7 +544,10 @@
         (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || ('erreur ' + previewRes.status))));
         return;
       }
-      const warning = `ANNULATION DE LA RÉSERVATION\n\n` +
+      // Aucun paiement autorisé ni prélevé : on ne parle pas de remboursement.
+      const warning = preview.paiement === false
+        ? `ANNULATION DE LA RÉSERVATION\n\nAucun paiement n’a été fait pour cette réservation : rien à rembourser.\n\nConfirmer l’annulation ?`
+        : `ANNULATION DE LA RÉSERVATION\n\n` +
         `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
         `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
         `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
@@ -562,7 +565,7 @@
         (await PAPDialog.alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status))));
         return;
       }
-      (await PAPDialog.alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : '')));
+      (await PAPDialog.alert('✅ ' + (out.message || (out.paiement === false ? 'Réservation annulée.' : 'Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + Number(out.refund).toFixed(2) + ' $.' : '')))));
       window.location.reload();
     } catch (e) {
       (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));

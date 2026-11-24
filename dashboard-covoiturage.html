@@ -277,7 +277,7 @@ async function annulerUnJour(rideId) {
     body: JSON.stringify({ endpoint: 'ride-annuler-date', ride_id: rideId, date: String(date).trim() })
   });
   const out = await res.json().catch(() => ({}));
-  await PAPDialog.alert(res.ok ? ('Trajet annulé le ' + out.date + ' seulement.' + (out.reservations_annulees ? ' ' + out.reservations_annulees + ' réservation(s) remboursée(s) et avertie(s).' : '')) : (out.error || 'Action impossible.'));
+  await PAPDialog.alert(res.ok ? ('Trajet annulé le ' + out.date + ' seulement.' + (out.reservations_annulees ? ' ' + out.reservations_annulees + ' réservation(s) annulée(s) et avertie(s)' + (out.reservations_remboursees ? ', dont ' + out.reservations_remboursees + ' remboursée(s).' : '.') : '')) : (out.error || 'Action impossible.'));
 }
 
 async function annulerTrajet(rideId) {
@@ -330,7 +330,10 @@ async function annulerReservation(bookingId) {
     });
     const preview = await previewRes.json().catch(() => ({}));
     if (!previewRes.ok) { (await PAPDialog.alert('❌ Vérification impossible : ' + (preview.error || previewRes.status))); return; }
-    const warning = `ANNULATION DE LA RÉSERVATION\n\n` +
+    // Aucun paiement autorisé ni prélevé : on ne parle pas de remboursement.
+    const warning = preview.paiement === false
+      ? `ANNULATION DE LA RÉSERVATION\n\nAucun paiement n’a été fait pour cette réservation : rien à rembourser.\n\nConfirmer l’annulation ?`
+      : `ANNULATION DE LA RÉSERVATION\n\n` +
       `Montant payé : ${Number(preview.total || 0).toFixed(2)} $\n` +
       `Remboursement : ${Number(preview.refund || 0).toFixed(2)} $ (${preview.refund_pct || 0} %)\n` +
       `Retenue : ${Number(preview.retained || 0).toFixed(2)} $\n` +
@@ -348,7 +351,7 @@ async function annulerReservation(bookingId) {
       (await PAPDialog.alert('❌ Annulation impossible : ' + (out.error || ('erreur ' + res.status))));
       return;
     }
-    (await PAPDialog.alert('✅ Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + out.refund + ' $.' : '')));
+    (await PAPDialog.alert('✅ ' + (out.message || (out.paiement === false ? 'Réservation annulée.' : 'Réservation annulée.' + (out.refund != null ? ' Remboursement : ' + Number(out.refund).toFixed(2) + ' $.' : '')))));
     window.location.reload();
   } catch (e) {
     (await PAPDialog.alert('❌ Erreur réseau. Réessaie dans un instant.'));
