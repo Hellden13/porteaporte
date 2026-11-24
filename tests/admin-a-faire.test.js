@@ -16,7 +16,7 @@ describe('construireAFaire — règles', () => {
   test('rien en base : total 0', () => {
     const r = construireAFaire({}, NOW);
     assert.equal(r.total, 0);
-    assert.deepEqual(Object.keys(r.items).sort(), ['livraisons', 'relancer', 'reservations', 'signalements', 'validations']);
+    assert.deepEqual(Object.keys(r.items).sort(), ['livraisons', 'photos', 'preuves', 'relancer', 'reservations', 'signalements', 'validations']);
   });
 
   test('relancer : même règle que le bouton Relancer (livreur ou les deux, Non démarré, non suspendu)', () => {

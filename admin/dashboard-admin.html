@@ -95,6 +95,13 @@
       margin-bottom: 18px;
       scrollbar-width: thin;
     }
+    /* Menu cellulaire : « À faire » puis 6 sections dépliables */
+    .mobile-admin-nav { flex-direction: column; overflow: visible; }
+    .mobile-admin-nav .mob-a-faire { margin-right: 64px; /* place pour la cloche des notifications */ font-size: 1rem !important; padding: 12px 14px !important; color: #fff !important; background: rgba(93,191,255,.15) !important; border-color: rgba(93,191,255,.45) !important; border-radius: 12px !important; }
+    .mobile-admin-nav details { border: 1px solid var(--brand-bg-surface-light); border-radius: 12px; background: var(--brand-bg-surface); }
+    .mobile-admin-nav summary { cursor: pointer; padding: 12px 14px; font-weight: 800; color: #fff; min-height: 24px; }
+    .mobile-admin-nav details[open] { padding-bottom: 8px; }
+    .mobile-admin-nav details a { display: inline-block; margin: 4px 0 0 10px; }
     .mobile-admin-nav a {
       flex: 0 0 auto;
       border: 1px solid var(--brand-bg-surface-light);
@@ -366,61 +373,58 @@
 
   <aside class="sidebar">
     <div class="sidebar-brand">⚡ PorteàPorte</div>
-    <div class="sidebar-label">Navigation</div>
-    <a href="#section-stats"        class="nav-link active"><span class="icon">📊</span> Tableau de bord</a>
-    <a href="#section-users"        class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
-    <a href="#section-livreurs"     class="nav-link"><span class="icon">🚚</span> Livreurs</a>
-    <a href="#section-livraisons"   class="nav-link"><span class="icon">📦</span> Livraisons</a>
-    <a href="#section-revenus"      class="nav-link"><span class="icon">💰</span> Revenus</a>
-    <a href="#section-litiges"      class="nav-link"><span class="icon">⚠️</span> Litiges</a>
-    <a href="#section-avis"         class="nav-link"><span class="icon">⭐</span> Avis utilisateurs</a>
-    <a href="#section-rewards"      class="nav-link"><span class="icon">🎁</span> Missions & tirages</a>
-    <a href="#section-gamification" class="nav-link"><span class="icon">🎮</span> Gamification</a>
-    <a href="#section-impact"       class="nav-link"><span class="icon">♥</span> Transparence</a>
-    <a href="#section-covoiturage"  class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
-    <a href="#section-parrainage"   class="nav-link"><span class="icon">🤝</span> Parrainage</a>
-    <a href="#section-notifications"class="nav-link"><span class="icon">🔔</span> Notifications push</a>
-    <div class="sidebar-label" style="margin-top:16px;color:#ff9999">🚨 Centre de contrôle</div>
-    <a href="/admin/pilotage" class="nav-link" style="background:rgba(214,255,93,.08);border-left:3px solid #d6ff5d"><span class="icon">📍</span> Pilotage propriétaire</a>
-    <a href="/admin/operations.html" class="nav-link" style="background:rgba(93,191,255,.06);border-left:3px solid #5dbfff"><span class="icon">🚨</span> Operations (LIVE)</a>
-    <a href="/admin/diagnostic.html" class="nav-link"><span class="icon">🔍</span> Diagnostic</a>
-    <a href="/admin/stripe-health.html" class="nav-link"><span class="icon">💳</span> Stripe Health</a>
-    <a href="/admin/go-live.html" class="nav-link"><span class="icon">🚀</span> Go-Live Checklist</a>
-
-    <div class="sidebar-label" style="margin-top:16px">👥 Utilisateurs &amp; modération</div>
-    <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Révision KYC</a>
-    <a href="/admin/users.html" class="nav-link"><span class="icon">👥</span> Utilisateurs</a>
-    <a href="/admin/face-verify.html" class="nav-link"><span class="icon">👤</span> Vérification faciale IA</a>
-    <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Arbitrage manquements</a>
+    <!-- Plan du site, étape 2 : « À faire maintenant » en tête, puis 6 sections (Membres, Trajets et livraisons, Argent, Communauté, Chiffres, Système) -->
+    <a href="#a-faire" class="nav-link nav-a-faire active" style="background:rgba(93,191,255,.12);border-left:3px solid var(--brand-bleu,#5dbfff);font-weight:800"><span class="icon">✅</span> À faire maintenant</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">👥 Membres</div>
+    <a href="/admin/users.html" class="nav-link"><span class="icon">👥</span> Gestion des membres</a>
+    <a href="#section-users" class="nav-link"><span class="icon">📋</span> Liste des membres</a>
+    <a href="#section-livreurs" class="nav-link"><span class="icon">🚚</span> Livreurs</a>
+    <a href="/admin/kyc-review.html" class="nav-link"><span class="icon">🪪</span> Vérification d’identité (KYC)</a>
+    <a href="/admin/face-verify.html" class="nav-link"><span class="icon">👤</span> Vérification faciale</a>
+    <a href="/admin/photos-moderation.html" class="nav-link"><span class="icon">📸</span> Photos de profil</a>
+    <a href="/admin/vehicules.html" class="nav-link"><span class="icon">🚙</span> Véhicules</a>
+    <a href="/admin/manquements.html" class="nav-link"><span class="icon">⚖️</span> Manquements</a>
     <a href="/admin/signalements-messages.html" class="nav-link"><span class="icon">🚩</span> Conversations signalées</a>
-    <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Intelligence adresses</a>
-
-    <div class="sidebar-label" style="margin-top:16px">💰 Finances &amp; analytics</div>
-    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètrès financiers</a>
-    <a href="/admin/ride-payments.html" class="nav-link"><span class="icon">💳</span> Paiements covoit</a>
-    <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Dashboard Fondateur</a>
-    <a href="/admin/analytics.html" class="nav-link"><span class="icon">📊</span> Analytics</a>
-    <a href="/admin/backup.html" class="nav-link"><span class="icon">💾</span> Backup &amp; Export</a>
-
-    <div class="sidebar-label" style="margin-top:16px">🤝 Communauté &amp; partenariats</div>
-    <a href="/admin/organismes.html" class="nav-link"><span class="icon">❤️</span> Organismes partenaires</a>
+    <a href="#section-avis" class="nav-link"><span class="icon">⭐</span> Avis</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">🚗 Trajets et livraisons</div>
+    <a href="/admin/operations.html" class="nav-link"><span class="icon">🚨</span> Centre opérations</a>
+    <a href="#section-livraisons" class="nav-link"><span class="icon">📦</span> Livraisons</a>
+    <a href="#section-covoiturage" class="nav-link"><span class="icon">🚗</span> Covoiturage</a>
+    <a href="/admin/rides-fix.html" class="nav-link"><span class="icon">🛠</span> Correction des trajets</a>
+    <a href="/admin/safe-points.html" class="nav-link"><span class="icon">📍</span> Points de rencontre</a>
+    <a href="/admin/partage-trajets.html" class="nav-link"><span class="icon">📘</span> Partage des trajets</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">💰 Argent</div>
+    <a href="#section-revenus" class="nav-link"><span class="icon">💰</span> Revenus</a>
+    <a href="#section-litiges" class="nav-link"><span class="icon">⚠️</span> Litiges</a>
+    <a href="/admin/ride-payments.html" class="nav-link"><span class="icon">💳</span> Paiements covoiturage</a>
+    <a href="/admin/auto-release.html" class="nav-link"><span class="icon">🔓</span> Libération des paiements livreurs</a>
+    <a href="/admin/parametres.html" class="nav-link"><span class="icon">⚙️</span> Paramètres financiers</a>
+    <a href="/admin/promos.html" class="nav-link"><span class="icon">🎟️</span> Codes promo</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">❤️ Communauté</div>
+    <a href="#section-impact" class="nav-link"><span class="icon">♥</span> Transparence</a>
+    <a href="/admin/organismes.html" class="nav-link"><span class="icon">🤝</span> Organismes partenaires</a>
     <a href="/admin/votes.html" class="nav-link"><span class="icon">🗳️</span> Votes communautaires</a>
-    <a href="/admin/presse-kit.html" class="nav-link"><span class="icon">📰</span> Kit Presse (interne)</a>
-
-    <div class="sidebar-label" style="margin-top:16px">📣 Promotion covoiturage</div>
-    <a href="/admin/partage-trajets.html" class="nav-link"><span class="icon">📘</span> Partage trajets (Facebook)</a>
-
-    <div class="sidebar-label" style="margin-top:16px">🌐 Pages publiques</div>
-    <a href="/transparence.html" class="nav-link" target="_blank"><span class="icon">📈</span> Transparence ↗</a>
-    <a href="/status.html" class="nav-link" target="_blank"><span class="icon">📡</span> Status service ↗</a>
-    <a href="/comparatif.html" class="nav-link" target="_blank"><span class="icon">⚖️</span> Comparatif vs concurrents ↗</a>
-    <a href="/calculateur-prix.html" class="nav-link" target="_blank"><span class="icon">💰</span> Calculateur prix ↗</a>
-    <a href="/calculateur-revenus-livreur.html" class="nav-link" target="_blank"><span class="icon">🚗</span> Calculateur revenus ↗</a>
-    <div class="sidebar-label" style="margin-top:16px">Portail utilisateur</div>
-    <a href="/dashboard-expediteur.html"  class="nav-link"><span class="icon">📦</span> Espace expéditeur</a>
-    <a href="/dashboard-livreur.html"     class="nav-link"><span class="icon">🚚</span> Espace livreur</a>
-    <a href="/dashboard-covoiturage.html" class="nav-link"><span class="icon">🚗</span> Espace covoiturage</a>
-    <a href="/compte.html"               class="nav-link"><span class="icon">👤</span> Mon profil</a>
+    <a href="#section-rewards" class="nav-link"><span class="icon">🎁</span> Missions et tirages</a>
+    <a href="#section-gamification" class="nav-link"><span class="icon">🎮</span> Badges et niveaux</a>
+    <a href="#section-parrainage" class="nav-link"><span class="icon">🔗</span> Parrainage</a>
+    <a href="#section-notifications" class="nav-link"><span class="icon">🔔</span> Notifications push</a>
+    <a href="/admin/presse-kit.html" class="nav-link"><span class="icon">📰</span> Kit média</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">📊 Chiffres</div>
+    <a href="#section-stats" class="nav-link"><span class="icon">📊</span> Vue d’ensemble</a>
+    <a href="/admin/pilotage" class="nav-link"><span class="icon">📍</span> Pilotage</a>
+    <a href="/admin/fondateur.html" class="nav-link"><span class="icon">👑</span> Tableau du fondateur</a>
+    <a href="/admin/analytics.html" class="nav-link"><span class="icon">📈</span> Analytics</a>
+    <a href="/admin/analytics-recherches.html" class="nav-link"><span class="icon">🔎</span> Recherches de trajets</a>
+    <a href="/admin/address-intel.html" class="nav-link"><span class="icon">💡</span> Adresses</a>
+    <div class="sidebar-label admin-section" style="margin-top:16px">⚙️ Système</div>
+    <a href="/admin/diagnostic.html" class="nav-link"><span class="icon">🔍</span> Diagnostic</a>
+    <a href="/admin/stripe-health.html" class="nav-link"><span class="icon">💳</span> Santé de Stripe</a>
+    <a href="/admin/test-email.html" class="nav-link"><span class="icon">✉️</span> Tester un courriel</a>
+    <a href="/admin/go-live.html" class="nav-link"><span class="icon">🚀</span> Liste de mise en ligne</a>
+    <a href="/admin/backup.html" class="nav-link"><span class="icon">💾</span> Sauvegarde et export</a>
+    <a href="/transparence.html" class="nav-link" target="_blank"><span class="icon">↗</span> Voir la transparence</a>
+    <a href="/status.html" class="nav-link" target="_blank"><span class="icon">↗</span> État du service</a>
+    <a href="/dashboard.html" class="nav-link"><span class="icon">↗</span> Voir mon espace membre</a>
     <div class="sidebar-bottom">
       <div style="font-size:.8rem;color:#5A6A7A;margin-bottom:10px" id="admin-email">—</div>
       <button class="logout-btn" onclick="AUTH_API.logout()">Se déconnecter</button>
@@ -429,30 +433,63 @@
 
   <main class="main">
     <nav class="mobile-admin-nav" aria-label="Navigation admin mobile">
-      <a href="/admin/pilotage" style="background:rgba(214,255,93,.15);color:#d6ff5d;font-weight:900">📍 Pilotage</a>
-      <a href="/admin/operations.html" style="background:rgba(93,191,255,.15);color:#5dbfff;font-weight:900">🚨 OPS</a>
-      <a href="/admin/diagnostic.html">🔍 Diag</a>
-      <a href="/admin/stripe-health.html">💳 Stripe</a>
-      <a href="/admin/ride-payments.html">💳 Paiements covoit</a>
-      <a href="/admin/parametres.html">⚙️ Params</a>
-      <a href="/admin/fondateur.html">👑 Fondateur</a>
-      <a href="/admin/kyc-review.html">🪪 KYC</a>
-      <a href="/admin/photos-moderation.html">📸 Photos</a>
-      <a href="/admin/safe-points.html">🗺️ Lieux safe</a>
-      <a href="/admin/analytics-recherches.html">📈 Recherches</a>
-      <a href="/admin/rides-fix.html">🛠 Fix trajets</a>
-      <a href="/admin/manquements.html">⚖️ Litiges</a>
-      <a href="/admin/users.html">👥 Users</a>
-      <a href="/admin/organismes.html">❤️ Orgs</a>
-      <a href="/admin/votes.html">🗳️ Votes</a>
-      <a href="/admin/analytics.html">📊 Analytics</a>
-      <a href="/admin/backup.html">💾 Backup</a>
-      <a href="/admin/go-live.html">🚀 Go-Live</a>
-      <span style="border-left:1px solid #1E2535;margin:0 8px"></span>
-      <a href="#section-stats">📊 Stats</a>
-      <a href="#section-revenus">💰 Revenus</a>
-      <a href="#section-livreurs">🚚 Livreurs</a>
-      <a href="#section-avis">⭐ Avis</a>
+      <a class="mob-a-faire" href="#a-faire">✅ À faire maintenant</a>
+      <details class="mob-section"><summary>👥 Membres</summary>
+        <a href="/admin/users.html">👥 Gestion des membres</a>
+        <a href="#section-users">📋 Liste des membres</a>
+        <a href="#section-livreurs">🚚 Livreurs</a>
+        <a href="/admin/kyc-review.html">🪪 Vérification d’identité (KYC)</a>
+        <a href="/admin/face-verify.html">👤 Vérification faciale</a>
+        <a href="/admin/photos-moderation.html">📸 Photos de profil</a>
+        <a href="/admin/vehicules.html">🚙 Véhicules</a>
+        <a href="/admin/manquements.html">⚖️ Manquements</a>
+        <a href="/admin/signalements-messages.html">🚩 Conversations signalées</a>
+        <a href="#section-avis">⭐ Avis</a>
+      </details>
+      <details class="mob-section"><summary>🚗 Trajets et livraisons</summary>
+        <a href="/admin/operations.html">🚨 Centre opérations</a>
+        <a href="#section-livraisons">📦 Livraisons</a>
+        <a href="#section-covoiturage">🚗 Covoiturage</a>
+        <a href="/admin/rides-fix.html">🛠 Correction des trajets</a>
+        <a href="/admin/safe-points.html">📍 Points de rencontre</a>
+        <a href="/admin/partage-trajets.html">📘 Partage des trajets</a>
+      </details>
+      <details class="mob-section"><summary>💰 Argent</summary>
+        <a href="#section-revenus">💰 Revenus</a>
+        <a href="#section-litiges">⚠️ Litiges</a>
+        <a href="/admin/ride-payments.html">💳 Paiements covoiturage</a>
+        <a href="/admin/auto-release.html">🔓 Libération des paiements livreurs</a>
+        <a href="/admin/parametres.html">⚙️ Paramètres financiers</a>
+        <a href="/admin/promos.html">🎟️ Codes promo</a>
+      </details>
+      <details class="mob-section"><summary>❤️ Communauté</summary>
+        <a href="#section-impact">♥ Transparence</a>
+        <a href="/admin/organismes.html">🤝 Organismes partenaires</a>
+        <a href="/admin/votes.html">🗳️ Votes communautaires</a>
+        <a href="#section-rewards">🎁 Missions et tirages</a>
+        <a href="#section-gamification">🎮 Badges et niveaux</a>
+        <a href="#section-parrainage">🔗 Parrainage</a>
+        <a href="#section-notifications">🔔 Notifications push</a>
+        <a href="/admin/presse-kit.html">📰 Kit média</a>
+      </details>
+      <details class="mob-section"><summary>📊 Chiffres</summary>
+        <a href="#section-stats">📊 Vue d’ensemble</a>
+        <a href="/admin/pilotage">📍 Pilotage</a>
+        <a href="/admin/fondateur.html">👑 Tableau du fondateur</a>
+        <a href="/admin/analytics.html">📈 Analytics</a>
+        <a href="/admin/analytics-recherches.html">🔎 Recherches de trajets</a>
+        <a href="/admin/address-intel.html">💡 Adresses</a>
+      </details>
+      <details class="mob-section"><summary>⚙️ Système</summary>
+        <a href="/admin/diagnostic.html">🔍 Diagnostic</a>
+        <a href="/admin/stripe-health.html">💳 Santé de Stripe</a>
+        <a href="/admin/test-email.html">✉️ Tester un courriel</a>
+        <a href="/admin/go-live.html">🚀 Liste de mise en ligne</a>
+        <a href="/admin/backup.html">💾 Sauvegarde et export</a>
+        <a href="/transparence.html">↗ Voir la transparence</a>
+        <a href="/status.html">↗ État du service</a>
+        <a href="/dashboard.html">↗ Voir mon espace membre</a>
+      </details>
     </nav>
     <div class="page-header">
       <div>
@@ -3470,11 +3507,30 @@
   function renderAFaire(data) {
     const it = data.items || {};
     const groupes = [];
-    const relancer = (it.relancer || []).filter((p) => afId(p.id));
-    if (relancer.length) groupes.push(['📨 Comptes « Non démarré » à relancer', relancer.map((p) => afLigne(
-      afEsc(p.nom) + (afJJMM(p.derniere_relance) ? `<small class="af-relance">Dernier envoi « Relancer » : ${afJJMM(p.derniere_relance)}</small>` : ''),
-      afEsc([p.email, afDepuis(p.depuis)].filter(Boolean).join(' · ')),
-      `<button class="action-btn" onclick="afAction(() => sendVerifReminder('${afId(p.id)}'))">📨 Relancer</button>`))]);
+    // Ordre : le plus urgent d'abord (preuves, signalements, validations, photos), puis le suivi.
+    const preuves = (it.preuves || []).filter((x) => afId(x.id) && afId(x.livraison_id));
+    if (preuves.length) groupes.push(['🧾 Preuves de livraison à réviser', preuves.map((x) => afLigne(
+      `Livraison ${afEsc(x.livraison_id.slice(0, 8))}…`, afEsc(afDepuis(x.depuis)),
+      `<button class="action-btn" onclick="viewDeliveryProof('${afId(x.livraison_id)}')">Voir la preuve</button>`))]);
+    const sigs = (it.signalements || []).filter((r) => afId(r.id));
+    if (sigs.length) groupes.push(['⚠️ Signalements ouverts', sigs.map((r) => afLigne(
+      `${r.source === 'manquement' ? 'Manquement' : (r.source === 'messagerie' ? 'Conversation signalée' : 'Covoiturage')} — ${afEsc(r.motif)}`, afEsc(afDepuis(r.depuis)),
+      r.source === 'manquement'
+        ? `<a class="action-btn" href="/admin/manquements.html">Traiter</a>`
+        : (r.source === 'messagerie'
+          ? `<a class="action-btn" href="/admin/signalements-messages.html">Lire et décider</a>`
+          : `<a class="action-btn" href="#section-covoiturage">Voir le signalement</a>`)))]);
+    const vals = (it.validations || []).filter((v) => afId(v.id));
+    if (vals.length) groupes.push(['🪪 Organismes et livreurs en attente de validation', vals.map((v) => afLigne(
+      `${v.type === 'organisme' ? 'Organisme' : 'Livreur'} — ${afEsc(v.nom)}`, afEsc(afDepuis(v.depuis)),
+      v.type === 'organisme'
+        ? `<button class="action-btn" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','approved'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','rejected'))">Refuser</button>`
+        : `<button class="action-btn" onclick="afAction(() => setDriverStatus('${afId(v.id)}','verified'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => setDriverStatus('${afId(v.id)}','rejected'))">Refuser</button>`))]);
+
+    const photos = (it.photos || []).filter((x) => afId(x.id));
+    if (photos.length) groupes.push(['📸 Photos de profil à modérer', photos.map((x) => afLigne(
+      afEsc(x.nom), afEsc(afDepuis(x.depuis)),
+      `<a class="action-btn" href="/admin/photos-moderation.html">Modérer</a>`))]);
     const livs = (it.livraisons || []).filter((l) => afId(l.id));
     if (livs.length) groupes.push(['📦 Livraisons bloquées ou à capturer (plus de 48 h)', livs.map((l) => afLigne(
       `${afEsc(l.code || l.id.slice(0, 8))} — ${afEsc(l.trajet)}`,
@@ -3489,19 +3545,11 @@
       `Réservation ${afEsc(b.id.slice(0, 8))}…${b.passager ? ' — ' + afEsc(b.passager) : ''}`,
       afEsc([b.places ? b.places + ' place(s)' : '', afDepuis(b.depuis)].filter(Boolean).join(' · ')),
       `<a class="action-btn" href="#section-covoiturage">Voir la réservation</a>`))]);
-    const sigs = (it.signalements || []).filter((r) => afId(r.id));
-    if (sigs.length) groupes.push(['⚠️ Signalements ouverts', sigs.map((r) => afLigne(
-      `${r.source === 'manquement' ? 'Manquement' : 'Covoiturage'} — ${afEsc(r.motif)}`, afEsc(afDepuis(r.depuis)),
-      r.source === 'manquement'
-        ? `<a class="action-btn" href="/admin/manquements.html">Traiter</a>`
-        : `<a class="action-btn" href="#section-covoiturage">Voir le signalement</a>`))]);
-    const vals = (it.validations || []).filter((v) => afId(v.id));
-    if (vals.length) groupes.push(['🪪 Organismes et livreurs en attente de validation', vals.map((v) => afLigne(
-      `${v.type === 'organisme' ? 'Organisme' : 'Livreur'} — ${afEsc(v.nom)}`, afEsc(afDepuis(v.depuis)),
-      v.type === 'organisme'
-        ? `<button class="action-btn" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','approved'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => updateImpactApplication('${afId(v.id)}','rejected'))">Refuser</button>`
-        : `<button class="action-btn" onclick="afAction(() => setDriverStatus('${afId(v.id)}','verified'))">✓ Approuver</button><button class="action-btn danger" onclick="afAction(() => setDriverStatus('${afId(v.id)}','rejected'))">Refuser</button>`))]);
-
+    const relancer = (it.relancer || []).filter((p) => afId(p.id));
+    if (relancer.length) groupes.push(['📨 Comptes « Non démarré » à relancer', relancer.map((p) => afLigne(
+      afEsc(p.nom) + (afJJMM(p.derniere_relance) ? `<small class="af-relance">Dernier envoi « Relancer » : ${afJJMM(p.derniere_relance)}</small>` : ''),
+      afEsc([p.email, afDepuis(p.depuis)].filter(Boolean).join(' · ')),
+      `<button class="action-btn" onclick="afAction(() => sendVerifReminder('${afId(p.id)}'))">📨 Relancer</button>`))]);
     const total = groupes.reduce((s, g) => s + g[1].length, 0);
     const erreurs = data.erreurs || [];
     const errBox = document.getElementById('a-faire-erreur');
