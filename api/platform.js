@@ -57,6 +57,7 @@ function sansCoordonneesDestinataire(l) {
 }
 const { adminAFaire } = require('../lib/_admin-a-faire');
 const { refusPlanProtection } = require('../lib/_protection');
+const CT = require('../lib/_commande-telephone');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
 const { calculerBonusFidelite } = require('../lib/_fidelite');
@@ -472,7 +473,7 @@ async function assignDriver(req, res, ctx, body) {
   const livreurId = body.livreur_id || body.livreurId || ctx.session.id;
   if (!livraisonId) return res.status(400).json({ error: 'livraison_id requis' });
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,pickup_code_hash,recipient_confirmation_hash`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${livraisonId}&select=id,code,expediteur_id,livreur_id,statut,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,pickup_code_hash,recipient_confirmation_hash,admin_note`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -485,6 +486,10 @@ async function assignDriver(req, res, ctx, body) {
   const admin = roleIn(ctx.profile, ['admin']);
   const selfDriver = livreurId === ctx.session.id && isVerifiedDriver(ctx.session, ctx.profile);
   const owner = livraison.expediteur_id === ctx.session.id;
+  // Commande téléphonique : le livreur visé doit être permis (Denis, ou badge + partage allumé), même si c'est l'admin qui assigne.
+  if (!(await CT.peutPrendre(ctx, livraison, livreurId))) {
+    return res.status(403).json({ error: 'Commande du service aux aînés : réservée aux livreurs approuvés.', code: 'service_aines_reserve' });
+  }
   if (!admin && !selfDriver && !owner) return res.status(403).json({ error: 'Assignation refusée' });
   if (!admin && livraison.statut !== 'paiement_autorise') {
     return res.status(409).json({ error: 'Paiement escrow requis avant assignation' });
@@ -995,7 +1000,7 @@ async function livreurRescueAccept(req, res, ctx, body) {
   if (!livraison_id) return res.status(400).json({ error: 'livraison_id requis' });
   if (!isVerifiedDriver(ctx.session, ctx.profile)) return res.status(403).json({ error: 'Livreur vérifié requis' });
 
-  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,rescue_mode,rescue_livreur_original,rescue_bonus_pct,prix_total,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg`, {
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,statut,rescue_mode,rescue_livreur_original,rescue_bonus_pct,prix_total,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,admin_note`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const livraison = lr.ok ? (await lr.json())[0] : null;
@@ -1007,6 +1012,7 @@ async function livreurRescueAccept(req, res, ctx, body) {
     if (!el.allowed) return res.status(403).json({ error: 'Livraison incompatible avec ton véhicule du jour', reason: el.reason });
   }
   if (!livraison.rescue_mode) return res.status(409).json({ error: 'Cette livraison n\'est pas en rescue' });
+  if (!(await CT.peutPrendre(ctx, livraison, ctx.session.id))) return res.status(403).json({ error: 'Commande du service aux aînés : réservée aux livreurs approuvés.', code: 'service_aines_reserve' });
   if (livraison.rescue_livreur_original === ctx.session.id) return res.status(409).json({ error: 'Tu ne peux pas accepter ta propre rescue' });
 
   // Assigner le nouveau livreur
@@ -1886,13 +1892,70 @@ async function gpsUpdate(req, res, ctx, body) {
   return res.status(200).json({ success: true, location: Array.isArray(insert.data) ? insert.data[0] : insert.data });
 }
 
+// ── Commandes téléphoniques (admin seulement, 26 nov. 2026) — voir lib/_commande-telephone.js ──
+// Aucun courriel ni téléphone dans les journaux : seuls des identifiants et des montants sont écrits.
+async function adminCommandeTel(req, res, ctx, body, endpoint) {
+  if (!roleIn(ctx.profile, ['admin'])) return res.status(403).json({ error: 'Admin requis' });
+  res.setHeader('Cache-Control', 'no-store');
+  body = body || {};
+  const repondre = (r) => (r.erreur ? res.status(r.status || 400).json({ error: r.erreur, champ: r.champ || null }) : null);
+  if (endpoint === 'admin-commande-tel-prix') {
+    const v = CT.validerPrix(body);
+    if (v.erreur) return repondre({ status: 400, ...v });
+    return res.status(200).json({ success: true, prix: CT.prixCommande(v.valeurs) });
+  }
+  if (endpoint === 'admin-commande-tel-creer') {
+    const r = await CT.creerCommande(ctx, body);
+    if (r.erreur) return repondre(r);
+    console.log('[commande-tel] créée', r.commande.livraison_id, r.commande.prix.total);
+    return res.status(200).json({ success: true, ...r.commande });
+  }
+  if (endpoint === 'admin-commande-tel-liste') {
+    const [commandes, reglage] = await Promise.all([CT.listerCommandes(ctx), CT.lireReglage(ctx)]);
+    return res.status(200).json({ success: true, commandes, reglage });
+  }
+  const id = safeRestId(body.livraison_id);
+  if (endpoint === 'admin-commande-tel-lien') {
+    if (!id) return res.status(400).json({ error: 'livraison_id requis' });
+    const l = await CT.lireLivraison(ctx, id);
+    if (!l) return res.status(404).json({ error: 'Commande introuvable' });
+    const r = await CT.creerLienPaiement(ctx, l, await CT.lireCommande(ctx, id));
+    if (r.erreur) return repondre(r);
+    return res.status(200).json({ success: true, lien: r.lien });
+  }
+  if (endpoint === 'admin-commande-tel-courriel') {
+    if (!id) return res.status(400).json({ error: 'livraison_id requis' });
+    const r = await CT.donneesCourrielLien(ctx, id);
+    if (r.erreur) return repondre(r);
+    const envoi = await callNotifier('commande_tel_lien_paiement', r.donnees);
+    if (!envoi || envoi.ok === false) return res.status(502).json({ error: 'Envoi du courriel impossible.' });
+    await fetch(`${ctx.sbUrl}/rest/v1/transaction_audit_events`, { method: 'POST', headers: sbHeaders(ctx.sbKey, 'return=minimal'), body: JSON.stringify({ livraison_id: id, user_id: null, actor_id: ctx.session.id, event_type: 'commande_tel_courriel', status: 'envoye', evidence: { a: CT.masquerEmail(r.donnees.to) } }) }).catch(() => null);
+    return res.status(200).json({ success: true, envoye_a: CT.masquerEmail(r.donnees.to) });
+  }
+  if (endpoint === 'admin-service-aines') {
+    if (body.partage !== undefined) {
+      if (!(await CT.ecrireReglage(ctx, body.partage === true))) return res.status(502).json({ error: 'Réglage non enregistré' });
+    }
+    const livreurId = body.livreur_id ? safeRestId(body.livreur_id) : null;
+    if (body.livreur_id && !livreurId) return res.status(400).json({ error: 'livreur_id invalide' });
+    if (livreurId && body.accorde !== undefined) {
+      if (!(await CT.badgeLivreur(ctx, livreurId, body.accorde === true))) return res.status(502).json({ error: 'Badge non enregistré' });
+    }
+    const [reglage, approuves] = await Promise.all([CT.lireReglage(ctx), CT.livreursApprouves(ctx)]);
+    const lr = await fetch(`${ctx.sbUrl}/rest/v1/profiles?role=in.(livreur,les%20deux)&driver_status=eq.verified&select=id,prenom,nom,ville&limit=500`, { headers: sbHeaders(ctx.sbKey) });
+    const livreurs = (lr.ok ? await lr.json().catch(() => []) : []).map((p) => ({ id: p.id, nom: [p.prenom, (p.nom || '').slice(0, 1)].filter(Boolean).join(' ') + (p.nom ? '.' : ''), ville: p.ville || '', approuve: approuves.has(p.id) }));
+    return res.status(200).json({ success: true, reglage, livreurs });
+  }
+  return res.status(404).json({ error: 'Endpoint inconnu' });
+}
+
 async function availableLivraisons(req, res, ctx) {
   if (!isVerifiedDriver(ctx.session, ctx.profile)) {
     return res.status(403).json({ error: 'Livreur verifie requis' });
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,assurance_plan,statut,description,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,assurance_plan,statut,description,admin_note,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
@@ -1904,7 +1967,11 @@ async function availableLivraisons(req, res, ctx) {
   if (!estAdmin && !jour) {
     return res.status(200).json({ success: true, livraisons: [], debut_journee_requis: true, message: 'Fais ton début de journée (véhicule, selfie, photo du véhicule) pour voir les missions.' });
   }
-  const filtered = rows
+  // Commandes téléphoniques (service aux aînés) : seulement Denis, ou les livreurs approuvés si le partage est allumé.
+  const cacheAines = {};
+  const permises = [];
+  for (const row of rows) if (await CT.peutPrendre(ctx, row, ctx.session.id, cacheAines)) permises.push(row);
+  const filtered = permises
     .map((row) => ({ row, eligibility: estAdmin ? deliveryEligibility(ctx.profile, row) : eligibiliteVehicule(jour.vehicule, row, ctx.profile) }))
     .filter((item) => item.eligibility.allowed);
 
@@ -6799,6 +6866,7 @@ module.exports = async function handler(req, res) {
     if (endpoint === 'badge-benefit-status') return await badgeBenefitStatus(req, res, ctx, body);
     if (endpoint === 'promo-validate')        return await promoValidate(req, res, ctx, body);
     if (endpoint === 'admin-promo-list')      return await adminPromoList(req, res, ctx);
+    if (endpoint.startsWith('admin-commande-tel') || endpoint === 'admin-service-aines') return await adminCommandeTel(req, res, ctx, body, endpoint);
     if (endpoint === 'admin-promo-create')    return await adminPromoCreate(req, res, ctx, body);
     if (endpoint === 'admin-promo-toggle')    return await adminPromoToggle(req, res, ctx, body);
     if (endpoint === 'stripe-connect-onboard')   return await stripeConnectOnboard(req, res, ctx, body);

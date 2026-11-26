@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commandes téléphoniques — Admin PorteàPorte</title>
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/visual-polish.css">
+  <script src="/js/dialogues.js"></script>
+  <script src="/js/session-expiree.js"></script>
+  <script src="/js/flottants.js?v=20261126"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
+  <script src="/js/adresses.js"></script>
+  <script src="/js/auth-complete.js"></script>
+  <style>
+    body { background: var(--brand-bg-dark); color: var(--brand-text); padding: 32px clamp(16px,4vw,48px); min-height: 100vh; }
+    h1 { margin: 0 0 8px; font-size: 1.4rem; }
+    .sub { color: var(--brand-muted); font-size: .88rem; margin: 0 0 28px; max-width: 760px; line-height: 1.5; }
+    .grid2 { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 24px; align-items: start; }
+    @media(max-width:900px){ .grid2 { grid-template-columns: 1fr; } }
+    .card { background: var(--brand-bg-surface); border: 1px solid var(--brand-border); border-radius: 12px; padding: 22px; margin-bottom: 24px; min-width: 0; }
+    .card h2 { margin: 0 0 16px; font-size: 1rem; color: var(--brand-bleu); }
+    .card h3 { margin: 18px 0 10px; font-size: .85rem; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .06em; }
+    .field { margin-bottom: 12px; min-width: 0; }
+    .field label { display: block; font-size: .78rem; font-weight: 700; color: var(--brand-muted); margin-bottom: 5px; }
+    .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: rgba(255,255,255,.04); border: 1px solid var(--brand-border); border-radius: 8px; color: var(--brand-text); padding: 10px 12px; font-size: .92rem; font-family: inherit; }
+    .field textarea { min-height: 64px; resize: vertical; }
+    .field .hint { font-size: .74rem; color: var(--brand-muted); margin-top: 4px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media(max-width:520px){ .row2, .row3 { grid-template-columns: 1fr; } }
+    .addr-wrap { position: relative; }
+    .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin: 6px 0 12px; }
+    .check input { width: auto; }
+    .prix { background: rgba(93,191,255,.07); border: 1px solid rgba(93,191,255,.3); border-radius: 10px; padding: 14px; margin: 6px 0 16px; }
+    .prix .total { font-size: 1.5rem; font-weight: 900; color: #fff; }
+    .prix .detail { font-size: .8rem; color: var(--brand-muted); margin-top: 4px; line-height: 1.5; }
+    .btn { padding: 11px 18px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .88rem; }
+    .btn-main { background: var(--brand-bleu); color: #071006; }
+    .btn-ghost { background: transparent; color: var(--brand-text); border: 1px solid var(--brand-border); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .status { margin-top: 10px; font-size: .86rem; min-height: 1.2em; }
+    .status.ok { color: #34d399; } .status.err { color: #f87171; }
+    .lien { font-family: monospace; font-size: .78rem; word-break: break-all; background: rgba(255,255,255,.04); border-radius: 6px; padding: 8px; margin-top: 8px; }
+    .codes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .code { background: rgba(196,241,53,.08); border: 1px solid rgba(196,241,53,.3); border-radius: 8px; padding: 8px 12px; }
+    .code b { font-family: monospace; font-size: 1.15rem; letter-spacing: .12em; color: #fff; }
+    .code span { display: block; font-size: .72rem; color: var(--brand-muted); }
+    .cmd { border-top: 1px solid var(--brand-border); padding: 14px 0; }
+    .cmd:first-child { border-top: 0; padding-top: 0; }
+    .cmd .t { font-weight: 800; color: #fff; overflow-wrap: anywhere; }
+    .cmd .m { font-size: .82rem; color: var(--brand-muted); margin-top: 4px; line-height: 1.5; overflow-wrap: anywhere; }
+    .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 800; background: rgba(255,255,255,.08); }
+    .pill.en_attente { background: rgba(251,191,36,.15); color: #fbbf24; }
+    .pill.paiement_autorise { background: rgba(52,211,153,.15); color: #34d399; }
+    .note-secu { background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.35); color: #FDE68A; border-radius: 10px; padding: 12px; font-size: .84rem; margin-bottom: 16px; }
+    .switch { display: flex; gap: 10px; align-items: center; font-weight: 800; }
+    .livreur { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.05); font-size: .88rem; }
+    .empty { color: var(--brand-muted); font-size: .9rem; padding: 12px 0; }
+    .back-link { display: inline-flex; color: var(--brand-muted); text-decoration: none; font-size: .85rem; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<a class="back-link" href="/admin/dashboard-admin.html">← Tableau de bord admin</a>
+<h1>📞 Commandes téléphoniques</h1>
+<p class="sub">Épicerie livrée aux aînés. Au lancement : cueillette d’une commande <strong>déjà prête et payée</strong> à l’épicerie seulement. Le livreur n’avance jamais d’argent. Le prix est calculé par le serveur avec les vrais tarifs. Aucun numéro de carte ici : le payeur paie sur Stripe.</p>
+
+<div class="grid2">
+  <div>
+    <div class="card" id="form-card">
+      <h2>Nouvelle commande</h2>
+      <h3>Payeur (reçoit le lien)</h3>
+      <div class="field"><label for="payeur_nom">Nom du payeur *</label><input id="payeur_nom" autocomplete="off"></div>
+      <div class="row2">
+        <div class="field"><label for="payeur_email">Courriel</label><input id="payeur_email" type="email" autocomplete="off"></div>
+        <div class="field"><label for="payeur_tel">Cellulaire</label><input id="payeur_tel" type="tel" autocomplete="off" placeholder="418 555-1234"></div>
+      </div>
+      <div class="hint" style="font-size:.74rem;color:var(--brand-muted);margin:-6px 0 10px">Courriel ou cellulaire : au moins un des deux.</div>
+
+      <h3>Personne qui reçoit</h3>
+      <div class="field"><label for="aine_nom">Nom de la personne qui reçoit *</label><input id="aine_nom" autocomplete="off"></div>
+      <div class="field"><label for="adresse_livraison">Adresse de livraison *</label><div class="addr-wrap"><input id="adresse_livraison" autocomplete="off"></div></div>
+      <div class="row2">
+        <div class="field"><label for="ville_livraison">Ville *</label><input id="ville_livraison" autocomplete="off"></div>
+        <div class="field"><label for="cp_livraison">Code postal</label><input id="cp_livraison" autocomplete="off"></div>
+      </div>
+      <div class="field"><label for="note">Note pour le livreur</label><textarea id="note" placeholder="Étage, sonnette, chien, porte arrière…"></textarea></div>
+
+      <h3>Épicerie (commande déjà prête et payée)</h3>
+      <div class="field"><label for="epicerie_nom">Épicerie *</label><input id="epicerie_nom" autocomplete="off" placeholder="Ex. IGA, Metro, Maxi…"></div>
+      <div class="field"><label for="epicerie_adresse">Adresse de l’épicerie *</label><div class="addr-wrap"><input id="epicerie_adresse" autocomplete="off"></div></div>
+      <div class="row2">
+        <div class="field"><label for="epicerie_ville">Ville *</label><input id="epicerie_ville" autocomplete="off"></div>
+        <div class="field"><label for="cp_epicerie">Code postal</label><input id="cp_epicerie" autocomplete="off"></div>
+      </div>
+      <div class="field"><label for="commande_no">Nom ou numéro de la commande à l’épicerie *</label><input id="commande_no" autocomplete="off"></div>
+
+      <h3>Quand</h3>
+      <div class="row3">
+        <div class="field"><label for="date">Date *</label><input id="date" type="date"></div>
+        <div class="field"><label for="heure_debut">De *</label><input id="heure_debut" type="time" value="13:00"></div>
+        <div class="field"><label for="heure_fin">À *</label><input id="heure_fin" type="time" value="15:00"></div>
+      </div>
+      <div class="hint" style="font-size:.74rem;color:var(--brand-muted);margin:-6px 0 10px">Au plus 5 jours à l’avance (l’autorisation de la carte expire après 7 jours).</div>
+
+      <h3>Colis et options</h3>
+      <div class="row3">
+        <div class="field"><label for="type">Type</label><select id="type"><option value="colis">Colis</option><option value="nourriture">Nourriture</option></select></div>
+        <div class="field"><label for="taille">Taille</label><select id="taille"><option value="petit">Petit</option><option value="moyen" selected>Moyen</option><option value="gros">Gros</option></select></div>
+        <div class="field"><label for="poids_kg">Poids estimé (kg)</label><input id="poids_kg" type="number" min="0.5" max="30" step="0.5" value="10"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="protection">Protection colis</label><select id="protection"><option value="none">Aucune</option><option value="base">Base — 1 $ (jusqu’à 50 $)</option><option value="standard" selected>Standard — 2,99 $ (jusqu’à 250 $)</option></select></div>
+        <div class="field"><label for="valeur_commande">Valeur de la commande ($)</label><input id="valeur_commande" type="number" min="0" max="2000" step="0.01"><div class="hint">Requise avec une protection.</div></div>
+      </div>
+      <label class="check"><input id="priorite" type="checkbox"> Priorité +5 $</label>
+
+      <div class="prix" id="prix"><div class="total" id="prix-total">— $</div><div class="detail" id="prix-detail">Entre les villes de l’épicerie et de livraison.</div></div>
+      <button class="btn btn-main" id="btn-creer" type="button">Créer et générer le lien de paiement</button>
+      <div class="status" id="creer-status" role="status"></div>
+    </div>
+
+    <div class="card" id="resultat" hidden>
+      <h2>Commande créée</h2>
+      <div class="t" id="res-titre"></div>
+      <div class="codes" id="res-codes"></div>
+      <div class="lien" id="res-lien"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" type="button" id="res-copier">📋 Copier le lien</button>
+        <button class="btn btn-ghost" type="button" id="res-courriel">✉️ Envoyer par courriel</button>
+      </div>
+      <div class="status" id="res-status" role="status"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Commandes</h2>
+      <div class="note-secu">🔒 Rappel au payeur : le paiement se fait seulement sur checkout.stripe.com, jamais par téléphone ni par texto.</div>
+      <div id="liste"><div class="empty">Chargement…</div></div>
+    </div>
+    <div class="card">
+      <h2>Service aux aînés</h2>
+      <label class="switch"><input type="checkbox" id="partage"> Partager le service aux aînés avec les autres livreurs</label>
+      <p class="sub" style="margin:8px 0 12px">Éteint : seul ton compte voit et accepte ces livraisons. Allumé : seulement les livreurs avec le badge « Approuvé service aux aînés » (refus côté serveur pour les autres).</p>
+      <div id="livreurs"><div class="empty">Chargement…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var token = null;
+  var dernier = null; // dernière commande créée
+  var el = function (id) { return document.getElementById(id); };
+  var CHAMPS = ['payeur_nom','payeur_email','payeur_tel','aine_nom','adresse_livraison','ville_livraison','cp_livraison','note','epicerie_nom','epicerie_adresse','epicerie_ville','cp_epicerie','commande_no','date','heure_debut','heure_fin','type','taille','poids_kg','protection','valeur_commande'];
+  var PRIX = ['epicerie_ville','ville_livraison','cp_epicerie','cp_livraison','type','taille','poids_kg','protection','priorite'];
+  var STATUTS = { en_attente: 'En attente du paiement', paiement_autorise: 'Payée — cherche un livreur', confirme: 'Livreur assigné', ramasse: 'Ramassée', en_route: 'En route', livre: 'Livrée', livree: 'Livrée', payee: 'Terminée', annule: 'Annulée' };
+  var dollars = function (n) { return Number(n || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' }); };
+
+  function valeurs(liste) {
+    var o = {};
+    liste.forEach(function (k) { var i = el(k); if (!i) return; o[k] = i.type === 'checkbox' ? i.checked : i.value; });
+    return o;
+  }
+  function statut(id, msg, ok) { var s = el(id); s.textContent = msg || ''; s.className = 'status ' + (msg ? (ok ? 'ok' : 'err') : ''); }
+  async function api(endpoint, body) {
+    var r = await fetch('/api/platform?endpoint=' + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body || {}) });
+    var d = await r.json().catch(function () { return {}; });
+    if (!r.ok) { var e = new Error(d.error || 'Erreur'); e.champ = d.champ; throw e; }
+    return d;
+  }
+  async function copier(texte, statutId) {
+    try { await navigator.clipboard.writeText(texte); statut(statutId, 'Lien copié.', true); }
+    catch (_) { statut(statutId, 'Copie impossible : sélectionne le lien à la main.', false); }
+  }
+
+  // Prix en direct (serveur, vrais tarifs)
+  var minuterie = null;
+  function majPrix() {
+    clearTimeout(minuterie);
+    minuterie = setTimeout(async function () {
+      var v = valeurs(PRIX);
+      if (!v.epicerie_ville || !v.ville_livraison) return;
+      try {
+        var d = await api('admin-commande-tel-prix', v);
+        var p = d.prix;
+        el('prix-total').textContent = dollars(p.total);
+        el('prix-detail').textContent = 'Livraison (frais de service inclus) ' + dollars(p.livraison) + ' · protection ' + dollars(p.protection) + ' · priorité ' + dollars(p.priorite) + ' · ' + p.distance_km + ' km';
+      } catch (e) { el('prix-total').textContent = '— $'; el('prix-detail').textContent = e.message; }
+    }, 350);
+  }
+
+  function afficherCodes(cont, c) {
+    cont.textContent = '';
+    [['Code de ramassage', 'à donner au livreur', c.code_ramassage], ['Code de réception', 'à donner à la personne qui reçoit (par téléphone)', c.code_reception]].forEach(function (x) {
+      var d = document.createElement('div'); d.className = 'code';
+      var b = document.createElement('b'); b.textContent = x[2] || '— — —';
+      var s = document.createElement('span'); s.textContent = x[0] + ' — ' + x[1];
+      d.appendChild(b); d.appendChild(s); cont.appendChild(d);
+    });
+  }
+
+  async function creer() {
+    var btn = el('btn-creer');
+    btn.disabled = true; statut('creer-status', 'Création…', true);
+    try {
+      var body = valeurs(CHAMPS); body.priorite = el('priorite').checked;
+      var d = await api('admin-commande-tel-creer', body);
+      dernier = d;
+      el('resultat').hidden = false;
+      el('res-titre').textContent = d.titre + ' · ' + dollars(d.prix.total);
+      afficherCodes(el('res-codes'), d);
+      el('res-lien').textContent = d.lien ? d.lien.url : ('Lien non créé : ' + (d.lien_erreur || 'erreur'));
+      statut('creer-status', 'Commande créée.', true);
+      el('resultat').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      charger();
+    } catch (e) {
+      statut('creer-status', e.message, false);
+      if (e.champ && el(e.champ)) el(e.champ).focus();
+    } finally { btn.disabled = false; }
+  }
+
+  async function envoyerCourriel(id, statutId) {
+    if (!(await PAPDialog.confirm('Envoyer le lien de paiement par courriel au payeur ?'))) return;
+    try { var d = await api('admin-commande-tel-courriel', { livraison_id: id }); statut(statutId, 'Courriel envoyé à ' + d.envoye_a + '.', true); }
+    catch (e) { statut(statutId, e.message, false); }
+  }
+
+  async function nouveauLien(id, statutId) {
+    try { await api('admin-commande-tel-lien', { livraison_id: id }); statut(statutId, 'Nouveau lien créé (l’ancien est fermé).', true); charger(); }
+    catch (e) { statut(statutId, e.message, false); }
+  }
+
+  function bouton(texte, fn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-ghost'; b.textContent = texte; b.addEventListener('click', fn); return b; }
+
+  async function charger() {
+    var cont = el('liste');
+    try {
+      var d = await api('admin-commande-tel-liste');
+      el('partage').checked = Boolean(d.reglage && d.reglage.partage);
+      cont.textContent = '';
+      if (!d.commandes.length) { cont.innerHTML = '<div class="empty">Aucune commande pour l’instant.</div>'; return; }
+      d.commandes.forEach(function (c) {
+        var div = document.createElement('div'); div.className = 'cmd';
+        var t = document.createElement('div'); t.className = 't'; t.textContent = c.titre || c.code; div.appendChild(t);
+        var pill = document.createElement('span'); pill.className = 'pill ' + c.statut; pill.textContent = STATUTS[c.statut] || c.statut;
+        var m = document.createElement('div'); m.className = 'm';
+        m.appendChild(pill);
+        m.appendChild(document.createTextNode(' ' + (c.date || '') + ' ' + (c.plage || '') + ' · ' + dollars(c.prix_total) + ' · ' + (c.livreur ? 'Livreur : ' + c.livreur : 'Aucun livreur')));
+        m.appendChild(document.createElement('br'));
+        m.appendChild(document.createTextNode('Payeur : ' + (c.payeur_nom || '') + (c.payeur_email ? ' · ' + c.payeur_email : '') + (c.payeur_tel ? ' · ' + c.payeur_tel : '') + ' · Commande « ' + (c.commande_no || '') + ' »'));
+        div.appendChild(m);
+        var codes = document.createElement('div'); codes.className = 'codes'; afficherCodes(codes, c); div.appendChild(codes);
+        var st = 'st-' + c.livraison_id;
+        var act = document.createElement('div'); act.className = 'actions';
+        if (c.statut === 'en_attente') {
+          if (c.lien) {
+            var l = document.createElement('div'); l.className = 'lien'; l.textContent = c.lien.url + '  (expire ' + new Date(c.lien.expires_at).toLocaleString('fr-CA') + ')'; div.appendChild(l);
+            act.appendChild(bouton('📋 Copier', function () { copier(c.lien.url, st); }));
+            if (c.payeur_email) act.appendChild(bouton('✉️ Envoyer par courriel', function () { envoyerCourriel(c.livraison_id, st); }));
+          }
+          act.appendChild(bouton('🔄 Générer un nouveau lien', function () { nouveauLien(c.livraison_id, st); }));
+        }
+        div.appendChild(act);
+        var s = document.createElement('div'); s.className = 'status'; s.id = st; s.setAttribute('role', 'status'); div.appendChild(s);
+        cont.appendChild(div);
+      });
+    } catch (e) { cont.innerHTML = ''; var x = document.createElement('div'); x.className = 'empty'; x.textContent = e.message; cont.appendChild(x); }
+  }
+
+  async function chargerLivreurs(body) {
+    var cont = el('livreurs');
+    try {
+      var d = await api('admin-service-aines', body || {});
+      el('partage').checked = Boolean(d.reglage.partage);
+      cont.textContent = '';
+      if (!d.livreurs.length) { cont.innerHTML = '<div class="empty">Aucun livreur vérifié.</div>'; return; }
+      d.livreurs.forEach(function (l) {
+        var row = document.createElement('div'); row.className = 'livreur';
+        var n = document.createElement('span'); n.textContent = (l.approuve ? '✅ ' : '') + l.nom + (l.ville ? ' · ' + l.ville : '');
+        row.appendChild(n);
+        row.appendChild(bouton(l.approuve ? 'Retirer le badge' : 'Approuver (service aux aînés)', function () { chargerLivreurs({ livreur_id: l.id, accorde: !l.approuve }); }));
+        cont.appendChild(row);
+      });
+    } catch (e) { cont.textContent = e.message; }
+  }
+
+  async function init() {
+    if (!await AUTH_API.requireAuth('admin')) return;
+    var u = AUTH_API.getUser();
+    token = u && u.session && u.session.access_token;
+    if (!token) { document.body.innerHTML = '<p style="color:#ef4444;padding:40px">Accès refusé.</p>'; return; }
+    var demain = new Date(Date.now() + 86400000); el('date').value = demain.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+    PRIX.forEach(function (k) { var i = el(k); if (i) { i.addEventListener('input', majPrix); i.addEventListener('change', majPrix); } });
+    el('btn-creer').addEventListener('click', creer);
+    el('res-copier').addEventListener('click', function () { if (dernier && dernier.lien) copier(dernier.lien.url, 'res-status'); });
+    el('res-courriel').addEventListener('click', function () { if (dernier) envoyerCourriel(dernier.livraison_id, 'res-status'); });
+    el('partage').addEventListener('change', function () { chargerLivreurs({ partage: el('partage').checked }); });
+    if (window.Adresses) {
+      [['adresse_livraison', 'ville_livraison', 'cp_livraison'], ['epicerie_adresse', 'epicerie_ville', 'cp_epicerie']].forEach(function (a) {
+        window.Adresses.brancher(el(a[0]), { onChoix: function (x) {
+          el(a[0]).value = x.ligne1 || x.principal || el(a[0]).value;
+          if (x.ville) window.Adresses.remplir(el(a[1]), x.ville);
+          if (x.code_postal) window.Adresses.remplir(el(a[2]), x.code_postal);
+          majPrix();
+        } });
+      });
+    }
+    majPrix();
+    charger();
+    chargerLivreurs();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement — PorteàPorte</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/assets/brand-uniform.css">
+  <link rel="stylesheet" href="/assets/a11y.css">
+  <style>
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:radial-gradient(ellipse at center, rgba(93,191,255,.08) 0%, #05080c 70%); color:#fff; padding:20px; font-family:Inter, system-ui, sans-serif; }
+    .card { max-width:540px; text-align:center; padding:36px 24px; }
+    h1 { margin:0 0 14px; font-size:1.7rem; }
+    p { color:#c9d1db; line-height:1.65; margin:0 0 16px; }
+    .secu { background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.35); color:#FDE68A; border-radius:12px; padding:14px; font-weight:700; margin-top:22px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div id="ok">
+      <h1>✅ Merci, le paiement est autorisé</h1>
+      <p>Ta carte est seulement autorisée pour l’instant. Le montant est prélevé <strong>après la livraison</strong>. Si la livraison n’a pas lieu, rien n’est prélevé.</p>
+      <p>Tu recevras un reçu de Stripe par courriel. PorteàPorte s’occupe du reste ; on te rappelle si quelque chose change.</p>
+    </div>
+    <div id="annule" hidden>
+      <h1>Paiement non terminé</h1>
+      <p>Aucun montant n’a été autorisé. Tu peux reprendre le lien reçu tant qu’il est valide, ou rappeler PorteàPorte pour en recevoir un nouveau.</p>
+    </div>
+    <div class="secu">🔒 Le paiement se fait seulement sur checkout.stripe.com, jamais par téléphone ni par texto.</div>
+  </main>
+  <script>
+    (function () {
+      var s = new URLSearchParams(location.search).get('statut');
+      if (s === 'annule') { document.getElementById('ok').hidden = true; document.getElementById('annule').hidden = false; }
+    })();
+  </script>
+</body>
+</html>

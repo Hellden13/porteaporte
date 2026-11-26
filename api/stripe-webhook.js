@@ -229,6 +229,18 @@ module.exports = async function handler(req, res) {
         status: obj.status,
         evidence: { source: 'api/stripe-webhook', event_id: event.id }
       }), 'delivery payment authorize audit insert');
+
+      // Commande téléphonique (26 nov. 2026) : alerte [PP-ALERTE] Livraison et notification aux livreurs
+      // permis AU PAIEMENT (pas à la création). Une seule fois, même si Stripe renvoie l'événement.
+      if (obj.metadata?.source === 'telephone') {
+        try {
+          const { apresPaiementCommande } = require('../lib/_commande-telephone');
+          const { deliverPush } = require('../lib/_push');
+          await apresPaiementCommande({ sbUrl, sbKey }, livraisonId, { deliverPush });
+        } catch (e) {
+          console.warn('[stripe-webhook] commande téléphonique :', e.message);
+        }
+      }
     }
   }
 

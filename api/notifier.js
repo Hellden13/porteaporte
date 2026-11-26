@@ -46,6 +46,7 @@ const PUBLIC_TYPES = new Set([
   'ride_booking_cancelled',
   'ride_driver_completed_to_passenger',
   'ride_rappel_terminer',
+  'commande_tel_lien_paiement',
   'bienvenue',
   'sos_alert',
 ]);
@@ -1389,6 +1390,31 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
     // Rappel au conducteur (26 nov. 2026) : un départ récurrent passé n'a pas été « terminé » ;
     // le prochain départ reste fermé aux réservations tant que ce n'est pas fait. Un seul par départ.
+    // Commande téléphonique (26 nov. 2026) : lien de paiement Stripe Checkout, envoyé seulement quand
+    // Denis clique « Envoyer par courriel ». Phrase anti-fraude obligatoire.
+    case 'commande_tel_lien_paiement': {
+      const url = safeHttpUrl(data.url || '');
+      const montant = Number(data.montant || 0).toFixed(2).replace('.', ',');
+      const jour = data.date ? new Date(`${data.date}T16:00:00Z`).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Toronto' }) : '';
+      const expire = data.expires_at ? heureQc(data.expires_at) : '';
+      emails.push({
+        to: data.to,
+        from: { email: fromEmail, name: fromName },
+        subject: `Ton lien de paiement PorteàPorte — livraison pour ${String(data.aine_nom || '').slice(0, 60)}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#7dffc1;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — LIEN DE PAIEMENT</div>
+            <h1 style="color:#fff;font-size:1.3rem;margin:0 0 12px">Bonjour ${escapeHtml(data.payeur_nom || '')},</h1>
+            <p style="color:#c9d1db;line-height:1.55;margin:0 0 14px">Voici le lien pour payer la livraison de l’épicerie <strong>${escapeHtml(data.epicerie_nom || '')}</strong> chez <strong>${escapeHtml(data.aine_nom || '')}</strong>, le ${escapeHtml(jour)} (${escapeHtml(data.plage || '')}).</p>
+            <p style="color:#c9d1db;margin:0 0 18px">Montant : <strong style="color:#fff">${escapeHtml(montant)} $</strong>. La carte est seulement autorisée maintenant ; le paiement est prélevé <strong>après la livraison</strong>. Si la livraison n’a pas lieu, rien n’est prélevé.</p>
+            ${url ? `<a href="${url}" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Payer en toute sécurité</a>` : ''}
+            <p style="color:#a8b0ba;font-size:.85rem;margin:14px 0 0">Ce lien est valide jusqu’au ${escapeHtml(expire)}.</p>
+            <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.35);border-radius:10px;padding:14px;margin-top:18px;color:#FDE68A;font-weight:700">🔒 Le paiement se fait seulement sur checkout.stripe.com, jamais par téléphone ni par texto.</div>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:18px">Livraison ${escapeHtml(data.code || '')} · PorteàPorte</p>
+          </div>`
+      });
+      break;
+    }
     case 'ride_rappel_terminer': {
       const route = `${escapeHtml(data.ville_depart || '?')} → ${escapeHtml(data.ville_arrivee || '?')}`;
       const jour = data.departure_time ? new Date(data.departure_time).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Toronto' }) : '';
