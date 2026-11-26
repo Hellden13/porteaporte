@@ -92,6 +92,8 @@ test('livraisons en cours d’avant : hachage mis à niveau AVEC LE MÊME CODE (
   ] });
   global.fetch = db.fetch;
   const r = await C.mettreAJourHachages(CTX);
+  assert.equal(r.lues, 2, 'la livraison finie n’est pas lue');
+  assert.equal(r.erreur, null);
   assert.equal(r.mis_a_jour, 1);
   assert.equal(r.inconnus, 1);
   assert.deepEqual(r.inconnus_liste, [{ id: 'bbbbbbbb', cree_le: null, statut: 'publie', prix_total: null }], 'sans donnée personnelle');
@@ -102,7 +104,11 @@ test('livraisons en cours d’avant : hachage mis à niveau AVEC LE MÊME CODE (
   assert.deepEqual(await C.lireCodes(CTX, a), ancien, 'toujours réaffiché à l’expéditeur');
   assert.equal(b.recipient_confirmation_hash, hashReceptionCode('654321', ID2), 'inconnu : laissé tel quel');
   assert.ok(!c.recipient_confirmation_hash.startsWith('h2$'), 'livraison finie : pas touchée');
-  assert.equal((await C.mettreAJourHachages(CTX)).mis_a_jour, 0, 'idempotent');
+  const deuxieme = await C.mettreAJourHachages(CTX);
+  assert.equal(deuxieme.mis_a_jour, 0, 'idempotent');
+  assert.equal(deuxieme.deja_a_cle, 1);
+  db.illisible = ['livraisons'];
+  assert.match((await C.mettreAJourHachages(CTX)).erreur, /lecture des livraisons impossible/, 'un échec de lecture se voit');
 });
 
 test('branché partout : création, ramassage, codes de l’expéditeur, courriel d’assignation, messagerie, cron', () => {
