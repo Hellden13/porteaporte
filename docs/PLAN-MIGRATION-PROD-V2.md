@@ -42,6 +42,14 @@ Ce que permet la copie du 1er septembre :
 | `organismes_partenaires` | Écrit dans le navigateur par `admin/organismes.html` | Vérifier que seuls les admins peuvent écrire (`is_admin()`) |
 | `transactions`, `user_badges` | Déjà fermées aux membres (règles « deny » ou `WITH CHECK (false)`) | Garder tel quel |
 
+### 2b. Clé séparée pour les codes de livraison (décision de Denis, 26 novembre 2026)
+
+Depuis le 26 novembre, les codes de ramassage et de réception sont tirés au hasard. Deux choses en dépendent : leur hachage en base (`h2$`, HMAC) et leur copie chiffrée (AES-256-GCM). Les deux utilisent `INTERNAL_API_SECRET`, le même secret que les appels internes. Pendant la migration :
+1. Créer une variable Vercel dédiée, par exemple `CODES_LIVRAISON_SECRET` (au moins 32 caractères au hasard), pour la production et les aperçus. **Denis la crée** ; elle n'est jamais copiée dans le dépôt.
+2. Dans `lib/_codes-livraison.js`, lire cette variable pour `hacherCode` et `cleChiffrement`, en gardant `INTERNAL_API_SECRET` seulement pour lire les anciens hachages et les anciennes copies chiffrées.
+3. Re-hachage des livraisons en cours : déchiffrer chaque code avec l'ancienne clé, puis écrire le nouveau hachage (`h3$`) et une nouvelle copie chiffrée avec la clé dédiée. Le code reste **le même**. C'est une tâche idempotente, sur le modèle de `mettreAJourHachages`.
+4. Test : avec la nouvelle clé, les anciens codes valent toujours ; avec seulement `INTERNAL_API_SECRET`, les nouveaux hachages ne correspondent plus.
+
 ### 3. Ordre proposé (pendant la répétition générale, section 3, étape 3)
 1. Créer le schéma dans prod-v2, **puis** appliquer une migration `rls_api_seulement.sql` avec les points 1 et 2. Elle est écrite et relue avant, puis approuvée par Denis.
 2. Tester sur un aperçu Vercel branché sur prod-v2. Avec une session de membre (pas la clé de service), une insertion ou une modification directe de `livraisons`, `ride_bookings` ou `rides` doit être **refusée** (erreur 401 ou 403). Les parcours normaux par l'API doivent marcher : créer une livraison, réserver, annuler, terminer, payer.
