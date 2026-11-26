@@ -240,8 +240,9 @@ describe('8. prime de protection : 100 % au fonds de protection, hors des 60 % d
     const win = {};
     vm.runInNewContext(lire('js/gain-livreur.js'), { window: win, Math, Number, String, Object });
     assert.equal(JSON.stringify(win.PAPGain.PRIMES_PROTECTION_CENTS), JSON.stringify(R.PRIMES_PROTECTION_CENTS));
-    const m = lire('create-mission.html').match(/const INSURANCE_PLANS=\{none:\{premium:0[^;]*base:\{premium:([\d.]+)[^;]*standard:\{premium:([\d.]+)[^;]*plus:\{premium:([\d.]+)/);
-    assert.deepEqual(m.slice(1).map((x) => Math.round(Number(x) * 100)), [100, 299, 599]);
+    // « Plus » n'est plus offert dans le formulaire depuis le 26 nov. 2026 (sa prime reste pour les livraisons existantes).
+    const m = lire('create-mission.html').match(/const INSURANCE_PLANS=\{none:\{premium:0[^;]*base:\{premium:([\d.]+)[^;]*standard:\{premium:([\d.]+)/);
+    assert.deepEqual(m.slice(1).map((x) => Math.round(Number(x) * 100)), [R.PRIMES_PROTECTION_CENTS.base, R.PRIMES_PROTECTION_CENTS.standard]);
     assert.equal(win.PAPGain.texte(12.99, { planProtection: 'standard' }), '6,00 $');
     assert.equal(win.PAPGain.texte(10), '6,00 $');
   });

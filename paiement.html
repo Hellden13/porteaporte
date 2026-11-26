@@ -207,7 +207,6 @@ nav{padding:18px 40px;display:flex;align-items:center;justify-content:space-betw
             <option value="0">Aucune protection - 0 $ - couverture 0 $</option>
             <option value="1">Base - 1 $ - couverture max 50 $</option>
             <option value="2.99">Standard - 2,99 $ - couverture max 250 $</option>
-            <option value="5.99">Plus - 5,99 $ - couverture max 1 000 $</option>
           </select>
           <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">La couverture est limitée a la valeur déclarée du colis et au plafond du plan choisi.</div>
         </div>
@@ -468,7 +467,7 @@ function assuranceLabel(plan) {
     none: 'Aucune protection - couverture 0 $',
     base: 'Base - couverture max 50 $',
     standard: 'Standard - couverture max 250 $',
-    plus: 'Plus - couverture max 1 000 $',
+    plus: 'Plus - ancienne option',
     fragile: 'Fragile - ancienne option'
   };
   return labels[plan] || plan || 'Aucune protection - couverture 0 $';

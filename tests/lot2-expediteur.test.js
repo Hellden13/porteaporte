@@ -42,9 +42,10 @@ test('expéditeur : plus de prix de concurrents ni de % d’économie invérifia
   assert.match(tableau, /frais de service inclus, livraison flexible/);
 });
 
-test('à ne pas toucher (décision de Denis en attente) : protection « Plus » 5,99 $ et « © 2026 PorteàPorte inc. »', () => {
-  assert.match(exp, /<div class="price">5,99 \$<span>\/envoi<\/span><\/div>/);
-  assert.match(exp, /© 2026 PorteàPorte inc\. — Livraison collaborative au Québec/);
+test('Lot 3 (décision de Denis, 26 nov. 2026) : plus de protection « Plus » ; pied de page « © 2026 PorteàPorte »', () => {
+  assert.doesNotMatch(exp, /5,99 \$|1 000 \$|<h3>Plus<\/h3>/);
+  assert.match(exp, /© 2026 PorteàPorte — Livraison collaborative au Québec/);
+  assert.doesNotMatch(exp, /PorteàPorte inc/);
 });
 
 test('« Mon tableau de bord » : le lien de navigation une fois connecté (toutes les pages)', () => {

@@ -282,3 +282,29 @@ describe('4. pickup : bon code de ramassage pour tout le monde', () => {
     assert.equal(statut(), 'ramasse');
   });
 });
+
+// Lot 3 (26 nov. 2026) : la protection « Plus » (5,99 $ / 1 000 $) est refusée à la création, sous toutes ses formes.
+describe('protection colis : « Plus » refusé à la création, maximum 250 $', () => {
+  beforeEach(() => nouvelleBase());
+  const base = { endpoint: 'create-livraison', ville_depart: 'Lévis', ville_arrivee: 'Québec', adresse_depart: '1 rue A, Lévis', adresse_arrivee: '2 rue B, Québec', prix_total: 30, type_colis: 'document' };
+  for (const plan of ['plus', 'Plus', 'Plus - 5,99 $ - couverture max 1 000 $', '5.99', 'Protection Plus']) {
+    test(`« ${plan} » → 400 protection_plus_indisponible, aucune livraison créée`, async () => {
+      const res = await appel(EXP, { ...base, assurance_plan: plan });
+      assert.equal(res._status, 400, JSON.stringify(res._body));
+      assert.equal(res._body.code, 'protection_plus_indisponible');
+      assert.equal(res._body.plafond_cad, 250);
+      assert.equal(db.livraisons.length, 0);
+    });
+  }
+  for (const plan of ['none', 'base', 'standard', 'Standard - 2,99 $ - couverture max 250 $', undefined]) {
+    test(`« ${plan} » accepté`, async () => {
+      const res = await appel(EXP, { ...base, assurance_plan: plan });
+      assert.equal(res._status, 200, JSON.stringify(res._body));
+      assert.equal(db.livraisons.length, 1);
+    });
+  }
+  test('les livraisons existantes en « Plus » ne sont pas touchées : la prime reste comptée à la répartition', () => {
+    const { primeProtectionCents } = require('../js/repartition');
+    assert.equal(primeProtectionCents('plus'), 599);
+  });
+});

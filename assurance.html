@@ -263,8 +263,8 @@
     <div class="hero-shield">
       <div class="shield-icon">🛡️</div>
       <div>
-        <strong style="display:block; font-size:0.95rem;">Protection disponible de 0 $ à 5,99 $ par envoi</strong>
-        <span style="font-size:0.82rem; color: var(--brand-muted);">Plafond de 0 $ à 1 000 $, toujours limité par la valeur déclarée</span>
+        <strong style="display:block; font-size:0.95rem;">Protection disponible de 0 $ à 2,99 $ par envoi</strong>
+        <span style="font-size:0.82rem; color: var(--brand-muted);">Plafond de 0 $ à 250 $, toujours limité par la valeur déclarée</span>
       </div>
     </div>
   </div>
@@ -352,20 +352,6 @@
         <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">La meilleure valeur pour la plupart des envois.</p>
       </div>
 
-      <!-- Plus -->
-      <div class="level-card plus">
-        <div class="level-name orange">Plus</div>
-        <div class="level-price orange">5,99 $<span>/envoi</span></div>
-        <div class="level-max" id="cap-plus" style="background: rgba(255,165,0,0.06); color: #FFA500;">Couverture max : 1 000 $</div>
-        <ul class="level-list">
-          <li><span class="icon-ok">✓</span><span>Plafond maximal du programme</span></li>
-          <li><span class="icon-ok">✓</span><span>Objets fragiles et électroniques</span></li>
-          <li><span class="icon-ok">✓</span><span>Analyse prioritaire</span></li>
-          <li><span class="icon-ok">✓</span><span>Suivi renforcé en cas de litige</span></li>
-          <li><span class="icon-ok">✓</span><span>Rapport de sinistre complet</span></li>
-        </ul>
-        <p style="font-size:0.8rem; color: var(--brand-muted); margin-top:0.5rem;">Pour bijoux, équipements photo, objets de collection.</p>
-      </div>
     </div>
   </div>
 </section>
@@ -494,8 +480,8 @@
         <div class="faq-a">La valeur déclarée est celle que tu as indiquée lors de la création de la mission. En cas de réclamation, tu devras fournir une preuve de cette valeur : facture d'achat, reçu, capture d'écran du prix en ligne, ou estimation d'un professionnel pour les objets d'art ou antiquités. La compensation ne peut jamais dépasser la valeur déclarée ni le plafond de ton niveau de protection.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Quelle est la différence entre le niveau Standard et Plus ? <span class="arrow">▼</span></div>
-        <div class="faq-a">Le niveau Plus offre un plafond plus élevé et un suivi renforcé que le niveau Standard. Pendant la bêta, la couverture reste limitée au <strong>plafond en vigueur affiché en haut de cette page</strong>, à la valeur déclarée, aux preuves disponibles et aux fonds disponibles.</div>
+        <div class="faq-q">Quelle est la couverture maximale ? <span class="arrow">▼</span></div>
+        <div class="faq-a">Pour l'instant, la protection va jusqu'à <strong>250 $</strong> par envoi (niveau Standard). La couverture reste aussi limitée à la valeur déclarée, aux preuves disponibles et aux fonds disponibles, selon le <strong>plafond en vigueur affiché en haut de cette page</strong>.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">La protection est-elle remboursée si j'annule ma mission ? <span class="arrow">▼</span></div>
@@ -532,7 +518,7 @@
     <a href="/confidentialite.html">Confidentialité</a>
     <a href="/contact.html">Contact</a>
   </div>
-  <div class="footer-copy">© 2026 PorteàPorte inc. — Livraison collaborative au Québec 🍁</div>
+  <div class="footer-copy">© 2026 PorteàPorte — Livraison collaborative au Québec 🍁</div>
 </footer>
 
 <script>
@@ -568,7 +554,6 @@
       const caps = [
         { id: 'cap-base',     declared: 5000,   label: 'Base' },
         { id: 'cap-standard', declared: 25000,  label: 'Standard' },
-        { id: 'cap-plus',     declared: 100000, label: 'Plus' },
       ];
       caps.forEach(({ id, declared }) => {
         const el = document.getElementById(id);

@@ -100,7 +100,7 @@
           <option value="fixed_price">Prix fixe total</option>
           <option value="discount_pct">Rabais en %</option>
           <option value="discount_cad">Rabais en $</option>
-          <option value="insurance_upgrade">Assurance Plus offerte</option>
+          <option value="insurance_upgrade">Protection Standard offerte</option>
           <option value="free_delivery">Livraison gratuite</option>
         </select>
       </div>
@@ -160,7 +160,7 @@
     <div><strong style="color:#c4f135">prix fixe</strong><br><span style="color:var(--brand-muted)">Le client paie un montant fixe total. Ex: INTACT2026 → 1,00 $. Idéal pour offres partenaires premium.</span></div>
     <div><strong style="color:#5dbfff">rabais %</strong><br><span style="color:var(--brand-muted)">Pourcentage de réduction sur le total. Ex: PARTNER20 → -20 %. Flexible pour promotions.</span></div>
     <div><strong style="color:#5dbfff">rabais $</strong><br><span style="color:var(--brand-muted)">Montant fixe déduit du total. Ex: BIENVENUE5 → -5,00 $. Simple à communiquer.</span></div>
-    <div><strong style="color:#fbbf24">assurance Plus</strong><br><span style="color:var(--brand-muted)">Upgrade automatique vers la couverture Plus (1 000 $) sans frais. Parfait pour assureurs partenaires.</span></div>
+    <div><strong style="color:#fbbf24">protection offerte</strong><br><span style="color:var(--brand-muted)">Protection Standard (jusqu'à 250 $) offerte sans frais. Le plan « Plus » (1 000 $) est retiré depuis le 26 nov. 2026.</span></div>
     <div><strong style="color:#34d399">gratuit</strong><br><span style="color:var(--brand-muted)">Livraison à 0 $. Utiliser seulement pour des tests ou des offres très ciblées (max_uses = 1).</span></div>
   </div>
 </div>
@@ -205,7 +205,7 @@
         const valueDisplay = c.type === 'fixed_price' ? `${Number(c.value).toFixed(2)} $`
           : c.type === 'discount_pct' ? `-${c.value} %`
           : c.type === 'discount_cad' ? `-${Number(c.value).toFixed(2)} $`
-          : c.type === 'insurance_upgrade' ? 'Assurance Plus'
+          : c.type === 'insurance_upgrade' ? 'Protection Standard'
           : 'Gratuit';
         const typeLabel = { fixed_price: 'Prix fixe', discount_pct: 'Rabais %', discount_cad: 'Rabais $', insurance_upgrade: 'Assurance', free_delivery: 'Gratuit' }[c.type] || c.type;
         const conds = c.conditions || {};

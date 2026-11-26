@@ -56,6 +56,7 @@ function sansCoordonneesDestinataire(l) {
   return c;
 }
 const { adminAFaire } = require('../lib/_admin-a-faire');
+const { refusPlanProtection } = require('../lib/_protection');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
 const { calculerBonusFidelite } = require('../lib/_fidelite');
@@ -253,6 +254,9 @@ async function createLivraison(req, res, ctx, body) {
       });
     }
   }
+  // Protection « Plus » retirée (26 nov. 2026) : refusée même si envoyée quand même (lib/_protection.js).
+  const refusProtection = refusPlanProtection(payload.assurance_plan);
+  if (refusProtection) return res.status(refusProtection.status).json(refusProtection.body);
   const declaredCents = Math.round(toNumber(payload.valeur_declaree, 0) * 100);
   if (declaredCents > maxColisValueCents) {
     return res.status(400).json({
