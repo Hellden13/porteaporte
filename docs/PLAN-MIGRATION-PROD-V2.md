@@ -6,6 +6,49 @@
 
 ---
 
+## ⚠️ PRIORITÉ 1 — Règles RLS à corriger dans prod-v2 (décision de Denis, 26 novembre 2026)
+
+**Pourquoi ici :** l'accès à l'ancien projet ne peut pas être récupéré (2FA perdue, le support refuse). Ses règles ne peuvent donc pas être corrigées. Elles le seront **dans prod-v2, avant la bascule**. **C'est un plan : rien n'est exécuté.** Chaque étape demande l'accord de Denis.
+
+**Source :** la copie du schéma de production dans le dépôt (`supabase/migrations/20260901090000_production_schema_baseline.sql`, 1er septembre 2026). Les règles réelles d'aujourd'hui n'ont pas pu être lues. Si le schéma de prod-v2 est recréé depuis ce fichier, **ces failles y seront recopiées** : il faut appliquer la migration ci-dessous juste après.
+
+**Principe :** l'API (clé de service, `api/platform.js` et `lib/`) fait toutes les écritures qui touchent l'argent, les statuts et la confiance. Les membres **lisent** leurs données et n'écrivent directement que des choses sans conséquence.
+
+### 1. Livraisons (`livraisons`) : aucune insertion ni modification directe par les membres
+
+Ce que permet la copie du 1er septembre :
+- **Insérer :** `livraisons_insert_expediteur` exige seulement `expediteur_id = auth.uid()`. Un membre peut créer une livraison avec **n'importe quel prix, statut** (même « payée » ou « livrée »), **plan de protection** (dont « Plus ») ou livreur.
+- **Modifier :** `livraisons_update_participants_admin` laisse l'expéditeur **ou le livreur** changer **n'importe quelle colonne** de leur livraison : prix, statut, livreur, protection, codes de réception. Un livreur pourrait marquer « livré » sans le code. Aucun déclencheur ne protège ces colonnes.
+- `GRANT … INSERT, UPDATE ON livraisons TO authenticated` sur toutes les colonnes.
+
+À faire dans prod-v2 :
+1. Supprimer toutes les règles INSERT et UPDATE de `livraisons` pour `authenticated` : `livraisons_insert_expediteur`, `livraisons_insert_expediteur_own`, `livraisons_update_expediteur`, `livraisons_update_expediteur_cancel_own`, `livraisons_update_livreur`, `livraisons_update_livreur_accept_verified`, `livraisons_update_livreur_assigned_status`, `livraisons_update_participants_admin`.
+2. `REVOKE INSERT, UPDATE, DELETE ON public.livraisons FROM anon, authenticated;` (en plus des règles, pour fermer à double tour).
+3. Garder la **lecture** pour les participants et l'admin (`livraisons_select_participants_admin`), et la liste masquée des offres (`livraisons_disponibles_masquees()`).
+4. Code à adapter avant : `admin/face-verify.html` écrit directement dans `livraisons` (2 endroits). Il faut le faire passer par un point d'API admin.
+5. Vérifier que toutes les actions des membres passent déjà par l'API : création (`create-livraison`), annulation (`cancel-livraison`), ramassage, livraison et codes (`confirm-delivery`), offres et assignation.
+
+### 2. Autres tables sensibles (même principe)
+
+| Table | Ce que les membres peuvent faire aujourd'hui (copie du 1er sept.) | À faire dans prod-v2 |
+|---|---|---|
+| `ride_bookings` | Insérer une réservation à son nom (`bookings_passenger_insert`) ; passager ou conducteur peuvent **modifier toute la réservation** (`bookings_parties_update`) : statut « payé », montant, places | Retirer INSERT et UPDATE pour `authenticated`, `REVOKE` ; tout passe par `ride-book`, `ride-cancel`, `ride-complete`, paiement |
+| `rides` | Le conducteur peut **tout modifier** sur son trajet (`rides_driver_update`) : prix au km, places, statut, date (même avec des réservations) ; insertion directe sans les vérifications de l'API (véhicule, villes) | Retirer INSERT et UPDATE, `REVOKE` ; tout passe par `ride-create` et `ride-update` (qui bloquent déjà la modification quand il y a des réservations) |
+| `kyc_submissions` | Le membre écrit et modifie son dossier (statut limité à en attente ou refusé). Les pages admin `admin/kyc-review.html` le valident **dans le navigateur** | Membre : passer par l'API ou limiter les colonnes ; admin : point d'API (voir `admin/kyc-review.html`) |
+| `driver_verifications` | Le membre insère et modifie sa vérification en attente | Vérifier que `status` ne peut pas devenir « verified » par le membre (WITH CHECK), sinon passer par l'API |
+| `offres` | Le livreur crée et modifie ses offres en attente (prix compris) | Acceptable si le prix est revérifié par l'API à l'acceptation ; sinon passer par l'API |
+| `profiles` | Le membre modifie son profil ; un déclencheur (`protect_profile_privileged_fields`, migration du 1er sept.) bloque déjà rôle, points, scores, statuts, Stripe | **Vérifier que ce déclencheur existe dans prod-v2**, puis garder la modification directe (11 pages l'utilisent) |
+| `reviews`, `evaluations`, `cov_reviews` | Insertion directe d'avis | Vérifier qu'un avis exige un trajet ou une livraison terminé, et un seul par personne |
+| `organismes_partenaires` | Écrit dans le navigateur par `admin/organismes.html` | Vérifier que seuls les admins peuvent écrire (`is_admin()`) |
+| `transactions`, `user_badges` | Déjà fermées aux membres (règles « deny » ou `WITH CHECK (false)`) | Garder tel quel |
+
+### 3. Ordre proposé (pendant la répétition générale, section 3, étape 3)
+1. Créer le schéma dans prod-v2, **puis** appliquer une migration `rls_api_seulement.sql` avec les points 1 et 2. Elle est écrite et relue avant, puis approuvée par Denis.
+2. Tester sur un aperçu Vercel branché sur prod-v2. Avec une session de membre (pas la clé de service), une insertion ou une modification directe de `livraisons`, `ride_bookings` ou `rides` doit être **refusée** (erreur 401 ou 403). Les parcours normaux par l'API doivent marcher : créer une livraison, réserver, annuler, terminer, payer.
+3. Lire les règles réelles avec `select * from pg_policies where schemaname = 'public'` et les garder dans le dépôt : ce qu'on ne pouvait pas faire avec l'ancien projet.
+
+---
+
 ## 0. Décision : voie C (clé de service)
 
 Mis à jour le 22 novembre 2026.
