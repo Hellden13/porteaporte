@@ -33,9 +33,48 @@
     return scriptPromise;
   }
 
+  const TOKEN_WAIT_MS = 12000;
+  const TOKEN_POLL_MS = 200;
+
   function mount(containerId, action) {
-    const state = { enabled: false, token: '', widgetId: null, ready: null };
+    // used : un jeton Turnstile ne sert qu'une fois. Une fois remis à Supabase,
+    // on n'en redonne plus avant que le widget en produise un nouveau.
+    const state = { enabled: false, token: '', used: false, widgetId: null, ready: null };
     const container = document.getElementById(containerId);
+
+    function widgetExpired() {
+      const ts = window.turnstile;
+      if (state.widgetId === null || !ts || typeof ts.isExpired !== 'function') return false;
+      try { return ts.isExpired(state.widgetId) === true; } catch (_) { return false; }
+    }
+
+    // Jeton utilisable : celui du callback, sinon celui que le widget détient
+    // réellement (getResponse) ; jamais un jeton expiré ni déjà remis.
+    function freshToken() {
+      if (state.used || widgetExpired()) return '';
+      if (!state.token && state.widgetId !== null && window.turnstile && typeof window.turnstile.getResponse === 'function') {
+        try { state.token = window.turnstile.getResponse(state.widgetId) || ''; } catch (_) { state.token = ''; }
+      }
+      return state.token;
+    }
+
+    async function waitForToken(ms) {
+      const until = Date.now() + ms;
+      let token = freshToken();
+      while (!token && Date.now() < until) {
+        await new Promise((resolve) => setTimeout(resolve, TOKEN_POLL_MS));
+        token = freshToken();
+      }
+      return token;
+    }
+
+    function refreshWidget() {
+      state.token = '';
+      state.used = false;
+      if (state.widgetId !== null && window.turnstile) {
+        try { window.turnstile.reset(state.widgetId); } catch (_) { /* widget retiré */ }
+      }
+    }
 
     state.ready = (async () => {
       if (!container) return;
@@ -52,8 +91,10 @@
         sitekey: config.site_key,
         theme: 'dark',
         action,
-        callback: (token) => { state.token = token; },
+        'refresh-expired': 'auto',
+        callback: (token) => { state.token = token || ''; state.used = false; },
         'expired-callback': () => { state.token = ''; },
+        // On ne retourne rien : Turnstile garde son nouvel essai automatique.
         'error-callback': () => { state.token = ''; }
       });
     })().catch((error) => {
@@ -67,16 +108,19 @@
     return {
       async getToken() {
         await state.ready;
-        if (state.enabled && !state.token) {
+        if (!state.enabled) return null;
+        // Jeton déjà remis ou expiré : on relance le widget, puis on attend le
+        // nouveau jeton (au lieu de refuser tout de suite).
+        if (state.used || widgetExpired()) refreshWidget();
+        const token = await waitForToken(TOKEN_WAIT_MS);
+        if (!token) {
           throw new Error('Confirme que tu n’es pas un robot avant de continuer.');
         }
-        return state.token || null;
+        state.used = true;
+        return token;
       },
       reset() {
-        state.token = '';
-        if (state.widgetId !== null && window.turnstile) {
-          window.turnstile.reset(state.widgetId);
-        }
+        refreshWidget();
       }
     };
   }
