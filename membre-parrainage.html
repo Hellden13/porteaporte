@@ -253,7 +253,7 @@
 
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script src="/js/supabase-config.js"></script>
   <script>
@@ -273,7 +273,7 @@
       const dashUrl = (role === 'livreur' || role === 'les deux')
         ? '/dashboard.html?onglet=livrer' : '/dashboard.html?onglet=envois';
       const navBtn = document.getElementById('nav-compte-btn');
-      if (navBtn) { navBtn.href = dashUrl; navBtn.textContent = 'Mon dashboard'; }
+      if (navBtn) { navBtn.href = dashUrl; navBtn.textContent = 'Mon tableau de bord'; }
 
       document.getElementById('login-prompt').style.display = 'none';
       document.getElementById('parrain-section').style.display = 'block';
@@ -410,7 +410,7 @@
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>

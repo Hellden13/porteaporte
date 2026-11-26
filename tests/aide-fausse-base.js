@@ -41,6 +41,7 @@ function correspond(ligne, [cle, v]) {
   const x = valeur(ligne, cle);
   if (v.startsWith('eq.')) return String(x) === v.slice(3);
   if (v.startsWith('neq.')) return String(x) !== v.slice(4);
+  if (v.startsWith('not.in.(')) return !v.slice(8, -1).split(',').map((s) => s.replace(/^"|"$/g, '')).includes(String(x));
   if (v.startsWith('in.(')) return v.slice(4, -1).split(',').map((s) => s.replace(/^"|"$/g, '')).includes(String(x));
   if (v === 'not.is.null') return x != null;
   if (v === 'is.null') return x == null;

@@ -130,7 +130,7 @@
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -220,7 +220,7 @@
       <div class="benefit-card">
         <div class="benefit-icon">⚡</div>
         <h4>API d'intégration (à venir)</h4>
-        <p>Une API REST pour connecter votre système de caisse ou votre boutique en ligne est en développement. En attendant, tout passe par le dashboard partenaire.</p>
+        <p>Une API REST pour connecter votre système de caisse ou votre boutique en ligne est en développement. En attendant, tout passe par le tableau de bord partenaire.</p>
       </div>
       <div class="benefit-card">
         <div class="benefit-icon">🏷️</div>
@@ -311,7 +311,7 @@
       </div>
       <div class="testi-card">
         <div style="font-size:2.6rem;margin-bottom:12px">🛍️</div>
-        <p class="testi-quote">Tu es une <strong>boutique en ligne québécoise</strong> ? Offre la livraison locale à tes clients via le dashboard expéditeur. Une intégration API est en développement.</p>
+        <p class="testi-quote">Tu es une <strong>boutique en ligne québécoise</strong> ? Offre la livraison locale à tes clients via le tableau de bord expéditeur. Une intégration API est en développement.</p>
         <div style="color:var(--brand-muted);font-size:.85rem;margin-top:10px">Objectif partenariat type : Etsy locaux, e-commerce Shopify, microbrasseries</div>
       </div>
       <div class="testi-card">
@@ -422,7 +422,7 @@
       const dashUrl = (role === 'livreur' || role === 'les deux')
         ? '/dashboard.html?onglet=livrer' : '/dashboard.html?onglet=envois';
       const btn = document.getElementById('nav-compte-btn');
-      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon dashboard'; }
+      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon tableau de bord'; }
     })();
 
     document.getElementById('partner-form').addEventListener('submit', async (e) => {
@@ -470,7 +470,7 @@
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>

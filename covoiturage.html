@@ -29,7 +29,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(to bottom, rgba(10,12,16,0) 40%, rgba(10,12,16,0.95) 100%);
+      /* 26 nov. 2026 : le voile (95 % dès 40 % de la hauteur) rendait pâle le texte du bas de l'image
+         (bandeau de fonctions). Simple fondu dans les derniers pixels. */
+      background: linear-gradient(to bottom, rgba(10,12,16,0) 94%, rgba(10,12,16,0.35) 100%);
       pointer-events: none;
     }
 
@@ -375,15 +377,15 @@
   <meta property="og:site_name" content="PorteàPorte">
   <meta property="og:title" content="Covoiturage · PorteàPorte">
   <meta property="og:description" content="Trouve ou publie un trajet de covoiturage au Québec. Partage les frais, réduis ton empreinte carbone et rencontre de nouvelles personnes.">
-  <meta property="og:image" content="https://porteaporte.site/assets/photos/hero-covoiturage-confiance.png">
+  <meta property="og:image" content="https://porteaporte.site/assets/photos/og-covoiturage-confiance-v2.jpg">
   <meta property="og:url" content="https://porteaporte.site/covoiturage.html">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Covoiturage · PorteàPorte">
   <meta name="twitter:description" content="Trouve ou publie un trajet de covoiturage au Québec. Partage les frais, réduis ton empreinte carbone et rencontre de nouvelles personnes.">
-  <meta name="twitter:image" content="https://porteaporte.site/assets/photos/hero-covoiturage-confiance.png">
+  <meta name="twitter:image" content="https://porteaporte.site/assets/photos/og-covoiturage-confiance-v2.jpg">
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -407,13 +409,10 @@
 
   <!-- HERO -->
   <div class="cov-hero">
-    <img loading="eager" decoding="async" src="/assets/photos/hero-covoiturage-confiance.webp" alt="Covoiturage de confiance entre gens de chez nous — PorteàPorte">
+    <img loading="eager" decoding="async" width="1400" height="566" src="/assets/photos/hero-covoiturage-confiance-v2.webp" alt="Covoiturage de confiance entre gens de chez nous — PorteàPorte">
   </div>
 
-  <!-- BANNIÈRE PROMO covoit + colis -->
-  <div class="cov-promo-banner">
-    <img src="/assets/photos/hero-covoiturage-colis.webp" alt="Covoiturage intelligent — trajets partagés, coûts réduits, colis dans le coffre — PorteàPorte" loading="lazy">
-  </div>
+  <!-- Bannière promo retirée (26 nov. 2026) : son image vouvoie et promet « Sécuritaire et fiable » sans preuve dans le code. -->
 
   <!-- BANNIÈRE LÉGALE -->
   <div class="legal-banner">
@@ -545,8 +544,8 @@
         <div class="cta-card primary">
           <div class="cta-icon">🚗</div>
           <h3>Tu fais déjà la route ?</h3>
-          <p>Publiez ton trajet, partagez les frais d'essence et de déplacement avec des passagers qui vont dans la même direction.</p>
-          <p style="font-size:0.82rem;color:var(--brand-bleu);">Trajet de 250 km → économisez jusqu'à 60 $</p>
+          <p>Publie ton trajet, partage les frais d'essence et de déplacement avec des passagers qui vont dans la même direction.</p>
+          <p style="font-size:0.82rem;color:var(--brand-bleu);">Trajet de 250 km → économise jusqu'à 60 $ de frais</p>
           <a class="btn" href="/covoiturage-publier.html">Publier mon trajet</a>
         </div>
         <div class="cta-card">
@@ -564,7 +563,7 @@
         <div class="how-grid">
           <div class="how-step">
             <div class="how-step-num">1</div>
-            <h4>Publiez ton trajet</h4>
+            <h4>Publie ton trajet</h4>
             <p>Le conducteur indique son départ, sa destination, ses disponibilités et les options de son véhicule.</p>
           </div>
           <div class="how-step">
@@ -574,7 +573,7 @@
           </div>
           <div class="how-step">
             <div class="how-step-num">3</div>
-            <h4>Partez ensemble</h4>
+            <h4>On part ensemble</h4>
             <p>Chacun connaît son rôle. Le conducteur n'est pas un taxi — c'est un voisin qui partage sa route.</p>
           </div>
           <div class="how-step">
@@ -591,7 +590,7 @@
           <div class="trust-icon">✅</div>
           <div>
             <h4>Profils vérifiés</h4>
-            <p>Les conducteurs vérifiés affichent un badge. Email et identité validés avant de publier.</p>
+            <p>Les conducteurs dont l’identité a été vérifiée par PorteàPorte affichent le badge ✅ Vérifié. Regarde-le avant de réserver.</p>
           </div>
         </div>
         <div class="trust-card">
@@ -685,7 +684,12 @@
         else if (sortedDays.join(',') === semaine.join(',')) label = 'Lun-Ven (semaine)';
         else if (sortedDays.join(',') === weekend.join(',')) label = 'Sam-Dim (weekend)';
         else label = sortedDays.join('-');
-        return `🔁 ${label} à ${heure}`;
+        // Prochaine occurrence réelle (calculée par le serveur), jamais la date de création passée.
+        const prochain = ride.next_departure_time ? new Date(ride.next_departure_time) : null;
+        const prochainTxt = prochain && Number.isFinite(prochain.getTime())
+          ? ' · prochain : ' + prochain.toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Toronto' })
+          : '';
+        return `🔁 ${label} à ${heure}${prochainTxt}`;
       }
 
       // ─── Trajet ponctuel : date complète ───
@@ -750,8 +754,12 @@
     }
 
     const SMOKING_LABEL = { non_fumeur: '🚭 Non-fumeur', fumeur: '🚬 Fumeur OK', exterieur: '🌬️ Ext. seulement' };
-    const MUSIC_LABEL   = { silence: '🔇 Silence', selon_humeur: '🎶 Selon l\'humeur', musique: '🔊 Musique' };
-    const CHAT_LABEL    = { silencieux: '🤫 Silencieux', selon_humeur: '🙂 Selon l\'humeur', bavard: '😄 Bavard' };
+    const VEHICULE_LABEL = { berline: 'Berline', suv: 'VUS', vus: 'VUS', minivan: 'Minifourgonnette', camion: 'Camionnette', pickup: 'Camionnette',
+      compacte: 'Compacte', electrique: 'Électrique', hybride: 'Hybride', diesel: 'Diesel', autre: 'Autre' };
+    function escTexte(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+    // Toujours « Musique : … » / « Jasette : … » (avant : deux « Selon l'humeur » côte à côte).
+    const MUSIC_LABEL   = { silence: '🔇 Musique : silence', selon_humeur: '🎶 Musique : selon l\'humeur', musique: '🔊 Musique : oui' };
+    const CHAT_LABEL    = { silencieux: '🤫 Jasette : silence', selon_humeur: '🙂 Jasette : selon l\'humeur', bavard: '😄 Jasette : bienvenue' };
     const TRUNK_LABEL   = { petit: '🎒 Petit coffre', moyen: '🧳 Coffre moyen', grand: '🚚 Grand coffre' };
 
     // ─── Détection visiteur non-connecté → CTA conversion adapté ───
@@ -829,8 +837,10 @@
         const conditionsHtml = `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;">${conditions}</div>`;
 
         // Infos véhicule
-        const vehicleStr = [d.vehicle_year, d.vehicle_make, d.vehicle_model, d.vehicle_color]
-          .filter(Boolean).join(' ') || r.vehicle_type || 'Véhicule';
+        // Type affiché en français (VUS, Berline, Électrique…) ; la valeur en base ne change pas.
+        const typeVehicule = VEHICULE_LABEL[String(r.vehicle_type || '').toLowerCase()] || '';
+        const marqueModele = [d.vehicle_year, d.vehicle_make, d.vehicle_model, d.vehicle_color].filter(Boolean).join(' ');
+        const vehicleStr = escTexte([typeVehicule, marqueModele].filter(Boolean).join(' · ') || 'Véhicule');
 
         // Ambiance chips
         const ambiance = [
@@ -966,9 +976,8 @@
   <script src="/js/support-widget.js"></script>
   <script src="/js/qc-cities.js" defer></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/ride-review-modal.js"></script>
-  <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/fetes.js?v=tc2211" defer></script>
 </body>

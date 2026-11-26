@@ -2,7 +2,7 @@
    (test complet du 22 nov. 2026, point 23) :
    • bas de page réservé (le dernier contenu peut toujours défiler au-dessus des boutons);
    • plus de boutons empilés au même endroit (menu carré bleu et bulle d'aide étaient superposés);
-   • sur cellulaire : boutons plus petits, « Niveau » réduit à une icône, « GPS actif » réduit à un point. */
+   • sur cellulaire : boutons plus petits, « GPS actif » réduit à un point. */
 (function () {
   'use strict';
   if (document.getElementById('pap-flottants-css')) return;
@@ -17,31 +17,25 @@
     '[class*="card"]{min-width:0;max-width:100%;box-sizing:border-box}' +
     '[class*="card"],[class*="card"] *{overflow-wrap:break-word;word-break:normal}' +
     '[class*="card"] img,[class*="card"] video,[class*="card"] canvas{max-width:100%}' +
-    /* Ordinateur : bulle d'aide en bas à droite, menu juste au-dessus, GPS au centre, Niveau à gauche. */
+    /* Ordinateur : bulle d'aide en bas à droite, menu juste au-dessus, GPS au centre. */
     '#pia-launch{right:20px!important;bottom:20px!important}' +
     '.pap-launcher-btn{right:21px!important;bottom:88px!important}' +
     '#pap-gps-status{left:50%!important;right:auto!important;bottom:20px!important;transform:translateX(-50%);white-space:nowrap}' +
-    '.pp-layer-pill{left:18px!important;bottom:20px!important}' +
     /* 24 nov. 2026 (vu sur Brave Android) :
        • la marge intérieure générale des boutons (12px 18px) écrasait l'icône à 6 px dans les boutons ronds;
        • libellé visible « Menu » / « Aide » sous l'icône;
-       • le bouton « Niveau » était caché derrière le bouton SOS (même coin) : il monte au-dessus. */
+       • (le bouton « Niveau » a été retiré le 26 nov. 2026 : il ne changeait rien à l'affichage). */
     '.pap-launcher-btn,#pia-launch{padding:0!important;flex-direction:column!important;gap:2px;line-height:1}' +
     '.pap-launcher-btn svg,#pia-launch svg{max-width:none!important;flex:none!important;width:26px!important;height:26px!important}' +
     '.pap-launcher-btn::after,#pia-launch::after{font:800 11px/1 system-ui,-apple-system,sans-serif;letter-spacing:.02em;color:#051022}' +
     '.pap-launcher-btn::after{content:"Menu"}' +
     '#pia-launch::after{content:"Aide"}' +
     '#pia-launch{display:flex!important;align-items:center!important;justify-content:center!important}' +
-    'body.pap-avec-sos .pp-layer-pill{bottom:72px!important}' +
-    /* Dans le menu de gauche d'un tableau de bord : entrée normale, plus de bouton flottant par-dessus le menu. */
-    '.pp-layer-pill.pp-dans-menu{position:static!important;display:flex!important;width:100%!important;margin:14px 0 0!important;justify-content:space-between!important;box-sizing:border-box}' +
     '@media (max-width:640px){' +
       'body{--pap-reserve-bas:84px}' +
       '#pia-launch{width:58px!important;height:58px!important;border-radius:16px!important;right:12px!important;bottom:12px!important}' +
       '.pap-launcher-btn{width:58px!important;height:58px!important;font-size:19px!important;right:12px!important;bottom:78px!important}' +
       '.pap-launcher-btn svg,#pia-launch svg{width:26px!important;height:26px!important}' +
-      '.pp-layer-pill{left:12px!important;bottom:12px!important;padding:0!important;width:44px!important;height:44px!important;min-width:0!important;justify-content:center!important;overflow:hidden}' +
-      '.pp-layer-pill > :not(.pp-layer-chevron){display:none!important}' +
       '#pap-gps-status{bottom:20px!important;padding:6px 10px!important;font-size:.72rem!important;max-width:calc(100vw - 140px);overflow:hidden;text-overflow:ellipsis}' +
     '}';
   (document.head || document.documentElement).appendChild(s);

@@ -40,9 +40,9 @@ test('SOS : un seul bouton, même si le script est chargé deux fois', () => {
   }
 });
 
-test('SOS : le bouton « Niveau » ne se cache plus derrière (il monte au-dessus), et le SOS reste rouge', () => {
+test('SOS : reste rouge (le bouton « Niveau » qui s’empilait dessus a été retiré le 26 nov. 2026)', () => {
   assert.ok(sos.includes("document.body.classList.add('pap-avec-sos');"));
-  assert.ok(fl.includes("'body.pap-avec-sos .pp-layer-pill{bottom:72px!important}'"));
+  assert.ok(!fl.includes('pp-layer-pill'));
   assert.ok(sos.includes("'.pap-sos-fab{background:linear-gradient(135deg,#ff3b3b,#c81e1e)!important;color:#fff!important}'"));
 });
 

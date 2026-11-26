@@ -102,14 +102,14 @@
 
     <div class="actions">
       <a id="trackingLink" class="btn" href="/dashboard.html?onglet=envois">📦 Voir ma livraison</a>
-      <a class="btn secondary" href="/dashboard.html?onglet=envois">Dashboard →</a>
+      <a class="btn secondary" href="/dashboard.html?onglet=envois">Tableau de bord →</a>
     </div>
     <div class="countdown" id="countdown"></div>
   </main>
 
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/codes-livraison.js"></script>
@@ -161,7 +161,7 @@
     function stopCountdown() { clearInterval(timer); countEl.textContent = ''; }
     const timer = setInterval(() => {
       secs--;
-      countEl.textContent = 'Redirection vers ton dashboard dans ' + secs + ' secondes…';
+      countEl.textContent = 'Redirection vers ton tableau de bord dans ' + secs + ' secondes…';
       if (secs <= 0) {
         clearInterval(timer);
         window.location.href = '/dashboard.html?onglet=envois';
@@ -170,7 +170,7 @@
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>

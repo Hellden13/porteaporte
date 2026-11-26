@@ -301,9 +301,18 @@ describe('3. annuler une seule date d\'un trajet récurrent', () => {
     assert.ok((await chercher(JOUR)).includes('r1'), 'autre jour');
     assert.equal(cle(APRES) !== undefined, true);
   });
-  test('réservation refusée si le prochain départ est un jour annulé', async () => {
-    base();
+  test('jamais de réservation sur un jour annulé : le départ avance au jour suivant (option A, 26 nov. 2026)', async () => {
+    const db = base();
     await appel(conducteur, { ride_id: 'r1', date: JOUR });
+    const res = makeRes();
+    await rides.rideBook({ headers: {} }, res, { ...CTX, session: { id: '33333333-3333-4333-8333-333333333333' }, profile: { role: 'expediteur' } }, { ride_id: 'r1', pickup_city: 'Lévis', dropoff_city: 'Québec', seats: 1 });
+    assert.notEqual(res._body && res._body.code, 'date_annulee');
+    assert.equal(jourQc(new Date(db.tables.rides[0].departure_time)), APRES, 'la réservation suit le prochain départ non annulé');
+  });
+  test('réservation refusée si le départ stocké (encore réservé) est un jour annulé', async () => {
+    const db = base();
+    await appel(conducteur, { ride_id: 'r1', date: JOUR });
+    db.tables.ride_bookings.push({ id: 'b2', ride_id: 'r1', passenger_id: P, status: 'confirme', seats_reserved: 1 }); // restée active
     const res = makeRes();
     await rides.rideBook({ headers: {} }, res, { ...CTX, session: { id: '33333333-3333-4333-8333-333333333333' }, profile: { role: 'expediteur' } }, { ride_id: 'r1', pickup_city: 'Lévis', dropoff_city: 'Québec', seats: 1 });
     assert.equal(res._status, 409);

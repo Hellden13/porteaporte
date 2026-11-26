@@ -133,21 +133,11 @@ describe('2. Annulation : « remboursement » seulement si un paiement avait ét
   });
 });
 
-describe('3. « Niveau » ne cache plus le menu de gauche', () => {
-  const lm = lire('js/layer-mode.js');
-  const fl = lire('js/flottants.js');
-  test('sur ordinateur, « Niveau » devient la dernière entrée du menu de gauche (aside.sidebar)', () => {
-    assert.ok(lm.includes("const menuGauche = document.querySelector('aside.sidebar');"));
-    assert.ok(lm.includes("window.innerWidth >= 769"));
-    assert.ok(lm.includes("menuGauche.appendChild(pill);") && lm.includes("pill.classList.add('pp-dans-menu');"));
-    assert.ok(lm.includes("document.body.appendChild(pill);"), 'il redevient flottant sur cellulaire');
-    assert.ok(lm.includes("window.addEventListener('resize'"));
-    assert.ok(fl.includes("'.pp-layer-pill.pp-dans-menu{position:static!important;"));
-  });
-  test('le tableau de bord covoiturage a bien un menu aside.sidebar avec Signalements', () => {
+describe('3. « Niveau » : retiré le 26 nov. 2026 (décision de Denis : il ne changeait rien)', () => {
+  test('le tableau de bord covoiturage a bien un menu aside.sidebar avec Signalements, sans « Niveau »', () => {
     const h = lire('membre-covoiturage.html');
     assert.ok(/<aside class="sidebar">[\s\S]*Signalements[\s\S]*<\/aside>/.test(h));
-    assert.ok(h.includes('/js/layer-mode.js') && h.includes('/js/flottants.js'));
+    assert.ok(!h.includes('/js/layer-mode.js') && h.includes('/js/flottants.js'));
   });
 });
 

@@ -60,10 +60,10 @@
       const dashUrl = DASH[role] || '/dashboard.html?onglet=envois';
       const firstName = window.__papUserName || 'Mon compte';
 
-      // Trouver tous les liens vers login.html → remplacer par "Dashboard"
+      // Trouver tous les liens vers login.html → remplacer par « Mon tableau de bord »
       document.querySelectorAll('a[href="/login.html"], a[href="login.html"]').forEach(a => {
         a.href = dashUrl;
-        a.textContent = '📊 Dashboard';
+        a.textContent = 'Mon tableau de bord';
         a.title = 'Mon tableau de bord';
       });
 

@@ -131,6 +131,18 @@ La clé publique peut être dans le code. **La clé de service, jamais.**
 10. Garder l'ancien projet **intact, en lecture**, au moins 30 jours. Ne rien y supprimer.
 11. Rien à faire pour « Supprimer » : il marche sans migration.
 
+### À faire avec la nouvelle base : une date sur chaque réservation (option B, trajets récurrents)
+
+Décision de Denis du 26 novembre 2026 : pour l'instant, on applique l'**option A**. Quand on réserve un trajet récurrent, sa date stockée (`rides.departure_time`) avance au prochain départ, **seulement si aucune réservation n'est en cours** (voir `avancerDepartRecurrent` dans `lib/_rides.js`). Sinon, la nouvelle réservation est refusée tant que le départ précédent n'est pas terminé (code `depart_precedent_en_cours`).
+
+**Option B, à faire pendant ou après la migration :**
+- Ajouter une colonne `ride_bookings.departure_date` (le départ réservé, en `timestamptz`), remplie à la réservation avec le prochain départ choisi.
+- Donner aussi les places par date : par exemple une table `ride_occurrences (ride_id, date, available_seats)`. Aujourd'hui, `available_seats` est commun à toutes les dates.
+- Lire cette date au lieu de `rides.departure_time` dans la politique d'annulation (`rideCancel`), le moment du prélèvement (`rideCaptureEligible`), la vérification « avant le départ » (`avantDepart`), l'annulation d'une date (`rideAnnulerDate`) et les courriels.
+- Pour les réservations existantes, remplir la colonne avec `rides.departure_time`.
+- Avec B, plusieurs dates d'un même trajet peuvent avoir des réservations en même temps, et le refus `depart_precedent_en_cours` disparaît.
+- **Toucher à Supabase demande l'accord de Denis.**
+
 ---
 
 ## 4. Retour en arrière

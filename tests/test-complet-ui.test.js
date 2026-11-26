@@ -164,7 +164,6 @@ test('23. boutons flottants rangés : place réservée en bas, aucun empilement,
   assert.match(js, /body\{padding-bottom:max\(var\(--pap-reserve-bas,92px\)/);
   assert.match(js, /\.pap-launcher-btn\{right:21px!important;bottom:88px!important\}/, 'menu au-dessus de la bulle, plus superposé');
   assert.match(js, /#pap-gps-status\{left:50%!important/);
-  assert.match(js, /\.pp-layer-pill > :not\(\.pp-layer-chevron\)\{display:none!important\}/);
   for (const f of ['membre-livrer.html', 'membre-accueil.html', 'covoiturage-trajet.html', 'index.html']) {
     const h = lire(f);
     assert.ok(h.indexOf('/js/flottants.js') > 0, f);

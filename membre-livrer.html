@@ -5,7 +5,7 @@
 <script src="/js/onglets-membre.js"></script>
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard livreur — PorteàPorte</title>
+  <title>Tableau de bord livreur — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/brand-uniform.css">
   <link rel="stylesheet" href="/assets/a11y.css">
@@ -16,7 +16,7 @@
   <script src="/js/modal-helper.js"></script>
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script src="/js/gain-livreur.js"></script>
   <script src="/js/repartition.js"></script>
   <style>
@@ -764,7 +764,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
         <button onclick="openStripeDashboard()"
           style="background:transparent;color:var(--brand-cyan);border:1px solid var(--brand-cyan);border-radius:10px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer">
-          🔗 Dashboard Stripe
+          🔗 Tableau de bord Stripe
         </button>
         <button onclick="loadStripeStatus()"
           style="background:transparent;color:var(--brand-muted);border:1px solid var(--brand-border);border-radius:10px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer">
@@ -2373,7 +2373,7 @@
           const exp = m.expediteur_profile;
           const expName = exp ? [exp.prenom, exp.nom].filter(Boolean).join(' ') || 'Expéditeur' : null;
           const expPhoto = exp && exp.photo_url ? `<img loading="lazy" decoding="async" src="${exp.photo_url}" alt="Photo de ${esc(expName || 'l expéditeur')}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:4px">` : '';
-          const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1)}★` : '';
+          const expRating = exp && exp.score_confiance ? ` · ${(exp.score_confiance/20).toFixed(1).replace('.', ',')} ★` : '';
           return `
           <div class="mission-card" style="flex-direction:column;align-items:stretch;gap:10px">
             <div style="display:flex;justify-content:space-between;align-items:center">
@@ -2648,7 +2648,7 @@
             🔗 Ouvrir directement Stripe
           </button>` : `
           <button onclick="openStripeDashboard()" style="background:rgba(93,191,255,.1);color:var(--brand-cyan);border:1px solid rgba(93,191,255,.4);border-radius:10px;padding:11px 18px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;margin-top:10px">
-            🔗 Ouvrir mon dashboard Stripe (gérer compte bancaire, etc.)
+            🔗 Ouvrir mon tableau de bord Stripe (gérer compte bancaire, etc.)
           </button>`}`;
 
         if (isActive) {
@@ -2969,13 +2969,12 @@
   <script src="/js/notif-bell.js"></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/gps-tracker.js"></script>
   <script src="/js/face-match.js"></script>
   <script src="/js/pwa-install.js"></script>
   <script src="/js/onboarding.js"></script>
   <script src="/js/badge-celebration.js"></script>
-  <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/onboarding-checklist.js" defer></script>
   <script src="/js/pending-payment-banner.js" defer></script>

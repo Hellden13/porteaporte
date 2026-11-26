@@ -234,7 +234,7 @@
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-left.jpg">
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -261,7 +261,7 @@
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <div class="hero-badge">✦ Livraison collaborative au Québec</div>
-    <h1>Envoyez <em>moins cher</em>.<br>Suivez en temps réel.</h1>
+    <h1>Envoie <em>moins cher</em>.<br>Suis ton colis en temps réel.</h1>
     <p>Des livreurs qui passent déjà par là peuvent prendre en charge ton colis. L'objectif bêta : rester souvent moins cher que les grands transporteurs, avec un suivi clair.</p>
     <div class="hero-actions">
       <a href="/create-mission.html" class="btn btn-primary">📦 Envoyer un colis</a>
@@ -375,55 +375,44 @@
 <!-- TARIFS -->
 <section id="tarifs">
   <div class="container">
-    <div class="section-label">Comparaison de prix</div>
+    <div class="section-label">Exemples de prix</div>
     <h2 class="section-title">Des prix expliqués, sans surprise</h2>
-    <p class="section-sub">Les économies affichées sont des estimations bêta comparées aux grands transporteurs. Le prix final est toujours montré avant paiement.</p>
+    <p class="section-sub">Exemples sur notre territoire bêta (Lévis–Québec), calculés avec le même outil que la création d’un envoi. Le prix final est toujours montré avant le paiement.</p>
     <div style="overflow-x: auto; border-radius: 16px; border: 1px solid var(--brand-border);">
+      <!-- Prix = API price-estimate (lib/_lib.js computeDeliveryPrice + prixMinimumTotal), livraison flexible, sans option.
+           Vérifiés par tests/lot2-expediteur.test.js : à mettre à jour si les tarifs changent. -->
       <table class="tarif-table">
         <thead>
           <tr>
-            <th>Envoi</th>
-            <th style="color: var(--brand-bleu);">PorteàPorte</th>
-            <th>UPS</th>
-            <th>FedEx</th>
-            <th>Purolator</th>
+            <th>Envoi et trajet</th>
+            <th style="color: var(--brand-bleu);">Prix</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
-              <strong>Colis 1 kg — 20 km</strong><br>
-              <span style="font-size:0.8rem; color: var(--brand-muted);">Envoi local, même ville</span>
-            </td>
-            <td class="highlight">5,00 $ <span class="savings-badge">—63 %</span></td>
-            <td class="competitor">13,50 $</td>
-            <td class="competitor">14,20 $</td>
-            <td class="competitor">12,80 $</td>
+            <td><strong>Document ou enveloppe</strong><br>
+              <span style="font-size:0.85rem; color: var(--brand-muted);">Lévis → Québec centre-ville</span></td>
+            <td class="highlight" data-prix-exemple="Lévis|Québec|document|document|0.5">15,00 $</td>
           </tr>
           <tr>
-            <td>
-              <strong>Colis 5 kg — 80 km</strong><br>
-              <span style="font-size:0.8rem; color: var(--brand-muted);">Interrégional (ex : Montréal–Laval)</span>
-            </td>
-            <td class="highlight">14,00 $ <span class="savings-badge">—57 %</span></td>
-            <td class="competitor">31,90 $</td>
-            <td class="competitor">34,50 $</td>
-            <td class="competitor">29,70 $</td>
+            <td><strong>Petit colis — 1 kg</strong><br>
+              <span style="font-size:0.85rem; color: var(--brand-muted);">Lévis → Québec centre-ville</span></td>
+            <td class="highlight" data-prix-exemple="Lévis|Québec|colis|petit|1">20,70 $</td>
           </tr>
           <tr>
-            <td>
-              <strong>Colis 10 kg — 200 km</strong><br>
-              <span style="font-size:0.8rem; color: var(--brand-muted);">Longue distance (ex : Montréal–Québec)</span>
-            </td>
-            <td class="highlight">28,00 $ <span class="savings-badge">—61 %</span></td>
-            <td class="competitor">71,40 $</td>
-            <td class="competitor">78,20 $</td>
-            <td class="competitor">67,90 $</td>
+            <td><strong>Colis moyen — 5 kg</strong><br>
+              <span style="font-size:0.85rem; color: var(--brand-muted);">Lévis → Sainte-Foy</span></td>
+            <td class="highlight" data-prix-exemple="Lévis|Sainte-Foy|colis|moyen|5">20,70 $</td>
+          </tr>
+          <tr>
+            <td><strong>Grand colis — 10 kg</strong><br>
+              <span style="font-size:0.85rem; color: var(--brand-muted);">Lévis → Sainte-Foy</span></td>
+            <td class="highlight" data-prix-exemple="Lévis|Sainte-Foy|colis|grand|10">31,05 $</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p style="margin-top:1.25rem; font-size:0.8rem; color: var(--brand-muted);">* Estimations illustratives basées sur le modèle tarifaire PorteàPorte (bêta) — les prix réels varient selon la distance, le poids et la disponibilité, et peuvent changer sans préavis. Prix concurrents basés sur les tarifs standard publics sans rabais entreprise, à titre de comparaison.</p>
+    <p style="margin-top:1.25rem; font-size:0.8rem; color: var(--brand-muted);">* Prix suggéré, frais de service inclus, livraison flexible (sans urgence) et sans option de protection. Le prix réel dépend de la distance, du poids, de la taille et de l’urgence, et peut changer pendant la bêta.</p>
   </div>
 </section>
 
@@ -539,7 +528,7 @@
 <section class="cta-final">
   <div class="container">
     <h2>Prêt à envoyer ton premier colis ?</h2>
-    <p>Créez votre mission en 2 minutes. Aucun abonnement requis — payez uniquement quand vous envoyez.</p>
+    <p>Crée ta livraison en 2 minutes. Aucun abonnement — tu paies seulement quand tu envoies.</p>
     <a href="/create-mission.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 1rem 2.5rem;">
       📦 Créer une livraison gratuitement
     </a>
@@ -574,8 +563,7 @@
 </script>
 <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
-  <script src="/js/layer-mode.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/fetes.js?v=tc2211" defer></script>
 </body>

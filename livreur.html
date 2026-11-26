@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/assets/visual-polish.css">
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase-config.js"></script>
   <script src="/js/modal-helper.js"></script>
@@ -36,7 +36,7 @@
   <main class="wrap">
     <div class="top">
       <a class="brand" href="/index.html">PorteàPorte</a>
-      <a class="btn secondary" id="driverDashboardLink" href="/dashboard.html?onglet=livrer">Dashboard</a>
+      <a class="btn secondary" id="driverDashboardLink" href="/dashboard.html?onglet=livrer">Tableau de bord</a>
     </div>
 
     <section class="panel">
@@ -106,11 +106,11 @@
       let html = '';
 
       if (profile.role === 'admin') {
-        html = '<div class="state-title">Acces admin detecte</div><p class="state-note">Ton compte admin peut ouvrir les outils d administration ou les espaces de test.</p><div class="actions"><a class="btn" href="/admin/dashboard-admin.html">Dashboard admin</a><a class="btn secondary" href="/dashboard.html?onglet=livrer">Espace livreur</a></div>';
+        html = '<div class="state-title">Acces admin detecte</div><p class="state-note">Ton compte admin peut ouvrir les outils d administration ou les espaces de test.</p><div class="actions"><a class="btn" href="/admin/dashboard-admin.html">Tableau de bord admin</a><a class="btn secondary" href="/dashboard.html?onglet=livrer">Espace livreur</a></div>';
       } else if (!isDriverRole) {
         html = '<div class="state-title">Ajouter le role livreur</div><p class="state-note">Ton compte est expéditeur. Remplis ce formulaire pour demander aussi l acces livreur.</p>';
       } else if (status === 'verified') {
-        html = '<div class="state-title">Profil livreur verifie</div><p class="state-note">Ton profil est actif. Tu peux voir les missions compatibles avec ton mode de transport.</p><div class="actions"><a class="btn" href="/dashboard.html?onglet=livrer">Ouvrir mon dashboard livreur</a><a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a></div>';
+        html = '<div class="state-title">Profil livreur verifie</div><p class="state-note">Ton profil est actif. Tu peux voir les missions compatibles avec ton mode de transport.</p><div class="actions"><a class="btn" href="/dashboard.html?onglet=livrer">Ouvrir mon tableau de bord livreur</a><a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a></div>';
         form.style.display = 'none';
       } else if (status === 'pending_review') {
         html = '<div class="state-title">Dossier en revision</div><p class="state-note">Ta demande livreur est envoyée. Les vraies missions et les adresses restent bloquees jusqu a validation admin.</p><div class="actions"><a class="btn secondary" href="/dashboard.html?onglet=envois">Espace expéditeur</a><a class="btn secondary" href="/dashboard.html?onglet=compte">Mon profil</a></div>';
@@ -207,7 +207,7 @@
   </script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
 </body>
 </html>

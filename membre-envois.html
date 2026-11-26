@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Dashboard expéditeur - PorteàPorte">
-    <title>Dashboard expéditeur — PorteàPorte</title>
+    <title>Tableau de bord expéditeur — PorteàPorte</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     
     <link rel="stylesheet" href="/assets/brand-uniform.css">
@@ -612,7 +612,7 @@
                         <div class="owner-switch-kicker">Covoiturage en premier</div>
                         <h2 class="owner-switch-title">Que veux-tu faire maintenant?</h2>
                     </div>
-                    <p class="owner-switch-note">Le dashboard reste disponible, mais les actions importantes sont ici: trouver un trajet, publier un trajet, ou envoyer un colis.</p>
+                    <p class="owner-switch-note">Le tableau de bord reste disponible, mais les actions importantes sont ici: trouver un trajet, publier un trajet, ou envoyer un colis.</p>
                 </div>
                 <div class="owner-switch-grid">
                     <a class="owner-choice primary" href="/covoiturage.html">
@@ -802,7 +802,7 @@
     <script src="/js/modal-helper.js"></script>
     <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
     <script src="/js/codes-livraison.js"></script>
     <script src="/js/supabase-config.js"></script>
     <script src="/js/auth-complete.js"></script>
@@ -831,7 +831,7 @@
             const score = profile.score || profile.score_confiance || 0;
             document.getElementById('user-xp').textContent = xp + ' XP';
             document.getElementById('stat-xp').textContent = xp;
-            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1) + '★' : '—';
+            document.getElementById('user-score').textContent = score > 0 ? (score / 20).toFixed(1).replace('.', ',') + ' ★' : '—';
             document.getElementById('user-balance').textContent = '$' + ((profile.coins || 0) / 100).toFixed(2);
 
             await loadMissions();
@@ -1437,7 +1437,7 @@
                             <div style="font-size:.72rem;color:#5dbfff;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Ton livreur</div>
                             <div style="font-size:1.05rem;font-weight:900;color:#fff;margin-top:2px">${livreurNom}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:.85rem">
-                              ${mission.livreur_profile.score_confiance ? `<span style="color:#ffd700">★ ${(mission.livreur_profile.score_confiance / 20).toFixed(1)}</span>` : ''}
+                              ${mission.livreur_profile.score_confiance ? `<span style="color:#ffd700">★ ${(mission.livreur_profile.score_confiance / 20).toFixed(1).replace('.', ',')}</span>` : ''}
                               <span style="color:#7dffc1;font-weight:700">✓ Identité vérifiée</span>
                             </div>
                           </div>
@@ -1455,7 +1455,7 @@
                             : `<div style="width:28px;height:28px;border-radius:50%;background:var(--brand-bg-surface-light);display:flex;align-items:center;justify-content:center;font-size:14px">🚚</div>`}
                         <div>
                           <div style="font-size:.82rem;font-weight:700;color:var(--brand-text)">${livreurNom}</div>
-                          ${mission.livreur_profile.score_confiance ? `<div style="font-size:.75rem;color:var(--brand-muted)">${(mission.livreur_profile.score_confiance / 20).toFixed(1)}★</div>` : ''}
+                          ${mission.livreur_profile.score_confiance ? `<div style="font-size:.75rem;color:var(--brand-muted)">${(mission.livreur_profile.score_confiance / 20).toFixed(1).replace('.', ',')} ★</div>` : ''}
                         </div>
                       </div>`
                     : mission.livreur_id
@@ -1521,12 +1521,11 @@
   <script src="/js/notif-bell.js"></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/pwa-install.js"></script>
   <script src="/js/onboarding.js"></script>
   <script src="/js/badge-celebration.js"></script>
   <script src="/js/cancel-livraison.js"></script>
-  <script src="/js/layer-mode.js" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/onboarding-checklist.js" defer></script>
   <script src="/js/pending-payment-banner.js" defer></script>

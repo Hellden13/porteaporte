@@ -75,7 +75,7 @@
   <meta name="twitter:image" content="https://porteaporte.site/assets/hero-center.jpg">
   <script src="/js/dialogues.js"></script>
 <script src="/js/session-expiree.js"></script>
-<script src="/js/flottants.js"></script>
+<script src="/js/flottants.js?v=20261126"></script>
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -249,6 +249,9 @@
   </main>
 
   <script src="/js/platform-settings-defaults.js"></script>
+  <!-- Supabase chargé AVANT le script de la page (avant : jamais chargé → « CDN non charge » en console). -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
   <script>
     function money(cents){return (Number(cents||0)/100).toLocaleString('fr-CA',{style:'currency',currency:'CAD'});}
     function monthLabel(value){
@@ -431,13 +434,12 @@
       const dashUrl = (role === 'livreur' || role === 'les deux')
         ? '/dashboard.html?onglet=livrer' : '/dashboard.html?onglet=envois';
       const btn = document.getElementById('nav-compte-btn');
-      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon dashboard'; }
+      if (btn) { btn.href = dashUrl; btn.textContent = 'Mon tableau de bord'; }
     })();
   </script>
-  <script src="/js/supabase-config.js"></script>
   <script src="/js/support-widget.js"></script>
   <script src="/js/app-launcher.js" defer></script>
-  <script src="/js/auth-state.js" defer></script>
+  <script src="/js/auth-state.js?v=20261126" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/figures-disclaimer.js" defer></script>
 </body>
