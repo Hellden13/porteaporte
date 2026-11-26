@@ -36,6 +36,20 @@
   // Primes de protection colis (mêmes montants que le formulaire create-mission.html).
   // Décision de Denis : la prime va à 100 % au fonds de protection, hors des 60 % du livreur.
   var PRIMES_PROTECTION_CENTS = { none: 0, base: 100, standard: 299, plus: 599 };
+  // Plan réel d'une livraison (26 nov. 2026) : plan noté au journal, sinon plan déjà au bon nom (base de
+  // prod-v2), sinon déduit de la prime (assurance_prix : 0 = aucune, 1 = Base, 2,99 = Standard, 5,99 = Plus).
+  // « basique » seul ne veut rien dire (c'est la valeur par défaut de la base actuelle).
+  var PRIME_VERS_PLAN = { 0: 'none', 100: 'base', 299: 'standard', 599: 'plus' };
+  function planProtectionReel(livraison, planJournal) {
+    var j = String(planJournal || '').toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(PRIMES_PROTECTION_CENTS, j)) return j;
+    var p = String((livraison && livraison.assurance_plan) || '').toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(PRIMES_PROTECTION_CENTS, p)) return p;
+    var c = Math.round(Number(livraison && livraison.assurance_prix) * 100);
+    if (Number.isFinite(c) && Object.prototype.hasOwnProperty.call(PRIME_VERS_PLAN, c)) return PRIME_VERS_PLAN[c];
+    return p === 'standard' ? 'standard' : 'none';
+  }
+
   function primeProtectionCents(plan) {
     var k = String(plan || 'none').toLowerCase();
     return Object.prototype.hasOwnProperty.call(PRIMES_PROTECTION_CENTS, k) ? PRIMES_PROTECTION_CENTS[k] : 0;
@@ -238,7 +252,7 @@
     STRIPE_POURCENT: STRIPE_POURCENT, STRIPE_FIXE_CENTS: STRIPE_FIXE_CENTS, POSTES_LIVRAISON: POSTES_LIVRAISON,
     fraisStripeEstimes: fraisStripeEstimes, partager: partager, gainLivreurCents: gainLivreurCents,
     repartitionLivraison: repartitionLivraison, repartitionTrajet: repartitionTrajet, repartitionAnnulation: repartitionAnnulation,
-    PRIMES_PROTECTION_CENTS: PRIMES_PROTECTION_CENTS, primeProtectionCents: primeProtectionCents,
+    PRIMES_PROTECTION_CENTS: PRIMES_PROTECTION_CENTS, primeProtectionCents: primeProtectionCents, planProtectionReel: planProtectionReel,
     validerParametres: validerParametres, dollars: dollars,
     fraisServiceLivraison: fraisServiceLivraison, prixMinimumTotal: prixMinimumTotal,
     REDISTRIBUTION_TRAJET_DEFAUT: REDISTRIBUTION_TRAJET_DEFAUT, normaliserRedistribution: normaliserRedistribution

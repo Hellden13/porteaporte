@@ -56,7 +56,7 @@ function sansCoordonneesDestinataire(l) {
   return c;
 }
 const { adminAFaire } = require('../lib/_admin-a-faire');
-const { refusPlanProtection } = require('../lib/_protection');
+const { refusPlanProtection, normaliserPlan, colonnesPlan, noterPlan, lirePlanJournal } = require('../lib/_protection');
 const CT = require('../lib/_commande-telephone');
 const { adminVerificationReminder } = require('../lib/_relance');
 const { distanceLivraison } = require('../lib/_distance');
@@ -64,7 +64,7 @@ const { calculerBonusFidelite } = require('../lib/_fidelite');
 const { apresCaptureLivraison } = require('../lib/_apres-capture');
 const { verifierBadgesAuto, recompenserParrainage, recompenseAvis5Etoiles, badgeProfilVerifie, jalonSansReclamation } = require('../lib/_recompenses');
 const { totauxRepartition, enregistrerAnnulation, repartitionLivraison: repartitionLivraisonCalc, repartitionTrajet: repartitionTrajetCalc } = require('../lib/_repartition-journal');
-const { validerParametres, prixMinimumTotal } = require('../js/repartition');
+const { validerParametres, prixMinimumTotal, planProtectionReel } = require('../js/repartition');
 const { livraisonsTestIds, adminLivraisonTest, idsLivraisonsTest } = require('../lib/_livraisons-test');
 const { adminRemettreRamasse } = require('../lib/_livraisons-coincees');
 const { adminVersements, adminVersementApprouver, versementsApprouvesPublics } = require('../lib/_versements');
@@ -258,6 +258,9 @@ async function createLivraison(req, res, ctx, body) {
   // Protection « Plus » retirée (26 nov. 2026) : refusée même si envoyée quand même (lib/_protection.js).
   const refusProtection = refusPlanProtection(payload.assurance_plan);
   if (refusProtection) return res.status(refusProtection.status).json(refusProtection.body);
+  // Plan réel (none / base / standard) traduit pour la base actuelle : assurance_plan + prime dans assurance_prix.
+  const planReel = normaliserPlan(body.assurance_plan);
+  Object.assign(payload, colonnesPlan(planReel));
   const declaredCents = Math.round(toNumber(payload.valeur_declaree, 0) * 100);
   if (declaredCents > maxColisValueCents) {
     return res.status(400).json({
@@ -276,6 +279,7 @@ async function createLivraison(req, res, ctx, body) {
   if (!insert.ok) return res.status(400).json({ error: 'Creation livraison impossible', details: insert.data });
   const data = insert.data;
   const livraison = Array.isArray(data) ? data[0] : data;
+  if (livraison?.id) await noterPlan(ctx, livraison.id, planReel, ctx.session.id);
 
   // ─── Enregistrer l'usage du code promo ────────────────────────────────────
   if (validatedPromo && livraison?.id) {
@@ -311,7 +315,7 @@ async function createLivraison(req, res, ctx, body) {
       ville_depart: livraison?.ville_depart || payload.ville_depart,
       ville_arrivee: livraison?.ville_arrivee || payload.ville_arrivee,
       prix_total: livraison?.prix_total ?? payload.prix_total,
-      assurance_plan: livraison?.assurance_plan ?? payload.assurance_plan ?? null
+      assurance_plan: planReel
     }
   }).catch((err) => console.error('[push nouvelle_mission]', err.message));
 
@@ -1679,7 +1683,7 @@ async function submitDeliveryProof(req, res, ctx, body) {
     return res.status(400).json({ error: 'Position GPS obligatoire pour un depot sans destinataire' });
   }
 
-  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total,ville_depart,ville_arrivee,rescue_livreur_original,rescue_bonus_pct,assurance_plan`, {
+  const livRes = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraisonId)}&select=id,livreur_id,expediteur_id,statut,stripe_payment_intent,code,prix_total,ville_depart,ville_arrivee,rescue_livreur_original,rescue_bonus_pct,assurance_plan,assurance_prix`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const rows = livRes.ok ? await livRes.json() : [];
@@ -1955,11 +1959,13 @@ async function availableLivraisons(req, res, ctx) {
   }
 
   const r = await fetch(
-    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,assurance_plan,statut,description,admin_note,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
+    `${ctx.sbUrl}/rest/v1/livraisons?livreur_id=is.null&statut=in.(publie,paiement_autorise)&select=id,code,expediteur_id,ville_depart,ville_arrivee,type_colis,taille_colis,poids_kg,prix_total,assurance_plan,assurance_prix,statut,description,admin_note,destinataire_dispo_jours,destinataire_dispo_debut,destinataire_dispo_fin,rescue_mode,rescue_bonus_pct,rescue_pickup_address,rescue_livreur_original,cree_le&order=cree_le.desc&limit=100`,
     { headers: sbHeaders(ctx.sbKey) }
   );
   const rows = r.ok ? await r.json() : [];
   if (!r.ok) return res.status(400).json({ error: 'Lecture livraisons impossible', details: rows });
+  // Plan réel (« basique » seul ne dit rien) : le gain affiché au livreur retire la bonne prime.
+  for (const row of rows) row.assurance_plan = planProtectionReel(row);
   // Début de journée obligatoire : sans véhicule du jour, aucune mission n'est proposée.
   // Le jumelage utilise le véhicule du jour (lib/_vehicules.js), pas l'ancien choix du navigateur.
   const estAdmin = roleIn(ctx.profile, ['admin']);

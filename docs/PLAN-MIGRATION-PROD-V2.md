@@ -50,6 +50,13 @@ Depuis le 26 novembre, les codes de ramassage et de réception sont tirés au ha
 3. Re-hachage des livraisons en cours : déchiffrer chaque code avec l'ancienne clé, puis écrire le nouveau hachage (`h3$`) et une nouvelle copie chiffrée avec la clé dédiée. Le code reste **le même**. C'est une tâche idempotente, sur le modèle de `mettreAJourHachages`.
 4. Test : avec la nouvelle clé, les anciens codes valent toujours ; avec seulement `INTERNAL_API_SECRET`, les nouveaux hachages ne correspondent plus.
 
+### 2c. Table `livraisons` : contraintes à corriger (constat du 26 novembre 2026)
+
+- **`assurance_plan`** n'accepte que `basique`, `standard`, `premium` et `vehicule` (défaut `basique`, jamais vide), alors que le code parle `none`, `base`, `standard` et `plus`. Depuis le 26 novembre, le code traduit le plan (`base` et `none` → `basique`) et met la prime dans `assurance_prix` ; le plan réel est aussi noté au journal (`plan_protection`). **Dans prod-v2 :** remplacer la contrainte par `none`, `base`, `standard` (et `plus` seulement si l'interrupteur est rallumé), défaut `none`. Convertir chaque ligne avec le plan du journal, sinon avec la prime (0 → `none`, 1 → `base`, 2,99 → `standard`).
+- **Colonne `source`** (commande téléphonique, etc.) : à créer (`web` par défaut, `telephone`). Aujourd'hui, c'est la note admin « 📞 Commande téléphonique » et l'événement `commande_telephonique` qui servent de marque.
+- **Statut `payment_failed`** : le webhook l'écrit sur une livraison, mais la contrainte de `statut` ne le permet pas (voir l'écart n° 2 du rapport du 26 novembre). À décider : ajouter ce statut, ou garder le statut et noter l'échec seulement au journal.
+- **Les 14 livraisons d'avant le 26 novembre** (sauvegarde du 22 novembre) ont perdu en silence leur description, leur poids, leur date et leur valeur déclarée, et leur plan est toujours `basique` avec une prime de 0. **Ces données sont perdues** : elles ne peuvent pas être retrouvées à partir de la base. Ne rien inventer pendant la copie : `none` pour le plan, valeurs vides pour le reste.
+
 ### 3. Ordre proposé (pendant la répétition générale, section 3, étape 3)
 1. Créer le schéma dans prod-v2, **puis** appliquer une migration `rls_api_seulement.sql` avec les points 1 et 2. Elle est écrite et relue avant, puis approuvée par Denis.
 2. Tester sur un aperçu Vercel branché sur prod-v2. Avec une session de membre (pas la clé de service), une insertion ou une modification directe de `livraisons`, `ride_bookings` ou `rides` doit être **refusée** (erreur 401 ou 403). Les parcours normaux par l'API doivent marcher : créer une livraison, réserver, annuler, terminer, payer.

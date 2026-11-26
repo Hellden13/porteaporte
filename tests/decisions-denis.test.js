@@ -262,8 +262,10 @@ describe('8. prime de protection : 100 % au fonds de protection, hors des 60 % d
     const plat = lire('api/platform.js');
     assert.match(plat, /p\.poste === 'prime_protection'/);
     assert.match(plat, /livraison_protection: repartitionLivraisonCalc\(\{ montantPayeCents: 1299, settings, planProtection: 'standard' \}\)/);
-    assert.match(plat, /rescue_livreur_original,rescue_bonus_pct,assurance_plan`/);
-    assert.match(lire('lib/_apres-capture.js'), /planProtection: livraison\.assurance_plan,/);
+    assert.match(plat, /rescue_livreur_original,rescue_bonus_pct,assurance_plan,assurance_prix`/);
+    // 26 nov. 2026 : plan RÉEL (journal, sinon prime dans assurance_prix) — « basique » seul ne dit rien.
+    assert.match(lire('lib/_apres-capture.js'), /const planReel = planProtectionReel\(livraison, await lirePlanJournal\(ctx, livraison\.id \|\| livraison_id\)\);/);
+    assert.match(lire('lib/_apres-capture.js'), /planProtection: planReel,/);
     assert.match(lire('transparence.html'), /lignesRepartition\(ex\.livraison_protection\)/);
   });
 });

@@ -72,6 +72,36 @@ function colonnesLues(sel) {
     .filter((x) => x && x !== '*' && !SCHEMA[x] && !/^count$/.test(x));
 }
 
+// Contraintes CHECK / NOT NULL de PRODUCTION (copie du schéma du 1er sept. 2026) pour livraisons :
+// comme Postgres, une valeur refusée donne 400 (code 23514 ou 23502). Avant, la fausse base acceptait tout,
+// et le refus de « base » / « none » dans assurance_plan n'a jamais été vu par les tests (26 nov. 2026).
+const CONTRAINTES = {
+  livraisons: {
+    enum: {
+      assurance_plan: ['basique', 'standard', 'premium', 'vehicule'],
+      mode_prix: ['fixe', 'appel_offres'],
+      paiement_statut: ['en_attente', 'escrow', 'libere', 'rembourse', 'echec'],
+      statut: ['en_attente', 'publie', 'paiement_autorise', 'offre_recue', 'confirme', 'en_route', 'ramasse', 'livre', 'livree', 'delivered', 'payee', 'paid', 'depot_securise', 'relivraison_demandee', 'retour_expediteur', 'annule', 'litige', 'rembourse'],
+    },
+    enumNull: {
+      taille_colis: ['petit', 'moyen', 'gros', 'xl'],
+      reception_mode: ['signature', 'depot_porte', 'concierge', 'voisin', 'boite_securisee'],
+    },
+    positif: ['prix_base', 'valeur_declaree'],
+    nonNul: ['expediteur_id', 'destinataire_nom', 'ville_depart', 'ville_arrivee', 'type_colis', 'valeur_declaree', 'prix_base', 'commission_pp', 'assurance_plan', 'assurance_prix', 'tps', 'tvq', 'prix_total', 'pourboire', 'statut', 'mode_prix', 'paiement_statut'],
+  },
+};
+function violation(nom, ligne, m) {
+  const c = CONTRAINTES[nom];
+  if (!c || !ligne || typeof ligne !== 'object') return null;
+  for (const [col, ok] of Object.entries(c.enum)) if (col in ligne && !ok.includes(ligne[col])) return { code: '23514', message: `new row for relation "${nom}" violates check constraint "${nom}_${col}_check"` };
+  for (const [col, ok] of Object.entries(c.enumNull)) if (col in ligne && ligne[col] != null && !ok.includes(ligne[col])) return { code: '23514', message: `new row for relation "${nom}" violates check constraint "${nom}_${col}_check"` };
+  for (const col of c.positif) if (col in ligne && ligne[col] != null && Number(ligne[col]) < 0) return { code: '23514', message: `new row for relation "${nom}" violates check constraint "${nom}_${col}_check"` };
+  for (const col of c.nonNul) if (col in ligne && ligne[col] === null) return { code: '23502', message: `null value in column "${col}" of relation "${nom}" violates not-null constraint` };
+  if (m === 'POST' && !('expediteur_id' in ligne)) return { code: '23502', message: `null value in column "expediteur_id" of relation "${nom}" violates not-null constraint` };
+  return null;
+}
+
 function creerBase(tables = {}) {
   const db = { tables: { transaction_audit_events: [], ...JSON.parse(JSON.stringify(tables)) }, rpc: [], stripe: [], courriels: [], seq: 0, badges: new Set() };
   const t = (nom) => (db.tables[nom] = db.tables[nom] || []);
@@ -146,6 +176,12 @@ function creerBase(tables = {}) {
       if (lim > 0) res.splice(lim);
       return rep(res.map((x) => ({ ...x })), true, 200, { 'content-range': `0-${Math.max(0, res.length - 1)}/${res.length}` });
     }
+    if ((m === 'POST' || m === 'PATCH') && body && typeof body === 'object') {
+      for (const it of (Array.isArray(body) ? body : [body])) {
+        const v = violation(nom, it, m);
+        if (v) { db.refus = db.refus || []; db.refus.push({ table: nom, contrainte: v.message, m }); return rep(v, false, 400); }
+      }
+    }
     if (m === 'POST') {
       const items = Array.isArray(body) ? body : [body];
       const crees = items.map((it) => {
@@ -186,4 +222,4 @@ function avecVehicule(fetchFn) {
   return async (url, o) => (String(url).includes('event_type=in.(vehicule_enregistre') ? rep([VEHICULE_TEST]) : fetchFn(url, o));
 }
 
-module.exports = { creerBase, rep, makeRes, avecVehicule, VEHICULE_TEST };
+module.exports = { creerBase, rep, makeRes, avecVehicule, VEHICULE_TEST, CONTRAINTES };
