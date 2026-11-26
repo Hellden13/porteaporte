@@ -1353,7 +1353,7 @@ async function manquementSignaler(req, res, ctx, body) {
   }
 
   // Charger la livraison pour valider les rôles
-  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,expediteur_id,livreur_id`, {
+  const lr = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,code,expediteur_id,livreur_id,ville_depart,ville_arrivee,prix_total`, {
     headers: sbHeaders(ctx.sbKey)
   });
   const livraison = lr.ok ? (await lr.json())[0] : null;
@@ -1419,6 +1419,8 @@ async function manquementSignaler(req, res, ctx, body) {
       severity: 'critical',
       details: {
         'Livraison': livraison.code || livraison_id.slice(0, 8),
+        'Trajet': livraison.ville_depart || livraison.ville_arrivee ? `${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}` : 'Non applicable',
+        'Prix total': livraison.prix_total != null ? `${Number(livraison.prix_total).toFixed(2)} $` : 'Non applicable',
         'Signaleur': signaleur_role,
         'Accusé': accuse_role,
         'Catégorie': categorie,
@@ -1808,9 +1810,12 @@ async function submitDeliveryProof(req, res, ctx, body) {
       livreur_prenom: ctx.profile?.prenom || '',
       livreur_email: ctx.session.email || '',
       note,
+      date_heure: new Date().toISOString(),
       admin_link: adminLink,
       confirm_link: confirmLink
-    }).catch((e) => console.error('[notifier preuve_soumise_admin]', e.message));
+    }).then((result) => {
+      if (!result.ok) console.error('[notifier preuve_soumise_admin] envoi refusé; statut', result.status);
+    }).catch(() => console.error('[notifier preuve_soumise_admin] envoi impossible'));
 
     // 2. Notif expéditeur — colis livré, en attente confirmation
     if (expediteurEmail) {

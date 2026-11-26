@@ -5,7 +5,8 @@
 // ============================================================
 // CONFIGURATION REQUISE dans Vercel → Settings → Environment Variables :
 //   RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxxxxxx
-//   ADMIN_EMAIL      = denismorneaubtc@gmail.com
+//   ADMIN_ALERT_EMAIL = adresse réservée aux alertes administrateur
+//   ADMIN_EMAIL       = repli temporaire pendant la migration
 //   FROM_EMAIL       = notifications@porteaporte.site
 //   INTERNAL_API_SECRET = (obligatoire en prod pour types sensibles — voir BUILD)
 // ============================================================
@@ -169,7 +170,7 @@ module.exports = async function handler(req, res) {
       success: true,
       resend_configured: Boolean(process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY),
       from_email_configured: Boolean(process.env.FROM_EMAIL),
-      admin_email_configured: Boolean(process.env.ADMIN_EMAIL),
+      admin_email_configured: Boolean(process.env.ADMIN_ALERT_EMAIL || process.env.ADMIN_EMAIL),
       supabase_configured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
       internal_secret_configured: Boolean(internalSecret()),
       from_domain: fromDomain || null,
@@ -191,7 +192,7 @@ module.exports = async function handler(req, res) {
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
   const SENDGRID_API_KEY = process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY;
-  const ADMIN_EMAIL      = process.env.ADMIN_EMAIL || 'denismorneaubtc@gmail.com';
+  const ADMIN_EMAIL      = process.env.ADMIN_ALERT_EMAIL || process.env.ADMIN_EMAIL || 'denismorneaubtc@gmail.com';
   const FROM_EMAIL       = process.env.FROM_EMAIL  || 'notifications@porteaporte.site';
   const FROM_NAME        = NOM_EXPEDITEUR_COURRIEL; // un seul nom d'expéditeur partout
 
@@ -271,6 +272,108 @@ function safeHttpUrl(value, fallback = 'https://porteaporte.site/admin/operation
   return escapeHtml(fallback);
 }
 
+function formatAlertAmount(value) {
+  if (value === undefined || value === null || value === '') return '';
+  const amount = Number(String(value).replace(',', '.').replace(/[^0-9.-]/g, ''));
+  if (!Number.isFinite(amount)) return '';
+  return new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount) + ' $';
+}
+
+const ALERT_NOT_APPLICABLE = 'Non applicable';
+
+function sanitizeAlertSubjectFragment(value) {
+  return String(value || '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[expurgé]')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi, '[expurgé]')
+    .replace(/(?:\+?1[ .()-]*)?(?:\d[ .()-]*){10}\b/g, '[expurgé]')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function alertRoute(data) {
+  const explicit = String(data.trajet || data.route || data.details?.Trajet || '').replace(/[\r\n]+/g, ' ').trim();
+  if (explicit) return sanitizeAlertSubjectFragment(explicit).slice(0, 100);
+  const from = String(data.ville_depart || data.ride_from || '').replace(/[\r\n]+/g, ' ').trim();
+  const to = String(data.ville_arrivee || data.ride_to || '').replace(/[\r\n]+/g, ' ').trim();
+  return from || to ? sanitizeAlertSubjectFragment(`${from || '?'} → ${to || '?'}`).slice(0, 100) : '';
+}
+
+function alertAmount(data) {
+  return formatAlertAmount(
+    data.prix_total ?? data.total_price ?? data.montant ?? data.details?.['Prix total'] ?? data.details?.Montant
+  );
+}
+
+const CIVIC_ADDRESS_HINT = /(?:^|[\s,])(?:\d+[a-z]?|rue|avenue|av\.?|boulevard|boul\.?|chemin|ch\.?|route|rang|autoroute|street|st\.?|road|rd\.?|drive|dr\.?|lane|ln\.?)(?=$|[\s,])/i;
+
+function alertSubjectCity(value) {
+  const text = sanitizeAlertSubjectFragment(value);
+  if (!text) return '';
+  const parts = text.split(',').map((part) => part.trim()).filter(Boolean);
+  const candidates = CIVIC_ADDRESS_HINT.test(parts[0] || '') ? parts.slice(1) : parts.slice(0, 1);
+  for (const candidate of candidates) {
+    const city = candidate
+      .replace(/\s+(?:QC|Québec|Canada)(?:\s+[A-Z]\d[A-Z][ -]?\d[A-Z]\d)?$/i, '')
+      .trim();
+    if (city && !/\d/.test(city) && !CIVIC_ADDRESS_HINT.test(city)) return city.slice(0, 60);
+  }
+  return '';
+}
+
+function alertSubjectRoute(data) {
+  let from = alertSubjectCity(data.ville_depart || data.ride_from);
+  let to = alertSubjectCity(data.ville_arrivee || data.ride_to);
+  if (from && to) return `${from} → ${to}`;
+
+  const explicit = String(data.trajet || data.route || data.details?.Trajet || '').trim();
+  const parts = explicit.split(/\s*(?:→|->|—|–)\s*/);
+  if (parts.length === 2) {
+    from = alertSubjectCity(parts[0]);
+    to = alertSubjectCity(parts[1]);
+    if (from && to) return `${from} → ${to}`;
+  }
+  return '';
+}
+
+function adminAlertSubject(kind, summary, data = {}) {
+  const route = alertSubjectRoute(data);
+  const amount = alertAmount(data);
+  const safeKind = sanitizeAlertSubjectFragment(kind);
+  const safeSummary = sanitizeAlertSubjectFragment(summary);
+  return `[PP-ALERTE] ${safeKind} — ${safeSummary}${route ? ' ' + route : ''}${amount ? ', ' + amount : ''}`;
+}
+
+function pushAdminAlert(emails, adminEmail, fromEmail, fromName, kind, summary, data = {}, options = {}) {
+  const when = data.created_at || data.date_heure || data.departure_time || data.date_souhaitee;
+  const route = alertRoute(data);
+  const amount = alertAmount(data);
+  const adminLink = data.admin_link || options.adminLink || 'https://porteaporte.site/admin/operations.html';
+  const rows = [
+    { label: 'Type', value: options.type || kind || ALERT_NOT_APPLICABLE },
+    { label: 'Date/heure', value: when ? heureQc(when) : ALERT_NOT_APPLICABLE },
+    { label: 'Trajet', value: route || ALERT_NOT_APPLICABLE },
+    { label: 'Montant', value: amount || ALERT_NOT_APPLICABLE },
+    { label: 'Lien admin', value: adminLink, href: adminLink },
+    ...(options.extraRows || [])
+  ];
+  emails.push({
+    to: adminEmail,
+    from: { email: fromEmail, name: fromName },
+    subject: adminAlertSubject(kind, summary, data),
+    html: templateAdminNotif(options.title || `${kind} — ${summary}`, rows, !!options.urgent)
+  });
+}
+
+function adminCriticalKind(data) {
+  const text = `${data.subject || ''} ${data.title || ''}`.toLowerCase();
+  if (/litige|manquement|signalement/.test(text)) return ['Litige', 'nouveau signalement'];
+  if (/annul/.test(text)) return ['Annulation', 'événement à vérifier'];
+  if (/nouvelle livraison|livraison créée/.test(text)) return ['Livraison', 'nouvelle demande'];
+  if (/inscription|nouveau livreur|nouveau conducteur/.test(text)) return ['Inscription', 'nouveau conducteur/livreur'];
+  return ['Administration', 'action requise'];
+}
+
 function buildEmails(type, data, adminEmail, fromEmail, fromName) {
   const emails = [];
 
@@ -301,7 +404,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: adminEmail,
         from: { email: fromEmail, name: fromName },
-        subject: `🆕 Nouvel inscrit : ${data.prenom} ${data.nom} (${data.role})`,
+        subject: adminAlertSubject('Inscription', /livreur|conducteur|chauffeur|les deux|both/i.test(String(data.role || '')) ? 'nouveau conducteur/livreur' : 'nouveau membre', data),
         html: templateAdminNotif('Nouvelle inscription', [
           { label: 'Nom', value: `${data.prenom} ${data.nom}` },
           { label: 'Courriel', value: data.email },
@@ -396,7 +499,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: adminEmail,
         from: { email: fromEmail, name: fromName },
-        subject: `📦 Nouvelle livraison : ${data.ville_depart} → ${data.ville_arrivee}`,
+        subject: adminAlertSubject('Livraison', 'nouvelle demande', data),
         html: templateAdminNotif('Nouvelle livraison publiée', [
           { label: 'Code', value: data.code },
           { label: 'Trajet', value: `${data.ville_depart} → ${data.ville_arrivee}` },
@@ -589,11 +692,19 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
         : '';
       const title = escapeHtml(data.title || data.subject || 'Action requise');
       const message = escapeHtml(data.message || '');
-      const safeSubject = String(data.subject || 'Événement plateforme').replace(/[\r\n]+/g, ' ').slice(0, 160);
+      const alertWhen = data.created_at ? heureQc(data.created_at) : '';
+      const [alertKind, alertSummary] = adminCriticalKind(data);
+      const requiredRows = [
+        { label: 'Type', value: alertKind || ALERT_NOT_APPLICABLE },
+        { label: 'Date/heure', value: alertWhen || ALERT_NOT_APPLICABLE },
+        { label: 'Trajet', value: alertRoute(data) || ALERT_NOT_APPLICABLE },
+        { label: 'Montant', value: alertAmount(data) || ALERT_NOT_APPLICABLE },
+        { label: 'Lien admin', value: data.cta_url || 'https://porteaporte.site/admin/operations.html', href: data.cta_url || 'https://porteaporte.site/admin/operations.html' }
+      ];
       emails.push({
         to: adminEmail,
         from: { email: fromEmail, name: fromName },
-        subject: `${sev.label} ${safeSubject} — PorteàPorte`,
+        subject: adminAlertSubject(alertKind, alertSummary, data),
         html: `
           <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
             <div style="color:#b8f53e;font-weight:900;font-size:.78rem;letter-spacing:.12em;margin-bottom:14px">PORTEÀPORTE · ADMIN ALERT</div>
@@ -602,6 +713,7 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
               <h2 style="margin:0;color:#fff;font-size:1.2rem;line-height:1.3">${title}</h2>
             </div>
             ${message ? `<p style="color:#d8dde6;line-height:1.6;margin:0 0 14px">${message}</p>` : ''}
+            ${renderAdminRows(requiredRows)}
             ${detailsHtml}
             ${ctaHtml}
             <p style="color:#6d7886;font-size:.74rem;margin-top:24px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px">Tu reçois cet email parce que tu es admin de PorteàPorte. Pour gérer les alertes : <a href="https://porteaporte.site/admin/operations.html" style="color:#b8f53e">Centre Opérations →</a></p>
@@ -741,21 +853,19 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
 
     // ── PREUVE SOUMISE — alerte admin action requise ──
     case 'preuve_soumise_admin': {
-      emails.push({
-        to: adminEmail,
-        from: { email: fromEmail, name: fromName },
-        subject: `🔔 ACTION REQUISE — Preuve déposée : livraison #${data.code}`,
-        html: templateAdminNotif('⚠️ Preuve de livraison soumise — paiement en attente', [
+      pushAdminAlert(emails, adminEmail, fromEmail, fromName, 'Preuve de livraison', 'preuve déposée', data, {
+        type: 'Preuve de livraison déposée',
+        urgent: true,
+        adminLink: data.admin_link,
+        title: '⚠️ Preuve de livraison soumise — paiement en attente',
+        extraRows: [
           { label: 'Code livraison', value: data.code },
-          { label: 'Trajet', value: `${data.ville_depart} → ${data.ville_arrivee}` },
-          { label: 'Type', value: data.type_colis },
-          { label: 'Montant en escrow', value: `${parseFloat(data.prix_total || 0).toFixed(2)} $` },
+          { label: 'Type de colis', value: data.type_colis },
           { label: 'Livreur', value: `${data.livreur_prenom} (${data.livreur_email})` },
           { label: 'Note du livreur', value: data.note || '—' },
-          { label: 'Lien confirmation destinataire', value: data.confirm_link },
+          { label: 'Lien confirmation destinataire', value: data.confirm_link, href: data.confirm_link },
           { label: 'Actions disponibles', value: '1. Attendre que le destinataire entre son code → libération automatique\n2. OU valider manuellement dans le dashboard admin si confirmé verbalement' }
-        ], true) +
-        `<div style="text-align:center;margin:20px 0"><a href="${data.admin_link}" style="background:#b8f53e;color:#071006;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block">→ Ouvrir le dashboard admin</a></div>`
+        ]
       });
       break;
     }
@@ -949,13 +1059,15 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       emails.push({
         to: adminEmail,
         from: { email: fromEmail, name: fromName },
-        subject: `⚠️ LITIGE OUVERT : ${data.code} — Action requise`,
+        subject: adminAlertSubject('Litige', 'nouveau litige', data),
         html: templateAdminNotif('⚠️ Nouveau litige — action requise', [
           { label: 'Code livraison', value: data.code },
+          { label: 'Date/heure', value: data.created_at ? heureQc(data.created_at) : '' },
           { label: 'Type', value: data.type_litige },
           { label: 'Plaignant', value: data.plaignant_email },
           { label: 'Montant réclamé', value: `${data.montant} $` },
-          { label: 'Description', value: data.description }
+          { label: 'Description', value: data.description },
+          { label: 'Lien admin', value: data.admin_link || 'https://porteaporte.site/admin/operations.html' }
         ], true)
       });
       break;
@@ -1111,6 +1223,15 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    case 'admin_nouveau_message': {
+      const contexte = data.contexte === 'livraison' ? 'livraison' : 'covoiturage';
+      pushAdminAlert(emails, adminEmail, fromEmail, fromName, 'Messagerie', `nouveau message ${contexte}`, data, {
+        type: 'Nouveau message',
+        adminLink: data.admin_link || 'https://porteaporte.site/admin/operations.html'
+      });
+      break;
+    }
+
     // ─── LIVRAISON : NOUVEAU MESSAGE (sans l'adresse ni le texte de l'autre personne) ───
     case 'livraison_nouveau_message':
     case 'livraison_lien_destinataire': {
@@ -1194,19 +1315,16 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
           </div>`
       });
       // Aussi notif admin pour suivi
-      emails.push({
-        to: adminEmail,
-        from: { email: fromEmail, name: fromName },
-        subject: `🎫 Réservation : ${route} (${data.total_price || '—'} $)`,
-        html: templateAdminNotif('Nouvelle réservation covoiturage', [
-          { label: 'Route', value: route },
+      pushAdminAlert(emails, adminEmail, fromEmail, fromName, 'Covoiturage', 'nouvelle réservation', data, {
+        type: 'Nouvelle réservation covoiturage',
+        adminLink: data.admin_link || 'https://porteaporte.site/admin/operations.html',
+        title: 'Nouvelle réservation covoiturage',
+        extraRows: [
           { label: 'Passager', value: `${data.passenger_name || ''} (${data.admin_passenger_email || ''})` },
           { label: 'Conducteur', value: `${data.driver_name || ''} (${data.driver_email || ''})` },
-          { label: 'Date trajet', value: data.departure_time || '?' },
           { label: 'Places', value: data.seats || 1 },
-          { label: 'Total payé', value: `${data.total_price || '—'} $` },
           { label: 'Montant conducteur', value: `${data.driver_amount || '—'} $` }
-        ])
+        ]
       });
       break;
     }
@@ -1258,6 +1376,13 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
             </div>`
         });
       }
+      pushAdminAlert(emails, adminEmail, fromEmail, fromName, 'Annulation', 'réservation de covoiturage annulée', {
+        ...data,
+        date_heure: data.created_at || data.date_heure || new Date().toISOString()
+      }, {
+        type: 'Annulation covoiturage',
+        adminLink: 'https://porteaporte.site/admin/operations.html'
+      });
       break;
     }
 
@@ -1654,13 +1779,19 @@ function templatePartenaire(d) {
   );
 }
 
-function templateAdminNotif(titre, rows, urgent = false) {
+function renderAdminRows(rows) {
   const rowsHtml = rows.map(r =>
     `<tr>
-      <td style="padding:7px 12px;color:#888;font-size:12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;">${r.label}</td>
-      <td style="padding:7px 12px;font-size:12px;font-weight:500;border-bottom:1px solid #f0f0f0;">${r.value || '—'}</td>
+      <td style="padding:7px 12px;color:#888;font-size:12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;">${escapeHtml(r.label || '')}</td>
+      <td style="padding:7px 12px;font-size:12px;font-weight:500;border-bottom:1px solid #f0f0f0;">${r.href
+        ? `<a href="${safeHttpUrl(r.href)}" style="color:#0A5E9A;word-break:break-all">${escapeHtml(r.value || r.href || ALERT_NOT_APPLICABLE)}</a>`
+        : escapeHtml(r.value || '—')}</td>
     </tr>`
   ).join('');
+  return `<table style="width:100%;border-collapse:collapse;font-family:inherit;">${rowsHtml}</table>`;
+}
+
+function templateAdminNotif(titre, rows, urgent = false) {
 
   const headerBg = urgent ? '#8B0000' : '#0A1628';
   const alertBar = urgent
@@ -1670,8 +1801,8 @@ function templateAdminNotif(titre, rows, urgent = false) {
   return wrap(
     `<div style="${HEADER(headerBg)}">${LOGO_HTML}<div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:8px;">📊 Notification Admin</div></div>`,
     `${alertBar}
-    <h2 style="font-size:18px;margin:0 0 16px;">${titre}</h2>
-    <table style="width:100%;border-collapse:collapse;font-family:inherit;">${rowsHtml}</table>
+    <h2 style="font-size:18px;margin:0 0 16px;">${escapeHtml(titre)}</h2>
+    ${renderAdminRows(rows)}
     <div style="margin-top:16px;text-align:center;">
       <a href="https://porteaporte.site/admin/dashboard-admin.html" style="background:#0A1628;color:#ffffff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:12px;font-weight:600;display:inline-block;">Ouvrir le panneau admin →</a>
     </div>

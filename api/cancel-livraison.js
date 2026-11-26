@@ -126,7 +126,7 @@ module.exports = async function handler(req, res) {
 
     // Récupérer la livraison
     const livRes = await fetch(
-      `${SB_URL}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,expediteur_id,livreur_id,statut,prix_total,stripe_payment_intent`,
+      `${SB_URL}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison_id)}&select=id,expediteur_id,livreur_id,statut,prix_total,stripe_payment_intent,ville_depart,ville_arrivee`,
       {
         headers: {
           apikey: SB_KEY,
@@ -312,6 +312,7 @@ module.exports = async function handler(req, res) {
         severity: reviewFlags.length ? 'critical' : sev,
         details: {
           'Livraison': livraison.id?.slice(0, 8) || '?',
+          'Trajet': livraison.ville_depart || livraison.ville_arrivee ? `${livraison.ville_depart || '?'} → ${livraison.ville_arrivee || '?'}` : 'Non applicable',
           'Annulée par': canceller,
           'Raison': raison || '(non précisée)',
           'Statut au moment': livraison.statut,
