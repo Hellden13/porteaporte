@@ -130,6 +130,8 @@
     .post-confirm-row strong { display:block; color:#fff; margin-bottom:3px; }
     .post-confirm-actions { display:grid; gap:8px; margin-top:14px; }
     .post-confirm-actions a { text-align:center; border-radius:10px; padding:11px 14px; font-weight:900; text-decoration:none; background:linear-gradient(135deg,#5dbfff,#3da9ff); color:#000; }
+    #btn-reserve[hidden], .depart-bloque[hidden] { display: none !important; }
+    .depart-bloque { background: rgba(251,191,36,.10); border: 1px solid rgba(251,191,36,.45); color: #FDE68A; border-radius: 12px; padding: 14px 16px; font-weight: 700; line-height: 1.45; }
     .btn-reserve { width: 100%; background: linear-gradient(135deg,#6c63ff,#8b7fff); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 15px rgba(108,99,255,.35); }
     .btn-reserve:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.45); }
     .btn-reserve:disabled { opacity: .6; cursor: not-allowed; transform: none; }
@@ -430,6 +432,7 @@
         </div>
         <div class="post-confirm-card" id="post-confirm-card"></div>
 
+        <div class="depart-bloque" id="depart-bloque" role="status" hidden></div>
         <button class="btn-reserve" id="btn-reserve" onclick="submitBooking()">Réserver ma place</button>
       </div>
     </div>
@@ -1031,6 +1034,20 @@ function populateCitySelects(ride) {
   renderCards('dropoff-cards', 'pax-dropoff', visibleStops.length - 1, (s) => !s.isStart);
 }
 
+// Trajet récurrent dont le départ précédent n'est pas encore terminé (26 nov. 2026) : on remplace
+// d'avance le bouton de réservation par un message clair (le serveur refuse aussi la réservation).
+function afficherDepartBloque(r) {
+  var bloc = document.getElementById('depart-bloque');
+  var btn = document.getElementById('btn-reserve');
+  var p = r && r.depart_precedent_en_cours;
+  if (!bloc || !btn) return;
+  if (!p || !p.departure_time) { bloc.hidden = true; btn.hidden = false; return; }
+  var jour = new Date(p.departure_time).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Toronto' });
+  bloc.textContent = '⏳ Le prochain départ s’ouvrira quand le conducteur aura terminé celui du ' + jour + '.';
+  bloc.hidden = false;
+  btn.hidden = true;
+}
+
 function renderRide(r) {
   document.getElementById('city-from').textContent = r.departure_city  || r.from_city || '?';
   document.getElementById('city-to').textContent   = r.destination_city || r.to_city  || '?';
@@ -1038,6 +1055,7 @@ function renderRide(r) {
   var recLigne = (r.is_recurring && Array.isArray(r.recurrence_days) && r.recurrence_days.length)
     ? ' · 🔁 chaque ' + r.recurrence_days.map(function (k) { return joursRec[k] || k; }).join(', ') : '';
   document.getElementById('ride-date-line').textContent = (r.is_recurring ? 'Prochain départ : ' : '') + formatDate(r.departure_time || r.date) + recLigne;
+  afficherDepartBloque(r);
 
   const seats = r.available_seats ?? r.seats_available ?? 0;
   const dist  = (r.distance_km || r.total_distance_km) ? (r.distance_km || r.total_distance_km) + ' km' : '—';

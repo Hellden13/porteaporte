@@ -45,6 +45,7 @@ const PUBLIC_TYPES = new Set([
   'ride_booking_to_driver',
   'ride_booking_cancelled',
   'ride_driver_completed_to_passenger',
+  'ride_rappel_terminer',
   'bienvenue',
   'sos_alert',
 ]);
@@ -1386,6 +1387,29 @@ function buildEmails(type, data, adminEmail, fromEmail, fromName) {
       break;
     }
 
+    // Rappel au conducteur (26 nov. 2026) : un départ récurrent passé n'a pas été « terminé » ;
+    // le prochain départ reste fermé aux réservations tant que ce n'est pas fait. Un seul par départ.
+    case 'ride_rappel_terminer': {
+      const route = `${escapeHtml(data.ville_depart || '?')} → ${escapeHtml(data.ville_arrivee || '?')}`;
+      const jour = data.departure_time ? new Date(data.departure_time).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Toronto' }) : '';
+      emails.push({
+        to: data.driver_email,
+        from: { email: fromEmail, name: fromName },
+        subject: `Termine ton trajet du ${jour} (${String(data.ville_depart || '?')} → ${String(data.ville_arrivee || '?')})`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#05080c;color:#f7f8fb;border-radius:12px;padding:28px">
+            <div style="color:#fbbf24;font-weight:900;font-size:.8rem;letter-spacing:.1em;margin-bottom:12px">PORTEÀPORTE — TRAJET À TERMINER</div>
+            <h1 style="color:#fff;font-size:1.4rem;margin:0 0 12px">Bonjour ${escapeHtml(data.driver_name || '')}, termine ton trajet du ${escapeHtml(jour)}</h1>
+            <p style="color:#a8b0ba;margin:0 0 18px">${route}</p>
+            <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.35);border-radius:10px;padding:16px;margin-bottom:18px;line-height:1.5">
+              Ce départ n'a pas encore été marqué « terminé ». Tant que ce n'est pas fait, <strong>tes passagers ne peuvent pas réserver ton prochain départ</strong> et le paiement de ce trajet n'est pas versé.
+            </div>
+            <a href="https://porteaporte.site/dashboard.html?onglet=covoiturage" style="display:inline-block;background:#5dbfff;color:#051022;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none">Terminer mon trajet</a>
+            <p style="color:#6d7886;font-size:.78rem;margin-top:22px;line-height:1.5">Le trajet n'a pas eu lieu ? Ne le marque pas « terminé » : écris-nous avec le bouton « Aide » de ton tableau de bord, on s'en occupe avec tes passagers.</p>
+          </div>`
+      });
+      break;
+    }
     case 'ride_driver_completed_to_passenger': {
       const route = `${data.ville_depart || '?'} -> ${data.ville_arrivee || '?'}`;
       emails.push({

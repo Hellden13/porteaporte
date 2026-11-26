@@ -1,5 +1,5 @@
 // api/cron-cleanup.js — Nettoyage périodique des tables temporaires
-// Appelé par Vercel Cron (voir vercel.json) — toutes les heures
+// Appelé par Vercel Cron (voir vercel.json) — chaque jour à 3 h UTC, et à 12 h UTC pour la tâche « rappels-trajets »
 'use strict';
 
 const { sanitizeEnv, sbHeaders, alertAdmin } = require('../lib/_lib');
@@ -20,6 +20,20 @@ module.exports = async function handler(req, res) {
   if (!sbUrl || !sbKey) return res.status(503).json({ error: 'Config manquante' });
 
   const results = {};
+
+  // Tâche du matin (vercel.json : /api/cron-rappels-trajets, 12 h UTC ≈ 7 h au Québec, 26 nov. 2026) :
+  // rappel au conducteur d'un départ récurrent d'hier pas encore « terminé ». Rien d'autre.
+  const tache = String((req.query && req.query.tache) || new URL(req.url || '/', 'https://porteaporte.site').searchParams.get('tache') || '');
+  if (tache === 'rappels-trajets') {
+    try {
+      const { rappelsTerminerTrajet } = require('../lib/_rides');
+      results.rappels_terminer = await rappelsTerminerTrajet({ sbUrl, sbKey });
+    } catch (e) {
+      results.rappels_terminer = 'exception: ' + e.message;
+    }
+    console.log('[cron-rappels-trajets]', JSON.stringify(results));
+    return res.status(200).json({ success: true, tache, results });
+  }
 
   // 1. Nettoyer rate_limits expirés (> 1h)
   try {

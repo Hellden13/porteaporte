@@ -313,11 +313,17 @@ describe('paiement-livraison handler', () => {
 
 // ─── Tests platform.js dispatcher ─────────────────────────────────────────────
 describe('vercel routing guards', () => {
-  test('plan Hobby: un seul cron actif et tracking-public passe par platform', () => {
+  test('plan Hobby: crons quotidiens servis par cron-cleanup, et tracking-public passe par platform', () => {
     const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
     const apiFunctions = fs.readdirSync('api').filter((name) => name.endsWith('.js'));
     assert.ok(apiFunctions.length <= 12, `le plan Hobby accepte au plus 12 fonctions, trouvé: ${apiFunctions.length}`);
-    assert.deepEqual((config.crons || []).map((cron) => cron.path), ['/api/cron-cleanup']);
+    // Hobby (doc Vercel, lue le 26 nov. 2026) : plusieurs crons permis, mais au plus une fois par jour
+    // (sinon le déploiement échoue). Chaque cron passe par la fonction cron-cleanup (aucune fonction de plus).
+    for (const cron of config.crons || []) {
+      assert.match(cron.schedule, /^\d{1,2} \d{1,2} \* \* \*$/, `${cron.path} : une fois par jour`);
+      const cible = cron.path === '/api/cron-cleanup' ? cron.path : (config.rewrites || []).find((rw) => rw.source === cron.path)?.destination;
+      assert.match(String(cible), /^\/api\/cron-cleanup(\?|$)/, cron.path);
+    }
     const rideCron = (config.rewrites || []).find((rw) => rw.source === '/api/cron-ride-capture');
     assert.equal(rideCron?.destination, '/api/cron-cleanup');
     const tracking = (config.rewrites || []).filter((rw) => rw.source === '/api/tracking-public');
