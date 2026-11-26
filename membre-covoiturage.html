@@ -724,7 +724,8 @@ function buildTrajets() {
         : (() => {
           const bookingRow = b => {
             const drvContact = [];
-            const canContactDriver = ['confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
+            // Le serveur ouvre la conversation dès la demande de place (en_attente) : même règle ici.
+            const canContactDriver = ['en_attente','confirme','driver_completed','paye'].includes(String(b.status||'').toLowerCase());
             if (canContactDriver && b.driver_id) {
               drvContact.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.driver_id)}','${escHtml(b.driver_prenom||'Conducteur')}')" style="display:inline-block;padding:5px 11px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.75rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au conducteur</button>`);
             }
@@ -777,7 +778,7 @@ function buildReservations() {
 
   <div style="background:rgba(93,191,255,.06);border:1px solid rgba(93,191,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#7de4ff;font-size:.92rem">
     💡 <strong>Comment contacter tes passagers ?</strong><br>
-    Clique <strong>💬 Écrire</strong> sur la ligne du passager : vous vous écrivez par la messagerie PorteàPorte, vos coordonnées restent privées. Chaque passager a sa propre conversation. Elle se ferme 3 jours après le trajet ; en cas de problème, utilise « Signaler ».
+    Clique <strong>💬 Écrire au passager</strong> sur sa ligne : vous vous écrivez par la messagerie PorteàPorte, vos coordonnées restent privées. Chaque passager a sa propre conversation. Elle se ferme 3 jours après le trajet ; en cas de problème, utilise « Signaler ».
   </div>
 
     <div class="table-wrap">
@@ -786,7 +787,7 @@ function buildReservations() {
       : `<table><thead><tr><th>Passager</th><th>Trajet</th><th>Places</th><th>Animal</th><th>Montant</th><th>Statut</th><th>Validation</th><th>Contact</th></tr></thead><tbody>
         ${allBookings.map(b=>{
           const contactInfo = [];
-          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire</button>`);
+          contactInfo.push(`<button type="button" onclick="ouvrirMessagerie('${escHtml(b.ride_id)}','${escHtml(b.passenger_id)}','${escHtml(b.passenger_prenom||'Passager')}')" style="display:inline-block;padding:6px 12px;background:rgba(93,191,255,.12);border:1px solid rgba(93,191,255,.4);border-radius:6px;color:var(--cyan);font-size:.78rem;font-weight:700;cursor:pointer;margin:2px">💬 Écrire au passager</button>`);
 
           // Carte animal (visible si passager a un animal sur ce trajet)
           let petCell = '<span style="color:var(--muted);font-size:.75rem">—</span>';

@@ -196,6 +196,49 @@
     .card .meeting-card .mc-sub { color: #3D4654; }
     .card .meeting-card.selected { background: #E9E6FF; border-color: #6c63ff; }
     .card .meeting-card.selected .mc-name { color: #10131A; }
+    /* Écrire au conducteur (principal) / Partager ce trajet (secondaire) */
+    .ride-actions { margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+    .btn-ecrire { background:linear-gradient(135deg,#5dbfff,#00b8d4); color:#001828; border:0; border-radius:12px;
+      padding:12px 18px; font-weight:900; font-size:1rem; cursor:pointer; min-height:46px; box-shadow:0 4px 14px rgba(0,184,212,.28); }
+    .btn-ecrire:hover { filter:brightness(1.06); }
+    .btn-ecrire:focus-visible, .share-toggle:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+    #driver-actions-wrap .btn-ecrire { width:100%; }
+    .share-menu { position:relative; }
+    .share-toggle { list-style:none; display:inline-flex; align-items:center; gap:7px; cursor:pointer; min-height:46px;
+      padding:0 14px; border-radius:12px; border:1px solid rgba(255,255,255,.18); color:#C9D1DB; background:transparent;
+      font-weight:700; font-size:.88rem; }
+    .share-toggle::-webkit-details-marker { display:none; }
+    .share-toggle::after { content:'▾'; font-size:.75rem; opacity:.8; }
+    .share-menu[open] .share-toggle::after { content:'▴'; }
+    .share-list { position:absolute; z-index:30; top:calc(100% + 6px); left:0; width:min(290px, calc(100vw - 32px));
+      background:#141B26; border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:8px; box-shadow:0 12px 30px rgba(0,0,0,.45);
+      display:flex; flex-direction:column; gap:4px; }
+    .share-list button { text-align:left; background:transparent; color:#E6EBF2; border:0; border-radius:8px; padding:10px 12px;
+      font-weight:600; font-size:.9rem; cursor:pointer; }
+    .share-list button:hover, .share-list button:focus-visible { background:rgba(255,255,255,.08); }
+    /* brand-uniform.css habille tous les boutons (!important) : le menu de partage reste discret. */
+    #share-menu .share-list button { display:block; width:100%; min-height:42px; justify-content:flex-start; text-align:left;
+      background:transparent !important; color:#E6EBF2 !important; border:0 !important; box-shadow:none !important;
+      padding:10px 12px !important; font-weight:600 !important; font-size:.9rem; border-radius:8px !important; }
+    #share-menu .share-list button:hover, #share-menu .share-list button:focus-visible { background:rgba(255,255,255,.08) !important; transform:none; }
+    /* Le menu ouvert passe au-dessus des cartes suivantes (Itinéraire, Conducteur). */
+    #card-trajet { position:relative; z-index:4; }
+    .share-note { margin:2px 4px 6px; color:#93A1B3; font-size:.76rem; line-height:1.4; }
+    .ecrire-note { margin-top:10px; padding:10px 12px; border-radius:10px; background:rgba(93,191,255,.10);
+      border-left:3px solid #5dbfff; color:#D9E6F2; font-size:.86rem; line-height:1.45; }
+    .ecrire-note a { color:#5dbfff; font-weight:800; }
+    .ecrire-mobile { display:none; }
+    @media (max-width: 820px) {
+      .ecrire-mobile { display:block; padding:14px 16px; margin-bottom:14px; }
+      .ecrire-mobile .btn-ecrire { width:100%; }
+      .ecrire-mobile-txt { color:#C9D1DB; font-size:.88rem; margin-bottom:8px; }
+    }
+    @media (max-width: 480px) {
+      .ride-actions .btn-ecrire { flex:1 1 100%; }
+      .ride-actions .share-menu { flex:1 1 100%; }
+      .share-toggle { width:100%; justify-content:center; }
+      .share-list { width:100%; }
+    }
     .note-nouveau { display:inline-block; font-size:.8rem; font-weight:800; color:#0B1B10; background:#9BE7B0; border-radius:999px; padding:2px 10px; }
   </style>
 </head>
@@ -227,7 +270,7 @@
     </div>
 
     <div id="content-left" style="display:none">
-      <div class="card" id="card-trajet">
+      <div class="card" id="card-trajet" data-ecrire-zone>
         <div class="route-cities">
           <span class="city" id="city-from"></span>
           <span class="arrow">&#8594;</span>
@@ -235,13 +278,22 @@
         </div>
         <div class="route-date" id="ride-date-line"></div>
         <div class="meta-grid" id="meta-grid"></div>
-        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-          <button type="button" onclick="openShareCard()" style="background:linear-gradient(135deg,#5dbfff,#0090c0);color:#00131a;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.9rem">🖼️ Créer ma carte à partager</button>
-          <button type="button" onclick="shareThisRideFb()" style="background:#1877F2;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">📘 Facebook</button>
-          <button type="button" onclick="shareThisRideMessenger()" style="background:#0099FF;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">💬 Messenger</button>
-          <button type="button" onclick="shareThisRideWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">💬 WhatsApp</button>
-          <button type="button" id="ride-copy-btn" onclick="shareThisRideCopy()" style="background:#f0f2f5;color:#1a1a2e;border:1px solid #d6dae2;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.9rem">🔗 Copier le lien</button>
+        <!-- Écrire (principal) d'abord ; le partage est secondaire et dit clairement ce qu'il fait. -->
+        <div class="ride-actions">
+          <button type="button" class="btn-ecrire" data-ecrire onclick="ecrireAuConducteur(this)">💬 Écrire au conducteur</button>
+          <details class="share-menu" id="share-menu">
+            <summary class="share-toggle"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg> Partager ce trajet</summary>
+            <div class="share-list" role="group" aria-label="Partager ce trajet">
+              <p class="share-note">Pour inviter des gens à réserver. Pour parler au conducteur, utilise « 💬 Écrire au conducteur ».</p>
+              <button type="button" onclick="openShareCard()">🖼️ Créer une image à partager</button>
+              <button type="button" onclick="shareThisRideFb()">Partager sur Facebook</button>
+              <button type="button" onclick="shareThisRideMessenger()">Partager par Messenger</button>
+              <button type="button" onclick="shareThisRideWhatsApp()">Partager par WhatsApp</button>
+              <button type="button" id="ride-copy-btn" onclick="shareThisRideCopy()">🔗 Copier le lien</button>
+            </div>
+          </details>
         </div>
+        <div class="ecrire-note" data-ecrire-note hidden></div>
       </div>
 
       <div class="card">
@@ -286,6 +338,12 @@
     </div>
 
     <div id="sidebar-real" style="display:none">
+      <!-- Cellulaire : la réservation passe en premier ; « Écrire » reste visible dès l'arrivée. -->
+      <div class="card ecrire-mobile" data-ecrire-zone>
+        <div class="ecrire-mobile-txt"><span id="ecrire-mobile-qui">Une question sur ce trajet ?</span></div>
+        <button type="button" class="btn-ecrire" data-ecrire onclick="ecrireAuConducteur(this)">💬 Écrire au conducteur</button>
+        <div class="ecrire-note" data-ecrire-note hidden></div>
+      </div>
       <div class="card price-card">
         <div class="price-big" id="price-total"></div>
         <div class="price-sub">par passager (tout inclus)</div>
@@ -423,7 +481,53 @@ const params = new URLSearchParams(location.search);
 const rideId = params.get('id') || params.get('ride_id');
 const resumeBookingId = params.get('booking_id'); // si l'user revient depuis dashboard pour payer
 
-// ── Partage Facebook du trajet ──────────────────────────────
+// ── Écrire au conducteur : messagerie masquée du site seulement ──
+let ecrireCible = null;
+function ecrireNote(html, btn) {
+  document.querySelectorAll('[data-ecrire-note]').forEach(function (n) { n.hidden = true; n.innerHTML = ''; });
+  if (!html) return;
+  var zone = btn && btn.closest ? btn.closest('[data-ecrire-zone]') : null;
+  var note = zone ? zone.querySelector('[data-ecrire-note]') : null;
+  if (!note) note = premierVisible('[data-ecrire-note]') || document.querySelector('[data-ecrire-note]');
+  if (note) { note.innerHTML = html; note.hidden = false; }
+}
+// Le bouton « Écrire » réellement visible (cellulaire : celui du haut ; ordinateur : celui de la carte du trajet).
+function premierVisible(sel) {
+  return Array.prototype.find.call(document.querySelectorAll(sel), function (e) {
+    var z = e.closest('[data-ecrire-zone]') || e; return z.offsetParent !== null;
+  }) || null;
+}
+async function ecrireAuConducteur(btn) {
+  ecrireNote('');
+  // Pas connecté : connexion, puis retour sur CE trajet avec la messagerie ouverte.
+  if (!currentUser) {
+    const retour = new URL(location.href);
+    retour.searchParams.set('ecrire', '1');
+    location.href = '/login.html?next=' + encodeURIComponent(retour.pathname + retour.search);
+    return;
+  }
+  if (!ecrireCible || !ecrireCible.driverId) { ecrireNote('Le trajet se charge encore. Réessaie dans un instant.', btn); return; }
+  // Le conducteur écrit à ses passagers depuis son tableau de bord (un fil par passager).
+  if (ecrireCible.driverId === currentUser.id) {
+    location.href = '/dashboard.html?onglet=covoiturage';
+    return;
+  }
+  // La messagerie s'ouvre entre le conducteur et un passager qui a demandé une place (règle du serveur).
+  let reserve = false;
+  try {
+    const { data } = await db.from('ride_bookings').select('id').eq('ride_id', ecrireCible.rideId).eq('passenger_id', currentUser.id).limit(1);
+    reserve = Array.isArray(data) && data.length > 0;
+  } catch (_) { reserve = false; }
+  if (reserve && window.RideChat) {
+    window.RideChat.open({ ride_id: ecrireCible.rideId, other_user_id: ecrireCible.driverId, other_name: ecrireCible.prenom });
+    return;
+  }
+  const nom = String(ecrireCible.prenom || 'le conducteur').replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+  ecrireNote('💬 Tu pourras écrire à ' + nom + ' dès que ta demande de place est envoyée : vos échanges restent sur PorteàPorte, '
+    + 'sans numéro ni courriel. <a href="#booking-card" onclick="document.getElementById(\'booking-card\').scrollIntoView({behavior:\'smooth\',block:\'start\'});return false;">Réserver ma place ↓</a>', btn);
+}
+
+// ── Partage du trajet (secondaire) ──────────────────────────
 function rideShareUrl() {
   return 'https://porteaporte.site/trajet/' + encodeURIComponent(rideId || '');
 }
@@ -1011,23 +1115,41 @@ function renderRide(r) {
   if (!actionsWrap) {
     actionsWrap = document.createElement('div');
     actionsWrap.id = 'driver-actions-wrap';
+    actionsWrap.setAttribute('data-ecrire-zone', '');
     actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;';
     document.getElementById('card-chauffeur').appendChild(actionsWrap);
   }
   actionsWrap.innerHTML = '';
-  if (currentUser && driverIdForBadge && driverIdForBadge !== currentUser.id) {
+  // Bouton « Écrire » toujours visible (connecté ou non) : messagerie masquée du site seulement.
+  ecrireCible = { rideId: r.id || rideId, driverId: driverIdForBadge, prenom: prenom || 'Conducteur' };
+  var estConducteur = currentUser && driverIdForBadge && driverIdForBadge === currentUser.id;
+  document.querySelectorAll('[data-ecrire]').forEach(function (b) {
+    b.textContent = estConducteur ? '💬 Écrire à mes passagers' : '💬 Écrire au conducteur';
+  });
+  var quiMobile = document.getElementById('ecrire-mobile-qui');
+  if (quiMobile) quiMobile.textContent = estConducteur ? 'Tes passagers t’écrivent par la messagerie PorteàPorte.' : 'Une question pour ' + (prenom || 'le conducteur') + ' ?';
+  if (driverIdForBadge) {
     var btnChat = document.createElement('button');
     btnChat.type = 'button';
-    btnChat.style.cssText = 'background:linear-gradient(135deg,#5dbfff,#00b8d4);color:#001828;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9rem;';
-    btnChat.innerHTML = '💬 Contacter le chauffeur';
-    btnChat.addEventListener('click', function () {
-      window.RideChat.open({
-        ride_id: r.id || rideId,
-        other_user_id: driverIdForBadge,
-        other_name: prenom || 'Conducteur'
-      });
-    });
+    btnChat.className = 'btn-ecrire';
+    btnChat.setAttribute('data-ecrire', '');
+    btnChat.textContent = estConducteur ? '💬 Écrire à mes passagers' : '💬 Écrire à ' + (prenom || 'ton conducteur');
+    btnChat.addEventListener('click', function () { ecrireAuConducteur(btnChat); });
     actionsWrap.appendChild(btnChat);
+    var noteChat = document.createElement('div');
+    noteChat.className = 'ecrire-note';
+    noteChat.setAttribute('data-ecrire-note', '');
+    noteChat.hidden = true;
+    actionsWrap.appendChild(noteChat);
+  }
+  // Retour de la connexion (?ecrire=1) : on ouvre la messagerie une seule fois.
+  if (currentUser && params.get('ecrire') === '1' && !window.__ecrireAuto) {
+    window.__ecrireAuto = true;
+    try {
+      var u = new URL(location.href); u.searchParams.delete('ecrire');
+      history.replaceState(null, '', u.pathname + u.search + u.hash);
+    } catch (_) {}
+    setTimeout(function () { ecrireAuConducteur(premierVisible('[data-ecrire]') || btnChat); }, 0);
   }
   // Lien « Lire et répondre » du courriel d'avis : ouvre la conversation (le serveur vérifie la participation).
   var autreParam = new URLSearchParams(location.search).get('message');
