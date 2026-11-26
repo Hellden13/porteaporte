@@ -35,6 +35,19 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ success: true, tache, results });
   }
 
+  // Tâche « codes-hachages » (vercel.json : /api/cron-codes-hachages, 26 nov. 2026) : codes des livraisons
+  // en cours, ancien hachage sans clé → hachage à clé, MÊME code. Idempotente. Rien d'autre.
+  if (tache === 'codes-hachages') {
+    try {
+      const { mettreAJourHachages } = require('../lib/_codes-livraison');
+      results.codes_hachages = await mettreAJourHachages({ sbUrl, sbKey });
+    } catch (e) {
+      results.codes_hachages = 'exception: ' + e.message;
+    }
+    console.log('[cron-codes-hachages]', JSON.stringify(results));
+    return res.status(200).json({ success: true, tache, results });
+  }
+
   // 1. Nettoyer rate_limits expirés (> 1h)
   try {
     const r = await fetch(`${sbUrl}/rest/v1/rpc/cleanup_rate_limits`, {

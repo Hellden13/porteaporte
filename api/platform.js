@@ -74,7 +74,7 @@ function champsDistance(b) {
 }
 const ADR = require('../lib/_adresses');
 const GL = require('../lib/_grand-livre');
-const { codesLivraison, codesAffichables, verifierCodeReception, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
+const { creerCodes, lireCodes, verifierCodeReception, verifierCodeRamassage, NOM_RAMASSAGE, NOM_RECEPTION } = require('../lib/_codes-livraison');
 const { concoursFetesPublic, concoursFetesMoi, adminConcoursFetes, estDrawConcours, CONCOURS: CONCOURS_FETES } = require('../lib/_concours-fetes');
 const { promoValidate, applyPromoCode, adminPromoList, adminPromoCreate, adminPromoToggle, validateCode: validatePromoCode, computeDiscount: computePromoDiscount } = require('../lib/_promos');
 
@@ -298,24 +298,11 @@ async function createLivraison(req, res, ctx, body) {
       cta_label: '📦 Voir dans Operations →'
     }
   );
-  // Les deux codes sont créés ici, une seule fois, et ne changent plus (voir lib/_codes-livraison).
-  const codes = livraison?.id ? (codesLivraison(livraison.id) || { ramassage: generateReceptionCode(), reception: generateReceptionCode() }) : null;
-  let receptionCode = codes ? codes.reception : null;
-  let pickupCode = codes ? codes.ramassage : null;
-  if (receptionCode) {
-    const hash = hashReceptionCode(receptionCode, livraison.id);
-    const pickupHash = pickupCode ? hashReceptionCode(pickupCode, livraison.id) : null;
-    const codePatch = await fetch(`${ctx.sbUrl}/rest/v1/livraisons?id=eq.${encodeURIComponent(livraison.id)}`, {
-      method: 'PATCH',
-      headers: sbHeaders(ctx.sbKey),
-      body: JSON.stringify({
-        recipient_confirmation_hash: hash,
-        recipient_confirmation_created_at: new Date().toISOString(),
-        pickup_code_hash: pickupHash
-      })
-    }).catch(() => {});
-    if (!codePatch || !codePatch.ok) { receptionCode = null; pickupCode = null; }
-  }
+  // Les deux codes sont créés ici, une seule fois, AU HASARD (26 nov. 2026) : hachage à clé sur la
+  // livraison + copie chiffrée au journal (voir lib/_codes-livraison). Échec : aucun code affiché.
+  const codes = livraison?.id ? await creerCodes(ctx, livraison.id) : null;
+  const receptionCode = codes ? codes.reception : null;
+  const pickupCode = codes ? codes.ramassage : null;
   await deliverPush(ctx, {
     type: 'nouvelle_mission',
     data: {
@@ -532,6 +519,7 @@ async function assignDriver(req, res, ctx, body) {
 
   // Envoyer le code par courriel à l'expéditeur (fire-and-forget)
   try {
+    const codesAssign = await lireCodes(ctx, livraison);
     const expRes = await fetch(`${ctx.sbUrl}/rest/v1/profiles?id=eq.${livraison.expediteur_id}&select=email,prenom,nom`, {
       headers: sbHeaders(ctx.sbKey)
     });
@@ -547,8 +535,8 @@ async function assignDriver(req, res, ctx, body) {
         data: {
           expediteur_email: expProfile?.email,
           prenom: expProfile?.prenom || 'Expéditeur',
-          code_ramassage: codesAffichables(livraison).ramassage,
-          code_reception: codesAffichables(livraison).reception,
+          code_ramassage: codesAssign.ramassage,
+          code_reception: codesAssign.reception,
           code_livraison: livraison.code || livraison.id?.slice(0, 8)?.toUpperCase(),
           dashboard_url: `${siteOrigin()}/dashboard.html?onglet=envois`,
           ville_depart: livraison.ville_depart,
@@ -1090,7 +1078,7 @@ async function livraisonCodes(req, res, ctx, body) {
     return res.status(403).json({ error: 'Réservé à l\'expéditeur de cette livraison' });
   }
   res.setHeader('Cache-Control', 'no-store');
-  const c = codesAffichables(livraison);
+  const c = await lireCodes(ctx, livraison);
   return res.status(200).json({
     success: true,
     livraison_id: livraison.id,
@@ -1132,13 +1120,10 @@ async function livraisonPickup(req, res, ctx, body) {
     });
   }
 
-  const expectedHash = livraison.pickup_code_hash;
-  if (!expectedHash) return res.status(409).json({ error: 'Aucun code pickup configuré pour cette livraison' });
-  const suppliedHash = hashReceptionCode(pickup_code, livraison.id);
-  // Le bon code de ramassage est exigé pour TOUT le monde, admin compris.
-  if (suppliedHash !== expectedHash) {
-    return res.status(403).json({ error: `${NOM_RAMASSAGE} invalide. Demande-le à l'expéditeur.` });
-  }
+  if (!livraison.pickup_code_hash) return res.status(409).json({ error: 'Aucun code pickup configuré pour cette livraison' });
+  // Le bon code de ramassage est exigé pour TOUT le monde, admin compris ; 5 essais faux au maximum (26 nov. 2026).
+  const vPickup = await verifierCodeRamassage({ sbUrl: ctx.sbUrl, sbKey: ctx.sbKey, livraison, code: pickup_code, req, acteurId: ctx.session.id });
+  if (!vPickup.ok) return res.status(vPickup.status).json(vPickup.body);
 
   // Upload selfie au storage Supabase (optionnel)
   let selfieUrl = null;

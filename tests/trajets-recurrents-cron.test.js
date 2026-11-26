@@ -147,7 +147,7 @@ test('courriel de rappel : sujet clair, données échappées, lien vers le table
 
 test('tâches planifiées : avancement dans le cron du soir, rappel le matin (12 h UTC) sans nouvelle fonction', () => {
   const v = JSON.parse(lire('vercel.json'));
-  assert.deepEqual(v.crons.map((c) => [c.path, c.schedule]), [['/api/cron-cleanup', '0 3 * * *'], ['/api/cron-rappels-trajets', '0 12 * * *']]);
+  assert.deepEqual(v.crons.map((c) => [c.path, c.schedule]).slice(0, 2), [['/api/cron-cleanup', '0 3 * * *'], ['/api/cron-rappels-trajets', '0 12 * * *']]);
   assert.ok(v.rewrites.some((r) => r.source === '/api/cron-rappels-trajets' && r.destination === '/api/cron-cleanup?tache=rappels-trajets'));
   assert.match(lire('api/cron-cleanup.js'), /if \(tache === 'rappels-trajets'\) \{/);
   assert.match(lire('lib/_cron-ride-capture.js'), /recurrents = await avancerTrajetsRecurrents\(ctx\);/);

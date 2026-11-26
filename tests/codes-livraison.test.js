@@ -18,7 +18,7 @@ before(() => {
 });
 
 const platform = require('../api/platform');
-const { codesLivraison, codesAffichables } = require('../lib/_codes-livraison');
+const { codesLivraison, codesAffichables, codeCorrespond, PREFIXE_H2 } = require('../lib/_codes-livraison');
 const { hashReceptionCode } = require('../lib/_lib');
 
 const EXP = '11111111-1111-4111-8111-111111111111';
@@ -62,7 +62,7 @@ async function fakeFetch(url, o = {}) {
     if (m === 'POST') { db.audit.push(body); return rep([body]); }
     const lid = decodeURIComponent((url.match(/livraison_id=eq\.([^&]+)/) || [])[1] || '');
     const type = (url.match(/event_type=eq\.([^&]+)/) || [])[1];
-    return rep(db.audit.filter((e) => (!lid || e.livraison_id === lid) && (!type || e.event_type === type)).map((e, i) => ({ id: 'e' + i })));
+    return rep(db.audit.filter((e) => (!lid || e.livraison_id === lid) && (!type || e.event_type === type)).map((e, i) => ({ id: 'e' + i, ...e })).reverse());
   }
   if (url.includes('/rest/v1/livraisons')) {
     if (m === 'POST') {
@@ -128,11 +128,18 @@ describe('1. un seul code de réception', () => {
   test('création : hachages enregistrés = codes affichés = codes du courriel', async () => {
     const res = await appel(EXP, { endpoint: 'create-livraison', ville_depart: 'Lévis', ville_arrivee: 'Québec', adresse_depart: '1 rue A, Lévis', adresse_arrivee: '2 rue B, Québec', prix_total: 30, type_colis: 'document' });
     assert.equal(res._status, 200, JSON.stringify(res._body));
-    const c = codesLivraison(LIV_ID);
-    assert.equal(res._body.recipient_confirmation_code, c.reception);
-    assert.equal(res._body.pickup_code, c.ramassage);
-    assert.equal(hashes().r, hashReceptionCode(c.reception, LIV_ID));
-    assert.equal(hashes().p, hashReceptionCode(c.ramassage, LIV_ID));
+    // 26 nov. 2026 : codes au hasard (plus dérivés de l'identifiant), hachages À CLÉ en base.
+    const c = { reception: res._body.recipient_confirmation_code, ramassage: res._body.pickup_code };
+    assert.match(c.reception, /^\d{6}$/);
+    assert.match(c.ramassage, /^\d{6}$/);
+    assert.notEqual(c.reception, codesLivraison(LIV_ID).reception, 'pas l’ancien code dérivé');
+    assert.ok(hashes().r.startsWith(PREFIXE_H2) && hashes().p.startsWith(PREFIXE_H2));
+    assert.ok(codeCorrespond('reception', c.reception, LIV_ID, hashes().r));
+    assert.ok(codeCorrespond('ramassage', c.ramassage, LIV_ID, hashes().p));
+    // L'expéditeur revoit les mêmes codes (copie chiffrée).
+    const vus = await appel(EXP, { endpoint: 'livraison-codes', livraison_id: LIV_ID });
+    assert.equal(vus._body.code_reception, c.reception);
+    assert.equal(vus._body.code_ramassage, c.ramassage);
     const mail = db.courriels.find((x) => x.type === 'livraison_creee_expediteur');
     assert.equal(mail.data.recipient_code, c.reception);
     assert.equal(mail.data.pickup_code, c.ramassage);
@@ -156,8 +163,8 @@ describe('1. un seul code de réception', () => {
   });
 
   test('chemin complet : création → assignation → le code de la création marque bien livré', async () => {
-    await appel(EXP, { endpoint: 'create-livraison', ville_depart: 'Lévis', ville_arrivee: 'Québec', adresse_depart: '1 rue A, Lévis', adresse_arrivee: '2 rue B, Québec', prix_total: 30, type_colis: 'document' });
-    const codeAffiche = codesLivraison(LIV_ID).reception;
+    const cree = await appel(EXP, { endpoint: 'create-livraison', ville_depart: 'Lévis', ville_arrivee: 'Québec', adresse_depart: '1 rue A, Lévis', adresse_arrivee: '2 rue B, Québec', prix_total: 30, type_colis: 'document' });
+    const codeAffiche = cree._body.recipient_confirmation_code;
     db.livraisons[0].statut = 'paiement_autorise';
     await appel(ADMIN, { endpoint: 'assign-driver', livraison_id: LIV_ID, livreur_id: LIVREUR });
     db.livraisons[0].statut = 'ramasse';

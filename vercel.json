@@ -26,6 +26,10 @@
         {
             "path": "/api/cron-rappels-trajets",
             "schedule": "0 12 * * *"
+        },
+        {
+            "path": "/api/cron-codes-hachages",
+            "schedule": "30 3 * * *"
         }
     ],
     "redirects": [
@@ -298,6 +302,10 @@
         {
             "source": "/api/cron-rappels-trajets",
             "destination": "/api/cron-cleanup?tache=rappels-trajets"
+        },
+        {
+            "source": "/api/cron-codes-hachages",
+            "destination": "/api/cron-cleanup?tache=codes-hachages"
         },
         {
             "source": "/trajet/:id",
